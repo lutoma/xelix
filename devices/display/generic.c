@@ -122,7 +122,7 @@ void scroll()
 void moveCursor()
 {
    // The screen is 80 characters wide...
-   uint16 cursorLocation = pos - videoMemory+1;
+   uint16 cursorLocation = pos - videoMemory;
    outb(0x3D4, 14);                  // Tell the VGA board we are setting the high cursor byte.
    outb(0x3D5, cursorLocation >> 8); // Send the high cursor byte.
    outb(0x3D4, 15);                  // Tell the VGA board we are setting the low cursor byte.
