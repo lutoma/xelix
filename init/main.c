@@ -8,13 +8,15 @@ void checkIntLenghts()
 {
 	print("Checking length of uint8... ");
 	if(sizeof(uint8) == 1) print("Right\n");
-	else print("WRONG!\n");
+	else panic("Got wrong lenght for uint8");
+	
 	print("Checking length of uint16... ");
 	if(sizeof(uint16) == 2) print("Right\n");
-	else print("WRONG!\n");
+	else panic("Got wrong lenght for uint16");
+	
 	print("Checking length of uint32... ");
 	if(sizeof(uint32) == 4) print("Right\n");
-	else print("WRONG!\n");
+	else panic("Got wrong lenght for uint32");
 }
 
 void kmain()
@@ -24,6 +26,4 @@ void kmain()
 	checkIntLenghts();
 	cpu_init();
 	print("Initialized CPU\n");
-	panic("Blubb!"); //test
-	print("test"); //test
 }

@@ -25,7 +25,7 @@ void print(char* s)
 
 void panic(char* reason)
 {
-	print("FATAL ERROR: ");
+	print("\n\nFATAL ERROR: ");
 	print(reason);
 	for(;;) //Sleep forever
 	{
