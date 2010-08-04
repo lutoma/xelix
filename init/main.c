@@ -26,4 +26,7 @@ void kmain()
 	checkIntLenghts();
 	cpu_init();
 	print("Initialized CPU\n");
+
+
+	print("Ohai! Welcome to Decore."); // Makes sense, huh?
 }
