@@ -11,7 +11,7 @@ kernel: init/main.o init/loader.o devices/display/generic.o common/generic.o
 # dependencies
 init/main.c: common/generic.h devices/display/interface.h
 
-common/generic.c: common/generic.h
+common/generic.c: common/generic.h devices/display/interface.h
 
 devices/display/interface.h: common/generic.h
 devices/display/generic.c: devices/display/interface.h

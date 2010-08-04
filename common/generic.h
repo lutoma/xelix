@@ -12,4 +12,7 @@ typedef signed char sint8;
 void outb(uint16 port, uint8 value);
 uint8 inb(uint16 port);
 
+void printf(char* s);
+void print(char* s);
+
 #endif

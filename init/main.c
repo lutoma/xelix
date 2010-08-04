@@ -14,12 +14,10 @@ void kmain()
 	
 	display_print("Selbstest ob ints richtige Laengen haben.\n");
 	if(sizeof(uint8) == 1)
-		display_print("     uint8 richtig!\n");
+		printf("     uint8 richtig!\n");
 	if(sizeof(uint16) == 2)
-		display_print("     uint16 richtig!\n");
+		printf("     uint16 richtig!\n");
 	if(sizeof(uint32) == 4)
-		display_print("     uint32 richtig!\n");
+		printf("     uint32 richtig!\n");
 	
-
-
 }
