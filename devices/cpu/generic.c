@@ -26,12 +26,14 @@ int isProtected()
 	else return 0;
 }
 
+// Not needed so far, as grub automatically switches to protected mode.
 void setProtected()
 {
+	print("Error: Can't switch to protected mode. Use a bootloader wich automatically enables protected mode such as GNU GRUB.\n");
 	return;
 }
 
 int cpu_is32Bit()
 {
-	return;
+	return 1;
 }

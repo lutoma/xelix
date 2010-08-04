@@ -16,9 +16,19 @@ uint8 inb(uint16 port)
 
 void printf(char* s)
 {
-	display_print(s);
+	print(s);
 }
 void print(char* s)
 {
-	printf(s);
+	display_print(s);
+}
+
+void panic(char* reason)
+{
+	print("FATAL ERROR: ");
+	print(reason);
+	for(;;) //Sleep forever
+	{
+	  asm("cli;hlt;");
+	}
 }
