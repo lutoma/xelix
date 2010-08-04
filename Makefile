@@ -1,6 +1,6 @@
 
 
-kernel: init/main.o init/loader.o devices/display/generic.o common.o
+kernel: init/main.o init/loader.o devices/display/generic.o common/generic.o
 	ld -T linker.ld -o kernel.bin $^
 
 # how to compile .c to .o
@@ -9,18 +9,18 @@ kernel: init/main.o init/loader.o devices/display/generic.o common.o
 
 
 # dependencies
-init/main.c: common.h devices/display/interface.h
+init/main.c: common/generic.h devices/display/interface.h
 
-common.c: common.h
+common/generic.c: common/generic.h
 
-devices/display/interface.h: common.h
+devices/display/interface.h: common/generic.h
 devices/display/generic.c: devices/display/interface.h
 
 
 
 
 clean:
-	rm -rf kernel.bin init/main.o init/loader.o devices/display/generic.o common.o
+	rm -rf kernel.bin init/main.o init/loader.o devices/display/generic.o common/generic.o
 
 
 init/loader.o: init/loader.s

@@ -1,4 +1,4 @@
-#include <common.h>
+#include <common/generic.h>
 
 
 // Write a byte out to the specified port.
