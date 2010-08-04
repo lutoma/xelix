@@ -56,6 +56,34 @@ void display_setColor(uint8 newcolor)
 	color = newcolor;
 }
 
+void display_printHex(uint32 num)
+{
+	char s[11]; // maximal 2 (0x) + 2*4 (long int sind 4 bytes) + 1 ('\0')
+	s[0] = '0';
+	s[1] = 'x';
+	
+	char tmp[9];
+	int i=0;
+	while(num != 0)
+	{
+		unsigned char c = num & 0xf;
+		num = num>>4;
+		if(c < 10)
+			c+='0';
+		else
+			c= c-10 + 'A';
+		tmp[i++] = c;
+	}
+	s[i+2] = '\0';
+	int j;
+	for(j=0; j < i; j++)
+	{
+		s[2+j] = tmp[i-1-j];
+	}
+	display_print(s);
+}
+
+
 void display_clear()
 {
 	int i;
