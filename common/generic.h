@@ -17,5 +17,6 @@ uint8 inb(uint16 port);
 
 void printf(char* s);
 void print(char* s);
+void log(char* s);
 void panic(char* reason);
 #endif

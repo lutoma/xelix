@@ -8,16 +8,16 @@ uint32 tick = 0;
 static void timer_callback(registers_t regs)
 {
    tick++;
-   //print("Tick: ");
-   //display_printDec(tick);
-   //print("\n");
+   //log("Tick: ");
+   //display_logDec(tick);
+   //log("\n");
 }
 
 void pit_init(uint32 frequency)
 {
-   print("Initializing PIT at ");
+   log("Initializing PIT at ");
    display_printDec(frequency);
-   print("Hz.\n");
+   log("Hz.\n");
    // Firstly, register our timer callback.
    irq_registerHandler(IRQ0, &timer_callback);
 

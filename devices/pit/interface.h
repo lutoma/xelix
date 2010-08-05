@@ -1,5 +1,5 @@
-#ifndef INTERRUPTS_PIT_H
-#define INTERRUPTS_PIT_H
+#ifndef DEVICES_PIT_INTERFACE_H
+#define DEVICES_PIT_INTERFACE_H
 
 #include <common/generic.h>
 

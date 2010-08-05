@@ -11,10 +11,10 @@ void cpu_init()
 	if(!protected)
 	{
 		setProtected();
-		print("Setting CPU to protected mode.\n");
+		log("Setting CPU to protected mode.\n");
 	} else
 	{
-		print("CPU is already in protected mode, not enabling.\n");
+		log("CPU is already in protected mode, not enabling.\n");
 	}
 }
 
