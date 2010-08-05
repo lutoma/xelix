@@ -1,6 +1,5 @@
 Compile
-=======
-To compile run:
+-------
 * `make makefile` (Yes, seriously)
 * `make clean`
 
