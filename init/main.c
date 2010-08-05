@@ -1,6 +1,7 @@
 #include <common/generic.h>
 #include <devices/display/interface.h>
 #include <devices/cpu/interface.h>
+#include <devices/keyboard/interface.h>
 #include <memory/gdt.h>
 #include <interrupts/idt.h>
 
@@ -32,6 +33,9 @@ void kmain()
 	print("Initialized global descriptor table.\n");
 	idt_init();
 	print("Initialized interruptor descriptor table.\n");
+	
+	keyboard_init();
+	print("Initialized Keyboard.\n");
 
 	print("Ohai! Welcome to Decore.\n");
 
