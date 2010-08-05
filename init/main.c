@@ -4,6 +4,7 @@
 #include <devices/keyboard/interface.h>
 #include <memory/gdt.h>
 #include <interrupts/idt.h>
+#include <interrupts/pit.h>
 
 void checkIntLenghts();
 
@@ -34,10 +35,15 @@ void kmain()
 	idt_init();
 	print("Initialized interruptor descriptor table.\n");
 	
+	pit_init(50); //50Hz
+	print("Initialized PIT\n");
+
+
 	//keyboard_init();
 	//print("Initialized Keyboard.\n");
+
 	
-	print("Hello! Welcome to Decore.\n");
+	print("Ohai! Welcome to Decore.\n");
 
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");

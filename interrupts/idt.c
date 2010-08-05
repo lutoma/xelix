@@ -21,14 +21,6 @@ struct idt_ptr_struct
 } __attribute__((packed));
 typedef struct idt_ptr_struct idt_ptr_t;
 
-typedef struct registers
-{
-   uint32 ds;                  // Data segment selector
-   uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-   uint32 int_no, err_code;    // Interrupt number and error code (if applicable)
-   uint32 eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
-} registers_t;
-
 // These extern directives let us access the addresses of our ASM ISR handlers.
 extern void isr0 ();
 extern void isr1 ();
@@ -64,16 +56,48 @@ extern void isr30 ();
 extern void isr31();
 extern void isr32();
 
+extern void irq0();
+extern void irq1();
+extern void irq2();
+extern void irq3();
+extern void irq4();
+extern void irq5();
+extern void irq6();
+extern void irq7();
+extern void irq8();
+extern void irq9();
+extern void irq10();
+extern void irq11();
+extern void irq12();
+extern void irq13();
+extern void irq14();
+extern void irq15();
+
 idt_entry_t idt_entries[256];
 idt_ptr_t   idt_ptr;
 
 extern void idt_flush(uint32);
 static void setGate(uint8,uint32,uint16,uint8);
 
+
+
 void idt_init()
 {
    idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
    idt_ptr.base  = (uint32)&idt_entries;
+
+    // Remap the irq table.
+    outb(0x20, 0x11);
+    outb(0xA0, 0x11);
+    outb(0x21, 0x20);
+    outb(0xA1, 0x28);
+    outb(0x21, 0x04);
+    outb(0xA1, 0x02);
+    outb(0x21, 0x01);
+    outb(0xA1, 0x01);
+    outb(0x21, 0x0);
+    outb(0xA1, 0x0);
+    print("Remapped IRQ table to ISRs 32-47.\n");
 
    memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
 
@@ -109,7 +133,24 @@ void idt_init()
    setGate(29, (uint32)isr29 , 0x08, 0x8E);
    setGate(30, (uint32)isr30 , 0x08, 0x8E);
    setGate(31, (uint32)isr31 , 0x08, 0x8E);
-   setGate(32, (uint32)isr32 , 0x08, 0x8E);
+
+  //IRQs
+   setGate(32, (uint32)irq0  , 0x08, 0x8E);
+   setGate(33, (uint32)irq1  , 0x08, 0x8E);
+   setGate(34, (uint32)irq2  , 0x08, 0x8E);
+   setGate(35, (uint32)irq3  , 0x08, 0x8E);
+   setGate(36, (uint32)irq4  , 0x08, 0x8E);
+   setGate(37, (uint32)irq5  , 0x08, 0x8E);
+   setGate(38, (uint32)irq6  , 0x08, 0x8E);
+   setGate(39, (uint32)irq7  , 0x08, 0x8E);
+   setGate(40, (uint32)irq8  , 0x08, 0x8E);
+   setGate(41, (uint32)irq9  , 0x08, 0x8E);
+   setGate(42, (uint32)irq10 , 0x08, 0x8E);
+   setGate(43, (uint32)irq11 , 0x08, 0x8E);
+   setGate(44, (uint32)irq12 , 0x08, 0x8E);
+   setGate(45, (uint32)irq13 , 0x08, 0x8E);
+   setGate(46, (uint32)irq14 , 0x08, 0x8E);
+   setGate(47, (uint32)irq15 , 0x08, 0x8E);
 
    idt_flush((uint32)&idt_ptr);
 }
@@ -132,4 +173,32 @@ void isr_handler(registers_t regs)
    print("received interrupt: ");
    display_printHex(regs.int_no);
    print("\n");
+
+}
+isr_t interrupt_handlers[256];
+// This gets called from our ASM interrupt handler stub.
+void irq_handler(registers_t regs)
+{
+   // Send an EOI (end of interrupt) signal to the PICs.
+   // If this interrupt involved the slave.
+   if (regs.int_no >= 40)
+   {
+       // Send reset signal to slave.
+       outb(0xA0, 0x20);
+   }
+   // Send reset signal to master. (As well as slave, if necessary).
+   outb(0x20, 0x20);
+
+   if (interrupt_handlers[regs.int_no] != 0)
+   {
+       isr_t handler = interrupt_handlers[regs.int_no];
+       handler(regs);
+   }
+   print("got irq!");
+}
+isr_t interrupt_handlers[256];
+
+void idt_registerHandler(uint8 n, isr_t handler)
+{
+  interrupt_handlers[n] = handler;
 }
