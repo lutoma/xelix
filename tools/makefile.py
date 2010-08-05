@@ -57,8 +57,10 @@ memory/gdta.o: memory/gdt.asm
 interrupts/idta.o: interrupts/idt.asm
 	nasm -f elf -o interrupts/idta.o interrupts/idt.asm
 
-run: kernel
+run:
 	qemu -kernel kernel.bin
+
+test: kernel run
 
 makefile:
 	tools/makefile.py
