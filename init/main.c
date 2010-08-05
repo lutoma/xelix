@@ -31,7 +31,17 @@ static void kbd_callback(registers_t regs)
 
 void kmain()
 {
+	
 	display_init();
+	
+	display_setColor(0x0f);
+	print("                                               \n");
+	print("                                     decore    \n");
+	print("                                               \n");
+	display_setColor(0x07);
+	
+	
+	
 	print("Initialized Display.\n");
 	checkIntLenghts();
 	cpu_init();

@@ -16,7 +16,7 @@ void moveCursor(); // Cursor richtig zum pos bewegen
 
 void display_init()
 {
-	color = 0x0f;
+	color = 0x07;
 	pos = videoMemory;
 	display_clear();
 	
