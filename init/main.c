@@ -2,6 +2,7 @@
 #include <devices/display/interface.h>
 #include <devices/cpu/interface.h>
 #include <memory/gdt.h>
+#include <interrupts/idt.h>
 
 void checkIntLenghts();
 
@@ -29,7 +30,12 @@ void kmain()
 	print("Initialized CPU\n");
 	gdt_init();
 	print("Initialized global descriptor table.\n");
+	idt_init();
+	print("Initialized interruptor descriptor table.\n");
 
 	print("Ohai! Welcome to Decore.");
 	print("0test0a0aäoöuü");
+
+	asm volatile ("int $0x3");
+	asm volatile ("int $0x4");
 }

@@ -24,7 +24,7 @@ hfiles.sort();
 
 
 makefile.write("# kernel binary\n");
-makefile.write("kernel: init/loader.o memory/gdta.o ");
+makefile.write("kernel: init/loader.o memory/gdta.o interrupts/idta.o ");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
 makefile.write("\n\tld -T linker.ld -o kernel.bin $^\n\n");
@@ -54,6 +54,8 @@ init/loader.o: init/loader.asm
 	nasm -f elf -o init/loader.o init/loader.asm
 memory/gdta.o: memory/gdt.asm
 	nasm -f elf -o memory/gdta.o memory/gdt.asm
+interrupts/idta.o: interrupts/idt.asm
+	nasm -f elf -o interrupts/idta.o interrupts/idt.asm
 
 run: kernel
 	qemu -kernel kernel.bin
