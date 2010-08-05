@@ -34,9 +34,7 @@ void irq_registerHandler(uint8 n, irqHandler_t handler)
 {
   log("Registered IRQ handler for ");
   display_printDec(n);
-  log("[");
-  //display_logDec(handler.ds);
-  log("].\n");
+  log("\n");
   interrupt_handlers[n] = handler;
 }
 
