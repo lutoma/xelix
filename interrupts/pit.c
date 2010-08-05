@@ -7,9 +7,9 @@ uint32 tick = 0;
 static void timer_callback(registers_t regs)
 {
    tick++;
-   print("Tick: ");
-   display_printDec(tick);
-   print("\n");
+   //print("Tick: ");
+   //display_printDec(tick);
+   //print("\n");
 }
 
 void pit_init(uint32 frequency)
