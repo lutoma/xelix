@@ -1,6 +1,7 @@
 #include <common/generic.h>
 #include <devices/display/interface.h>
 #include <devices/cpu/interface.h>
+#include <memory/gdt.h>
 
 void checkIntLenghts();
 
@@ -26,7 +27,8 @@ void kmain()
 	checkIntLenghts();
 	cpu_init();
 	print("Initialized CPU\n");
-
+	gdt_init();
+	print("Initialized global descriptor table.\n");
 
 	print("Ohai! Welcome to Decore.");
 	print("0test0a0aäoöuü");
