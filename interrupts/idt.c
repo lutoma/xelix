@@ -4,11 +4,11 @@
 // A struct describing an interrupt gate.
 struct idt_entry_struct
 {
-	uint16 base_lo;             // The lower 16 bits of the address to jump to when this interrupt fires.
-	uint16 sel;                 // Kernel segment selector.
-	uint8  always0;             // This must always be zero.
-	uint8  flags;               // More flags. See documentation.
-	uint16 base_hi;             // The upper 16 bits of the address to jump to.
+	uint16 base_lo;				 // The lower 16 bits of the address to jump to when this interrupt fires.
+	uint16 sel;					  // Kernel segment selector.
+	uint8  always0;				 // This must always be zero.
+	uint8  flags;					// More flags. See documentation.
+	uint16 base_hi;				 // The upper 16 bits of the address to jump to.
 } __attribute__((packed));
 typedef struct idt_entry_struct idt_entry_t;
 
@@ -17,7 +17,7 @@ typedef struct idt_entry_struct idt_entry_t;
 struct idt_ptr_struct
 {
 	uint16 limit;
-	uint32 base;                // The address of the first element in our idt_entry_t array.
+	uint32 base;					 // The address of the first element in our idt_entry_t array.
 } __attribute__((packed));
 typedef struct idt_ptr_struct idt_ptr_t;
 
@@ -75,7 +75,7 @@ extern void irq15();
 
 
 idt_entry_t idt_entries[256];
-idt_ptr_t   idt_ptr;
+idt_ptr_t	idt_ptr;
 
 extern void idt_flush(uint32);
 static void setGate(uint8,uint32,uint16,uint8);
@@ -87,6 +87,7 @@ void idt_init()
 	idt_ptr.base  = (uint32)&idt_entries;
 
 	memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
+
 
 	// Remap the irq table.
 	outb(0x20, 0x11);
@@ -135,7 +136,7 @@ void idt_init()
 	setGate(30, (uint32)isr30 , 0x08, 0x8E);
 	setGate(31, (uint32)isr31 , 0x08, 0x8E);
 
-	//IRQs
+	// IRQ
 	setGate(32, (uint32)irq0  , 0x08, 0x8E);
 	setGate(33, (uint32)irq1  , 0x08, 0x8E);
 	setGate(34, (uint32)irq2  , 0x08, 0x8E);

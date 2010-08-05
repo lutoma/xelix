@@ -1,4 +1,4 @@
-#include <interrupts/pit.h>
+#include <devices/pit/interface.h>
 #include <interrupts/idt.h>
 #include <interrupts/irq.h>
 #include <devices/display/interface.h>

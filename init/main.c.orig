@@ -4,8 +4,12 @@
 #include <devices/keyboard/interface.h>
 #include <memory/gdt.h>
 #include <interrupts/idt.h>
+<<<<<<< HEAD
+#include <interrupts/pit.h>
 #include <interrupts/irq.h>
+=======
 #include <devices/pit/interface.h>
+>>>>>>> 5aba116b7c0d0a3d4f43015613dbf0c6194b24ed
 
 void checkIntLenghts();
 static void kbd_callback(registers_t regs);
