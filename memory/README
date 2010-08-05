@@ -1,0 +1,2 @@
+The reason for why this is not in /devices is simply that this doesn't contain a driver for accessing the memory (as there ain't the need 
+for one), but rather memory managing stuff.

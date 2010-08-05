@@ -24,7 +24,7 @@ hfiles.sort();
 
 
 makefile.write("# kernel binary\n");
-makefile.write("kernel: init/loader.o");
+makefile.write("kernel: init/loader.o memory/gdta.o ");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
 makefile.write("\n\tld -T linker.ld -o kernel.bin $^\n\n");
@@ -50,9 +50,9 @@ makefile.write("""\n\n
 	gcc -Wall -I . -nostartfiles -nodefaultlibs -nostdlib -o $@ -c $<
 
 
-init/loader.o: init/loader.s
-	nasm -f elf -o init/loader.o init/loader.s
-
+init/loader.o: init/loader.asm
+	nasm -f elf -o init/loader.o init/loader.asm
+	nasm -f elf -o memory/gdta.o memory/gdt.asm
 
 run: kernel
 	qemu -kernel kernel.bin

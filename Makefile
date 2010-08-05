@@ -1,19 +1,21 @@
 # kernel binary
-kernel: init/loader.o common/generic.o devices/cpu/generic.o devices/display/generic.o init/main.o
+kernel: init/loader.o memory/gdta.o  common/generic.o devices/cpu/generic.o devices/display/generic.o init/main.o memory/gdt.o
 	ld -T linker.ld -o kernel.bin $^
 
 # dependencies
 common/generic.h:
 devices/cpu/interface.h: common/generic.h
 devices/display/interface.h: common/generic.h
+memory/gdt.h: common/generic.h
 common/generic.c: common/generic.h devices/display/interface.h
 devices/cpu/generic.c: devices/cpu/interface.h
 devices/display/generic.c: devices/display/interface.h
 init/main.c: common/generic.h devices/display/interface.h devices/cpu/interface.h
+memory/gdt.c: memory/gdt.h
 
 # clean
 clean:
-	rm -rf kernel.bin init/loader.o common/generic.o devices/cpu/generic.o devices/display/generic.o init/main.o
+	rm -rf kernel.bin init/loader.o common/generic.o devices/cpu/generic.o devices/display/generic.o init/main.o memory/gdt.o
 
 
 # how to compile .c to .o
@@ -21,9 +23,9 @@ clean:
 	gcc -Wall -I . -nostartfiles -nodefaultlibs -nostdlib -o $@ -c $<
 
 
-init/loader.o: init/loader.s
-	nasm -f elf -o init/loader.o init/loader.s
-
+init/loader.o: init/loader.asm
+	nasm -f elf -o init/loader.o init/loader.asm
+	nasm -f elf -o memory/gdta.o memory/gdt.asm
 
 run: kernel
 	qemu -kernel kernel.bin
