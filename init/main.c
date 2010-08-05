@@ -43,21 +43,21 @@ void kmain()
 	cpu_init();
 	log("Initialized CPU\n");
 	gdt_init();
-	log("Initialized global descriptor table.\n");
+	log("Initialized GDT (global descriptor table)\n");
 	idt_init();
-	log("Initialized interruptor descriptor table.\n");
+	log("Initialized IDT (interrupt descriptor table)\n");
 	pit_init(50); //50Hz
-	log("Initialized PIT\n");
+	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();
-	log("Initialized keyboard.\n");
+	log("Initialized keyboard\n");
 	memory_init();
 	log("Initialized memory.\n");
 	
-	log("\nDecore is up.\n\n");
-
 	uint32 *ptr = (uint32*)0xA0000000;
 	uint32 do_page_fault = *ptr;
 
+	
+	log("\nDecore is up.\n");
 	
 	while(1)
 	{
