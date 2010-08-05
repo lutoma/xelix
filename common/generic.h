@@ -10,6 +10,7 @@ typedef signed char sint8;
 
 // Port i.o. so that we don't always have to use assembler
 void outb(uint16 port, uint8 value);
+void outw(uint16 port, uint16 value);
 uint8 inb(uint16 port);
 
 void printf(char* s);

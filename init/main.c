@@ -28,5 +28,6 @@ void kmain()
 	print("Initialized CPU\n");
 
 
-	print("Ohai! Welcome to Decore."); // Makes sense, huh?
+	print("Ohai! Welcome to Decore.");
+	print("0test0a0aäoöuü");
 }

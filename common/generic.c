@@ -6,6 +6,10 @@ void outb(uint16 port, uint8 value)
 {
     asm ("outb %1, %0" : : "dN" (port), "a" (value));
 }
+void outw(uint16 port, uint16 value)
+{
+    asm ("outw %1, %0" : : "dN" (value), "a" (port)); // TODO port and value need to be swapped
+}
 
 uint8 inb(uint16 port)
 {
