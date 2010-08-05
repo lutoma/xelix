@@ -8,6 +8,7 @@ makefile = open("Makefile", "w");
 
 cfiles = [];
 hfiles = [];
+asmfiles = []
 
 for root, dirs, files in os.walk("."):
 	if ".git" in root:
@@ -18,13 +19,18 @@ for root, dirs, files in os.walk("."):
 			cfiles.append(dateiname);
 		if dateiname[-2:] == ".h":
 			hfiles.append(dateiname);
+		if dateiname[-4:] == ".asm":
+			asmfiles.append(dateiname);
 
 cfiles.sort();
 hfiles.sort();
+asmfiles.sort();
 
 
 makefile.write("# kernel binary\n");
-makefile.write("kernel: init/loader.o memory/gdta.o interrupts/idta.o ");
+makefile.write("kernel: ");
+for f in asmfiles:
+	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
 makefile.write("\n\tld -T linker.ld -o kernel.bin $^\n\n");
@@ -40,22 +46,22 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf kernel.bin init/loader.o");
+makefile.write("clean:\n\trm -rf kernel.bin");
+for f in asmfiles:
+	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
 
 makefile.write("""\n\n
+
 # how to compile .c to .o
-.c.o:
+%.o: %.c
 	gcc -Wall -I . -nostartfiles -nodefaultlibs -nostdlib -fno-stack-protector -o $@ -c $<
 
+# how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
+%-asm.o: %.asm
+	nasm -f elf -o $@ $<
 
-init/loader.o: init/loader.asm
-	nasm -f elf -o init/loader.o init/loader.asm
-memory/gdta.o: memory/gdt.asm
-	nasm -f elf -o memory/gdta.o memory/gdt.asm
-interrupts/idta.o: interrupts/idt.asm
-	nasm -f elf -o interrupts/idta.o interrupts/idt.asm
 
 run:
 	qemu -kernel kernel.bin
