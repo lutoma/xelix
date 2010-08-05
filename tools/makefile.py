@@ -52,6 +52,7 @@ makefile.write("""\n\n
 
 init/loader.o: init/loader.asm
 	nasm -f elf -o init/loader.o init/loader.asm
+memory/gdta.o: memory/gdt.asm
 	nasm -f elf -o memory/gdta.o memory/gdt.asm
 
 run: kernel
