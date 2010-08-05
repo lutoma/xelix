@@ -1,4 +1,7 @@
 #!/bin/sh
+
+# usage:  tools/linecount.sh .
+
 NUMBER=0
 LINE=0
 CHAR=0
@@ -10,7 +13,7 @@ count ()
 		elif [ -f "$temp" ] ; then
 			NUMBER=$(($NUMBER+1))
 			LINE=$(($LINE+`wc -l $temp | awk '{print $1}'`))
-			CHAR=$(($LINE+`wc -m $temp | awk '{print $1}'`))
+			CHAR=$(($CHAR+`wc -m $temp | awk '{print $1}'`))
 		fi
 	done
 }
