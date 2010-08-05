@@ -550,7 +550,7 @@ void keyboard_init()
 	modifiers.super = 0;
 	
 	irq_registerHandler(IRQ1, &handleIrq);
-		
+	keyboard_leaveFocus();
 }
 
 void handleIrq(registers_t regs)
@@ -644,4 +644,9 @@ void keyboard_takeFocus(void (*func)(char*))
 {
 	focusedFunction = func;
 	log("Application took focus.\n");
+}
+
+void keyboard_leaveFocus()
+{
+	focusedFunction = -1;
 }

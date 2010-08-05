@@ -5,7 +5,7 @@
 
 void keyboard_init(); // irqs have to be set up first!
 void keyboard_takeFocus(void (*func)(char*));
-
+void keyboard_leaveFocus();
 
 
 #endif

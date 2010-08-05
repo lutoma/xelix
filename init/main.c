@@ -7,9 +7,9 @@
 #include <interrupts/irq.h>
 #include <devices/pit/interface.h>
 #include <memory/interface.h>
+#include <init/debugconsole.h>
 
 void checkIntLenghts();
-void handleInput(char* input);
 
 void checkIntLenghts()
 {
@@ -26,14 +26,9 @@ void checkIntLenghts()
 	else panic("Got wrong lenght for uint32");
 }
 
-void handleInput(char* input)
-{
-		print(input);
-}
-
 void kmain()
 {
-	
+	common_setLogLevel(1); //Enable logs
 	display_init();
 	
 	display_setColor(0x0f);
@@ -62,8 +57,10 @@ void kmain()
 	//uint32 *ptr = (uint32*)0xA0000000;
 	//uint32 do_page_fault = *ptr;
 
-	keyboard_takeFocus(&handleInput);
+	
 	log("Decore is up.\n");
+
+	debugconsole_init();
 	
 	while(1)
 	{
