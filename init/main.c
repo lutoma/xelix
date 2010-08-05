@@ -36,7 +36,7 @@ void kmain()
 	pit_init(50); //50Hz
 	print("Initialized PIT\n");
 	
-	print("Ohai! Welcome to Decore.\n");
+	print("\nOhai! Welcome to Decore.\n\n");
 
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");
