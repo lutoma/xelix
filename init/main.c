@@ -39,8 +39,8 @@ void kmain()
 	print("Initialized PIT\n");
 
 
-	//keyboard_init();
-	//print("Initialized Keyboard.\n");
+	keyboard_init();
+	print("Initialized Keyboard.\n");
 
 	
 	print("Ohai! Welcome to Decore.\n");
