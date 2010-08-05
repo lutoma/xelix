@@ -1,0 +1,11 @@
+
+idt.h / idt.c: sets up the interrupt descriptor table
+
+isr.h / isr.c: isr handler
+
+irq.h / irq.c: irq handlers (register new ones, ...)
+
+
+TODO:
+* split up idt.asm into idt.asm, isr.asm and irq.asm
+* make the idt_init (which creates the idt) call functions in isr.h and irq.h to initialise the part concerning isr / irq, eg. remapping.

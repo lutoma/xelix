@@ -1,5 +1,6 @@
 #include <interrupts/pit.h>
 #include <interrupts/idt.h>
+#include <interrupts/irq.h>
 #include <devices/display/interface.h>
 
 uint32 tick = 0;
@@ -18,7 +19,7 @@ void pit_init(uint32 frequency)
    display_printDec(frequency);
    print("Hz.\n");
    // Firstly, register our timer callback.
-   idt_registerHandler(IRQ0, &timer_callback);
+   irq_registerHandler(IRQ0, &timer_callback);
 
    // The value we send to the PIT is the value to divide it's input clock
    // (1193180 Hz) by, to get our required frequency. Important to note is

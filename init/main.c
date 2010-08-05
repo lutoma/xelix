@@ -5,6 +5,7 @@
 #include <memory/gdt.h>
 #include <interrupts/idt.h>
 #include <interrupts/pit.h>
+#include <interrupts/irq.h>
 
 void checkIntLenghts();
 static void kbd_callback(registers_t regs);
@@ -69,7 +70,7 @@ void kmain()
 	 //outb(0xa1,0xff);
    //asm("sti");
 
-	idt_registerHandler(IRQ1, &kbd_callback);
+	irq_registerHandler(IRQ1, &kbd_callback);
 
 	
 	//print("\nOhai! Welcome to Decore.\n\n");
