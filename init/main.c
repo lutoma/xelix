@@ -33,7 +33,7 @@ void kmain()
 	idt_init();
 	print("Initialized interruptor descriptor table.\n");
 
-	print("Ohai! Welcome to Decore.");
+	print("Ohai! Welcome to Decore.\n");
 
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");
