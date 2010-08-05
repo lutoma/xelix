@@ -2,6 +2,7 @@ Compile
 -------
 * `make makefile` (Yes, seriously)
 * `make clean`
+* `make`
 
 Run (Qemu)
 ----------
