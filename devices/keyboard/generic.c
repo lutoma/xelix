@@ -547,7 +547,6 @@ void keyboard_init()
 	modifiers.alt = 0;
 	modifiers.super = 0;
 	
-	// TODO: replace by irq handler
 	irq_registerHandler(IRQ1, &handleIrq);
 		
 }

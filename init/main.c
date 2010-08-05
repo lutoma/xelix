@@ -6,6 +6,7 @@
 #include <interrupts/idt.h>
 #include <interrupts/irq.h>
 #include <devices/pit/interface.h>
+#include <memory/interface.h>
 
 void checkIntLenghts();
 
@@ -47,14 +48,16 @@ void kmain()
 	log("Initialized interruptor descriptor table.\n");
 	pit_init(50); //50Hz
 	log("Initialized PIT\n");
-	
 	keyboard_init();
-	log("Initialized Keyboard.\n");
-	
-	
-	
+	log("Initialized keyboard.\n");
+	memory_init();
+	log("Initialized memory.\n");
 	
 	log("\nDecore is up.\n\n");
+
+	uint32 *ptr = (uint32*)0xA0000000;
+	uint32 do_page_fault = *ptr;
+
 	
 	while(1)
 	{
