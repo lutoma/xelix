@@ -100,7 +100,7 @@ void idt_init()
 	outb(0xA1, 0x01);
 	outb(0x21, 0x0);
 	outb(0xA1, 0x0);
-	print("Remapped IRQ table to ISRs 32-47.\n");
+	log("Remapped IRQ table to ISRs 32-47.\n");
 
 	// ISR
 	setGate( 0, (uint32)isr0  , 0x08, 0x8E);

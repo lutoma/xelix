@@ -29,17 +29,24 @@ uint8 inb(uint16 port)
 
 void printf(char* s)
 {
-	print(s);
+  print(s);
 }
 void print(char* s)
 {
-	display_print(s);
+  display_print(s);
+}
+
+//Todo: Write to file
+void log(char* s)
+{
+  print(s);
+  //if(addn) display_print("\n");
 }
 
 void panic(char* reason)
 {
-	print("\n\nFATAL ERROR: ");
-	print(reason);
+	log("\n\nFATAL ERROR: ");
+	log(reason);
 	for(;;) //Sleep forever
 	{
 	  asm("cli;hlt;");

@@ -11,16 +11,16 @@ void checkIntLenghts();
 
 void checkIntLenghts()
 {
-	print("Checking length of uint8... ");
-	if(sizeof(uint8) == 1) print("Right\n");
+	log("Checking length of uint8... ");
+	if(sizeof(uint8) == 1) log("Right\n");
 	else panic("Got wrong lenght for uint8");
 	
-	print("Checking length of uint16... ");
-	if(sizeof(uint16) == 2) print("Right\n");
+	log("Checking length of uint16... ");
+	if(sizeof(uint16) == 2) log("Right\n");
 	else panic("Got wrong lenght for uint16");
 	
-	print("Checking length of uint32... ");
-	if(sizeof(uint32) == 4) print("Right\n");
+	log("Checking length of uint32... ");
+	if(sizeof(uint32) == 4) log("Right\n");
 	else panic("Got wrong lenght for uint32");
 }
 
@@ -37,24 +37,24 @@ void kmain()
 	
 	
 	
-	print("Initialized Display.\n");
+	log("Initialized Display.\n");
 	checkIntLenghts();
 	cpu_init();
-	print("Initialized CPU\n");
+	log("Initialized CPU\n");
 	gdt_init();
-	print("Initialized global descriptor table.\n");
+	log("Initialized global descriptor table.\n");
 	idt_init();
-	print("Initialized interruptor descriptor table.\n");
+	log("Initialized interruptor descriptor table.\n");
 	pit_init(50); //50Hz
-	print("Initialized PIT\n");
+	log("Initialized PIT\n");
 	
 	keyboard_init();
-	print("Initialized Keyboard.\n");
+	log("Initialized Keyboard.\n");
 	
 	
 	
 	
-	print("\nDecore is up.\n\n");
+	log("\nDecore is up.\n\n");
 	
 	while(1)
 	{
