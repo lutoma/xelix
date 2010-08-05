@@ -1,6 +1,6 @@
 Compile
 -------
-* `make makefile` (Yes, seriously)
+* `tools/makefile.py`
 * `make clean`
 * `make`
 
