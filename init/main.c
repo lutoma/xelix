@@ -67,7 +67,7 @@ void kmain()
 	 
 	 //outb(0x21,0xfd);
 	 //outb(0xa1,0xff);
-   //asm("sti");
+	//asm("sti");
 
 	idt_registerHandler(IRQ1, &kbd_callback);
 
