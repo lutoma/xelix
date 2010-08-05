@@ -3,6 +3,7 @@
 #include <devices/cpu/interface.h>
 #include <memory/gdt.h>
 #include <interrupts/idt.h>
+#include <interrupts/pit.h>
 
 void checkIntLenghts();
 
@@ -32,7 +33,9 @@ void kmain()
 	print("Initialized global descriptor table.\n");
 	idt_init();
 	print("Initialized interruptor descriptor table.\n");
-
+	pit_init(50); //50Hz
+	print("Initialized PIT\n");
+	
 	print("Ohai! Welcome to Decore.\n");
 
 	asm volatile ("int $0x3");
