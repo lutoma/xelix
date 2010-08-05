@@ -7,6 +7,7 @@
 #include <interrupts/pit.h>
 
 void checkIntLenghts();
+static void kbd_callback(registers_t regs);
 
 void checkIntLenghts()
 {
@@ -21,6 +22,11 @@ void checkIntLenghts()
 	print("Checking length of uint32... ");
 	if(sizeof(uint32) == 4) print("Right\n");
 	else panic("Got wrong lenght for uint32");
+}
+
+static void kbd_callback(registers_t regs)
+{
+	print("Key pressed!\n");
 }
 
 void kmain()
@@ -42,9 +48,10 @@ void kmain()
 	keyboard_init();
 	print("Initialized Keyboard.\n");
 
-	
-	print("Ohai! Welcome to Decore.\n");
+	idt_registerHandler(IRQ1, &kbd_callback);
 
-	asm volatile ("int $0x3");
-	asm volatile ("int $0x4");
+	
+	print("\nOhai! Welcome to Decore.\n\n");
+	asm volatile ("int $0x21");
+	//for(;;) asm volatile ("int $0x20");
 }

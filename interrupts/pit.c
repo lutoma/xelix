@@ -8,14 +8,14 @@ static void timer_callback(registers_t regs)
 {
    tick++;
    print("Tick: ");
-   display_printHex(tick);
+   display_printDec(tick);
    print("\n");
 }
 
 void pit_init(uint32 frequency)
 {
    print("Initializing PIT at ");
-   display_printHex(frequency);
+   display_printDec(frequency);
    print("Hz.\n");
    // Firstly, register our timer callback.
    idt_registerHandler(IRQ0, &timer_callback);
