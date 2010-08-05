@@ -1,6 +1,6 @@
 # kernel binary
-kernel:  init/loader-asm.o interrupts/idt-asm.o memory/gdt-asm.o common/generic.o devices/cpu/generic.o devices/display/generic.o devices/keyboard/generic.o devices/pit/generic.o init/main.o interrupts/idt.o interrupts/irq.o interrupts/isr.o memory/gdt.o
-	ld -T linker.ld -o kernel.bin $^
+kernel.bin:  init/loader-asm.o interrupts/idt-asm.o memory/gdt-asm.o common/generic.o devices/cpu/generic.o devices/display/generic.o devices/keyboard/generic.o devices/pit/generic.o init/main.o interrupts/idt.o interrupts/irq.o interrupts/isr.o memory/gdt.o
+	ld -T linker.ld -nostdlib -o kernel.bin $^
 
 # dependencies
 common/generic.h:
@@ -20,7 +20,7 @@ devices/pit/generic.c: devices/pit/interface.h interrupts/idt.h interrupts/irq.h
 init/main.c: common/generic.h devices/display/interface.h devices/cpu/interface.h devices/keyboard/interface.h memory/gdt.h interrupts/idt.h interrupts/irq.h devices/pit/interface.h
 interrupts/idt.c: interrupts/idt.h devices/display/interface.h
 interrupts/irq.c: interrupts/irq.h devices/display/interface.h
-interrupts/isr.c: interrupts/isr.h
+interrupts/isr.c: interrupts/isr.h devices/display/interface.h
 memory/gdt.c: memory/gdt.h
 
 # clean
@@ -31,7 +31,7 @@ clean:
 
 # how to compile .c to .o
 %.o: %.c
-	gcc -Wall -I . -nostartfiles -nodefaultlibs -nostdlib -fno-stack-protector -o $@ -c $<
+	gcc -Wall -I . -ffreestanding -fno-stack-protector -o $@ -c $<
 
 # how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
 %-asm.o: %.asm
@@ -41,7 +41,7 @@ clean:
 run:
 	qemu -kernel kernel.bin
 
-test: kernel run
+test: kernel.bin run
 
 makefile:
 	tools/makefile.py
