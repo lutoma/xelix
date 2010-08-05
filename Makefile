@@ -1,5 +1,5 @@
 # kernel binary
-kernel: init/loader.o memory/gdta.o interrupts/idta.o  common/generic.o devices/cpu/generic.o devices/display/generic.o devices/keyboard/generic.o devices/pit/generic.o init/main.o interrupts/idt.o interrupts/irq.o interrupts/isr.o memory/gdt.o
+kernel:  init/loader-asm.o interrupts/idt-asm.o memory/gdt-asm.o common/generic.o devices/cpu/generic.o devices/display/generic.o devices/keyboard/generic.o devices/pit/generic.o init/main.o interrupts/idt.o interrupts/irq.o interrupts/isr.o memory/gdt.o
 	ld -T linker.ld -o kernel.bin $^
 
 # dependencies
@@ -25,20 +25,18 @@ memory/gdt.c: memory/gdt.h
 
 # clean
 clean:
-	rm -rf kernel.bin init/loader.o common/generic.o devices/cpu/generic.o devices/display/generic.o devices/keyboard/generic.o devices/pit/generic.o init/main.o interrupts/idt.o interrupts/irq.o interrupts/isr.o memory/gdt.o
+	rm -rf kernel.bin init/loader-asm.o interrupts/idt-asm.o memory/gdt-asm.o common/generic.o devices/cpu/generic.o devices/display/generic.o devices/keyboard/generic.o devices/pit/generic.o init/main.o interrupts/idt.o interrupts/irq.o interrupts/isr.o memory/gdt.o
+
 
 
 # how to compile .c to .o
-.c.o:
+%.o: %.c
 	gcc -Wall -I . -nostartfiles -nodefaultlibs -nostdlib -fno-stack-protector -o $@ -c $<
 
+# how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
+%-asm.o: %.asm
+	nasm -f elf -o $@ $<
 
-init/loader.o: init/loader.asm
-	nasm -f elf -o init/loader.o init/loader.asm
-memory/gdta.o: memory/gdt.asm
-	nasm -f elf -o memory/gdta.o memory/gdt.asm
-interrupts/idta.o: interrupts/idt.asm
-	nasm -f elf -o interrupts/idta.o interrupts/idt.asm
 
 run:
 	qemu -kernel kernel.bin

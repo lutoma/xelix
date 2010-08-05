@@ -562,11 +562,6 @@ void handleIrq(registers_t regs)
 		code2 = inb(0x60);
 	}
 	
-	// tell keyboard we received the scancode
-	uint8 i = inb(0x61);
-	outb(0x61, i|0x80);
-	outb(0x61, i);
-	
 	handleScancode(code, code2);
 	
 }
