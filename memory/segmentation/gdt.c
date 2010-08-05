@@ -1,4 +1,4 @@
-#include <memory/gdt.h>
+#include <memory/segmentation/gdt.h>
 
 // TYPES
 

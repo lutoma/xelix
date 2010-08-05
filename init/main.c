@@ -2,7 +2,7 @@
 #include <devices/display/interface.h>
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
-#include <memory/gdt.h>
+#include <memory/segmentation/gdt.h>
 #include <interrupts/idt.h>
 #include <interrupts/irq.h>
 #include <devices/pit/interface.h>
