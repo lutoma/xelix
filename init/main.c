@@ -34,7 +34,6 @@ void kmain()
 	print("Initialized interruptor descriptor table.\n");
 
 	print("Ohai! Welcome to Decore.");
-	print("0test0a0aäoöuü");
 
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");

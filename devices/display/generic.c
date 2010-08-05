@@ -20,7 +20,7 @@ void display_init()
 	pos = videoMemory;
 	display_clear();
 	
-	
+	/*
 	// CHANGE FONT (http://www.cs.usfca.edu/~cruse/cs686f03/newzero.cpp)
 	#define GRAF_PORT 0x3CE		// for i/o to the Graphics Controller
 	#define TSEQ_PORT 0x3C4		// for i/o to the VGA Timer-Sequencer
@@ -39,12 +39,12 @@ unsigned char newglyph[ 16 ] = 	{
 				0x00,	// 00000000
 				0x7C,	// 01111100
 				0x82,	// 10000010
-				0xff,	// 10000010
-				0xff,	// 10000010
-				0xff,	// 10000010
-				0xff,	// 10000010
-				0xff,	// 10000010
-				0xff,	// 10000010
+				0x82,	// 10000010
+				0x82,	// 10000010
+				0x82,   // 10000010
+				0x82,	// 10000010
+				0x82,	// 10000010
+				0x82,	// 10000010
 				0x82,	// 10000010
 				0x7C,	// 01111100
 				0x00,	// 00000000
@@ -68,7 +68,7 @@ unsigned char newglyph[ 16 ] = 	{
 	outw( 0x0004, GRAF_PORT );	// select map 0 for reads
 	outw( 0x1005, GRAF_PORT );	// enable odd-even addressing
 	outw( 0x0E06, GRAF_PORT );	// map starts at 0xB800:0000
-	
+	*/
 	
 	
 }
