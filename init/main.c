@@ -9,6 +9,7 @@
 #include <memory/interface.h>
 
 void checkIntLenghts();
+void handleInput(char* input);
 
 void checkIntLenghts()
 {
@@ -23,6 +24,11 @@ void checkIntLenghts()
 	log("Checking length of uint32... ");
 	if(sizeof(uint32) == 4) log("Right\n");
 	else panic("Got wrong lenght for uint32");
+}
+
+void handleInput(char* input)
+{
+		print(input);
 }
 
 void kmain()
@@ -53,11 +59,11 @@ void kmain()
 	memory_init();
 	log("Initialized memory.\n");
 	
-	uint32 *ptr = (uint32*)0xA0000000;
-	uint32 do_page_fault = *ptr;
+	//uint32 *ptr = (uint32*)0xA0000000;
+	//uint32 do_page_fault = *ptr;
 
-	
-	log("\nDecore is up.\n");
+	keyboard_takeFocus(&handleInput);
+	log("Decore is up.\n");
 	
 	while(1)
 	{
