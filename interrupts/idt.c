@@ -79,7 +79,7 @@ idt_ptr_t   idt_ptr;
 extern void idt_flush(uint32);
 static void setGate(uint8,uint32,uint16,uint8);
 
-
+isr_t interrupt_handlers[256];
 
 void idt_init()
 {
@@ -175,10 +175,11 @@ void isr_handler(registers_t regs)
    print("\n");
 
 }
-isr_t interrupt_handlers[256];
+
 // This gets called from our ASM interrupt handler stub.
 void irq_handler(registers_t regs)
 {
+   //print("Received IRQ.\n");
    // Send an EOI (end of interrupt) signal to the PICs.
    // If this interrupt involved the slave.
    if (regs.int_no >= 40)
@@ -194,11 +195,15 @@ void irq_handler(registers_t regs)
        isr_t handler = interrupt_handlers[regs.int_no];
        handler(regs);
    }
-   print("got irq!");
+   
 }
-isr_t interrupt_handlers[256];
 
 void idt_registerHandler(uint8 n, isr_t handler)
 {
+  print("Registered IRQ handler for ");
+  display_printDec(n);
+  print("[");
+  //display_printDec(handler.ds);
+  print("].\n");
   interrupt_handlers[n] = handler;
 }
