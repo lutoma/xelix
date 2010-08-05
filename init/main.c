@@ -34,10 +34,10 @@ void kmain()
 	idt_init();
 	print("Initialized interruptor descriptor table.\n");
 	
-	keyboard_init();
-	print("Initialized Keyboard.\n");
-
-	print("Ohai! Welcome to Decore.\n");
+	//keyboard_init();
+	//print("Initialized Keyboard.\n");
+	
+	print("Hello! Welcome to Decore.\n");
 
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");
