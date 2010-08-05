@@ -3,14 +3,11 @@ Compile
 * `make makefile` (Yes, seriously)
 * `make clean`
 
-Run
-===
-
-Using Qemu
------------
+Run (Qemu)
+----------
 * `make run`
 
-Using GRUB
+Run (GRUB)
 ----------
 * Copy kernel.bin to your boot partition
 * Add Decore to your operating systems ;)
