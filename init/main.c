@@ -26,7 +26,16 @@ void checkIntLenghts()
 
 static void kbd_callback(registers_t regs)
 {
-	print("Key pressed!\n");
+	register int i;
+	int scan;
+
+	// tell keyboard we received the scancode
+	scan = inb(0x60);
+	i = inb(0x61);
+	outb(0x61, i|0x80);
+	outb(0x61, i);
+	
+	display_printHex(scan);
 }
 
 void kmain()
@@ -50,18 +59,21 @@ void kmain()
 	print("Initialized global descriptor table.\n");
 	idt_init();
 	print("Initialized interruptor descriptor table.\n");
-	
 	pit_init(50); //50Hz
 	print("Initialized PIT\n");
-
-
-	keyboard_init();
-	print("Initialized Keyboard.\n");
+	
+	//keyboard_init();
+	//print("Initialized Keyboard.\n");
+	 
+	 //outb(0x21,0xfd);
+	 //outb(0xa1,0xff);
+   //asm("sti");
 
 	idt_registerHandler(IRQ1, &kbd_callback);
 
 	
-	print("\nOhai! Welcome to Decore.\n\n");
-	asm volatile ("int $0x21");
+	//print("\nOhai! Welcome to Decore.\n\n");
+	//asm volatile ("int $0x21");
+	asm volatile ("int $0x3");
 	//for(;;) asm volatile ("int $0x20");
 }

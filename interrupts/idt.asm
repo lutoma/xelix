@@ -65,7 +65,6 @@ ISR_NOERRCODE 28
 ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
-ISR_NOERRCODE 32
 
 IRQ   0,    32
 IRQ   1,    33
@@ -77,12 +76,13 @@ IRQ   6,    38
 IRQ   7,    39
 IRQ   8,    40
 IRQ   9,    41
-IRQ   10,   42
-IRQ   11,   43
-IRQ   12,   44
-IRQ   13,   45
-IRQ   14,   46
-IRQ   15,   47
+IRQ  10,    42
+IRQ  11,    43
+IRQ  12,    44
+IRQ  13,    45
+IRQ  14,    46
+IRQ  15,    47
+
 
 ; In isr.c
 [EXTERN isr_handler]

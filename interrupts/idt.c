@@ -83,8 +83,11 @@ isr_t interrupt_handlers[256];
 
 void idt_init()
 {
+   asm("sti"); // Enable interrupts. Usally a good idea if you want to use them...
    idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
    idt_ptr.base  = (uint32)&idt_entries;
+
+   memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
 
     // Remap the irq table.
     outb(0x20, 0x11);
@@ -98,8 +101,6 @@ void idt_init()
     outb(0x21, 0x0);
     outb(0xA1, 0x0);
     print("Remapped IRQ table to ISRs 32-47.\n");
-
-   memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
 
    setGate( 0, (uint32)isr0  , 0x08, 0x8E);
    setGate( 1, (uint32)isr1  , 0x08, 0x8E);
@@ -187,9 +188,11 @@ void irq_handler(registers_t regs)
        // Send reset signal to slave.
        outb(0xA0, 0x20);
    }
+
+   //print("Sent EOI\n");
    // Send reset signal to master. (As well as slave, if necessary).
    outb(0x20, 0x20);
-
+  
    if (interrupt_handlers[regs.int_no] != 0)
    {
        isr_t handler = interrupt_handlers[regs.int_no];

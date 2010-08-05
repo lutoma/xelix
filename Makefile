@@ -26,7 +26,7 @@ clean:
 
 # how to compile .c to .o
 .c.o:
-	gcc -Wall -I . -nostartfiles -nodefaultlibs -nostdlib -o $@ -c $<
+	gcc -Wall -I . -nostartfiles -nodefaultlibs -nostdlib -fno-stack-protector -o $@ -c $<
 
 
 init/loader.o: init/loader.asm
