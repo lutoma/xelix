@@ -108,6 +108,28 @@ void display_setColor(uint8 newcolor)
 	color = newcolor;
 }
 
+void display_printDec(uint32 num)
+{
+	char s[11]; // maximal log(2^(4*8)) (long int sind 4 bytes) + 1 ('\0') = 11
+	
+	char tmp[9];
+	int i=0;
+	while(num != 0)
+	{
+		unsigned char c = num % 10;
+		num = (num - c)/10;
+		c+='0';
+		tmp[i++] = c;
+	}
+	s[i] = '\0';
+	int j;
+	for(j=0; j < i; j++)
+	{
+		s[j] = tmp[i-1-j];
+	}
+	display_print(s);
+}
+
 void display_printHex(uint32 num)
 {
 	char s[11]; // maximal 2 (0x) + 2*4 (long int sind 4 bytes) + 1 ('\0')
