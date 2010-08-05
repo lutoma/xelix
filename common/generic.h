@@ -8,6 +8,8 @@ typedef signed short sint16;
 typedef unsigned char uint8;
 typedef signed char sint8;
 
+void memset(void* ptr, uint8 fill, int size);
+
 // Port i.o. so that we don't always have to use assembler
 void outb(uint16 port, uint8 value);
 void outw(uint16 port, uint16 value);

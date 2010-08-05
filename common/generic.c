@@ -1,6 +1,15 @@
 #include <common/generic.h>
 #include <devices/display/interface.h>
 
+
+void memset(void* ptr, uint8 fill, int size)
+{
+	uint8* p = (uint8*) ptr;
+	uint8* max = p+size;
+	for(; p < max; p++)
+		*p = fill;
+}
+
 // Write a byte out to the specified port.
 void outb(uint16 port, uint8 value)
 {
