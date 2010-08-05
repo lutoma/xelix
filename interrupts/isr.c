@@ -1,4 +1,5 @@
 #include <interrupts/isr.h>
+#include <devices/display/interface.h>
 
 
 // This gets called from our ASM interrupt handler stub.

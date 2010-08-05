@@ -8,7 +8,6 @@
 #include <devices/pit/interface.h>
 
 void checkIntLenghts();
-static void kbd_callback(registers_t regs);
 
 void checkIntLenghts()
 {
