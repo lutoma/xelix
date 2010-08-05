@@ -4,7 +4,7 @@
 #include <devices/keyboard/interface.h>
 #include <memory/gdt.h>
 #include <interrupts/idt.h>
-#include <interrupts/pit.h>
+#include <devices/pit/interface.h>
 
 void checkIntLenghts();
 static void kbd_callback(registers_t regs);
