@@ -525,53 +525,65 @@ char keymapshift[256] = {
 
 // current modifier keys
 struct {
-	int shift:1;
-	int control:1;
+	int shiftl:1;
+	int shiftr:1;
+	int controll:1;
+	int controlr:1;
 	int alt:1;
 	int super:1;
 } modifiers;
 
-void handleScancode(uint8 code);
+void handleScancode(uint8 code, uint8 code2);
 void printModifiers();
 
 // init after interrupts have been initialised
 void keyboard_init()
 {
-	modifiers.shift = 0;
-	modifiers.control = 0;
+	modifiers.shiftl = 0;
+	modifiers.shiftr = 0;
+	modifiers.controll = 0;
+	modifiers.controlr = 0;
 	modifiers.alt = 0;
 	modifiers.super = 0;
 	
 	// TODO: replace by irq handler
-	uint8 oldin = 0;
+	uint8 old = 0;
 	while(1)
 	{
-		uint8 in = inb(0x60);
-		if(in != oldin)
+		uint8 code = inb(0x60);
+		if(code != old)
 		{
-			oldin = in;
-			handleScancode(in);
+			old = code;
+			uint8 code2 = 0;
+			if (code == 0xe0) // escape sequence
+			{
+				code2 = inb(0x60);
+				old = code2;
+			}
+			handleScancode(code, code2);
 		}
 	}
 		
 }
 
-void handleScancode(uint8 code)
-{
-	uint8 code2 = 0;
-	if (code == 0xe0) // escape sequence
-		code2 = inb(0x60);
-	
-	
-	
+void handleScancode(uint8 code, uint8 code2)
+{	
 	if( code==0x2a) // shift press
-		modifiers.shift=1;
+		modifiers.shiftl=1;
 	if( code==0xaa) // shift release
-		modifiers.shift=0;
+		modifiers.shiftl=0;
+	if( code==0x36) // shift press
+		modifiers.shiftr=1;
+	if( code==0x36+0x80) // shift release
+		modifiers.shiftr=0;
 	if( code==0x1d) // ctrl press
-		modifiers.control=1;
+		modifiers.controll=1;
 	if( code==0x9d) // control release
-		modifiers.control=0;
+		modifiers.controll=0;
+	if( code2==0x1d) // ctrl press
+		modifiers.controlr=1;
+	if( code2==0x9d) // control release
+		modifiers.controlr=0;
 	if( code==0x38) // alt press
 		modifiers.alt = 1;
 	if( code==0xb8) // alt release
@@ -584,7 +596,7 @@ void handleScancode(uint8 code)
 	if( keymap[code] != 0)
 	{
 		char c = keymap[code];
-		if( modifiers.shift )
+		if( modifiers.shiftl | modifiers.shiftr )
 			c = keymapshift[code];
 		char s[2];
 		s[0] = c;
@@ -595,6 +607,11 @@ void handleScancode(uint8 code)
 	{
 		print(" ");
 		display_printHex(code);
+		if (code2 != 0)
+		{
+			print("-");
+			display_printHex(code2);
+		}
 	}
 	
 	if( code==0x32)
@@ -605,10 +622,14 @@ void handleScancode(uint8 code)
 void printModifiers()
 {
 	print(" Modifiers: ");
-	if(modifiers.shift)
-		print("shift ");
-	if(modifiers.control)
-		print("control ");
+	if(modifiers.shiftl)
+		print("shiftl ");
+	if(modifiers.shiftr)
+		print("shiftr ");
+	if(modifiers.controll)
+		print("controll ");
+	if(modifiers.controlr)
+		print("controlr ");
 	if(modifiers.alt)
 		print("alt ");
 	if(modifiers.super)
