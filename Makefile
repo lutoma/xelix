@@ -1,2 +1,2 @@
 makefile:
-        tools/makefile.py
+	tools/makefile.py
