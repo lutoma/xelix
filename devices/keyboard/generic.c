@@ -603,7 +603,7 @@ void handleScancode(uint8 code, uint8 code2)
 		s[1] = 0;
 		print(s);
 	}
-	else if( keymap[code + 0x80] == 0 )
+	/*else if( keymap[code + 0x80] == 0 )
 	{
 		print(" ");
 		display_printHex(code);
@@ -612,11 +612,11 @@ void handleScancode(uint8 code, uint8 code2)
 			print("-");
 			display_printHex(code2);
 		}
-	}
+	}*/
 	
-	if( code==0x32)
+	/*if( code==0x32)
 		printModifiers();
-
+	*/
 }
 
 void printModifiers()
