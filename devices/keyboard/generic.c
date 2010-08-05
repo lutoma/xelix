@@ -1,6 +1,6 @@
 #include <devices/keyboard/interface.h>
 #include <devices/display/interface.h>
-
+#include <interrupts/irq.h>
 
 
 char keymap[256] = {
@@ -267,7 +267,7 @@ char keymapshift[256] = {
  0 ,//0x1
 '!',//0x2
 '"',//0x3
-'§',//0x4
+ 0 ,//0x4
 '$',//0x5
 '%',//0x6
 '&',//0x7
@@ -533,6 +533,7 @@ struct {
 	int super:1;
 } modifiers;
 
+void handleIrq(registers_t regs);
 void handleScancode(uint8 code, uint8 code2);
 void printModifiers();
 
@@ -547,23 +548,27 @@ void keyboard_init()
 	modifiers.super = 0;
 	
 	// TODO: replace by irq handler
-	uint8 old = 0;
-	while(1)
-	{
-		uint8 code = inb(0x60);
-		if(code != old)
-		{
-			old = code;
-			uint8 code2 = 0;
-			if (code == 0xe0) // escape sequence
-			{
-				code2 = inb(0x60);
-				old = code2;
-			}
-			handleScancode(code, code2);
-		}
-	}
+	irq_registerHandler(IRQ1, &handleIrq);
 		
+}
+
+void handleIrq(registers_t regs)
+{
+	// read scancodes
+	uint8 code = inb(0x60);
+	uint8 code2 = 0;
+	if (code == 0xe0) // escape sequence
+	{
+		code2 = inb(0x60);
+	}
+	
+	// tell keyboard we received the scancode
+	uint8 i = inb(0x61);
+	outb(0x61, i|0x80);
+	outb(0x61, i);
+	
+	handleScancode(code, code2);
+	
 }
 
 void handleScancode(uint8 code, uint8 code2)

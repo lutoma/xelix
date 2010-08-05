@@ -15,7 +15,7 @@ memory/gdt.h: common/generic.h
 common/generic.c: common/generic.h devices/display/interface.h
 devices/cpu/generic.c: devices/cpu/interface.h
 devices/display/generic.c: devices/display/interface.h
-devices/keyboard/generic.c: devices/keyboard/interface.h devices/display/interface.h
+devices/keyboard/generic.c: devices/keyboard/interface.h devices/display/interface.h interrupts/irq.h
 devices/pit/generic.c: devices/pit/interface.h interrupts/idt.h interrupts/irq.h devices/display/interface.h
 init/main.c: common/generic.h devices/display/interface.h devices/cpu/interface.h devices/keyboard/interface.h memory/gdt.h interrupts/idt.h interrupts/irq.h devices/pit/interface.h
 interrupts/idt.c: interrupts/idt.h devices/display/interface.h

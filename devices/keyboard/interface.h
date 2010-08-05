@@ -3,7 +3,7 @@
 
 #include <common/generic.h>
 
-void keyboard_init();
+void keyboard_init(); // irqs have to be set up first!
 
 
 

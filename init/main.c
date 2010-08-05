@@ -25,20 +25,6 @@ void checkIntLenghts()
 	else panic("Got wrong lenght for uint32");
 }
 
-static void kbd_callback(registers_t regs)
-{
-	register int i;
-	int scan;
-
-	// tell keyboard we received the scancode
-	scan = inb(0x60);
-	i = inb(0x61);
-	outb(0x61, i|0x80);
-	outb(0x61, i);
-	
-	display_printHex(scan);
-}
-
 void kmain()
 {
 	
@@ -63,18 +49,16 @@ void kmain()
 	pit_init(50); //50Hz
 	print("Initialized PIT\n");
 	
-	//keyboard_init();
-	//print("Initialized Keyboard.\n");
-	 
-	 //outb(0x21,0xfd);
-	 //outb(0xa1,0xff);
-	//asm("sti");
-
-	irq_registerHandler(IRQ1, &kbd_callback);
-
+	keyboard_init();
+	print("Initialized Keyboard.\n");
 	
-	//print("\nOhai! Welcome to Decore.\n\n");
-	//asm volatile ("int $0x21");
-	asm volatile ("int $0x3");
-	//for(;;) asm volatile ("int $0x20");
+	
+	
+	
+	print("\nDecore is up.\n\n");
+	
+	while(1)
+	{
+		
+	}
 }
