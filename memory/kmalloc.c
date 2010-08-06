@@ -2,6 +2,10 @@
 
 #include <devices/display/interface.h>
 
+
+// TODO: improve kmalloc  (heap?)
+
+
 // simple linear memory allocation without the possibility of free()ing
 
 // is defined in the linker script: where the kernel binary stuff ends in memory.
@@ -23,7 +27,7 @@ void* kmalloc(uint32 numbytes)
 }
 
 
-// currently, returning physical address only works correctly when paging is disabled.
+// FIXME: returning physical address only works correctly when paging is disabled.
 void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 {
 	// align to 4 kb (= 0x1000 bytes)
