@@ -110,6 +110,11 @@ void display_setColor(uint8 newcolor)
 
 void display_printDec(uint32 num)
 {
+	if(num == 0)
+	{
+		display_print("0");
+		return;
+	}
 	char s[11]; // maximal log(2^(4*8)) (long int sind 4 bytes) + 1 ('\0') = 11
 	
 	char tmp[9];
@@ -132,6 +137,11 @@ void display_printDec(uint32 num)
 
 void display_printHex(uint32 num)
 {
+	if(num == 0)
+	{
+		display_print("0x0");
+		return;
+	}
 	char s[11]; // maximal 2 (0x) + 2*4 (long int sind 4 bytes) + 1 ('\0')
 	s[0] = '0';
 	s[1] = 'x';
