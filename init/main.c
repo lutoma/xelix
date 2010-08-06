@@ -8,6 +8,8 @@
 #include <devices/pit/interface.h>
 #include <memory/kmalloc.h>
 
+#include <common/bitmap.h>
+
 void checkIntLenghts();
 
 void checkIntLenghts()
@@ -54,15 +56,27 @@ void kmain()
 	log("\nDecore is up.\n");
 	
 	
-	// kmalloc test
-	int* a = kmalloc(sizeof(int));
+	// test bitmap
 	
-	*a = 1234;
-	kmalloc(13);
+	bitmap_t* b = bitmap_init(5);
+	bitmap_clearall(b);
 	
-	display_printDec(*a);
+	display_printDec(bitmap_get(b,3));
 	
-	uint16* align = kmalloc_aligned(sizeof(uint16), 0);
+	bitmap_set(b, 3);
+	
+	
+	display_printDec(bitmap_get(b, 2));
+	display_printDec(bitmap_get(b, 3));
+	bitmap_set(b, 4);
+	display_printDec(bitmap_get(b, 4));
+	bitmap_clear(b, 3);
+	display_printDec(bitmap_get(b, 3));
+	
+	// should print 001100
+	
+	
+	
 	
 	
 	while(1)
