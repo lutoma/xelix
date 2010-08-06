@@ -1,4 +1,4 @@
-#include <memory/gdt.h>
+#include <memory/segmentation/gdt.h>
 
 // TYPES
 
@@ -21,7 +21,7 @@ typedef struct
    uint16 limit;               // The upper 16 bits of all selector limits.
    uint32 base;                // The address of the first gdt_entry_t struct.
 } __attribute__((packed))
-ptr;
+gdt_ptr_t;
 
 
 // FUNCTIONS
@@ -34,7 +34,7 @@ extern void gdt_flush(uint32);
 static void setGate(sint32,uint32,uint32,uint8,uint8);
 
 entry gdt_entries[5];
-ptr   gdt_ptr;
+gdt_ptr_t   gdt_ptr;
 
 
 // Initialisation routine - zeroes all the interrupt service routines,
