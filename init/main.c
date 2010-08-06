@@ -61,7 +61,7 @@ void kmain()
 
 	
 	log("Decore is up.\n");
-	debugconsole_init(); //debugconsole got bugs.
+	debugconsole_init();
 
 	// test bitmap
 	/*

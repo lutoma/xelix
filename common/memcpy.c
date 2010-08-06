@@ -1,6 +1,7 @@
 //Fast as hell implementation of memcpy ;)
-
 #include <common/memcpy.h>
+void dps_minimove_forward(char *dst, const char *src, size_t t);
+void dps_minimove_backward(char *dst, char *src, size_t t);
 
 void dps_minimove_forward(char *dst, const char *src, size_t t) {
 	if (t) { dst[0] = src[0];
