@@ -6,6 +6,7 @@
 #include <interrupts/idt.h>
 #include <interrupts/irq.h>
 #include <devices/pit/interface.h>
+#include <memory/kmalloc.h>
 
 void checkIntLenghts();
 
@@ -51,6 +52,18 @@ void kmain()
 	log("Initialized keyboard\n");
 	
 	log("\nDecore is up.\n");
+	
+	
+	// kmalloc test
+	int* a = kmalloc(sizeof(int));
+	
+	*a = 1234;
+	kmalloc(13);
+	
+	display_printDec(*a);
+	
+	uint16* align = kmalloc_aligned(sizeof(uint16), 0);
+	
 	
 	while(1)
 	{
