@@ -24,4 +24,5 @@ void common_setLogLevel(int level);
 char *strcat(char *dest, const char *src);
 char *strcpy(char *dest, const char *src);
 int strlen(const char * str);
+void assert(int r);
 #endif

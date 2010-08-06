@@ -60,7 +60,7 @@ int strlen(const char * str)
 char* strcpy(char *dest, const char *src)
 {
    char *save = dest;
-   while(*dest++ = *src++);
+   while((*dest++ = *src++));
    return save;
 }
 
@@ -80,10 +80,13 @@ char* strcat(char *dest, const char *src)
 
 void panic(char* reason)
 {
+	asm volatile("cli"); // Disable interrupts.
 	log("\n\nFATAL ERROR: ");
 	log(reason);
-	for(;;) //Sleep forever
-	{
-	  asm("cli;hlt;");
-	}
+	for(;;) asm("cli;hlt;");//Sleep forever
+}
+
+void assert(int r)
+{
+  if(!r) panic("Assertion failed");
 }
