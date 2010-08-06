@@ -6,7 +6,7 @@
 #include <interrupts/idt.h>
 #include <interrupts/irq.h>
 #include <devices/pit/interface.h>
-#include <memory/interface.h>
+//#include <memory/interface.h>
 #include <init/debugconsole.h>
 
 void checkIntLenghts();
@@ -14,16 +14,16 @@ void checkIntLenghts();
 void checkIntLenghts()
 {
 	log("Checking length of uint8... ");
-	if(sizeof(uint8) == 1) log("Right\n");
-	else panic("Got wrong lenght for uint8");
+	assert(sizeof(uint8) == 1);
+	log("Right\n");
 	
 	log("Checking length of uint16... ");
-	if(sizeof(uint16) == 2) log("Right\n");
-	else panic("Got wrong lenght for uint16");
+	assert(sizeof(uint16) == 2);
+	log("Right\n");
 	
 	log("Checking length of uint32... ");
-	if(sizeof(uint32) == 4) log("Right\n");
-	else panic("Got wrong lenght for uint32");
+	assert(sizeof(uint32) == 4);
+	log("Right\n");
 }
 
 void kmain()
@@ -51,17 +51,16 @@ void kmain()
 	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();
 	log("Initialized keyboard\n");
-	memory_init();
-	log("Initialized memory.\n");
+	//memory_init();
+	//log("Initialized memory.\n");
 	
 	//uint32 *ptr = (uint32*)0xA0000000;
 	//uint32 do_page_fault = *ptr;
 
 	
 	log("Decore is up.\n");
+	//debugconsole_init(); //debugconsole got bugs.
 
-	debugconsole_init();
-	
 	while(1)
 	{
 		
