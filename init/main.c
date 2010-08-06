@@ -30,7 +30,7 @@ void checkIntLenghts()
 
 void kmain()
 {
-	common_setLogLevel(1); //Enable logs
+	log_init();
 	display_init();
 	
 	display_setColor(0x0f);
@@ -61,10 +61,10 @@ void kmain()
 
 	
 	log("Decore is up.\n");
-	//debugconsole_init(); //debugconsole got bugs.
+	debugconsole_init(); //debugconsole got bugs.
 
 	// test bitmap
-	
+	/*
 	bitmap_t* b = bitmap_init(5);
 	bitmap_clearall(b);
 	
@@ -79,13 +79,8 @@ void kmain()
 	display_printDec(bitmap_get(b, 4));
 	bitmap_clear(b, 3);
 	display_printDec(bitmap_get(b, 3));
-	
+	*/
 	// should print 001100
-	
-	
-	
-	
-	
 	while(1)
 	{
 		

@@ -1,9 +1,10 @@
 #include <common/generic.h>
+#include <common/memcpy.h>
 #include <devices/display/interface.h>
 
 int logsEnabled;
 
-void memset(void* ptr, uint8 fill, int size)
+void memset(void* ptr, uint8 fill, size_t size)
 {
 	uint8* p = (uint8*) ptr;
 	uint8* max = p+size;
@@ -37,16 +38,30 @@ void print(char* s)
   display_print(s);
 }
 
+void clear()
+{
+  display_clear();
+}
+
 //Todo: Write to file
 void log(char* s)
 {
+  kernellog = strcat(kernellog, s);
   if(logsEnabled) print(s);
   //if(addn) display_print("\n");
+}
+
+void log_init()
+{
+  kernellog = (char**)kmalloc(4000);
+  common_setLogLevel(1); //Enable logs
 }
 
 //Currently only 0=Off and 1=On
 void common_setLogLevel(int level)
 {
+  if(level) log("Enabled printing of log messages.\n");
+  else log("Warning: disabled printing of log messages.\n");
   logsEnabled = level;
 }
 
@@ -89,4 +104,14 @@ void panic(char* reason)
 void assert(int r)
 {
   if(!r) panic("Assertion failed");
+}
+
+char* substr(const char *src, size_t start, size_t len)
+{
+  char *dest = kmalloc(len+1);
+  if (dest) {
+    memcpy(dest, src+start, len);
+    dest[len] = '\0';
+  }
+  return dest;
 }
