@@ -47,7 +47,7 @@ char* monthToString(int month, int shortVersion)
   longNames[11] = "December";
   
   --month;
-  monthString = longNames[month -1];
+  monthString = longNames[month];
   if(shortVersion) monthString = substr(monthString, 0, 3);
   return monthString;
 }
