@@ -5,9 +5,10 @@
 
 uint32 tick = 0;
 
-static void timer_callback(registers_t regs)
+static void timerCallback(registers_t regs)
 {
    tick++;
+   //display_printDec(tick % 50);
    //log("Tick: ");
    //display_logDec(tick);
    //log("\n");
@@ -19,7 +20,7 @@ void pit_init(uint32 frequency)
    display_printDec(frequency);
    log("Hz.\n");
    // Firstly, register our timer callback.
-   irq_registerHandler(IRQ0, &timer_callback);
+   irq_registerHandler(IRQ0, &timerCallback);
 
    // The value we send to the PIT is the value to divide it's input clock
    // (1193180 Hz) by, to get our required frequency. Important to note is
@@ -36,4 +37,10 @@ void pit_init(uint32 frequency)
    // Send the frequency divisor.
    outb(0x40, l);
    outb(0x40, h);
+}
+
+
+uint32 pit_getTickNum()
+{
+  return tick;
 }
