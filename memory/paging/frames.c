@@ -16,8 +16,8 @@ uint32 numFrames;
 
 void frames_init()
 {
-	numFrames = 0x20000 / 0x1000;//0xFFFFFFFF / 0x1000; // memory bytes / frame size (4kb=0x1000byte)
-	// assume 0x2000 bytes = 128 Megabytes of memory for the moment.
+	numFrames = 0x8000000 / 0x1000; // memory bytes / frame size (4kb=0x1000byte)
+	// assume 0x8000000 bytes = 128 Megabytes of memory for the moment.
 	usedFrames = bitmap_init(numFrames);
 
 	// set all frames as free
@@ -32,9 +32,9 @@ uint32  frames_allocateFrame()
 	{
 		if(bitmap_get(usedFrames, frameNum) == 0)
 		{
-			print("Allocating frame number ");
+			/*print("Allocating frame number ");
 			display_printDec(frameNum);
-			print("\n");
+			print("\n");*/
 			bitmap_set(usedFrames, frameNum);
 			return frameNum;
 		}

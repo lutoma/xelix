@@ -24,4 +24,7 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress);
 // dependencies: none
 
 
+extern uint32 kernelMaxMemory; // not to be used outside of memory subsystem!
+
+
 #endif

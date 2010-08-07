@@ -14,6 +14,8 @@ extern uint32 end;
 // It advances an always points to the beginning of the free memory space.
 uint32 memoryPosition = (uint32)&end; // maybe put this in an init function?
 
+uint32 kernelMaxMemory = 0xA00000; // 10 megabytes // allocating memory for the kernel won't go beyond this.
+
 void* kmalloc(uint32 numbytes)
 {
 	void* ptr = (void *) memoryPosition;
@@ -24,6 +26,11 @@ void* kmalloc(uint32 numbytes)
 	display_print(" bytes at ");
 	display_printHex((int)ptr);
 	display_print(".\n");
+	
+	if(memoryPosition >= kernelMaxMemory)
+	{
+		print("\nKMALLOC: OUT OF KERNEL MEMORY!!\n");
+	}
 	
 	return ptr;
 }
@@ -52,6 +59,11 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 	display_print(" bytes of aligned memory at ");
 	display_printHex((int)ptr);
 	display_print(".\n");
+	
+	if(memoryPosition >= kernelMaxMemory)
+	{
+		print("\nKMALLOC_aligned: OUT OF KERNEL MEMORY!!\n");
+	}
 	
 	return ptr;
 }

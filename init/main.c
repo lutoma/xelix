@@ -59,14 +59,6 @@ void kmain()
 	log("\nDecore is up.\n");
 	
 	
-	// test frames
-	
-	uint32 f = frames_allocateFrame();
-	frames_allocateFrame();
-	frames_allocateFrame();
-	frames_freeFrame(f);
-	frames_allocateFrame();
-	
 	
 	
 	
