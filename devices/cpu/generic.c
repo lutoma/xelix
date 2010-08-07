@@ -29,7 +29,7 @@ int isProtected()
 // Not needed so far, as grub automatically switches to protected mode.
 void setProtected()
 {
-	panic("Can't [yet] switch to protected mode. Use a bootloader which automatically enables protected mode such as GNU GRUB.\n");
+	PANIC("Can't [yet] switch to protected mode. Use a bootloader which automatically enables protected mode such as GNU GRUB.\n");
 	return;
 }
 
