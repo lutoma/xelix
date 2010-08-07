@@ -9,7 +9,7 @@ typedef unsigned char uint8;
 typedef signed char sint8;
 
 // fills size bytes of memory starting at ptr with the byte fill.
-void memset(void* ptr, uint8 fill, int size);
+void memset(void* ptr, uint8 fill, uint32 size);
 
 // Port i.o. so that we don't always have to use assembler
 void outb(uint16 port, uint8 value);

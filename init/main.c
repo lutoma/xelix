@@ -8,7 +8,8 @@
 #include <devices/pit/interface.h>
 #include <memory/kmalloc.h>
 
-#include <common/bitmap.h>
+
+#include <memory/paging/frames.h>
 
 void checkIntLenghts();
 
@@ -58,25 +59,13 @@ void kmain()
 	log("\nDecore is up.\n");
 	
 	
-	// test bitmap
+	// test frames
 	
-	bitmap_t* b = bitmap_init(5);
-	bitmap_clearall(b);
-	
-	display_printDec(bitmap_get(b,3));
-	
-	bitmap_set(b, 3);
-	
-	
-	display_printDec(bitmap_get(b, 2));
-	display_printDec(bitmap_get(b, 3));
-	bitmap_set(b, 4);
-	display_printDec(bitmap_get(b, 4));
-	bitmap_clear(b, 3);
-	display_printDec(bitmap_get(b, 3));
-	
-	// should print 00110
-	
+	uint32 f = frames_allocateFrame();
+	frames_allocateFrame();
+	frames_allocateFrame();
+	frames_freeFrame(f);
+	frames_allocateFrame();
 	
 	
 	

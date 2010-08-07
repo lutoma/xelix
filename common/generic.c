@@ -2,7 +2,7 @@
 #include <devices/display/interface.h>
 
 
-void memset(void* ptr, uint8 fill, int size)
+void memset(void* ptr, uint8 fill, uint32 size)
 {
 	uint8* p = (uint8*) ptr;
 	uint8* max = p+size;

@@ -51,4 +51,10 @@ STARTUP SEQUENCE IS SUBJECT TO CHANGE due to our experiences!
 Interface to other kernel systems
 ---------------------------------
 interface.h
-kmalloc.h
+kmalloc.h <-- needs no initialisation to work!
+
+
+TODO
+----
+detect amount of memory and use that information
+
