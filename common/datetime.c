@@ -51,3 +51,19 @@ char* monthToString(int month, int shortVersion)
   if(shortVersion) monthString = substr(monthString, 0, 3);
   return monthString;
 }
+
+void registerTick()
+{
+
+}
+
+void sleep(time_t timeout)
+{
+  timeout = timeout * 50; //PIT is running @ 50Hz
+  int startTick = pit_getTickNum();
+  while(1)
+  {
+    //display_printDec(pit_getTickNum() / 50);
+    if(pit_getTickNum() > startTick + timeout) break;
+  }
+}
