@@ -6,6 +6,12 @@ import re;
 
 makefile = open("Makefile", "w");
 
+# visualisation of includes! (open eg. with kgraphviewer)
+
+graphfile = open("includesgraph.dot", "w");
+graphfile.write("digraph unnamed {\n");
+
+
 cfiles = [];
 hfiles = [];
 asmfiles = []
@@ -43,6 +49,7 @@ for f in hfiles + cfiles:
 		m = re.search("#include <(.+)>", line);
 		if m != None:
 			makefile.write(" " + m.group(1));
+			graphfile.write('"' + f + '" -> "' + m.group(1) + '"\n');
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
@@ -81,8 +88,9 @@ makefile:
 	tools/makefile.py
 """);
 
-
-
-
 makefile.close();
+
+graphfile.write("}\n");
+graphfile.close();
+
 
