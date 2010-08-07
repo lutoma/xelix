@@ -19,7 +19,7 @@ void* kmalloc(uint32 numbytes);
 void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress);
 
 
-// kmalloc does not need an init-function to work
+void kmalloc_init(uint32 start);
 
 // dependencies: none
 

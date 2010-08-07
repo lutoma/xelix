@@ -284,6 +284,7 @@ void acpiPowerOff(void)
   log("Starting power off procedure");
    // SCI_EN is set to 1 if acpi shutdown is possible
    if (SCI_EN == 0)
+      log("ACPI Shutdown is impossible");
       return;
 
    acpiEnable();
