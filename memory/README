@@ -42,7 +42,7 @@ The corresponding memory.c source file takes care of setting up the
 management systems mentioned above.
 Problem: GDT (segmentation) has to be set up before entering protected mode,
 paging etc. needs the protected mode.
-Solution: memory_init_preprotected() memory_init_postprotected();
+Solution: memory_init_preprotected(), memory_init_postprotected();
 In our environment this is a non-problem as grub already set protected mode.
 
 STARTUP SEQUENCE IS SUBJECT TO CHANGE due to our experiences!

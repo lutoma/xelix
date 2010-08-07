@@ -47,9 +47,11 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 	}
 	
 	
-	display_print("Allocated aligned memory at ");
+	display_print("Allocated ");
+	display_printHex(numbytes);
+	display_print(" bytes of aligned memory at ");
 	display_printHex((int)ptr);
-	display_print("\n");
+	display_print(".\n");
 	
 	return ptr;
 }
