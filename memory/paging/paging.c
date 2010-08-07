@@ -82,8 +82,7 @@ void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
 
 void paging_init()
 {
-	print("kernelMaxMemory=");
-	display_printHex(kernelMaxMemory);
+		print("calling\n");
 	// create kernelDirectory
 	uint32 tmpPhys;
 	kernelDirectory = kmalloc_aligned(sizeof(pageDirectory_t), &tmpPhys);
@@ -98,13 +97,31 @@ void paging_init()
 	{
 		createPage(i, KERNEL_MODE, READWRITE);
 	}
+	
+	// TODO: PAGEFAULT-INTERRUPT
+	
+	
+	display_printHex(& (kernelDirectory->directoryEntries) );
+	print(" == ");
+	display_printHex(kernelDirectory->physicalAddress);
+	
+	
+	// set paging directory
+	asm volatile("mov %0, %%cr3":: "r"(kernelDirectory->physicalAddress));
+	// enable paging!
+	uint32 cr0;
+	asm volatile("mov %%cr0, %0": "=r"(cr0));
+	cr0 |= 0x80000000; // Enable paging!
+	//while(1) { }
+	asm volatile("mov %0, %%cr0":: "r"(cr0));
 }
+
 
 void allocatePage(pageTableEntry_t* page)
 {
 	if( page->present )
 	{
-		log("Trying to allocatePage(pageTableEntry_t*) which is already present!\n");
+		//log("Trying to allocatePage(pageTableEntry_t*) which is already present!\n");
 	}
 	page->frame = frames_allocateFrame();
 	page->present = 1;
@@ -128,7 +145,7 @@ void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
 		memset(pageTable, 0, sizeof(pageTable_t));
 		
 		currentPageDirectory->pageTables[pageTableNum] = pageTable;
-		currentPageDirectory->directoryEntries[pageTableNum].pagetable = physAddressOfPageTable % 0x1000;
+		currentPageDirectory->directoryEntries[pageTableNum].pagetable = physAddressOfPageTable  / 0x1000;
 		currentPageDirectory->directoryEntries[pageTableNum].present = 1;
 	}
 	
