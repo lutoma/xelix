@@ -2,7 +2,7 @@
 #include <devices/display/interface.h>
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
-#include <memory/segmentation/gdt.h>
+#include <memory/interface.h>
 #include <interrupts/idt.h>
 #include <interrupts/irq.h>
 #include <devices/pit/interface.h>
@@ -42,12 +42,14 @@ void kmain()
 	
 	log("Initialized Display.\n");
 	checkIntLenghts();
+	memory_init_preprotected();
+	log("Initialized preprotected memory\n");
 	cpu_init();
 	log("Initialized CPU\n");
-	gdt_init();
-	log("Initialized GDT (global descriptor table)\n");
 	idt_init();
 	log("Initialized IDT (interrupt descriptor table)\n");
+	memory_init_postprotected();
+	log("Initialized postprotected memory\n");
 	pit_init(50); //50Hz
 	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();

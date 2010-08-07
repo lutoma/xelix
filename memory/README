@@ -1,7 +1,54 @@
+MEMORY MANAGEMENT IN DECORE
+---------------------------
 
 
-kmalloc.h and kmalloc.c provide memory allocation.
+1. physical memory management
+The physical memory is split into 4kb *frames*. These are managed in
+paging/frames.c and a small interface which is only used by the virtual
+memory code is exposed in paging/frames.h.
+
+2.virtual memory management
+We use paging as our memory abstraction mechanism.
+
+2a. segmentation
+Due to the design of the x86 platform, segmentation has to be used.
+segmentation/gdt.c sets up a minimal global descriptor table which basically
+maps everything transparently so that we don't need to think about segmentation.
+It exposes a small interface containing an init function in segmentation/gdt.h
+As we use paging for abstraction and virtual memory providing, we don't use LDTs.
+
+2b. paging
+Paging is implemented in paging/paging.c. It exposes a minimal interface in
+paging/paging.h which should NOT be used by the rest of the kernel.
+It also handels page-fault interrupts. Swapping or anything else fancy is not
+done, all used pages are held in memory.
+
+3. heap memory management / memory allocation
+
+3a. user-space
+user-space programms have their own heap memory management (malloc etc.) which
+does not interest us, we just provide enough virtual memory, map that to physical memory etc.
+
+3b. in the kernel
+But in the kernel, we also need to be able do dynamically allocate memory.
+Currently this is implemented (very badly ;) ) in kmalloc.c.
+An interface for kernel-wide usage is exposed in kmalloc.h.
 
 
-The reason for why this is not in /devices is simply that this doesn't contain a driver for accessing the memory (as there ain't the need 
-for one), but rather memory managing stuff.
+Startup
+-------
+An interface is exposed in interface.h.
+The corresponding memory.c source file takes care of setting up the
+management systems mentioned above.
+Problem: GDT (segmentation) has to be set up before entering protected mode,
+paging etc. needs the protected mode.
+Solution: memory_init_preprotected() memory_init_postprotected();
+In our environment this is a non-problem as grub already set protected mode.
+
+STARTUP SEQUENCE IS SUBJECT TO CHANGE due to our experiences!
+
+
+Interface to other kernel systems
+---------------------------------
+interface.h
+kmalloc.h
