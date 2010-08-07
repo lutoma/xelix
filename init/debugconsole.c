@@ -2,6 +2,7 @@
 #include <devices/display/interface.h>
 #include <memory/kmalloc.h>
 #include <common/datetime.h>
+#include <common/acpi.h>
 
 void handleInput(char* input);
 int intCurPos = 0;
@@ -44,6 +45,10 @@ void handleInput(char* input)
       } else if(strcmp(line,"clear") == 0)
       {
         clear();
+
+      } else if(strcmp(line,"halt") == 0)
+      {
+        acpiPowerOff();
       } else {
         print("\n");
         print(line);
@@ -54,7 +59,11 @@ void handleInput(char* input)
     intCurPos = 0;
     print(prompt);
   } else {
-    if(strcmp(line,"\b"))
+    if(!strcmp(input,"\b"))
+    {
+      line = substr(line, 0, strlen(line)-1);
+    }
+    else
       line = strcat(line, input);
     print(input);
   }
@@ -65,7 +74,7 @@ void debugconsole_init()
 {
   log("\nStarted Decore debug shell\n");
   line = (char**)kmalloc(40);
-  common_setLogLevel(0); // We don't want logging stuff to pop up in our debug console
+  common_setLogLevel(0); // We don't want logging stuff to pop up in our debug console. if you want to see them, use the "kernellog" debug command.
   print(prompt);
   keyboard_takeFocus(&handleInput);
 }

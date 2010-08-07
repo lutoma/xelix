@@ -20,7 +20,7 @@ void* kmalloc(uint32 numbytes)
 	memoryPosition += numbytes;
 	
 	log("Allocated memory at ");
-	//display_printHex((int)ptr);
+	logHex((int)ptr);
 	log("\n");
 	
 	return ptr;
@@ -46,7 +46,7 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 	
 	
 	log("Allocated aligned memory at ");
-	//display_printHex((int)ptr); //fixme
+	logHex((int)ptr); //fixme
 	log("\n");
 	
 	return ptr;

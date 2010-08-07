@@ -54,7 +54,7 @@ char* monthToString(int month, int shortVersion)
 
 void registerTick()
 {
-
+//dummy
 }
 
 void sleep(time_t timeout)

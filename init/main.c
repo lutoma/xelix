@@ -8,7 +8,6 @@
 #include <devices/pit/interface.h>
 #include <init/debugconsole.h>
 #include <memory/kmalloc.h>
-
 #include <common/bitmap.h>
 
 void checkIntLenghts();
@@ -53,6 +52,8 @@ void kmain()
 	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();
 	log("Initialized keyboard\n");
+	initAcpi();
+	log("Initialized ACPI (Advanced Configuration and Power Interface)\n");
 	//memory_init();
 	//log("Initialized memory.\n");
 	

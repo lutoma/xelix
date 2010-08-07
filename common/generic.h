@@ -10,6 +10,8 @@ typedef signed char sint8;
 typedef long int time_t;
 typedef long int size_t;
 typedef long long word;  // up to 32 bytes long
+typedef uint8 byte;
+#define NULL 0
 #define wsize sizeof(word)
 #define wmask (wsize - 1)
 
@@ -26,14 +28,18 @@ uint8 inb(uint16 port);
 void printf(char* s);
 void print(char* s);
 void clear();
-void log_init();
 void log(char* s);
+void logDec(uint32 num);
+void logHex(uint32 num);
+void log_init();
 int strcmp(const char *s1, const char *s2);
 void panic(char* reason);
 void common_setLogLevel(int level);
 char *strcat(char *dest, const char *src);
 char *strcpy(char *dest, const char *src);
-int strlen(const char * str);
+size_t strlen(const char * str);
 void assert(int r);
 char* substr(const char *src, size_t start, size_t len);
+int (memcmp)(const void *s1, const void *s2, size_t n);
+int inw(unsigned int blubb);
 #endif

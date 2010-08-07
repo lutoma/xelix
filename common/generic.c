@@ -51,6 +51,65 @@ void log(char* s)
   //if(addn) display_print("\n");
 }
 
+void logDec(uint32 num)
+{
+  if(num == 0)
+  {
+    log("0");
+    return;
+  }
+  char s[11]; // maximal log(2^(4*8)) (long int sind 4 bytes) + 1 ('\0') = 11
+	
+  char tmp[9];
+  int i=0;
+  while(num != 0)
+  {
+    unsigned char c = num % 10;
+    num = (num - c)/10;
+    c+='0';
+    tmp[i++] = c;
+  }
+  s[i] = '\0';
+  int j;
+  for(j=0; j < i; j++)
+  {
+    s[j] = tmp[i-1-j];
+  }
+  log(s);
+}
+
+void logHex(uint32 num)
+{
+	if(num == 0)
+	{
+		log("0x0");
+		return;
+	}
+	char s[11]; // maximal 2 (0x) + 2*4 (long int sind 4 bytes) + 1 ('\0')
+	s[0] = '0';
+	s[1] = 'x';
+	
+	char tmp[9];
+	int i=0;
+	while(num != 0)
+	{
+		unsigned char c = num & 0xf;
+		num = num>>4;
+		if(c < 10)
+			c+='0';
+		else
+			c= c-10 + 'A';
+		tmp[i++] = c;
+	}
+	s[i+2] = '\0';
+	int j;
+	for(j=0; j < i; j++)
+	{
+		s[2+j] = tmp[i-1-j];
+	}
+	log(s);
+}
+
 void log_init()
 {
   kernellog = (char**)kmalloc(4000);
@@ -65,7 +124,7 @@ void common_setLogLevel(int level)
   logsEnabled = level;
 }
 
-int strlen(const char * str)
+size_t strlen(const char * str)
 {
     const char *s;
     for (s = str; *s; ++s);
@@ -114,4 +173,24 @@ char* substr(const char *src, size_t start, size_t len)
     dest[len] = '\0';
   }
   return dest;
+}
+
+/* memcmp */
+int (memcmp)(const void *s1, const void *s2, size_t n)
+{
+    const unsigned char *us1 = (const unsigned char *) s1;
+    const unsigned char *us2 = (const unsigned char *) s2;
+    while (n-- != 0) {
+        if (*us1 != *us2)
+            return (*us1 < *us2) ? -1 : +1;
+        us1++;
+        us2++;
+    }
+    return 0;
+}
+
+// dummy
+int inw(unsigned int blubb)
+{
+
 }
