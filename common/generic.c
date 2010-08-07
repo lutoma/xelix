@@ -1,4 +1,5 @@
 #include <common/generic.h>
+#include <memory/kmalloc.h>
 #include <common/memcpy.h>
 #include <devices/display/interface.h>
 
@@ -165,7 +166,7 @@ void assert(int r)
   if(!r) panic("Assertion failed");
 }
 
-char* substr(const char *src, size_t start, size_t len)
+char* substr(char** *src, size_t start, size_t len)
 {
   char *dest = kmalloc(len+1);
   if (dest) {
@@ -189,8 +190,13 @@ int (memcmp)(const void *s1, const void *s2, size_t n)
     return 0;
 }
 
-// dummy
-int inw(unsigned int blubb)
+void reboot()
 {
-
+    unsigned char good = 0x02;
+    log("Goint to reboot NOW!");
+    asm volatile("cli"); //We don't want interrupts here
+    while ((good & 0x02) != 0)
+        good = inb(0x64);
+    outb(0x64, 0xFE);
+    //frz();
 }

@@ -39,7 +39,8 @@ char *strcat(char *dest, const char *src);
 char *strcpy(char *dest, const char *src);
 size_t strlen(const char * str);
 void assert(int r);
-char* substr(const char *src, size_t start, size_t len);
+char* substr(char** *src, size_t start, size_t len);
 int (memcmp)(const void *s1, const void *s2, size_t n);
 int inw(unsigned int blubb);
+void reboot();
 #endif
