@@ -73,7 +73,7 @@ void kmain()
 	bitmap_clear(b, 3);
 	display_printDec(bitmap_get(b, 3));
 	
-	// should print 001100
+	// should print 00110
 	
 	
 	
