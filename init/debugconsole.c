@@ -48,7 +48,12 @@ void handleInput(char* input)
 
       } else if(strcmp(line,"halt") == 0)
       {
+        print("\n");
+        common_setLogLevel(1);
         acpiPowerOff();
+      } else if(strcmp(line,"reboot") == 0)
+      {
+        reboot();
       } else {
         print("\n");
         print(line);
