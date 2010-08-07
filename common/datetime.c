@@ -3,6 +3,7 @@
 int date(char dateStr)
 {
   int whatDate;
+  int nowDate;
   switch(dateStr)
   {
     case 's':
@@ -25,7 +26,17 @@ int date(char dateStr)
       break;
   }
   outb(0x70, whatDate);
-  return inb(0x71);
+  nowDate = inb(0x71);
+  switch(dateStr)
+  {
+    case 's':
+    case 'm':
+    case 'h':    
+    case 'y':
+      nowDate = (nowDate & 0xf) + 10 * (nowDate >> 4);
+  }
+  if(dateStr == 'y') nowDate += 2000;
+  return nowDate;
 }
 
 char* monthToString(int month, int shortVersion)
