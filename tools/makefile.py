@@ -71,8 +71,8 @@ image: kernel.bin
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
 	sudo cp kernel.bin mount/kernel
-        sudo umount mount
-        sudo losetup -d /dev/loop0
+	sudo umount mount
+	sudo losetup -d /dev/loop0
 	rm -rf mount
 
 test: kernel.bin image run

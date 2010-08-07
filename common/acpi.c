@@ -1,12 +1,5 @@
 #include <common/acpi.h>
-
-/*
-#include <stddef.h>
-#include <string.h>
-#include <io.h>
-#include <time.h>
-*/
-
+#include <common/datetime.h>
 
 word *SMI_CMD;
 byte ACPI_ENABLE;
@@ -142,6 +135,7 @@ int acpiCheckHeader(unsigned int *ptr, char *sig)
 
 int acpiEnable(void)
 {
+  log("Enabling acpi...");
    // check if acpi is enabled
    if ( (inb((unsigned int) PM1a_CNT) &SCI_EN) == 0 )
    {
@@ -176,7 +170,7 @@ int acpiEnable(void)
          return -1;
       }
    } else {
-      //log("acpi was already enabled.\n");
+      log("acpi was already enabled.\n");
       return 0;
    }
 }
@@ -287,6 +281,7 @@ int initAcpi(void)
 
 void acpiPowerOff(void)
 {
+  log("Starting power off procedure");
    // SCI_EN is set to 1 if acpi shutdown is possible
    if (SCI_EN == 0)
       return;
@@ -294,6 +289,7 @@ void acpiPowerOff(void)
    acpiEnable();
 
    // send the shutdown command
+   log("Power off.");
    outw((unsigned int) PM1a_CNT, SLP_TYPa | SLP_EN );
    if ( PM1b_CNT != 0 )
       outw((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN );
