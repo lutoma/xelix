@@ -11,7 +11,7 @@ hfiles = [];
 asmfiles = []
 
 for root, dirs, files in os.walk("."):
-	if ".git" in root:
+	if ".git" in root or "tools" in root:
 		continue
 	for f in files:
 		dateiname = (root + "/" + f)[2:];
@@ -46,7 +46,7 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf kernel.bin");
+makefile.write("clean:\n\trm -rf kernel.bin mount");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
@@ -64,9 +64,18 @@ makefile.write("""\n\n
 
 
 run:
-	qemu -kernel kernel.bin
+	qemu -fda floppy.img
 
-test: kernel.bin run
+image: kernel.bin
+	mkdir mount
+	sudo losetup /dev/loop0 floppy.img
+	sudo mount /dev/loop0 mount
+	sudo cp kernel.bin mount/kernel
+        sudo umount mount
+        sudo losetup -d /dev/loop0
+	rm -rf mount
+
+test: kernel.bin image run
 
 makefile:
 	tools/makefile.py
