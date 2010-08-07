@@ -15,6 +15,9 @@ typedef uint8 byte;
 #define wsize sizeof(word)
 #define wmask (wsize - 1)
 
+#define PANIC(msg) panic(msg, __FILE__, __LINE__, 0);
+#define ASSERT(b) ((b) ? (void)0 : panic(#b, __FILE__, __LINE__, 1))
+
 char** kernellog;
 
 // fills size bytes of memory starting at ptr with the byte fill.
@@ -33,7 +36,7 @@ void logDec(uint32 num);
 void logHex(uint32 num);
 void log_init();
 int strcmp(const char *s1, const char *s2);
-void panic(char* reason);
+void panic(const char *reason, const char *file, uint32 line, int assertionf);
 void common_setLogLevel(int level);
 char *strcat(char *dest, const char *src);
 char *strcpy(char *dest, const char *src);
