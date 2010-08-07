@@ -27,11 +27,15 @@ void handleInput(char* input)
       } else if(!strcmp(line,"date"))
       {
         print("\n");
-        //Fr 6. Aug 21:55:24 CEST 2010
-        display_printDec(date('d'));
-        print(". ");
         int month = date('M');
+        int day = date('d');
+        int year = date('y');
+        int weekDay = getWeekDay(day, month, year);
+        print(dayToString(weekDay));
+        print(" ");
         print(monthToString(month, 1));
+        print(" ");
+        display_printDec(day);
         print(" ");
         display_printDec(date('h'));
         print(":");
@@ -41,7 +45,11 @@ void handleInput(char* input)
         print(" ");
         print("UTC");
         print(" ");
-        display_printDec(date('y'));
+        display_printDec(year);
+      } else if(strcmp(line,"weekday") == 0)
+      {
+        print("\n");
+        print(dayToString(getWeekDay(date('d'), date('M'), date('y')),0));
       } else if(strcmp(line,"clear") == 0)
       {
         clear();
