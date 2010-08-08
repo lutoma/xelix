@@ -53,7 +53,7 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf kernel.bin mount");
+makefile.write("clean:\n\trm -rf kernel.bin mount floppy.img");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
@@ -76,6 +76,7 @@ run:
 
 image: kernel.bin
 	- mkdir mount
+	cp tools/floppy.img .
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
 	sudo cp kernel.bin mount/kernel

@@ -43,7 +43,6 @@ void kmain(struct multiboot *mboot_ptr)
 	
 	
 	log("Initialized Display.\n");
-	log("Initialized ACPI (Advanced Configuration and Power Interface)\n");
 	checkIntLenghts();
 	cpu_init();
 	log("Initialized CPU\n");
