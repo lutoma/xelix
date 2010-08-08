@@ -7,7 +7,7 @@
 void memory_init_preprotected()
 {
 	gdt_init();
-	log(" Initialised GDT.\n");
+	log("Initialised GDT.\n");
 }
 
 void memory_init_postprotected()
