@@ -72,7 +72,7 @@ makefile.write("""\n\n
 
 run:
 	- rm /var/qemu.log
-	qemu -d  cpu_reset -monitor stdio -fda floppy.img
+	qemu -d  cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
 image: kernel.bin
 	- mkdir mount
