@@ -13,7 +13,7 @@ void memory_init_preprotected()
 void memory_init_postprotected()
 {
 	frames_init();
-	log("Initialised frames.");
+	log("Initialised frames.\n");
 	paging_init();
-	log("Initialised paging.");
+	log("Initialised paging.\n");
 }

@@ -62,8 +62,10 @@ void kmain()
 	
 	// trigger page fault!
 	
+	uint32* a;
 	a = 1024*1024*1024; // 4gb
 	*a = 1234;
+	display_printDec(*a);
 	
 	
 	

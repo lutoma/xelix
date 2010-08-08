@@ -1,7 +1,9 @@
 #include <memory/paging/paging.h>
 #include <memory/paging/frames.h>
 #include <memory/kmalloc.h>
+#include <interrupts/isr.h>
 
+/////////////////////////////
 // STRUCTURES
 
 enum mode {
@@ -60,6 +62,7 @@ typedef struct {
 	uint32 physicalAddress; // the physical address of the directoryEntries[] array, because we need it to give it to the cpu.
 } pageDirectory_t;
 
+/////////////////////////////
 // VARIABLES
 
 // The page directory the kernel uses before it starts other processes with their own virtual address space and their own page directories. Containts all the pages the kernel will ever need - that is already containts present pages for the whole kernel heap / kmalloc-space / whatever.
@@ -69,6 +72,7 @@ pageDirectory_t* kernelDirectory=0;
 pageDirectory_t* currentPageDirectory=0;
 
 
+/////////////////////////////
 // FUNCTION DECLERATIONS
 
 // allocates physical memory for the given page
@@ -78,6 +82,10 @@ void allocatePage(pageTableEntry_t* page);
 // if the corresponding pageTable does not exist yet, creates it and adds its pageDirectoryEntry to the currentPageDirectory.
 void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw);
 
+// handles a page fault interrupt
+void pageFaultHandler(registers_t regs);
+
+/////////////////////////////
 // FUNCTION DEFINITIONS
 
 void paging_init()
@@ -101,7 +109,9 @@ void paging_init()
 		createPage(i, KERNEL_MODE, READWRITE);
 	}
 	
-	// TODO: PAGEFAULT-INTERRUPT
+	// register pagefault-Interrupt
+	
+	isr_registerHandler(0xE /*=14*/, &pageFaultHandler);
 	
 	
 	// set paging directory
@@ -154,8 +164,45 @@ void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
 	page->rw = rw;
 	
 	allocatePage(page);
-	
-	
-	
 }
+
+
+void pageFaultHandler(registers_t regs)
+{
+	// get the address for which the page fault occured
+	uint32 faultingAddress;
+	asm volatile("mov %%cr2, %0" : "=r" (faultingAddress));
+	
+	// read infomation from the error code
+	
+	uint8 notPresent = ! (regs.err_code & 0x1); // pagefault because page was not present?
+	uint8 write = regs.err_code & 0x2; // pagefault caused by write (if unset->read)
+	uint8 usermode = regs.err_code & 0x4; // during usermode (if unset->kernelmode)
+	uint8 reservedoverwritten = regs.err_code & 0x8; // reserved bits overwritten (if set -> reserved bits were overwritten causing this page fault
+	uint8 instructionfetch = regs.err_code & 0x10; // pagefault during instruction set (if set -> during instruction fetch)
+	
+	print("pagefault at ");
+	display_printHex(faultingAddress);
+	print(": ");
+	if(notPresent) print("not present, ");
+	if(write) print("write, ");
+	if(!write) print("read, ");
+	if(usermode) print("user-mode, ");
+	if(!usermode) print("kernel-mode, ");
+	if(reservedoverwritten) print("reserved bits overwritten, ");
+	if(instructionfetch) print("during instruction fetch");
+	
+	if(notPresent)
+	{
+		print("->createPage()\n");
+		// we can handle this pagefault by creating a new page
+		// at the moment, everything is in kernel mode
+		createPage(faultingAddress, KERNEL_MODE, READWRITE);
+	}
+	else
+	{
+		print("NOT HANDLING PAGEFAULT!\n");
+	}
+}
+
 
