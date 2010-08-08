@@ -75,18 +75,26 @@ while ( (node = readdirFs(fsRoot, i)) != 0)
 {
   print("Found file ");
   print(node->name);
-  print("\n");
-  //fsNode_t *fsnode = finddirFs(fsRoot, node->name);
+  fsNode_t *fsnode = finddirFs(fsRoot, node->name);
 
-/*    char buf[256];
+  if ((fsnode->flags&0x7) == FS_DIRECTORY)
+    print("\n\t(directory)\n");
+  else
+  {
+    print("\n\t contents: \"");
+    char buf[256];
     uint32 sz = readFs(fsnode, 0, 256, buf);
     int j;
     for (j = 0; j < sz; j++)
-      display_printChar(buf[j]);
+			if(j < fsnode->length)
+				display_printChar(buf[j]);
 
-*/
-	i++;
-	}
+    print("\"\n");
+  }
+  i++;
+}
+
+
 	while(1)
 
 	{

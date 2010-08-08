@@ -12,9 +12,9 @@ void* kmalloc(uint32 numbytes)
 	void* ptr = (void *) memoryPosition;
 	memoryPosition += numbytes;
 	
-	log("Allocated memory at ");
-	logHex((int)ptr);
-	log("\n");
+	//log("Allocated memory at ");
+	//logHex((int)ptr);
+	//log("\n");
 	
 	return ptr;
 }
