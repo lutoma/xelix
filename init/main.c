@@ -11,6 +11,7 @@
 #include <init/debugconsole.h>
 #include <memory/kmalloc.h>
 #include <common/bitmap.h>
+#include <filesystems/interface.h>
 
 void checkIntLenghts();
 
