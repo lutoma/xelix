@@ -19,6 +19,6 @@ typedef struct
 
 // Initialises the initial ramdisk. It gets passed the address of the multiboot module,
 // and returns a completed filesystem node.
-fsNode_t *initialiseMemfs(uint32 location);
+fsNode_t *memfs_init(uint32 location);
 
 #endif

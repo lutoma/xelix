@@ -31,6 +31,13 @@ void checkIntLenghts()
 
 void kmain(struct multiboot *mboot_ptr)
 {
+
+	 ASSERT(mboot_ptr->mods_count > 0);
+   uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
+   uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
+   // Don't trample our module with placement accesses, please!
+   kmalloc_init(initrd_location);
+
 	log_init();
 	display_init();
 	
@@ -54,16 +61,34 @@ void kmain(struct multiboot *mboot_ptr)
 	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();
 	log("Initialized keyboard\n");
-	//memory_init();
-	//log("Initialized memory.\n");
 	
-	//uint32 *ptr = (uint32*)0xA0000000;
-	//uint32 do_page_fault = *ptr;
-	
-
 	log("Decore is up.\n");
-	//debugconsole_init();
+
+	//setLogLevel(0);
+   // Initialise the initial ramdisk, and set it as the filesystem root.
+   fsRoot = memfs_init(initrd_location);
+
+// list the contents of /
+int i = 0;
+struct dirent *node = 0;
+while ( (node = readdirFs(fsRoot, i)) != 0)
+{
+  print("Found file ");
+  print(node->name);
+  print("\n");
+  fsNode_t *fsnode = finddirFs(fsRoot, node->name);
+
+/*    char buf[256];
+    uint32 sz = readFs(fsnode, 0, 256, buf);
+    int j;
+    for (j = 0; j < sz; j++)
+      display_printChar(buf[j]);
+
+*/
+	i++;
+	}
 	while(1)
+
 	{
 		
 	}

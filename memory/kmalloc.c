@@ -47,5 +47,5 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 
 void kmalloc_init(uint32 start)
 {
-	memoryPosition = (uint32)&start; // maybe put this in an init function?
+	memoryPosition = (uint32)&start;
 }

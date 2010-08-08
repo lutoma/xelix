@@ -37,7 +37,7 @@ void logHex(uint32 num);
 void log_init();
 int strcmp(const char *s1, const char *s2);
 void panic(const char *reason, const char *file, uint32 line, int assertionf);
-void common_setLogLevel(int level);
+void setLogLevel(int level);
 char *strcat(char *dest, const char *src);
 char *strcpy(char *dest, const char *src);
 size_t strlen(const char * str);

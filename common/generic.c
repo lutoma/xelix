@@ -114,11 +114,11 @@ void logHex(uint32 num)
 void log_init()
 {
   kernellog = (char**)kmalloc(4000);
-  common_setLogLevel(1); //Enable logs
+  setLogLevel(1); //Enable logs
 }
 
 //Currently only 0=Off and 1=On
-void common_setLogLevel(int level)
+void setLogLevel(int level)
 {
   if(level) log("Enabled printing of log messages.\n");
   else log("Warning: disabled printing of log messages.\n");
