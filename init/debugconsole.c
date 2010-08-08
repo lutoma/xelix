@@ -1,5 +1,6 @@
 #include <init/debugconsole.h>
 #include <devices/display/interface.h>
+#include <devices/keyboard/interface.h>
 #include <memory/kmalloc.h>
 #include <common/datetime.h>
 #include <common/acpi.h>
@@ -11,20 +12,20 @@ char** line;
 
 void handleInput(char* input)
 {
-  if(!strcmp("\b", input))
+  if(!strcmp(*"\b", *input))
   {
     if(intCurPos < 1) return;
     --intCurPos;
   } else ++intCurPos;
   
-  if(!strcmp("\n", input))
+  if(!strcmp("\n", *input))
   {
-    if(strlen(line) > 0)
+    if(strlen(*line) > 0)
     {
-      if(!strcmp(line,"kernellog")) //testcommand
+      if(!strcmp(*line,"kernellog")) //testcommand
       {
-        print(kernellog);
-      } else if(!strcmp(line,"date"))
+        print(*kernellog);
+      } else if(!strcmp(*line,"date"))
       {
         print("\n");
         int month = date('M');
@@ -46,20 +47,20 @@ void handleInput(char* input)
         print("UTC");
         print(" ");
         display_printDec(year);
-      } else if(strcmp(line,"weekday") == 0)
+      } else if(strcmp(*line,"weekday") == 0)
       {
         print("\n");
         print(dayToString(getWeekDay(date('d'), date('M'), date('y')),0));
-      } else if(strcmp(line,"clear") == 0)
+      } else if(strcmp(*line,"clear") == 0)
       {
         clear();
 
-      } else if(strcmp(line,"halt") == 0)
+      } else if(strcmp(*line,"halt") == 0)
       {
         print("\n");
         common_setLogLevel(1);
         acpiPowerOff();
-      } else if(strcmp(line,"reboot") == 0)
+      } else if(strcmp(*line,"reboot") == 0)
       {
         reboot();
       } else {
@@ -68,7 +69,7 @@ void handleInput(char* input)
         print(": Command not found.");
       }
     }
-    strcpy(line, "");
+    strcpy(*line, "");
     intCurPos = 0;
     display_setColor(0x0f);
     print(prompt);
@@ -76,10 +77,10 @@ void handleInput(char* input)
   } else {
     if(!strcmp(input,"\b"))
     {
-      line = substr(line, 0, strlen(line)-1);
+      *line = substr(line, 0, strlen(*line)-1);
     }
     else
-      line = strcat(line, input);
+      *line = strcat(*line, input);
     print(input);
   }
   

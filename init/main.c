@@ -1,6 +1,7 @@
 #include <common/multiboot.h>
 #include <common/generic.h>
 #include <devices/display/interface.h>
+#include <common/acpi.h>
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
 #include <memory/segmentation/gdt.h>
