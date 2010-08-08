@@ -71,21 +71,20 @@ makefile.write("""\n\n
 
 
 run:
-	qemu -fda floppy.img
+	rm /var/qemu.log
+	qemu -d  cpu_reset -monitor stdio -fda floppy.img
 
 image: kernel.bin
-	mkdir mount
+	- mkdir mount
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
 	sudo cp kernel.bin mount/kernel
 	sudo umount mount
 	sudo losetup -d /dev/loop0
-	rm -rf mount
+	- rm -rf mount
 
 test: kernel.bin image run
 
-makefile:
-	tools/makefile.py
 """);
 
 makefile.close();
