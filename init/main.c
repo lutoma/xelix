@@ -8,10 +8,10 @@
 #include <interrupts/idt.h>
 #include <interrupts/irq.h>
 #include <devices/pit/interface.h>
-#include <init/debugconsole.h>
 #include <memory/kmalloc.h>
 #include <common/bitmap.h>
 #include <filesystems/interface.h>
+#include <filesystems/memfs/interface.h>
 
 void checkIntLenghts();
 
@@ -65,7 +65,7 @@ void kmain(struct multiboot *mboot_ptr)
 	
 
 	log("Decore is up.\n");
-	debugconsole_init();
+	//debugconsole_init();
 	while(1)
 	{
 		
