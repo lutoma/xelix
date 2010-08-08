@@ -82,12 +82,15 @@ void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
 
 void paging_init()
 {
-		print("calling\n");
 	// create kernelDirectory
 	uint32 tmpPhys;
 	kernelDirectory = kmalloc_aligned(sizeof(pageDirectory_t), &tmpPhys);
 	memset(kernelDirectory, 0, sizeof(pageDirectory_t));
 	kernelDirectory->physicalAddress = tmpPhys + ((uint32)&(kernelDirectory->directoryEntries) - (uint32)kernelDirectory); // we need to put the physical location of kernelDirectory->directoryEntries into kernelDirectory->physicalAddress.
+	
+	// allocating and stuff works on the currentPageDirectory
+	currentPageDirectory = kernelDirectory;
+	
 	
 	// identity mapping of kernel memory space:
 	// create pages for every virtual address in our kernel memory space
@@ -101,18 +104,12 @@ void paging_init()
 	// TODO: PAGEFAULT-INTERRUPT
 	
 	
-	display_printHex(& (kernelDirectory->directoryEntries) );
-	print(" == ");
-	display_printHex(kernelDirectory->physicalAddress);
-	
-	
 	// set paging directory
 	asm volatile("mov %0, %%cr3":: "r"(kernelDirectory->physicalAddress));
 	// enable paging!
 	uint32 cr0;
 	asm volatile("mov %%cr0, %0": "=r"(cr0));
 	cr0 |= 0x80000000; // Enable paging!
-	//while(1) { }
 	asm volatile("mov %0, %%cr0":: "r"(cr0));
 }
 
@@ -147,6 +144,8 @@ void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
 		currentPageDirectory->pageTables[pageTableNum] = pageTable;
 		currentPageDirectory->directoryEntries[pageTableNum].pagetable = physAddressOfPageTable  / 0x1000;
 		currentPageDirectory->directoryEntries[pageTableNum].present = 1;
+		currentPageDirectory->directoryEntries[pageTableNum].rw = READWRITE;
+		currentPageDirectory->directoryEntries[pageTableNum].usermode = USER_MODE;
 	}
 	
 	pageTableEntry_t* page = &(currentPageDirectory->pageTables[pageTableNum]->tableEntries[pageNumInTable]);

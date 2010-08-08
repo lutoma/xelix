@@ -60,6 +60,12 @@ void kmain()
 	
 	
 	
+	// trigger page fault!
+	
+	a = 1024*1024*1024; // 4gb
+	*a = 1234;
+	
+	
 	
 	
 	while(1)
