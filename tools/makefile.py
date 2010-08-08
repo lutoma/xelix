@@ -71,7 +71,7 @@ makefile.write("""\n\n
 
 
 run:
-	rm /var/qemu.log
+	- rm /var/qemu.log
 	qemu -d  cpu_reset -monitor stdio -fda floppy.img
 
 image: kernel.bin
