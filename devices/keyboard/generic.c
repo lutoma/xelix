@@ -602,7 +602,7 @@ void handleScancode(uint8 code, uint8 code2)
 		char s[2];
 		s[0] = c;
 		s[1] = 0;
-		if(focusedFunction > 0)
+		if(focusedFunction)
 		{
 			(*focusedFunction) (s); // Pass string to keyboard handler of the currently focused application.
 		}
@@ -648,5 +648,5 @@ void keyboard_takeFocus(void (*func)(char*))
 
 void keyboard_leaveFocus()
 {
-	focusedFunction = -1;
+	focusedFunction = 0;
 }

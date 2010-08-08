@@ -36,7 +36,7 @@ void kmain(struct multiboot *mboot_ptr)
    uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
    uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
    // Don't trample our module with placement accesses, please!
-   kmalloc_init(initrd_location);
+   kmalloc_init(initrd_end);
 
 	log_init();
 	display_init();
@@ -76,7 +76,7 @@ while ( (node = readdirFs(fsRoot, i)) != 0)
   print("Found file ");
   print(node->name);
   print("\n");
-  fsNode_t *fsnode = finddirFs(fsRoot, node->name);
+  //fsNode_t *fsnode = finddirFs(fsRoot, node->name);
 
 /*    char buf[256];
     uint32 sz = readFs(fsnode, 0, 256, buf);

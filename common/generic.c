@@ -113,7 +113,7 @@ void logHex(uint32 num)
 
 void log_init()
 {
-  kernellog = (char**)kmalloc(4000);
+  kernellog = (char*)kmalloc(4000);
   setLogLevel(1); //Enable logs
 }
 
@@ -153,7 +153,7 @@ char* strcat(char *dest, const char *src)
     return dest;
 }
 
-void panic(const char *reason, const char *file, uint32 line, int assertionf)
+void panic(char *reason, char *file, uint32 line, int assertionf)
 {
 	asm volatile("cli"); // Disable interrupts.
 	log("\n\nFATAL ERROR: ");
@@ -167,7 +167,7 @@ void panic(const char *reason, const char *file, uint32 line, int assertionf)
 	for(;;) asm("cli;hlt;");//Sleep forever
 }
 
-char* substr(char** *src, size_t start, size_t len)
+char* substr(char* src, size_t start, size_t len)
 {
   char *dest = kmalloc(len+1);
   if (dest) {

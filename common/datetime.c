@@ -1,4 +1,5 @@
 #include <common/datetime.h>
+#include <devices/pit/interface.h>
 
 int date(char dateStr)
 {
