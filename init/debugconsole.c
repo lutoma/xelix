@@ -89,7 +89,7 @@ void debugconsole_init()
 {
   log("\nStarted Decore debug shell\n");
   line = (char**)kmalloc(40);
-  common_setLogLevel(0); // We don't want logging stuff to pop up in our debug console. if you want to see them, use the "kernellog" debug command.
+  common_setLogLevel(0); // We don't want logging stuff to pop up in our debug console. if you want to see the log, use the "kernellog" debug command.
   display_setColor(0x0f);
   print(prompt);
   display_setColor(0x07);
