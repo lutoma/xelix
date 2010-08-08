@@ -6,6 +6,8 @@ import re;
 
 makefile = open("Makefile", "w");
 
+makefile.write("export LANG=C");
+
 # visualisation of includes! (open eg. with kgraphviewer)
 
 graphfile = open("includesgraph.dot", "w");
