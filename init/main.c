@@ -94,6 +94,7 @@ while ( (node = readdirFs(fsRoot, i)) != 0)
   i++;
 }
 
+	print("finished listing files\n");
 
 	while(1)
 

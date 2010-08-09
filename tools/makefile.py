@@ -72,10 +72,25 @@ makefile.write("""\n\n
 	nasm -f elf -o $@ $<
 
 
+initrd.img: tools/makeinitrd
+	tools/makeinitrd # paramters to initrd here!!!
+
+tools/makeinitrd: tools/makeinitrd.c
+	gcc -o tools/makeinitrd tools/makeinitrd.c
+
+
 run:
 	- rm /var/qemu.log
-	qemu -d  cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+	qemu -d  cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
 
+
+test: kernel.bin initrd.img run
+
+makefile:
+	tools/makefile.py
+
+
+# create a boot image for usb-stick or floppy
 image: kernel.bin
 	- mkdir mount
 	cp tools/floppy.img .
@@ -86,7 +101,7 @@ image: kernel.bin
 	sudo losetup -d /dev/loop0
 	- rm -rf mount
 
-test: kernel.bin image run
+
 
 """);
 
