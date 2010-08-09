@@ -533,7 +533,7 @@ struct {
 	int super:1;
 } modifiers;
 
-void (*focusedFunction)(char*);
+void (*focusedFunction)(char); // a variable -> pointer to a function
 
 void handleIrq(registers_t regs);
 void handleScancode(uint8 code, uint8 code2);
@@ -598,13 +598,19 @@ void handleScancode(uint8 code, uint8 code2)
 	{
 		char c = keymap[code];
 		if( modifiers.shiftl | modifiers.shiftr )
+		{
 			c = keymapshift[code];
-		char s[2];
-		s[0] = c;
-		s[1] = 0;
+		}
 		if(focusedFunction)
 		{
-			(*focusedFunction) (s); // Pass string to keyboard handler of the currently focused application.
+			(*focusedFunction) (c); // Pass string to keyboard handler of the currently focused application.
+		}
+		else
+		{
+			char s[2];
+			s[0] = c;
+			s[1] = 0;
+			print(s);
 		}
 	}
 	/*else if( keymap[code + 0x80] == 0 )
@@ -640,7 +646,7 @@ void printModifiers()
 		print("super ");
 }
 
-void keyboard_takeFocus(void (*func)(char*))
+void keyboard_takeFocus(void (*func)(char))
 {
 	focusedFunction = func;
 	log("Application took focus.\n");

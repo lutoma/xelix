@@ -21,7 +21,7 @@ char* kernellog;
 #define ASSERT(b) ((b) ? (void)0 : panic(#b, __FILE__, __LINE__, 1))
 
 // fills size bytes of memory starting at ptr with the byte fill.
-void memset(void* ptr, uint8 fill, size_t size);
+void memset(void* ptr, uint8 fill, uint32 size);
 
 // Port I/O so that we don't always have to use assembler
 void outb(uint16 port, uint8 value);

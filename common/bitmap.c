@@ -21,8 +21,9 @@ bitmap_t* bitmap_init(uint32 numbits)
 		log("Error: bitmap with numbits=0 requested! returning 0");
 		return 0;
 	}
-	bitmap_t* bitmap = kmalloc(sizeof(bitmap));
-	bitmap->numbits = kmalloc((numbits-1)/8+1); // (numbits-1)/8 wird abgerundet
+	bitmap_t* bitmap = kmalloc(sizeof(bitmap_t));
+	bitmap->numbits = numbits;
+	bitmap->bits = kmalloc((numbits-1)/8+1); // (numbits-1)/8 wird abgerundet
 	return bitmap;
 }
 

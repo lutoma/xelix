@@ -1,8 +1,8 @@
 #include <interrupts/irq.h>
 #include <devices/display/interface.h>
 
-// TODO multiple interrupt handlers per Interrupt?
-irqHandler_t interrupt_handlers[256];
+// TODO merge isr_registerHandler and irq_registerHandler
+interruptHandler_t interrupt_handlers[256];
 
 
 
@@ -24,13 +24,13 @@ void irq_handler(registers_t regs)
   
    if (interrupt_handlers[regs.int_no] != 0)
    {
-       irqHandler_t handler = interrupt_handlers[regs.int_no];
+       interruptHandler_t handler = interrupt_handlers[regs.int_no];
        handler(regs);
    }
    
 }
 
-void irq_registerHandler(uint8 n, irqHandler_t handler)
+void irq_registerHandler(uint8 n, interruptHandler_t handler)
 {
   log("Registered IRQ handler for ");
   logDec(n);

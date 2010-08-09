@@ -1,5 +1,5 @@
 *.o
 kernel.bin
+initrd.img
 Makefile
 includesgraph.dot
-./floppy.img

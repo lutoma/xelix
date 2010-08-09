@@ -22,9 +22,8 @@
 #define IRQ14 46
 #define IRQ15 47
 
-typedef void (*irqHandler_t)(registers_t);
 
 // registers a irqHandler (a callback which is called when the specified irq interrupt (ie n=IRQ1 for keyboard) occurs
-void irq_registerHandler(uint8 n, irqHandler_t handler);
+void irq_registerHandler(uint8 n, interruptHandler_t handler);
 
 #endif
