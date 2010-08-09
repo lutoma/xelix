@@ -73,20 +73,22 @@ int i = 0;
 struct dirent *node = 0;
 while ( (node = readdirFs(fsRoot, i)) != 0)
 {
+	if(strcmp(node->name, "helloworld.bin") ==0)
+		continue;
   print("Found file ");
   print(node->name);
   fsNode_t *fsnode = finddirFs(fsRoot, node->name);
-
+	display_printDec(fsnode->length);
   if ((fsnode->flags&0x7) == FS_DIRECTORY)
-    print("\n\t(directory)\n");
+    print("\n    (directory)\n");
   else
   {
-    print("\n\t contents: \"");
+    print("\n     contents: \"");
     char buf[256];
     uint32 sz = readFs(fsnode, 0, 256, buf);
     int j;
     for (j = 0; j < sz; j++)
-			if(j < fsnode->length)
+			if(j < fsnode->length -1)
 				display_printChar(buf[j]);
 
     print("\"\n");
