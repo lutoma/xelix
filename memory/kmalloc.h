@@ -24,4 +24,7 @@ void kmalloc_init(uint32 start);
 // dependencies: none
 
 
+extern uint32 kernelMaxMemory; // not to be used outside of memory subsystem!
+
+
 #endif
