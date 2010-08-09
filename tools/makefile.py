@@ -84,15 +84,17 @@ run: floppy.img
 	# qemu -initrd doesn't work as it should..
 	qemu -d  cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
+runvbox: floppy.img
+	VBoxSDL -fda floppy.img --startvm Xenic
 
-test: kernel.bin initrd.img floppy.img run
+test: floppy.img run
 
 makefile:
 	tools/makefile.py
 
 
 # create a boot image for usb-stick or floppy
-floppy.img: kernel.bin
+floppy.img: kernel.bin initrd.img
 	- mkdir mount
 	cp tools/floppy.img .
 	sudo losetup /dev/loop0 floppy.img
