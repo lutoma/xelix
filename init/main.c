@@ -32,18 +32,18 @@ void kmain(struct multiboot *mboot_ptr)
 {
 
 	 ASSERT(mboot_ptr->mods_count > 0);
-   uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
-   uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
-   // Don't trample our module with placement accesses, please!
-   kmalloc_init(initrd_end);
+	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
+	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
+	// Don't trample our module with placement accesses, please!
+	kmalloc_init(initrd_end);
 
 	log_init();
 	display_init();
 	
 	display_setColor(0x0f);
-	print("                                               \n");
-	print("                                     decore    \n");
-	print("                                               \n");
+	print("															  \n");
+	print("												 decore	 \n");
+	print("															  \n");
 	display_setColor(0x07);
 	
 	
@@ -67,8 +67,9 @@ void kmain(struct multiboot *mboot_ptr)
 
 	log("reading initrd");
 	//setLogLevel(0);
-   // Initialise the initial ramdisk, and set it as the filesystem root.
-   fsRoot = memfs_init(initrd_location);
+	log("Listing files of initrd");
+	// Initialise the initial ramdisk, and set it as the filesystem root.
+	fsRoot = memfs_init(initrd_location);
 
 	// list the contents of /
 	int i = 0;
@@ -81,10 +82,10 @@ void kmain(struct multiboot *mboot_ptr)
 		print(node->name);
 		fsNode_t *fsnode = finddirFs(fsRoot, node->name);
 		if ((fsnode->flags&0x7) == FS_DIRECTORY)
-			print("\n    (directory)\n");
+			print("\n	 (directory)\n");
 		else
 		{
-			print("\n     contents: \"");
+			print("\n	  contents: \"");
 			char buf[256];
 			uint32 sz = readFs(fsnode, 0, 256, buf);
 			int j;
