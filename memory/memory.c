@@ -7,13 +7,13 @@
 void memory_init_preprotected()
 {
 	gdt_init();
-	log("Initialised GDT.\n");
+	log("Initialized GDT.\n");
 }
 
 void memory_init_postprotected()
 {
 	frames_init();
-	log("Initialised frames.\n");
+	log("Initialized frames.\n");
 	paging_init();
-	log("Initialised paging.\n");
+	log("Initialized paging.\n");
 }
