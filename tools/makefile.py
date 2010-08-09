@@ -79,19 +79,20 @@ tools/makeinitrd: tools/makeinitrd.c
 	gcc -o tools/makeinitrd tools/makeinitrd.c
 
 
-run:
+run: floppy.img
 	- rm /var/qemu.log
-	qemu -d  cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
+	# qemu -initrd doesn't work as it should..
+	qemu -d  cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
 
-test: kernel.bin initrd.img run
+test: kernel.bin initrd.img floppy.img run
 
 makefile:
 	tools/makefile.py
 
 
 # create a boot image for usb-stick or floppy
-image: kernel.bin
+floppy.img: kernel.bin
 	- mkdir mount
 	cp tools/floppy.img .
 	sudo losetup /dev/loop0 floppy.img
