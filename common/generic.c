@@ -154,6 +154,18 @@ char* strcat(char *dest, const char *src)
     return dest;
 }
 
+void warn(char *reason, char *file, uint32 line)
+{
+	asm volatile("cli"); // Disable interrupts.
+	log("\n\nWARNING: ");
+	log(reason);
+	log(" in ");
+	log(file);
+	log(" at line ");
+	logDec(line);
+	for(;;) asm("cli;hlt;");//Sleep forever
+}
+
 void panic(char *reason, char *file, uint32 line, int assertionf)
 {
 	asm volatile("cli"); // Disable interrupts.
