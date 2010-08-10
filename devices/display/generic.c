@@ -1,24 +1,67 @@
 #include <devices/display/interface.h>
+#include <memory/kmalloc.h>
+
+const uint32 columns = 80; // on-screen character grid
+const uint32 rows = 25;
+
 
 uint16* const videoMemory = (uint16*) 0xB8000; // 80x25 Zeichen   // short ist zwei Bytes: 1. Byte char, 2. Byte Farben // const ist so, dass der Zeiger nicht verändert werden kann, die Daten dahinter schon
 
-uint16* pos; //shows current cursor position
-
-uint8 color;
-
-void scroll(); //Scroll down one line
-void moveCursor(); // Cursor richtig zum pos bewegen
 
 /*
- *  Columns = 80
- *  Rows = 25
+ * Buffer concept:
+ * Everything is written to the buffer (which is x number of lines). 
+ * The screen displays part of the buffer.
+ * The buffer is wrap-around, i.e. when the end is reached it just continues at the beginning. (see also wrapAroundBuffer())
+ * 
  */
+
+uint16* buffer; // start of the buffer
+uint16* bufferEnd; // end of the buffer (points one beyond last character)
+uint16* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen. Should not be changed directly, see setScreenPos()
+uint16* cursorPos; // points to current cursor position in buffer. This is directly after the last printed character. This is where new text is printed etc. (use wrapAroundBuffer() to ensure it does not point outside the buffer)
+
+
+uint8 color; // the current color
+
+
+void printChar(char c); // prints a char    should not be used directly, use display_print() instead
+
+// wraps the given position in the buffer
+uint16* wrapAroundBuffer(uint16* pos);
+
+// set the screenPos to pos (first character of a line) in buffer, update actual content shown on screen etc.
+void setScreenPos(uint16* pos);
+
 
 void display_init()
 {
 	color = 0x07;
-	pos = videoMemory;
-	display_clear();
+	
+	
+	// clear the screen
+	uint16* p = videoMemory;
+	int i;
+	for(i=0; i<80*25; i++)
+	{
+		*p = color<<8 | ' ';
+		p++;
+	}
+	
+	
+	uint32 bufferSize = columns * rows * 5; // number of characters in buffer
+	buffer = kmalloc(sizeof(uint16) * bufferSize);
+	bufferEnd = buffer + bufferSize;
+	
+	// clear buffer
+	uint16* ptr;
+	for(ptr = buffer; ptr < bufferEnd; ptr++)
+	{
+		*ptr = color<<8 | 'x';
+	}
+	
+	screenPos = buffer;
+	cursorPos = buffer+80*45;
 	
 	/*
 	// CHANGE FONT (http://www.cs.usfca.edu/~cruse/cs686f03/newzero.cpp)
@@ -45,6 +88,7 @@ unsigned char newglyph[ 16 ] = 	{
 				0x82,	// 10000010
 				0x82,	// 10000010
 				0x82,	// 10000010
+	*videoMemory = color<<8 | 'P';
 				0x82,	// 10000010
 				0x7C,	// 01111100
 				0x00,	// 00000000
@@ -67,41 +111,95 @@ unsigned char newglyph[ 16 ] = 	{
 	outw( 0x0300, TSEQ_PORT );	// leave synchronous reset
 	outw( 0x0004, GRAF_PORT );	// select map 0 for reads
 	outw( 0x1005, GRAF_PORT );	// enable odd-even addressing
-	outw( 0x0E06, GRAF_PORT );	// map starts at 0xB800:0000
+	outw( 0x0E06, GRAF_PORT );	// map starts at 0http://www.flickr.com/photos/jungepiraten/4844152708/sizes/l/xB800:0000
 	*/
 	
 	
 }
 
+// the main print function which should always be used
 void display_print(char* s)
 {
+	char* string = s;
 	while(*s != '\0')
 	{
-		display_printChar(*(s++));
+		printChar(*(s++));
 	}
-	moveCursor();
+	
+	if(string[0] == 'a' && string[1] == 0)
+		setScreenPos(wrapAroundBuffer(cursorPos - ((cursorPos-buffer) % columns) -  columns*(rows-1) ) ); // compute the position columns*(rows-1) lines above cursorPos
 }
 
-void display_printChar(char c)
+void printChar(char c)
 {
 	if(c == '\n')
-	{ // neue Zeile
-		pos = pos - (pos-videoMemory) % 80 + 80;
+	{ // new line
+		cursorPos = cursorPos - (cursorPos-buffer) % columns + columns;
+		cursorPos = wrapAroundBuffer(cursorPos);
+		// fill new line with blanks (we might be reusing part of the buffer)
+		uint16* ptr;
+		for(ptr = cursorPos; ptr < cursorPos + columns; ptr++)
+			*ptr = color<<8 | ' ';
 	}
 	else if(c== '\b') 
 	{ // backspace
-		pos--;
-		*pos = color<<8 | ' ';
+		cursorPos--;
+		cursorPos = wrapAroundBuffer(cursorPos);
+		*cursorPos = color<<8 | ' ';
 	}
 	else
 	{
-		*(pos++) = color<<8 | c;
-	}
-	if(pos >= videoMemory + 80*25)
-	{
-		scroll();
+		// normal character
+		*cursorPos = color<<8 | c;
+		cursorPos++;
+		cursorPos = wrapAroundBuffer(cursorPos);
 	}
 }
+
+uint16* wrapAroundBuffer(uint16* pos)
+{
+	if(pos >= bufferEnd)
+		return pos - ( bufferEnd - buffer );
+	if(pos < buffer)
+		return pos + ( bufferEnd - buffer );
+	return pos;
+}
+
+
+void setScreenPos(uint16* pos)
+{
+	screenPos = pos;
+	
+	// copy contents to screen
+	
+	
+	uint16* copyend = wrapAroundBuffer(screenPos + columns*rows);
+	if(copyend > screenPos)
+	{
+		memcpy(videoMemory, screenPos, columns*rows * 2); // 2 bytes per character! (uint16)
+	}
+	else
+	{
+		uint32 characterstobufferend = bufferEnd - screenPos;
+		memcpy(videoMemory, screenPos, characterstobufferend * 2);
+		memcpy(videoMemory+characterstobufferend, buffer, (copyend - buffer) * 2);
+	}
+	
+	*videoMemory = color<<8 | 'P';
+	
+	// set cursor
+	/*
+	uint16 cursorLocation = cursorPos - screenPos; // relative position of cursor
+	outb(0x3D4, 14);                  // Tell the VGA board we are setting the high cursor byte.
+	outb(0x3D5, cursorLocation >> 8); // Send the high cursor byte.
+	outb(0x3D4, 15);                  // Tell the VGA board we are setting the low cursor byte.
+	outb(0x3D5, cursorLocation);      // Send the low cursor byte.
+	*/
+}
+
+
+
+
 
 void display_setColor(uint8 newcolor)
 {
@@ -165,50 +263,4 @@ void display_printHex(uint32 num)
 		s[2+j] = tmp[i-1-j];
 	}
 	display_print(s);
-}
-
-
-void display_clear()
-{
-	int i;
-	for(i=0; i<80*25; i++)
-	{
-		display_printChar(' ');
-	}
-	pos = videoMemory;
-}
-
-//Scroll the screen
-void scroll()
-{
-	uint16* read;
-	uint16* write;
-	for(read = videoMemory+80, write = videoMemory; read < pos; read++, write++)
-	{
-		*write = *read;
-	}
-	
-	// neue restliche Zeile leermachen sonst bleibt da die vorherige letzte Zeile
-	for(; write < videoMemory+80*25; write++)
-	{
-		*write = color<<8 | ' ';
-	}
-	
-	// Positionszeiger eine Zeile nach oben verschieben
-	pos -= 80;
-	if(pos < videoMemory)
-	{
-		pos = videoMemory;
-	}
-}
-
-// Updates the hardware cursor.
-void moveCursor()
-{
-	// The screen is 80 characters wide...
-	uint16 cursorLocation = pos - videoMemory;
-	outb(0x3D4, 14);                  // Tell the VGA board we are setting the high cursor byte.
-	outb(0x3D5, cursorLocation >> 8); // Send the high cursor byte.
-	outb(0x3D4, 15);                  // Tell the VGA board we are setting the low cursor byte.
-	outb(0x3D5, cursorLocation);      // Send the low cursor byte.
 }

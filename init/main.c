@@ -20,10 +20,15 @@ void kmain(multibootHeader_t *mboot_ptr)
 	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
 	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
 	// Don't trample our module with placement accesses, please!
+	
 	kmalloc_init(initrd_end);
 
-	log_init();
 	display_init();
+	
+	
+	log_init();
+	
+	
 	
 	display_setColor(0x0f);
 	print("\n");
@@ -79,7 +84,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 			int j;
 			for (j = 0; j < sz; j++)
 				if(j < fsnode->length -1)
-					display_printChar(buf[j]);
+					//display_printChar(buf[j]);
 			
 			print("\"\n");
 		}
@@ -94,10 +99,15 @@ void kmain(multibootHeader_t *mboot_ptr)
 	uint32* a;
 	a = 1024*1024*1024; // 4gb
 	*a = 1234;
-	display_printDec(*a);
+	printDec(*a);
 	
 	
-	display_printHex(sizeof(size_t));
+	printHex(sizeof(size_t));
+	
+	
+	print("HALLO");
+	
+	print("a");
 	
 	
 	while(1)

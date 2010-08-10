@@ -104,7 +104,7 @@ fsNode_t *memfs_init(uint32 location)
 		rootNodes[i].mask = rootNodes[i].uid = rootNodes[i].gid = 0;
 		rootNodes[i].length = memfsHeaders[i].length;
 		rootNodes[i].inode = i;
-		ootNodes[i].flags = FS_FILE;
+		rootNodes[i].flags = FS_FILE;
 		rootNodes[i].read = &memfs_read;
 		rootNodes[i].write = 0;
 		rootNodes[i].readdir = 0;

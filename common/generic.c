@@ -60,10 +60,6 @@ void printDec(uint32 num)
 {
 	display_printDec(num);
 }
-void clear()
-{
-	display_clear();
-}
 
 //Todo: Write to file
 void log(char* s)
