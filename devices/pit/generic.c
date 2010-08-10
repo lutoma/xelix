@@ -41,5 +41,5 @@ void pit_init(uint32 frequency)
 
 uint32 pit_getTickNum()
 {
-  return tick;
+	return tick;
 }

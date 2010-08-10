@@ -12,24 +12,10 @@
 
 void checkIntLenghts();
 
-void checkIntLenghts()
-{
-	log("Checking length of uint8... ");
-	ASSERT(sizeof(uint8) == 1);
-	log("Right\n");
-	
-	log("Checking length of uint16... ");
-	ASSERT(sizeof(uint16) == 2);
-	log("Right\n");
-	
-	log("Checking length of uint32... ");
-	ASSERT(sizeof(uint32) == 4);
-	log("Right\n");
-}
 
-void kmain(struct multiboot *mboot_ptr)
+void kmain(multibootHeader_t *mboot_ptr)
 {
-
+	// check that our initrd was loaded by the bootloader and determine the addresses.
 	ASSERT(mboot_ptr->mods_count > 0);
 	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
 	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
@@ -40,13 +26,13 @@ void kmain(struct multiboot *mboot_ptr)
 	display_init();
 	
 	display_setColor(0x0f);
-	print("															  \n");
-	print("												 decore	 \n");
-	print("															  \n");
+	print("\n");
+	print("                                   Xelix\n");
+	print("\n");
 	display_setColor(0x07);
 	
 	ASSERT(mboot_ptr->mods_count > 0); // If mods_count < 1, no initrd is loaded -> error.
-
+	
 	
 	log("Initialized Display.\n");
 	checkIntLenghts();
@@ -63,8 +49,10 @@ void kmain(struct multiboot *mboot_ptr)
 	keyboard_init();
 	log("Initialized keyboard\n");
 	
-	log("Decore is up.\n");
-
+	display_setColor(0x0f);
+	log("Xelix is up.\n");
+	display_setColor(0x07);
+	
 	log("Reading Initrd...\n");
 	//setLogLevel(0);
 	log("Listing files of initrd");
@@ -92,7 +80,7 @@ void kmain(struct multiboot *mboot_ptr)
 			for (j = 0; j < sz; j++)
 				if(j < fsnode->length -1)
 					display_printChar(buf[j]);
-
+			
 			print("\"\n");
 		}
 		i++;
@@ -117,4 +105,20 @@ void kmain(struct multiboot *mboot_ptr)
 	{
 		
 	}
+}
+
+
+void checkIntLenghts()
+{
+	log("Checking length of uint8... ");
+	ASSERT(sizeof(uint8) == 1);
+	log("Right\n");
+	
+	log("Checking length of uint16... ");
+	ASSERT(sizeof(uint16) == 2);
+	log("Right\n");
+	
+	log("Checking length of uint32... ");
+	ASSERT(sizeof(uint32) == 4);
+	log("Right\n");
 }
