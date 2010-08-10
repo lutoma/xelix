@@ -58,7 +58,7 @@ for f in hfiles + cfiles:
 		m = re.search("#include <(.+)>", line);
 		if m != None:
 			makefile.write(" " + m.group(1));
-			graphfile.write('"' + f + '" -> "' + m.group(1) + '"\n');
+			graphfile.write('"' + m.group(1) + '" -> "' + f + '"\n');
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");

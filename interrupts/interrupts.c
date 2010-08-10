@@ -20,9 +20,9 @@ void interrupt_callback(registers_t regs){
 	if (interruptHandlers[regs.int_no] == 0)
 	{
 		/*
-		log("received interrupt: ");
-		display_printHex(regs.int_no);
-		log("\n");
+		print("received interrupt: ");
+		printHex(regs.int_no);
+		print("\n");
 		*/
 	}
 	else

@@ -1,22 +1,21 @@
 #include <devices/pit/interface.h>
 #include <interrupts/interface.h>
-#include <devices/display/interface.h>
 
 uint32 tick = 0;
 
 static void timerCallback(registers_t regs)
 {
 	tick++;
-	//display_printDec(tick % 50);
+	//printDec(tick % 50);
 	//log("Tick: ");
-	//display_logDec(tick);
+	//logDec(tick);
 	//log("\n");
 }
 
 void pit_init(uint32 frequency)
 {
 	log("Initializing PIT at ");
-	display_printDec(frequency);
+	printDec(frequency);
 	log("Hz.\n");
 	// Firstly, register our timer callback.
 	interrupt_registerHandler(IRQ0, &timerCallback);
@@ -36,11 +35,11 @@ void pit_init(uint32 frequency)
 	// Send the frequency divisor.
 	outb(0x40, l);
 	outb(0x40, h);
-	display_printDec(frequency);
+	printDec(frequency);
 }
 
 
 uint32 pit_getTickNum()
 {
-  return tick;
+	return tick;
 }

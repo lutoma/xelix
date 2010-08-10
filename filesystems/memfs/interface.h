@@ -6,15 +6,15 @@
 
 typedef struct
 {
-   uint32 fileCount; // The number of files in the ramdisk.
+	uint32 fileCount; // The number of files in the ramdisk.
 } memfsHeader_t;
 
 typedef struct
 {
-   uint8 magic;     // Magic number, for error checking.
-   sint8 name[64];  // Filename.
-   uint32 offset;   // Offset in the initrd that the file starts.
-   uint32 length;   // Length of the file.
+	uint8 magic;   // Magic number, for error checking.
+	sint8 name[64];// Filename.
+	uint32 offset; // Offset in the initrd that the file starts.
+	uint32 length; // Length of the file.
 } memfsFileHeader_t;
 
 // Initialises the initial ramdisk. It gets passed the address of the multiboot module,

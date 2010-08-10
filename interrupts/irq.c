@@ -1,5 +1,4 @@
 #include <interrupts/interface.h>
-#include <devices/display/interface.h>
 
 // This gets called from our ASM irq handler stub.
 void irq_handler(registers_t regs)
