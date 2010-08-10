@@ -1,7 +1,7 @@
 #include <memory/paging/paging.h>
 #include <memory/paging/frames.h>
 #include <memory/kmalloc.h>
-#include <interrupts/isr.h>
+#include <interrupts/interface.h>
 
 /////////////////////////////
 // STRUCTURES
@@ -110,8 +110,7 @@ void paging_init()
 	}
 	
 	// register pagefault-Interrupt
-	
-	isr_registerHandler(0xE /*=14*/, &pageFaultHandler);
+	interrupt_registerHandler(0xE /*=14*/, &pageFaultHandler);
 	
 	
 	// set paging directory
@@ -182,7 +181,7 @@ void pageFaultHandler(registers_t regs)
 	uint8 instructionfetch = regs.err_code & 0x10; // pagefault during instruction set (if set -> during instruction fetch)
 	
 	print("pagefault at ");
-	display_printHex(faultingAddress);
+	printHex(faultingAddress);
 	print(": ");
 	if(notPresent) print("not present, ");
 	if(write) print("write, ");

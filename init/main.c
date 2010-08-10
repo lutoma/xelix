@@ -4,8 +4,7 @@
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
 #include <memory/interface.h>
-#include <interrupts/idt.h>
-#include <interrupts/irq.h>
+#include <interrupts/interface.h>
 #include <devices/pit/interface.h>
 #include <memory/kmalloc.h>
 #include <filesystems/interface.h>
@@ -31,7 +30,7 @@ void checkIntLenghts()
 void kmain(struct multiboot *mboot_ptr)
 {
 
-	 ASSERT(mboot_ptr->mods_count > 0);
+	ASSERT(mboot_ptr->mods_count > 0);
 	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
 	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
 	// Don't trample our module with placement accesses, please!
@@ -46,7 +45,8 @@ void kmain(struct multiboot *mboot_ptr)
 	print("															  \n");
 	display_setColor(0x07);
 	
-	
+	ASSERT(mboot_ptr->mods_count > 0); // If mods_count < 1, no initrd is loaded -> error.
+
 	
 	log("Initialized Display.\n");
 	checkIntLenghts();
@@ -54,8 +54,8 @@ void kmain(struct multiboot *mboot_ptr)
 	log("Initialized preprotected memory\n");
 	cpu_init();
 	log("Initialized CPU\n");
-	idt_init();
-	log("Initialized IDT (interrupt descriptor table)\n");
+	interrupts_init();
+	log("Initialized interrupts\n");
 	memory_init_postprotected();
 	log("Initialized postprotected memory\n");
 	pit_init(50); //50Hz
@@ -65,7 +65,7 @@ void kmain(struct multiboot *mboot_ptr)
 	
 	log("Decore is up.\n");
 
-	log("reading initrd");
+	log("Reading Initrd...\n");
 	//setLogLevel(0);
 	log("Listing files of initrd");
 	// Initialise the initial ramdisk, and set it as the filesystem root.
@@ -108,6 +108,8 @@ void kmain(struct multiboot *mboot_ptr)
 	*a = 1234;
 	display_printDec(*a);
 	
+	
+	display_printHex(sizeof(size_t));
 	
 	
 	while(1)

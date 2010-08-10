@@ -6,10 +6,8 @@ Compile
 
 Run (Qemu)
 ----------
-* `make image`
-* `make run`
-
-(There is a short version for `make && make image && make run`: `make test`.
+* `make runqemu`
+(If you want to use it with grub, use `make runqemufloppy`
 
 Run (GRUB)
 ----------
