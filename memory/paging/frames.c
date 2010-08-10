@@ -1,7 +1,6 @@
 #include <memory/paging/frames.h>
 #include <common/bitmap.h>
 #include <common/generic.h>
-#include <devices/display/interface.h>
 
 // organises 4 kb frames of the physical memory
 

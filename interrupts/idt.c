@@ -1,5 +1,4 @@
 #include <interrupts/idt.h>
-#include <devices/display/interface.h>
 
 // A struct describing an interrupt gate.
 typedef struct
