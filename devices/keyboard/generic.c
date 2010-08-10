@@ -1,5 +1,4 @@
 #include <devices/keyboard/interface.h>
-#include <devices/display/interface.h>
 #include <interrupts/interface.h>
 
 
@@ -616,11 +615,11 @@ void handleScancode(uint8 code, uint8 code2)
 	/*else if( keymap[code + 0x80] == 0 )
 	{
 		print(" ");
-		display_printHex(code);
+		printHex(code);
 		if (code2 != 0)
 		{
 			print("-");
-			display_printHex(code2);
+			printHex(code2);
 		}
 	}*/
 	

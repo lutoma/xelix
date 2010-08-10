@@ -1,5 +1,4 @@
 #include <memory/kmalloc.h>
-#include <devices/display/interface.h>
 
 // TODO: improve kmalloc  (heap?)
 
@@ -22,11 +21,11 @@ void* kmalloc(uint32 numbytes)
 	memoryPosition += numbytes;
 
 	/*
-	display_print("Allocated ");
-	display_printHex(numbytes);
-	display_print(" bytes at ");
-	display_printHex((int)ptr);
-	display_print(".\n");
+	print("Allocated ");
+	printHex(numbytes);
+	print(" bytes at ");
+	printHex((int)ptr);
+	print(".\n");
 	*/
 	
 	if(memoryPosition >= kernelMaxMemory)
@@ -56,11 +55,11 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 	}
 	
 	/*
-	display_print("Allocated ");
-	display_printHex(numbytes);
-	display_print(" bytes of aligned memory at ");
-	display_printHex((int)ptr);
-	display_print(".\n");
+	print("Allocated ");
+	printHex(numbytes);
+	print(" bytes of aligned memory at ");
+	printHex((int)ptr);
+	print(".\n");
 	*/
 	
 	if(memoryPosition >= kernelMaxMemory)
