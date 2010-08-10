@@ -21,13 +21,13 @@ void* kmalloc(uint32 numbytes)
 	void* ptr = (void *) memoryPosition;
 	memoryPosition += numbytes;
 
-	
+	/*
 	display_print("Allocated ");
 	display_printHex(numbytes);
 	display_print(" bytes at ");
 	display_printHex((int)ptr);
 	display_print(".\n");
-	
+	*/
 	
 	if(memoryPosition >= kernelMaxMemory)
 	{
