@@ -1,4 +1,5 @@
 #include <filesystems/memfs/interface.h>
+#include <common/string.h>
 #include <memory/kmalloc.h>
 
 memfsHeader_t *memfsHeader;     // The header.

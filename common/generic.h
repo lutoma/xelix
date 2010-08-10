@@ -61,13 +61,8 @@ void assert(int r);
 
 
 
-// STRING FUNCTIONS
+// MISC
 
-int strcmp(const char *s1, const char *s2);
-char *strcat(char *dest, const char *src);
-char *strcpy(char *dest, const char *src);
-size_t strlen(const char * str);
-char* substr(char* src, size_t start, size_t len);
 int (memcmp)(const void *s1, const void *s2, size_t n);
 
 
