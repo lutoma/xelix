@@ -23,7 +23,7 @@ static uint32 memfs_read(fsNode_t *node, uint32 offset, uint32 size, uint8 *buff
    return size;
 }
 
-// Read directory [aka get contents]
+// Read directory [aka get content]
 static struct dirent *memfs_readdir(fsNode_t *node, uint32 index)
 {
    if (node == rootNode && index == 0)

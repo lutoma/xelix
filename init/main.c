@@ -31,11 +31,10 @@ void checkIntLenghts()
 void kmain(struct multiboot *mboot_ptr)
 {
 
-	 ASSERT(mboot_ptr->mods_count > 0);
-   uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
-   uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
-   // Don't trample our module with placement accesses, please!
-   kmalloc_init(initrd_end);
+	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
+	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
+	// Don't trample our module with placement accesses, please!
+	kmalloc_init(initrd_end);
 
 	log_init();
 	display_init();
@@ -46,7 +45,8 @@ void kmain(struct multiboot *mboot_ptr)
 	print("                                               \n");
 	display_setColor(0x07);
 	
-	
+	ASSERT(mboot_ptr->mods_count > 0); // If mods_count < 1, no initrd is loaded -> error.
+
 	
 	log("Initialized Display.\n");
 	checkIntLenghts();
@@ -65,7 +65,7 @@ void kmain(struct multiboot *mboot_ptr)
 	
 	log("Decore is up.\n");
 
-	log("reading initrd");
+	log("Reading Initrd...\n");
 	//setLogLevel(0);
    // Initialise the initial ramdisk, and set it as the filesystem root.
    fsRoot = memfs_init(initrd_location);

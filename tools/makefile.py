@@ -100,6 +100,7 @@ floppy.img: kernel.bin initrd.img
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
 	sudo cp kernel.bin mount/kernel
+	sudo cp initrd.img mount/initrd
 	sudo umount mount
 	sudo losetup -d /dev/loop0
 	- rm -rf mount
