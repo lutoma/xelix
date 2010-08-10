@@ -11,6 +11,7 @@
 #include <filesystems/memfs/interface.h>
 
 void checkIntLenghts();
+void readInitrd(uint32 initrd_location);
 
 void checkIntLenghts()
 {
@@ -25,6 +26,43 @@ void checkIntLenghts()
 	log("Checking length of uint32... ");
 	ASSERT(sizeof(uint32) == 4);
 	log("Right\n");
+}
+
+void readInitrd(uint32 initrd_location)
+{
+	// Initialise the initial ramdisk, and set it as the filesystem root.
+	fsRoot = memfs_init(initrd_location);
+
+	// list the contents of /
+	int i = 0;
+	struct dirent *node = 0;
+	while ( (node = readdirFs(fsRoot, i)) != 0)
+	{
+		print("Found file ");
+		print(node->name);
+		fsNode_t *fsnode = finddirFs(fsRoot, node->name);
+		if ((fsnode->flags&0x7) == FS_DIRECTORY)
+			print("\n	 (directory)\n");
+		else
+		{
+			char* ext = substr(node->name, strlen(node->name) -4, 4);
+			if(strcmp(ext, ".bin"))
+			{
+				print("\n	  contents: \"");
+				char buf[256];
+				uint32 sz = readFs(fsnode, 0, 256, buf);
+				int j;
+				for (j = 0; j < sz; j++)
+					if(j < fsnode->length -1)
+						display_printChar(buf[j]);
+				print("\"");
+			} else {
+				print("\n	 Not showing contents of binary file");
+			}
+			print("\n");
+		}
+		i++;
+	}
 }
 
 void kmain(struct multiboot *mboot_ptr)
@@ -66,47 +104,9 @@ void kmain(struct multiboot *mboot_ptr)
 	log("Decore is up.\n");
 
 	log("Reading Initrd...\n");
-	//setLogLevel(0);
-	log("Listing files of initrd");
-	// Initialise the initial ramdisk, and set it as the filesystem root.
-	fsRoot = memfs_init(initrd_location);
-
-	// list the contents of /
-	int i = 0;
-	struct dirent *node = 0;
-	while ( (node = readdirFs(fsRoot, i)) != 0)
-	{
-		//if(strcmp(node->name, "helloworld.bin") ==0)
-		//	continue;
-		print("Found file ");
-		print(node->name);
-		fsNode_t *fsnode = finddirFs(fsRoot, node->name);
-		if ((fsnode->flags&0x7) == FS_DIRECTORY)
-			print("\n	 (directory)\n");
-		else
-		{
-			print("\n	  contents: \"");
-			char buf[256];
-			uint32 sz = readFs(fsnode, 0, 256, buf);
-			int j;
-			for (j = 0; j < sz; j++)
-				if(j < fsnode->length -1)
-					display_printChar(buf[j]);
-
-			print("\"\n");
-		}
-		i++;
-	}
-
+	readInitrd(initrd_location);
 	print("finished listing files\n");
 
-
-	// trigger page fault!
-	
-	uint32* a;
-	a = 1024*1024*1024; // 4gb
-	*a = 1234;
-	display_printDec(*a);
 	
 	
 	
