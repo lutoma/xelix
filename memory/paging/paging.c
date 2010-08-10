@@ -1,7 +1,7 @@
 #include <memory/paging/paging.h>
 #include <memory/paging/frames.h>
 #include <memory/kmalloc.h>
-#include <interrupts/isr.h>
+#include <interrupts/interface.h>
 
 /////////////////////////////
 // STRUCTURES
@@ -110,8 +110,7 @@ void paging_init()
 	}
 	
 	// register pagefault-Interrupt
-	
-	isr_registerHandler(0xE /*=14*/, &pageFaultHandler);
+	interrupt_registerHandler(0xE /*=14*/, &pageFaultHandler);
 	
 	
 	// set paging directory

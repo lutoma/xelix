@@ -1,6 +1,6 @@
 #include <devices/keyboard/interface.h>
 #include <devices/display/interface.h>
-#include <interrupts/irq.h>
+#include <interrupts/interface.h>
 
 
 char keymap[256] = {
@@ -549,7 +549,7 @@ void keyboard_init()
 	modifiers.alt = 0;
 	modifiers.super = 0;
 	
-	irq_registerHandler(IRQ1, &handleIrq);
+	interrupt_registerHandler(IRQ1, &handleIrq);
 	keyboard_leaveFocus();
 }
 

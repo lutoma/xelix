@@ -4,8 +4,7 @@
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
 #include <memory/interface.h>
-#include <interrupts/idt.h>
-#include <interrupts/irq.h>
+#include <interrupts/interface.h>
 #include <devices/pit/interface.h>
 #include <memory/kmalloc.h>
 #include <filesystems/interface.h>
@@ -54,8 +53,8 @@ void kmain(struct multiboot *mboot_ptr)
 	log("Initialized preprotected memory\n");
 	cpu_init();
 	log("Initialized CPU\n");
-	idt_init();
-	log("Initialized IDT (interrupt descriptor table)\n");
+	interrupts_init();
+	log("Initialized interrupts\n");
 	memory_init_postprotected();
 	log("Initialized postprotected memory\n");
 	pit_init(50); //50Hz
