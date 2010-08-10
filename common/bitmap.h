@@ -8,7 +8,7 @@
 
 typedef struct {
 	uint32 numbits;
-	uint8* bits; // an array large enough for numbits to fit in. Might (if numbits%8!=0) have some spare bits at the end
+	uint32* bits; // an array large enough for numbits to fit in. Might (if numbits%8!=0) have some spare bits at the end
 } bitmap_t;
 
 
@@ -26,5 +26,8 @@ void bitmap_clear(bitmap_t* bitmap, uint32 bitnum);
 
 // clears every bit to 0
 void bitmap_clearall(bitmap_t* bitmap);
+
+// finds the first bit set to 0    returns 0 if no cleared bit found (0 is also returned if the first bit is cleared)
+uint32 bitmap_findFirstClearedBit(bitmap_t* bitmap);
 
 #endif

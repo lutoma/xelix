@@ -4,8 +4,7 @@
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
 #include <memory/interface.h>
-#include <interrupts/idt.h>
-#include <interrupts/irq.h>
+#include <interrupts/interface.h>
 #include <devices/pit/interface.h>
 #include <memory/kmalloc.h>
 #include <filesystems/interface.h>
@@ -31,6 +30,7 @@ void checkIntLenghts()
 void kmain(struct multiboot *mboot_ptr)
 {
 
+	ASSERT(mboot_ptr->mods_count > 0);
 	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
 	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
 	// Don't trample our module with placement accesses, please!
@@ -40,9 +40,9 @@ void kmain(struct multiboot *mboot_ptr)
 	display_init();
 	
 	display_setColor(0x0f);
-	print("                                               \n");
-	print("                                     decore    \n");
-	print("                                               \n");
+	print("															  \n");
+	print("												 decore	 \n");
+	print("															  \n");
 	display_setColor(0x07);
 	
 	ASSERT(mboot_ptr->mods_count > 0); // If mods_count < 1, no initrd is loaded -> error.
@@ -54,8 +54,8 @@ void kmain(struct multiboot *mboot_ptr)
 	log("Initialized preprotected memory\n");
 	cpu_init();
 	log("Initialized CPU\n");
-	idt_init();
-	log("Initialized IDT (interrupt descriptor table)\n");
+	interrupts_init();
+	log("Initialized interrupts\n");
 	memory_init_postprotected();
 	log("Initialized postprotected memory\n");
 	pit_init(50); //50Hz
@@ -67,8 +67,9 @@ void kmain(struct multiboot *mboot_ptr)
 
 	log("Reading Initrd...\n");
 	//setLogLevel(0);
-   // Initialise the initial ramdisk, and set it as the filesystem root.
-   fsRoot = memfs_init(initrd_location);
+	log("Listing files of initrd");
+	// Initialise the initial ramdisk, and set it as the filesystem root.
+	fsRoot = memfs_init(initrd_location);
 
 	// list the contents of /
 	int i = 0;
@@ -81,10 +82,10 @@ void kmain(struct multiboot *mboot_ptr)
 		print(node->name);
 		fsNode_t *fsnode = finddirFs(fsRoot, node->name);
 		if ((fsnode->flags&0x7) == FS_DIRECTORY)
-			print("\n    (directory)\n");
+			print("\n	 (directory)\n");
 		else
 		{
-			print("\n     contents: \"");
+			print("\n	  contents: \"");
 			char buf[256];
 			uint32 sz = readFs(fsnode, 0, 256, buf);
 			int j;

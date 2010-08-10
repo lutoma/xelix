@@ -2,24 +2,24 @@
 #include <devices/display/interface.h>
 
 // A struct describing an interrupt gate.
-struct idt_entry_struct
+typedef struct
 {
-	uint16 base_lo;				 // The lower 16 bits of the address to jump to when this interrupt fires.
-	uint16 sel;					  // Kernel segment selector.
-	uint8  always0;				 // This must always be zero.
-	uint8  flags;					// More flags. See documentation.
-	uint16 base_hi;				 // The upper 16 bits of the address to jump to.
-} __attribute__((packed));
-typedef struct idt_entry_struct idt_entry_t;
+	uint16 base_lo;	// The lower 16 bits of the address to jump to when this interrupt fires.
+	uint16 sel;		// Kernel segment selector.
+	uint8  always0;	// This must always be zero.
+	uint8  flags;	// More flags. See documentation.
+	uint16 base_hi;	// The upper 16 bits of the address to jump to.
+} __attribute__((packed))
+idtEntry_t;
 
 // A struct describing a pointer to an array of interrupt handlers.
 // This is in a format suitable for giving to 'lidt'.
-struct idt_ptr_struct
+typedef struct
 {
 	uint16 limit;
-	uint32 base;					 // The address of the first element in our idt_entry_t array.
-} __attribute__((packed));
-typedef struct idt_ptr_struct idt_ptr_t;
+	uint32 base; // The address of the first element in our idt_entry_t array.
+} __attribute__((packed))
+idtPtr_t;
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
 extern void isr0 ();
@@ -74,8 +74,8 @@ extern void irq14();
 extern void irq15();
 
 
-idt_entry_t idt_entries[256];
-idt_ptr_t	idt_ptr;
+idtEntry_t idtEntries[256];
+idtPtr_t idtPtr;
 
 extern void idt_flush(uint32);
 static void setGate(uint8,uint32,uint16,uint8);
@@ -83,10 +83,10 @@ static void setGate(uint8,uint32,uint16,uint8);
 void idt_init()
 {
 	asm("sti"); // Enable interrupts. Usally a good idea if you want to use them...
-	idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
-	idt_ptr.base  = (uint32)&idt_entries;
+	idtPtr.limit = sizeof(idtEntry_t) * 256 -1;
+	idtPtr.base  = (uint32)&idtEntries;
 
-	memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
+	memset(&idtEntries, 0, sizeof(idtEntry_t)*256);
 
 
 	// Remap the irq table.
@@ -154,17 +154,17 @@ void idt_init()
 	setGate(46, (uint32)irq14 , 0x08, 0x8E);
 	setGate(47, (uint32)irq15 , 0x08, 0x8E);
 
-	idt_flush((uint32)&idt_ptr);
+	idt_flush((uint32)&idtPtr);
 }
 
 static void setGate(uint8 num, uint32 base, uint16 sel, uint8 flags)
 {
-	idt_entries[num].base_lo = base & 0xFFFF;
-	idt_entries[num].base_hi = (base >> 16) & 0xFFFF;
+	idtEntries[num].base_lo = base & 0xFFFF;
+	idtEntries[num].base_hi = (base >> 16) & 0xFFFF;
 
-	idt_entries[num].sel     = sel;
-	idt_entries[num].always0 = 0;
+	idtEntries[num].sel     = sel;
+	idtEntries[num].always0 = 0;
 	// We must uncomment the OR below when we get to using user-mode.
 	// It sets the interrupt gate's privilege level to 3.
-	idt_entries[num].flags   = flags /* | 0x60 */;
+	idtEntries[num].flags   = flags /* | 0x60 */;
 }

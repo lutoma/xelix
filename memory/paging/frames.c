@@ -27,20 +27,16 @@ void frames_init()
 
 uint32  frames_allocateFrame()
 {
-	uint32 frameNum;
-	for(frameNum=0; 1; frameNum++)
+	uint32 frameNum = bitmap_findFirstClearedBit(usedFrames);
+	
+	if(frameNum == 0 && bitmap_get(usedFrames, 0))
 	{
-		if(bitmap_get(usedFrames, frameNum) == 0)
-		{
-			/*print("Allocating frame number ");
-			display_printDec(frameNum);
-			print("\n");*/
-			bitmap_set(usedFrames, frameNum);
-			return frameNum;
-		}
+		print("Could not find free frame to allocate! Out of memory!\n");
 	}
-	print("Could not find free frame to allocate! Out of memory!\n");
-	return 0;
+	
+	bitmap_set(usedFrames, frameNum);
+	
+	return frameNum;
 }
 
 void frames_freeFrame(uint32 frameNum)

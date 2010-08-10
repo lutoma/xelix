@@ -6,7 +6,14 @@ import re;
 
 makefile = open("Makefile", "w");
 
-makefile.write("export LANG=C");
+makefile.write("""
+export LANG=C
+
+# just issuing make will compile everything
+all: kernel.bin initrd.img
+
+\n""");
+
 
 # visualisation of includes! (open eg. with kgraphviewer)
 
@@ -36,7 +43,7 @@ asmfiles.sort();
 
 
 makefile.write("# kernel binary\n");
-makefile.write("kernel.bin: ");
+makefile.write("kernel.bin:");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
@@ -55,7 +62,7 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf kernel.bin mount floppy.img initrd.img");
+makefile.write("clean:\n\trm -rf kernel.bin mount initrd.img floppy.img");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
@@ -72,22 +79,12 @@ makefile.write("""\n\n
 	nasm -f elf -o $@ $<
 
 
+# initrd image
 initrd.img: tools/makeinitrd
 	tools/makeinitrd tools/test.txt test.txt tools/helloworld helloworld.bin
-
 tools/makeinitrd: tools/makeinitrd.c
 	gcc -o tools/makeinitrd tools/makeinitrd.c
 
-
-run: floppy.img
-	- rm /var/qemu.log
-	# qemu -initrd doesn't work as it should..
-	qemu -d  cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
-
-runvbox: floppy.img
-	VBoxSDL -fda floppy.img --startvm Xenic
-
-test: floppy.img run
 
 makefile:
 	tools/makefile.py
@@ -104,6 +101,24 @@ floppy.img: kernel.bin initrd.img
 	sudo umount mount
 	sudo losetup -d /dev/loop0
 	- rm -rf mount
+
+
+
+# running the kernel
+
+
+
+runqemufloppy: floppy.img
+	- rm /var/qemu.log
+	# qemu -initrd doesn't work as it should.. (more precise, please!)
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+
+runqemu: initrd.img kernel.bin
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
+
+runvbox: floppy.img
+	VBoxSDL -fda floppy.img --startvm Xenic
+
 
 
 
