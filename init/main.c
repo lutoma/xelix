@@ -9,10 +9,11 @@
 #include <memory/kmalloc.h>
 #include <filesystems/interface.h>
 #include <filesystems/memfs/interface.h>
+#include <devices/pit/interface.h>
 
 void checkIntLenghts();
 void readInitrd(uint32 initrd_location);
-
+void calculateFibonacci();
 
 void readInitrd(uint32 initrd_location)
 {
@@ -51,6 +52,30 @@ void readInitrd(uint32 initrd_location)
 	}
 }
 
+void calculateFibonacci()
+{
+	uint32 starttick = pit_getTickNum();
+	uint32 a = 0;
+	uint32 b = 1;
+	uint32 c;
+	int i;
+	printDec(0);
+	for(i = 0; i < 100; i++)
+	{
+		c = b;
+		b = a;
+		a = c + b;
+		print("\n");
+		printDec(a);
+	}
+	
+	uint32 endtick = pit_getTickNum();
+	float cs = (endtick - starttick) /50;
+	print("\nCalculation took ");
+	printDec(cs);
+	print(" Seconds...");
+}
+
 void kmain(multibootHeader_t *mboot_ptr)
 {
 	// check that our initrd was loaded by the bootloader and determine the addresses.
@@ -87,18 +112,15 @@ void kmain(multibootHeader_t *mboot_ptr)
 	keyboard_init();
 	log("Initialized keyboard\n");
 	
-	display_setColor(0x0f);
-	log("Xelix is up.\n");
-	display_setColor(0x07);
-	
 	log("Reading Initrd...\n");
 	readInitrd(initrd_location);
 	print("finished listing files\n");
 
-	
-	
-	display_printHex(sizeof(size_t));
-	
+	display_setColor(0x0f);
+	log("Xelix is up.\n");
+	display_setColor(0x07);	
+
+	calculateFibonacci(); //Just a speed test
 	
 	while(1)
 
