@@ -109,6 +109,8 @@ void kmain(struct multiboot *mboot_ptr)
 	display_printDec(*a);
 	
 	
+	display_printHex(sizeof(size_t));
+	
 	
 	while(1)
 

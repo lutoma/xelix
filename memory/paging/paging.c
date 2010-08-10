@@ -181,7 +181,7 @@ void pageFaultHandler(registers_t regs)
 	uint8 instructionfetch = regs.err_code & 0x10; // pagefault during instruction set (if set -> during instruction fetch)
 	
 	print("pagefault at ");
-	display_printHex(faultingAddress);
+	printHex(faultingAddress);
 	print(": ");
 	if(notPresent) print("not present, ");
 	if(write) print("write, ");

@@ -3,7 +3,7 @@
 #include <devices/display/interface.h>
 
 int logsEnabled;
-
+char* kernellog;
 
 void memset(void* ptr, uint8 fill, uint32 size)
 {
@@ -36,7 +36,7 @@ void outb(uint16 port, uint8 value)
 }
 void outw(uint16 port, uint16 value)
 {
-	 asm ("outw %1, %0" : : "dN" (value), "a" (port)); // TODO port and value need to be swapped
+	 asm ("outw %1, %0" : : "dN" (value), "a" (port));
 }
 
 uint8 inb(uint16 port)
@@ -46,24 +46,28 @@ uint8 inb(uint16 port)
 	return ret;
 }
 
-void printf(char* s)
-{
-  print(s);
-}
+
 void print(char* s)
 {
-  display_print(s);
+	display_print(s);
 }
-
+void printHex(uint32 num)
+{
+	display_printHex(num);
+}
+void printDec(uint32 num)
+{
+	display_printDec(num);
+}
 void clear()
 {
-  display_clear();
+	display_clear();
 }
 
 //Todo: Write to file
 void log(char* s)
 {
-  //kernellog = strcat(kernellog, s); // doesn't work, kills the function. worked before christoph added his memory stuff ;)
+  kernellog = strcat(kernellog, s); // doesn't work, kills the function. worked before christoph added his memory stuff ;)
   if(logsEnabled) print(s);
   //if(addn) display_print("\n");
 }
