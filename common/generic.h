@@ -17,6 +17,7 @@ char* kernellog;
 #define wsize sizeof(word)
 #define wmask (wsize - 1)
 
+#define WARN(msg) warn(msg, __FILE__, __LINE__);
 #define PANIC(msg) panic(msg, __FILE__, __LINE__, 0);
 #define ASSERT(b) ((b) ? (void)0 : panic(#b, __FILE__, __LINE__, 1))
 

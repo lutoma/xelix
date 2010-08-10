@@ -31,7 +31,7 @@ void* kmalloc(uint32 numbytes)
 	
 	if(memoryPosition >= kernelMaxMemory)
 	{
-		print("\nKMALLOC: OUT OF KERNEL MEMORY!!\n");
+		PANIC("Out of kernel memory");
 	}
 	
 	return ptr;
@@ -65,7 +65,7 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 	
 	if(memoryPosition >= kernelMaxMemory)
 	{
-		print("\nKMALLOC_aligned: OUT OF KERNEL MEMORY!!\n");
+		PANIC("Out of kernel memory");
 	}
 	
 	return ptr;

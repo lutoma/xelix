@@ -73,7 +73,7 @@ makefile.write("""\n\n
 
 
 initrd.img: tools/makeinitrd
-	tools/makeinitrd # paramters to initrd here!!!
+	tools/makeinitrd tools/test.txt test.txt tools/helloworld helloworld.bin
 
 tools/makeinitrd: tools/makeinitrd.c
 	gcc -o tools/makeinitrd tools/makeinitrd.c
