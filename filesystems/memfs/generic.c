@@ -1,6 +1,5 @@
 #include <filesystems/memfs/interface.h>
 #include <memory/kmalloc.h>
-#include <common/memcpy.h>
 
 memfsHeader_t *memfsHeader;     // The header.
 memfsFileHeader_t *memfsHeaders; // The list of file headers.

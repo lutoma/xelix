@@ -1,6 +1,5 @@
 #include <common/generic.h>
 #include <memory/kmalloc.h>
-#include <common/memcpy.h>
 #include <devices/display/interface.h>
 
 int logsEnabled;
@@ -13,6 +12,22 @@ void memset(void* ptr, uint8 fill, uint32 size)
 	for(; p < max; p++)
 		*p = fill;
 }
+
+void memcpy(void* dest, void* src, uint32 size)
+{
+	uint8* from = (uint8*) src;
+	uint8* to = (uint8*) dest;
+	while(size > 0)
+	{
+		*to = *from;
+		
+		size--;
+		from++;
+		to++;
+	}
+}
+
+
 
 // Write a byte out to the specified port.
 void outb(uint16 port, uint8 value)
