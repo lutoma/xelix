@@ -21,13 +21,13 @@ void* kmalloc(uint32 numbytes)
 	void* ptr = (void *) memoryPosition;
 	memoryPosition += numbytes;
 
-	/*
+	
 	display_print("Allocated ");
 	display_printHex(numbytes);
 	display_print(" bytes at ");
 	display_printHex((int)ptr);
 	display_print(".\n");
-	*/
+	
 	
 	if(memoryPosition >= kernelMaxMemory)
 	{
@@ -73,5 +73,5 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 
 void kmalloc_init(uint32 start)
 {
-	memoryPosition = (uint32)&start;
+	memoryPosition = (uint32)start;
 }
