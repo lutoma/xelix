@@ -6,7 +6,13 @@ import re;
 
 makefile = open("Makefile", "w");
 
-makefile.write("export LANG=C");
+makefile.write("""
+export LANG=C
+
+all: kernel.bin initrd.img
+
+\n""");
+
 
 # visualisation of includes! (open eg. with kgraphviewer)
 
@@ -36,7 +42,7 @@ asmfiles.sort();
 
 
 makefile.write("# kernel binary\n");
-makefile.write("kernel.bin: ");
+makefile.write("kernel.bin:");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
@@ -55,7 +61,7 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf kernel.bin mount floppy.img");
+makefile.write("clean:\n\trm -rf kernel.bin mount initrd.img floppy.img");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
