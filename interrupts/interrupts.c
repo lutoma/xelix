@@ -16,7 +16,24 @@ void interrupts_init()
 	memset(interruptHandlers, 0, 256*sizeof(interruptHandler_t));
 }
 
-void interrupt_callback(registers_t regs){
+void interrupt_callback(registers_t regs)
+{
+	static int ininterrupt = 0;
+	
+	
+	if(ininterrupt)
+	{
+		
+		// double fault!!!
+		print("double fault!!!\n");
+		
+		while(1)
+		{
+		}
+	}
+	
+	ininterrupt = 1;
+	
 	if (interruptHandlers[regs.int_no] == 0)
 	{
 		/*
@@ -30,6 +47,8 @@ void interrupt_callback(registers_t regs){
 		interruptHandler_t handler = interruptHandlers[regs.int_no];
 		handler(regs);
 	}
+	
+	ininterrupt = 0;
 
 }
 
