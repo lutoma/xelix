@@ -33,6 +33,8 @@ uint16* wrapAroundBuffer(uint16* pos);
 // copies the buffer to screen (starting at screenPos)
 void copyBufferToScreen();
 
+void updateCursorPosition();
+
 
 void display_init()
 {
@@ -132,6 +134,7 @@ void display_print(char* s)
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
+	updateCursorPosition();
 }
 
 void printChar(char c)
@@ -161,7 +164,7 @@ void printChar(char c)
 		{
 			*oldCursorPos = color<<8 | ' ';
 			oldCursorPos++;
-			oldCursorPos == wrapAroundBuffer(oldCursorPos);
+			oldCursorPos = wrapAroundBuffer(oldCursorPos);
 		}
 	}
 	else
@@ -197,16 +200,27 @@ void copyBufferToScreen()
 		count--;
 	}
 }
+
+void updateCursorPosition()
+{
+	// set cursor Position
 	
-	// set cursor
-	/*
-	uint16 cursorLocation = cursorPos - screenPos; // relative position of cursor
+	uint16* screenVirt = screenPos; // the screenPos mapped so that it is always before cursorPos, even if it is infront of the buffer
+	if(screenVirt > cursorPos)
+		screenVirt -= bufferEnd-buffer;
+	
+	uint16 cursorLocation = columns*rows; // relative position of cursor, initialise to outside of screen -> cursor not visible
+	
+	if(cursorPos-screenVirt < columns*rows)
+	{ // cursor is in visible screen
+		cursorLocation = cursorPos-screenVirt;
+	}
+	
 	outb(0x3D4, 14);                  // Tell the VGA board we are setting the high cursor byte.
 	outb(0x3D5, cursorLocation >> 8); // Send the high cursor byte.
 	outb(0x3D4, 15);                  // Tell the VGA board we are setting the low cursor byte.
 	outb(0x3D5, cursorLocation);      // Send the low cursor byte.
-	*/
-
+}
 
 
 void display_scrollUp()
@@ -215,6 +229,7 @@ void display_scrollUp()
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
+	updateCursorPosition();
 }
 void display_scrollDown()
 {
@@ -222,6 +237,7 @@ void display_scrollDown()
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
+	updateCursorPosition();
 }
 
 
