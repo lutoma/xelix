@@ -9,5 +9,12 @@ void display_print(char* s);
 void display_printDec(uint32 num);
 void display_printHex(uint32 num);
 void display_setColor(uint8 newcolor);
-void display_clear();
+
+// scrolling in the buffer
+void display_scrollUp();
+void display_scrollDown();
+void display_scrollEnd(); // scrolls down completely
+
+
+
 #endif

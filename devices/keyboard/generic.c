@@ -1,5 +1,6 @@
 #include <devices/keyboard/interface.h>
 #include <interrupts/interface.h>
+#include <devices/display/interface.h>
 
 
 char keymap[256] = {
@@ -607,6 +608,11 @@ void handleScancode(uint8 code, uint8 code2) // if code is 0xe0 (escape sequence
 	if( code==0xe0 && code2==0xdb) // super release
 		modifiers.super=0;
 	
+	if( code==0xe0 && code2==0x49 ) // page up press
+		display_scrollUp();
+	if( code==0xe0 && code2==0x51 ) // page down press
+		display_scrollDown();
+	
 	if( keymap[code] != 0)
 	{
 		char c = keymap[code];
@@ -626,7 +632,7 @@ void handleScancode(uint8 code, uint8 code2) // if code is 0xe0 (escape sequence
 			print(s); // Print char
 		}
 	}
-	else if( keymap[code + 0x80] == 0 )
+	/*else if( keymap[code + 0x80] == 0 )
 	{
 		print(" ");
 		printHex(code);

@@ -180,9 +180,7 @@ inline uint16* wrapAroundBuffer(uint16* pos)
 
 void copyBufferToScreen()
 {
-	// copy contents to screen
-	
-	
+	// copy correct part of buffer to screen
 	uint16* from = screenPos;
 	uint16* to = videoMemory;
 	uint32 count = columns*rows;
@@ -193,24 +191,6 @@ void copyBufferToScreen()
 		from = wrapAroundBuffer(++from);
 		count--;
 	}
-	
-	
-	
-	
-	/*uint16* copyend = wrapAroundBuffer(screenPos + columns*rows -1);
-	if(copyend > screenPos)
-	{
-		memcpy(videoMemory, screenPos, columns*rows * 2); // 2 bytes per character! (uint16)
-	}
-	else
-	{
-		uint32 characterstobufferend = bufferEnd - screenPos;
-		memcpy(videoMemory, screenPos, characterstobufferend * 2);
-		memcpy(videoMemory+characterstobufferend, buffer, (copyend - buffer) * 2);
-	}
-	*/
-	
-	*videoMemory = color<<8 | 'P';
 }
 	
 	// set cursor
@@ -223,6 +203,21 @@ void copyBufferToScreen()
 	*/
 
 
+
+void display_scrollUp()
+{
+	screenPos -= columns;
+	screenPos = wrapAroundBuffer(screenPos);
+	
+	copyBufferToScreen();
+}
+void display_scrollDown()
+{
+	screenPos += columns;
+	screenPos = wrapAroundBuffer(screenPos);
+	
+	copyBufferToScreen();
+}
 
 
 
