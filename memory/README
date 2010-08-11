@@ -37,6 +37,8 @@ An interface for kernel-wide usage is exposed in kmalloc.h.
 
 Startup
 -------
+kmalloc_init()
+
 An interface is exposed in interface.h.
 The corresponding memory.c source file takes care of setting up the
 management systems mentioned above.
@@ -45,13 +47,14 @@ paging etc. needs the protected mode.
 Solution: memory_init_preprotected(), memory_init_postprotected();
 In our environment this is a non-problem as grub already set protected mode.
 
-STARTUP SEQUENCE IS SUBJECT TO CHANGE due to our experiences!
 
 
 Interface to other kernel systems
 ---------------------------------
 interface.h
-kmalloc.h <-- needs no initialisation to work!
+kmalloc.h
+
+paging/paging.h is used for processes (each of them has their own virtual address space)
 
 
 TODO
