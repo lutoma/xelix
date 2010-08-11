@@ -554,19 +554,33 @@ void keyboard_init()
 
 void handleIrq(registers_t regs)
 {
+	static uint8 waitingForEscapeSequence = 0;
+	
 	// read scancodes
 	uint8 code = inb(0x60);
-	uint8 code2 = 0;
-	if (code == 0xe0) // escape sequence
+	
+	if (code == 0xe0)
 	{
-		code2 = inb(0x60);
+		// escape sequence
+		waitingForEscapeSequence = 1;
 	}
-	
-	handleScancode(code, code2);
-	
+	else
+	{
+		if(waitingForEscapeSequence)
+		{
+			// this is the second scancode to the escape sequence
+			handleScancode(0xe0, code);
+			waitingForEscapeSequence = 0;
+		}
+		else
+		{
+			// normal scancode
+			handleScancode(code, 0);
+		}
+	}
 }
 
-void handleScancode(uint8 code, uint8 code2)
+void handleScancode(uint8 code, uint8 code2) // if code is 0xe0 (escape sequence), the second code is given
 {	
 	if( code==0x2a) // shift press
 		modifiers.shiftl=1;
@@ -612,7 +626,7 @@ void handleScancode(uint8 code, uint8 code2)
 			print(s); // Print char
 		}
 	}
-	/*else if( keymap[code + 0x80] == 0 )
+	else if( keymap[code + 0x80] == 0 )
 	{
 		print(" ");
 		printHex(code);
@@ -621,7 +635,7 @@ void handleScancode(uint8 code, uint8 code2)
 			print("-");
 			printHex(code2);
 		}
-	}*/
+	}
 	
 	/*if( code==0x32)
 		printModifiers();
