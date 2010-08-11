@@ -1,5 +1,6 @@
 #include <common/multiboot.h>
 #include <common/generic.h>
+#include <common/string.h>
 #include <devices/display/interface.h>
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
@@ -41,7 +42,12 @@ void readInitrd(uint32 initrd_location)
 				int j;
 				for (j = 0; j < sz; j++)
 					if(j < fsnode->length -1)
-						display_printChar(buf[j]);
+					{
+						char s[2];
+						s[0] = buf[j];
+						s[1] = '\0';
+						print(s);
+					}
 				print("\"");
 			} else {
 				print("\n	 Not showing contents of binary file");
@@ -78,15 +84,27 @@ void calculateFibonacci()
 
 void kmain(multibootHeader_t *mboot_ptr)
 {
+
+	
+	
+	memory_init_preprotected();
+	interrupts_init();
+	
+	
+	
 	// check that our initrd was loaded by the bootloader and determine the addresses.
 	ASSERT(mboot_ptr->mods_count > 0);
 	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
 	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
-	// Don't trample our module with placement accesses, please!
+	// Don't trample our module with placement accesses, please
 	kmalloc_init(initrd_end);
-
-	log_init();
+	
+	
 	display_init();
+	
+	
+	log_init();
+	
 	
 	display_setColor(0x0f);
 	print("\n");
@@ -94,16 +112,18 @@ void kmain(multibootHeader_t *mboot_ptr)
 	print("\n");
 	display_setColor(0x07);
 	
-	ASSERT(mboot_ptr->mods_count > 0); // If mods_count < 1, no initrd is loaded -> error.
 	
+	print("a");
 	
-	log("Initialized Display.\n");
-	checkIntLenghts();
-	memory_init_preprotected();
+
+	// needed before display_init!!!
 	log("Initialized preprotected memory\n");
+	log("Initialized Display.\n");
+	
+	
 	cpu_init();
 	log("Initialized CPU\n");
-	interrupts_init();
+	
 	log("Initialized interrupts\n");
 	memory_init_postprotected();
 	log("Initialized postprotected memory\n");
@@ -114,16 +134,17 @@ void kmain(multibootHeader_t *mboot_ptr)
 	
 	log("Reading Initrd...\n");
 	readInitrd(initrd_location);
+
 	print("finished listing files\n");
 
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
 
+
 	calculateFibonacci(); //Just a speed test
 	
 	while(1)
-
 	{
 		
 	}

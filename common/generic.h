@@ -42,8 +42,6 @@ void print(char* s);
 void printHex(uint32 num);
 void printDec(uint32 num);
 
-void clear();
-
 // KERNEL LOG
 void log(char* s);
 void logDec(uint32 num);
