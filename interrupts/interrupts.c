@@ -23,13 +23,8 @@ void interrupt_callback(registers_t regs)
 	
 	if(ininterrupt)
 	{
-		
 		// double fault!!!
-		print("double fault!!!\n");
-		
-		while(1)
-		{
-		}
+		PANIC("double fault!!!\n");
 	}
 	
 	ininterrupt = 1;
