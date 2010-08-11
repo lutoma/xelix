@@ -1,4 +1,5 @@
 #include <devices/floppy/interface.h>
+#include <memory/kmalloc.h>
 
 floppyDrive_t *drive0;
 floppyDrive_t *drive1;
@@ -9,7 +10,7 @@ void printDriveDetails(floppyDrive_t *drive);
 floppyDrive_t *detectDetails(int num)
 {
 	unsigned int c;
-	floppyDrive_t *thisDrive;
+	floppyDrive_t* thisDrive = kmalloc(sizeof(floppyDrive_t));
 	thisDrive = 0;
 	
 	ASSERT(num < 2 && num > -1); // Currently we don't support any more than two drives
