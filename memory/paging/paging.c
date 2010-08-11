@@ -197,6 +197,9 @@ void pageFaultHandler(registers_t regs)
 		// we can handle this pagefault by creating a new page
 		// at the moment, everything is in kernel mode
 		createPage(faultingAddress, KERNEL_MODE, READWRITE);
+		
+		// Flush the TLB (translation lookaside buffer) selectively for the new page created
+		asm ("invlpg %0" : : "m" (faultingAddress) );
 	}
 	else
 	{
