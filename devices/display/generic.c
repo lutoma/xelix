@@ -120,26 +120,18 @@ unsigned char newglyph[ 16 ] = 	{
 // the main print function which should always be used
 void display_print(char* s)
 {
-	uint16* oldCursorPos = cursorPos;
 	while(*s != '\0')
 	{
 		printChar(*(s++));
 	}
 	
+	// automatically set screenPos so the user sees the new content
 	screenPos = cursorPos;
 	screenPos = screenPos - (screenPos-buffer) % columns;
 	screenPos = screenPos - columns*(rows-1);
 	screenPos = wrapAroundBuffer(screenPos);
 	
-	
-	/*if((oldCursorPos - buffer) % columns + (cursorPos - oldCursorPos) < columns)
-	{
-		
-	} 
-	else
-	{*/
 	copyBufferToScreen();
-	//}
 }
 
 void printChar(char c)
@@ -222,10 +214,15 @@ void display_scrollDown()
 
 
 
+
 void display_setColor(uint8 newcolor)
 {
 	color = newcolor;
 }
+
+/*******************
+ * Print numbers
+ ******************/
 
 void display_printDec(uint32 num)
 {

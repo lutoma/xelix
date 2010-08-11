@@ -13,7 +13,6 @@ void display_setColor(uint8 newcolor);
 // scrolling in the buffer
 void display_scrollUp();
 void display_scrollDown();
-void display_scrollEnd(); // scrolls down completely
 
 
 

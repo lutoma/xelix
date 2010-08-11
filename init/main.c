@@ -38,7 +38,7 @@ void readInitrd(uint32 initrd_location)
 			{
 				print("\n	  contents: \"");
 				char buf[256];
-				uint32 sz = readFs(fsnode, 0, 256, buf);
+				uint32 sz = readFs(fsnode, 0, 256, (uint8*) buf);
 				int j;
 				for (j = 0; j < sz; j++)
 					if(j < fsnode->length -1)
@@ -86,9 +86,9 @@ void kmain(multibootHeader_t *mboot_ptr)
 {
 
 	
-	
-	memory_init_preprotected();
-	interrupts_init();
+	// descriptor tables have to be created first
+	memory_init_preprotected(); // gdt
+	interrupts_init(); // idt
 	
 	
 	
@@ -101,10 +101,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	
 	
 	display_init();
-	
-	
 	log_init();
-	
 	
 	display_setColor(0x0f);
 	print("\n");
@@ -113,18 +110,11 @@ void kmain(multibootHeader_t *mboot_ptr)
 	display_setColor(0x07);
 	
 	
-	print("a");
-	
-
-	// needed before display_init!!!
-	log("Initialized preprotected memory\n");
-	log("Initialized Display.\n");
-	
-	
+	log("Initialized preprotected memory\n"); // cheating. this already happened, but display wasn't up yet.
+	log("Initialized interrupts\n");
+	log("Initialized Display.\n"); 
 	cpu_init();
 	log("Initialized CPU\n");
-	
-	log("Initialized interrupts\n");
 	memory_init_postprotected();
 	log("Initialized postprotected memory\n");
 	pit_init(50); //50Hz

@@ -642,7 +642,7 @@ void handleScancode(uint8 code, uint8 code2) // if code is 0xe0 (escape sequence
 			printHex(code2);
 		}
 	}
-	
+	*/
 	/*if( code==0x32)
 		printModifiers();
 	*/
