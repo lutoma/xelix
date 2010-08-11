@@ -128,14 +128,8 @@ void kmain(multibootHeader_t *mboot_ptr)
 
 	print("finished listing files\n");
 
-	log("Detecting floppy drives...\n");
-	if(floppy_detect())
-	{
-		floppy_init();
-		log("Initialized floppy drives\n");
-	} else {
-		log("Didn't find any floppy drives\n");
-	}
+	log("Initialized floppy drives\n");
+	floppy_init();
 
 	display_setColor(0x0f);
 	log("Xelix is up.\n");

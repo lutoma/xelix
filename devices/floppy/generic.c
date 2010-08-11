@@ -1,66 +1,42 @@
 #include <devices/floppy/interface.h>
 #include <memory/kmalloc.h>
 
-floppyDrive_t *drive0;
-floppyDrive_t *drive1;
+floppyDrive_t drive0 = { .number = 0 }, drive1 = { .number = 1 };
 
-floppyDrive_t *detectDetails(int num);
-void printDriveDetails(floppyDrive_t *drive);
-
-floppyDrive_t *detectDetails(int num)
+static
+void floppy_parseInfo(uint8 info, floppyDrive_t *dest)
 {
-	unsigned int c;
-	floppyDrive_t* thisDrive = kmalloc(sizeof(floppyDrive_t));
-	thisDrive = 0;
-	
-	ASSERT(num < 2 && num > -1); // Currently we don't support any more than two drives
-	thisDrive->number = num;
-	outb(0x70, 0x10);
-	c = inb(0x71);
-
-	if(!num) c >>= 4;
-	else c &= 0xF;
-	switch(c)
+	switch (info)
 	{
-		case 0:
-			return 0; // No floppy drive here...
-
 		case 1:
-			thisDrive->size = 360;
-			thisDrive->inch = 525;
+			dest->size = 360;
+			dest->inch = 525;
 			break;
 
 		case 2:
-			thisDrive->size = 1200;
-			thisDrive->inch = 525;
+			dest->size = 1200;
+			dest->inch = 525;
 			break;
 
 		case 3:
-			thisDrive->size = 720;
-			thisDrive->inch = 350;
+			dest->size = 720;
+			dest->inch = 350;
 			break;
 
 		case 4:
-			thisDrive->size = 1440;
-			thisDrive->inch = 350;
+			dest->size = 1440;
+			dest->inch = 350;
 			break;
 
 		case 5:
-			thisDrive->size = 2880;
-			thisDrive->inch = 350;
+			dest->size = 2880;
+			dest->inch = 350;
 			break;
 	}
-	
-	return thisDrive;
 }
 
-unsigned int floppy_detect()
-{
-	outb(0x70, 0x10);
-	return inb(0x71); // 0 = no floppy devices, everything else: there is at least one. [see detectDetails]
-}
-
-void printDriveDetails(floppyDrive_t *drive)
+static
+void floppy_printDetails(floppyDrive_t *drive)
 {
   print("Floppy drive #");
   printDec(drive->number);
@@ -74,10 +50,12 @@ void printDriveDetails(floppyDrive_t *drive)
 
 void floppy_init()
 {
-	drive0 = detectDetails(0);
-	drive1 = detectDetails(1);
+	outb(0x70, 0x10);
+	uint8 c = inb(0x71);
 
-	printDriveDetails(drive0);
-	printDriveDetails(drive1);
+	floppy_parseInfo(c >> 4, &drive0);
+	floppy_parseInfo(c & 0xF, &drive1);
 
+	floppy_printDetails(&drive0);
+	floppy_printDetails(&drive1);
 }
