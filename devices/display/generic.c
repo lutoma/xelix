@@ -138,7 +138,7 @@ void printChar(char c)
 {
 	if(c == '\n')
 	{ // new line
-		cursorPos = cursorPos - (cursorPos-buffer) % columns + columns;
+		cursorPos = cursorPos - (cursorPos-buffer) % columns + columns; // advance to next line
 		cursorPos = wrapAroundBuffer(cursorPos);
 		// fill new line with blanks (we might be reusing part of the buffer)
 		uint16* ptr;
@@ -150,6 +150,19 @@ void printChar(char c)
 		cursorPos--;
 		cursorPos = wrapAroundBuffer(cursorPos);
 		*cursorPos = color<<8 | ' ';
+	}
+	else if(c== '\t')
+	{ // tab
+		uint16* oldCursorPos = cursorPos;
+		cursorPos = cursorPos - (cursorPos-buffer) % 4 + 4; // advance to next tabstop
+		cursorPos = wrapAroundBuffer(cursorPos);
+		// clear where the cursor advanced
+		while(oldCursorPos != cursorPos)
+		{
+			*oldCursorPos = color<<8 | ' ';
+			oldCursorPos++;
+			oldCursorPos == wrapAroundBuffer(oldCursorPos);
+		}
 	}
 	else
 	{

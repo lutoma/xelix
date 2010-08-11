@@ -19,7 +19,7 @@ char keymap[256] = {
  0 ,//0xc
  0 ,//0xd
 '\b',//0xe
- 0 ,//0xf
+'\t',//0xf
 'q',//0x10
 'w',//0x11
 'e',//0x12
@@ -632,7 +632,8 @@ void handleScancode(uint8 code, uint8 code2) // if code is 0xe0 (escape sequence
 			print(s); // Print char
 		}
 	}
-	/*else if( keymap[code + 0x80] == 0 )
+	/*
+	else if( keymap[code + 0x80] == 0 )
 	{
 		print(" ");
 		printHex(code);
