@@ -4,7 +4,7 @@
 floppyDrive_t drive0 = { .number = 0 }, drive1 = { .number = 1 };
 
 static
-void floppy_parseInfo(uint8 info, floppyDrive_t *dest)
+void parseInfo(uint8 info, floppyDrive_t *dest)
 {
 	switch (info)
 	{
@@ -36,7 +36,7 @@ void floppy_parseInfo(uint8 info, floppyDrive_t *dest)
 }
 
 static
-void floppy_printDetails(floppyDrive_t *drive)
+void printDetails(floppyDrive_t *drive)
 {
   print("Floppy drive #");
   printDec(drive->number);
@@ -53,9 +53,9 @@ void floppy_init()
 	outb(0x70, 0x10);
 	uint8 c = inb(0x71);
 
-	floppy_parseInfo(c >> 4, &drive0);
-	floppy_parseInfo(c & 0xF, &drive1);
+	parseInfo(c >> 4, &drive0);
+	parseInfo(c & 0xF, &drive1);
 
-	floppy_printDetails(&drive0);
-	floppy_printDetails(&drive1);
+	if(drive0.size) printDetails(&drive0);
+	if(drive1.size) printDetails(&drive1);
 }
