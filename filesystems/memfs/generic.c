@@ -2,14 +2,34 @@
 #include <common/string.h>
 #include <memory/kmalloc.h>
 
+
+// TYPES
+
+typedef struct
+{
+	uint32 fileCount; // The number of files in the ramdisk.
+} memfsHeader_t;
+
+typedef struct
+{
+	uint8 magic;   // Magic number, for error checking.
+	char name[64];// Filename.
+	uint32 offset; // Offset in the initrd that the file starts.
+	uint32 length; // Length of the file.
+} memfsFileHeader_t;
+
+ 
+// VARABLES
+
 memfsHeader_t *memfsHeader; // The header.
 memfsFileHeader_t *memfsHeaders; // The list of file headers.
 fsNode_t *rootNode; // Our root directory node.
 fsNode_t *devNode; // We also add a directory node for /dev, so we can mount devfs later on.
 fsNode_t *rootNodes; // List of file nodes.
 int rootNodeCount; // Number of file nodes.
-
 struct dirent dirent;
+
+// IMPLEMENTATION
 
 // Read single file
 static uint32 memfs_read(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer)
@@ -100,11 +120,11 @@ fsNode_t *memfs_init(uint32 location)
 		// of memory.
 		memfsHeaders[i].offset += location;
 		// Create a new file node.
-		strcpy(rootNodes[i].name, &memfsHeaders[i].name);
+		strcpy(rootNodes[i].name, memfsHeaders[i].name);
 		rootNodes[i].mask = rootNodes[i].uid = rootNodes[i].gid = 0;
 		rootNodes[i].length = memfsHeaders[i].length;
 		rootNodes[i].inode = i;
-		ootNodes[i].flags = FS_FILE;
+		rootNodes[i].flags = FS_FILE;
 		rootNodes[i].read = &memfs_read;
 		rootNodes[i].write = 0;
 		rootNodes[i].readdir = 0;
