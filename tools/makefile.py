@@ -113,6 +113,9 @@ runqemufloppy: floppy.img
 	# qemu -initrd doesn't work as it should.. (more precise, please!)
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
+runbochsfloppy: floppy.img
+	bochs -f bochsrc.txt -q
+
 runqemu: initrd.img kernel.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
 
