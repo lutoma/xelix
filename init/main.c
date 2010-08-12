@@ -11,6 +11,7 @@
 #include <filesystems/interface.h>
 #include <filesystems/memfs/interface.h>
 #include <devices/pit/interface.h>
+#include <devices/floppy/interface.h>
 
 void checkIntLenghts();
 void readInitrd(uint32 initrd_location);
@@ -127,12 +128,15 @@ void kmain(multibootHeader_t *mboot_ptr)
 
 	print("finished listing files\n");
 
+	log("Initialized floppy drives\n");
+	floppy_init();
+
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
 
 
-	calculateFibonacci(); //Just a speed test
+	//calculateFibonacci(); //Just a speed test
 	
 	while(1)
 	{
