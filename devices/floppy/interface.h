@@ -1,6 +1,5 @@
 #ifndef DEVICES_FLOPPY_INTERFACE_H
 #define DEVICES_FLOPPY_INTERFACE_H
-
 #include <common/generic.h>
 
 typedef struct floppyDrive

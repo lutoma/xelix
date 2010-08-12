@@ -35,8 +35,7 @@ void parseInfo(uint8 info, floppyDrive_t *dest)
 	}
 }
 
-static
-void printDetails(floppyDrive_t *drive)
+static void printDetails(floppyDrive_t *drive)
 {
   print("Floppy drive #");
   printDec(drive->number);
