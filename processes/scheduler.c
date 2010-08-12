@@ -21,7 +21,6 @@ uint32* schedule(uint32* esp)
 {
 	if(currentProcess == 0)
 	{
-		print("multiprocessing not enabled yet.");
 		return 0;
 	}
 	currentProcess->esp = esp;

@@ -25,24 +25,32 @@ switchcontext:
 	; give esp (pointing to the top (in x86 bottom in terms of hardware) of the stack so far) as a paramter (push it to stack according to cdecl calling convention)
 	mov eax, esp
 	push eax
-	;call schedule ; this causes an error
+	call schedule
+	; return value of schedule() is now in eax (cdecl calling convention)
 	
-	; extract the return value of schedule() (according to cdecl calling convention it is in eax) and thus set the stack pointer for the new process
+	; if the return value is 0, it means multiprocessing is not enabled yet -> don't change the stack
+	cmp eax, 0
+	je nomultiprocessing
+	
+	; set the stack pointer for the new process
 	mov esp, eax
+	
+quitinterrupt:
 	
 	; ack IRQ
 	mov al, 0x20
 	out 0x20, al
-	
-	; retrieve registers of new process
+	; retrieve registers of new process (or old process if nomultiprocessing as stack wasn't changed)
 	pop gs
 	pop fs
 	pop es
 	pop ds
 	popa
 	
-	
 	sti
 	; interrupt return, because of automatically pushed stuff in the new process' stack continues excecution at the point the new process was last pre-empted.
 	iret
-
+	
+nomultiprocessing:
+	pop eax ; we have to pop the parameter to schedule() (cdecl calling convention) so we geht the original stack
+	jmp quitinterrupt
