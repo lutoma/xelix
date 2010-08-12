@@ -7,13 +7,22 @@ uint32 maxPid = 0;
 
 void createProcess(char name[100], void function())
 {
+	print("create process ");
+	print(name);
+	print("\n");
 	process_t* p = kmalloc(sizeof(p));
 	
 	p->pid = ++maxPid;
 	p->parent = 0;
 	
+	
+
+	// this process gets its own virtual memory space
+	p->pageDirectory = paging_cloneCurrentDirectory();
+	
+	
 	// allocate space for the stack
-	p->esp = kmalloc(0x1000);
+	p->esp = kmalloc(0x1000); // 0xff100000
 	p->esp += 0x1000; // in x86, the stack grows downwards
 	
 	
@@ -41,6 +50,8 @@ void createProcess(char name[100], void function())
 	*--stack = 0x10;	// GS
 	
 	p->esp = stack;
+	
+	
 	
 	scheduler_addProcess(p);
 }

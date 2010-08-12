@@ -549,8 +549,8 @@ void keyboard_init()
 	modifiers.alt = 0;
 	modifiers.super = 0;
 	
-	interrupt_registerHandler(IRQ1, &handleIrq);
 	keyboard_leaveFocus();
+	interrupt_registerHandler(IRQ1, &handleIrq);
 }
 
 void handleIrq(registers_t regs)

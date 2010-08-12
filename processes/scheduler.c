@@ -33,7 +33,8 @@ uint32* schedule(uint32* esp)
 	
 	currentProcess = processes[currentProcessIndex];
 	
-	// TODO change virtual memory space
+	
+	paging_switchPageDirectory(currentProcess->pageDirectory);
 	
 	return currentProcess->esp;
 }

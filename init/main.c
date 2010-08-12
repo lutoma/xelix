@@ -61,6 +61,13 @@ void readInitrd(uint32 initrd_location)
 
 void printAlphabet()
 {
+	uint32* a = 0x1000*1024*4+2;
+	print("alphabet");
+	*a = 3141;
+	printDec(*a);
+	while(1)
+	{
+	}
 	char abc[] = "abcdefghijklmnopqrstuvwxyz";
 	while(1)
 	{
@@ -76,6 +83,16 @@ void printAlphabet()
 void calculateFibonacci()
 {
 	createProcess("alphabet", &printAlphabet); // we have to put it here, because otherwise it won't be executed as the irq0 switches to this task after it is added to the scheduler
+	
+	uint32* a = 0x1000*1024*4+2;
+	
+	//*a = 4567;
+	print("fibonacci");
+	printDec(*a);
+	
+	while(1)
+	{
+	}
 	while(1)
 	{
 		uint32 a = 0;
