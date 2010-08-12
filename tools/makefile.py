@@ -2,7 +2,7 @@
 import os;
 import re;
 
-# current working directory must be the main decore directory with the Makefile inside!
+# current working directory must be the main xelix directory with the Makefile inside!
 
 makefile = open("Makefile", "w");
 
@@ -119,8 +119,8 @@ runbochsfloppy: floppy.img
 runqemu: initrd.img kernel.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
 
-runvbox: floppy.img
-	VBoxSDL -fda floppy.img --startvm Xenic
+runvboxfloppy: floppy.img
+	VBoxSDL -fda floppy.img --startvm Xelix
 
 
 
