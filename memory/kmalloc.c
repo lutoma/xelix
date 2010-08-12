@@ -37,7 +37,7 @@ void* kmalloc(uint32 numbytes)
 }
 
 
-// FIXME: returning physical address only works correctly when paging is disabled.
+// FIXME: returning physical address only works because of identity paging the kernel heap.
 void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 {
 	// align to 4 kb (= 0x1000 bytes)
@@ -73,5 +73,5 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 void kmalloc_init(uint32 start)
 {
 	memoryPosition = (uint32)start;
-	kernelMaxMemory = memoryPosition + 0xA00000;
+	kernelMaxMemory = 0x1000 * 1024 * 3 - 1; // a whole number of page tables
 }

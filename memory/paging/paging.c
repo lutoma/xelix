@@ -23,7 +23,7 @@ enum readandwrite {
 pageDirectory_t* kernelDirectory=0;
 
 // The current page directory. The pages which the kernel also uses (which are present in kernelDirectory) are linked in.
-pageDirectory_t* currentPageDirectory=0;
+pageDirectory_t* currentDirectory=0;
 
 
 /////////////////////////////
@@ -32,12 +32,15 @@ pageDirectory_t* currentPageDirectory=0;
 // allocates physical memory for the given page
 void allocatePage(pageTableEntry_t* page);
 
-// creates the pageDirectoryEntry and allocates memory (via allocatePage()) for the page containing the virtualAddress
-// if the corresponding pageTable does not exist yet, creates it and adds its pageDirectoryEntry to the currentPageDirectory.
-void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw);
+// creates the pageDirectoryEntry and allocates memory (via allocatePage()) for the page containing the virtualAddress in directory
+// if the corresponding pageTable does not exist yet, creates it and adds its pageDirectoryEntry to the directory.
+void createPage(pageDirectory_t* directory, uint32 virtualAddress, enum mode usermode, enum readandwrite rw);
 
 // handles a page fault interrupt
 void pageFaultHandler(registers_t regs);
+
+
+
 
 /////////////////////////////
 // FUNCTION DEFINITIONS
@@ -50,8 +53,8 @@ void paging_init()
 	memset(kernelDirectory, 0, sizeof(pageDirectory_t));
 	kernelDirectory->physicalAddress = tmpPhys + ((uint32)&(kernelDirectory->directoryEntries) - (uint32)kernelDirectory); // we need to put the physical location of kernelDirectory->directoryEntries into kernelDirectory->physicalAddress.
 	
-	// allocating and stuff works on the currentPageDirectory
-	currentPageDirectory = kernelDirectory;
+	// allocating and stuff works on the currentDirectory
+	currentDirectory = kernelDirectory;
 	
 	
 	// identity mapping of kernel memory space:
@@ -60,7 +63,7 @@ void paging_init()
 	int i;
 	for(i=0; i <=  kernelMaxMemory; i += 0x1000)
 	{
-		createPage(i, KERNEL_MODE, READWRITE);
+		createPage(kernelDirectory, i, KERNEL_MODE, READWRITE);
 	}
 	
 	// register pagefault-Interrupt
@@ -68,7 +71,7 @@ void paging_init()
 	
 	
 	// set paging directory
-	asm volatile("mov %0, %%cr3":: "r"(kernelDirectory->physicalAddress));
+	paging_switchPageDirectory(kernelDirectory);
 	// enable paging!
 	uint32 cr0;
 	asm volatile("mov %%cr0, %0": "=r"(cr0));
@@ -76,6 +79,11 @@ void paging_init()
 	asm volatile("mov %0, %%cr0":: "r"(cr0));
 }
 
+void paging_switchPageDirectory(pageDirectory_t* directory)
+{
+	currentDirectory = directory;
+	asm volatile("mov %0, %%cr3":: "r"(currentDirectory->physicalAddress));
+}
 
 void allocatePage(pageTableEntry_t* page)
 {
@@ -87,14 +95,14 @@ void allocatePage(pageTableEntry_t* page)
 	page->present = 1;
 }
 
-void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
+void createPage(pageDirectory_t* directory, uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
 {
 	uint32 totalPageNum = virtualAddress / 0x1000; // rundet ab
 	uint32 pageTableNum = totalPageNum / 1024;
 	uint32 pageNumInTable = totalPageNum % 1024;
 	
 	
-	if(currentPageDirectory->pageTables[pageTableNum] == 0)
+	if(directory->pageTables[pageTableNum] == 0)
 	{
 		// create page table!
 		
@@ -104,14 +112,14 @@ void createPage(uint32 virtualAddress, enum mode usermode, enum readandwrite rw)
 		// this automatically sets all present-bits to zero, so this new page table will really work right away
 		memset(pageTable, 0, sizeof(pageTable_t));
 		
-		currentPageDirectory->pageTables[pageTableNum] = pageTable;
-		currentPageDirectory->directoryEntries[pageTableNum].pagetable = physAddressOfPageTable  / 0x1000;
-		currentPageDirectory->directoryEntries[pageTableNum].present = 1;
-		currentPageDirectory->directoryEntries[pageTableNum].rw = READWRITE;
-		currentPageDirectory->directoryEntries[pageTableNum].usermode = USER_MODE;
+		directory->pageTables[pageTableNum] = pageTable;
+		directory->directoryEntries[pageTableNum].pagetable = physAddressOfPageTable  / 0x1000;
+		directory->directoryEntries[pageTableNum].present = 1;
+		directory->directoryEntries[pageTableNum].rw = READWRITE;
+		directory->directoryEntries[pageTableNum].usermode = USER_MODE;
 	}
 	
-	pageTableEntry_t* page = &(currentPageDirectory->pageTables[pageTableNum]->tableEntries[pageNumInTable]);
+	pageTableEntry_t* page = &(directory->pageTables[pageTableNum]->tableEntries[pageNumInTable]);
 	
 	page->usermode = usermode;
 	page->rw = rw;
@@ -150,7 +158,7 @@ void pageFaultHandler(registers_t regs)
 		print("->createPage()\n");
 		// we can handle this pagefault by creating a new page
 		// at the moment, everything is in kernel mode
-		createPage(faultingAddress, KERNEL_MODE, READWRITE);
+		createPage(currentDirectory, faultingAddress, KERNEL_MODE, READWRITE);
 		
 		// Flush the TLB (translation lookaside buffer) selectively for the new page created
 		asm ("invlpg %0" : : "m" (faultingAddress) );
@@ -161,4 +169,67 @@ void pageFaultHandler(registers_t regs)
 	}
 }
 
-
+pageDirectory_t* paging_cloneCurrentDirectory()
+{
+	// create directory (similiear to paging_init())
+	uint32 tmpPhys;
+	pageDirectory_t* directory = kmalloc_aligned(sizeof(pageDirectory_t), &tmpPhys);
+	memset(directory, 0, sizeof(pageDirectory_t));
+	directory->physicalAddress = tmpPhys + ((uint32)&(directory->directoryEntries) - (uint32)directory);
+	
+	// iterate through pagetables
+	int tableNum;
+	for(tableNum = 0; tableNum < 1024; tableNum++)
+	{
+		if(currentDirectory->pageTables[tableNum] == 0)
+		{
+			// page table not present in source
+			continue;
+		}
+		if(currentDirectory->pageTables[tableNum] == kernelDirectory->pageTables[tableNum])
+		{
+			print("link page table ");
+			printDec(tableNum);
+			print("\n");
+			// link page table
+			directory->pageTables[tableNum] = currentDirectory->pageTables[tableNum];
+			memcpy(&(directory->directoryEntries[tableNum]), &(currentDirectory->directoryEntries[tableNum]), sizeof(pageDirectoryEntry_t));
+		}
+		else
+		{
+			
+			print("copy page table ");
+			printDec(tableNum);
+			print("\n");
+			pageTable_t* srcTable = currentDirectory->pageTables[tableNum];
+			// copy page table contents
+			int pageNum;
+			for(pageNum=0; pageNum < 1024; pageNum++)
+			{
+				if(srcTable->tableEntries[pageNum].present == 0) // when we implement swapping we need to change this
+				{
+					// page is empty
+					continue;
+				}
+				createPage(directory, 0x1000*1024*tableNum + 0x1000*pageNum, KERNEL_MODE, READWRITE);
+				// actually copy data
+				
+				// disable paging    this code will still work as we identity-mapped the kernel space
+				uint32 cr0;
+				asm volatile("mov %%cr0, %0": "=r"(cr0));
+				cr0 &= ~0x80000000; // Enable paging!
+				asm volatile("mov %0, %%cr0":: "r"(cr0));
+				
+				
+				memcpy((uint32*) ( directory->pageTables[tableNum]->tableEntries[pageNum].frame * 0x1000), (uint32*) (currentDirectory->pageTables[tableNum]->tableEntries[pageNum].frame * 0x1000), 0x1000);  //->pageTables[tableNum] points to the current table even if paging is disabled, because we store page tables in the kernel memory which is identity mapped
+				
+				// enable paging again
+				asm volatile("mov %%cr0, %0": "=r"(cr0));
+				cr0 |= 0x80000000; // Enable paging!
+				asm volatile("mov %0, %%cr0":: "r"(cr0));
+			}
+			
+		}
+	}
+	return directory;
+}

@@ -13,9 +13,9 @@
 #include <devices/pit/interface.h>
 #include <devices/floppy/interface.h>
 
+#include <processes/process.h>
+
 void checkIntLenghts();
-void readInitrd(uint32 initrd_location);
-void calculateFibonacci();
 
 void readInitrd(uint32 initrd_location)
 {
@@ -59,29 +59,59 @@ void readInitrd(uint32 initrd_location)
 	}
 }
 
+
+void printAlphabet()
+{
+	uint32* a = 0x1000*1024*4+2;
+	print("alphabet");
+	*a = 3141;
+	printDec(*a);
+	while(1)
+	{
+	}
+	char abc[] = "abcdefghijklmnopqrstuvwxyz";
+	while(1)
+	{
+		char* p = abc;
+		while(*p != 0)
+		{
+			print(p++);
+			print("\n");
+		}
+	}
+}
+
 void calculateFibonacci()
 {
-	uint32 starttick = pit_getTickNum();
-	uint32 a = 0;
-	uint32 b = 1;
-	uint32 c;
-	int i;
-	printDec(0);
-	for(i = 0; i < 100; i++)
-	{
-		c = b;
-		b = a;
-		a = c + b;
-		print("\n");
-		printDec(a);
-	}
+	createProcess("alphabet", &printAlphabet); // we have to put it here, because otherwise it won't be executed as the irq0 switches to this task after it is added to the scheduler
 	
-	uint32 endtick = pit_getTickNum();
-	float cs = (endtick - starttick) /50;
-	print("\nCalculation took ");
-	printDec(cs);
-	print(" Seconds...");
+	uint32* a = 0x1000*1024*4+2;
+	
+	//*a = 4567;
+	print("fibonacci");
+	printDec(*a);
+	
+	while(1)
+	{
+	}
+	while(1)
+	{
+		uint32 a = 0;
+		uint32 b = 1;
+		uint32 c;
+		int i;
+		printDec(0);
+		for(i = 0; i < 20; i++)
+		{
+			c = b;
+			b = a;
+			a = c + b;
+			print("\n");
+			printDec(a);
+		}
+	}
 }
+
 
 void kmain(multibootHeader_t *mboot_ptr)
 {
@@ -135,12 +165,15 @@ void kmain(multibootHeader_t *mboot_ptr)
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
 
+	print("Creating Process...\n");
+	
 
-	//calculateFibonacci(); //Just a speed test
+
+	createProcess("fibonacci", &calculateFibonacci);
 	
 	while(1)
 	{
-		
+		print("main kernel loop\n");
 	}
 }
 

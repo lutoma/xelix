@@ -2,7 +2,7 @@
 import os;
 import re;
 
-# current working directory must be the main decore directory with the Makefile inside!
+# current working directory must be the main xelix directory with the Makefile inside!
 
 makefile = open("Makefile", "w");
 
@@ -72,7 +72,7 @@ makefile.write("""\n\n
 
 # how to compile .c to .o
 %.o: %.c
-	gcc -Wall -Werror -I . -ffreestanding -fno-stack-protector -o $@ -c $<
+	gcc -Wall -I . -ffreestanding -fno-stack-protector -o $@ -c $<
 
 # how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
 %-asm.o: %.asm
@@ -113,11 +113,14 @@ runqemufloppy: floppy.img
 	# qemu -initrd doesn't work as it should.. (more precise, please!)
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
+runbochsfloppy: floppy.img
+	bochs -f bochsrc.txt -q
+
 runqemu: initrd.img kernel.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
 
-runvbox: floppy.img
-	VBoxSDL -fda floppy.img --startvm Xenic
+runvboxfloppy: floppy.img
+	VBoxSDL -fda floppy.img --startvm Xelix
 
 
 

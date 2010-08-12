@@ -3,8 +3,6 @@
 
 #include <common/generic.h>
 
-void paging_init();
-
 /************
  * TYPES
  ************/
@@ -54,6 +52,19 @@ typedef struct {
 	uint32 physicalAddress; // the physical address of the directoryEntries[] array, because we need it to give it to the cpu.
 } pageDirectory_t;
 
+/*****************
+ * FUNCTIONS
+ *****************/
+ 
+ 
+void paging_init();
+
+// creates a new pageDirectory (which is not set active), copying the currentDirectory and linking the pages present in kernelDirectory
+pageDirectory_t* paging_cloneCurrentDirectory();
+
+
+// switches paging to use the specified directory. Does not en- or deable paging!
+void paging_switchPageDirectory(pageDirectory_t* directory);
 
 
 
