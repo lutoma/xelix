@@ -131,6 +131,7 @@ void logHex(uint32 num)
 void log_init()
 {
 	kernellog = (char*)kmalloc(5000);
+	kernellog[0] = '\0'; // set kernel log to empty string
 	setLogLevel(1); //Enable logs
 }
 
