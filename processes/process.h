@@ -12,13 +12,15 @@ typedef struct {
 	
 	// information needed to continue the process
 	
-	uint32* esp; // the stack pointer // stack is setup as if in an interrupt with (n ints of) status stuff pushed, ie. *(esp+n+1) = eip, *(esp+n+2) = cs, *(esp+n+3) = eflags.    so after setting up the correct esp and popping the status stuff, iret will continue execution of this thread // see switchcontext.asm for the order of this status stuff.
+	uint32* esp; // the stack pointer // stack is setup as if in an interrupt with (n ints of) status stuff pushed, ie. *(esp+n+1) = eip, *(esp+n+2) = cs, *(esp+n+3) = eflags. (later in user mode there will be more)   so after setting up the correct esp and popping the status stuff, iret will continue execution of this thread // see switchcontext.asm for the order of this status stuff.
 	
 	// virtual address space
 	pageDirectory_t* pageDirectory;
 } process_t;
 
 
+// temporary function
+void createProcess(char name[100], void function());
 
 
 

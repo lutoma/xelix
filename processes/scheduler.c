@@ -19,8 +19,8 @@ process_t* processes[7] = {0, 0, 0, 0, 0, 0, 0}; // TODO: replace by linked list
  */
 uint32* schedule(uint32* esp)
 {
-	if(currentProcess == 0)
-	{
+	if(*processes == 0)
+	{ // no process set up yet
 		return 0;
 	}
 	currentProcess->esp = esp;
@@ -38,7 +38,7 @@ uint32* schedule(uint32* esp)
 	return currentProcess->esp;
 }
 
-void schedule_addProcess(process_t* process)
+void scheduler_addProcess(process_t* process)
 {
 	int i = 0;
 	while(processes[i] != 0)
