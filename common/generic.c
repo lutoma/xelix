@@ -5,6 +5,7 @@
 
 int logsEnabled;
 char* kernellog;
+uint32 maxLogSize;
 
 void memset(void* ptr, uint8 fill, uint32 size)
 {
@@ -64,9 +65,10 @@ void printDec(uint32 num)
 //Todo: Write to file
 void log(char* s)
 {
-	kernellog = strcat(kernellog, s); // doesn't work, kills the function. worked before christoph added his memory stuff ;)
-	if(logsEnabled) print(s);
-	//if(addn) display_print("\n");
+	if(strlen(kernellog) + strlen(s) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
+		kernellog = strcat(kernellog, s); // concatenate to kernellog
+	if(logsEnabled)
+		print(s); // print it on screen
 }
 
 void logDec(uint32 num)
@@ -130,7 +132,8 @@ void logHex(uint32 num)
 
 void log_init()
 {
-	kernellog = (char*)kmalloc(5000);
+	maxLogSize = 5000;
+	kernellog = (char*)kmalloc(maxLogSize);
 	kernellog[0] = '\0'; // set kernel log to empty string
 	setLogLevel(1); //Enable logs
 }
