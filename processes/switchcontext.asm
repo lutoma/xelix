@@ -1,7 +1,7 @@
 
 
 ; in scheduler.c
-extern schedule
+[EXTERN schedule]
 
 global switchcontext
 
@@ -25,7 +25,7 @@ switchcontext:
 	; give esp (pointing to the top (in x86 bottom in terms of hardware) of the stack so far) as a paramter (push it to stack according to cdecl calling convention)
 	mov eax, esp
 	push eax
-	call schedule
+	;call schedule ; this causes an error
 	
 	; extract the return value of schedule() (according to cdecl calling convention it is in eax) and thus set the stack pointer for the new process
 	mov esp, eax
