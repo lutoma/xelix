@@ -117,7 +117,7 @@ runqemu: initrd.img kernel.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
 
 runvbox: floppy.img
-	VBoxSDL -fda floppy.img --startvm Xenic
+	VBoxSDL -fda floppy.img --startvm Xelix
 
 
 

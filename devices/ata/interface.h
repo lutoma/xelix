@@ -5,7 +5,8 @@
 struct ataDrive;
 typedef struct ataDrive
 {
-	char name[128];
+	int num;
+	//char name[128];
 } ataDrive_t;
 
 void ata_init();
