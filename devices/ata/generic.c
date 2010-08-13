@@ -44,9 +44,9 @@ void setActiveDrive(int drive)
 	int value;
 	ASSERT(drive > -1 && drive < 2); // Only 0 and 1 are possible
 	if(selectedDrive == drive) return;
-	if(drive) value = 0xA0; // Master
+	if(!drive) value = 0xA0; // Master
 	else value = 0xB0; // Slave
-	outb(SELECT_PORT, value); // Warning: untested...
+	outb(SELECT_PORT, value);
 	delay(); // Now give the controller a bit time for setting the selected drive.
 	selectedDrive = drive;
 }
