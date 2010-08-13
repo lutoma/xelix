@@ -14,7 +14,6 @@
 #include <memory/kmalloc.h>
 
 int selectedDrive = -1;
-int blocked = 0; // Does the device currently do anything?
 ataDrive_t* drive0;
 ataDrive_t* drive1;
 
@@ -70,20 +69,24 @@ void ata_detectDrives()
 		{
 			if(!i)
 			{
-				print("Didn't find a master drive\n");
-				drive0 = 0;
+				log("Didn't find a master drive\n");
+				drive0 = NULL;
 			} else {
-				print("Didn't find a slave drive\n");
-				drive1 = 0;
+				log("Didn't find a slave drive\n");
+				drive1 = NULL;
 			}
 		} else {
 			if(!i)
 			{
-				print("Found a master drive\n");
+				log("Found a master drive\n");
+				drive0 = kmalloc(sizeof(ataDrive_t));
 				drive0->num = 0;
+				drive0->blocked = 1;
 			} else {
-				print("Found a slave drive\n");
+				log("Found a slave drive\n");
+				drive1 = kmalloc(sizeof(ataDrive_t));
 				drive1->num = 1;
+				drive1->blocked = 1;
 			}
 			print("    Status: ");
 			printDec(*driveStatus);
@@ -95,15 +98,28 @@ void ata_detectDrives()
 // Now init all this stuff. Called by init/main.c
 void ata_init()
 {
-	print("Detecting ATA drives...\n");
+	log("Detecting ATA drives...\n");
 	ata_detectDrives();
-	if(!drive0 && !drive1) return; // Nothing to do
-	
-	// Wait until device is ready
-	uint8* status;
-	while((status = getDriveStatus())){
-		if(*status) PANIC("ATA device error"); // 1 = Error
-		if(*status == 8) break; // Ok, device is ready
-	}
+	if(drive0 == NULL && drive1 == NULL) return; // Nothing to do
 
+	int i;
+	for(i=0; i < 2; i++)
+	{
+		if(!i && drive0 == NULL) continue;
+		if(i && drive1 == NULL) continue;
+		
+		log("Initializing drive #");
+		logDec(i);
+		log("\n");
+		
+		setActiveDrive(i);
+
+		// Wait until device(s) get(s) ready
+		uint8* status;
+		while((status = getDriveStatus())){
+			if(*status) PANIC("ATA device error"); // 1 = Error
+			if(*status == 8) break; // Ok, device is ready
+		}
+		
+	}
 }
