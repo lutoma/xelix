@@ -33,8 +33,6 @@ void* kmalloc(uint32 numbytes)
 		PANIC("Out of kernel memory");
 	}
 	
-	memset(ptr, 0, numbytes); // THIS IS A BAD HACK. CALLEES SHOULD TAKE CARE TO INITIALISE THEIR MEMORY CORRECTLY
-	
 	return ptr;
 }
 
@@ -68,7 +66,7 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 	{
 		PANIC("Out of kernel memory");
 	}
-	memset(ptr, 0, numbytes); // THIS IS A BAD HACK. CALLEES SHOULD TAKE CARE TO INITIALISE THEIR MEMORY CORRECTLY
+	
 	return ptr;
 }
 
