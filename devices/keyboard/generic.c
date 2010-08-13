@@ -551,6 +551,13 @@ void keyboard_init()
 	
 	keyboard_leaveFocus();
 	interrupt_registerHandler(IRQ1, &handleIrq);
+	
+	// flush input buffer (maybe the user pressed keys before we handle irqs or set up the idt)
+	// see also: http://forum.osdev.org/viewtopic.php?p=176249
+	while(inb(0x64) & 1)
+	{
+		inb(0x60); // read scancode
+	}
 }
 
 void handleIrq(registers_t regs)
