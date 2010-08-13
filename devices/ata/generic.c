@@ -85,6 +85,9 @@ void ata_detectDrives()
 				print("Found a slave drive\n");
 				drive1->num = 1;
 			}
+			print("    Status: ");
+			printDec(*driveStatus);
+			print("\n");
 		}	
 	}
 }
@@ -94,4 +97,13 @@ void ata_init()
 {
 	print("Detecting ATA drives...\n");
 	ata_detectDrives();
+	if(!drive0 && !drive1) return; // Nothing to do
+	
+	// Wait until device is ready
+	uint8* status;
+	while((status = getDriveStatus())){
+		if(*status) PANIC("ATA device error"); // 1 = Error
+		if(*status == 8) break; // Ok, device is ready
+	}
+
 }
