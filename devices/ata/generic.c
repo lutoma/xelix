@@ -12,6 +12,7 @@
 #include <devices/ata/interface.h>
 #include <devices/ata/generic.h>
 #include <memory/kmalloc.h>
+#include <common/string.h>
 
 int selectedDrive = -1;
 ataDrive_t* drive0;
@@ -19,7 +20,7 @@ ataDrive_t* drive1;
 
 void delay();
 void setActiveDrive();
-uint8* getDriveStatus();
+uint8 getDriveStatus();
 void flushCache();
 
 // Read the Status 4 times, resulting in a 400 nanoseconds delay [one cpu io port reading takes something about 100ns]. As supposed in the ATA specifications.
@@ -30,11 +31,9 @@ void delay()
 		getDriveStatus();
 }
 // Get the drive status. Should be self-explaining.
-uint8* getDriveStatus()
+uint8 getDriveStatus()
 {
-	uint8* status = kmalloc(sizeof(uint8));
-	*status = inb(STATUS_PORT);
-	return status;
+	return inb(ATA_STATUS_PORT);
 }
 
 // Select the active drive we want to use on one controller [0/1].
@@ -43,9 +42,9 @@ void setActiveDrive(int drive)
 	int value;
 	ASSERT(drive > -1 && drive < 2); // Only 0 and 1 are possible
 	if(selectedDrive == drive) return;
-	if(!drive) value = 0xA0; // Master
-	else value = 0xB0; // Slave
-	outb(SELECT_PORT, value);
+	if(!drive) value = ATA_MASTER_DRIVE; // Master
+	else value = ATA_SLAVE_DRIVE; // Slave
+	outb(ATA_SELECT_PORT, value);
 	delay(); // Now give the controller a bit time for setting the selected drive.
 	selectedDrive = drive;
 }
@@ -63,9 +62,9 @@ void ata_detectDrives()
 	for(i=0; i < 2; i++)
 	{
 		setActiveDrive(i);
-		outb(COMMAND_PORT, 0xEC); // IDENTIFY
-		uint8* driveStatus = getDriveStatus(); // Now read the return value
-		if(!*driveStatus)
+		outb(ATA_COMMAND_PORT, 0xEC); // IDENTIFY
+		uint8 driveStatus = getDriveStatus(); // Now read the return value
+		if(!driveStatus)
 		{
 			if(!i)
 			{
@@ -89,7 +88,7 @@ void ata_detectDrives()
 				drive1->blocked = 1;
 			}
 			print("    Status: ");
-			printDec(*driveStatus);
+			printDec(driveStatus);
 			print("\n");
 		}	
 	}
@@ -115,10 +114,12 @@ void ata_init()
 		setActiveDrive(i);
 
 		// Wait until device(s) get(s) ready
-		uint8* status;
+		uint8 status;
 		while((status = getDriveStatus())){
-			if(*status) PANIC("ATA device error"); // 1 = Error
-			if(*status == 8) break; // Ok, device is ready
+			if(status != 8)
+				printDec(status % 8);
+			if(status == 1) PANIC("ATA device error"); // 1 = Error
+			if(status == 8) break; // Ok, device is ready
 		}
 		
 	}
