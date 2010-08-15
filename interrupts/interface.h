@@ -29,7 +29,7 @@ typedef struct {
 	uint32 ds;                  // Data segment selector
 	uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
 	uint32 int_no, err_code;    // Interrupt number and error code (if applicable)
-	uint32 eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
+	uint32 eip, cs, eflags, useresp, ss; // Pushed by the processor automatically. // This is what the processor expects to be in the stack when doing an iret. useresp and ss are only used when returning to another privilege level
 } registers_t;
 
 typedef void (*interruptHandler_t)(registers_t); // interruptHandler_t is the type of a function with the signature  void func(registers_t)

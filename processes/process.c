@@ -21,37 +21,28 @@ void createProcess(char name[100], void function())
 	p->pageDirectory = paging_cloneCurrentDirectory();
 	
 	
+	
+	
+	p->regs.ss = 0x10 ;// kernel data selector
+	p->regs.useresp = 0; // this and the entry above only becomes relevant when switching to user mode
+	
 	// allocate space for the stack
-	p->esp = kmalloc(0x1000); // 0xff100000
-	p->esp += 0x1000; // in x86, the stack grows downwards
-	
-	
-	uint32* stack = p->esp;
-	// initialise stack so it looks as if it were stored in switchcontext
-	// processor data
-	*--stack = 0x202;       // EFLAGS
-	*--stack = 0x08;	// CS
-	*--stack = (uint32)function;       // EIP
-
-	// pusha
-	*--stack = 0;	   // EDI
-	*--stack = 0;	   // ESI
-	*--stack = 0;	   // EBP
-	*--stack = 0;	   // NULL
-	*--stack = 0;	   // EBX
-	*--stack = 0;	   // EDX
-	*--stack = 0;	   // ECX
-	*--stack = 0;	   // EAX
-
-	// data segments
-	*--stack = 0x10;	// DS
-	*--stack = 0x10;	// ES
-	*--stack = 0x10;	// FS
-	*--stack = 0x10;	// GS
-	
-	p->esp = stack;
-	
-	
+	p->regs.useresp = (uint32)kmalloc(0x1000); // 0xff100000
+	p->regs.useresp += 0x1000; // in x86, the stack grows downwards
+	p->regs.eflags = 0x202;
+	p->regs.cs = 0x08; // kernel code segment
+	p->regs.eip = (uint32)function;
+	p->regs.err_code = 0;
+	p->regs.int_no = 0;
+	p->regs.eax = 0;
+	p->regs.ecx = 0;
+	p->regs.edx = 0;
+	p->regs.ebx = 0;
+	p->regs.esp = p->regs.useresp;
+	p->regs.ebp = 0;
+	p->regs.esi = 0;
+	p->regs.edi = 0;
+	p->regs.ds = 0x10; // kernel data segment
 	
 	scheduler_addProcess(p);
 }
