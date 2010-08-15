@@ -8,6 +8,7 @@ global switchcontext
 ; this is called when the IRQ0 timer interrupt is fired.
 ; This is called directly, without any modification to the stack.
 switchcontext:
+	cli
 	; push registers to stack (eflags, cs and eip (of the last instruction of the process before this irq) 
 	;have already been pushed automatically by the interrupt) 
 	

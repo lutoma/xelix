@@ -62,10 +62,6 @@ void readInitrd(uint32 initrd_location)
 
 void printAlphabet()
 {
-	uint32* a = 0x1000*1024*4+2;
-	print("alphabet");
-	*a = 3141;
-	printDec(*a);
 	while(1)
 	{
 	}
@@ -81,15 +77,15 @@ void printAlphabet()
 	}
 }
 
+extern uint32 call_syscall(uint32, uint32);
+
 void calculateFibonacci()
 {
-	createProcess("alphabet", &printAlphabet); // we have to put it here, because otherwise it won't be executed as the irq0 switches to this task after it is added to the scheduler
+	createProcess("alphabet", &printAlphabet);
 	
-	uint32* a = 0x1000*1024*4+2;
 	
-	//*a = 4567;
-	print("fibonacci");
-	printDec(*a);
+	char abc[] = "HAllo dies ist ein system-call Test!";
+	call_syscall(1,abc);
 	
 	while(1)
 	{
@@ -167,13 +163,11 @@ void kmain(multibootHeader_t *mboot_ptr)
 
 	print("Creating Process...\n");
 	
-
-
 	createProcess("fibonacci", &calculateFibonacci);
 	
 	while(1)
 	{
-		print("main kernel loop\n");
+		//print("main kernel loop\n");
 	}
 }
 
