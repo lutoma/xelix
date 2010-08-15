@@ -1,0 +1,20 @@
+system calls in xelix
+---------------------
+
+
+
+interrupt no. 81
+eax: syscall number
+other registers: supplementary information for the syscall, see documentation of each individual syscall
+return value: given back in eax
+
+Syscalls at int 81:
+1: print
+	ebx: pointer to C-String which will be printed to screen
+	returns: 0
+2: printDec
+	ebx: uint32 which will be printed in decimal system
+	returns: 0
+3: printHex
+	ebx: uint32 which will be printed in hexadecimal system
+	returns: 0

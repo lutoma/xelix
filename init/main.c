@@ -81,6 +81,8 @@ void printAlphabet()
 	}
 }
 
+extern int call_syscall();
+
 void calculateFibonacci()
 {
 	createProcess("alphabet", &printAlphabet); // we have to put it here, because otherwise it won't be executed as the irq0 switches to this task after it is added to the scheduler
@@ -90,6 +92,13 @@ void calculateFibonacci()
 	//*a = 4567;
 	print("fibonacci");
 	printDec(*a);
+	
+	
+	char abc[] = "HAllo dies ist ein Test!";
+	print("nach syscall");
+	call_syscall(1,abc);
+	call_syscall(2, 1024);
+	call_syscall(3, 1024);
 	
 	while(1)
 	{
@@ -167,9 +176,16 @@ void kmain(multibootHeader_t *mboot_ptr)
 
 	print("Creating Process...\n");
 	
-
-
-	createProcess("fibonacci", &calculateFibonacci);
+	char abc[] = "HAllo dies ist ein Test!";
+	//call_syscall(1,abc);
+	//call_syscall(2, 1024);
+	call_syscall(3, 1024);
+	call_syscall(3, 1024);
+	call_syscall(3,1024);
+	print("nach syscall");
+	
+	
+	//createProcess("fibonacci", &calculateFibonacci);
 	
 	while(1)
 	{

@@ -1,0 +1,8 @@
+Log created: 2010-08-15T15:34:40.654322000Z
+Executable: /usr/lib/virtualbox/VBoxSDL
+Arg[0]: /usr/lib/virtualbox/VBoxSDL
+Arg[1]: -fda
+Arg[2]: floppy.img
+Arg[3]: --startvm
+Arg[4]: Xelix
+fatal error in recompiler cpu: triple fault
