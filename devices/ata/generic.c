@@ -1,9 +1,9 @@
 /** @file devices/ata/generic.c
  * Generic driver for ATA harddisks
- *@author Lukas Martini
- *@todo Keep track of bad sectors
- *@warning Always read the status of a drive first before sending any data. Sending something may also modify the status, resulting in loosing the ability to check if there is any drive.
- *@see All the preprocessor variables are defined in generic.h
+ * @author Lukas Martini
+ * @todo Keep track of bad sectors
+ * @warning Always read the status of a drive first before sending any data. Sending something may also modify the status, resulting in loosing the ability to check if there is any drive.
+ * @see All the preprocessor variables are defined in generic.h
  */
 
 #include <devices/ata/interface.h>

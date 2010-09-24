@@ -10,9 +10,6 @@ typedef struct ataDrive
 	int blocked;
 } ataDrive_t;
 
-/** Initialize ATA
- * @see http://blablupp.com
- */
 void ata_init();
 
 #endif

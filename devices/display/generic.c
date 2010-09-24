@@ -1,21 +1,30 @@
+/** @file devices/display/generic.c
+ * Generic display driver
+ * @author Lukas Martini
+ * @author Christoph Sünderhauf
+ */
+
 #include <devices/display/interface.h>
 #include <memory/kmalloc.h>
 
 const uint32 columns = 80; // on-screen character grid
 const uint32 rows = 25;
 
+/** Pointer to video memory\n
+ * 80x25 Zeichen\n
+ * short ist zwei Bytes: 1. Byte char, 2. Byte Farben\n
+ * const ist so, dass der Zeiger nicht verändert werden kann, die Daten dahinter schon
+ */
+uint16* const videoMemory = (uint16*) 0xB8000; 
 
-uint16* const videoMemory = (uint16*) 0xB8000; // 80x25 Zeichen   // short ist zwei Bytes: 1. Byte char, 2. Byte Farben // const ist so, dass der Zeiger nicht verändert werden kann, die Daten dahinter schon
 
-
-/*
- * Buffer concept:
- * Everything is written to the buffer (which is x number of lines). 
- * The screen displays part of the buffer.
+/**
+ * Buffer concept:\n
+ * Everything is written to the buffer (which is x number of lines).\n
+ * The screen displays part of the buffer.\n
  * The buffer is wrap-around, i.e. when the end is reached it just continues at the beginning. (see also wrapAroundBuffer())
  * 
  */
-
 uint16* buffer; // start of the buffer
 uint16* bufferEnd; // end of the buffer (points one beyond last character)
 uint16* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen.
@@ -35,7 +44,7 @@ void copyBufferToScreen();
 
 void updateCursorPosition();
 
-
+/// Initialize display
 void display_init()
 {
 	color = 0x07;
@@ -119,7 +128,7 @@ unsigned char newglyph[ 16 ] = 	{
 	
 }
 
-// the main print function which should always be used
+/// The main print function which should always be used
 void display_print(char* s)
 {
 	while(*s != '\0')
@@ -137,6 +146,7 @@ void display_print(char* s)
 	updateCursorPosition();
 }
 
+/// Print single char. Mostly used internally
 void printChar(char c)
 {
 	if(c == '\n')
@@ -176,6 +186,9 @@ void printChar(char c)
 	}
 }
 
+/** Wrap the buffer
+ * @return the position
+ */
 inline uint16* wrapAroundBuffer(uint16* pos)
 {
 	if(pos >= bufferEnd)
@@ -185,7 +198,7 @@ inline uint16* wrapAroundBuffer(uint16* pos)
 	return pos;
 }
 
-
+/// Copy the buffer to the screen
 void copyBufferToScreen()
 {
 	// copy correct part of buffer to screen
@@ -201,6 +214,7 @@ void copyBufferToScreen()
 	}
 }
 
+// Update the cursor position on the screen
 void updateCursorPosition()
 {
 	// set cursor Position
@@ -222,7 +236,7 @@ void updateCursorPosition()
 	outb(0x3D5, cursorLocation);      // Send the low cursor byte.
 }
 
-
+/// Scroll up the display
 void display_scrollUp()
 {
 	screenPos -= columns;
@@ -231,6 +245,8 @@ void display_scrollUp()
 	copyBufferToScreen();
 	updateCursorPosition();
 }
+
+/// Scroll down the display
 void display_scrollDown()
 {
 	screenPos += columns;
@@ -240,19 +256,14 @@ void display_scrollDown()
 	updateCursorPosition();
 }
 
-
-
-
-
+/// Set display color
 void display_setColor(uint8 newcolor)
 {
 	color = newcolor;
 }
 
-/*******************
- * Print numbers
- ******************/
 
+/// Print numbers
 void display_printDec(uint32 num)
 {
 	if(num == 0)
@@ -280,6 +291,7 @@ void display_printDec(uint32 num)
 	display_print(s);
 }
 
+/// Display number in hexadecimal form
 void display_printHex(uint32 num)
 {
 	if(num == 0)
