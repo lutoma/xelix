@@ -118,7 +118,9 @@ void compilerInfo()
 	log(__DATE__);
 	print(" ");
 	log(__TIME__);
-	#ifdef __GNUC__
+
+	/* Test for GCC > 3.2.0 */
+	#if GCC_VERSION > 30200
 		log(" using GCC ");
 		logDec(__GNUC__);
 		log(".");
@@ -126,7 +128,7 @@ void compilerInfo()
 		log(".");
 		logDec(__GNUC_PATCHLEVEL__);
 	#else
-		log(" using an unknown compiler\n")
+		log(" using an unknown compiler\n");
 	#endif
 }
 

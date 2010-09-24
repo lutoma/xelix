@@ -72,7 +72,7 @@ makefile.write("""\n\n
 
 # how to compile .c to .o
 %.o: %.c
-	gcc -Wall -Werror -I . -ffreestanding -fno-stack-protector -o $@ -c $<
+	gcc -Wall -I . -ffreestanding -fno-stack-protector -o $@ -c $<
 
 # how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
 %-asm.o: %.asm

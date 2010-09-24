@@ -2,7 +2,9 @@
 #define COMMON_GENERIC_H
 
 // utility stuff used almost everywhere in the kernel
-
+#define GCC_VERSION (__GNUC__ * 10000 \
+                               + __GNUC_MINOR__ * 100 \
+                               + __GNUC_PATCHLEVEL__)
 
 // Typedefs
 typedef unsigned int uint32;
