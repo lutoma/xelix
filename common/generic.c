@@ -1,3 +1,9 @@
+/** @file common/generic.c
+ * Common utilities often used.
+ * @author Lukas Martini
+ * @author Christoph Sünderhauf
+ */
+
 #include <common/generic.h>
 #include <common/string.h>
 #include <memory/kmalloc.h>
@@ -7,6 +13,7 @@ int logsEnabled;
 char* kernellog;
 uint32 maxLogSize;
 
+/// Memset function. Fills memory with something.
 void memset(void* ptr, uint8 fill, uint32 size)
 {
 	uint8* p = (uint8*) ptr;
@@ -14,7 +21,7 @@ void memset(void* ptr, uint8 fill, uint32 size)
 	for(; p < max; p++)
 		*p = fill;
 }
-
+/// Our Memcpy
 void memcpy(void* dest, void* src, uint32 size)
 {
 	uint8* from = (uint8*) src;
@@ -31,16 +38,27 @@ void memcpy(void* dest, void* src, uint32 size)
 
 
 
-// Write a byte out to the specified port.
+/** Write out a byte to the specified port
+ * @param port The port to write to
+ * @param value The valued to be written to the port
+ */
 void outb(uint16 port, uint8 value)
 {
 	 asm ("outb %1, %0" : : "dN" (port), "a" (value));
 }
+
+/** Write out a word to the specified port
+ * @param port The port to write to
+ * @param value The valued to be written to the port
+ */
 void outw(uint16 port, uint16 value)
 {
 	 asm ("outw %1, %0" : : "dN" (value), "a" (port));
 }
-
+/** Read a byte from the specified port
+ * @param port The port to read from
+ * @return String read from port.
+ */
 uint8 inb(uint16 port)
 {
 	uint8 ret;
@@ -48,21 +66,28 @@ uint8 inb(uint16 port)
 	return ret;
 }
 
-
+/// Print function
 void print(char* s)
 {
 	display_print(s);
 }
+
+/// Print int as Hex
 void printHex(uint32 num)
 {
 	display_printHex(num);
 }
+
+/// Print int
 void printDec(uint32 num)
 {
 	display_printDec(num);
 }
 
-//Todo: Write to file
+/** Logs something. Also prints it out.
+ * @todo Write to file
+ * @param s String to log
+ */
 void log(char* s)
 {
 	if(strlen(kernellog) + strlen(s) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
@@ -71,6 +96,10 @@ void log(char* s)
 		print(s); // print it on screen
 }
 
+/** Same as log, only with Integer
+ * @todo Write to file
+ * @param num Number to log
+ */
 void logDec(uint32 num)
 {
 	if(num == 0)
@@ -98,6 +127,10 @@ void logDec(uint32 num)
 	log(s);
 }
 
+/** Same as log, only with Hex
+ * @todo Write to file
+ * @param num Number to log
+ */
 void logHex(uint32 num)
 {
 	if(num == 0)
@@ -130,6 +163,7 @@ void logHex(uint32 num)
 	log(s);
 }
 
+/// Initialize log
 void log_init()
 {
 	maxLogSize = 5000;
@@ -138,7 +172,9 @@ void log_init()
 	setLogLevel(1); //Enable logs
 }
 
-//Currently only 0=Off and 1=On
+/** Set log level\n
+ * @param Log level to be set. Currently only off (0) and on (1).
+ */
 void setLogLevel(int level)
 {
 	if(level) log("Enabled printing of log messages.\n");
@@ -146,6 +182,7 @@ void setLogLevel(int level)
 	logsEnabled = level;
 }
 
+/// Warn. Use the WARN() macro that inserts the line.
 void warn(char *reason, char *file, uint32 line)
 {
 	asm volatile("cli"); // Disable interrupts.
@@ -158,6 +195,7 @@ void warn(char *reason, char *file, uint32 line)
 	for(;;) asm("cli;hlt;");//Sleep forever
 }
 
+/// Panic. Use the PANIC() macro that inserts the line.
 void panic(char *reason, char *file, uint32 line, int assertionf)
 {
 	asm volatile("cli"); // Disable interrupts.
@@ -172,7 +210,7 @@ void panic(char *reason, char *file, uint32 line, int assertionf)
 	for(;;) asm("cli;hlt;");//Sleep forever
 }
 
-/* memcmp */
+/// A Memcmp
 int (memcmp)(const void *s1, const void *s2, size_t n)
 {
 	const unsigned char *us1 = (const unsigned char *) s1;
@@ -186,6 +224,7 @@ int (memcmp)(const void *s1, const void *s2, size_t n)
 	return 0;
 }
 
+/// Reboot the computer
 void reboot()
 {
 	unsigned char good = 0x02;
