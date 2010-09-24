@@ -1,3 +1,8 @@
+/** @file mainpage.h
+ * \brief Only contains the main page of the documentation
+ * @author Lukas Martini
+ */
+
 /** @mainpage Xelix Project
  *  
  *  @section sec1 Welcome
