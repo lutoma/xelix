@@ -5,7 +5,10 @@
  *  The aim of xelix is to create a modern POSIX-compatible operating system from scratch.
  * 
  *  @section sec2 Try it!
- *  Want to give it a try? Get the code by typing\n
+ *  Currently, there is no stable release yet. The only possibility to get Xelix is to compile it from source.
+ * 
+ *  @section sec3 Develop it!
+ *  Want to get the code? Get it by typing\n
  *  git clone git://github.com/xelix/xelix.git\n
  *  into a console. You can also browse it online on <a href="http://github.com/xelix/xelix/">Github</a>. 
  */

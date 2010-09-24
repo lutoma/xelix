@@ -15,27 +15,31 @@ int selectedDrive = -1;
 ataDrive_t* drive0;
 ataDrive_t* drive1;
 
-/** Read the Status 4 times, resulting in a 400 nanoseconds delay [one cpu io port reading takes something about 100ns]. As supposed in the ATA specifications. 
-* @see ATA Specification
- */
 void delay();
-void setActiveDrive();
+void setActiveDrive(int drive);
 uint8 getDriveStatus();
 void flushCache();
 
+/** Read the Status 4 times, resulting in a 400 nanoseconds delay [one cpu io port reading takes something about 100ns]. As supposed in the ATA specifications. 
+* @see ATA Specification
+ */
 void delay()
 {
 	int i;
 	for(i = 0; i < 4; i++)
 		getDriveStatus();
 }
-// Get the drive status. Should be self-explaining.
+/** Get the drive status. Should be self-explaining.
+ * @return Status of the drive.
+ */
 uint8 getDriveStatus()
 {
 	return inb(ATA_STATUS_PORT);
 }
 
-// Select the active drive we want to use on one controller [0/1].
+/** Select the active drive we want to use on one controller [0/1].
+ * @param drive The drive to be set active.
+ */
 void setActiveDrive(int drive)
 {
 	int value;
@@ -48,13 +52,14 @@ void setActiveDrive(int drive)
 	selectedDrive = drive;
 }
 
-// Flush the write cache. Normally, the drive should do this automatically, but for support of old ones, we also do it manually.
+/// Flush the write cache. Normally, the drive should do this automatically, but for support of old ones, we also do it manually.
+/// @bug Not implemented yet ;)
 void flushCache()
 {
 
 }
 
-// Find out if there are actually any ATA drives.
+/// Find out if there are actually any ATA drives.
 void ata_detectDrives()
 {
 	int i;
@@ -93,7 +98,7 @@ void ata_detectDrives()
 	}
 }
 
-// Now init all this stuff. Called by init/main.c
+/// Now init all this stuff. Called by init/main.c
 void ata_init()
 {
 	log("Detecting ATA drives...\n");
