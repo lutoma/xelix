@@ -15,6 +15,7 @@
 #include <devices/ata/interface.h>
 #include <processes/process.h>
 #include <init/debugconsole.h>
+
 void checkIntLenghts();
 void readInitrd(uint32 initrd_location);
 void calculateFibonacci();
@@ -117,12 +118,16 @@ void compilerInfo()
 	log(__DATE__);
 	print(" ");
 	log(__TIME__);
-	log(" using GCC ");
-	logDec(__GNUC__);
-	log(".");
-	logDec(__GNUC_MINOR__);
-	log(".");
-	logDec(__GNUC_PATCHLEVEL__);
+	#ifdef __GNUC__
+		log(" using GCC ");
+		logDec(__GNUC__);
+		log(".");
+		logDec(__GNUC_MINOR__);
+		log(".");
+		logDec(__GNUC_PATCHLEVEL__);
+	#else
+		log(" using an unknown compiler\n")
+	#endif
 }
 
 void kmain(multibootHeader_t *mboot_ptr)
