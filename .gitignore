@@ -4,3 +4,4 @@ initrd.img
 floppy.img
 Makefile
 includesgraph.dot
+*.log
