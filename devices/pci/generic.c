@@ -1,3 +1,9 @@
+/** @file devices/pci/generic.c
+ * \brief A PCI driver.
+ * @author Lukas Martini
+ * @todo Fully implement it.
+ */
+
 #include <devices/pci/interface.h>
 
 void getDevices();
@@ -21,6 +27,11 @@ unsigned short readConfig (unsigned short bus, unsigned short slot,
 	tmp = (unsigned short)((inb(0xCFC) >> ((offset & 2) * 8)) & 0xffff);
 	return (tmp);
 }
+
+/** Initialize PCI
+ * @bug Not implemented yet
+ * @todo Implement it ;)
+ */
 void pci_init()
 {
   // Dummy

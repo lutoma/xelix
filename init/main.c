@@ -1,5 +1,5 @@
 /** @file init/main.c
- * Initialization code of kernel
+ * \brief Initialization code of kernel
  * @author Lukas Martini
  * @author Christoph Sünderhauf
  */
@@ -197,7 +197,6 @@ void kmain(multibootHeader_t *mboot_ptr)
 
 	print("Creating Process...\n");
 	
-	createProcess("fibonacci", &calculateFibonacci);
 
 	createProcess("debugconsole", &debugconsole_init);
 	

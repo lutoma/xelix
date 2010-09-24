@@ -1,5 +1,5 @@
 /** @file common/generic.c
- * Common utilities often used.
+ * \brief Common utilities often used.
  * @author Lukas Martini
  * @author Christoph Sünderhauf
  */
@@ -173,7 +173,7 @@ void log_init()
 }
 
 /** Set log level\n
- * @param Log level to be set. Currently only off (0) and on (1).
+ * @param level Log level to be set. Currently only off (0) and on (1).
  */
 void setLogLevel(int level)
 {

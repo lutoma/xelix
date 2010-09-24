@@ -1,5 +1,5 @@
 /** @file devices/display/generic.c
- * Generic display driver
+ * \brief Generic display driver
  * @author Lukas Martini
  * @author Christoph Sünderhauf
  */

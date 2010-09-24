@@ -1,5 +1,5 @@
 /** @file devices/keyboard/generic.c
- * A generic & simple keyboard driver
+ * \brief A generic & simple keyboard driver
  * @author Christoph Sünderhauf
  * @author Lukas Martini
  */

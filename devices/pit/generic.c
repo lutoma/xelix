@@ -1,17 +1,25 @@
+/** @file devices/pit/generic.c
+ * \brief A generic PIT driver.
+ * @author Lukas Martini
+ */
+
 #include <devices/pit/interface.h>
 #include <interrupts/interface.h>
 
 uint32 tick = 0;
 
+/** The timer callback. Gets called every time the PIT fires.
+ * @param regs The registers supplied by the IRQ
+ * @note Does nothing but increase the PIT value by one.
+ */
 static void timerCallback(registers_t regs)
 {
 	tick++;
-	//printDec(tick % 50);
-	//log("Tick: ");
-	//logDec(tick);
-	//log("\n");
 }
 
+/** Initialize the PIT
+ * @param frequency The frequency to initialize the PIT with
+ */
 void pit_init(uint32 frequency)
 {
 	log("Initializing PIT at ");
@@ -38,7 +46,9 @@ void pit_init(uint32 frequency)
 	printDec(frequency);
 }
 
-
+/** Get the tick num
+ * @return The tick num
+ */
 uint32 pit_getTickNum()
 {
 	return tick;

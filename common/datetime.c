@@ -1,7 +1,16 @@
+/** @file common/datetime.c
+ * \brief Common date/time functions.
+ * @author Lukas Martini
+ */
+
 #include <common/datetime.h>
 #include <common/string.h>
 #include <devices/pit/interface.h>
 
+/** Get the current day, month, yearh, time etc.
+ * @param dateStr Which date do you want?
+ * @return Requested date.
+ */
 int date(char dateStr)
 {
 	int whatDate;
@@ -43,6 +52,11 @@ int date(char dateStr)
 	return nowDate;
 }
 
+/** Convert month number to month name
+ * @param month The number of the month to be converted
+ * @param shortVersion create short three-letter version or long name?
+ * @return Month name
+ */
 char* monthToString(int month, int shortVersion)
 {
 	char* monthString;
@@ -66,7 +80,13 @@ char* monthToString(int month, int shortVersion)
 	return monthString;
 }
 
-// See http://de.wikipedia.org/wiki/Wochentagsberechnung for details
+/** Calculate weekday
+ * @param dayOfMonth Day of the month
+ * @param month Month
+ * @param year Year
+ * @return The weekday
+ * @see See http://de.wikipedia.org/wiki/Wochentagsberechnung for details
+ */
 int getWeekDay(int dayOfMonth, int month, int year)
 {
 	int dayNum = dayOfMonth % 7;
@@ -95,6 +115,11 @@ int getWeekDay(int dayOfMonth, int month, int year)
 	return (dayNum + monthNum + yearNum + centuryNum) % 7;
 }
 
+/** Convert day number to day name
+ * @param day The number of the day to be converted
+ * @param shortVersion create short three-letter version or long name?
+ * @return Day name
+ */
 char* dayToString(int day, int shortVersion)
 {
 	char* dayString;
@@ -113,6 +138,9 @@ char* dayToString(int day, int shortVersion)
 	return dayString;
 }
 
+/** Sleep x seconds
+ * @param timeout Time to sleep
+ */
 void sleep(time_t timeout)
 {
 	timeout *= 50; //PIT is running @ 50Hz
