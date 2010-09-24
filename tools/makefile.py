@@ -119,7 +119,7 @@ runbochsfloppy: floppy.img
 runqemu: initrd.img kernel.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
 
-runvboxfloppy: floppy.img
+runvbox: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
 
 

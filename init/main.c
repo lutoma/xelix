@@ -12,10 +12,13 @@
 #include <filesystems/memfs/interface.h>
 #include <devices/pit/interface.h>
 #include <devices/floppy/interface.h>
-
+#include <devices/ata/interface.h>
 #include <processes/process.h>
-
+#include <init/debugconsole.h>
 void checkIntLenghts();
+void readInitrd(uint32 initrd_location);
+void calculateFibonacci();
+void compilerInfo();
 
 void readInitrd(uint32 initrd_location)
 {
@@ -108,6 +111,19 @@ void calculateFibonacci()
 	}
 }
 
+void compilerInfo()
+{
+	log("This release of Xelix was compiled ");
+	log(__DATE__);
+	print(" ");
+	log(__TIME__);
+	log(" using GCC ");
+	logDec(__GNUC__);
+	log(".");
+	logDec(__GNUC_MINOR__);
+	log(".");
+	logDec(__GNUC_PATCHLEVEL__);
+}
 
 void kmain(multibootHeader_t *mboot_ptr)
 {
@@ -129,17 +145,17 @@ void kmain(multibootHeader_t *mboot_ptr)
 	
 	display_init();
 	log_init();
-	
+
 	display_setColor(0x0f);
 	print("\n");
 	print("                                   Xelix\n");
 	print("\n");
 	display_setColor(0x07);
 	
-	
+	compilerInfo();	
 	log("Initialized preprotected memory\n"); // cheating. this already happened, but display wasn't up yet.
-	log("Initialized interrupts\n");
-	log("Initialized Display.\n"); 
+	log("Initialized interrupts\n"); // same here
+	log("Initialized Display.\n");  // same here, surprise...
 	cpu_init();
 	log("Initialized CPU\n");
 	memory_init_postprotected();
@@ -157,6 +173,9 @@ void kmain(multibootHeader_t *mboot_ptr)
 	log("Initialized floppy drives\n");
 	floppy_init();
 
+	ata_init(); // Now initialise real harddisks
+	log("Initialized ATA driver\n");
+
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
@@ -164,6 +183,8 @@ void kmain(multibootHeader_t *mboot_ptr)
 	print("Creating Process...\n");
 	
 	createProcess("fibonacci", &calculateFibonacci);
+
+	createProcess("debugconsole", &debugconsole_init);
 	
 	while(1)
 	{
