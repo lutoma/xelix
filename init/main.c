@@ -1,3 +1,9 @@
+/** @file init/main.c
+ * Initialization code of kernel
+ * @author Lukas Martini
+ * @author Christoph Sünderhauf
+ */
+
 #include <common/multiboot.h>
 #include <common/generic.h>
 #include <common/string.h>
@@ -16,11 +22,15 @@
 #include <processes/process.h>
 #include <init/debugconsole.h>
 
+
 void checkIntLenghts();
 void readInitrd(uint32 initrd_location);
 void calculateFibonacci();
 void compilerInfo();
 
+/** Read the initrd file supplied by the bootloader (usally GNU GRUB).
+ * @param initrd_location The position of the initrd in the kernel
+ */
 void readInitrd(uint32 initrd_location)
 {
 	// Initialise the initial ramdisk, and set it as the filesystem root.
@@ -63,7 +73,7 @@ void readInitrd(uint32 initrd_location)
 	}
 }
 
-
+/// Only prints an alphabet, for testing
 void printAlphabet()
 {
 	while(1)
@@ -81,8 +91,10 @@ void printAlphabet()
 	}
 }
 
+/// Call syscall. External.
 extern uint32 call_syscall(uint32, uint32);
 
+/// Calculate fibonacci numbers, for performance testing
 void calculateFibonacci()
 {
 	createProcess("alphabet", &printAlphabet);
@@ -112,6 +124,7 @@ void calculateFibonacci()
 	}
 }
 
+/// Prints out compiler information, especially for GNU GCC
 void compilerInfo()
 {
 	log("This release of Xelix was compiled ");
@@ -131,7 +144,10 @@ void compilerInfo()
 		log(" using an unknown compiler\n");
 	#endif
 }
-
+/** The main kernel function.
+ * This is called first.
+ * @param mboot_ptr Pointer to the multiboot header
+ */
 void kmain(multibootHeader_t *mboot_ptr)
 {
 
@@ -199,7 +215,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	}
 }
 
-
+/// Check if ints have the right length
 void checkIntLenghts()
 {
 	log("Checking length of uint8... ");

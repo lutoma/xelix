@@ -1,12 +1,9 @@
-/*  devices/ata/generic.c: Generic driver for ATA harddisks
- *  This file is part of Xelix. The license in COPYING applies to this file. If you did not receive such a file along with this code, you can get it from http://xelix.org.
- *  Written by:
- *  - Lukas Martini
- *  Todo:
- *  - Keep track of bad sectors
- *  Notes:
- *  - Always read the status of a drive first before sending any data. Sending something may also modify the status, resulting in loosing the ability to check if there is any drive.
- *  - All the preprocessor variables are defined in generic.h
+/** @file devices/ata/generic.c
+ * Generic driver for ATA harddisks
+ *@author Lukas Martini
+ *@todo Keep track of bad sectors
+ *@warning Always read the status of a drive first before sending any data. Sending something may also modify the status, resulting in loosing the ability to check if there is any drive.
+ *@see All the preprocessor variables are defined in generic.h
  */
 
 #include <devices/ata/interface.h>
@@ -18,12 +15,14 @@ int selectedDrive = -1;
 ataDrive_t* drive0;
 ataDrive_t* drive1;
 
+/** Read the Status 4 times, resulting in a 400 nanoseconds delay [one cpu io port reading takes something about 100ns]. As supposed in the ATA specifications. 
+* @see ATA Specification
+ */
 void delay();
 void setActiveDrive();
 uint8 getDriveStatus();
 void flushCache();
 
-// Read the Status 4 times, resulting in a 400 nanoseconds delay [one cpu io port reading takes something about 100ns]. As supposed in the ATA specifications.
 void delay()
 {
 	int i;
