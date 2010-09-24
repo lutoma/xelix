@@ -1,8 +1,14 @@
+/** @file devices/keyboard/generic.c
+ * A generic & simple keyboard driver
+ * @author Christoph Sünderhauf
+ * @author Lukas Martini
+ */
+
 #include <devices/keyboard/interface.h>
 #include <interrupts/interface.h>
 #include <devices/display/interface.h>
 
-
+/// A generic keymap. To be replaced later by files.
 char keymap[256] = {
  0 ,//0x0
  0 ,//0x1
@@ -262,6 +268,7 @@ char keymap[256] = {
  0 //0xff
 };
 
+/// A generic uppercase keymap. To be replaced later by files.
 char keymapshift[256] = {
  0 ,//0x0
  0 ,//0x1
@@ -523,7 +530,7 @@ char keymapshift[256] = {
 
 
 
-// current modifier keys
+/// Current modifier keys
 struct {
 	int shiftl:1;
 	int shiftr:1;
@@ -539,7 +546,7 @@ void handleIrq(registers_t regs);
 void handleScancode(uint8 code, uint8 code2);
 void printModifiers();
 
-// init after interrupts have been initialised
+/// Initialize keyboard after interrupts have initialized
 void keyboard_init()
 {
 	modifiers.shiftl = 0;
@@ -560,6 +567,9 @@ void keyboard_init()
 	}
 }
 
+/** Handles the IRQs we catch
+ * @param regs The registers we get from the IRQ
+ */
 void handleIrq(registers_t regs)
 {
 	static uint8 waitingForEscapeSequence = 0;
@@ -588,7 +598,11 @@ void handleIrq(registers_t regs)
 	}
 }
 
-void handleScancode(uint8 code, uint8 code2) // if code is 0xe0 (escape sequence), the second code is given
+/** Handle a scancode. Calls the active function or simply prints the char.
+ * @param code The scancode
+ * @param code2 If code is 0xe0 (escape sequence), this second code is given
+ */
+void handleScancode(uint8 code, uint8 code2)
 {	
 	if( code==0x2a) // shift press
 		modifiers.shiftl=1;
@@ -656,6 +670,7 @@ void handleScancode(uint8 code, uint8 code2) // if code is 0xe0 (escape sequence
 	*/
 }
 
+/// Print the active modifiers.
 void printModifiers()
 {
 	print(" Modifiers: ");
@@ -673,12 +688,16 @@ void printModifiers()
 		print("super ");
 }
 
+/** Take keyboard focus.
+ * @param func The function which should take the focus
+ */
 void keyboard_takeFocus(void (*func)(char))
 {
 	focusedFunction = func;
 	log("Application took focus.\n");
 }
 
+/// To drop the keyboard focus.
 void keyboard_leaveFocus()
 {
 	focusedFunction = 0;
