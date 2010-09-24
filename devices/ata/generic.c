@@ -116,10 +116,8 @@ void ata_init()
 		// Wait until device(s) get(s) ready
 		uint8 status;
 		while((status = getDriveStatus())){
-			if(status != 8)
-				printDec(status % 8);
 			if(status == 1) PANIC("ATA device error"); // 1 = Error
-			if(status == 8) break; // Ok, device is ready
+			if(status == 88) break; // Ok, device is ready
 		}
 		
 	}

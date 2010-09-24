@@ -64,7 +64,7 @@ void printDec(uint32 num)
 //Todo: Write to file
 void log(char* s)
 {
-	kernellog = strcat(kernellog, s); // doesn't work, kills the function. worked before christoph added his memory stuff ;)
+	kernellog = strcat(kernellog, s);
 	if(logsEnabled) print(s);
 	//if(addn) display_print("\n");
 }
@@ -130,7 +130,7 @@ void logHex(uint32 num)
 
 void log_init()
 {
-	kernellog = (char*)kmalloc(5000);
+	//char* kernellog = kmalloc(5000);
 	setLogLevel(1); //Enable logs
 }
 

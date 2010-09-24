@@ -12,6 +12,7 @@
 #include <filesystems/memfs/interface.h>
 #include <devices/pit/interface.h>
 #include <devices/ata/interface.h>
+#include <init/debugconsole.h>
 
 void checkIntLenghts();
 void readInitrd(uint32 initrd_location);
@@ -118,14 +119,14 @@ void kmain(multibootHeader_t *mboot_ptr)
 	
 	display_init();
 	log_init();
-	
+
 	display_setColor(0x0f);
 	print("\n");
 	print("                                   Xelix\n");
 	print("\n");
 	display_setColor(0x07);
 	
-	
+	compilerInfo();	
 	log("Initialized preprotected memory\n"); // cheating. this already happened, but display wasn't up yet.
 	log("Initialized interrupts\n"); // same here
 	log("Initialized Display.\n");  // same here, surprise...
@@ -149,10 +150,10 @@ void kmain(multibootHeader_t *mboot_ptr)
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
-	compilerInfo();
 
 	//calculateFibonacci(); //Just a speed test
-
+	debugconsole_init();
+	
 	while(1)
 	{
 		
