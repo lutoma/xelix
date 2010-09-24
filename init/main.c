@@ -17,8 +17,6 @@
 #include <filesystems/interface.h>
 #include <filesystems/memfs/interface.h>
 #include <devices/pit/interface.h>
-#include <devices/floppy/interface.h>
-#include <devices/ata/interface.h>
 #include <processes/process.h>
 #include <init/debugconsole.h>
 
@@ -192,12 +190,6 @@ void kmain(multibootHeader_t *mboot_ptr)
 	readInitrd(initrd_location);
 
 	print("finished listing files\n");
-
-	log("Initialized floppy drives\n");
-	floppy_init();
-
-	ata_init(); // Now initialise real harddisks
-	log("Initialized ATA driver\n");
 
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
