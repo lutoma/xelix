@@ -1,17 +1,16 @@
 #include <common/acpi.h>
 #include <common/datetime.h>
 
-word *SMI_CMD;
+sint32 *SMI_CMD;
 byte ACPI_ENABLE;
 byte ACPI_DISABLE;
-word *PM1a_CNT;
-word *PM1b_CNT;
-word SLP_TYPa;
-word SLP_TYPb;
-word SLP_EN;
-word SCI_EN;
+sint32 *PM1a_CNT;
+sint32 *PM1b_CNT;
+sint32 SLP_TYPa;
+sint32 SLP_TYPb;
+sint32 SLP_EN;
+sint32 SCI_EN;
 byte PM1_CNT_LEN;
-
 
 
 struct RSDPtr
@@ -20,7 +19,7 @@ struct RSDPtr
    byte CheckSum;
    byte OemID[6];
    byte Revision;
-   word *RsdtAddress;
+   sint32 *RsdtAddress;
 };
 
 
@@ -28,16 +27,16 @@ struct RSDPtr
 struct FACP
 {
    byte Signature[4];
-   word Length;
+   sint32 Length;
    byte unneded1[40 - 8];
-   word *DSDT;
+   sint32 *DSDT;
    byte unneded2[48 - 44];
-   word *SMI_CMD;
+   sint32 *SMI_CMD;
    byte ACPI_ENABLE;
    byte ACPI_DISABLE;
    byte unneded3[64 - 54];
-   word *PM1a_CNT_BLK;
-   word *PM1b_CNT_BLK;
+   sint32 *PM1a_CNT_BLK;
+   sint32 *PM1b_CNT_BLK;
    byte unneded4[89 - 72];
    byte PM1_CNT_LEN;
 };
@@ -281,16 +280,16 @@ int initAcpi(void)
 
 void acpiPowerOff(void)
 {
-  log("Starting power off procedure");
+  log("Starting power off procedure\n");
    // SCI_EN is set to 1 if acpi shutdown is possible
    if (SCI_EN == 0)
-      log("ACPI Shutdown is impossible");
+      log("ACPI Shutdown is impossible\n");
       return;
 
    acpiEnable();
 
    // send the shutdown command
-   log("Power off.");
+   log("Power off.\n");
    outw((unsigned int) PM1a_CNT, SLP_TYPa | SLP_EN );
    if ( PM1b_CNT != 0 )
       outw((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN );
