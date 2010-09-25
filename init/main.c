@@ -31,95 +31,6 @@ void compilerInfo();
  */
 void readInitrd(uint32 initrd_location)
 {
-	// Initialise the initial ramdisk, and set it as the filesystem root.
-	fsRoot = memfs_init(initrd_location);
-
-	// list the contents of /
-	int i = 0;
-	struct dirent *node = 0;
-	while ( (node = readdirFs(fsRoot, i)) != 0)
-	{
-		print("Found file ");
-		print(node->name);
-		fsNode_t *fsnode = finddirFs(fsRoot, node->name);
-		if ((fsnode->flags&0x7) == FS_DIRECTORY)
-			print("\n	 (directory)\n");
-		else
-		{
-			char* ext = substr(node->name, strlen(node->name) -4, 4);
-			if(strcmp(ext, ".bin"))
-			{
-				print("\n	  contents: \"");
-				char buf[256];
-				uint32 sz = readFs(fsnode, 0, 256, (uint8*) buf);
-				int j;
-				for (j = 0; j < sz; j++)
-					if(j < fsnode->length -1)
-					{
-						char s[2];
-						s[0] = buf[j];
-						s[1] = '\0';
-						print(s);
-					}
-				print("\"");
-			} else {
-				print("\n	 Not showing contents of binary file");
-			}
-			print("\n");
-		}
-		i++;
-	}
-}
-
-/// Only prints an alphabet, for testing
-void printAlphabet()
-{
-	while(1)
-	{
-	}
-	char abc[] = "abcdefghijklmnopqrstuvwxyz";
-	while(1)
-	{
-		char* p = abc;
-		while(*p != 0)
-		{
-			print(p++);
-			print("\n");
-		}
-	}
-}
-
-/// Call syscall. External.
-extern uint32 call_syscall(uint32, uint32);
-
-/// Calculate fibonacci numbers, for performance testing
-void calculateFibonacci()
-{
-	createProcess("alphabet", &printAlphabet);
-	
-	
-	char abc[] = "HAllo dies ist ein system-call Test!";
-	call_syscall(1,abc);
-	
-	while(1)
-	{
-	}
-	while(1)
-	{
-		uint32 a = 0;
-		uint32 b = 1;
-		uint32 c;
-		int i;
-		printDec(0);
-		for(i = 0; i < 20; i++)
-		{
-			c = b;
-			b = a;
-			a = c + b;
-			print("\n");
-			printDec(a);
-		}
-	}
 }
 
 /// Prints out compiler information, especially for GNU GCC
@@ -194,9 +105,6 @@ void kmain(multibootHeader_t *mboot_ptr)
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
-
-	print("Creating Process...\n");
-	
 
 	createProcess("debugconsole", &debugconsole_init);
 	
