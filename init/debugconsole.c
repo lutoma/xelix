@@ -12,7 +12,7 @@
 uint32 cursorPosition;
 char currentLine[256] = "";
 void printPrompt();
-void executeCommand(char* command);
+void executeCommand(char *command);
 
 /// Print the command line prompt.
 void printPrompt()
@@ -24,7 +24,7 @@ void printPrompt()
 /** Execute a command
  * @param command The command to be executed
  */
-void executeCommand(char command[256])
+void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
 	print(command);
@@ -39,7 +39,8 @@ void handler(char c)
 		cursorPosition--;
 	} else if(c == 0xA)
 	{
-		executeCommand(*currentLine);
+		print("\n");
+		executeCommand(currentLine);
 		currentLine[0] = '\0';
 		printPrompt();
 		return;
