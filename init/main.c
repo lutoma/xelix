@@ -1,4 +1,8 @@
-// Main file of kernel
+/** @file init/main.c
+ * \brief Initialization code of kernel
+ * @author Lukas Martini
+ * @author Christoph Sünderhauf
+ */
 
 #include <common/multiboot.h>
 #include <common/generic.h>
@@ -12,7 +16,7 @@
 #include <memory/kmalloc.h>
 #include <filesystems/interface.h>
 #include <filesystems/memfs/interface.h>
-#include <common/acpi.h>
+#include <devices/pit/interface.h>
 #include <processes/process.h>
 #include <init/debugconsole.h>
 
@@ -22,12 +26,14 @@ void readInitrd(uint32 initrd_location);
 void calculateFibonacci();
 void compilerInfo();
 
-// Read the initrd file supplied by the bootloader (usally GNU GRUB).
+/** Read the initrd file supplied by the bootloader (usally GNU GRUB).
+ * @param initrd_location The position of the initrd in the kernel
+ */
 void readInitrd(uint32 initrd_location)
 {
 }
 
-// Prints out compiler information, especially for GNU GCC
+/// Prints out compiler information, especially for GNU GCC
 void compilerInfo()
 {
 	log("This release of Xelix was compiled ");
@@ -48,8 +54,10 @@ void compilerInfo()
 		log(" using an unknown compiler\n");
 	#endif
 }
-// The main kernel function.
-// This is the first function called
+/** The main kernel function.
+ * This is called first.
+ * @param mboot_ptr Pointer to the multiboot header
+ */
 void kmain(multibootHeader_t *mboot_ptr)
 {
 
@@ -89,8 +97,6 @@ void kmain(multibootHeader_t *mboot_ptr)
 	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();
 	log("Initialized keyboard\n");
-	initAcpi();
-	log("Initialized ACPI\n");
 	
 	log("Reading Initrd...\n");
 	readInitrd(initrd_location);
@@ -100,7 +106,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
-	acpiPowerOff();
+
 	//createProcess("debugconsole", &debugconsole_init);
 	debugconsole_init();
 	while(1)

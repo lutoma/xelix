@@ -228,7 +228,7 @@ int (memcmp)(const void *s1, const void *s2, size_t n)
 void reboot()
 {
 	unsigned char good = 0x02;
-	log("Going to reboot NOW!");
+	log("Goint to reboot NOW!");
 	asm volatile("cli"); //We don't want interrupts here
 	while ((good & 0x02) != 0)
 	good = inb(0x64);
