@@ -1,6 +1,7 @@
 /** @file init/debugconsole.c
  * \brief A simple console for debugging purposes.
  * @author Lukas Martini
+ * @author Benjamin Richter
  */
 
 #include <init/debugconsole.h>
@@ -9,7 +10,7 @@
 #include <devices/keyboard/interface.h>
 
 uint32 cursorPosition;
-char* currentLine;
+char currentLine[256] = "";
 void printPrompt();
 void executeCommand(char* command);
 
@@ -25,9 +26,8 @@ void printPrompt()
  */
 void executeCommand(char command[256])
 {
-	print("\n");
+	if(strcmp(command, "reboot") == 0) reboot();
 	print(command);
-	print("\n");
 }
 
 /// Handle keyboard input.
@@ -39,25 +39,26 @@ void handler(char c)
 		cursorPosition--;
 	} else if(c == 0xA)
 	{
-		executeCommand(currentLine);
-		currentLine = "";
+		executeCommand(*currentLine);
+		currentLine[0] = '\0';
 		printPrompt();
 		return;
 	}	else cursorPosition++;
 
-	char s[2];
-	s[0] = c;
-	s[1] = 0;
-	
-	currentLine = strcat(currentLine, s);
-	print(s);
+	if (strlen(currentLine) < sizeof(currentLine)-2) {
+	    char s[2] = { c, 0 };
+	    strcat(currentLine, s);
+	    print(s);
+        }
 }
 
 /// Initialize the debug console.
 void debugconsole_init()
 {
 	log("Initializing debug console\n");
-	currentLine = kmalloc(600);
+	log("Debuconsole currentLine position in memory: ");
+	logHex(currentLine);
+	log("\n");
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	keyboard_takeFocus(&handler);
 	printPrompt();
