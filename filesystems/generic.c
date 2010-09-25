@@ -1,57 +1,57 @@
+/** @file init/main.c
+ * \brief Generic file handling functions
+ * This file provices abstraction from the filesystem drivers for normal use.
+ * @author Lukas Martini
+ */
+
 #include <filesystems/interface.h>
 
-fsNode_t *fsRoot = 0; // The root of the filesystem.
-
-uint32 readFs(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer)
+/** Read contents of a node
+ * @param node Node to read
+ * @return Data of the node
+ */
+char* fs_read(node_t* node)
 {
-	// Has the node got a read callback?
-	if (node->read != 0)
-		return node->read(node, offset, size, buffer);
-	else
-		return 0;
+	if(node->readFunction <= 0) return;
+	(*node->readFunction) (node);
+	return "foo";
 }
 
-uint32 writeFs(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer)
+/** Write to a specific node
+ * @param node Node to write to
+ * @param what Data to write to the node
+ */
+void fs_write(node_t* node, char* what)
 {
-	// Has the node got a write callback?
-	if (node->write != 0)
-		return node->read(node, offset, size, buffer);
-	else
-		return 0;
+
 }
 
-void openFs(fsNode_t *node, uint8 read, uint8 write)
+/** Show contents of directory
+ * @param node The directory-node to be read
+ * @param buffer A buffer array to write to
+ * @return Array with file-nodes
+ * @bug Only supports 50 items [50]
+ */
+node_t* fs_list(node_t* node, node_t buffer[])
 {
-	// Has the node got a open callback?
-	if (node->open != 0)
-		return node->open(node);
-	else
-		return;
+
 }
 
-void closeFs(fsNode_t *node)
+/** Search for a specific node by filename
+ * @param start Start directory
+ * @param name Name to search for
+ * @return Node of the node found
+ */
+node_t* fs_search(node_t* start, char* name)
 {
-	// Has the node got a close callback?
-	if (node->close != 0)
-		return node->close(node);
-	else
-		return;
+
 }
 
-struct dirent *readdirFs(fsNode_t *node, uint32 index)
-{
-	// Has the node got a readdir callback and _is_ it actually a directory
-	if ((node->flags&0x7) == FS_DIRECTORY && node->readdir != 0 )
-		return node->readdir(node, index);
-	else
-		return 0;
-}
 
-fsNode_t *finddirFs(fsNode_t *node, char *name)
+/** Initialize the filesystem abstraction system
+ */
+void fs_init()
 {
-	// Has the node got a finddir callback and _is_ it actually a directory
-	if ((node->flags&0x7) == FS_DIRECTORY && node->finddir != 0 )
-		return node->finddir(node, name);
-	else
-		return 0;
+
+	
 }

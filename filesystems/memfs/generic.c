@@ -2,7 +2,7 @@
 #include <common/string.h>
 #include <memory/kmalloc.h>
 
-
+/*
 // TYPES
 
 typedef struct
@@ -18,7 +18,7 @@ typedef struct
 	uint32 length; // Length of the file.
 } memfsFileHeader_t;
 
- 
+
 // VARABLES
 
 memfsHeader_t *memfsHeader; // The header.
@@ -135,3 +135,4 @@ fsNode_t *memfs_init(uint32 location)
 	}
 	return rootNode;
 }
+*/
