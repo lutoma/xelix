@@ -49,6 +49,7 @@ void compilerInfo()
 		logDec(__GNUC_MINOR__);
 		log(".");
 		logDec(__GNUC_PATCHLEVEL__);
+		log("\n");
 	#else
 		log(" using an unknown compiler\n");
 	#endif
