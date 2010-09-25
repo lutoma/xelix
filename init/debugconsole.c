@@ -24,7 +24,7 @@ void printPrompt()
 /** Execute a command
  * @param command The command to be executed
  */
-void executeCommand(char* command)
+void executeCommand(char command[256])
 {
 	if(strcmp(command, "reboot") == 0) reboot();
 	print(command);
