@@ -193,7 +193,7 @@ pageDirectory_t* paging_cloneCurrentDirectory()
 			print("\n");
 			// link page table
 			directory->pageTables[tableNum] = currentDirectory->pageTables[tableNum];
-			memcpy(&(directory->directoryEntries[tableNum]), &(currentDirectory->directoryEntries[tableNum]), sizeof(pageDirectoryEntry_t));
+			directory->directoryEntries[tableNum] = currentDirectory->directoryEntries[tableNum];
 		}
 		else
 		{

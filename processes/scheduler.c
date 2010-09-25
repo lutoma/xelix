@@ -28,7 +28,7 @@ registers_t* schedule(registers_t regs)
 	if(currentProcess != 0) // or else this is the first time multiprocessing is enabled and schedule() is called
 	{
 		// we have to save the state of the last process
-		memcpy(&(currentProcess->regs), &regs, sizeof(registers_t));
+		currentProcess->regs = regs;
 	}
 	
 	currentProcessIndex++;
@@ -42,7 +42,7 @@ registers_t* schedule(registers_t regs)
 	
 	paging_switchPageDirectory(currentProcess->pageDirectory);
 	
-	memcpy(&regs, &(currentProcess->regs), sizeof(registers_t));
+	regs = currentProcess->regs;
 	return &regs;
 }
 

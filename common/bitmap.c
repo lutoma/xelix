@@ -14,28 +14,28 @@ static inline uint32 offset(uint32 bitnum)
 	return bitnum % 32;
 }
 
-bitmap_t* bitmap_init(uint32 numbits)
+bitmap_t bitmap_init(uint32 numbits)
 {
 	if(numbits == 0)
 	{
 		log("Error: bitmap with numbits=0 requested! returning 0");
-		return 0;
+		return (bitmap_t){ 0, NULL };
 	}
-	bitmap_t* bitmap = kmalloc(sizeof(bitmap_t));
-	bitmap->numbits = numbits;
-	bitmap->bits = kmalloc(sizeof(uint32) * (numbits-1)/32+1); // (numbits-1)/32 wird abgerundet
+	bitmap_t bitmap;
+	bitmap.numbits = numbits;
+	bitmap.bits = kmalloc(sizeof(uint32) * (numbits-1)/32+1); // (numbits-1)/32 wird abgerundet
 	return bitmap;
 }
 
 // returns 1 or 0
-uint8 bitmap_get(bitmap_t* bitmap, uint32 bitnum)
+uint8 bitmap_get(bitmap_t bitmap, uint32 bitnum)
 {
-	if( bitnum >= bitmap->numbits )
+	if( bitnum >= bitmap.numbits )
 	{
 		log("Error: bitmap_get() called on a bit number which exceeds the size of the bitmap!");
 		return 0;
 	}
-	if ( bitmap->bits[index(bitnum)] & (0x1 << offset(bitnum)) )
+	if ( bitmap.bits[index(bitnum)] & (0x1 << offset(bitnum)) )
 	{
 		return 1;
 	}
@@ -46,40 +46,40 @@ uint8 bitmap_get(bitmap_t* bitmap, uint32 bitnum)
 }
 
 // sets a bit (to 1)
-void bitmap_set(bitmap_t* bitmap, uint32 bitnum)
+void bitmap_set(bitmap_t bitmap, uint32 bitnum)
 {
-	if( bitnum >= bitmap->numbits )
+	if( bitnum >= bitmap.numbits )
 	{
 		log("Error: bitmap_get() called on a bit number which exceeds the size of the bitmap!");
 		return;
 	}
-	bitmap->bits[index(bitnum)] = bitmap->bits[index(bitnum)] | (0x1 << offset(bitnum));
+	bitmap.bits[index(bitnum)] = bitmap.bits[index(bitnum)] | (0x1 << offset(bitnum));
 }
 
 
 // clears a bit (to 0)
-void bitmap_clear(bitmap_t* bitmap, uint32 bitnum)
+void bitmap_clear(bitmap_t bitmap, uint32 bitnum)
 {
-	if( bitnum >= bitmap->numbits )
+	if( bitnum >= bitmap.numbits )
 	{
 		log("Error: bitmap_get() called on a bit number which exceeds the size of the bitmap!");
 		return;
 	}
-	bitmap->bits[index(bitnum)] = bitmap->bits[index(bitnum)] & ~(0x1 << offset(bitnum));
+	bitmap.bits[index(bitnum)] = bitmap.bits[index(bitnum)] & ~(0x1 << offset(bitnum));
 }
 
 // clears every bit to 0
-void bitmap_clearall(bitmap_t* bitmap)
+void bitmap_clearall(bitmap_t bitmap)
 {
-	memset(bitmap->bits, 0, sizeof(uint32) * (bitmap->numbits-1)/32+1); // s.o. bei kmalloc für die Byteanzahl
+	memset(bitmap.bits, 0, sizeof(uint32) * (bitmap.numbits-1)/32+1); // s.o. bei kmalloc für die Byteanzahl
 }
 
-uint32 bitmap_findFirstClearedBit(bitmap_t* bitmap)
+uint32 bitmap_findFirstClearedBit(bitmap_t bitmap)
 {
 	int i;
-	for(i=0; i <= index(bitmap->numbits); i++)
+	for(i=0; i <= index(bitmap.numbits); i++)
 	{
-		if(bitmap->bits[i] == 0xffffffff)
+		if(bitmap.bits[i] == 0xffffffff)
 		{
 			continue;
 		}

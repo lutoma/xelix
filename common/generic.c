@@ -44,7 +44,7 @@ void memcpy(void* dest, void* src, uint32 size)
  */
 void outb(uint16 port, uint8 value)
 {
-	 asm ("outb %1, %0" : : "dN" (port), "a" (value));
+	 asm ("outb %1, %0" : : "Nd" (port), "a" (value));
 }
 
 /** Write out a word to the specified port
@@ -53,7 +53,7 @@ void outb(uint16 port, uint8 value)
  */
 void outw(uint16 port, uint16 value)
 {
-	 asm ("outw %1, %0" : : "dN" (value), "a" (port));
+	 asm ("outw %1, %0" : : "Nd" (port), "a" (value));
 }
 /** Read a byte from the specified port
  * @param port The port to read from
@@ -62,7 +62,7 @@ void outw(uint16 port, uint16 value)
 uint8 inb(uint16 port)
 {
 	uint8 ret;
-	asm ("inb %1, %0" : "=a" (ret) : "dN" (port));
+	asm ("inb %1, %0" : "=a" (ret) : "Nd" (port));
 	return ret;
 }
 
