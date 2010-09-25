@@ -1,8 +1,3 @@
-/** @file mainpage.h
- * \brief Only contains the main page of the documentation
- * @author Lukas Martini
- */
-
 /** @mainpage Xelix Project
  *  
  *  @section sec1 Welcome
@@ -16,4 +11,10 @@
  *  Want to get the code? Get it by typing\n
  *  git clone git://github.com/xelix/xelix.git\n
  *  into a console. You can also browse it online on <a href="http://github.com/xelix/xelix/">Github</a>. 
+ */
+
+/** @file mainpage.h
+ * \brief Only contains the main page of the documentation
+ * @author Lukas Martini
+ * @note Has to be in this "wrong" order or otherwise the main page won't show up.
  */
