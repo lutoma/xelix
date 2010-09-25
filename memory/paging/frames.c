@@ -6,7 +6,7 @@
 
 
 // 0->free, 1->used. usedFrames->numbits
-bitmap_t* usedFrames;
+bitmap_t usedFrames;
 
 // The total number of frames. This depends on the amount of memory. (TODO)
 uint32 numFrames;
