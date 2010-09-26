@@ -84,6 +84,12 @@ void printDec(uint32 num)
 	display_printDec(num);
 }
 
+/// Clear screen
+void clear(void)
+{
+	display_clear();
+}
+
 /** Logs something. Also prints it out.
  * @todo Write to file
  * @param s String to log

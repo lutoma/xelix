@@ -44,12 +44,11 @@ void copyBufferToScreen();
 
 void updateCursorPosition();
 
-/// Initialize display
-void display_init()
+void display_clear();
+
+/// Clear screen
+void display_clear()
 {
-	color = 0x07;
-	
-	
 	// clear the screen
 	uint16* p = videoMemory;
 	int i;
@@ -59,11 +58,6 @@ void display_init()
 		p++;
 	}
 	
-	
-	uint32 bufferSize = columns * rows * 5; // number of characters in buffer
-	buffer = kmalloc(sizeof(uint16) * bufferSize);
-	bufferEnd = buffer + bufferSize;
-	
 	// clear buffer
 	uint16* ptr;
 	for(ptr = buffer; ptr < bufferEnd; ptr++)
@@ -72,7 +66,19 @@ void display_init()
 	}
 	
 	screenPos = buffer;
-	cursorPos = buffer+80*45;
+	cursorPos = buffer + (80*25);
+}
+
+/// Initialize display
+void display_init()
+{
+	color = 0x07;
+	
+	uint32 bufferSize = columns * rows * 5; // number of characters in buffer
+	buffer = kmalloc(sizeof(uint16) * bufferSize);
+	bufferEnd = buffer + bufferSize;
+
+	display_clear();
 	
 	/*
 	// CHANGE FONT (http://www.cs.usfca.edu/~cruse/cs686f03/newzero.cpp)

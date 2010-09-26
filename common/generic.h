@@ -43,6 +43,7 @@ void memcpy(void* dest, void* src, uint32 size);
 void print(char* s);
 void printHex(uint32 num);
 void printDec(uint32 num);
+void clear(void);
 
 // KERNEL LOG
 void log(char* s);

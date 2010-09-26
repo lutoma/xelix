@@ -8,6 +8,7 @@
 #include <common/string.h>
 #include <memory/kmalloc.h>
 #include <devices/keyboard/interface.h>
+#include <common/datetime.h>
 
 uint32 cursorPosition;
 char currentLine[256] = "";
@@ -24,10 +25,40 @@ void printPrompt()
 /** Execute a command
  * @param command The command to be executed
  */
+// Yes, this is only a bunch of hardcoded crap
 void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
-	print(command);
+	else if(strcmp(command, "clear") == 0) clear();
+	else if(strcmp(command, "date") == 0)
+	{
+		int day = date('d');
+		int month = date('M');
+		int year = date('y');
+		int hour = date('h');
+		int minute = date('m');
+		int second = date('s');
+		int weekDay = getWeekDay(day, month, year);
+		
+		print(dayToString(weekDay,1));
+		print(" ");
+		print(monthToString(month,1));
+		print(" ");
+		printDec(day);
+		print(" ");
+		printDec(hour);
+		print(":");
+		printDec(minute);
+		print(":");
+		printDec(second);
+		print(" UTC ");
+		printDec(year);
+	} else
+	{
+		print("error: command \"");
+		print(command);
+		print("\" not found");
+	}
 }
 
 /// Handle keyboard input.
