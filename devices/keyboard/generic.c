@@ -565,6 +565,8 @@ void keyboard_init()
 	{
 		inb(0x60); // read scancode
 	}
+	
+	log("Initialized keyboard\n");
 }
 
 /** Handles the IRQs we catch

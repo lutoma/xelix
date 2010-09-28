@@ -82,22 +82,14 @@ void kmain(multibootHeader_t *mboot_ptr)
 	display_setColor(0x07);
 	
 	compilerInfo();	
-	log("Initialized preprotected memory\n"); // cheating. this already happened, but display wasn't up yet.
-	log("Initialized interrupts\n"); // same here
-	log("Initialized Display.\n");  // same here, surprise...
 	cpu_init();
-	log("Initialized CPU\n");
 	memory_init_postprotected();
-	log("Initialized postprotected memory\n");
 	pit_init(50); //50Hz
-	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();
-	log("Initialized keyboard\n");
 	fs_init();
 	
 	log("Reading Initrd...\n");
 	readInitrd(initrd_location);
-
 	print("finished listing files\n");
 
 	display_setColor(0x0f);

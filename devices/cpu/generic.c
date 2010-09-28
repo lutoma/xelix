@@ -22,6 +22,8 @@ void cpu_init()
 	{
 		log("CPU is already in protected mode, not enabling.\n");
 	}
+
+	log("Initialized CPU\n");
 }
 /** Check if CPU is running in protected mode.
  * @return Bool if CPU is in protected mode.

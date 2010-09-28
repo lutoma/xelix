@@ -131,7 +131,7 @@ unsigned char newglyph[ 16 ] = 	{
 	outw( 0x0E06, GRAF_PORT );	// map starts at 0http://www.flickr.com/photos/jungepiraten/4844152708/sizes/l/xB800:0000
 	*/
 	
-	
+	log("Initialized Display.\n");
 }
 
 /// The main print function which should always be used

@@ -14,6 +14,7 @@ void interrupts_init()
 
 	// set all interruptHandlers to zero
 	memset(interruptHandlers, 0, 256*sizeof(interruptHandler_t));
+	log("Initialized interrupts\n");
 }
 
 void interrupt_callback(registers_t regs)
