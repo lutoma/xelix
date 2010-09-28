@@ -17,7 +17,7 @@ typedef struct node {
 } node_t;
 
 /// The root directory /.
-node_t fs_root;
+node_t* fs_root;
 
 char* fs_read(node_t* node);
 void fs_write(node_t* node, char* what);

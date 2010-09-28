@@ -1,8 +1,5 @@
-/** @file init/main.c
- * \brief Initialization code of kernel
- * @author Lukas Martini
- * @author Christoph Sünderhauf
- */
+// Initialization code of kernel
+
 
 #include <common/multiboot.h>
 #include <common/generic.h>
@@ -96,6 +93,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	log("Initialized PIT (programmable interrupt timer)\n");
 	keyboard_init();
 	log("Initialized keyboard\n");
+	fs_init();
 	
 	log("Reading Initrd...\n");
 	readInitrd(initrd_location);
