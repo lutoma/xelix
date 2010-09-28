@@ -54,10 +54,9 @@ void compilerInfo()
 		log(" using an unknown compiler\n");
 	#endif
 }
-/** The main kernel function.
- * This is called first.
- * @param mboot_ptr Pointer to the multiboot header
- */
+
+// The main kernel function.
+// (This is the first function called ever)
 void kmain(multibootHeader_t *mboot_ptr)
 {
 
@@ -115,7 +114,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	}
 }
 
-/// Check if ints have the right length
+// Check if ints have the right length
 void checkIntLenghts()
 {
 	log("Checking length of uint8... ");

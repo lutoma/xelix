@@ -1,8 +1,4 @@
-/** @file init/debugconsole.c
- * \brief A simple console for debugging purposes.
- * @author Lukas Martini
- * @author Benjamin Richter
- */
+// A simple console for debugging purposes.
 
 #include <init/debugconsole.h>
 #include <common/string.h>
@@ -15,16 +11,14 @@ char currentLine[256] = "";
 void printPrompt();
 void executeCommand(char *command);
 
-/// Print the command line prompt.
+// Print the command line prompt.
 void printPrompt()
 {
 	cursorPosition = 0;
 	print("\n> ");
 }
 
-/** Execute a command
- * @param command The command to be executed
- */
+// Execute a command
 // Yes, this is only a bunch of hardcoded crap
 void executeCommand(char *command)
 {
@@ -61,7 +55,7 @@ void executeCommand(char *command)
 	}
 }
 
-/// Handle keyboard input.
+// Handle keyboard input.
 void handler(char c)
 {
 	if(c == 0x8) //0x8 is the backspace key.
@@ -84,7 +78,7 @@ void handler(char c)
         }
 }
 
-/// Initialize the debug console.
+// Initialize the debug console.
 void debugconsole_init()
 {
 	log("Initializing debug console\n");
