@@ -1,19 +1,12 @@
-/** @file common/generic.c
- * \brief Common utilities often used.
- * @author Lukas Martini
- * @author Christoph Sünderhauf
- */
+// Common utilities often used.
 
 #include <common/generic.h>
+#include <common/log.h>
 #include <common/string.h>
 #include <memory/kmalloc.h>
 #include <devices/display/interface.h>
 
-int logsEnabled;
-char* kernellog;
-uint32 maxLogSize;
-
-/// Memset function. Fills memory with something.
+// Memset function. Fills memory with something.
 void memset(void* ptr, uint8 fill, uint32 size)
 {
 	uint8* p = (uint8*) ptr;
@@ -88,104 +81,6 @@ void printDec(uint32 num)
 void clear(void)
 {
 	display_clear();
-}
-
-/** Logs something. Also prints it out.
- * @todo Write to file
- * @param s String to log
- */
-void log(char* s)
-{
-	if(strlen(kernellog) + strlen(s) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
-		kernellog = strcat(kernellog, s); // concatenate to kernellog
-	if(logsEnabled)
-		print(s); // print it on screen
-}
-
-/** Same as log, only with Integer
- * @todo Write to file
- * @param num Number to log
- */
-void logDec(uint32 num)
-{
-	if(num == 0)
-	{
-	 log("0");
-	 return;
-	}
-	char s[11]; // maximal log(2^(4*8)) (long int sind 4 bytes) + 1 ('\0') = 11
-	
-	char tmp[9];
-	int i=0;
-	while(num != 0)
-	{
-	 unsigned char c = num % 10;
-	 num = (num - c)/10;
-	 c+='0';
-	 tmp[i++] = c;
-	}
-	s[i] = '\0';
-	int j;
-	for(j=0; j < i; j++)
-	{
-	 s[j] = tmp[i-1-j];
-	}
-	log(s);
-}
-
-/** Same as log, only with Hex
- * @todo Write to file
- * @param num Number to log
- */
-void logHex(uint32 num)
-{
-	if(num == 0)
-	{
-		log("0x0");
-		return;
-	}
-	char s[11]; // maximal 2 (0x) + 2*4 (long int sind 4 bytes) + 1 ('\0')
-	s[0] = '0';
-	s[1] = 'x';
-	
-	char tmp[9];
-	int i=0;
-	while(num != 0)
-	{
-		unsigned char c = num & 0xf;
-		num = num>>4;
-		if(c < 10)
-			c+='0';
-		else
-			c= c-10 + 'A';
-		tmp[i++] = c;
-	}
-	s[i+2] = '\0';
-	int j;
-	for(j=0; j < i; j++)
-	{
-		s[2+j] = tmp[i-1-j];
-	}
-	log(s);
-}
-
-/// Initialize log
-void log_init()
-{
-	maxLogSize = 5000;
-	kernellog = (char*)kmalloc(maxLogSize);
-	kernellog[0] = '\0'; // set kernel log to empty string
-	setLogLevel(1); //Enable logs
-}
-
-/** Set log level\n
- * @param level Log level to be set. Currently only off (0) and on (1).
- */
-void setLogLevel(int level)
-{
-	if(level) log("Enabled printing of log messages.\n");
-	else log("Warning: disabled printing of log messages.\n");
-	logsEnabled = level;
 }
 
 /// Warn. Use the WARN() macro that inserts the line.

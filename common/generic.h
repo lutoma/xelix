@@ -45,13 +45,6 @@ void printHex(uint32 num);
 void printDec(uint32 num);
 void clear(void);
 
-// KERNEL LOG
-void log(char* s);
-void logDec(uint32 num);
-void logHex(uint32 num);
-void log_init();
-void setLogLevel(int level);
-
 // to automatically have file names and line numbers
 //#define WARN(msg) warn(msg, __FILE__, __LINE__);
 #define PANIC(msg) panic(msg, __FILE__, __LINE__, 0);
