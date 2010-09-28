@@ -1,5 +1,4 @@
-#ifndef PROCESSES_PROCESS_H
-#define PROCESSES_PROCESS_H
+#pragma once
 
 #include <common/generic.h>
 #include <interrupts/interface.h>
@@ -22,7 +21,3 @@ typedef struct {
 
 // temporary function
 void createProcess(char name[100], void function());
-
-
-
-#endif

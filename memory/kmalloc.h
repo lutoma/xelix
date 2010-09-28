@@ -1,5 +1,4 @@
-#ifndef MEMORY_KMALLOC_H
-#define MEMORY_KMALLOC_H
+#pragma once
 
 #include <common/generic.h>
 
@@ -25,6 +24,3 @@ void kmalloc_init(uint32 start);
 
 
 extern uint32 kernelMaxMemory; // not to be used outside of memory subsystem!
-
-
-#endif

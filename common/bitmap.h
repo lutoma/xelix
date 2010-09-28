@@ -1,6 +1,4 @@
-#ifndef COMMON_BITMAP_H
-#define COMMON_BITMAP_H
-
+#pragma once
 #include <common/generic.h>
 
 // provides a bitmap
@@ -29,5 +27,3 @@ void bitmap_clearall(bitmap_t bitmap);
 
 // finds the first bit set to 0    returns 0 if no cleared bit found (0 is also returned if the first bit is cleared)
 uint32 bitmap_findFirstClearedBit(bitmap_t bitmap);
-
-#endif

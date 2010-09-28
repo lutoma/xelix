@@ -1,7 +1,5 @@
-#ifndef COMMON_GENERIC_H
-#define COMMON_GENERIC_H
+#pragma once
 
-// utility stuff used almost everywhere in the kernel
 #define GCC_VERSION (__GNUC__ * 10000 \
                                + __GNUC_MINOR__ * 100 \
                                + __GNUC_PATCHLEVEL__)
@@ -62,5 +60,3 @@ int (memcmp)(const void *s1, const void *s2, size_t n);
 
 
 void reboot(); // to be moved later when the halting process becomes more complicated ;)
-
-#endif

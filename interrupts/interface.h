@@ -1,5 +1,4 @@
-#ifndef INTERRUPTS_INTERFACE_H
-#define INTERRUPTS_INTERFACE_H
+#pragma once
 
 #include <common/generic.h>
 
@@ -41,5 +40,3 @@ void interrupt_registerHandler(uint8 n, interruptHandler_t handler);
 
 // for internal use only!
 void interrupt_callback(registers_t regs);
-
-#endif

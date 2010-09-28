@@ -1,5 +1,4 @@
-#ifndef MEMORY_PAGING_PAGING_H
-#define MEMORY_PAGING_PAGING_H
+#pragma once
 
 #include <common/generic.h>
 
@@ -65,8 +64,3 @@ pageDirectory_t* paging_cloneCurrentDirectory();
 
 // switches paging to use the specified directory. Does not en- or deable paging!
 void paging_switchPageDirectory(pageDirectory_t* directory);
-
-
-
-
-#endif

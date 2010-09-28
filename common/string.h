@@ -1,5 +1,4 @@
-#ifndef COMMON_STRING_H
-#define COMMON_STIRNG_H
+#pragma once
 
 #include <common/generic.h>
 
@@ -11,7 +10,3 @@ char *strcat(char *dest, const char *src);
 char *strcpy(char *dest, const char *src);
 size_t strlen(const char * str);
 char* substr(char* src, size_t start, size_t len);
-
-
-
-#endif

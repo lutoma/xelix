@@ -1,7 +1,4 @@
-#ifndef FILESYSTEMS_MEMFS_INTERFACE_H
-#define FILESYSTEMS_MEMFS_INTERFACE_H
+#pragma once
 
 #include <common/generic.h>
 #include <filesystems/interface.h>
-
-#endif
