@@ -87,7 +87,7 @@ void log_init()
 	setLogLevel(1); //Enable logs
 }
 
-// Set log level\n
+// Set log level
 // Currently only off (0) and on (1).
 void setLogLevel(int level)
 {
