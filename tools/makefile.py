@@ -110,7 +110,6 @@ floppy.img: kernel.bin initrd.img
 
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
-	# qemu -initrd doesn't work as it should.. (more precise, please!)
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
 runbochsfloppy: floppy.img
@@ -119,7 +118,11 @@ runbochsfloppy: floppy.img
 runqemu: initrd.img kernel.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
 
-runvbox: floppy.img
+runqemunox: initrd.img kernel.bin
+	# Exit with ^A-x
+	qemu -d cpu_reset -kernel kernel.bin -initrd initrd.img -nographic
+	
+runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
 
 
