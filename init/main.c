@@ -5,6 +5,7 @@
 #include <common/generic.h>
 #include <common/string.h>
 #include <devices/display/interface.h>
+#include <devices/serial/interface.h>
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
 #include <memory/interface.h>
@@ -73,6 +74,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	
 	
 	display_init();
+	serial_init();
 	log_init();
 
 	display_setColor(0x0f);

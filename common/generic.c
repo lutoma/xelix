@@ -4,6 +4,7 @@
 #include <common/log.h>
 #include <common/string.h>
 #include <memory/kmalloc.h>
+#include <devices/serial/interface.h>
 #include <devices/display/interface.h>
 
 // Memset function. Fills memory with something.
@@ -62,18 +63,21 @@ uint8 inb(uint16 port)
 /// Print function
 void print(char* s)
 {
+	serial_print(s);
 	display_print(s);
 }
 
 /// Print int as Hex
 void printHex(uint32 num)
 {
+	serial_print(num);
 	display_printHex(num);
 }
 
 /// Print int
 void printDec(uint32 num)
 {
+	serial_print(num);
 	display_printDec(num);
 }
 
