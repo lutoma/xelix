@@ -139,7 +139,6 @@ void warn(char *reason, char *file, uint32 line)
 {
 	asm volatile("cli"); // Disable interrupts.
 	log("\n\nWARNING: %s in %s at line %d", reason, file, line);
-	for(;;) asm("cli;hlt;");//Sleep forever
 }
 
 /// Panic. Use the PANIC() macro that inserts the line.
