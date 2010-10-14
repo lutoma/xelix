@@ -30,6 +30,32 @@ void memcpy(void* dest, void* src, uint32 size)
 	}
 }
 
+// Small helper function
+static inline char to_digit(uint8 d)
+{
+	return (d < 10 ? '0' : 'a' - 10) + d;
+}
+
+// A small itoa
+// Please note it's not standard c syntax.
+char *itoa (int num, int base)
+{
+	if (num == 0)
+		return "0"; 
+	
+	char buf[8 * sizeof(num) + 1];
+	char *res = buf + 8 * sizeof(num);
+
+	*--res = '\0';
+
+	while ((num > 0) && (res >= buf))
+	{
+		*(--res) = to_digit(num % base);
+		num /= base;
+	}
+
+	return res;
+}
 
 
 /** Write out a byte to the specified port
@@ -79,6 +105,27 @@ void printDec(uint32 num)
 {
 	serial_print(num);
 	display_printDec(num);
+}
+
+void vprintf(const char *fmt, void **arg) {
+	while (*fmt) {
+		if (*fmt == '%') {
+			++fmt;
+			switch (*fmt) {
+				case 'c': display_printChar(*(char *)arg); break;
+				case 's': print(*(char **)arg); break;
+				case 'b': print(itoa(*(unsigned *)arg,  2)); break;
+				case 'd': print(itoa(*(unsigned *)arg, 10)); break;
+				case 'x': print(itoa(*(unsigned *)arg, 16)); break;
+			}
+			++arg;
+		} else display_printChar(*fmt);
+		++fmt;
+	}
+}
+
+void printf(const char *fmt, ...) {
+	vprintf(fmt, (void **)(&fmt) + 1);
 }
 
 /// Clear screen

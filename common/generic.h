@@ -29,18 +29,21 @@ void outw(uint16 port, uint16 value);
 uint8 inb(uint16 port);
 
 
-// LIB    (a smal subset of some c libraries)
+// LIB    (a small subset of some c libraries)
 
 // fills size bytes of memory starting at ptr with the byte fill.
 void memset(void* ptr, uint8 fill, uint32 size);
 // copies size bytes of memory from src to dest
 void memcpy(void* dest, void* src, uint32 size); 
-
+//Itoa
+char *itoa (int num, int base);
 
 // PRINTING to display
 void print(char* s);
 void printHex(uint32 num);
 void printDec(uint32 num);
+void vprintf(const char *fmt, void **arg);
+void printf(const char *fmt, ...);
 void clear(void);
 
 // to automatically have file names and line numbers

@@ -34,8 +34,6 @@ uint16* cursorPos; // points to current cursor position in buffer. This is direc
 uint8 color; // the current color
 
 
-void printChar(char c); // prints a char    should not be used directly, use display_print() instead
-
 // wraps the given position in the buffer
 uint16* wrapAroundBuffer(uint16* pos);
 
@@ -139,7 +137,7 @@ void display_print(char* s)
 {
 	while(*s != '\0')
 	{
-		printChar(*(s++));
+		display_printChar(*(s++));
 	}
 	
 	// automatically set screenPos so the user sees the new content
@@ -153,7 +151,7 @@ void display_print(char* s)
 }
 
 /// Print single char. Mostly used internally
-void printChar(char c)
+void display_printChar(char c)
 {
 	if(c == '\n')
 	{ // new line
