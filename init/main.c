@@ -34,20 +34,11 @@ void readInitrd(uint32 initrd_location)
 /// Prints out compiler information, especially for GNU GCC
 void compilerInfo()
 {
-	log("This release of Xelix was compiled ");
-	log(__DATE__);
-	print(" ");
-	log(__TIME__);
+	log("This release of Xelix was compiled %s %s", __DATE__, __TIME__);
 
 	/* Test for GCC > 3.2.0 */
 	#if GCC_VERSION > 30200
-		log(" using GCC ");
-		logDec(__GNUC__);
-		log(".");
-		logDec(__GNUC_MINOR__);
-		log(".");
-		logDec(__GNUC_PATCHLEVEL__);
-		log("\n");
+		log(" using GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 	#else
 		log(" using an unknown compiler\n");
 	#endif
@@ -98,7 +89,6 @@ void kmain(multibootHeader_t *mboot_ptr)
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
 
-	printf("This is printf-test number %d.\n",1);
 	//createProcess("debugconsole", &debugconsole_init);
 	debugconsole_init();
 	while(1)

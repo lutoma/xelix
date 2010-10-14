@@ -9,12 +9,13 @@ int logsEnabled;
 uint32 maxLogSize;
 
 // Logs something. Also prints it out.
-void log(char* s)
+// FIXME: doesn't parse the saved stuff, needs improvement. Dirty hacks ftw.
+void log(const char *fmt, ...)
 {
-	if(strlen(kernellog) + strlen(s) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
-		kernellog = strcat(kernellog, s); // concatenate to kernellog
+	if(strlen(kernellog) + strlen(fmt) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
+		kernellog = strcat(kernellog, fmt); // concatenate to kernellog
 	if(logsEnabled)
-		print(s); // print it on screen
+		vprintf(fmt, (void **)(&fmt) + 1);
 }
 
 // Same as log, only with Integer
