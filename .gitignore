@@ -1,4 +1,5 @@
 *.o
+*~
 kernel.bin
 initrd.img
 floppy.img

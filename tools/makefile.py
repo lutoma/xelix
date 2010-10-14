@@ -48,7 +48,7 @@ for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
-makefile.write("\n\tld -T linker.ld -nostdlib -o kernel.bin $^\n\n");
+makefile.write("\n\tld -melf_i386 -T linker.ld -nostdlib -o kernel.bin $^\n\n");
 
 makefile.write("# dependencies\n");
 for f in hfiles + cfiles:
@@ -72,7 +72,7 @@ makefile.write("""\n\n
 
 # how to compile .c to .o
 %.o: %.c
-	gcc -Wall -I . -ffreestanding -fno-stack-protector -o $@ -c $<
+	gcc -Wall -m32 -I . -ffreestanding -fno-stack-protector -o $@ -c $<
 
 # how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
 %-asm.o: %.asm
