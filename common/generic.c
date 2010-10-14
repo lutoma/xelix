@@ -138,12 +138,7 @@ void clear(void)
 void warn(char *reason, char *file, uint32 line)
 {
 	asm volatile("cli"); // Disable interrupts.
-	log("\n\nWARNING: ");
-	log(reason);
-	log(" in ");
-	log(file);
-	log(" at line ");
-	logDec(line);
+	log("\n\nWARNING: %s in %s at line %d", reason, file, line);
 	for(;;) asm("cli;hlt;");//Sleep forever
 }
 
