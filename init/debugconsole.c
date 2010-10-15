@@ -16,7 +16,7 @@ void printPrompt()
 {
 	cursorPosition = 0;
 	display_setColor(0x07);
-	print("\nlutix> ");
+	print("\n> ");
 }
 
 // Execute a command
