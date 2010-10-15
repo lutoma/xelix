@@ -40,8 +40,6 @@ char *itoa (int num, int base);
 
 // PRINTING to display
 void print(char* s);
-void printHex(uint32 num);
-void printDec(uint32 num);
 void vprintf(const char *fmt, void **arg);
 void printf(const char *fmt, ...);
 void clear(void);

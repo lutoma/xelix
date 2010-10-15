@@ -33,20 +33,8 @@ void executeCommand(char *command)
 		int minute = date('m');
 		int second = date('s');
 		int weekDay = getWeekDay(day, month, year);
-		
-		print(dayToString(weekDay,1));
-		print(" ");
-		print(monthToString(month,1));
-		print(" ");
-		printDec(day);
-		print(" ");
-		printDec(hour);
-		print(":");
-		printDec(minute);
-		print(":");
-		printDec(second);
-		print(" UTC ");
-		printDec(year);
+
+	printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
 	} else
 	{
 		print("error: command \"");

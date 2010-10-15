@@ -142,9 +142,7 @@ void pageFaultHandler(registers_t regs)
 	uint8 reservedoverwritten = regs.err_code & 0x8; // reserved bits overwritten (if set -> reserved bits were overwritten causing this page fault
 	uint8 instructionfetch = regs.err_code & 0x10; // pagefault during instruction set (if set -> during instruction fetch)
 	
-	print("pagefault at ");
-	printHex(faultingAddress);
-	print(": ");
+	printf("pagefault at 0x%x: ", faultingAddress);
 	if(notPresent) print("not present, ");
 	if(write) print("write, ");
 	if(!write) print("read, ");
@@ -188,9 +186,7 @@ pageDirectory_t* paging_cloneCurrentDirectory()
 		}
 		if(currentDirectory->pageTables[tableNum] == kernelDirectory->pageTables[tableNum])
 		{
-			print("link page table ");
-			printDec(tableNum);
-			print("\n");
+			printf("link page table %d\n",tableNum);
 			// link page table
 			directory->pageTables[tableNum] = currentDirectory->pageTables[tableNum];
 			directory->directoryEntries[tableNum] = currentDirectory->directoryEntries[tableNum];
@@ -198,9 +194,7 @@ pageDirectory_t* paging_cloneCurrentDirectory()
 		else
 		{
 			
-			print("copy page table ");
-			printDec(tableNum);
-			print("\n");
+			printf("copy page table %d\n", tableNum);
 			pageTable_t* srcTable = currentDirectory->pageTables[tableNum];
 			// copy page table contents
 			int pageNum;

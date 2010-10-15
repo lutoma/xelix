@@ -93,20 +93,6 @@ void print(char* s)
 	display_print(s);
 }
 
-/// Print int as Hex
-void printHex(uint32 num)
-{
-	serial_print(num);
-	display_printHex(num);
-}
-
-/// Print int
-void printDec(uint32 num)
-{
-	serial_print(num);
-	display_printDec(num);
-}
-
 void vprintf(const char *fmt, void **arg) {
 	while (*fmt) {
 		if (*fmt == '%') {
