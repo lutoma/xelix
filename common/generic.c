@@ -135,10 +135,7 @@ void panic(char *reason, char *file, uint32 line, int assertionf)
 	if(assertionf) log("Assertion \"");
 	log(reason);
 	if(assertionf) log("\" failed");
-	log(" in ");
-	log(file);
-	log(" at line ");
-	logDec(line);
+	log(" in file %s at line %d", file, line);
 	for(;;) asm("cli;hlt;");//Sleep forever
 }
 

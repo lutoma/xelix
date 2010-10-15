@@ -22,9 +22,7 @@ static void timerCallback(registers_t regs)
  */
 void pit_init(uint32 frequency)
 {
-	log("Initializing PIT at ");
-	logDec(frequency);
-	log("Hz.\n");
+	log("Initializing PIT at %d Hz.\n", frequency);
 	// Firstly, register our timer callback.
 	interrupt_registerHandler(IRQ0, &timerCallback);
 

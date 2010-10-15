@@ -70,9 +70,7 @@ void handler(char c)
 void debugconsole_init()
 {
 	log("Initializing debug console\n");
-	log("Debuconsole currentLine position in memory: ");
-	logHex(currentLine);
-	log("\n");
+	log("Debuconsole currentLine position in memory: 0x%x\n", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	keyboard_takeFocus(&handler);
 	printPrompt();

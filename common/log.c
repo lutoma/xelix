@@ -18,67 +18,6 @@ void log(const char *fmt, ...)
 		vprintf(fmt, (void **)(&fmt) + 1);
 }
 
-// Same as log, only with Integer
-void logDec(uint32 num)
-{
-	if(num == 0)
-	{
-	 log("0");
-	 return;
-	}
-	char s[11]; // maximal log(2^(4*8)) (long int sind 4 bytes) + 1 ('\0') = 11
-	
-	char tmp[9];
-	int i=0;
-	while(num != 0)
-	{
-	 unsigned char c = num % 10;
-	 num = (num - c)/10;
-	 c+='0';
-	 tmp[i++] = c;
-	}
-	s[i] = '\0';
-	int j;
-	for(j=0; j < i; j++)
-	{
-	 s[j] = tmp[i-1-j];
-	}
-	log(s);
-}
-
-// Same as log, only with Hex
-void logHex(uint32 num)
-{
-	if(num == 0)
-	{
-		log("0x0");
-		return;
-	}
-	char s[11]; // maximal 2 (0x) + 2*4 (long int sind 4 bytes) + 1 ('\0')
-	s[0] = '0';
-	s[1] = 'x';
-	
-	char tmp[9];
-	int i=0;
-	while(num != 0)
-	{
-		unsigned char c = num & 0xf;
-		num = num>>4;
-		if(c < 10)
-			c+='0';
-		else
-			c= c-10 + 'A';
-		tmp[i++] = c;
-	}
-	s[i+2] = '\0';
-	int j;
-	for(j=0; j < i; j++)
-	{
-		s[2+j] = tmp[i-1-j];
-	}
-	log(s);
-}
-
 // Initialize log
 void log_init()
 {

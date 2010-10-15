@@ -50,9 +50,7 @@ void interrupt_callback(registers_t regs)
 
 void interrupt_registerHandler(uint8 n, interruptHandler_t handler)
 {
-	log("Registered IRQ handler for ");
-	logDec(n);
-	log(".\n");
+	log("Registered IRQ handler for %d.\n", n);
 	interruptHandlers[n] = handler;
 }
 
