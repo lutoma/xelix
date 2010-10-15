@@ -15,7 +15,8 @@ void executeCommand(char *command);
 void printPrompt()
 {
 	cursorPosition = 0;
-	print("\n> ");
+	display_setColor(0x07);
+	print("\nlutix> ");
 }
 
 // Execute a command
@@ -47,6 +48,28 @@ void executeCommand(char *command)
 		printDec(second);
 		print(" UTC ");
 		printDec(year);
+	} 
+	else if(strcmp(command, "color") == 0) 
+	{
+		//TODO Parameter: Farbe setzen
+	} 
+	else if(strcmp(command, "colorinfo") == 0) {
+		printf("Black:\t\t0x00\n");
+		printf("Blue:\t\t0x01\n");
+		printf("Green:\t\t0x02\n");
+		printf("Cyan:\t\t0x03\n");
+		printf("Red:\t\t0x04\n");
+		printf("Lila:\t\t0x05\n");
+		printf("Brown:\t\t0x06\n");
+		printf("LightGray:\t0x07\n");
+		printf("Gray:\t\t0x08\n");
+		printf("LightBlue:\t0x09\n");
+		printf("LightGreen:\t0x0A\n");
+		printf("LightCyan:\t0x0B\n");
+		printf("Orange:\t\t0x0C\n");
+		printf("Pink:\t\t0x0D\n");
+		printf("Yellow:\t\t0x0E\n");
+		printf("White:\t\t0x0F\n");
 	} else
 	{
 		print("error: command \"");

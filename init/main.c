@@ -88,7 +88,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	display_setColor(0x0f);
 	log("Xelix is up.\n");
 	display_setColor(0x07);	
-
+	
 	//createProcess("debugconsole", &debugconsole_init);
 	debugconsole_init();
 	while(1)

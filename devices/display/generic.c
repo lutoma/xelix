@@ -157,10 +157,6 @@ void display_printChar(char c)
 	{ // new line
 		cursorPos = cursorPos - (cursorPos-buffer) % columns + columns; // advance to next line
 		cursorPos = wrapAroundBuffer(cursorPos);
-		// fill new line with blanks (we might be reusing part of the buffer)
-		uint16* ptr;
-		for(ptr = cursorPos; ptr < cursorPos + columns; ptr++)
-			*ptr = color<<8 | ' ';
 	}
 	else if(c== '\b') 
 	{ // backspace
@@ -264,6 +260,40 @@ void display_scrollDown()
 void display_setColor(uint8 newcolor)
 {
 	color = newcolor;
+}
+
+/// Get display color
+uint8 display_getColor()
+{
+	return color;
+}
+
+/// Set display color Foreground
+void display_setColorF(uint8 newcolor)
+{
+	uint8 newcolorPartF = newcolor % 0x10;
+	uint8 oldcolorPartB = color / 0x10;
+	color = oldcolorPartB + newcolorPartF;
+}
+
+/// Get display color Foreground
+uint8 display_getColorF()
+{
+	return color % 0x10;
+}
+
+/// Set display color Background
+void display_setColorB(uint8 newcolor) 
+{
+	uint8 newcolorPartB = newcolor % 0x10;
+	uint8 oldcolorPartF = color % 0x10;
+	color = newcolorPartB * 0x10 + oldcolorPartF;
+}
+
+/// Get display color Background
+uint8 display_getColorB()
+{
+	return color / 0x10;
 }
 
 
