@@ -45,17 +45,6 @@ void compilerInfo()
 	#endif
 }
 
-void multibootInfo(multibootHeader_t *pointer)
-{
-	uint32 initrd_location = *((uint32*)pointer->mods_addr);
-	uint32 initrd_end = *(uint32*)(pointer->mods_addr+4);
-
-	log("%%Mulitboot information:%%\n", 0x0f);
-	log("\tModule count: %d\n", pointer->mods_count);
-	log("\tModules start: 0x%x\n", initrd_location);
-	log("\tModules end: 0x%x\n", initrd_end);
-}
-
 // The main kernel function.
 // (This is the first function called ever)
 void kmain(multibootHeader_t *mbootPointer)
@@ -65,7 +54,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	memory_init_preprotected(); // gdt
 	interrupts_init(); // idt	
 
-	kmalloc_init(mbootPointer->mods_addr);
+	kmalloc_init(mbootPointer->modsAddr);
 	display_init();
 	serial_init();
 	log_init();
@@ -73,7 +62,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	printf("\n                                   %%Xelix%%\n\n", 0x0f);
 	
 	compilerInfo();	
-	multibootInfo(mbootPointer);
+	multiboot_printInfo(mbootPointer);
 	cpu_init();
 	memory_init_postprotected();
 	pit_init(50); //50Hz
@@ -87,7 +76,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	log("%%Xelix is up.%%\n", 0x0f);
 
 	printf("This %%should %s%% colored. The color code is %%%d%%.\n", 0x02, "be", 0x04, 0x02);
-	
+
 	//createProcess("debugconsole", &debugconsole_init);
 	debugconsole_init();
 	while(1){}

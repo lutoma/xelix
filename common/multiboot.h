@@ -16,28 +16,30 @@
 
 typedef struct {
 	uint32 flags;
-	uint32 mem_lower;
-	uint32 mem_upper;
-	uint32 boot_device;
-	uint32 cmdline;
-	uint32 mods_count;
-	uint32 mods_addr;
+	uint32 memLower;
+	uint32 memUpper;
+	uint32 bootDevice;
+	uint32 cmdLine;
+	uint32 modsCount;
+	uint32 modsAddr;
 	uint32 num;
 	uint32 size;
 	uint32 addr;
 	uint32 shndx;
-	uint32 mmap_length;
-	uint32 mmap_addr;
-	uint32 drives_length;
-	uint32 drives_addr;
-	uint32 config_table;
-	uint32 boot_loader_name;
-	uint32 apm_table;
-	uint32 vbe_control_info;
-	uint32 vbe_mode_info;
-	uint32 vbe_mode;
-	uint32 vbe_interface_seg;
-	uint32 vbe_interface_off;
-	uint32 vbe_interface_len;
+	uint32 mmapLength;
+	uint32 mmapAddr;
+	uint32 drivesLength;
+	uint32 drivesAddr;
+	uint32 configTable;
+	uint32 bootLoaderName;
+	uint32 apmTable;
+	uint32 vbeControlInfo;
+	uint32 vbeModeInfo;
+	uint32 vbeMode;
+	uint32 vbeInterfaceSeg;
+	uint32 vbeInterfaceOff;
+	uint32 vbeInterfaceLen;
 } __attribute__((packed))
 multibootHeader_t;
+
+void multiboot_printInfo(multibootHeader_t *pointer);
