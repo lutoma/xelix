@@ -91,10 +91,7 @@ void kmain(multibootHeader_t *mboot_ptr)
 	
 	//createProcess("debugconsole", &debugconsole_init);
 	debugconsole_init();
-	while(1)
-	{
-		//print("main kernel loop\n");
-	}
+	while(1){}
 }
 
 // Check if ints have the right length
