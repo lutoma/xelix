@@ -59,9 +59,7 @@ void executeCommand(char *command)
 		printf("White:\t\t0x0F\n");
 	} else
 	{
-		print("error: command \"");
-		print(command);
-		print("\" not found");
+		printf("error: command '%s' not found.\n", command);
 	}
 }
 

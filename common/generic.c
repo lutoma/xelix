@@ -38,7 +38,7 @@ static inline char to_digit(uint8 d)
 
 // A small itoa
 // Please note it's not standard c syntax.
-char *itoa (int num, int base)
+char *itoa(int num, int base)
 {
 	if (num == 0)
 		return "0"; 
@@ -55,6 +55,12 @@ char *itoa (int num, int base)
 	}
 
 	return res;
+}
+
+unsigned long atoi(const char *s) {
+  unsigned long n = 0;
+  while (isdigit(*s)) n = 10 * n + *s++ - '0';
+  return n;
 }
 
 
@@ -94,6 +100,7 @@ void print(char* s)
 }
 
 void vprintf(const char *fmt, void **arg) {
+	int state = 0;
 	while (*fmt) {
 		if (*fmt == '%') {
 			++fmt;
@@ -104,6 +111,19 @@ void vprintf(const char *fmt, void **arg) {
 				case 'd': print(itoa(*(unsigned *)arg, 10)); break;
 				case 'x': print(itoa(*(unsigned *)arg, 16)); break;
 			}
+
+			if(*fmt == '%')
+			{
+				if(!state)
+				{
+					display_setColor(*(unsigned *)arg);
+				} else {
+					display_setColor(0x07);
+					--arg;
+				}
+				state = !state;
+			}
+			
 			++arg;
 		} else display_printChar(*fmt);
 		++fmt;

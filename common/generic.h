@@ -4,6 +4,8 @@
                                + __GNUC_MINOR__ * 100 \
                                + __GNUC_PATCHLEVEL__)
 
+#define isdigit(C) ((C) >= '0' && (C) <= '9')
+
 // Typedefs
 typedef unsigned int uint32;
 typedef signed int sint32;
