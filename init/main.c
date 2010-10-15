@@ -3,6 +3,7 @@
 
 #include <common/multiboot.h>
 #include <common/generic.h>
+#include <common/log.h>
 #include <common/string.h>
 #include <devices/display/interface.h>
 #include <devices/serial/interface.h>
@@ -44,37 +45,35 @@ void compilerInfo()
 	#endif
 }
 
+void multibootInfo(multibootHeader_t *pointer)
+{
+	uint32 initrd_location = *((uint32*)pointer->mods_addr);
+	uint32 initrd_end = *(uint32*)(pointer->mods_addr+4);
+
+	log("%%Mulitboot information:%%\n", 0x0f);
+	log("\tModule count: %d\n", pointer->mods_count);
+	log("\tModules start: 0x%x\n", initrd_location);
+	log("\tModules end: 0x%x\n", initrd_end);
+}
+
 // The main kernel function.
 // (This is the first function called ever)
-void kmain(multibootHeader_t *mboot_ptr)
+void kmain(multibootHeader_t *mbootPointer)
 {
 
-	
 	// descriptor tables have to be created first
 	memory_init_preprotected(); // gdt
-	interrupts_init(); // idt
-	
-	
-	
-	// check that our initrd was loaded by the bootloader and determine the addresses.
-	ASSERT(mboot_ptr->mods_count > 0);
-	uint32 initrd_location = *((uint32*)mboot_ptr->mods_addr);
-	uint32 initrd_end = *(uint32*)(mboot_ptr->mods_addr+4);
-	// Don't trample our module with placement accesses, please
-	kmalloc_init(initrd_end);
-	
-	
+	interrupts_init(); // idt	
+
+	kmalloc_init(mbootPointer->mods_addr);
 	display_init();
 	serial_init();
 	log_init();
 
-	display_setColor(0x0f);
-	print("\n");
-	print("                                   Xelix\n");
-	print("\n");
-	display_setColor(0x07);
+	printf("\n                                   %%Xelix%%\n\n", 0x0f);
 	
 	compilerInfo();	
+	multibootInfo(mbootPointer);
 	cpu_init();
 	memory_init_postprotected();
 	pit_init(50); //50Hz
@@ -82,12 +81,10 @@ void kmain(multibootHeader_t *mboot_ptr)
 	fs_init();
 	
 	log("Reading Initrd...\n");
-	readInitrd(initrd_location);
+	//readInitrd(initrd_location);
 	print("finished listing files\n");
 
-	display_setColor(0x0f);
-	log("Xelix is up.\n");
-	display_setColor(0x07);	
+	log("%%Xelix is up.%%\n", 0x0f);
 
 	printf("This %%should %s%% colored. The color code is %%%d%%.\n", 0x02, "be", 0x04, 0x02);
 	
