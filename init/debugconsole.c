@@ -34,20 +34,7 @@ void executeCommand(char *command)
 		int minute = date('m');
 		int second = date('s');
 		int weekDay = getWeekDay(day, month, year);
-		
-		print(dayToString(weekDay,1));
-		print(" ");
-		print(monthToString(month,1));
-		print(" ");
-		printDec(day);
-		print(" ");
-		printDec(hour);
-		print(":");
-		printDec(minute);
-		print(":");
-		printDec(second);
-		print(" UTC ");
-		printDec(year);
+		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
 	} 
 	else if(strcmp(command, "color") == 0) 
 	{
@@ -105,9 +92,7 @@ void handler(char c)
 void debugconsole_init()
 {
 	log("Initializing debug console\n");
-	log("Debuconsole currentLine position in memory: ");
-	logHex(currentLine);
-	log("\n");
+	log("Debuconsole currentLine position in memory: 0x%x\n", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	keyboard_takeFocus(&handler);
 	printPrompt();

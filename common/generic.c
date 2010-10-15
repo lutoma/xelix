@@ -93,20 +93,6 @@ void print(char* s)
 	display_print(s);
 }
 
-/// Print int as Hex
-void printHex(uint32 num)
-{
-	serial_print(num);
-	display_printHex(num);
-}
-
-/// Print int
-void printDec(uint32 num)
-{
-	serial_print(num);
-	display_printDec(num);
-}
-
 void vprintf(const char *fmt, void **arg) {
 	while (*fmt) {
 		if (*fmt == '%') {
@@ -149,10 +135,7 @@ void panic(char *reason, char *file, uint32 line, int assertionf)
 	if(assertionf) log("Assertion \"");
 	log(reason);
 	if(assertionf) log("\" failed");
-	log(" in ");
-	log(file);
-	log(" at line ");
-	logDec(line);
+	log(" in file %s at line %d", file, line);
 	for(;;) asm("cli;hlt;");//Sleep forever
 }
 
