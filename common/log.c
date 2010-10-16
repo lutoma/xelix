@@ -21,7 +21,7 @@ void log(const char *fmt, ...)
 // Initialize log
 void log_init()
 {
-	maxLogSize = 5000;
+	maxLogSize = 10000;
 	kernellog = (char*)kmalloc(maxLogSize);
 	kernellog[0] = '\0'; // set kernel log to empty string
 	setLogLevel(1); //Enable logs

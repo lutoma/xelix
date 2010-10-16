@@ -25,12 +25,13 @@ void readInitrd(uint32 initrd_location);
 void calculateFibonacci();
 void compilerInfo();
 
+
 /// Prints out compiler information, especially for GNU GCC
 void compilerInfo()
 {
 	log("%%Compiling information:\n%%", 0x0f);
 	log("\tTime: %s %s\n", __DATE__, __TIME__);
-	/* Test for GCC > 3.2.0 */
+	// Test for GCC > 3.2.0
 	#if GCC_VERSION > 30200
 		log("\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 	#else
@@ -40,6 +41,7 @@ void compilerInfo()
 	log("\tOS: %s\n", __BUILDSYS__);
 	log("\tDistribution: %s\n", __BUILDDIST__);
 }
+
 
 // The main kernel function.
 // (This is the first function called ever)
