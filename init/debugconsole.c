@@ -6,8 +6,6 @@
 #include <devices/keyboard/interface.h>
 #include <common/datetime.h>
 
-char commands[4][20] = { "reboot", "clear", "colorinfo", "date", "help" };
-
 uint32 cursorPosition;
 char currentLine[256] = "";
 void printPrompt();
@@ -30,11 +28,7 @@ void executeCommand(char *command)
 	else if(strcmp(command, "help") == 0)
 	{
 		printf("%%You can use the following commands:%%\n", 0x04);
-		int i;
-		for(i = 0; i < 4; i++)
-		{
-			printf("\t%s\n", commands[i]);
-		}
+		printf("\treboot\n\tclear\n\tdate\n\tcolorinfo\n\thelp");
 	}
 	else if(strcmp(command, "date") == 0)
 	{
