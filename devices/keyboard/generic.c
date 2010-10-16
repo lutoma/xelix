@@ -4,6 +4,7 @@
  * @author Lukas Martini
  */
 
+#include <common/log.h>
 #include <devices/keyboard/interface.h>
 #include <interrupts/interface.h>
 #include <devices/display/interface.h>

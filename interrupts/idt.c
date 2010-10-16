@@ -1,5 +1,6 @@
 #include <interrupts/idt.h>
 
+#include <common/log.h>
 // A struct describing an interrupt gate.
 typedef struct
 {

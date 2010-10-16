@@ -3,6 +3,7 @@
  * @author Lukas Martini
  */
 
+#include <common/log.h>
 #include <devices/pit/interface.h>
 #include <interrupts/interface.h>
 

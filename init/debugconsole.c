@@ -1,8 +1,10 @@
 // A simple console for debugging purposes.
-
 #include <init/debugconsole.h>
+
+#include <common/log.h>
 #include <common/string.h>
 #include <memory/kmalloc.h>
+#include <devices/display/interface.h>
 #include <devices/keyboard/interface.h>
 #include <common/datetime.h>
 

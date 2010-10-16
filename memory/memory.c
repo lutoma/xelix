@@ -1,3 +1,4 @@
+#include <common/log.h>
 #include <memory/interface.h>
 #include <memory/segmentation/gdt.h>
 #include <memory/paging/frames.h>

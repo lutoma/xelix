@@ -1,3 +1,4 @@
+#include <common/log.h>
 #include <common/bitmap.h>
 #include <memory/kmalloc.h>
 

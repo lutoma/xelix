@@ -1,4 +1,6 @@
 #include <interrupts/interface.h>
+
+#include <common/log.h>
 #include <common/generic.h>
 #include <interrupts/idt.h>
 

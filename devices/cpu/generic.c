@@ -2,7 +2,8 @@
  * \brief Generic CPU-specific commands.
  * @author Lukas Martini
  */
- 
+
+#include <common/log.h>
 #include <devices/cpu/interface.h>
 
 int isProtected(); // Check if CPU is in protected mode

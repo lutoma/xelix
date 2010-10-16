@@ -4,6 +4,7 @@
  * @author Christoph Sünderhauf
  */
 
+#include <common/log.h>
 #include <devices/display/interface.h>
 #include <memory/kmalloc.h>
 
@@ -42,7 +43,7 @@ void copyBufferToScreen();
 
 void updateCursorPosition();
 
-void display_clear();
+
 
 /// Clear screen
 void display_clear()

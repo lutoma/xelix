@@ -1,5 +1,6 @@
 // This file provices abstraction from the filesystem drivers for normal use.
 
+#include <common/log.h>
 #include <filesystems/interface.h>
 #include <memory/kmalloc.h>
 
