@@ -25,13 +25,6 @@ void readInitrd(uint32 initrd_location);
 void calculateFibonacci();
 void compilerInfo();
 
-/** Read the initrd file supplied by the bootloader (usally GNU GRUB).
- * @param initrd_location The position of the initrd in the kernel
- */
-void readInitrd(uint32 initrd_location)
-{
-}
-
 /// Prints out compiler information, especially for GNU GCC
 void compilerInfo()
 {
@@ -68,10 +61,6 @@ void kmain(multibootHeader_t *mbootPointer)
 	pit_init(50); //50Hz
 	keyboard_init();
 	fs_init();
-	
-	log("Reading Initrd...\n");
-	//readInitrd(initrd_location);
-	print("finished listing files\n");
 
 	log("%%Xelix is up.%%\n", 0x0f);
 
