@@ -6,6 +6,8 @@
 #include <devices/keyboard/interface.h>
 #include <common/datetime.h>
 
+char commands[4][20] = { "reboot", "clear", "colorinfo", "date", "help" };
+
 uint32 cursorPosition;
 char currentLine[256] = "";
 void printPrompt();
@@ -25,6 +27,15 @@ void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
 	else if(strcmp(command, "clear") == 0) clear();
+	else if(strcmp(command, "help") == 0)
+	{
+		printf("%%You can use the following commands:%%\n", 0x04);
+		int i;
+		for(i = 0; i < 4; i++)
+		{
+			printf("\t%s\n", commands[i]);
+		}
+	}
 	else if(strcmp(command, "date") == 0)
 	{
 		int day = date('d');
@@ -41,22 +52,22 @@ void executeCommand(char *command)
 		//TODO Parameter: Farbe setzen
 	} 
 	else if(strcmp(command, "colorinfo") == 0) {
-		printf("Black:\t\t0x00\n");
-		printf("Blue:\t\t0x01\n");
-		printf("Green:\t\t0x02\n");
-		printf("Cyan:\t\t0x03\n");
-		printf("Red:\t\t0x04\n");
-		printf("Lila:\t\t0x05\n");
-		printf("Brown:\t\t0x06\n");
-		printf("LightGray:\t0x07\n");
-		printf("Gray:\t\t0x08\n");
-		printf("LightBlue:\t0x09\n");
-		printf("LightGreen:\t0x0A\n");
-		printf("LightCyan:\t0x0B\n");
-		printf("Orange:\t\t0x0C\n");
-		printf("Pink:\t\t0x0D\n");
-		printf("Yellow:\t\t0x0E\n");
-		printf("White:\t\t0x0F\n");
+		printf("%% %% Black:\t\t0x00\n", 0x00);
+		printf("%% %% Blue:\t\t\t0x01\n", 0x10);
+		printf("%% %% Green:\t\t0x02\n", 0x20);
+		printf("%% %% Cyan:\t\t\t0x03\n", 0x30);
+		printf("%% %% Red:\t\t\t0x04\n", 0x40);
+		printf("%% %% Lila:\t\t\t0x05\n", 0x50);
+		printf("%% %% Brown:\t\t0x06\n", 0x60);
+		printf("%% %% LightGray:\t0x07\n", 0x70);
+		printf("%% %% Gray:\t\t\t0x08\n", 0x80);
+		printf("%% %% LightBlue:\t0x09\n", 0x90);
+		printf("%% %% LightGreen:\t0x0A\n", 0xA0);
+		printf("%% %% LightCyan:\t0x0B\n", 0xB0);
+		printf("%% %% Orange:\t\t0x0C\n", 0xC0);
+		printf("%% %% Pink:\t\t\t0x0D\n", 0xD0);
+		printf("%% %% Yellow:\t\t0x0E\n", 0xE0);;
+		printf("%% %% White:\t\t0x0F\n", 0xF0);
 	} else
 	{
 		printf("error: command '%s' not found.\n", command);
