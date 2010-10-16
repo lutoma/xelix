@@ -1,6 +1,6 @@
 // Initialization code of kernel
 
-
+#include <buildinfo.h>
 #include <common/multiboot.h>
 #include <common/generic.h>
 #include <common/log.h>
@@ -28,14 +28,17 @@ void compilerInfo();
 /// Prints out compiler information, especially for GNU GCC
 void compilerInfo()
 {
-	log("This release of Xelix was compiled %s %s", __DATE__, __TIME__);
-
+	log("%%Compiling information:\n%%", 0x0f);
+	log("\tTime: %s %s\n", __DATE__, __TIME__);
 	/* Test for GCC > 3.2.0 */
 	#if GCC_VERSION > 30200
-		log(" using GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+		log("\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 	#else
-		log(" using an unknown compiler\n");
+		log("\tCompiler: Unknown\n");
 	#endif
+	log("\tBy: %s\n", __BUILDCOMP__);
+	log("\tOS: %s\n", __BUILDSYS__);
+	log("\tDistribution: %s\n", __BUILDDIST__);
 }
 
 // The main kernel function.

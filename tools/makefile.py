@@ -62,13 +62,20 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf kernel.bin mount initrd.img floppy.img");
+makefile.write("clean:\n\trm -rf kernel.bin mount initrd.img floppy.img buildinfo.h ");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
 
 makefile.write("""\n\n
+
+buildinfo.h:
+	printf "#pragma once\\n" > buildinfo.h
+	printf "#define __BUILDCOMP__ \\"`whoami`@`hostname -s`\\"\\n" >> buildinfo.h
+	printf "#define __BUILDSYS__ \\"`uname -srop`\\"\\n" >> buildinfo.h
+	printf "#define __BUILDDIST__ \\"`cat /etc/*-release | head -n 1 | xargs echo`\\"\\n" >> buildinfo.h
+
 
 # how to compile .c to .o
 %.o: %.c

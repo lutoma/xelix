@@ -5,7 +5,7 @@
 
 void multiboot_printInfo(multibootHeader_t *pointer)
 {
-	log("%%Multiboot information:%%\n", 0x0f);
+	log("\n%%Multiboot information:%%\n", 0x0f);
 	log("\tflags: %d\n", pointer->flags);
 	log("\tmemLower: 0x%x\n", pointer->memLower);
 	log("\tmemUpper: 0x%x\n", pointer->memUpper);
