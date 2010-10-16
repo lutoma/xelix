@@ -17,8 +17,10 @@ void executeCommand(char *command);
 void printPrompt()
 {
 	cursorPosition = 0;
+	int colorold = display_getColor();
 	display_setColor(0x07);
 	print("\n> ");
+	display_setColor(colorold);
 }
 
 // Execute a command
@@ -43,9 +45,9 @@ void executeCommand(char *command)
 		int weekDay = getWeekDay(day, month, year);
 		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
 	} 
-	else if(strcmp(command, "color") == 0) 
+	else if(strcmp(command, "colornext") == 0) 
 	{
-		//TODO Parameter: Farbe setzen
+		
 	} 
 	else if(strcmp(command, "colorinfo") == 0) {
 		printf("%% %% Black:\t\t0x00\n", 0x00);
