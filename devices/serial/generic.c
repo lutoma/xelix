@@ -17,8 +17,8 @@ void serial_init()
 	outb(PORT+3, 0x03); outb(PORT+2, 0xC7); outb(PORT+4, 0x0B);
 }
 
-#define CAN_RECV (inb(PORT+5) & 0b00000001)
-#define CAN_SEND (inb(PORT+5) & 0b00100000)
+#define CAN_RECV (inb(PORT+5) & 0x0b00000001)
+#define CAN_SEND (inb(PORT+5) & 0x0b00100000)
 
 void send(char c)
 {
