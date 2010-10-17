@@ -1,31 +1,23 @@
-/** @file devices/display/generic.c
- * \brief Generic display driver
- * @author Lukas Martini
- * @author Christoph Sünderhauf
- */
+// Generic display driver
+#include <devices/display/interface.h>
 
 #include <common/log.h>
-#include <devices/display/interface.h>
 #include <memory/kmalloc.h>
 
 const uint32 columns = 80; // on-screen character grid
 const uint32 rows = 25;
 
-/** Pointer to video memory\n
- * 80x25 Zeichen\n
- * short ist zwei Bytes: 1. Byte char, 2. Byte Farben\n
- * const ist so, dass der Zeiger nicht verändert werden kann, die Daten dahinter schon
- */
+// Pointer to video memory
+// 80x25 Zeichen
+// short ist zwei Bytes: 1. Byte char, 2. Byte Farben
 uint16* const videoMemory = (uint16*) 0xB8000; 
 
 
-/**
- * Buffer concept:\n
- * Everything is written to the buffer (which is x number of lines).\n
- * The screen displays part of the buffer.\n
- * The buffer is wrap-around, i.e. when the end is reached it just continues at the beginning. (see also wrapAroundBuffer())
- * 
- */
+// Buffer concept:
+// Everything is written to the buffer (which is x number of lines).
+// The screen displays part of the buffer.
+// The buffer is wrap-around, i.e. when the end is reached it just continues at the beginning. (see also wrapAroundBuffer())
+
 uint16* buffer; // start of the buffer
 uint16* bufferEnd; // end of the buffer (points one beyond last character)
 uint16* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen.
@@ -36,12 +28,12 @@ uint8 color; // the current color
 
 
 // wraps the given position in the buffer
-uint16* wrapAroundBuffer(uint16* pos);
+static uint16* wrapAroundBuffer(uint16* pos);
 
 // copies the buffer to screen (starting at screenPos)
-void copyBufferToScreen();
+static void copyBufferToScreen();
 
-void updateCursorPosition();
+static void updateCursorPosition();
 
 
 
@@ -68,7 +60,7 @@ void display_clear()
 	cursorPos = buffer + (80*25);
 }
 
-/// Initialize display
+// Initialize display
 void display_init()
 {
 	color = 0x07;
@@ -133,7 +125,7 @@ unsigned char newglyph[ 16 ] = 	{
 	log("Initialized Display.\n");
 }
 
-/// The main print function which should always be used
+// The main print function which should always be used
 void display_print(char* s)
 {
 	while(*s != '\0')
@@ -151,7 +143,7 @@ void display_print(char* s)
 	updateCursorPosition();
 }
 
-/// Print single char. Mostly used internally
+// Print single char. Mostly used internally
 void display_printChar(char c)
 {
 	if(c == '\n')
@@ -187,10 +179,8 @@ void display_printChar(char c)
 	}
 }
 
-/** Wrap the buffer
- * @return the position
- */
-inline uint16* wrapAroundBuffer(uint16* pos)
+// Wrap the buffer
+static inline uint16* wrapAroundBuffer(uint16* pos)
 {
 	if(pos >= bufferEnd)
 		return pos - ( bufferEnd - buffer );
@@ -199,8 +189,8 @@ inline uint16* wrapAroundBuffer(uint16* pos)
 	return pos;
 }
 
-/// Copy the buffer to the screen
-void copyBufferToScreen()
+// Copy the buffer to the screen
+static void copyBufferToScreen()
 {
 	// copy correct part of buffer to screen
 	uint16* from = screenPos;
@@ -216,7 +206,7 @@ void copyBufferToScreen()
 }
 
 // Update the cursor position on the screen
-void updateCursorPosition()
+static void updateCursorPosition()
 {
 	// set cursor Position
 	
@@ -237,7 +227,7 @@ void updateCursorPosition()
 	outb(0x3D5, cursorLocation);      // Send the low cursor byte.
 }
 
-/// Scroll up the display
+// Scroll up the display
 void display_scrollUp()
 {
 	screenPos -= columns;
@@ -247,7 +237,7 @@ void display_scrollUp()
 	updateCursorPosition();
 }
 
-/// Scroll down the display
+// Scroll down the display
 void display_scrollDown()
 {
 	screenPos += columns;
@@ -257,19 +247,19 @@ void display_scrollDown()
 	updateCursorPosition();
 }
 
-/// Set display color
+// Set display color
 void display_setColor(uint8 newcolor)
 {
 	color = newcolor;
 }
 
-/// Get display color
+// Get display color
 uint8 display_getColor()
 {
 	return color;
 }
 
-/// Set display color Foreground
+// Set display color Foreground
 void display_setColorF(uint8 newcolor)
 {
 	uint8 newcolorPartF = newcolor % 0x10;
@@ -277,13 +267,13 @@ void display_setColorF(uint8 newcolor)
 	color = oldcolorPartB + newcolorPartF;
 }
 
-/// Get display color Foreground
+// Get display color Foreground
 uint8 display_getColorF()
 {
 	return color % 0x10;
 }
 
-/// Set display color Background
+// Set display color Background
 void display_setColorB(uint8 newcolor) 
 {
 	uint8 newcolorPartB = newcolor % 0x10;
@@ -291,14 +281,14 @@ void display_setColorB(uint8 newcolor)
 	color = newcolorPartB * 0x10 + oldcolorPartF;
 }
 
-/// Get display color Background
+// Get display color Background
 uint8 display_getColorB()
 {
 	return color / 0x10;
 }
 
 
-/// Print numbers
+// Print numbers
 void display_printDec(uint32 num)
 {
 	if(num == 0)
@@ -326,7 +316,7 @@ void display_printDec(uint32 num)
 	display_print(s);
 }
 
-/// Display number in hexadecimal form
+// Display number in hexadecimal form
 void display_printHex(uint32 num)
 {
 	if(num == 0)
