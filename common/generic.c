@@ -92,6 +92,13 @@ uint8 inb(uint16 port)
 	return ret;
 }
 
+
+uint8 inbCMOS (uint16 port)
+{
+	outb(0x70, port);
+	return inb(0x71);
+}
+
 /// Print function
 void print(char* s)
 {
