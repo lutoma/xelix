@@ -96,7 +96,7 @@ tools/makeinitrd: tools/makeinitrd.c
 makefile:
 	tools/makefile.py
 
-install: kernel.bin
+install: xelix.bin
 	sudo cp xelix.bin /boot/xelix
 	sudo cp initrd.img /boot/xelix_initrd
 
