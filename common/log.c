@@ -12,8 +12,8 @@ uint32 maxLogSize;
 // FIXME: doesn't parse the saved stuff, needs improvement. Dirty hacks ftw.
 void log(const char *fmt, ...)
 {
-	if(strlen(kernellog) + strlen(fmt) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
-		kernellog = strcat(kernellog, fmt); // concatenate to kernellog
+	/*if(strlen(kernellog) + strlen(fmt) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
+		kernellog = strcat(kernellog, fmt); // concatenate to kernellog*/
 	if(logsEnabled)
 		vprintf(fmt, (void **)(&fmt) + 1);
 }
