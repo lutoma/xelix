@@ -13,7 +13,7 @@
 #include <interrupts/interface.h>
 #include <devices/pit/interface.h>
 #include <memory/kmalloc.h>
-#include <filesystems/interface.h>
+#include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <devices/pit/interface.h>
 #include <processes/process.h>
