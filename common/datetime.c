@@ -38,8 +38,7 @@ int date(char dateStr)
 		default:
 			return -1;
 	}
-	outb(0x70, whatDate);
-	nowDate = inb(0x71);
+	nowDate = inbCMOS(whatDate);
 	switch(dateStr)
 	{
 		case 's':
