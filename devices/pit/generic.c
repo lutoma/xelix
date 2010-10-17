@@ -1,8 +1,7 @@
 // A generic PIT driver.
-
+#include <devices/pit/interface.h>
 
 #include <common/log.h>
-#include <devices/pit/interface.h>
 #include <interrupts/interface.h>
 
 uint32 tick = 0;
