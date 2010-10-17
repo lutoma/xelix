@@ -10,7 +10,7 @@ makefile.write("""
 export LANG=C
 
 # just issuing make will compile everything
-all: kernel.bin initrd.img
+all: xelix.bin
 
 \n""");
 
@@ -43,12 +43,12 @@ asmfiles.sort();
 
 
 makefile.write("# kernel binary\n");
-makefile.write("kernel.bin:");
+makefile.write("xelix.bin:");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
-makefile.write("\n\tld -melf_i386 -T linker.ld -nostdlib -o kernel.bin $^\n\n");
+makefile.write("\n\tld -melf_i386 -T linker.ld -nostdlib -o xelix.bin $^\n\n");
 
 makefile.write("# dependencies\n");
 for f in hfiles + cfiles:
@@ -62,7 +62,7 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf kernel.bin mount initrd.img floppy.img buildinfo.h ");
+makefile.write("clean:\n\trm -rf xelix.bin mount initrd.img floppy.img buildinfo.h ");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
@@ -96,14 +96,17 @@ tools/makeinitrd: tools/makeinitrd.c
 makefile:
 	tools/makefile.py
 
+install: kernel.bin
+	sudo cp xelix.bin /boot/xelix
+	sudo cp initrd.img /boot/xelix_initrd
 
 # create a boot image for usb-stick or floppy
-floppy.img: kernel.bin initrd.img
+floppy.img: xelix.bin initrd.img
 	- mkdir mount
 	cp tools/floppy.img .
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
-	sudo cp kernel.bin mount/kernel
+	sudo cp xelix.bin mount/kernel
 	sudo cp initrd.img mount/initrd
 	sudo umount mount
 	sudo losetup -d /dev/loop0
@@ -122,12 +125,12 @@ runqemufloppy: floppy.img
 runbochsfloppy: floppy.img
 	bochs -f bochsrc.txt -q
 
-runqemu: initrd.img kernel.bin
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel kernel.bin -initrd initrd.img
+runqemu: xelix.bin
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin
 
-runqemunox: initrd.img kernel.bin
+runqemunox: initrd.img xelix.bin
 	# Exit with ^A-x
-	qemu -d cpu_reset -kernel kernel.bin -initrd initrd.img -nographic
+	qemu -d cpu_reset -kernel xelix.bin -nographic
 	
 runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
