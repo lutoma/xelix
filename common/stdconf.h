@@ -4,6 +4,7 @@
 
 #define PIT_RATE 50
 #define DEBUGCONSOLE_PROMPT "\n> "
+#define LOG_SAVE
 
 #define WITH_SERIAL
 #define WITH_DEBUGCONSOLE
