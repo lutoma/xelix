@@ -1,6 +1,7 @@
 // A simple console for debugging purposes.
 #include <init/debugconsole.h>
 
+#ifdef WITH_DEBUGCONSOLE
 #include <common/log.h>
 #include <common/string.h>
 #include <memory/kmalloc.h>
@@ -19,7 +20,7 @@ void printPrompt()
 	cursorPosition = 0;
 	int colorold = display_getColor();
 	display_setColor(0x07);
-	print("\n> ");
+	print(DEBUGCONSOLE_PROMPT);
 	display_setColor(colorold);
 }
 
@@ -104,3 +105,4 @@ void debugconsole_init()
 	keyboard_takeFocus(&handler);
 	printPrompt();
 }
+#endif

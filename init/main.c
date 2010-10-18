@@ -6,7 +6,9 @@
 #include <common/log.h>
 #include <common/string.h>
 #include <devices/display/interface.h>
+#ifdef WITH_SERIAL
 #include <devices/serial/interface.h>
+#endif
 #include <devices/cpu/interface.h>
 #include <devices/keyboard/interface.h>
 #include <memory/interface.h>
@@ -17,8 +19,9 @@
 #include <filesystems/memfs/interface.h>
 #include <devices/pit/interface.h>
 #include <processes/process.h>
+#ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>
-
+#endif
 
 void checkIntLenghts();
 void readInitrd(uint32 initrd_location);
@@ -54,25 +57,32 @@ void kmain(multibootHeader_t *mbootPointer)
 
 	kmalloc_init(mbootPointer->modsAddr);
 	display_init();
+	
+	#ifdef WITH_SERIAL
 	serial_init();
+	#endif
 	log_init();
 
 	printf("\n                                   %%Xelix%%\n\n", 0x0f);
-	
+
 	compilerInfo();	
 	multiboot_printInfo(mbootPointer);
 	cpu_init();
 	memory_init_postprotected();
-	pit_init(50); //50Hz
+	pit_init(PIT_RATE);
 	keyboard_init();
 	fs_init();
 
 	log("%%Xelix is up.%%\n", 0x0f);
 
 	printf("This %%should %s%% colored. The color code is %%%d%%.\n", 0x02, "be", 0x04, 0x02);
-
+	
 	//createProcess("debugconsole", &debugconsole_init);
+
+	#ifdef WITH_DEBUGCONSOLE
 	debugconsole_init();
+	#endif
+	
 	while(1){}
 }
 

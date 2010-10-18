@@ -102,7 +102,9 @@ uint8 inbCMOS (uint16 port)
 /// Print function
 void print(char* s)
 {
+	#ifdef WITH_SERIAL
 	serial_print(s);
+	#endif
 	display_print(s);
 }
 

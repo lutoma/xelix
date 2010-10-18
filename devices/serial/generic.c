@@ -1,6 +1,9 @@
 // Driver for output over serial port
 // Thanks to Waldteufel from whose kernel 'Ambulat' this Code is 'stolen'.
 
+#include <common/generic.h>
+#ifdef WITH_SERIAL
+
 #include <devices/serial/interface.h>
 #include <common/log.h>
 
@@ -39,4 +42,4 @@ void serial_print(char* s)
 		send(*(s++));
 	}
 }
-
+#endif

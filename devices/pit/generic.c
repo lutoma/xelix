@@ -10,7 +10,6 @@ uint32 tick = 0;
 static void timerCallback(registers_t regs)
 {
 	tick++;
-	printf(tick);
 }
 
 // Initialize the PIT
