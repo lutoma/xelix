@@ -4,16 +4,17 @@
 #include <common/string.h>
 #include <memory/kmalloc.h>
 
-char* kernellog;
 int logsEnabled;
-uint32 maxLogSize;
+#ifdef LOG_SAVE
+char* kernellog;
+#endif
 
 // Logs something. Also prints it out.
 // FIXME: doesn't parse the saved stuff, needs improvement. Dirty hacks ftw.
 void log(const char *fmt, ...)
 {
 	#ifdef LOG_SAVE
-	if(strlen(kernellog) + strlen(fmt) < maxLogSize) // prevent an overflow that is likely to happen if the log gets long enough
+	if(strlen(kernellog) + strlen(fmt) < LOG_MAXSIZE) // prevent an overflow that is likely to happen if the log gets long enough
 		kernellog = strcat(kernellog, fmt); // concatenate to kernellog
 	#endif
 	
@@ -24,9 +25,10 @@ void log(const char *fmt, ...)
 // Initialize log
 void log_init()
 {
-	maxLogSize = 10000;
-	kernellog = (char*)kmalloc(maxLogSize);
+	#ifdef LOG_SAVE
+	kernellog = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
 	kernellog[0] = '\0'; // set kernel log to empty string
+	#endif
 	setLogLevel(1); //Enable logs
 }
 
