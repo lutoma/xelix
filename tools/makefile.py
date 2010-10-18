@@ -76,6 +76,10 @@ buildinfo.h:
 	printf "#define __BUILDSYS__ \\"`uname -srop`\\"\\n" >> buildinfo.h
 	printf "#define __BUILDDIST__ \\"`cat /etc/*-release | head -n 1 | xargs echo`\\"\\n" >> buildinfo.h
 
+local.h:
+	tools/txtconfig.py
+
+config: local.h
 
 # how to compile .c to .o
 %.o: %.c

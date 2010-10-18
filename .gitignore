@@ -9,3 +9,6 @@ includesgraph.dot
 *.log
 *.geany
 buildinfo.h
+local.h
+xelix.bin
+SConstruct
