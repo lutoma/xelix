@@ -56,7 +56,7 @@ void executeCommand(char *command)
 		printf("%% %% Green:\t\t0x02\n", 0x20);
 		printf("%% %% Cyan:\t\t\t0x03\n", 0x30);
 		printf("%% %% Red:\t\t\t0x04\n", 0x40);
-		printf("%% %% Lila:\t\t\t0x05\n", 0x50);
+		printf("%% %% Purple:\t\t\t0x05\n", 0x50);
 		printf("%% %% Brown:\t\t0x06\n", 0x60);
 		printf("%% %% LightGray:\t0x07\n", 0x70);
 		printf("%% %% Gray:\t\t\t0x08\n", 0x80);
