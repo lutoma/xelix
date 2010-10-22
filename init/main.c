@@ -17,7 +17,6 @@
 #include <memory/kmalloc.h>
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
-#include <devices/pit/interface.h>
 #include <processes/process.h>
 #ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>
