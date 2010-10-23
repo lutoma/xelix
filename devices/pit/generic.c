@@ -4,7 +4,7 @@
 #include <common/log.h>
 #include <interrupts/interface.h>
 
-uint32 tick = 0;
+uint64 tick = 0;
 
 // The timer callback. Gets called every time the PIT fires.
 static void timerCallback(registers_t regs)
@@ -13,7 +13,7 @@ static void timerCallback(registers_t regs)
 }
 
 // Initialize the PIT
-void pit_init(uint32 frequency)
+void pit_init(uint16 frequency)
 {
 	log("Initializing PIT at %d Hz.\n", frequency);
 	// Firstly, register our timer callback.
@@ -38,7 +38,7 @@ void pit_init(uint32 frequency)
 }
 
 // Get the tick num
-uint32 pit_getTickNum()
+uint64 pit_getTickNum()
 {
 	return tick;
 }

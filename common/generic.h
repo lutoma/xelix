@@ -10,6 +10,8 @@
 #define isdigit(C) ((C) >= '0' && (C) <= '9')
 
 // Typedefs
+typedef unsigned long uint64;
+typedef signed long sint64;
 typedef unsigned int uint32;
 typedef signed int sint32;
 typedef unsigned short uint16;

@@ -1,5 +1,5 @@
 #pragma once
 #include <common/generic.h>
 
-void pit_init(uint32 frequency);
-uint32 pit_getTickNum();
+void pit_init(uint16 frequency);
+uint64 pit_getTickNum();
