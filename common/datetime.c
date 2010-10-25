@@ -142,7 +142,8 @@ char* dayToString(int day, int shortVersion)
  */
 void sleep(time_t timeout)
 {
-	timeout *= 50; //PIT is running @ 50Hz
+	timeout *= PIT_RATE;
+	timeout++; // Make sure we always wait at least 'timeout'. One tick too long doesn't matter.
 	int startTick = pit_getTickNum();
 	while(1)
 	{
