@@ -83,7 +83,7 @@ config: clean local.h
 
 # how to compile .c to .o
 %.o: %.c
-	gcc -frecord-gcc-switches -O2 -Wall -m32 -I . -ffreestanding -fno-stack-protector -o $@ -c $<
+	gcc -frecord-gcc-switches -Wall -m32 -I . -ffreestanding -fno-stack-protector -o $@ -c $<
 
 # how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
 %-asm.o: %.asm
