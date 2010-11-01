@@ -90,13 +90,6 @@ config: clean local.h
 	nasm -f elf -o $@ $<
 
 
-# initrd image
-initrd.img: tools/makeinitrd
-	tools/makeinitrd tools/test.txt test.txt tools/helloworld helloworld.bin
-tools/makeinitrd: tools/makeinitrd.c
-	gcc -o tools/makeinitrd tools/makeinitrd.c
-
-
 makefile:
 	tools/makefile.py
 
@@ -105,13 +98,12 @@ install: xelix.bin
 	sudo cp initrd.img /boot/xelix_initrd
 
 # create a boot image for usb-stick or floppy
-floppy.img: xelix.bin initrd.img
+floppy.img: xelix.bin
 	- mkdir mount
 	cp tools/floppy.img .
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
 	sudo cp xelix.bin mount/kernel
-	sudo cp initrd.img mount/initrd
 	sudo umount mount
 	sudo losetup -d /dev/loop0
 	- rm -rf mount
