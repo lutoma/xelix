@@ -23,13 +23,9 @@ void interrupt_callback(registers_t regs)
 {
 	static int ininterrupt = 0;
 	
-	
 	if(ininterrupt)
-	{
-		// double fault!!!
-		PANIC("double fault!!!\n");
-	}
-	
+		return; // Drop interrupt
+
 	ininterrupt = 1;
 	
 	if (interruptHandlers[regs.int_no] == 0)
