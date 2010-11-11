@@ -66,11 +66,16 @@ ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
 
-IRQ	0,	 32
-;extern switchcontext
-;global irq0
-;irq0:
-;	jmp switchcontext
+;IRQ	0,	 32
+global irq0
+extern switchcontext
+irq0:
+	cli
+	push byte 0
+	push byte 32
+	jmp irq_common_stub
+	jmp switchcontext
+
 IRQ	1,	 33
 IRQ	2,	 34
 IRQ	3,	 35
