@@ -4,6 +4,7 @@
 #include <common/multiboot.h>
 #include <common/generic.h>
 #include <common/log.h>
+#include <common/datetime.h>
 #include <common/string.h>
 #include <devices/display/interface.h>
 #ifdef WITH_SERIAL
@@ -18,6 +19,9 @@
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <processes/process.h>
+#ifdef WITH_FLOPPY
+#include <devices/floppy/interface.h>
+#endif
 #ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>
 #endif
@@ -66,20 +70,24 @@ void kmain(multibootHeader_t *mbootPointer)
 
 	compilerInfo();	
 	multiboot_printInfo(mbootPointer);
+
+	pit_init(PIT_RATE);
 	cpu_init();
 	memory_init_postprotected();
-	pit_init(PIT_RATE);
 	keyboard_init();
 	fs_init();
-
+	#ifdef WITH_FLOPPY
+	floppy_init();
+	#endif
+	
 	log("%%Xelix is up.%%\n", 0x0f);
 
 	printf("This %%should %s%% colored. The color code is %%%d%%.\n", 0x02, "be", 0x04, 0x02);
-	
-	//createProcess("debugconsole", &debugconsole_init);
+
+	printf("PIT Tick Num: %d\n", pit_getTickNum());
 
 	#ifdef WITH_DEBUGCONSOLE
-	debugconsole_init();
+	createProcess("debugconsole", &debugconsole_init);
 	#endif
 	
 	while(1){}

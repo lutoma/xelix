@@ -8,9 +8,6 @@ uint32 currentProcessIndex = 0;
 
 process_t* processes[7] = {0, 0, 0, 0, 0, 0, 0}; // TODO: replace by linked list or something else with more arbitrary length
 
-
-
-
 /*
  * called from the assembler switchcontext.asm
  * * gets the state of the last process as a parameter

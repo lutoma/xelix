@@ -5,10 +5,12 @@
 #include <interrupts/interface.h>
 
 uint64 tick = 0;
+void switchcontext(); // in ASM
 
 // The timer callback. Gets called every time the PIT fires.
 static void timerCallback(registers_t regs)
 {
+	//switchcontext();
 	tick++;
 }
 
@@ -23,7 +25,6 @@ void pit_init(uint16 frequency)
 	// (1193180 Hz) by, to get our required frequency. Important to note is
 	// that the divisor must be small enough to fit into 16-bits.
 	uint32 divisor = 1193180 / frequency;
-
 	// Send the command byte.
 	outb(0x43, 0x36);
 
@@ -34,6 +35,7 @@ void pit_init(uint16 frequency)
 	// Send the frequency divisor.
 	outb(0x40, l);
 	outb(0x40, h);
+
 	log("Initialized PIT (programmable interrupt timer)\n");
 }
 
