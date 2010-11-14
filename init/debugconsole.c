@@ -15,7 +15,7 @@ void printPrompt();
 void executeCommand(char *command);
 
 // Print the command line prompt.
-void printPrompt()
+static void printPrompt()
 {
 	cursorPosition = 0;
 	int colorold = display_getColor();
@@ -26,7 +26,7 @@ void printPrompt()
 
 // Execute a command
 // Yes, this is only a bunch of hardcoded crap
-void executeCommand(char *command)
+static void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
 	else if(strcmp(command, "clear") == 0) clear();
@@ -75,7 +75,7 @@ void executeCommand(char *command)
 }
 
 // Handle keyboard input.
-void handler(char c)
+static void handler(char c)
 {
 	if(c == 0x8) //0x8 is the backspace key.
 	{
@@ -101,7 +101,7 @@ void handler(char c)
 void debugconsole_init()
 {
 	log("Initializing debug console\n");
-	log("Debuconsole currentLine position in memory: 0x%x\n", currentLine);
+	log("debuconsole: CurrentLine position in memory: 0x%x\n", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	keyboard_takeFocus(&handler);
 	printPrompt();
