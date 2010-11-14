@@ -108,6 +108,16 @@ floppy.img: xelix.bin
 	sudo losetup -d /dev/loop0
 	- rm -rf mount
 
+#create an iso
+dist: floppy.img
+	- mkdir mount
+	cp tools/floppy.img .
+	sudo losetup /dev/loop0 floppy.img
+	sudo mount /dev/loop0 mount
+	mkisofs -o xelix.iso mount
+	sudo umount mount
+	sudo losetup -d /dev/loop0
+	- rm -rf mount
 
 
 # running the kernel
