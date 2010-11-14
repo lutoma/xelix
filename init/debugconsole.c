@@ -11,8 +11,6 @@
 
 uint32 cursorPosition;
 char currentLine[256] = "";
-void printPrompt();
-void executeCommand(char *command);
 
 // Print the command line prompt.
 static void printPrompt()
