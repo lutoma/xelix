@@ -19,9 +19,7 @@
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <processes/process.h>
-#ifdef WITH_FLOPPY
-#include <devices/floppy/interface.h>
-#endif
+
 #ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>
 #endif
@@ -76,9 +74,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	memory_init_postprotected();
 	keyboard_init();
 	fs_init();
-	#ifdef WITH_FLOPPY
-	floppy_init();
-	#endif
+
 	
 	log("%%Xelix is up.%%\n", 0x0f);
 
