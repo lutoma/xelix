@@ -7,7 +7,7 @@ uint32 maxPid = 0;
 
 void createProcess(char name[100], void function())
 {
-	log("process: Spawned new process with name %s", name);
+	log("process: Spawned new process with name %s\n", name);
 	(*function) (); // Fake-run process
 
 	
