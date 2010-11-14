@@ -142,14 +142,14 @@ void pageFaultHandler(registers_t regs)
 	uint8 reservedoverwritten = regs.err_code & 0x8; // reserved bits overwritten (if set -> reserved bits were overwritten causing this page fault
 	uint8 instructionfetch = regs.err_code & 0x10; // pagefault during instruction set (if set -> during instruction fetch)
 	
-	printf("pagefault at 0x%x: ", faultingAddress);
-	if(notPresent) print("not present, ");
-	if(write) print("write, ");
-	if(!write) print("read, ");
-	if(usermode) print("user-mode, ");
-	if(!usermode) print("kernel-mode, ");
-	if(reservedoverwritten) print("reserved bits overwritten, ");
-	if(instructionfetch) print("during instruction fetch");
+	log("paging: pagefault at 0x%x: ", faultingAddress);
+	if(notPresent) log("not present, ");
+	if(write) log("write, ");
+	if(!write) log("read, ");
+	if(usermode) log("user-mode, ");
+	if(!usermode) log("kernel-mode, ");
+	if(reservedoverwritten) log("reserved bits overwritten, ");
+	if(instructionfetch) log("during instruction fetch");
 	
 	if(notPresent)
 	{
@@ -163,7 +163,7 @@ void pageFaultHandler(registers_t regs)
 	}
 	else
 	{
-		print("NOT HANDLING PAGEFAULT!\n");
+		log("paging: Unhangdled pagefault\n");
 	}
 }
 
@@ -186,7 +186,7 @@ pageDirectory_t* paging_cloneCurrentDirectory()
 		}
 		if(currentDirectory->pageTables[tableNum] == kernelDirectory->pageTables[tableNum])
 		{
-			printf("link page table %d\n",tableNum);
+			log("paging: link page table %d\n",tableNum);
 			// link page table
 			directory->pageTables[tableNum] = currentDirectory->pageTables[tableNum];
 			directory->directoryEntries[tableNum] = currentDirectory->directoryEntries[tableNum];
@@ -194,7 +194,7 @@ pageDirectory_t* paging_cloneCurrentDirectory()
 		else
 		{
 			
-			printf("copy page table %d\n", tableNum);
+			log("paging: copy page table %d\n", tableNum);
 			pageTable_t* srcTable = currentDirectory->pageTables[tableNum];
 			// copy page table contents
 			int pageNum;
