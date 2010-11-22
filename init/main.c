@@ -78,10 +78,6 @@ void kmain(multibootHeader_t *mbootPointer)
 	
 	log("%%Xelix is up.%%\n", 0x0f);
 
-	printf("This %%should %s%% colored. The color code is %%%d%%.\n", 0x02, "be", 0x04, 0x02);
-
-	printf("PIT Tick Num: %d\n", pit_getTickNum());
-
 	#ifdef WITH_DEBUGCONSOLE
 	createProcess("debugconsole", &debugconsole_init);
 	#endif
