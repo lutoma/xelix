@@ -30,7 +30,7 @@ void calculateFibonacci();
 void compilerInfo();
 
 
-/// Prints out compiler information, especially for GNU GCC
+// Prints out compiler information, especially for GNU GCC
 void compilerInfo()
 {
 	log("%%Compiling information:\n%%", 0x0f);
@@ -46,6 +46,21 @@ void compilerInfo()
 	log("\tDistribution: %s\n", __BUILDDIST__);
 }
 
+// Check if ints have the right length
+void checkIntLenghts()
+{
+	log("Checking length of uint8... ");
+	ASSERT(sizeof(uint8) == 1);
+	log("Right\n");
+	
+	log("Checking length of uint16... ");
+	ASSERT(sizeof(uint16) == 2);
+	log("Right\n");
+	
+	log("Checking length of uint32... ");
+	ASSERT(sizeof(uint32) == 4);
+	log("Right\n");
+}
 
 // The main kernel function.
 // (This is the first function called ever)
@@ -83,20 +98,4 @@ void kmain(multibootHeader_t *mbootPointer)
 	#endif
 	
 	while(1){}
-}
-
-// Check if ints have the right length
-void checkIntLenghts()
-{
-	log("Checking length of uint8... ");
-	ASSERT(sizeof(uint8) == 1);
-	log("Right\n");
-	
-	log("Checking length of uint16... ");
-	ASSERT(sizeof(uint16) == 2);
-	log("Right\n");
-	
-	log("Checking length of uint32... ");
-	ASSERT(sizeof(uint32) == 4);
-	log("Right\n");
 }
