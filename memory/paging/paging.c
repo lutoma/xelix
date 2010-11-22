@@ -1,3 +1,4 @@
+#include <common/log.h>
 #include <memory/paging/paging.h>
 #include <memory/paging/frames.h>
 #include <memory/kmalloc.h>
