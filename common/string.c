@@ -31,6 +31,14 @@ char* strcpy(char *dest, const char *src)
 	return save;
 }
 
+// Copy n bytes of src to dst
+char *strncpy(char *dst, const char *src, size_t n)
+{
+	char *p = dst;
+	while (n-- && (*dst++ = *src++));
+	return p;
+}
+
 /** Compare two strings
  * @param s1 First string
  * @param s2 Second string
