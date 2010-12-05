@@ -1,4 +1,5 @@
 #include <memory/kmalloc.h>
+#define MEMORY_SECTIONS 65536
 
 // TODO: improve kmalloc  (heap?)
 
@@ -14,8 +15,12 @@ uint32 memoryPosition = (uint32)&end; // maybe put this in an init function?
 
 uint32 kernelMaxMemory = 0xA00000; // 10 megabytes // allocating memory for the kernel won't go beyond this.
 
+#ifdef WITH_NEW_KMALLOC
+uint32 memorySections[MEMORY_SECTIONS];
+uint32 nextSection = 0;
+#endif
 
-void* kmalloc(uint32 numbytes)
+void* __kmalloc(uint32 numbytes)
 {
 	void* ptr = (void *) memoryPosition;
 	memoryPosition += numbytes;
@@ -36,6 +41,55 @@ void* kmalloc(uint32 numbytes)
 	return ptr;
 }
 
+void* kmalloc(uint32 numbytes)
+{
+  #ifdef WITH_NEW_KMALLOC
+  uint32 i = 0;
+  while (i < MEMORY_SECTIONS)
+  {
+    memorySection_t *thisSection = (memorySection_t *)memorySections[i];
+    if (thisSection->size == numbytes && thisSection->free != 0)
+    {
+      thisSection->free = 0;
+    
+      memset(thisSection->pointer, 0, numbytes);
+      
+      return thisSection->pointer;
+    }
+    
+    i++;
+  }
+
+  memorySection_t *section = __kmalloc(sizeof(memorySection_t));
+  section->free = 0;
+  section->size = numbytes;
+  section->pointer = __kmalloc(numbytes);
+  memorySections[nextSection] = (uint32)section;
+  nextSection++;
+  
+  return section->pointer;
+  
+  #else
+  
+	return __kmalloc(numbytes);
+	#endif
+}
+
+#ifdef WITH_NEW_KMALLOC
+void kfree(void *ptr)
+{
+  uint32 i = 0;
+  while (i < MEMORY_SECTIONS)
+  {
+    if ((uint32)(((memorySection_t *)memorySections[i])->pointer) == (uint32) ptr)
+    {
+      ((memorySection_t *)memorySections[i])->free = 1;
+      return;
+    }
+    i++;
+  }
+}
+#endif
 
 // FIXME: returning physical address only works because of identity paging the kernel heap.
 void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)

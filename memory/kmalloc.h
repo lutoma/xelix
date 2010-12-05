@@ -5,7 +5,6 @@
 // usually everything is named with prefix_functions(), except here because this is used so often and is so fundamental, its like a kernel library.
 
 
-
 // returns a pointer to numbytes number bytes of memory available for usage
 // usage example:
 // (int*) var;
@@ -24,3 +23,13 @@ void kmalloc_init(uint32 start);
 
 
 extern uint32 kernelMaxMemory; // not to be used outside of memory subsystem!
+
+#ifdef WITH_NEW_KMALLOC
+typedef struct {
+  uint32 size;
+  uint8 free:1;
+  void *pointer;
+} memorySection_t;
+
+void kfree(void *ptr);
+#endif
