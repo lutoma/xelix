@@ -62,7 +62,7 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
-makefile.write("clean:\n\trm -rf xelix.bin mount initrd.img floppy.img buildinfo.h ");
+makefile.write("clean:\n\trm -rf xelix.bin mount floppy.img buildinfo.h ");
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
@@ -95,7 +95,6 @@ makefile:
 
 install: xelix.bin
 	sudo cp xelix.bin /boot/xelix
-	sudo cp initrd.img /boot/xelix_initrd
 
 # create a boot image for usb-stick or floppy
 floppy.img: xelix.bin
@@ -134,7 +133,7 @@ runbochsfloppy: floppy.img
 runqemu: xelix.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin
 
-runqemunox: initrd.img xelix.bin
+runqemunox: xelix.bin
 	# Exit with ^A-x
 	qemu -d cpu_reset -kernel xelix.bin -nographic
 	
