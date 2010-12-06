@@ -6,6 +6,7 @@
 #define DEBUGCONSOLE_PROMPT "\n> "
 #define LOG_SAVE
 #define LOG_MAXSIZE 10000
+#define MEMORY_MAX_KMEM 0xBFFFFF
 
 #define WITH_SERIAL
 #define WITH_DEBUGCONSOLE

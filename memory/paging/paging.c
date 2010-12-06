@@ -62,7 +62,7 @@ void paging_init()
 	// create pages for every virtual address in our kernel memory space
 	// because frames are allocated linearly, this will result in identity mapping.
 	int i;
-	for(i=0; i <=  kernelMaxMemory; i += 0x1000)
+	for(i=0; i <= MEMORY_MAX_KMEM; i += 0x1000)
 	{
 		createPage(kernelDirectory, i, KERNEL_MODE, READWRITE);
 	}

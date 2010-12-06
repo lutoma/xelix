@@ -10,8 +10,6 @@ extern uint32 end;
 // It advances an always points to the beginning of the free memory space.
 uint32 memoryPosition = (uint32)&end; // maybe put this in an init function?
 
-uint32 kernelMaxMemory = 0xA00000; // 10 megabytes // allocating memory for the kernel won't go beyond this.
-
 #ifdef WITH_NEW_KMALLOC
 uint32 memorySections[MEMORY_SECTIONS];
 uint32 nextSection = 0;
@@ -22,7 +20,7 @@ void* __kmalloc(uint32 numbytes)
 	void* ptr = (void *) memoryPosition;
 	memoryPosition += numbytes;
 
-	if(memoryPosition >= kernelMaxMemory)
+	if(memoryPosition >= MEMORY_MAX_KMEM)
 		PANIC("Out of kernel memory");
 	
 	return ptr;
@@ -89,7 +87,7 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 	if(physicalAddress != 0)
 		*physicalAddress = (uint32)ptr;
 	
-	if(memoryPosition >= kernelMaxMemory)
+	if(memoryPosition >= MEMORY_MAX_KMEM)
 		PANIC("Out of kernel memory");
 	
 	return ptr;
@@ -98,5 +96,4 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
 void kmalloc_init(uint32 start)
 {
 	memoryPosition = (uint32)start;
-	kernelMaxMemory = 0x1000 * 1024 * 3 - 1; // a whole number of page tables
 }

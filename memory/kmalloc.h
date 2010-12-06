@@ -19,11 +19,6 @@ void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress);
 
 void kmalloc_init(uint32 start);
 
-// dependencies: none
-
-
-extern uint32 kernelMaxMemory; // not to be used outside of memory subsystem!
-
 #ifdef WITH_NEW_KMALLOC
 typedef struct {
   uint32 size;
