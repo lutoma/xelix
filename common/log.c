@@ -37,6 +37,6 @@ void log_init()
 void setLogLevel(int level)
 {
 	if(level) log("Enabled printing of log messages.\n");
-	else log("Warning: disabled printing of log messages.\n");
+	else log("log: Warning: disabled printing of log messages.\n");
 	logsEnabled = level;
 }

@@ -1,15 +1,11 @@
-/** @file devices/keyboard/generic.c
- * \brief A generic & simple keyboard driver
- * @author Christoph Sünderhauf
- * @author Lukas Martini
- */
+// A generic & simple keyboard driver
+#include <devices/keyboard/interface.h>
 
 #include <common/log.h>
-#include <devices/keyboard/interface.h>
 #include <interrupts/interface.h>
 #include <devices/display/interface.h>
 
-/// A generic keymap. To be replaced later by files.
+// A generic keymap. To be replaced later by files.
 char keymap[256] = {
  0 ,//0x0
  0 ,//0x1
@@ -269,7 +265,7 @@ char keymap[256] = {
  0 //0xff
 };
 
-/// A generic uppercase keymap. To be replaced later by files.
+// A generic uppercase keymap. To be replaced later by files.
 char keymapshift[256] = {
  0 ,//0x0
  0 ,//0x1
@@ -531,7 +527,7 @@ char keymapshift[256] = {
 
 
 
-/// Current modifier keys
+// Current modifier keys
 struct {
 	int shiftl:1;
 	int shiftr:1;
@@ -547,7 +543,7 @@ void handleIrq(registers_t regs);
 void handleScancode(uint8 code, uint8 code2);
 void printModifiers();
 
-/// Initialize keyboard after interrupts have initialized
+// Initialize keyboard after interrupts have initialized
 void keyboard_init()
 {
 	modifiers.shiftl = 0;
@@ -567,12 +563,10 @@ void keyboard_init()
 		inb(0x60); // read scancode
 	}
 	
-	log("Initialized keyboard\n");
+	log("keyboard: Initialized\n");
 }
 
-/** Handles the IRQs we catch
- * @param regs The registers we get from the IRQ
- */
+// Handles the IRQs we catch
 void handleIrq(registers_t regs)
 {
 	static uint8 waitingForEscapeSequence = 0;
@@ -673,7 +667,7 @@ void handleScancode(uint8 code, uint8 code2)
 	*/
 }
 
-/// Print the active modifiers.
+// Print the active modifiers.
 void printModifiers()
 {
 	print(" Modifiers: ");
@@ -691,16 +685,14 @@ void printModifiers()
 		print("super ");
 }
 
-/** Take keyboard focus.
- * @param func The function which should take the focus
- */
+// Take keyboard focus.
 void keyboard_takeFocus(void (*func)(char))
 {
 	focusedFunction = func;
-	log("Application took focus.\n");
+	log("keyboard: Application took focus.\n");
 }
 
-/// To drop the keyboard focus.
+// To drop the keyboard focus.
 void keyboard_leaveFocus()
 {
 	focusedFunction = 0;

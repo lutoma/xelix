@@ -1,10 +1,9 @@
 // Driver for output over serial port
 // Thanks to Waldteufel from whose kernel 'Ambulat' this Code is 'stolen'.
-
 #include <common/generic.h>
 #ifdef WITH_SERIAL
-
 #include <devices/serial/interface.h>
+
 #include <common/log.h>
 
 void send(char c);
@@ -18,6 +17,8 @@ void serial_init()
 
 	outb(PORT+1, 0x00); outb(PORT+3, 0x80); outb(PORT+1, 0x00); outb(PORT+0, 0x03);
 	outb(PORT+3, 0x03); outb(PORT+2, 0xC7); outb(PORT+4, 0x0B);
+
+	log("serial: Initialized");
 }
 
 #define CAN_RECV (inb(PORT+5) & 1)

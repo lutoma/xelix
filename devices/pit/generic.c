@@ -17,7 +17,7 @@ static void timerCallback(registers_t regs)
 // Initialize the PIT
 void pit_init(uint16 frequency)
 {
-	log("Initializing PIT at %d Hz.\n", frequency);
+	log("pit: Initializing at %d Hz.\n", frequency);
 	// Firstly, register our timer callback.
 	interrupt_registerHandler(IRQ0, &timerCallback);
 
@@ -36,7 +36,7 @@ void pit_init(uint16 frequency)
 	outb(0x40, l);
 	outb(0x40, h);
 
-	log("Initialized PIT (programmable interrupt timer)\n");
+	log("pit: Initialized\n");
 }
 
 // Get the tick num

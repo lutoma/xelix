@@ -16,7 +16,7 @@ void interrupts_init()
 
 	// set all interruptHandlers to zero
 	memset(interruptHandlers, 0, 256*sizeof(interruptHandler_t));
-	log("Initialized interrupts\n");
+	log("interrupts: Initialized\n");
 }
 
 void interrupt_callback(registers_t regs)
@@ -48,7 +48,7 @@ void interrupt_callback(registers_t regs)
 
 void interrupt_registerHandler(uint8 n, interruptHandler_t handler)
 {
-	log("Registered IRQ handler for %d.\n", n);
+	log("interrupts: Registered IRQ handler for %d.\n", n);
 	interruptHandlers[n] = handler;
 }
 

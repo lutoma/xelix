@@ -51,6 +51,5 @@ fsNode_t *vfs_finddirNode(fsNode_t *node, char *name)
 // Initialize the filesystem abstraction system
 void fs_init()
 {
-
-	log("Initialized filesystem abstraction\n");
+	log("vfs: Initialized\n");
 }

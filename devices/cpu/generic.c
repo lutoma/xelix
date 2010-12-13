@@ -1,34 +1,14 @@
-/** @file devices/cpu/generic.c
- * \brief Generic CPU-specific commands.
- * @author Lukas Martini
- */
+//Generic CPU-specific commands.
+#include <devices/cpu/interface.h>
 
 #include <common/log.h>
-#include <devices/cpu/interface.h>
 
 int isProtected(); // Check if CPU is in protected mode
 void setProtected(); // Switch CPU to protected mode
 
 int protected;
 
-/// Initialize the CPU (set it to protected mode)
-void cpu_init()
-{
-	protected = isProtected();
-	if(!protected)
-	{
-		setProtected();
-		log("Setting CPU to protected mode.\n");
-	} else
-	{
-		log("CPU is already in protected mode, not enabling.\n");
-	}
-
-	log("Initialized CPU\n");
-}
-/** Check if CPU is running in protected mode.
- * @return Bool if CPU is in protected mode.
- */
+// Check if CPU is running in protected mode.
 int isProtected()
 {
 	uint32 v;
@@ -37,21 +17,33 @@ int isProtected()
 	else return 0;
 }
 
-/** Set CPU in protected mode
- * @bug Not implemented yet
- * @note Not needed so far, as grub automatically switches to protected mode.
- */
+// Set CPU in protected mode
+// Todo: Implement it
 void setProtected()
 {
 	PANIC("Can't [yet] switch to protected mode. Use a bootloader which automatically enables protected mode such as GNU GRUB.\n");
 	return;
 }
 
-/** Check if CPU is 32 bit
- * @bug Not implemented yet
- * @return Always 1 (= true)
- */
+// Check if CPU is 32 bit
+// Todo: Implement it
 int cpu_is32Bit()
 {
 	return 1;
+}
+
+// Initialize the CPU (set it to protected mode)
+void cpu_init()
+{
+	protected = isProtected();
+	if(!protected)
+	{
+		setProtected();
+		log("cpu: Setting CPU to protected mode.\n");
+	} else
+	{
+		log("cpu: Already in protected mode, not enabling.\n");
+	}
+
+	log("cpu: Initialized\n");
 }

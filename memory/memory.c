@@ -14,8 +14,8 @@ void memory_init_preprotected()
 void memory_init_postprotected()
 {
 	frames_init();
-	log("Initialized frames.\n");
+	log("frames: Initialized\n");
 	paging_init();
-	log("Initialized paging.\n");
-	log("Initialized postprotected memory\n");
+	log("paging: Initialized\n");
+	log("memory: Initialized\n");
 }

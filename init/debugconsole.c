@@ -98,8 +98,8 @@ static void handler(char c)
 // Initialize the debug console.
 void debugconsole_init()
 {
-	log("Initializing debug console\n");
-	log("debuconsole: CurrentLine position in memory: 0x%x\n", currentLine);
+	log("debugconsole: Initializing\n");
+	log("debugconsole: CurrentLine position in memory: 0x%x\n", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	keyboard_takeFocus(&handler);
 	printPrompt();
