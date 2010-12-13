@@ -10,6 +10,5 @@
 
 #define WITH_SERIAL
 #define WITH_DEBUGCONSOLE
-// Doesn't work as it should
-#undef WITH_NEW_KMALLOC
+#define WITH_NEW_KMALLOC
 
