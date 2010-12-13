@@ -57,9 +57,10 @@ void* kmalloc(uint32 numbytes)
 	#endif
 }
 
-#ifdef WITH_NEW_KMALLOC
+
 void kfree(void *ptr)
 {
+	#ifdef WITH_NEW_KMALLOC
 	uint32 i = 0;
 	while (i < MEMORY_SECTIONS)
 	{
@@ -71,8 +72,11 @@ void kfree(void *ptr)
 
 		i++;
 	}
+	#else
+		log("kmalloc: Call to kfree ignored, as new kmalloc is disabled.");
+	#endif
 }
-#endif
+
 
 // FIXME: returning physical address only works because of identity paging the kernel heap.
 void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
