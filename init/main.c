@@ -71,7 +71,13 @@ void kmain(multibootHeader_t *mbootPointer)
 	memory_init_preprotected(); // gdt
 	interrupts_init(); // idt	
 
-	kmalloc_init(mbootPointer->modsAddr);
+/*
+ * This should be
+ * kmalloc_init(mbootPointer->modsAddr);
+ * however, mbootPointer->modsAddr always was 0, therefore i replaced it by this dirty hack.
+ * Fix ASAP!
+ */
+	kmalloc_init(500);
 	display_init();
 	
 	#ifdef WITH_SERIAL
