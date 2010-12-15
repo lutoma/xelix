@@ -16,6 +16,9 @@
 #include <interrupts/interface.h>
 #include <devices/pit/interface.h>
 #include <memory/kmalloc.h>
+#ifdef WITH_SPEAKER
+#include <devices/speaker/interface.h>
+#endif
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <processes/process.h>
@@ -31,7 +34,7 @@ void compilerInfo();
 
 
 // Prints out compiler information, especially for GNU GCC
-void compilerInfo()
+static void compilerInfo()
 {
 	log("%%Compiling information:\n%%", 0x0f);
 	log("\tTime: %s %s\n", __DATE__, __TIME__);
@@ -47,7 +50,7 @@ void compilerInfo()
 }
 
 // Check if ints have the right length
-void checkIntLenghts()
+static void checkIntLenghts()
 {
 	log("Checking length of uint8... ");
 	ASSERT(sizeof(uint8) == 1);
@@ -61,6 +64,13 @@ void checkIntLenghts()
 	ASSERT(sizeof(uint32) == 4);
 	log("Right\n");
 }
+
+#ifdef WITH_SPEAKER
+static void bootBeep()
+{
+	speaker_beep(1, 1);
+}
+#endif
 
 // The main kernel function.
 // (This is the first function called ever)
@@ -94,9 +104,13 @@ void kmain(multibootHeader_t *mbootPointer)
 	cpu_init();
 	memory_init_postprotected();
 	keyboard_init();
+	speaker_init();
 	fs_init();
 
-	
+	#ifdef WITH_SPEAKER
+	createProcess("bootBeep", &bootBeep);
+	#endif
+
 	log("%%Xelix is up.%%\n", 0x0f);
 
 	#ifdef WITH_DEBUGCONSOLE
