@@ -27,12 +27,6 @@
 #include <init/debugconsole.h>
 #endif
 
-void checkIntLenghts();
-void readInitrd(uint32 initrd_location);
-void calculateFibonacci();
-void compilerInfo();
-
-
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
 {
