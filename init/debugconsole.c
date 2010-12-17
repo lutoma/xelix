@@ -79,6 +79,10 @@ static void handler(char c)
 	{
 		if(cursorPosition < 1) return; // We don't want the user to remove the prompt ;)
 		cursorPosition--;
+		currentLine[strlen(currentLine) -1] = 0;
+		char s[2] = { c, 0 };
+		printf("%s", s);
+		return;
 	} else if(c == 0xA)
 	{
 		print("\n");
