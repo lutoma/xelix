@@ -31,7 +31,7 @@ void* kmalloc(size_t numbytes)
 {
 	#ifdef WITH_NEW_KMALLOC
 	uint32 i = 0;
-	while (i < MEMORY_SECTIONS)
+	while (i < nextSection)
 	{
 		memorySection_t *thisSection = (memorySection_t *)memorySections[i];
 		if (thisSection->size == numbytes && thisSection->free != 0)
