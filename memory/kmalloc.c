@@ -38,7 +38,6 @@ void* kmalloc(uint32 numbytes)
 		{
 			thisSection->free = 0;
 			void *pointer = (void*)((uint32)thisSection + sizeof(memorySection_t));
-			memset(pointer, 0, numbytes);
 			return pointer;
 		}
 
