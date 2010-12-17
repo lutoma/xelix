@@ -10,18 +10,18 @@
 // (int*) var;
 // var = (int*) kmalloc(sizeof(int));
 // *var = 123;
-void* kmalloc(uint32 numbytes);
+void* kmalloc(size_t numbytes);
 
 // dito, but memory aligned to 4kb.
 // physicalAddress: If physicalAddress is not 0, the physical address of the memory returned is written into that location. The physical address is important when paging is already enabled: Then we can only access memory via its virtual address, but eg. new page directories need to containt physical addresses to their page tables.
-void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress);
+void* kmalloc_aligned(size_t numbytes, uint32* physicalAddress);
 
 
 void kmalloc_init(uint32 start);
 
 #ifdef WITH_NEW_KMALLOC
 typedef struct {
-	uint32 size;
+	size_t size;
 	uint8 free:1;
 } memorySection_t;
 

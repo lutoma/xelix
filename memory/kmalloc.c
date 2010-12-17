@@ -16,7 +16,7 @@ uint32 memorySections[MEMORY_SECTIONS];
 uint32 nextSection = 0;
 #endif
 
-void* __kmalloc(uint32 numbytes)
+void* __kmalloc(size_t numbytes)
 {
 	void* ptr = (void *) memoryPosition;
 	memoryPosition += numbytes;
@@ -27,7 +27,7 @@ void* __kmalloc(uint32 numbytes)
 	return ptr;
 }
 
-void* kmalloc(uint32 numbytes)
+void* kmalloc(size_t numbytes)
 {
 	#ifdef WITH_NEW_KMALLOC
 	uint32 i = 0;
@@ -80,7 +80,7 @@ void kfree(void *ptr)
 
 
 // FIXME: returning physical address only works because of identity paging the kernel heap.
-void* kmalloc_aligned(uint32 numbytes, uint32* physicalAddress)
+void* kmalloc_aligned(size_t numbytes, uint32* physicalAddress)
 {
 	// align to 4 kb (= 0x1000 bytes)
 	if( memoryPosition % 0x1000 != 0 )
