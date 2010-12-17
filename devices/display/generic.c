@@ -119,7 +119,7 @@ unsigned char newglyph[ 16 ] = 	{
 	outw( 0x0300, TSEQ_PORT );	// leave synchronous reset
 	outw( 0x0004, GRAF_PORT );	// select map 0 for reads
 	outw( 0x1005, GRAF_PORT );	// enable odd-even addressing
-	outw( 0x0E06, GRAF_PORT );	// map starts at 0http://www.flickr.com/photos/jungepiraten/4844152708/sizes/l/xB800:0000
+	outw( 0x0E06, GRAF_PORT );	// map starts at 0xB800:0000
 	*/
 	
 	log("display: Initialized\n");
