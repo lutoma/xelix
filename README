@@ -3,3 +3,5 @@ To build, you'll need GCC (possibly >= 4.4.3), NASM and GNU make, the GNU Binuti
 1. Run 'tools/makefile.py' which will generate a Makefile (You'll have to re-execute this whenever you add or remove a source file)
 2. Run 'make clean && make'
 3. Run 'make runqemu' (You need QEMU to do this)
+
+To submit your changes, create a patch using 'git-format-patch', then send it to the mailinglist.
