@@ -1,7 +1,8 @@
 #include <memory/kmalloc.h>
+// TODO: More MEMORY_SECTIONs?
 #define MEMORY_SECTIONS 65536
 
-// TODO: improve kmalloc  (heap?)
+// TODO: improve kmalloc	(heap?)
 
 
 // is defined in the linker script: where the kernel binary stuff ends in memory.
@@ -36,8 +37,9 @@ void* kmalloc(uint32 numbytes)
 		if (thisSection->size == numbytes && thisSection->free != 0)
 		{
 			thisSection->free = 0;
-			memset(thisSection->pointer, 0, numbytes);
-			return thisSection->pointer;
+			void *pointer = (void*)((uint32)thisSection + sizeof(memorySection_t));
+			memset(pointer, 0, numbytes);
+			return pointer;
 		}
 
 		i++;
@@ -46,12 +48,11 @@ void* kmalloc(uint32 numbytes)
 	memorySection_t *section = __kmalloc(sizeof(memorySection_t));
 	section->free = 0;
 	section->size = numbytes;
-	section->pointer = __kmalloc(numbytes);
 	memorySections[nextSection] = (uint32)section;
 	nextSection++;
-  
-	return section->pointer;
-  
+	
+	return __kmalloc(numbytes);
+	
 	#else
 	return __kmalloc(numbytes);
 	#endif
@@ -64,9 +65,11 @@ void kfree(void *ptr)
 	uint32 i = 0;
 	while (i < MEMORY_SECTIONS)
 	{
-		if ((uint32)(((memorySection_t *)memorySections[i])->pointer) == (uint32) ptr)
+		uint32 section_pointer = memorySections[i] + sizeof(memorySection_t);
+		if (section_pointer == (uint32) ptr)
 		{
 			((memorySection_t *)memorySections[i])->free = 1;
+			log("Freed %x\n", (uint32)ptr);
 			return;
 		}
 

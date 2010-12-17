@@ -21,9 +21,8 @@ void kmalloc_init(uint32 start);
 
 #ifdef WITH_NEW_KMALLOC
 typedef struct {
-  uint32 size;
-  uint8 free:1;
-  void *pointer;
+	uint32 size;
+	uint8 free:1;
 } memorySection_t;
 
 void kfree(void *ptr);
