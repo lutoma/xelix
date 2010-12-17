@@ -69,7 +69,6 @@ void kfree(void *ptr)
 		if (section_pointer == (uint32) ptr)
 		{
 			((memorySection_t *)memorySections[i])->free = 1;
-			log("Freed %x\n", (uint32)ptr);
 			return;
 		}
 
