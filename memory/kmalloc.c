@@ -62,7 +62,7 @@ void kfree(void *ptr)
 {
 	#ifdef WITH_NEW_KMALLOC
 	uint32 i = 0;
-	while (i < MEMORY_SECTIONS)
+	while (i < nextSection)
 	{
 		uint32 section_pointer = memorySections[i] + sizeof(memorySection_t);
 		if (section_pointer == (uint32) ptr)
