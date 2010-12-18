@@ -1,8 +1,7 @@
 #include <memory/kmalloc.h>
-// TODO: More MEMORY_SECTIONs?
 #define MEMORY_SECTIONS 65536
 
-// TODO: improve kmalloc	(heap?)
+// TODO: improve search of free memory sections
 
 
 // is defined in the linker script: where the kernel binary stuff ends in memory.
@@ -13,6 +12,7 @@ uint32 memoryPosition = (uint32)&end; // maybe put this in an init function?
 
 #ifdef WITH_NEW_KMALLOC
 uint32 memorySections[MEMORY_SECTIONS];
+uint32 freeSections = MEMORY_SECTIONS;
 uint32 nextSection = 0;
 #endif
 
@@ -38,16 +38,40 @@ void* kmalloc(size_t numbytes)
 		{
 			thisSection->free = 0;
 			void *pointer = (void*)((uint32)thisSection + sizeof(memorySection_t));
+			freeSections--;
 			return pointer;
 		}
 
 		i++;
+	}
+	
+	if (nextSection >= MEMORY_SECTIONS)
+	{
+		if (freeSections != 0)
+		{
+			i = 0;
+			while (i < nextSection)
+			{
+				memorySection_t *thisSection = (memorySection_t *)memorySections[i];
+				if (thisSection->free != 0 && thisSection->size > numbytes)
+				{
+					thisSection->free = 0;
+					thisSection->size = numbytes;
+					void *pointer = (void*)((uint32)thisSection + sizeof(memorySection_t));
+					freeSections--;
+					return pointer;
+				}
+			}
+		}
+		
+		return __kmalloc(numbytes);
 	}
 
 	memorySection_t *section = __kmalloc(sizeof(memorySection_t));
 	section->free = 0;
 	section->size = numbytes;
 	memorySections[nextSection] = (uint32)section;
+	freeSections--;
 	nextSection++;
 	
 	return __kmalloc(numbytes);
@@ -68,13 +92,14 @@ void kfree(void *ptr)
 		if (section_pointer == (uint32) ptr)
 		{
 			((memorySection_t *)memorySections[i])->free = 1;
+			freeSections++;
 			return;
 		}
 
 		i++;
 	}
 	#else
-		log("kmalloc: Call to kfree ignored, as new kmalloc is disabled.");
+		log("kmalloc: Call to kfree ignored, as new kmalloc is disabled.\n");
 	#endif
 }
 
