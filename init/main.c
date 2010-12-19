@@ -99,7 +99,9 @@ void kmain(multibootHeader_t *mbootPointer)
 	cpu_init();
 	memory_init_postprotected();
 	keyboard_init();
+	#ifdef WITH_SPEAKER
 	speaker_init();
+	#endif
 	fs_init();
 
 	#ifdef WITH_SPEAKER
