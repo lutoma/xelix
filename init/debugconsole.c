@@ -8,9 +8,11 @@
 #include <devices/display/interface.h>
 #include <devices/keyboard/interface.h>
 #include <common/datetime.h>
+#include <filesystems/vfs.h>
 
 uint32 cursorPosition;
 char currentLine[256] = "";
+static char* currentDir = "/";
 
 // Print the command line prompt.
 static void printPrompt()
@@ -33,6 +35,22 @@ static void executeCommand(char *command)
 		printf("%%You can use the following commands:%%\n", 0x04);
 		printf("\treboot\n\tclear\n\tdate\n\tcolorinfo\n\thelp");
 	}
+	else if(strcmp(command, "ls") == 0)
+	{
+		int i = 0;
+		struct dirent *node = 0;
+		while ( (node = vfs_readdirNode(rootNode, i)) != 0)
+		{
+			fsNode_t *fsNode = vfs_finddirNode(rootNode, node->name);
+			int color;
+			if((fsNode->flags&0x7) == FS_DIRECTORY)
+				color = 0x09;
+			else
+				color = 0x07;
+			printf("%%%s%%  ", color, node->name);
+			i++;
+		}
+	}
 	else if(strcmp(command, "date") == 0)
 	{
 		int day = date('d');
@@ -43,28 +61,6 @@ static void executeCommand(char *command)
 		int second = date('s');
 		int weekDay = getWeekDay(day, month, year);
 		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
-	} 
-	else if(strcmp(command, "colornext") == 0) 
-	{
-		
-	} 
-	else if(strcmp(command, "colorinfo") == 0) {
-		printf("%% %% Black:\t\t0x00\n", 0x00);
-		printf("%% %% Blue:\t\t\t0x01\n", 0x10);
-		printf("%% %% Green:\t\t0x02\n", 0x20);
-		printf("%% %% Cyan:\t\t\t0x03\n", 0x30);
-		printf("%% %% Red:\t\t\t0x04\n", 0x40);
-		printf("%% %% Purple:\t\t\t0x05\n", 0x50);
-		printf("%% %% Brown:\t\t0x06\n", 0x60);
-		printf("%% %% LightGray:\t0x07\n", 0x70);
-		printf("%% %% Gray:\t\t\t0x08\n", 0x80);
-		printf("%% %% LightBlue:\t0x09\n", 0x90);
-		printf("%% %% LightGreen:\t0x0A\n", 0xA0);
-		printf("%% %% LightCyan:\t0x0B\n", 0xB0);
-		printf("%% %% Orange:\t\t0x0C\n", 0xC0);
-		printf("%% %% Pink:\t\t\t0x0D\n", 0xD0);
-		printf("%% %% Yellow:\t\t0x0E\n", 0xE0);;
-		printf("%% %% White:\t\t0x0F\n", 0xF0);
 	} else
 	{
 		if(strlen(command) > 0)

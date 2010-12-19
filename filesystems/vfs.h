@@ -53,4 +53,10 @@ void vfs_closeNode(fsNode_t *node);
 struct dirent *vfs_readdirNode(fsNode_t *node, uint32 index);
 fsNode_t *vfs_finddirNode(fsNode_t *node, char *name);
 
-void fs_init();
+fsNode_t *rootNode; // Our root directory node.
+
+fsNode_t *rootNodes; // List of file nodes.
+int rootNodeCount; // Number of file nodes.
+
+void vfs_init();
+
