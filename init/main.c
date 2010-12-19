@@ -46,15 +46,15 @@ static void compilerInfo()
 // Check if ints have the right length
 static void checkIntLenghts()
 {
-	log("Checking length of uint8... ");
+	log("init: Checking length of uint8... ");
 	ASSERT(sizeof(uint8) == 1);
 	log("Right\n");
 	
-	log("Checking length of uint16... ");
+	log("init_ Checking length of uint16... ");
 	ASSERT(sizeof(uint16) == 2);
 	log("Right\n");
 	
-	log("Checking length of uint32... ");
+	log("init: Checking length of uint32... ");
 	ASSERT(sizeof(uint32) == 4);
 	log("Right\n");
 }
@@ -91,14 +91,17 @@ void kmain(multibootHeader_t *mbootPointer)
 
 	printf("\n                                   %%Xelix%%\n\n", 0x0f);
 
-	compilerInfo();	
+	compilerInfo();
+	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
 
 	pit_init(PIT_RATE);
 	cpu_init();
 	memory_init_postprotected();
 	keyboard_init();
+	#ifdef WITH_SPEAKER
 	speaker_init();
+	#endif
 	vfs_init();
 
 	#ifdef WITH_SPEAKER

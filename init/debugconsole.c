@@ -63,7 +63,7 @@ static void executeCommand(char *command)
 		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
 	} else
 	{
-		if(strlen(command) > 0)
+		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
 			printf("error: command '%s' not found.\n", command);
 	}
 }

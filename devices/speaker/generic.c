@@ -4,6 +4,7 @@
 #include <devices/speaker/interface.h>
 
 #include <common/log.h>
+#include <common/datetime.h>
 
 void speaker_on()
 {
