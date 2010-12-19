@@ -67,7 +67,7 @@ static void executeCommand(char *command)
 		printf("%% %% White:\t\t0x0F\n", 0xF0);
 	} else
 	{
-		if(strlen(command) > 0)
+		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
 			printf("error: command '%s' not found.\n", command);
 	}
 }
