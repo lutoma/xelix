@@ -1,6 +1,8 @@
 #include <processes/process.h>
+
 #include <processes/scheduler.h>
 #include <memory/kmalloc.h>
+#include <common/log.h>
 
 uint32 maxPid = 0;
 

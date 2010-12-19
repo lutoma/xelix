@@ -1,4 +1,6 @@
 #include <memory/kmalloc.h>
+
+#include <common/log.h>
 #define MEMORY_SECTIONS 65536
 
 // TODO: improve search of free memory sections

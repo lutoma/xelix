@@ -91,7 +91,8 @@ void kmain(multibootHeader_t *mbootPointer)
 
 	printf("\n                                   %%Xelix%%\n\n", 0x0f);
 
-	compilerInfo();	
+	compilerInfo();
+	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
 
 	pit_init(PIT_RATE);
