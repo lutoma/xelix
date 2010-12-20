@@ -84,9 +84,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	kmalloc_init(500);
 	display_init();
 	
-	#ifdef WITH_SERIAL
-	serial_init();
-	#endif
+	IFDEFC(WITH_SERIAL, serial_init());
 	log_init();
 
 	printf("\n                                   %%Xelix%%\n\n", 0x0f);
@@ -99,20 +97,14 @@ void kmain(multibootHeader_t *mbootPointer)
 	cpu_init();
 	memory_init_postprotected();
 	keyboard_init();
-	#ifdef WITH_SPEAKER
-	speaker_init();
-	#endif
+	IFDEFC(WITH_SPEAKER, speaker_init());
 	fs_init();
 
-	#ifdef WITH_SPEAKER
-	createProcess("bootBeep", &bootBeep);
-	#endif
+	IFDEFC(WITH_SPEAKER, createProcess("bootBeep", &bootBeep));
 
 	log("%%Xelix is up.%%\n", 0x0f);
 
-	#ifdef WITH_DEBUGCONSOLE
-	createProcess("debugconsole", &debugconsole_init);
-	#endif
+	IFDEFC(WITH_DEBUGCONSOLE, createProcess("debugconsole", &debugconsole_init));
 	
 	while(1){}
 }

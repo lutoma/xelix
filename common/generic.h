@@ -8,6 +8,7 @@
                                + __GNUC_PATCHLEVEL__)
 
 #define isdigit(C) ((C) >= '0' && (C) <= '9')
+#define IFDEFC(D,C) if(D) C;
 
 // Typedefs
 typedef unsigned long uint64;
