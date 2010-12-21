@@ -50,7 +50,7 @@ static void checkIntLenghts()
 	ASSERT(sizeof(uint8) == 1);
 	log("Right\n");
 	
-	log("init_ Checking length of uint16... ");
+	log("init: Checking length of uint16... ");
 	ASSERT(sizeof(uint16) == 2);
 	log("Right\n");
 	
