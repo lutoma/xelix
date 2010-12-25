@@ -23,10 +23,10 @@ mboot:
 	 dd  MBOOT_CHECKSUM			 ; To ensure that the above values are correct
 	 
 	 dd  mboot						 ; Location of this descriptor
-	 dd  code						  ; Start of kernel '.text' (code) section.
-	 dd  bss							; End of kernel '.data' section.
-	 dd  end							; End of kernel.
-	 dd  start						 ; Kernel entry point (initial EIP).
+;	 dd  code						  ; Start of kernel '.text' (code) section.
+;	 dd  bss							; End of kernel '.data' section.
+;	 dd  end							; End of kernel.
+;	 dd  start						 ; Kernel entry point (initial EIP).
 
 [GLOBAL start]						; Kernel entry point.
 [EXTERN kmain]						 ; This is the entry point of our C code
