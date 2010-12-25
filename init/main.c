@@ -98,7 +98,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	memory_init_postprotected();
 	keyboard_init();
 	IFDEFC(WITH_SPEAKER, speaker_init());
-	fs_init();
+	vfs_init();
 
 	IFDEFC(WITH_SPEAKER, createProcess("bootBeep", &bootBeep));
 
