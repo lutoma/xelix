@@ -48,7 +48,7 @@ for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o");
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o");
-makefile.write("\n\tld -melf_i386 -T linker.ld -nostdlib -o xelix.bin $^\n\n");
+makefile.write("\n\tld -melf_i386 -Ttext=0x100000 -nostdlib -o xelix.bin $^\n\n");
 
 makefile.write("# dependencies\n");
 for f in hfiles + cfiles:
