@@ -9,6 +9,7 @@
 
 #define isdigit(C) ((C) >= '0' && (C) <= '9')
 #define IFDEFC(D,C) if(D) C;
+#define DUMPVAR(C,D) log("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
 
 // Typedefs
 typedef unsigned long uint64;
