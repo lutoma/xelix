@@ -70,7 +70,6 @@ static void bootBeep()
 // (This is the first function called ever)
 void kmain(multibootHeader_t *mbootPointer)
 {
-
 	// descriptor tables have to be created first
 	memory_init_preprotected(); // gdt
 	interrupts_init(); // idt	
@@ -84,7 +83,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	kmalloc_init(500);
 	display_init();
 	
-	IFDEFC(WITH_SERIAL, serial_init());
+	if(WITH_SERIAL) serial_init();
 	log_init();
 
 	printf("\n                                   %%Xelix%%\n\n", 0x0f);
@@ -92,19 +91,29 @@ void kmain(multibootHeader_t *mbootPointer)
 	compilerInfo();
 	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
-
+	
 	pit_init(PIT_RATE);
 	cpu_init();
 	memory_init_postprotected();
 	keyboard_init();
-	IFDEFC(WITH_SPEAKER, speaker_init());
-	vfs_init();
+	if(WITH_SPEAKER) speaker_init();
 
-	IFDEFC(WITH_SPEAKER, createProcess("bootBeep", &bootBeep));
+	DUMPVAR("%d", mbootPointer->modsCount);
+	DUMPVAR("0x%x", mbootPointer->modsAddr);
+	if(mbootPointer->modsCount > 0)
+		vfs_init((char**)mbootPointer->modsAddr);
+	else
+		vfs_init(NULL);
+
+
+
+	//log("memfs: %s\n", );
+
+	if(WITH_SPEAKER) createProcess("bootBeep", &bootBeep);
 
 	log("%%Xelix is up.%%\n", 0x0f);
-
-	IFDEFC(WITH_DEBUGCONSOLE, createProcess("debugconsole", &debugconsole_init));
+	
+	if(WITH_DEBUGCONSOLE) createProcess("debugconsole", &debugconsole_init);
 	
 	while(1){}
 }
