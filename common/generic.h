@@ -26,6 +26,7 @@ typedef long int size_t;
 typedef uint8 byte;
 
 #define NULL 0
+#define EOF -1
 uint32 i,j; // For counters etc.
 
 // Port I/O so that we don't always have to use assembler
