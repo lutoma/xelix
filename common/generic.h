@@ -24,9 +24,12 @@ typedef signed char sint8;
 typedef long int time_t;
 typedef long int size_t;
 typedef uint8 byte;
+typedef int bool;
 
-#define NULL 0
-#define EOF -1
+#define NULL  0
+#define EOF  -1
+#define true  1
+#define false 0
 uint32 i,j; // For counters etc.
 
 // Port I/O so that we don't always have to use assembler
