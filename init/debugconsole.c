@@ -51,6 +51,13 @@ static void executeCommand(char *command)
 			i++;
 		}
 	}
+	else if(strcmp(command, "cat") == 0)
+	{
+		fsNode_t *fsNode = vfs_finddirNode(rootNode, "makememfs.c");
+		char buf[1000];
+		vfs_readNode(fsNode, 0, 1000, buf);
+		printf("%s\n", buf);
+	}
 	else if(strcmp(command, "date") == 0)
 	{
 		int day = date('d');
@@ -99,7 +106,7 @@ static void handler(char c)
 void debugconsole_init()
 {
 	log("debugconsole: Initializing\n");
-	log("debugconsole: CurrentLine position in memory: 0x%x\n", currentLine);
+	DUMPVAR("0x%x", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	keyboard_takeFocus(&handler);
 	printPrompt();
