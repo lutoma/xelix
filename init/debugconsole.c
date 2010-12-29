@@ -84,7 +84,7 @@ static void handler(char c)
 		cursorPosition--;
 		currentLine[strlen(currentLine) -1] = 0;
 		char s[2] = { c, 0 };
-		printf("%s", s);
+		print(s);
 		return;
 	} else if(c == 0xA)
 	{
