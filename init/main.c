@@ -100,7 +100,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	IFDEFC(WITH_SPEAKER, speaker_init());
 	fs_init();
 
-	IFDEFC(WITH_SPEAKER, createProcess("bootBeep", &bootBeep));
+	//IFDEFC(WITH_SPEAKER, createProcess("bootBeep", &bootBeep));
 
 	log("%%Xelix is up.%%\n", 0x0f);
 
