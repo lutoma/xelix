@@ -10,5 +10,4 @@
 
 #define WITH_SERIAL 1
 #define WITH_DEBUGCONSOLE 1
-#define WITH_NEW_KMALLOC 1
 #define WITH_SPEAKER 1

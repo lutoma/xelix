@@ -19,11 +19,9 @@ void* kmalloc_aligned(size_t numbytes, uint32* physicalAddress);
 
 void kmalloc_init(uint32 start);
 
-#ifdef WITH_NEW_KMALLOC
 typedef struct {
 	size_t size;
 	uint8 free:1;
 } memorySection_t;
 
 void kfree(void *ptr);
-#endif

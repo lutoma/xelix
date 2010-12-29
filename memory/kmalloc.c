@@ -12,11 +12,9 @@ extern uint32 end;
 // It advances an always points to the beginning of the free memory space.
 uint32 memoryPosition = (uint32)&end; // maybe put this in an init function?
 
-#ifdef WITH_NEW_KMALLOC
 uint32 memorySections[MEMORY_SECTIONS];
 uint32 freeSections = MEMORY_SECTIONS;
 uint32 nextSection = 0;
-#endif
 
 void* __kmalloc(size_t numbytes)
 {
@@ -31,7 +29,6 @@ void* __kmalloc(size_t numbytes)
 
 void* kmalloc(size_t numbytes)
 {
-	#ifdef WITH_NEW_KMALLOC
 	uint32 i = 0;
 	while (i < nextSection)
 	{
@@ -76,17 +73,12 @@ void* kmalloc(size_t numbytes)
 	freeSections--;
 	nextSection++;
 	
-	return __kmalloc(numbytes);
-	
-	#else
-	return __kmalloc(numbytes);
-	#endif
+	return __kmalloc(numbytes);	
 }
 
 
 void kfree(void *ptr)
 {
-	#ifdef WITH_NEW_KMALLOC
 	uint32 i = 0;
 	while (i < nextSection)
 	{
@@ -100,9 +92,6 @@ void kfree(void *ptr)
 
 		i++;
 	}
-	#else
-		log("kmalloc: Call to kfree ignored, as new kmalloc is disabled.\n");
-	#endif
 }
 
 
