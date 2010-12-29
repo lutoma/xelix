@@ -90,6 +90,11 @@ void rewind(FILE* fp)
 	fp->position = 0;
 }
 
+long ftell(FILE* fp)
+{
+	return fp->position;
+}
+
 int scandir(const char* dirp, struct dirent*** namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **))
 {
 	return 0;
