@@ -5,13 +5,7 @@
 
 // TODO: improve search of free memory sections
 
-
-// is defined in the linker script: where the kernel binary stuff ends in memory.
-extern uint32 end;
-// address (in bytes) where now memory is allocated from.
-// It advances an always points to the beginning of the free memory space.
-uint32 memoryPosition = (uint32)&end; // maybe put this in an init function?
-
+uint32 memoryPosition;
 uint32 memorySections[MEMORY_SECTIONS];
 uint32 freeSections = MEMORY_SECTIONS;
 uint32 nextSection = 0;
