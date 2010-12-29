@@ -39,9 +39,9 @@ static void executeCommand(char *command)
 	{
 		int i = 0;
 		struct dirent *node = 0;
-		while ( (node = vfs_readdirNode(rootNode, i)) != 0)
+		while ( (node = vfs_rootNode->readdir(vfs_rootNode, i) != 0) )
 		{
-			fsNode_t *fsNode = vfs_finddirNode(rootNode, node->name);
+			fsNode_t *fsNode = vfs_rootNode->finddir(vfs_rootNode, node->name);
 			int color;
 			if((fsNode->flags&0x7) == FS_DIRECTORY)
 				color = 0x09;
@@ -53,9 +53,9 @@ static void executeCommand(char *command)
 	}
 	else if(strcmp(command, "cat") == 0)
 	{
-		fsNode_t *fsNode = vfs_finddirNode(rootNode, "makememfs.c");
+		fsNode_t *fsNode = vfs_rootNode->finddir(vfs_rootNode, "makememfs.c");
 		char buf[1000];
-		vfs_readNode(fsNode, 0, 1000, buf);
+		fsNode->read(fsNode, 0, 1000, buf);
 		printf("%s\n", buf);
 	}
 	else if(strcmp(command, "date") == 0)

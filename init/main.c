@@ -100,10 +100,10 @@ void kmain(multibootHeader_t *mbootPointer)
 
 	DUMPVAR("%d", mbootPointer->modsCount);
 	DUMPVAR("0x%x", mbootPointer->modsAddr);
+	vfs_init(NULL);
 	if(mbootPointer->modsCount > 0)
-		vfs_init((char**)mbootPointer->modsAddr);
-	else
-		vfs_init(NULL);
+		initrd_init((char**)mbootPointer->modsAddr);
+
 
 
 
