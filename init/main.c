@@ -105,11 +105,9 @@ void kmain(multibootHeader_t *mbootPointer)
 		initrd_init((char**)mbootPointer->modsAddr);
 
 
-
-
 	//log("memfs: %s\n", );
 
-	if(WITH_SPEAKER) createProcess("bootBeep", &bootBeep);
+	//if(WITH_SPEAKER) createProcess("bootBeep", &bootBeep);
 
 	log("%%Xelix is up.%%\n", 0x0f);
 	
