@@ -10,51 +10,51 @@
 // Caution: Some^W most of those functions are untested, beware of the bugs ;)
 
 // Get Node from Path, return NULL if error
-fsNode_t* fio_pathToNode(const char* __path)
+fsNode_t* fio_pathToNode(const char* path)
 {
 	// Split path and iterate trough the single parts, going from / upwards.
-	static char* __pch;
-	__pch = strtok(__path, "/");	
-	fsNode_t* __node = vfs_rootNode->finddir(vfs_rootNode, __pch);
+	static char* pch;
+	pch = strtok(path, "/");	
+	fsNode_t* node = vfs_rootNode->finddir(vfs_rootNode, pch);
 
-	while(__pch != NULL && __node != NULL)
+	while(pch != NULL && node != NULL)
 	{
-		__pch = strtok(NULL, "/");		
-		__node = vfs_rootNode->finddir(__node, __pch);
+		pch = strtok(NULL, "/");		
+		node = vfs_rootNode->finddir(node, pch);
 	}
-	return __node;
+	return node;
 }
 
-FILE* fopen(const char* __path, const char* __modes)
+FILE* fopen(const char* path, const char* modes)
 {
-	log("fio: Opening file %s, modes '%s'\n", __path, __modes);
+	log("fio: Opening file %s, modes '%s'\n", path, modes);
 
-	fsNode_t* __node = fio_pathToNode(__path);
-	if(__node == NULL)
+	fsNode_t* node = fio_pathToNode(path);
+	if(node == NULL)
 		return;
 
 	// Tell the driver of the device this file is on we want to open it
-	if(__node->open != NULL)
-		if(__node->open(__node) == 1)
+	if(node->open != NULL)
+		if(node->open(node) == 1)
 			return NULL;
 
 	FILE* fp = kmalloc(sizeof(FILE));
-	fp->path = __path;
-	fp->modes = __modes;
-	fp->node = __node;
+	fp->path = path;
+	fp->modes = modes;
+	fp->node = node;
 	fp->position = 0;
 	return fp;
 }
 
-int fclose(FILE* __fp)
+int fclose(FILE* fp)
 {
-	log("fio: Closing file %s\n", __fp->path);
+	log("fio: Closing file %s\n", fp->path);
 	
 	// Tell the driver of the device this file is on we want to close it
-	if(__fp->node->close != NULL)
-		__fp->node->close(__fp->node);
+	if(fp->node->close != NULL)
+		fp->node->close(fp->node);
 
-	kfree(__fp);
+	kfree(fp);
 }
 
 char fgetc(FILE* fp)
@@ -62,7 +62,7 @@ char fgetc(FILE* fp)
 	if(fp->node->read == NULL)
 		return EOF;
 	static char c[1];
-	size_t __size = fp->node->read(fp->node, fp->position, 1, c);
+	size_t size = fp->node->read(fp->node, fp->position, 1, c);
 	fp->position++;
 	return c[0];
 }
@@ -72,8 +72,8 @@ int fputc(int c, FILE* fp)
 	if(fp->node->write == NULL)
 		return 1;
 
-	static char __c[1];
-	return fp->node->write(fp->node, fp->position, 1, __c);
+	static char s[1];
+	return fp->node->write(fp->node, fp->position, 1, s);
 }
 /*
 size_t fwrite (const void *array, size_t size, size_t count, FILE *fp)
