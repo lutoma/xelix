@@ -13,8 +13,8 @@ dd  MBOOT_HEADER_FLAGS
 dd  MBOOT_CHECKSUM
 
 _start:
-	 push ebx
-	 cli
-	 call kmain
-	 jmp $ ;Infinite loop, just in case something bad happens in the C code.
-
+	push ebx ; Pass arguments to kmain [ebx contains pointer to multiboot information] [see also: cdecl]
+	cli
+	call kmain
+	cli ; Assume something really bad happened and therefore halt
+	hlt
