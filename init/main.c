@@ -113,9 +113,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	
 	if(WITH_DEBUGCONSOLE) createProcess("debugconsole", &debugconsole_init);
 
+	asm("sti"); // Just in case they're disabled for whatever reason
 	while(true)
-	{
-		asm("sti"); // Just in case they're disabled for whatever reason
 		asm("hlt"); // Wait until interrupt fires
-	}
 }
