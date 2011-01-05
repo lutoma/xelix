@@ -8,7 +8,7 @@
                                + __GNUC_PATCHLEVEL__)
 
 #define isdigit(C) ((C) >= '0' && (C) <= '9')
-#define DUMPVAR(C,D) log("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
+#define DUMPVAR(C,D) printf("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
 
 // Typedefs
 typedef unsigned long uint64;
