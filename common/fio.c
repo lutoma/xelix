@@ -19,8 +19,8 @@ fsNode_t* fio_pathToNode(const char* path)
 
 	while(pch != NULL && node != NULL)
 	{
-		pch = strtok(NULL, "/");		
-		node = vfs_rootNode->finddir(node, pch);
+		pch = strtok(NULL, "/");
+		node = node->finddir(node, pch);
 	}
 	return node;
 }
