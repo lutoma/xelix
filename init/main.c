@@ -95,7 +95,6 @@ void kmain(multibootHeader_t *mbootPointer)
 	pit_init(PIT_RATE);
 	cpu_init();
 	memory_init_postprotected();
-	keyboard_init();
 	if(WITH_SPEAKER) speaker_init();
 
 	DUMPVAR("%d", mbootPointer->modsCount);
@@ -104,6 +103,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	if(mbootPointer->modsCount > 0)
 		initrd_init((char**)mbootPointer->modsAddr);
 
+	keyboard_init();
 
 	//log("memfs: %s\n", );
 

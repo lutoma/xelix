@@ -3,7 +3,7 @@
 
 #include <common/log.h>
 #include <interrupts/interface.h>
-#include <devices/display/interface.h>
+#include <filesystems/vfs.h>
 
 // A generic keymap. To be replaced later by files.
 char keymap[256] = {
@@ -559,10 +559,10 @@ void keyboard_init()
 	// flush input buffer (maybe the user pressed keys before we handle irqs or set up the idt)
 	// see also: http://forum.osdev.org/viewtopic.php?p=176249
 	while(inb(0x64) & 1)
-	{
 		inb(0x60); // read scancode
-	}
-	
+
+	fsNode_t* ourdev = vfs_createNode("keyboard", 0, 0, 0, FS_FILE, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, vfs_devNode);
+		
 	log("keyboard: Initialized\n");
 }
 

@@ -10,14 +10,15 @@
 #define FS_SYMLINK     0x06
 #define FS_MOUNTPOINT  0x08 // Is the file an active mountpoint?
 
+typedef struct fsNode;
 typedef uint32 (*read_type_t)(struct fsNode*,uint32,uint32,uint8*);
 typedef uint32 (*write_type_t)(struct fsNode*,uint32,uint32,uint8*);
 typedef uint32 (*open_type_t)(struct fsNode*);
 typedef void (*close_type_t)(struct fsNode*);
-typedef struct dirent * (*readdir_type_t)(struct fsNode*,uint32);
-typedef struct fsNode * (*finddir_type_t)(struct fsNode*,char *name);
+typedef struct dirent* (*readdir_type_t)(struct fsNode*,uint32);
+typedef struct fsNode* (*finddir_type_t)(struct fsNode*,char *name);
 
-
+// __fsNode is only there for use in the function declarations above.
 typedef struct fsNode
 {
    char name[128];     // The filename.
@@ -43,15 +44,6 @@ struct dirent // One of these is returned by the readdir call, according to POSI
   char name[128]; // Filename.
   uint32 ino;     // Inode number. Required by POSIX.
 };
-/*
-// Standard read/write/open/close functions.
-uint32 vfs_readNode(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer);
-uint32 vfs_writeNode(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer);
-int vfs_openNode(fsNode_t *node, uint8 read, uint8 write);
-void vfs_closeNode(fsNode_t *node);
-struct dirent *vfs_readdirNode(fsNode_t *node, uint32 index);
-fsNode_t *vfs_finddirNode(fsNode_t *node, char *name);
-*/
 
 fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readdir_type_t readdir, finddir_type_t finddir, fsNode_t *ptr, fsNode_t *parent);
 

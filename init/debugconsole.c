@@ -37,9 +37,9 @@ static void executeCommand(char *command)
 	}
 	else if(strcmp(command, "ls") == 0)
 	{
-		int i = 0;
 		struct dirent *node = 0;
-		while ( (node = vfs_rootNode->readdir(vfs_rootNode, i) != 0) )
+
+		for(i = 0; node = vfs_rootNode->readdir(vfs_rootNode, i); i++)
 		{
 			fsNode_t *fsNode = vfs_rootNode->finddir(vfs_rootNode, node->name);
 			int color;
@@ -48,7 +48,6 @@ static void executeCommand(char *command)
 			else
 				color = 0x07;
 			printf("%%%s%%  ", color, node->name);
-			i++;
 		}
 	}
 	else if(strcmp(command, "cat") == 0)
