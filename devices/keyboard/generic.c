@@ -642,13 +642,6 @@ void handleScancode(uint8 code, uint8 code2)
 		{
 			(*focusedFunction) (c); // Pass string to keyboard handler of the currently focused application.
 		}
-		else
-		{
-			char s[2];
-			s[0] = c;
-			s[1] = 0;
-			print(s); // Print char
-		}
 	}
 	/*
 	else if( keymap[code + 0x80] == 0 )
