@@ -25,8 +25,8 @@ void initrd_init(char** ramPosition)
 		vfs_createNode("initrd", 0, 0, 0, FS_FILE, 1, 0, 0, &__readHandler, NULL, NULL, NULL, NULL, NULL, NULL, vfs_devNode);
 	}
 
-	FILE* initrd = fopen("/dev/initrd", "r");
+	/*FILE* initrd = fopen("/dev/initrd", "r");
 	if(initrd != NULL)
 		fclose(initrd);
-
+	*/
 }
