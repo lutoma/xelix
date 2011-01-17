@@ -113,7 +113,13 @@ void kmain(multibootHeader_t *mbootPointer)
 	
 	if(WITH_DEBUGCONSOLE) createProcess("debugconsole", &debugconsole_init);
 
-	asm("sti"); // Just in case they're disabled for whatever reason
+	asm("sti");
+	/* Just in case they're disabled for whatever reason.
+	 * Note, just in case that's not obvious:
+	 * If you disable interrupts in an interrupt handler and
+	 * forget to re-enable them, we're basically screwed, so
+	 * be a brave man and don't do that.
+	 */
 	while(true)
 		asm("hlt"); // Wait until interrupt fires
 }
