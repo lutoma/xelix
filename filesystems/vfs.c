@@ -77,8 +77,6 @@ void vfs_init()
 
 	// Create the needed directories as specified by POSIX. Those get global variables.
 	vfs_tmpNode = vfs_createNode("tmp", 0, 0, 0, FS_DIRECTORY, 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, vfs_rootNode);
-	vfs_devNode = vfs_createNode("dev", 0, 0, 0, FS_DIRECTORY, 2, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, vfs_rootNode);
-	
-	log("vfs: Initialized\n");
+	vfs_devNode = vfs_createNode("dev", 0, 0, 0, FS_DIRECTORY, 2, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, vfs_rootNode);	
 }
 

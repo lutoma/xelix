@@ -44,6 +44,4 @@ void cpu_init()
 	{
 		log("cpu: Already in protected mode, not enabling.\n");
 	}
-
-	log("cpu: Initialized\n");
 }

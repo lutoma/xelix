@@ -33,9 +33,7 @@ void speaker_beep(uint8 frequency, time_t seconds)
 	speaker_off();
 }
 
-void speaker_init()
-{
-	log("speaker: Initializied\n");
-}
+// I still can't believe how much this function is doing
+void speaker_init(){}
 
 #endif

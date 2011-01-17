@@ -17,7 +17,7 @@ static void timerCallback(registers_t regs)
 // Initialize the PIT
 void pit_init(uint16 frequency)
 {
-	log("pit: Initializing at %d Hz.\n", frequency);
+	log("pit: Setting frequqncy to %d Hz.\n", frequency);
 	// Firstly, register our timer callback.
 	interrupt_registerHandler(IRQ0, &timerCallback);
 
@@ -35,8 +35,6 @@ void pit_init(uint16 frequency)
 	// Send the frequency divisor.
 	outb(0x40, l);
 	outb(0x40, h);
-
-	log("pit: Initialized\n");
 }
 
 // Get the tick num

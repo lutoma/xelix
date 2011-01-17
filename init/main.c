@@ -72,7 +72,7 @@ void kmain(multibootHeader_t *mbootPointer)
 {
 	// descriptor tables have to be created first
 	memory_init_preprotected(); // gdt
-	interrupts_init(); // idt	
+	INIT(interrupts,); // idt	
 
 /*
  * This should be
@@ -80,30 +80,28 @@ void kmain(multibootHeader_t *mbootPointer)
  * however, mbootPointer->modsAddr always was 0, therefore i replaced it by this dirty hack.
  * Fix ASAP!
  */
-	kmalloc_init(500);
-	display_init();
+	INIT(kmalloc,500);
+	INIT(display,);
 	
-	if(WITH_SERIAL) serial_init();
-	log_init();
-
-	printf("\n                                   %%Xelix%%\n\n", 0x0f);
+	if(WITH_SERIAL) INIT(serial,);
+	INIT(log,);
 
 	compilerInfo();
 	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
 	
-	pit_init(PIT_RATE);
-	cpu_init();
+	INIT(pit, PIT_RATE);
+	INIT(cpu,);
 	memory_init_postprotected();
-	if(WITH_SPEAKER) speaker_init();
+	if(WITH_SPEAKER) INIT(speaker,);
 
 	DUMPVAR("%d", mbootPointer->modsCount);
 	DUMPVAR("0x%x", mbootPointer->modsAddr);
-	vfs_init(NULL);
+	INIT(vfs, NULL);
 	if(mbootPointer->modsCount > 0)
 		initrd_init((char**)mbootPointer->modsAddr);
-
-	keyboard_init();
+	
+	INIT(keyboard,);
 
 	//log("memfs: %s\n", );
 
