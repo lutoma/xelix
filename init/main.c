@@ -72,7 +72,7 @@ void kmain(multibootHeader_t *mbootPointer)
 {
 	// descriptor tables have to be created first
 	memory_init_preprotected(); // gdt
-	INIT(interrupts,); // idt	
+	INIT(interrupts); // idt	
 
 /*
  * This should be
@@ -81,17 +81,17 @@ void kmain(multibootHeader_t *mbootPointer)
  * Fix ASAP!
  */
 	INIT(kmalloc,500);
-	INIT(display,);
+	INIT(display);
 	
-	if(WITH_SERIAL) INIT(serial,);
-	INIT(log,);
+	if(WITH_SERIAL) INIT(serial);
+	INIT(log);
 
 	compilerInfo();
 	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
 	
 	INIT(pit, PIT_RATE);
-	INIT(cpu,);
+	INIT(cpu);
 	memory_init_postprotected();
 	if(WITH_SPEAKER) INIT(speaker,);
 
@@ -101,7 +101,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	if(mbootPointer->modsCount > 0)
 		initrd_init((char**)mbootPointer->modsAddr);
 	
-	INIT(keyboard,);
+	INIT(keyboard);
 
 	//log("memfs: %s\n", );
 
