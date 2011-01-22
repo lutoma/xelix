@@ -131,3 +131,23 @@ cont:
 		} while (sc != 0);
 	}
 }
+
+
+/* Return index of first match of itemPointer in listPointer. */
+int find_substr(char *listPointer, char *itemPointer)
+{
+  int t;
+  char *p, *p2;
+
+  for(t=0; listPointer[t]; t++) {
+    p = &listPointer[t];
+    p2 = itemPointer;
+
+    while(*p2 && *p2==*p) {
+      p++;
+      p2++;
+    }
+    if(!*p2) return t; /* 1st return */
+  }
+   return -1; /* 2nd return */
+}
