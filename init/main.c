@@ -92,7 +92,8 @@ void kmain(multibootHeader_t *mbootPointer)
 
 	if(mbootPointer->bootLoaderName != NULL && find_substr(mbootPointer->bootLoaderName, "GNU GRUB") != -1)
 		init_haveGrub = true;
-	
+	else
+		log("init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
 	
 	INIT(pit, PIT_RATE);
 	INIT(cpu);
@@ -113,7 +114,7 @@ void kmain(multibootHeader_t *mbootPointer)
 
 	log("%%Xelix is up.%%\n", 0x0f);
 	
-	if(WITH_DEBUGCONSOLE) createProcess("debugconsole", &debugconsole_init);
+	if(WITH_DEBUGCONSOLE) INIT(debugconsole);
 
 	asm("sti");
 	/* Just in case they're disabled for whatever reason.
