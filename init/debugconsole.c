@@ -104,7 +104,6 @@ static void handler(char c)
 // Initialize the debug console.
 void debugconsole_init()
 {
-	log("debugconsole: Initializing\n");
 	DUMPVAR("0x%x", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	keyboard_takeFocus(&handler);
