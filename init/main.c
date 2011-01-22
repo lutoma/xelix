@@ -89,6 +89,10 @@ void kmain(multibootHeader_t *mbootPointer)
 	compilerInfo();
 	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
+
+	if(mbootPointer->bootLoaderName != NULL && find_substr(mbootPointer->bootLoaderName, "GNU GRUB") != -1)
+		init_haveGrub = true;
+	
 	
 	INIT(pit, PIT_RATE);
 	INIT(cpu);

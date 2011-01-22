@@ -55,6 +55,7 @@ void outb(uint16 port, uint8 value);
 void outw(uint16 port, uint16 value);
 uint8 inb(uint16 port);
 uint8 inbCMOS (uint16 port);
+bool init_haveGrub;
 
 
 // LIB    (a small subset of some c libraries)
