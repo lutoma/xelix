@@ -69,12 +69,12 @@ ISR_NOERRCODE 31
 
 irq0:
 	cli
-	jmp switchcontext
+	;jmp switchcontext
 	push byte 0
 	push byte 32
 	jmp irq_common_stub
 
-[EXTERN switchcontext]
+;[EXTERN switchcontext]
 
 IRQ	1,	 33
 IRQ	2,	 34
