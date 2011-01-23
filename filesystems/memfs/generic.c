@@ -1,3 +1,4 @@
+#include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <common/string.h>
 #include <memory/kmalloc.h>
@@ -23,7 +24,6 @@ struct dirent dirent;
 // Read single file
 static uint32 memfs_read(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer)
 {
-/*
 	memfsFileHeader_t header = memfsHeaders[node->inode];
 	if (offset > header.length)
 		return 0;
@@ -31,63 +31,58 @@ static uint32 memfs_read(fsNode_t *node, uint32 offset, uint32 size, uint8 *buff
 		size = header.length-offset;
 	memcpy(buffer, (uint8*) (header.offset+offset), size);
 	return size;
-*/
 }
 
 // Read directory [aka get content]
-static struct dirent *memfs_readdir(fsNode_t *node, uint32 index)
+static struct dirent *memfs_readDir(fsNode_t *node, uint32 index)
 {
-/*	if (index-1 >= rootNodeCount)
+	if (index >= vfs_rootNodeCount)
 		return 0;
-	strcpy(dirent.name, rootNodes[index-1]->name);
-	dirent.name[strlen(rootNodes[index-1]->name)] = 0; // Make sure the string is NULL-terminated.
-	dirent.ino = rootNodes[index-1]->inode;
+	strcpy(dirent.name, vfs_rootNodes[index]->name);
+	dirent.name[strlen(vfs_rootNodes[index]->name)] = 0; // Make sure the string is NULL-terminated.
+	dirent.ino = vfs_rootNodes[index]->inode;
 	return &dirent;
-*/
+
 }
 
-static fsNode_t *memfs_finddir(fsNode_t *node, char *name)
+static fsNode_t *memfs_findDir(fsNode_t *node, char *name)
 {
-/*
 	int i;
-	for (i = 0; i < rootNodeCount; i++)
-		if (!strcmp(name, rootNodes[i]->name))
-			return &rootNodes[i];
+	for (i = 0; i < vfs_rootNodeCount; i++)
+		if(!strcmp(name, vfs_rootNodes[i]->name))
+			return vfs_rootNodes[i];
 	return 0;
-*/
+
 }
 
 fsNode_t *memfs_init(uint32 location)
 {
-/*	log("memfs: Initializing at 0x%x\n", location);
+	log("memfs: Initializing at 0x%x\n", location);
+
 	// Initialise the main and file header pointers and populate the root directory.
 	memfsHeader = (memfsHeader_t *)location;
 	memfsHeaders = (memfsFileHeader_t *) (location+sizeof(memfsHeader_t));
-	DUMPVAR("0x%x", location);
-	DUMPVAR("%d", memfsHeader->fileCount);
 
+	if(memfsHeaders->magic != 0xBF)
+		PANIC("Corrupt/invalid initrd (Magic != 0xBF)");
 
-	int i;
+	// Initialise the root directory.
+	vfs_rootNodeCount = memfsHeader->fileCount;
+	vfs_rootNode = vfs_createNode("root", 0, 0, 0, FS_DIRECTORY, 0, 0, 0, &memfs_read, NULL, NULL, NULL, &memfs_readDir, &memfs_findDir, NULL, NULL); // RootNode is it's own parent, therefore NULL as last parameter.
+
+	vfs_rootNodes = (fsNode_t**)kmalloc(sizeof(fsNode_t) * memfsHeader->fileCount);
+	log("memfs: Creating files.\n");
 	for (i = 0; i < memfsHeader->fileCount; i++)
 	{
-		log("memfs: found file.\n");
 		// Edit the file's header - currently it holds the file offset
 		// relative to the start of the ramdisk. We want it relative to the start
 		// of memory.
 		memfsHeaders[i].offset += location;
-		// Create a new file node.
-		strcpy(rootNodes[i].name, memfsHeaders[i].name);
-		rootNodes[i].mask = rootNodes[i].uid = rootNodes[i].gid = 0;
-		rootNodes[i].length = memfsHeaders[i].length;
-		rootNodes[i].inode = i;
-		rootNodes[i].flags = FS_FILE;
-		rootNodes[i].read = &memfs_read;
-		rootNodes[i].write = 0;
-		rootNodes[i].readdir = 0;
-		rootNodes[i].finddir = 0;
-		rootNodes[i].open = 0;
-		rootNodes[i].close = 0;
-		rootNodes[i].impl = 0;
+		vfs_rootNodes[i] = vfs_createNode(memfsHeaders[i].name, 0, 0, 0, FS_FILE, i, memfsHeaders[i].length, 0, &memfs_read, NULL, NULL, NULL, NULL, NULL, NULL, vfs_rootNode);
+		vfs_rootNodes[i]->read = &memfs_read;
+		printf("memfs_read: 0x%x\n", vfs_rootNodes[i]->read);
+		printf("vfs_rootNodes[i]: 0x%x\n", vfs_rootNodes[i]);
 	}
-	*/
+
+	return NULL;
 }

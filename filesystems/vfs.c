@@ -16,11 +16,6 @@ static struct dirent *dummyReadDir(fsNode_t* node, uint32 index)
 	if(node != vfs_rootNode || index > 1) // Note: this is only hardcoded sh*t and should be replaced ASAP!
 		return 0;
 
-	if (index)
-		node = vfs_devNode;
-	else
-		node = vfs_tmpNode;
-
 	strcpy(dirent.name, node->name);
 	dirent.name[strlen(node->name)] = 0; // Make sure the string is NULL-terminated.
 	dirent.ino = node->inode;
@@ -29,12 +24,6 @@ static struct dirent *dummyReadDir(fsNode_t* node, uint32 index)
 
 static fsNode_t *dummyFindDir(fsNode_t *node, char *name)
 {
-	if (!strcmp(name, "dev"))
-			return vfs_devNode;
-
-	if (!strcmp(name, "tmp"))
-			return vfs_tmpNode;
-
 	return 0;
 }
 
@@ -68,15 +57,9 @@ fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, ui
 }
 
 // Initialize the filesystem abstraction system
-void vfs_init()
+void vfs_init(char** modules)
 {
-	// Firstly, we create some kind of fake-filesystem in the memory so we can create devicefiles etc.
-
-	// Initialise the root directory.
-	vfs_rootNode = vfs_createNode("root", 0, 0, 0, FS_DIRECTORY, 0, 0, 0, NULL, NULL, NULL, NULL, &dummyReadDir, &dummyFindDir, NULL, NULL); // RootNode is it's own parent, therefore NULL as last parameter.
-
-	// Create the needed directories as specified by POSIX. Those get global variables.
-	vfs_tmpNode = vfs_createNode("tmp", 0, 0, 0, FS_DIRECTORY, 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, vfs_rootNode);
-	vfs_devNode = vfs_createNode("dev", 0, 0, 0, FS_DIRECTORY, 2, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, vfs_rootNode);	
+	// Load the initrd
+	fsNode_t *bla = memfs_init(modules[0]);
 }
 

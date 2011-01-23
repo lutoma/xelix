@@ -9,6 +9,7 @@
 #include <devices/keyboard/interface.h>
 #include <common/datetime.h>
 #include <filesystems/vfs.h>
+#include <common/fio.h>
 
 uint32 cursorPosition;
 char currentLine[256] = "";
@@ -53,9 +54,18 @@ static void executeCommand(char *command)
 	else if(strcmp(command, "cat") == 0)
 	{
 		fsNode_t *fsNode = vfs_rootNode->finddir(vfs_rootNode, "makememfs.c");
+		
 		char buf[1000];
-		fsNode->read(fsNode, 0, 1000, buf);
-		printf("%s\n", buf);
+		int offset = 0;
+		int sz = fsNode->read(fsNode, offset, 100, buf);
+
+		while(sz != 0)
+		{
+			buf[sz] = 0;
+			printf("%s", buf);
+			offset += 100;
+			sz = fsNode->read(fsNode, offset, 100, buf);
+		}
 	}
 	else if(strcmp(command, "date") == 0)
 	{

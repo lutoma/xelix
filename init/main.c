@@ -59,15 +59,6 @@ static void checkIntLenghts()
 	log("Right\n");
 }
 
-#ifdef WITH_SPEAKER
-static void bootBeep()
-{
-	speaker_beep(1, 1);
-}
-#endif
-
-// The main kernel function.
-// (This is the first function called ever)
 void kmain(multibootHeader_t *mbootPointer)
 {
 	// descriptor tables have to be created first
@@ -80,9 +71,8 @@ void kmain(multibootHeader_t *mbootPointer)
  * however, mbootPointer->modsAddr always was 0, therefore i replaced it by this dirty hack.
  * Fix ASAP!
  */
-	INIT(kmalloc,500);
+	INIT(kmalloc, 500);
 	INIT(display);
-	
 	if(WITH_SERIAL) INIT(serial);
 	INIT(log);
 
@@ -90,7 +80,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
 
-	if(mbootPointer->bootLoaderName != NULL && find_substr(mbootPointer->bootLoaderName, "GNU GRUB") != -1)
+	if(mbootPointer->bootLoaderName != NULL && find_substr((char*)mbootPointer->bootLoaderName, "GNU GRUB") != -1)
 		init_haveGrub = true;
 	else
 		log("init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
@@ -98,22 +88,15 @@ void kmain(multibootHeader_t *mbootPointer)
 	INIT(pit, PIT_RATE);
 	INIT(cpu);
 	memory_init_postprotected();
-	if(WITH_SPEAKER) INIT(speaker,);
+	if(WITH_SPEAKER) INIT(speaker);
 
-	DUMPVAR("%d", mbootPointer->modsCount);
-	DUMPVAR("0x%x", mbootPointer->modsAddr);
-	INIT(vfs, NULL);
 	if(mbootPointer->modsCount > 0)
-		initrd_init((char**)mbootPointer->modsAddr);
-	
+	{
+		INIT(vfs, (char**)mbootPointer->modsAddr);
+	}	else
+		PANIC("Could not load initrd (mbootPointer->modsCount <= 0)");
+
 	INIT(keyboard);
-
-	//log("memfs: %s\n", );
-
-	//if(WITH_SPEAKER) createProcess("bootBeep", &bootBeep);
-
-	log("%%Xelix is up.%%\n", 0x0f);
-	
 	if(WITH_DEBUGCONSOLE) INIT(debugconsole);
 
 	asm("sti");

@@ -560,8 +560,6 @@ void keyboard_init()
 	// see also: http://forum.osdev.org/viewtopic.php?p=176249
 	while(inb(0x64) & 1)
 		inb(0x60); // read scancode
-
-	fsNode_t* ourdev = vfs_createNode("keyboard", 0, 0, 0, FS_FILE, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, vfs_devNode);		
 }
 
 // Handles the IRQs we catch

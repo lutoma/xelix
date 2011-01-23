@@ -28,7 +28,7 @@ fsNode_t* fio_pathToNode(const char* path)
 FILE* fopen(const char* path, const char* modes)
 {
 	log("fio: Opening file %s, modes '%s'\n", path, modes);
-
+	
 	fsNode_t* node = fio_pathToNode(path);
 	if(node == NULL)
 		return;

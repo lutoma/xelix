@@ -48,8 +48,8 @@ struct dirent // One of these is returned by the readdir call, according to POSI
 fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readdir_type_t readdir, finddir_type_t finddir, fsNode_t *ptr, fsNode_t *parent);
 
 fsNode_t* vfs_rootNode; // Our root directory node.
-fsNode_t* vfs_tmpNode;
-fsNode_t* vfs_devNode;
+fsNode_t** vfs_rootNodes; // Our root directory array.
+int vfs_rootNodeCount;
 
-void vfs_init();
+void vfs_init(char** modules);
 
