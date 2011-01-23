@@ -1,9 +1,6 @@
-
-
 ; in scheduler.c
 [EXTERN schedule]
-
-global switchcontext
+[GLOBAL switchcontext]
 
 ; this is called when the IRQ0 timer interrupt is fired.
 ; This is called directly, without any modification to the stack.

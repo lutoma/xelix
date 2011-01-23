@@ -43,6 +43,11 @@ static void compilerInfo()
 	log("\tDistribution: %s\n", __BUILDDIST__);
 }
 
+void test()
+{
+	printf("Test called\n");
+}
+
 // Check if ints have the right length
 static void checkIntLenghts()
 {

@@ -1,4 +1,5 @@
 [GLOBAL idt_flush]	 ; Allows the C code to call idt_flush().
+[GLOBAL irq0]
 
 idt_flush:
 	mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
@@ -66,15 +67,14 @@ ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
 
-;IRQ	0,	 32
-global irq0
-extern switchcontext
 irq0:
 	cli
+	jmp switchcontext
 	push byte 0
 	push byte 32
 	jmp irq_common_stub
-	jmp switchcontext
+
+[EXTERN switchcontext]
 
 IRQ	1,	 33
 IRQ	2,	 34
