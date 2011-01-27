@@ -14,21 +14,6 @@
 #define DUMPVARD(D) DUMPVAR("%d", #D);
 #define DUMPVARX(D) DUMPVAR("0x%x", #D);
 
-int schedulingEnabled;
-#define SPAWN_FUNCTION createProcess
-#define SPAWN_FUNCTION_N "createProcess" //fixme
-
-// Making ponies fly.
-#define INIT(C, ...) {\
-	log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (%%", 0x03, __LINE__); \
-	if(schedulingEnabled) log("%%" SPAWN_FUNCTION_N ")%%\n", 0x03); \
-	else log("%%plain)%%\n", 0x03); \
-	if(schedulingEnabled) SPAWN_FUNCTION (#C "_AutoInit", & C ## _init); \
-	else C ## _init(__VA_ARGS__); \
-	log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (%%", 0x03, __LINE__); \
-	if(schedulingEnabled) log("%%" SPAWN_FUNCTION_N ")%%\n", 0x03); \
-	else log("%%plain)%%\n", 0x03); }
-
 // Typedefs
 typedef unsigned long uint64;
 typedef signed long sint64;
@@ -49,6 +34,21 @@ typedef int bool;
 #define true  1
 #define false 0
 uint32 i,j; // For counters etc.
+
+bool schedulingEnabled;
+#define SPAWN_FUNCTION process_create
+#define SPAWN_FUNCTION_N "process_create" //fixme
+
+// Making ponies fly.
+#define INIT(C, ...) {\
+	log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (%%", 0x03, __LINE__); \
+	if(schedulingEnabled) log("%%" SPAWN_FUNCTION_N ")%%\n", 0x03); \
+	else log("%%plain)%%\n", 0x03); \
+	if(schedulingEnabled) SPAWN_FUNCTION (#C "_AutoInit", & C ## _init); \
+	else C ## _init(__VA_ARGS__); \
+	log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (%%", 0x03, __LINE__); \
+	if(schedulingEnabled) log("%%" SPAWN_FUNCTION_N ")%%\n", 0x03); \
+	else log("%%plain)%%\n", 0x03); }
 
 // Port I/O so that we don't always have to use assembler
 void outb(uint16 port, uint8 value);

@@ -4,9 +4,9 @@
 #include <memory/kmalloc.h>
 #include <common/log.h>
 
-void createProcess(char name[100], void function())
+void process_create(char name[100], void function())
 {
 	log("process: Spawned new process with name %s\n", name);
-	(*function) (); // Fake-run process
+	(*function) (); // Run process
 	return;
 }
