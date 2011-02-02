@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 import os;
 import re;
 
@@ -72,7 +72,7 @@ makefile.write("""\n\n
 
 buildinfo.h:
 	printf "#pragma once\\n" > buildinfo.h
-	printf "#define __BUILDCOMP__ \\"`whoami`@`hostname -s`\\"\\n" >> buildinfo.h
+	printf "#define __BUILDCOMP__ \\"`whoami`@`hostname`\\"\\n" >> buildinfo.h
 	printf "#define __BUILDSYS__ \\"`uname -srop`\\"\\n" >> buildinfo.h
 	printf "#define __BUILDDIST__ \\"`cat /etc/*-release | head -n 1 | xargs echo`\\"\\n" >> buildinfo.h
 
