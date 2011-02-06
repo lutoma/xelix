@@ -31,11 +31,6 @@ static void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
 	else if(strcmp(command, "clear") == 0) clear();
-	else if(strcmp(command, "help") == 0)
-	{
-		printf("%%You can use the following commands:%%\n", 0x04);
-		printf("\treboot\n\tclear\n\tdate\n\tcolorinfo\n\thelp");
-	}
 	else if(strcmp(command, "ls") == 0)
 	{
 		struct dirent *node = 0;
