@@ -27,7 +27,7 @@ install: xelix.bin
 # create a boot image for usb-stick or floppy
 floppy.img: xelix.bin
 	- mkdir mount
-	cp tools/floppy.img .
+	cp grub_floppy.img floppy.img
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
 	sudo cp xelix.bin mount/kernel
@@ -38,7 +38,7 @@ floppy.img: xelix.bin
 #create an iso
 dist: floppy.img
 	- mkdir mount
-	cp tools/floppy.img .
+	cp grub_floppy.img floppy.img
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
 	mkisofs -o xelix.iso mount
