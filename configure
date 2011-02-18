@@ -1,0 +1,69 @@
+#!/usr/bin/python2
+# coding: utf8
+
+SOURCE_DIR = 'src'
+
+# Yes, this is indeed a dirty hackish crap-file
+
+import os
+import re
+
+makefile = open("Makefile", "w");
+header = open('Makefile.header')
+makefile.write(header.read())
+header.close()
+
+cfiles = [];
+hfiles = [];
+asmfiles = []
+
+for root, dirs, files in os.walk(SOURCE_DIR):
+	if ".git" in root or "tools" in root:
+		continue
+
+	for f in files:
+		path = (root + "/" + f)
+		if path.endswith(".c"):
+			cfiles.append(path)
+		elif path.endswith(".h"):
+			hfiles.append(path)
+		elif path.endswith(".asm"):
+			asmfiles.append(path)
+
+cfiles.sort()
+hfiles.sort()
+asmfiles.sort()
+
+makefile.write("xelix.bin:")
+for f in asmfiles:
+	makefile.write(" " + f[:-4] + "-asm.o")
+	
+for f in cfiles:
+	makefile.write(" " + f[:-2] + ".o")
+
+makefile.write("\n\tld -melf_i386 -Ttext=0x100000 -nostdlib -o xelix.bin $^\n\n")
+
+for f in hfiles + cfiles:
+	makefile.write(f + ":")
+	fread = open(f, "r")
+	for line in fread:
+		m = re.search("#include <(.+)>", line)
+		if m != None:
+			if 'buildinfo.h' in m.group(1):
+				makefile.write(" {0}".format(m.group(1)))
+			else:
+				makefile.write(" {0}/{1}".format(SOURCE_DIR, m.group(1)))
+	makefile.write("\n");
+
+makefile.write("\n# clean\n");
+makefile.write("clean:\n\trm -rf xelix.bin mount floppy.img buildinfo.h ")
+for f in asmfiles:
+	makefile.write(" " + f[:-4] + "-asm.o")
+for f in cfiles:
+	makefile.write(" " + f[:-2] + ".o")
+
+makefile.write("\n\n\n")
+footer = open('Makefile.footer')
+makefile.write(footer.read())
+footer.close()
+makefile.close()

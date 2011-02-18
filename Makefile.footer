@@ -1,0 +1,65 @@
+buildinfo.h:
+	printf "#pragma once\n" > buildinfo.h
+	printf "#define __BUILDCOMP__ \"`whoami`@`hostname`\"\n" >> buildinfo.h
+	printf "#define __BUILDSYS__ \"`uname -srop`\"\n" >> buildinfo.h
+	printf "#define __BUILDDIST__ \"`cat /etc/*-release | head -n 1 | xargs echo`\"\n" >> buildinfo.h
+
+local.h:
+	tools/txtconfig.py
+
+config: clean local.h
+
+# how to compile .c to .o
+%.o: %.c
+	gcc -frecord-gcc-switches -Wall -m32 -I . -I src -ffreestanding -fno-stack-protector -o $@ -c $<
+
+# how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
+%-asm.o: %.asm
+	nasm -f elf -o $@ $<
+
+
+makefile:
+	tools/makefile.py
+
+install: xelix.bin
+	sudo cp xelix.bin /boot/xelix
+
+# create a boot image for usb-stick or floppy
+floppy.img: xelix.bin
+	- mkdir mount
+	cp tools/floppy.img .
+	sudo losetup /dev/loop0 floppy.img
+	sudo mount /dev/loop0 mount
+	sudo cp xelix.bin mount/kernel
+	sudo umount mount
+	sudo losetup -d /dev/loop0
+	- rm -rf mount
+
+#create an iso
+dist: floppy.img
+	- mkdir mount
+	cp tools/floppy.img .
+	sudo losetup /dev/loop0 floppy.img
+	sudo mount /dev/loop0 mount
+	mkisofs -o xelix.iso mount
+	sudo umount mount
+	sudo losetup -d /dev/loop0
+	- rm -rf mount
+
+# running the kernel
+runqemufloppy: floppy.img
+	- rm /var/qemu.log
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+
+runbochsfloppy: floppy.img
+	bochs -f bochsrc.txt -q
+
+runqemu: xelix.bin
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin
+
+runqemunox: xelix.bin
+	# Exit with ^A-x
+	qemu -d cpu_reset -kernel xelix.bin -nographic
+	
+runvboxfloppy: floppy.img
+	VBoxSDL -fda floppy.img --startvm Xelix
