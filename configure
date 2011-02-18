@@ -41,7 +41,10 @@ for f in asmfiles:
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o")
 
-makefile.write("\n\tld -melf_i386 -Ttext=0x100000 -nostdlib -o xelix.bin $^\n\n")
+makefile.write("""
+	ld -melf_i386 -Ttext=0x100000 -nostdlib -o xelix.bin $^
+	chmod -x xelix.bin
+""")
 
 for f in hfiles + cfiles:
 	makefile.write(f + ":")
