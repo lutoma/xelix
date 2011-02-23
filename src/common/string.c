@@ -1,17 +1,29 @@
-/** @file common/string.c
- * \brief Common string operations.
- * @author Lukas Martini
- * @author Christoph Sünderhauf
- * @todo Performance tweaking.
+/* string.c: Common string operations
+ * Copyright © 2010 Lukas Martini, Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "string.h"
 
 #include <common/string.h>
 #include <memory/kmalloc.h>
 
-/** Return length of string
- * @param str String to check length of
- * @return Length of string
- */
+// Return the length of a string
 size_t strlen(const char * str)
 {
 	 const char *s;
@@ -19,11 +31,6 @@ size_t strlen(const char * str)
 	 return(s - str);
 }
 
-/** Copy string src to dest
- * @param dest Destination
- * @param src Source
- * @return Destination string
- */
 char* strcpy(char *dest, const char *src)
 {
 	char *save = dest;
@@ -39,11 +46,7 @@ char *strncpy(char *dst, const char *src, size_t n)
 	return p;
 }
 
-/** Compare two strings
- * @param s1 First string
- * @param s2 Second string
- * @return 0 if strings are the same, otherwise something else
- */
+// Compare two strings
 int strcmp (const char * s1, const char * s2)
 {
 	 for(; *s1 == *s2; ++s1, ++s2)
@@ -52,23 +55,14 @@ int strcmp (const char * s1, const char * s2)
 	 return *(unsigned char *)s1 < *(unsigned char *)s2 ? -1 : 1;
 }
 
-/** Concatenate two strings
- * @param dest First string
- * @param src Second string
- * @return Concatenated string
- */
+// Concatenate two strings
 char* strcat(char *dest, const char *src)
 {
 	 strcpy(dest + strlen(dest), src);
 	 return dest;
 }
 
-/** Return part of string
- * @param src Source string
- * @param start Start of returned string
- * @param len Length of returned string
- * @return New string
- */
+// Return part of string
 char* substr(char* src, size_t start, size_t len)
 {
 	char *dest = kmalloc(len+1);

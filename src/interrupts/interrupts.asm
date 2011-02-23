@@ -1,3 +1,22 @@
+; interrupts.asm: Hardware part of interrupt handling
+; Copyright © 2010 Christoph Sünderhauf
+
+; This file is part of Xelix.
+;
+; Xelix is free software: you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; Xelix is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+
+
 [GLOBAL idt_flush]	 ; Allows the C code to call idt_flush().
 [GLOBAL irq0]
 
@@ -106,12 +125,12 @@ isr81:
 ; up for kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
 isr_common_stub:
-	pusha						  ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+	pusha			; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
-	mov ax, ds					; Lower 16-bits of eax = ds.
-	push eax					  ; save the data segment descriptor
+	mov ax, ds		; Lower 16-bits of eax = ds.
+	push eax		; save the data segment descriptor
 
-	mov ax, 0x10  ; load the kernel data segment descriptor
+	mov ax, 0x10	; load the kernel data segment descriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -119,16 +138,16 @@ isr_common_stub:
 
 	call isr_handler
 
-	pop eax		  ; reload the original data segment descriptor
+	pop eax			; reload the original data segment descriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 
-	popa							; Pops edi,esi,ebp...
-	add esp, 8	  ; Cleans up the pushed error code and pushed ISR number
+	popa			; Pops edi,esi,ebp...
+	add esp, 8		; Cleans up the pushed error code and pushed ISR number
 	sti
-	iret			  ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+	iret			; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 ; In isr.c
 [EXTERN irq_handler]
@@ -137,12 +156,12 @@ isr_common_stub:
 ; up for kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame. 
 irq_common_stub:
-	pusha						  ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+	pusha			; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
-	mov ax, ds					; Lower 16-bits of eax = ds.
-	push eax					  ; save the data segment descriptor
+	mov ax, ds		; Lower 16-bits of eax = ds.
+	push eax		; save the data segment descriptor
 
-	mov ax, 0x10  ; load the kernel data segment descriptor
+	mov ax, 0x10	; load the kernel data segment descriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -150,13 +169,13 @@ irq_common_stub:
 
 	call irq_handler
 
-	pop ebx		  ; reload the original data segment descriptor
+	pop ebx			; reload the original data segment descriptor
 	mov ds, bx
 	mov es, bx
 	mov fs, bx
 	mov gs, bx
 
-	popa							; Pops edi,esi,ebp...
-	add esp, 8	  ; Cleans up the pushed error code and pushed ISR number
+	popa			; Pops edi,esi,ebp...
+	add esp, 8		; Cleans up the pushed error code and pushed ISR number
 	sti
-	iret			  ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+	iret			; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP

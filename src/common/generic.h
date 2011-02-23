@@ -1,5 +1,24 @@
 #pragma once
 
+/* Copyright © 2010 Lukas Martini, Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <common/stdconf.h>
 
 #define GCC_VERSION (__GNUC__ * 10000 \
@@ -56,9 +75,6 @@ uint8 inb(uint16 port);
 uint8 inbCMOS (uint16 port);
 bool init_haveGrub;
 
-
-// LIB    (a small subset of some c libraries)
-
 // fills size bytes of memory starting at ptr with the byte fill.
 void memset(void* ptr, uint8 fill, uint32 size);
 // copies size bytes of memory from src to dest
@@ -66,7 +82,7 @@ void memcpy(void* dest, void* src, uint32 size);
 //Itoa
 char *itoa (int num, int base);
 
-// PRINTING to display
+// Printing
 void print(char* s);
 void vprintf(const char *fmt, void **arg);
 void printf(const char *fmt, ...);
@@ -77,15 +93,10 @@ void clear(void);
 #define PANIC(msg) panic(msg, __FILE__, __LINE__, 0);
 #define ASSERT(b) ((b) ? (void)0 : panic(#b, __FILE__, __LINE__, 1))
 
+// Don't use them, use the macros above.
 void panic(char *reason, char *file, uint32 line, int assertionf);
 void assert(int r);
 
-
-
-// MISC
-
+// Misc
 int (memcmp)(const void *s1, const void *s2, size_t n);
-
-
-
 void reboot(); // to be moved later when the halting process becomes more complicated ;)

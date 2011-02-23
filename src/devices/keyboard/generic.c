@@ -1,5 +1,23 @@
-// A generic & simple keyboard driver
-#include <devices/keyboard/interface.h>
+/* generic.c: A generic & simple keyboard driver
+ * Copyright © 2010 Christoph Sünderhauf
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "interface.h"
 
 #include <common/log.h>
 #include <interrupts/interface.h>
@@ -571,10 +589,7 @@ void handleIrq(registers_t regs)
 	uint8 code = inb(0x60);
 	
 	if (code == 0xe0)
-	{
-		// escape sequence
-		waitingForEscapeSequence = 1;
-	}
+		waitingForEscapeSequence = 1; // escape sequence
 	else
 	{
 		if(waitingForEscapeSequence)
@@ -584,17 +599,11 @@ void handleIrq(registers_t regs)
 			waitingForEscapeSequence = 0;
 		}
 		else
-		{
-			// normal scancode
-			handleScancode(code, 0);
-		}
+			handleScancode(code, 0); // normal scancode
 	}
 }
 
-/** Handle a scancode. Calls the active function or simply prints the char.
- * @param code The scancode
- * @param code2 If code is 0xe0 (escape sequence), this second code is given
- */
+// Handle a scancode. Calls the active function
 void handleScancode(uint8 code, uint8 code2)
 {	
 	if( code==0x2a) // shift press
@@ -635,9 +644,7 @@ void handleScancode(uint8 code, uint8 code2)
 			c = keymapshift[code];
 		}
 		if(focusedFunction)
-		{
 			(*focusedFunction) (c); // Pass string to keyboard handler of the currently focused application.
-		}
 	}
 	/*
 	else if( keymap[code + 0x80] == 0 )
@@ -684,5 +691,5 @@ void keyboard_takeFocus(void (*func)(char))
 // To drop the keyboard focus.
 void keyboard_leaveFocus()
 {
-	focusedFunction = 0;
+	focusedFunction = NULL;
 }

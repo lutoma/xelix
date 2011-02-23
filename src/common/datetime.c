@@ -1,16 +1,28 @@
-/** @file common/datetime.c
- * \brief Common date/time functions.
- * @author Lukas Martini
+/* datetime.c: Date / Time library
+ * Copyright © 2010 Lukas Martini
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/datetime.h>
+#include "datetime.h"
+
 #include <common/string.h>
 #include <devices/pit/interface.h>
 
-/** Get the current day, month, yearh, time etc.
- * @param dateStr Which date do you want?
- * @return Requested date.
- */
+// Get the current day, month, year, time etc.
 int date(char dateStr)
 {
 	int whatDate;
@@ -51,11 +63,7 @@ int date(char dateStr)
 	return nowDate;
 }
 
-/** Convert month number to month name
- * @param month The number of the month to be converted
- * @param shortVersion create short three-letter version or long name?
- * @return Month name
- */
+// Convert month number to month name
 char* monthToString(int month, int shortVersion)
 {
 	char* monthString;
@@ -79,13 +87,8 @@ char* monthToString(int month, int shortVersion)
 	return monthString;
 }
 
-/** Calculate weekday
- * @param dayOfMonth Day of the month
- * @param month Month
- * @param year Year
- * @return The weekday
- * @see See http://de.wikipedia.org/wiki/Wochentagsberechnung for details
- */
+// Calculate weekday
+//See http://de.wikipedia.org/wiki/Wochentagsberechnung for details
 int getWeekDay(int dayOfMonth, int month, int year)
 {
 	int dayNum = dayOfMonth % 7;
@@ -114,11 +117,7 @@ int getWeekDay(int dayOfMonth, int month, int year)
 	return (dayNum + monthNum + yearNum + centuryNum) % 7;
 }
 
-/** Convert day number to day name
- * @param day The number of the day to be converted
- * @param shortVersion create short three-letter version or long name?
- * @return Day name
- */
+// Convert weekday number to weekday name
 char* dayToString(int day, int shortVersion)
 {
 	char* dayString;
@@ -132,14 +131,13 @@ char* dayToString(int day, int shortVersion)
 	longNames[5] = "Saturday";
 	longNames[6] = "Sunday";
 	
-	dayString = longNames[day -1];
-	if(shortVersion) dayString = substr(dayString, 0, 3);
+	dayString = longNames[day-1];
+	if(shortVersion)
+		dayString = substr(dayString, 0, 3);
 	return dayString;
 }
 
-/** Sleep x seconds
- * @param timeout Time to sleep
- */
+// Sleep x seconds
 void sleep(time_t timeout)
 {
 	timeout *= PIT_RATE;

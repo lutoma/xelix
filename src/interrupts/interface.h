@@ -1,11 +1,24 @@
 #pragma once
 
+/* Copyright © 2010 Christoph Sünderhauf
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <common/generic.h>
-
-
-// should be called to init interrupts
-// creates IDT et. al.
-void interrupts_init();
 
 #define IRQ0 32
 #define IRQ1 33
@@ -33,10 +46,9 @@ typedef struct {
 
 typedef void (*interruptHandler_t)(registers_t); // interruptHandler_t is the type of a function with the signature  void func(registers_t)
 
-
-// registers a interruptHandler (a callback which is called when the specified irq interrupt (ie n=IRQ1 for keyboard) occurs
+// registers an interruptHandler (a callback which is called when the specified irq interrupt (ie n=IRQ1 for keyboard) occurs
 void interrupt_registerHandler(uint8 n, interruptHandler_t handler);
-
 
 // for internal use only!
 void interrupt_callback(registers_t regs);
+void interrupts_init();

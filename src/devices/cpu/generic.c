@@ -1,35 +1,50 @@
-//Generic CPU-specific commands.
-#include <devices/cpu/interface.h>
+/* generic.c: Generic CPU-specific commands.
+ * Copyright © 2010 Lukas Martini
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "interface.h"
 
 #include <common/log.h>
-
-int isProtected(); // Check if CPU is in protected mode
-void setProtected(); // Switch CPU to protected mode
 
 int protected;
 
 // Check if CPU is running in protected mode.
-int isProtected()
+static bool isProtected()
 {
 	uint32 v;
 	asm ( "mov %%cr0, %0":"=a"(v) );
-	if(v & 1) return 1;
-	else return 0;
+	if(v & 1) return true;
+	else return false;
 }
 
 // Set CPU in protected mode
 // Todo: Implement it
-void setProtected()
+static void setProtected()
 {
 	PANIC("Can't [yet] switch to protected mode. Use a bootloader which automatically enables protected mode such as GNU GRUB.\n");
-	return;
+	// log("cpu: Switched to protected mode.\n");
 }
 
 // Check if CPU is 32 bit
-// Todo: Implement it
-int cpu_is32Bit()
+// Todo: Implement me
+bool cpu_is32Bit()
 {
-	return 1;
+	return true;
 }
 
 // Initialize the CPU (set it to protected mode)
@@ -37,11 +52,7 @@ void cpu_init()
 {
 	protected = isProtected();
 	if(!protected)
-	{
 		setProtected();
-		log("cpu: Setting CPU to protected mode.\n");
-	} else
-	{
-		log("cpu: Already in protected mode, not enabling.\n");
-	}
+	else
+		log("cpu: Already in protected mode.\n");
 }

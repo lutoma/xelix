@@ -1,4 +1,24 @@
-// Common utilities often used.
+/* generic.c: Common utilities often used.
+ * Copyright © 2010 Lukas Martini, Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "test.h"
 
 #include <common/generic.h>
 #include <common/log.h>
@@ -15,7 +35,7 @@ void memset(void* ptr, uint8 fill, uint32 size)
 	for(; p < max; p++)
 		*p = fill;
 }
-/// Our Memcpy
+// Our Memcpy
 void memcpy(void* dest, void* src, uint32 size)
 {
 	uint8* from = (uint8*) src;
@@ -64,27 +84,18 @@ unsigned long atoi(const char *s) {
 }
 
 
-/** Write out a byte to the specified port
- * @param port The port to write to
- * @param value The valued to be written to the port
- */
+// Write a byte out to the specified port
 void outb(uint16 port, uint8 value)
 {
 	 asm ("outb %1, %0" : : "Nd" (port), "a" (value));
 }
 
-/** Write out a word to the specified port
- * @param port The port to write to
- * @param value The valued to be written to the port
- */
+// Write out a word to the specified port
 void outw(uint16 port, uint16 value)
 {
 	 asm ("outw %1, %0" : : "Nd" (port), "a" (value));
 }
-/** Read a byte from the specified port
- * @param port The port to read from
- * @return String read from port.
- */
+// Read a byte from the specified port
 uint8 inb(uint16 port)
 {
 	uint8 ret;
@@ -99,7 +110,7 @@ uint8 inbCMOS (uint16 port)
 	return inb(0x71);
 }
 
-/// Print function
+// Print function
 void print(char* s)
 {
 	#ifdef WITH_SERIAL
@@ -143,20 +154,20 @@ void printf(const char *fmt, ...) {
 	vprintf(fmt, (void **)(&fmt) + 1);
 }
 
-/// Clear screen
+// Clear screen
 void clear(void)
 {
 	display_clear();
 }
 
-/// Warn. Use the WARN() macro that inserts the line.
+// Warn. Use the WARN() macro that inserts the line.
 void warn(char *reason, char *file, uint32 line)
 {
 	asm volatile("cli"); // Disable interrupts.
 	log("\n\nWARNING: %s in %s at line %d", reason, file, line);
 }
 
-/// Panic. Use the PANIC() macro that inserts the line.
+// Panic. Use the PANIC() macro that inserts the line.
 void panic(char *reason, char *file, uint32 line, int assertionf)
 {
 	asm volatile("cli"); // Disable interrupts.
@@ -168,7 +179,7 @@ void panic(char *reason, char *file, uint32 line, int assertionf)
 	for(;;) asm("cli;hlt;");//Sleep forever
 }
 
-/// A Memcmp
+// A Memcmp
 int (memcmp)(const void *s1, const void *s2, size_t n)
 {
 	const unsigned char *us1 = (const unsigned char *) s1;
@@ -182,11 +193,11 @@ int (memcmp)(const void *s1, const void *s2, size_t n)
 	return 0;
 }
 
-/// Reboot the computer
+// Reboot the computer
 void reboot()
 {
 	unsigned char good = 0x02;
-	log("Goint to reboot NOW!");
+	log("Going to reboot NOW!");
 	asm volatile("cli"); //We don't want interrupts here
 	while ((good & 0x02) != 0)
 	good = inb(0x64);
