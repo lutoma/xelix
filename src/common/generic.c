@@ -18,8 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "test.h"
-
 #include <common/generic.h>
 #include <common/log.h>
 #include <common/string.h>
