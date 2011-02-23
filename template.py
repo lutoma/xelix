@@ -63,7 +63,7 @@ def main():
 	template = template.replace('<your name>', realname)
 
 	if extension == 'c':
-		template = template.replace('<own_header.h>', '<{0}.h>'.format(filenameNoExtension))
+		template = template.replace('<own_header.h>', '"{0}.h"'.format(filenameNoExtension))
 	
 	target.write(template)
 	target.close()
