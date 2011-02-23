@@ -34,14 +34,14 @@ def main():
 		error('Usage: {0} [file to create]'.format(sys.argv[0]))
 
 	filename = sys.argv[1]
-	extension = filename.split('.')
+	splitFilename = filename.split('.')
 
-	if len(extension) < 2:
+	if len(splitFilename) < 2:
 		error('This file does not seem to have an extension like .c or .py.')
 
-	filenameNoExtension = extension[0]
+	filenameNoExtension = splitFilename[0].split('/')[-1]
 	# Grab the last entry of the tuple
-	extension = extension[-1]
+	extension = splitFilename[-1]
 
 
 	try:
