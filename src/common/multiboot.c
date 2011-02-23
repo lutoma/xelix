@@ -20,38 +20,55 @@
 #include "multiboot.h"
 
 #include <common/log.h>
+#include <common/string.h>
+
+static void printInfo(var, varname, type)
+{
+	// Chop off the pointer->
+	varname = substr(varname, 9, strlen(varname)-9);
+	
+	// Lazy coder was lazy
+	char* t;
+	if(type == 's')
+		t = "\t %s: %s\n";
+	else
+		t = "\t %s: %d\n";
+
+	if(var == NULL)
+		printf(t, varname, var);
+	else
+		printf(t, varname, var);
+}
+
+#define printMbootStr(C) printInfo(C, #C, 's');
+#define printMbootInt(C) printInfo(C, #C, 'd');
 
 void multiboot_printInfo(multibootHeader_t *pointer)
 {
-/*
+
 	log("\n%%Multiboot information:%%\n", 0x0f);
-	log("\tflags: %d\n", pointer->flags);
-	log("\tmemLower: 0x%x\n", pointer->memLower);
-	log("\tmemUpper: 0x%x\n", pointer->memUpper);
-	//log("\tbootDevice: %s\n", pointer->bootDevice);
-	//if(pointer->bootLoaderName != 0) //QEMU doesn't append a \0 to the cmdline, resulting in epic failure in printf().
-		//log("\tcmdLine: %s\n", pointer->cmdLine);
-	log("\tmodsCount: %d\n", pointer->modsCount);
-	log("\tmodsAddr: 0x%x\n", pointer->modsAddr);
-	log("\tnum: %d\n", pointer->num);
-	log("\tsize: %d\n", pointer->size);
-	log("\taddr: 0x%x\n", pointer->addr);
-	log("\tshndx: %d\n", pointer->shndx);
-	log("\tmmapLength: %d\n", pointer->mmapLength);
-	log("\tmmapAddr: 0x%x\n", pointer->mmapAddr);
-	log("\tdrivesLength: %d\n", pointer->drivesLength);
-	log("\tdrivesAddr: 0x%x\n", pointer->drivesAddr);
-	log("\tconfigTable: %d\n", pointer->configTable);
-	if(pointer->bootLoaderName != 0)
-		log("\tbootLoaderName: %s\n", pointer->bootLoaderName);
-	else
-		log("\tbootLoaderName: 0\n");
-		log("\tapmTable: %d\n", pointer->apmTable);
-	log("\tvbeControlInfo: %d\n", pointer->vbeControlInfo);
-	log("\tvbeModeInfo: %d\n", pointer->vbeModeInfo);
-	log("\tvbeMode: %d\n", pointer->vbeMode);
-	log("\tvbeInterfaceSeg: %d\n", pointer->vbeInterfaceSeg);
-	log("\tvbeInterfaceOff: %d\n", pointer->vbeInterfaceOff);
-	log("\tvbeInterfaceLen: %d\n", pointer->vbeInterfaceLen);
-	*/
+	printMbootInt(pointer->flags);
+	printMbootInt(pointer->memLower);
+	printMbootInt(pointer->memUpper);
+	printMbootStr(pointer->bootDevice);
+	printMbootStr(pointer->cmdLine);
+	printMbootInt(pointer->modsCount);
+	printMbootInt(pointer->modsAddr);
+	printMbootInt(pointer->num);
+	printMbootInt(pointer->size);
+	printMbootInt(pointer->addr);
+	printMbootInt(pointer->shndx);
+	printMbootInt(pointer->mmapLength);
+	printMbootInt(pointer->mmapAddr);
+	printMbootInt(pointer->drivesLength);
+	printMbootInt(pointer->drivesAddr);
+	printMbootInt(pointer->configTable);
+	printMbootStr(pointer->bootLoaderName);
+	printMbootInt(pointer->apmTable);
+	printMbootInt(pointer->vbeControlInfo);
+	printMbootInt(pointer->vbeModeInfo);
+	printMbootInt(pointer->vbeMode);
+	printMbootInt(pointer->vbeInterfaceSeg);
+	printMbootInt(pointer->vbeInterfaceOff);
+	printMbootInt(pointer->vbeInterfaceLen);
 }
