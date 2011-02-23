@@ -59,7 +59,7 @@ def main():
 
 	realname = pwd.getpwuid(os.getuid())[4].split(',')[0] # Rather dirty hack
 	template = template.replace('<year>', str(datetime.datetime.now().year))
-	template = template.replace('<filename>', filename)
+	template = template.replace('<filename>', filenameNoExtension)
 	template = template.replace('<your name>', realname)
 
 	if extension == 'c':
