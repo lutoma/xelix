@@ -100,13 +100,19 @@ uint8 inb(uint16 port)
 	asm ("inb %1, %0" : "=a" (ret) : "Nd" (port));
 	return ret;
 }
-
-
-uint8 inbCMOS (uint16 port)
+//Read a byte from the CMOS
+uint8 readCMOS (uint16 port)
 {
 	outb(0x70, port);
 	return inb(0x71);
 }
+//Write a byte into the CMOS
+void writeCMOS(uint16 port,uint8 value) {
+  uint8 tmp = inb(0x70);
+  outb(0x70, (tmp & 0x80) | (port & 0x7F));
+  outb(0x71,value);
+}
+
 
 // Print function
 void print(char* s)

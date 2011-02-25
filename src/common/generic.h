@@ -72,7 +72,8 @@ bool schedulingEnabled;
 void outb(uint16 port, uint8 value);
 void outw(uint16 port, uint16 value);
 uint8 inb(uint16 port);
-uint8 inbCMOS (uint16 port);
+uint8 readCMOS (uint16 port);
+void writeCMOS (uint16 port, uint8 value);
 bool init_haveGrub;
 
 // fills size bytes of memory starting at ptr with the byte fill.
