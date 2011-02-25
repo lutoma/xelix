@@ -50,7 +50,7 @@ int date(char dateStr)
 		default:
 			return -1;
 	}
-	nowDate = inbCMOS(whatDate);
+	nowDate = readCMOS(whatDate);
 	switch(dateStr)
 	{
 		case 's':
