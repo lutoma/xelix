@@ -88,12 +88,12 @@ ISR_NOERRCODE 31
 
 irq0:
 	cli
-	;jmp switchcontext
+	call scheduler_select
 	push byte 0
 	push byte 32
 	jmp irq_common_stub
 
-;[EXTERN switchcontext]
+[EXTERN scheduler_select]
 
 IRQ	1,	 33
 IRQ	2,	 34

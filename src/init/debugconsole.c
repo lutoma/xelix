@@ -28,6 +28,7 @@
 #include <common/datetime.h>
 #include <filesystems/vfs.h>
 #include <common/fio.h>
+#include <tasks/scheduler.h>
 
 uint32 cursorPosition;
 char currentLine[256] = "";
@@ -74,11 +75,16 @@ static void executeCommand(char *command)
 
 		while(sz != 0)
 		{
-			buf[sz] = 0;
+			buf[sz] = 0; // Make sure it's NUL-terminated.
 			printf("%s", buf);
 			offset += 100;
 			sz = fsNode->read(fsNode, offset, 100, buf);
 		}
+	}
+	else if(strcmp(command, "pid") == 0)
+	{
+		task_t* proc = scheduler_getCurrentTask();
+		printf("procnum: %d\n", proc->pid);
 	}
 	else if(strcmp(command, "date") == 0)
 	{

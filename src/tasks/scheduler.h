@@ -1,5 +1,6 @@
-/* process.c: Some nice-to-have functions for easier process handling.
- * Copyright © 2010, 2011 Lukas Martini
+#pragma once
+
+/* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -14,20 +15,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "process.h"
+#include <common/generic.h>
 
-#include <memory/kmalloc.h>
-#include <common/log.h>
-#include <interrupts/interface.h>
-#include <memory/paging/paging.h>
+// Single linked list
+typedef struct task {
+	uint32 pid;
+	uint32 parent;
+	struct task* next;
+} task_t;
 
-// Start process. The name parameter is here for future use.
-void process_create(char name[100], void function())
-{
-	log("process: Spawned new process with name %s\n", name);
-	(*function) (); // Run process
-	return;
-}
+void scheduler_add();
+task_t* scheduler_getCurrentTask();

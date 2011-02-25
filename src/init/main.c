@@ -38,7 +38,7 @@
 #endif
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
-#include <processes/process.h>
+#include <tasks/task.h>
 
 #ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>
