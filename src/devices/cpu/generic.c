@@ -19,6 +19,7 @@
 
 #include "interface.h"
 
+#include "fault.h"
 #include <common/log.h>
 
 int protected;
@@ -55,4 +56,6 @@ void cpu_init()
 		setProtected();
 	else
 		log("cpu: Already in protected mode.\n");
+		
+	cpu_initFaultHandler();
 }

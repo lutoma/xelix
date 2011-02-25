@@ -24,6 +24,8 @@
 #include <memory/kmalloc.h>
 #include <devices/serial/interface.h>
 #include <devices/display/interface.h>
+#include <devices/pit/interface.h>
+#include <tasks/scheduler.h>
 
 // Memset function. Fills memory with something.
 void memset(void* ptr, uint8 fill, uint32 size)
@@ -172,15 +174,41 @@ void warn(char *reason, char *file, uint32 line)
 }
 
 // Panic. Use the PANIC() macro that inserts the line.
-void panic(char *reason, char *file, uint32 line, int assertionf)
+void panic(const char *reason, char *file, uint32 line, int assertionf, ...)
 {
-	asm volatile("cli"); // Disable interrupts.
-	log("\n\nFATAL ERROR: ");
+	// Disable interrupts.
+	asm volatile("cli");
+
+	clear();
+	printf("%%Kernel Panic!%%\n\n", 0x04);
+	printf("Reason: ");
+	
 	if(assertionf) log("Assertion \"");
-	log(reason);
-	if(assertionf) log("\" failed");
-	log(" in file %s at line %d", file, line);
-	for(;;) asm("cli;hlt;");//Sleep forever
+	vprintf(reason, (void **)(&assertionf) + 1);
+	if(assertionf) printf("\" failed");
+	
+	printf("\n");
+	printf("The file triggering the kernel panic was %s, line %d.\n\n", file, line);
+	
+	printf("Last known PIT ticknum: %d\n", pit_getTickNum());
+	
+	task_t* task = scheduler_getCurrentTask();
+	if(task != NULL)
+		printf("Last running task PID: %d\n\n", task->pid);
+	else
+		printf("No task was running or multitasking was disabled.\n\n");
+	
+	printf("If you can, please tell us what you did when the kernel panic occured.\n");
+	printf("Please also make a (manual) screenshot / note the screen output.\n\n");
+	
+	printf("You can contact us via:\n");
+	printf("\tMail: %s",  BUGFIX_MAIL);
+	printf("\tIRC: %\n\n",  IRC_CHANNEL);
+	
+	printf("Thanks!\n\n");
+	
+	//Sleep forever
+	asm("hlt;");
 }
 
 // A Memcmp
