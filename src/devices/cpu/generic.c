@@ -22,8 +22,6 @@
 #include "fault.h"
 #include <common/log.h>
 
-int protected;
-
 // Check if CPU is running in protected mode.
 static bool isProtected()
 {
@@ -51,7 +49,7 @@ bool cpu_is32Bit()
 // Initialize the CPU (set it to protected mode)
 void cpu_init()
 {
-	protected = isProtected();
+	bool protected = isProtected();
 	if(!protected)
 		setProtected();
 	else
