@@ -24,12 +24,19 @@ makefile:
 install: xelix.bin
 	sudo cp xelix.bin /boot/xelix
 
-# create a boot image for usb-stick or floppy
-floppy.img: xelix.bin
+mount:
 	- mkdir mount
 	cp grub_floppy.img floppy.img
 	sudo losetup /dev/loop0 floppy.img
 	sudo mount /dev/loop0 mount
+
+unmount:
+	sudo umount mount
+	sudo losetup -d /dev/loop0
+	- rm -rf mount
+
+# create a boot image for usb-stick or floppy
+floppy.img: xelix.bin mount
 	sudo cp xelix.bin mount/kernel
 	sudo umount mount
 	sudo losetup -d /dev/loop0
