@@ -174,7 +174,7 @@ void warn(char *reason, char *file, uint32 line)
 }
 
 // Panic. Use the PANIC() macro that inserts the line.
-void panic(const char *reason, char *file, uint32 line, int assertionf, ...)
+void panic(char *file, uint32 line, int assertionf, const char *reason, ...)
 {
 	// Disable interrupts.
 	asm volatile("cli");
@@ -184,7 +184,7 @@ void panic(const char *reason, char *file, uint32 line, int assertionf, ...)
 	printf("Reason: ");
 	
 	if(assertionf) log("Assertion \"");
-	vprintf(reason, (void **)(&assertionf) + 1);
+	vprintf(reason, (void **)(&reason) + 1);
 	if(assertionf) printf("\" failed");
 	
 	printf("\n");

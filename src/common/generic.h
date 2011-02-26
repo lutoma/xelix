@@ -91,11 +91,11 @@ void clear(void);
 
 // to automatically have file names and line numbers
 //#define WARN(msg) warn(msg, __FILE__, __LINE__);
-#define PANIC(msg, ...) panic(msg, __FILE__, __LINE__, 0, __VA_ARGS__);
+#define PANIC(...) panic( __FILE__, __LINE__, 0, __VA_ARGS__);
 #define ASSERT(b) ((b) ? (void)0 : panic(#b, __FILE__, __LINE__, 1))
 
 // Don't use them, use the macros above.
-void panic(const char *reason, char *file, uint32 line, int assertionf, ...);
+void panic(char *file, uint32 line, int assertionf, const char *reason, ...);
 void assert(int r);
 
 // Misc
