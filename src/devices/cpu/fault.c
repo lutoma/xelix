@@ -49,7 +49,7 @@ static void faultHandler(registers_t regs)
 {
 	if(regs.int_no > 18)
 		PANIC("Unkown CPU error %d", regs.int_no);
-	if(regs.int_no <= 18); // Can't use else here because of macro
+	if(regs.int_no <= 18) // Can't use else here because of macro
 		PANIC("CPU error %d (%s)", regs.int_no, errorDescriptions[regs.int_no]);
 }
 
@@ -58,6 +58,6 @@ void cpu_initFaultHandler()
 	// First 31 interrupts are CPU faults
 	for(i = 0; i < 32; i++)
 		interrupt_registerHandler(i, &faultHandler);
-		
+	
 	log("cpu: Registered CPU fault interrupt handlers");
 }
