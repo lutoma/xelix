@@ -84,7 +84,8 @@ static void executeCommand(char *command)
 	else if(strcmp(command, "pid") == 0)
 	{
 		task_t* proc = scheduler_getCurrentTask();
-		printf("procnum: %d\n", proc->pid);
+		if(proc != NULL)
+			printf("procnum: %d\n", proc->pid);
 	}
 	else if(strcmp(command, "date") == 0)
 	{
