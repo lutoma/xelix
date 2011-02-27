@@ -23,16 +23,30 @@
 #include <common/string.h>
 #include <memory/kmalloc.h>
 
-/* FIXME: Unfinished due to the lack of a strtok_r. Going to implement
- * it. --Lukas
- */
-
 char** arguments = NULL;
 char** values = NULL;
+uint32 parts = 1;
+bool initialized = false;
 
+/* Retrieve a single argument's key. Returns:
+ * Key: Argument exists and has key
+ * NULL: Argument exists, but has no key
+ * -1: Argument doesn't exist (And probably also doesn't have a key ;) )
+ * -2: Not initialized yet or nor arguments at all
+ */
 char* argparser_get(char* key)
 {
+	if((int)arguments == NULL || (int)values == NULL || parts == 0 || !initialized)
+		return -2;
 	
+	/* Fixme: Find a solution which doesn't require this code to iterate
+	 * through the whole array.
+	 */
+	for(i = 0; i < parts; i++)
+		if(!strcmp(key, arguments[i]))
+			return values[i];
+		
+	return -1;
 }
 
 void argparser_init(char* commandLine)
@@ -42,26 +56,31 @@ void argparser_init(char* commandLine)
 
 	log("argparser: Starting to parse\n");
 
-	// Strtok destroys the source string. As we don't want that, copy it
+	/* Strtok_r destroys the source string. As we don't want that, copy
+	 * it twice (one for first run, two for second run).
+	 */
 	uint32 size = strlen(commandLine) * sizeof(char);
 
-	//char* one = kmalloc(size);
-	char* one = strcpy((char*) kmalloc(size), commandLine);
-	char* two = strcpy((char*) kmalloc(size), commandLine);
+	char* one = kmalloc(size);
+	char* two = kmalloc(size);
+
+	if(one == NULL || two == NULL)
+		PANIC("Could not allocate ;_;\n");
+
+	strcpy(one, commandLine);
+	strcpy(two, commandLine);
 	
 	// Firstly, find out how many parts we have
-	static char* pch;
-	static int parts = 1;
-	pch = strtok(one, " ");
+	char* pch;
+	char* sp;
 	
-	while(strtok(NULL, " ") != NULL)
+	pch = strtok_r(one, " ", (char**)&sp);
+	while(strtok_r(NULL, " ", (char**)&sp) != NULL)
 		parts++;
-	
+
 	kfree(one);
 	
 	log("argparser: Counted %d parts\n", parts);
-	if(parts < 1)
-		return;
 
 	// Allocate arrays
 	arguments = kmalloc(parts * sizeof(uint32));
@@ -74,20 +93,24 @@ void argparser_init(char* commandLine)
 	}	
 	
 	// Strtok again and now actually fill array.
-	pch = strtok(two, " ");
-
+	
+	// We can reuse the string we used last time, but 'empty' it.
+	sp[0] = 0;
+	// Like sp, only for use in the loop.
+	char* spt;
+	
+	pch = strtok_r(two, " ", (char**)&sp);
 	for(i = 0; pch != NULL; i++)
 	{
-		pch[strlen(pch) -1] = 0; // No clue why, but works.
-		arguments[i] = pch;
-		values[i] = pch;
+		spt[0] = 0;
+		
+		arguments[i] = strtok_r(pch, "=", (char**)&spt);
+		values[i] = strtok_r(NULL, "=", (char**)&spt);
 		
 		// Next
-		pch = strtok(NULL, " ");
+		pch = strtok_r(NULL, " ", (char**)&sp);
 	}
 	
 	kfree(two);
-		
-	for(i=0; i < parts; i++)
-		log("argparser: plbk: %s = %s\n", arguments[i], values[i]);
+	initialized = true;
 }
