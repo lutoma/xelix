@@ -24,30 +24,30 @@
 #include <memory/kmalloc.h>
 
 // Return the length of a string
-size_t strlen(const char * str)
+size_t strlen(const char* str)
 {
 	 const char *s;
 	 for (s = str; *s; ++s);
 	 return(s - str);
 }
 
-char* strcpy(char *dest, const char *src)
+char* strcpy(char* dest, const char* src)
 {
-	char *save = dest;
+	char* save = dest;
 	while((*dest++ = *src++));
 	return save;
 }
 
 // Copy n bytes of src to dst
-char *strncpy(char *dst, const char *src, size_t n)
+char* strncpy(char* dst, const char* src, size_t n)
 {
-	char *p = dst;
+	char* p = dst;
 	while (n-- && (*dst++ = *src++));
 	return p;
 }
 
 // Compare two strings
-int strcmp (const char * s1, const char * s2)
+int strcmp(const char* s1, const char* s2)
 {
 	 for(; *s1 == *s2; ++s1, ++s2)
 			if(*s1 == 0)
@@ -73,13 +73,13 @@ char* substr(char* src, size_t start, size_t len)
 	return dest;
 }
 
-char * strtok(char *s, const char *delim)
+char* strtok(char *s, const char *delim)
 {
 	static char *last;
 	return strtok_r(s, delim, &last);
 }
 
-char * strtok_r(char *s, const char *delim, char **last)
+char* strtok_r(char* s, const char* delim, char** last)
 {
 	char *spanp;
 	int c, sc;
@@ -126,10 +126,10 @@ cont:
 
 
 /* Return index of first match of itemPointer in listPointer. */
-int find_substr(char *listPointer, char *itemPointer)
+int find_substr(char* listPointer, char* itemPointer)
 {
   int t;
-  char *p, *p2;
+  char* p, *p2;
 
   for(t=0; listPointer[t]; t++) {
     p = &listPointer[t];
