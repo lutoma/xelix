@@ -39,6 +39,7 @@
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <tasks/task.h>
+#include <common/argparser.h>
 
 #ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>
@@ -97,10 +98,12 @@ void kmain(multibootHeader_t *mbootPointer)
 	INIT(display);
 	if(WITH_SERIAL) INIT(serial);
 	INIT(log);
-
+	
 	compilerInfo();
 	checkIntLenghts();
 	multiboot_printInfo(mbootPointer);
+
+	INIT(argparser, (char*)mbootPointer->cmdLine);
 
 	if(mbootPointer->bootLoaderName != NULL && find_substr((char*)mbootPointer->bootLoaderName, "GNU GRUB") != -1)
 		init_haveGrub = true;
