@@ -54,6 +54,7 @@ static void executeCommand(char *command)
 	{
 		struct dirent *node = 0;
 
+		int i;
 		for(i = 0; node = vfs_rootNode->readdir(vfs_rootNode, i); i++)
 		{
 			fsNode_t *fsNode = vfs_rootNode->finddir(vfs_rootNode, node->name);

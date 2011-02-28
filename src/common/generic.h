@@ -51,7 +51,6 @@ typedef int bool;
 #define EOF  -1
 #define true  1
 #define false 0
-uint32 i,j; // For counters etc.
 
 bool schedulingEnabled;
 #define SPAWN_FUNCTION process_create

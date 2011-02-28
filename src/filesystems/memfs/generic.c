@@ -92,6 +92,8 @@ fsNode_t *memfs_init(uint32 location)
 
 	vfs_rootNodes = (fsNode_t**)kmalloc(sizeof(fsNode_t) * memfsHeader->fileCount);
 	log("memfs: Creating files.\n");
+	
+	int i;
 	for (i = 0; i < memfsHeader->fileCount; i++)
 	{
 		// Edit the file's header - currently it holds the file offset

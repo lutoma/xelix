@@ -42,6 +42,7 @@ char* argparser_get(char* key)
 	/* Fixme: Find a solution which doesn't require this code to iterate
 	 * through the whole array.
 	 */
+	int i;
 	for(i = 0; i < parts; i++)
 		if(!strcmp(key, arguments[i]))
 			return values[i];
@@ -100,6 +101,8 @@ void argparser_init(char* commandLine)
 	char* spt;
 	
 	pch = strtok_r(two, " ", (char**)&sp);
+	
+	int i;
 	for(i = 0; pch != NULL; i++)
 	{
 		spt[0] = 0;

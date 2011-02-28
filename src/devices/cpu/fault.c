@@ -56,6 +56,7 @@ static void faultHandler(registers_t regs)
 void cpu_initFaultHandler()
 {
 	// First 31 interrupts are CPU faults
+	int i;
 	for(i = 0; i < 32; i++)
 		interrupt_registerHandler(i, &faultHandler);
 	

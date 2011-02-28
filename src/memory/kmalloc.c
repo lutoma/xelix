@@ -44,9 +44,10 @@ void* kmalloc(size_t numbytes)
 {
 	if (freeSections == 0 || memorySections == NULL) return __kmalloc(numbytes);
 
+	uint32 i;
 	if (freeSections < MEMORY_SECTIONS)
 	{
-		uint32 i = 0;
+		i = 0;
 		while (i < nextSection)
 		{
 			memorySection_t *thisSection = (memorySection_t *)memorySections[i];
