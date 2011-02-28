@@ -1,14 +1,7 @@
-*.o
+*.(o|log|geany)
 *~
-kernel.bin
 initrd.img
 floppy.img
 Makefile
-Jamfile
-includesgraph.dot
-*.log
-*.geany
 buildinfo.h
-local.h
 xelix.bin
-SConstruct
