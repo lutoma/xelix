@@ -1,4 +1,5 @@
-*.(o|log|geany)
+*.o
+*.log
 *~
 initrd.img
 floppy.img
