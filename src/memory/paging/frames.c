@@ -1,5 +1,6 @@
 /* frames.h: Control of memory frames
  * Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,21 +21,19 @@
 #include "frames.h"
 
 #include <common/bitmap.h>
-#include <common/generic.h>
+#include <common/multiboot.h>
 
 // 0->free, 1->used. usedFrames->numbits
 bitmap_t usedFrames;
 
-uint32 numFrames;
-
 void frames_init()
 {
-	numFrames = 0x8000000 / 0x1000; // memory bytes / frame size (4kb=0x1000byte)
-	// assume 0x8000000 bytes = 128 Megabytes of memory for the moment.
-	usedFrames = bitmap_init(numFrames);
+	uint32 memSize = multiboot_header->memLower * multiboot_header->memUpper;
+	log("frames: memSize: %d\n", memSize);
 
-	// set all frames as free
-	bitmap_clearall(usedFrames);
+	// memory bytes / frame size (4kb=0x1000byte)
+	usedFrames = bitmap_init(memSize / 0x1000);
+	bitmap_clearall(usedFrames); // Free all
 }
 
 uint32 frames_allocateFrame()
@@ -42,7 +41,7 @@ uint32 frames_allocateFrame()
 	uint32 frameNum = bitmap_findFirstClearedBit(usedFrames);
 	
 	if(frameNum == 0 && bitmap_get(usedFrames, 0))
-		print("Could not find free frame to allocate! Out of memory!\n");
+		log("frames: Could not find free frame to allocate! Out of memory!\n");
 	
 	bitmap_set(usedFrames, frameNum);
 	return frameNum;
@@ -52,8 +51,9 @@ void frames_freeFrame(uint32 frameNum)
 {
 	if(bitmap_get(usedFrames, frameNum) != 1)
 	{
-		print("Trying to free a frame which is not used!\n");
+		log("frames: Attempt to free unused frame %d, ignoring.\n", frameNum);
 		return;
 	}
+
 	bitmap_clear(usedFrames, frameNum);
 }
