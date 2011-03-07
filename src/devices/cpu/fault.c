@@ -60,5 +60,5 @@ void cpu_initFaultHandler()
 	for(i = 0; i < 32; i++)
 		interrupt_registerHandler(i, &faultHandler);
 	
-	log("cpu: Registered CPU fault interrupt handlers");
+	log("cpu: Registered CPU fault interrupt handlers.\n");
 }
