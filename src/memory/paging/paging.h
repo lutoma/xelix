@@ -1,6 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,10 +21,6 @@
 
 #include <common/generic.h>
 
-/************
- * TYPES
- ************/
-
 typedef struct {
 	uint32 present  :1;   // Page present in memory 
 	uint32 rw       :1;   // Read-only if clear, readwrite if set (only applies to code running in user-mode, kernel-mode can do everything ;) )
@@ -36,7 +33,7 @@ typedef struct {
 	uint32 global   :1;   // something complicated - leave it disabled ;)
 	uint32 available:3;   // free for our use
 	uint32 frame    :20;  // physical frame address (shifted right 12 bits->aligned to 4kb), ie. frame number
-} pageTableEntry_t; // describes a page
+} pageTableEntry_t;
 
 typedef struct {
 	pageTableEntry_t tableEntries[1024];
@@ -69,15 +66,21 @@ typedef struct {
 	uint32 physicalAddress; // the physical address of the directoryEntries[] array, because we need it to give it to the cpu.
 } pageDirectory_t;
 
-/*****************
- * FUNCTIONS
- *****************/
- 
- 
-void paging_init();
+enum mode {
+	USER_MODE = 1,
+	KERNEL_MODE = 0
+};
 
-// creates a new pageDirectory (which is not set active), copying the currentDirectory and linking the pages present in kernelDirectory
+enum readandwrite {
+	READONLY = 0,
+	READWRITE = 1
+};
+
+// The page directory the kernel uses before it starts other processes with their own virtual address space and their own page directories. Containts all the pages the kernel will ever need - that is already containts present pages for the whole kernel heap / kmalloc-space / whatever.
+pageDirectory_t* kernelDirectory;
+
+// The current page directory. The pages which the kernel also uses (which are present in kernelDirectory) are linked in.
+pageDirectory_t* currentDirectory;
+
 pageDirectory_t* paging_cloneCurrentDirectory();
-
-// switches paging to use the specified directory. Does not en- or deable paging!
-void paging_switchPageDirectory(pageDirectory_t* directory);
+void paging_init();
