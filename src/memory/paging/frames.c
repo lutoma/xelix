@@ -22,16 +22,10 @@
 #include <common/bitmap.h>
 #include <common/generic.h>
 
-// organises 4 kb frames of the physical memory
-
-
 // 0->free, 1->used. usedFrames->numbits
 bitmap_t usedFrames;
 
-// The total number of frames. This depends on the amount of memory. (TODO)
 uint32 numFrames;
-
-
 
 void frames_init()
 {
@@ -43,18 +37,14 @@ void frames_init()
 	bitmap_clearall(usedFrames);
 }
 
-
-uint32  frames_allocateFrame()
+uint32 frames_allocateFrame()
 {
 	uint32 frameNum = bitmap_findFirstClearedBit(usedFrames);
 	
 	if(frameNum == 0 && bitmap_get(usedFrames, 0))
-	{
 		print("Could not find free frame to allocate! Out of memory!\n");
-	}
 	
 	bitmap_set(usedFrames, frameNum);
-	
 	return frameNum;
 }
 
