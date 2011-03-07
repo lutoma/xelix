@@ -101,6 +101,7 @@ void kmain(multibootHeader_t *mbootPointer)
 	
 	compilerInfo();
 	checkIntLenghts();
+	INIT(multiboot, mbootPointer);
 	multiboot_printInfo(mbootPointer);
 
 	INIT(argparser, (char*)mbootPointer->cmdLine);

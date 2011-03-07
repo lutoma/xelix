@@ -60,4 +60,7 @@ typedef struct {
 } __attribute__((packed))
 multibootHeader_t;
 
-void multiboot_printInfo(multibootHeader_t *pointer);
+multibootHeader_t* multiboot_header;
+
+void multiboot_printInfo();
+void multiboot_init(multibootHeader_t* pointer);
