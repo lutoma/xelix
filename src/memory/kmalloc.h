@@ -20,21 +20,18 @@
 
 #include <common/generic.h>
 
-void* kmalloc(size_t numbytes);
+// vanilla
+uint32 kmalloc(size_t sz); 
+// page aligned.
+uint32 kmalloc_a(size_t sz);
+// returns a physical address.
+uint32 kmalloc_p(size_t sz, uint32 *phys);
+// page aligned and returns a physical address.
+uint32 kmalloc_ap(size_t sz, uint32 *phys);
 
-/* memory aligned to 4kb.
- * physicalAddress: If physicalAddress is not 0, the physical address of
- * the memory returned is written into that location. The physical
- * address is important when paging is already enabled: Then we can only
- * access memory via its virtual address, but eg. new page directories
- * need to containt physical addresses to their page tables.
- */
-void* kmalloc_aligned(size_t numbytes, uint32* physicalAddress);
-
-typedef struct {
-	size_t size;
-	uint8 free:1;
-} memorySection_t;
+// Make it also work the other way round.
+#define kmalloc_pa kmalloc_ap
 
 void kfree(void *ptr);
-void kmalloc_init(uint32 start);
+
+void kmalloc_init();

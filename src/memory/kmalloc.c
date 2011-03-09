@@ -1,5 +1,5 @@
-/* kmalloc.c: Provides routines for memory allocation
- * Copyright © 2010, 2011 Fritz Grimpen
+/* kmalloc.c: Kernel heap
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,121 +17,70 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Thanks to Fritz Grimpen who wrote our original kmalloc.
+
 #include "kmalloc.h"
 
 #include <common/log.h>
-#define MEMORY_SECTIONS 65536
+#include <common/multiboot.h>
 
-// TODO: improve search of free memory sections
+static uint32 memoryPosition;
+#define pagingEnabled false // FIXME
 
-uint32 memoryPosition;
-uint32 *memorySections = NULL;
-uint32 freeSections = MEMORY_SECTIONS;
-uint32 nextSection = 0;
-
-void* __kmalloc(size_t numbytes)
+// For internal use (= In this file) only, see below.
+static uint32 __kmalloc(size_t sz, bool align, uint32 *phys)
 {
-	void* ptr = (void *) memoryPosition;
-	memoryPosition += numbytes;
+	// If the address is not already page-aligned
+	if (align == 1 && (memoryPosition & 0xFFFFF000))
+	{
+		// Align it.
+		memoryPosition &= 0xFFFFF000;
+		memoryPosition += 0x1000;
+	}
 
-	if(memoryPosition >= MEMORY_MAX_KMEM)
-		PANIC("Out of kernel memory");
-	
-	return ptr;
+	if (phys)
+		*phys = memoryPosition;
+
+	uint32 tmp = memoryPosition;
+	memoryPosition += sz;
+	return tmp;
 }
-
-void* kmalloc(size_t numbytes)
-{
-	if (freeSections == 0 || memorySections == NULL) return __kmalloc(numbytes);
-
-	uint32 i;
-	if (freeSections < MEMORY_SECTIONS)
-	{
-		i = 0;
-		while (i < nextSection)
-		{
-			memorySection_t *thisSection = (memorySection_t *)memorySections[i];
-			if (thisSection->size == numbytes && thisSection->free != 0)
-			{
-				thisSection->free = 0;
-				void *pointer = (void*)((uint32)thisSection + sizeof(memorySection_t));
-				freeSections--;
-				return pointer;
-			}
-
-			i++;
-		}
-	}
-	
-	if (nextSection >= MEMORY_SECTIONS)
-	{
-		i = 0;
-		while (i < nextSection)
-		{
-			memorySection_t *thisSection = (memorySection_t *)memorySections[i];
-			if (thisSection->free != 0 && thisSection->size > numbytes)
-			{
-				thisSection->free = 0;
-				thisSection->size = numbytes;
-				void *pointer = (void*)((uint32)thisSection + sizeof(memorySection_t));
-				freeSections--;
-				return pointer;
-			}
-		}
-	}
-	else
-	{
-		memorySection_t *section = __kmalloc(sizeof(memorySection_t));
-		section->free = 0;
-		section->size = numbytes;
-		memorySections[nextSection] = (uint32)section;
-		freeSections--;
-		nextSection++;
-	}
-	
-	return __kmalloc(numbytes);
-}
-
 
 void kfree(void *ptr)
 {
-	uint32 i = 0;
-	while (i < nextSection)
-	{
-		uint32 section_pointer = memorySections[i] + sizeof(memorySection_t);
-		if (section_pointer == (uint32) ptr)
-		{
-			((memorySection_t *)memorySections[i])->free = 1;
-			freeSections++;
-			return;
-		}
-
-		i++;
-	}
+	return;
 }
 
+/* A few shortcuts so one doesn't always have to pass all the
+ * parameters all the time.
+ */
 
-// FIXME: returning physical address only works because of identity paging the kernel heap.
-void* kmalloc_aligned(size_t numbytes, uint32* physicalAddress)
+// vanilla
+uint32 kmalloc(size_t sz)
 {
-	// align to 4 kb (= 0x1000 bytes)
-	if( memoryPosition % 0x1000 != 0 )
-		memoryPosition = memoryPosition + 0x1000 - (memoryPosition % 0x1000);
-	
-	void* ptr = (void*) memoryPosition;
-	memoryPosition+=numbytes;
-	
-	if(physicalAddress != 0)
-		*physicalAddress = (uint32)ptr;
-	
-	if(memoryPosition >= MEMORY_MAX_KMEM)
-		PANIC("Out of kernel memory");
-	
-	return ptr;
+	return __kmalloc(sz, false, NULL);
 }
 
-void kmalloc_init(uint32 start)
+// page aligned.
+uint32 kmalloc_a(size_t sz)
 {
-	memoryPosition = (uint32)start;
-	memorySections = __kmalloc(sizeof(uint32) * MEMORY_SECTIONS);
+	return __kmalloc(sz, true, NULL);
+}
+
+// returns a physical address.
+uint32 kmalloc_p(size_t sz, uint32 *phys)
+{
+	return __kmalloc(sz, false, phys);
+}
+
+// page aligned and returns a physical address.
+uint32 kmalloc_ap(size_t sz, uint32 *phys)
+{
+	return __kmalloc(sz, true, phys);
+}
+
+void kmalloc_init()
+{
+	// FIXME: Get from Multiboot header. Maybe.
+	memoryPosition = 5 * 1024 * 1024; // 15 MB.
 }
