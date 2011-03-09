@@ -1,4 +1,4 @@
-/* bitmap.c: Bitmaps
+/* bitmap.c: Bitset / Bitmap implementation
  * Copyright © 2010 Christoph Sünderhauf
  * Copyright © 2011 Lukas Martini
  *
@@ -23,17 +23,12 @@
 #include <common/log.h>
 #include <memory/kmalloc.h>
 
-// returns the index of bitmap->bits[] or the offset in the bitmap->bits[index].
-// offset such that offset 0 is the lowest bit, offset 7 is the highest bit.
-static inline uint32 index(uint32 bitnum)
-{
-	return bitnum/32;
-}
-
-static inline uint32 offset(uint32 bitnum)
-{
-	return bitnum % 32;
-}
+/* returns the index of bitmap->bits[] or the offset in the
+ * bitmap->bits[index]. Offset such that offset 0 is the lowest bit,
+ * offset 7 is the highest bit.
+ */
+#define index(a) (a/(8*4))
+#define offset(a) (a%(8*4))
 
 // returns 1 or 0
 uint8 bitmap_get(bitmap_t bitmap, uint32 bitnum)
