@@ -136,6 +136,7 @@ void vprintf(const char *fmt, void **arg) {
 				case 'b': print(itoa(*(unsigned *)arg,  2)); break;
 				case 'd': print(itoa(*(unsigned *)arg, 10)); break;
 				case 'x': print(itoa(*(unsigned *)arg, 16)); break;
+				case 't': print(*(unsigned *)arg ? "true" : "false"); break;
 			}
 
 			if(*fmt == '%')
