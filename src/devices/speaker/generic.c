@@ -50,8 +50,4 @@ void speaker_beep(uint8 frequency, time_t seconds)
 	sleep(seconds);
 	speaker_off();
 }
-
-// I still can't believe how much this function is doing
-void speaker_init(){}
-
 #endif

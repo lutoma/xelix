@@ -108,7 +108,6 @@ void kmain(multibootHeader_t *mbootPointer)
 	INIT(pit, PIT_RATE);
 	INIT(cpu);
 	memory_init_postprotected();
-	if(WITH_SPEAKER) INIT(speaker);
 
 	if(mbootPointer->modsCount > 0)
 	{
