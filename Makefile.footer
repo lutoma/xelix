@@ -57,17 +57,17 @@ dist: floppy.img
 # running the kernel
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+	qemu -no-kvm -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
 runbochsfloppy: floppy.img
 	bochs -f bochsrc.txt -q
 
 runqemu: xelix.bin
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin
+	qemu -no-kvm -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin
 
 runqemunox: xelix.bin
 	# Exit with ^A-x
-	qemu -d cpu_reset -kernel xelix.bin -nographic
+	qemu -no-kvm -d cpu_reset -kernel xelix.bin -nographic
 	
 runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
