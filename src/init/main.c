@@ -81,7 +81,7 @@ void kmain(multibootHeader_t *mbootPointer)
 {
 	// descriptor tables have to be created first
 	memory_init_preprotected(); // gdt
-	INIT(interrupts); // idt	
+	INIT(interrupts); // idt
 
 	INIT(kmalloc);
 	INIT(display);
