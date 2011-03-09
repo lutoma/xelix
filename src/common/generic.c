@@ -132,7 +132,8 @@ void vprintf(const char *fmt, void **arg) {
 			++fmt;
 			switch (*fmt) {
 				case 'c': display_printChar(*(char *)arg); break;
-				case 's': print(*(char **)arg); break;
+				// Print (null) if pointer == NULL.
+				case 's': print(*(char **)arg ? *(char **)arg : "(null)"); break;
 				case 'b': print(itoa(*(unsigned *)arg,  2)); break;
 				case 'd': print(itoa(*(unsigned *)arg, 10)); break;
 				case 'x': print(itoa(*(unsigned *)arg, 16)); break;
