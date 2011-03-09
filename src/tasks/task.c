@@ -23,7 +23,6 @@
 #include <memory/kmalloc.h>
 #include <common/log.h>
 #include <interrupts/interface.h>
-#include <memory/paging/paging.h>
 
 // Start process. The name parameter is here for future use.
 void process_create(char name[100], void function())
