@@ -115,7 +115,6 @@ static void setGate(uint8 num, uint32 base, uint16 sel, uint8 flags)
 
 void idt_init()
 {
-	asm("sti"); // Enable interrupts. Usally a good idea if you want to use them...
 	idtPtr.limit = sizeof(idtEntry_t) * 256 -1;
 	idtPtr.base  = (uint32)&idtEntries;
 
@@ -190,4 +189,5 @@ void idt_init()
 	setGate(81, (uint32)isr81 , 0x08, 0x8E);
 
 	idt_flush((uint32)&idtPtr);
+	asm("sti"); // Enable interrupts. Usually a good idea if you want to use them...
 }
