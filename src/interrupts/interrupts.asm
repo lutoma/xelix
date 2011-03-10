@@ -119,7 +119,7 @@ isr81:
 	jmp syscalls_handler_stub
 
 ; In interrupts.c
-[EXTERN interrupt_callback]
+[EXTERN interrupts_callback]
 
 ; This is our common ISR stub. It saves the processor state, sets
 ; up for kernel mode segments, calls the C-level fault handler,
@@ -136,7 +136,7 @@ isr_common_stub:
 	mov fs, ax
 	mov gs, ax
 
-	call interrupt_callback
+	call interrupts_callback
 
 	pop eax			; reload the original data segment descriptor
 	mov ds, ax

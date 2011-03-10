@@ -25,7 +25,7 @@
 
 interruptHandler_t interruptHandlers[256];
 
-void interrupt_callback(registers_t regs)
+void interrupts_callback(registers_t regs)
 {
 	// That might look useless, but trust me, it isn't.
 	static bool inInterrupt = false;
@@ -60,10 +60,10 @@ void irq_handler(registers_t regs)
 		sendEOI(true);
 
 	sendEOI(false); // Master
-	interrupt_callback(regs);
+	interrupts_callback(regs);
 }
 
-void interrupt_registerHandler(uint8 n, interruptHandler_t handler)
+void interrupts_registerHandler(uint8 n, interruptHandler_t handler)
 {
 	interruptHandlers[n] = handler;
 	log("interrupts: Registered IRQ handler for %d.\n", n);
@@ -74,6 +74,6 @@ void interrupts_init()
 	idt_init();
 
 	// set all interruptHandlers to zero
-	memset(interruptHandlers, 0, 256*sizeof(interruptHandler_t));
+	memset(interruptHandlers, NULL, 256*sizeof(interruptHandler_t));
 	log("interrupts: Initialized\n");
 }
