@@ -118,8 +118,8 @@ extern syscalls_handler_stub
 isr81:
 	jmp syscalls_handler_stub
 
-; In isr.c
-[EXTERN isr_handler]
+; In interrupts.c
+[EXTERN interrupt_callback]
 
 ; This is our common ISR stub. It saves the processor state, sets
 ; up for kernel mode segments, calls the C-level fault handler,
@@ -136,7 +136,7 @@ isr_common_stub:
 	mov fs, ax
 	mov gs, ax
 
-	call isr_handler
+	call interrupt_callback
 
 	pop eax			; reload the original data segment descriptor
 	mov ds, ax
@@ -149,7 +149,7 @@ isr_common_stub:
 	sti
 	iret			; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
-; In isr.c
+; In irq.c
 [EXTERN irq_handler]
 
 ; This is our common IRQ stub. It saves the processor state, sets
