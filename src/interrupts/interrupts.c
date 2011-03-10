@@ -1,5 +1,6 @@
 /* interrupts.c: Initialization of and interface to interrupts.
  * Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -40,6 +41,26 @@ void interrupt_callback(registers_t regs)
 	}
 	
 	inInterrupt = false;
+}
+
+// Send EOI (end of interrupt) signals to the PICs.
+static void sendEOI(bool slave)
+{
+	if (slave)
+		outb(0xA0, 0x20);
+	else
+		outb(0x20, 0x20);
+}
+
+// This gets called from our ASM irq handler stub.
+void irq_handler(registers_t regs)
+{
+	// If this interrupt involved the slave, send a EOI to the slave.
+	if (regs.int_no >= 40)
+		sendEOI(true);
+
+	sendEOI(false); // Master
+	interrupt_callback(regs);
 }
 
 void interrupt_registerHandler(uint8 n, interruptHandler_t handler)
