@@ -18,6 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include <lib/generic.h>
 
 void process_create(char name[100], void function());

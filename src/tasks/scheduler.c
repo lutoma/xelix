@@ -20,7 +20,7 @@
 #include "scheduler.h"
 
 #include "dispatcher.h"
-#include <common/log.h>
+#include <lib/log.h>
 #include <memory/kmalloc.h>
 
 static task_t* firstTask = NULL;

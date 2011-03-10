@@ -18,12 +18,12 @@
  */
 
 #include <buildinfo.h>
-#include <common/multiboot.h>
-#include <common/generic.h>
+#include <lib/multiboot.h>
+#include <lib/generic.h>
 #include "init.h"
-#include <common/log.h>
-#include <common/datetime.h>
-#include <common/string.h>
+#include <lib/log.h>
+#include <lib/datetime.h>
+#include <lib/string.h>
 #include <devices/display/interface.h>
 #ifdef WITH_SERIAL
 #include <devices/serial/interface.h>
@@ -40,7 +40,7 @@
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <tasks/task.h>
-#include <common/argparser.h>
+#include <lib/argparser.h>
 
 #ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>

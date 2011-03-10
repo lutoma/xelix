@@ -19,10 +19,9 @@
 
 #include "vfs.h"
 
-#include <common/log.h>
+#include <lib/log.h>
 #include <memory/kmalloc.h>
-#include <common/string.h>
-#include <common/fio.h>
+#include <lib/string.h>
 /*
  * // Is the node a directory, and does it have a callback?
  * if ( (node->flags&0x7) == FS_DIRECTORY && node->readdir != 0 )

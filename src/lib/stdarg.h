@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include "generic.h"
 
 typedef __builtin_va_list       va_list;
 #define va_start(ap, X)         __builtin_va_start(ap, X)

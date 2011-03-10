@@ -19,8 +19,8 @@
  */
 
 #include "interface.h"
-#include <common/log.h>
-#include <common/generic.h>
+#include <lib/log.h>
+#include <lib/generic.h>
 #include <interrupts/idt.h>
 
 interruptHandler_t interruptHandlers[256];

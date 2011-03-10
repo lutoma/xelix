@@ -19,7 +19,6 @@
 
 #include "interface.h"
 
-#include <common/log.h>
 #include <memory/kmalloc.h>
 
 const uint32 columns = 80; // on-screen character grid

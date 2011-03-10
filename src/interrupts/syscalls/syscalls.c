@@ -17,6 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <lib/generic.h>
 #include <interrupts/interface.h>
 
 // handles a syscall. The parameter gives the processor status for the systemcall

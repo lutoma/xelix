@@ -21,7 +21,7 @@
 
 #include "scheduler.h"
 #include <memory/kmalloc.h>
-#include <common/log.h>
+#include <lib/log.h>
 #include <interrupts/interface.h>
 
 // Start process. The name parameter is here for future use.

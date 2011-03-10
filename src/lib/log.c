@@ -17,8 +17,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/log.h>
-#include <common/string.h>
+#include "log.h"
+#include "string.h"
 #include <memory/kmalloc.h>
 
 int logsEnabled;

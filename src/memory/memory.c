@@ -17,10 +17,9 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/log.h>
+#include <lib/log.h>
 #include <memory/interface.h>
 #include <memory/segmentation/gdt.h>
-#include <common/generic.h>
 
 void memory_init_preprotected()
 {

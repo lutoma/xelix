@@ -1,7 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+/* Copyright © 2010, 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,15 +18,24 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include "generic.h"
 
-// String functions (similiar to the string.h C standard library)
-int strcmp(const char *s1, const char *s2);
-char* strcat(char *dest, const char *src);
-char* strcpy(char *dest, const char *src);
-char* strncpy(char *dst, const char *src, size_t n);
-size_t strlen(const char * str);
-char* substr(char* src, size_t start, size_t len);
-char* strtok(char *s, const char *delim);
-char* strtok_r(char *s, const char *delim, char **last);
-int find_substr(char *listPointer, char *itemPointer);
+#include <filesystems/vfs.h>
+
+typedef struct FILE
+{
+	const char* path;
+	const char* modes;
+	fsNode_t* node;
+	uint32 position;
+} FILE;
+
+FILE *fopen(const char* path, const char* mode);
+//FILE *freopen(const char *path, const char *mode, FILE *fp);
+int fclose(FILE* fp);
+char fgetc(FILE* fp);
+size_t fwrite (const void *array, size_t size, size_t count, FILE *stream);
+int fputc(int c, FILE *fp);
+void rewind(FILE *fp);
+long ftell(FILE* fp);
+int scandir(const char* dirp, struct dirent*** namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **));

@@ -20,7 +20,7 @@
 #include "interface.h"
 
 #include "keymaps.h"
-#include <common/log.h>
+#include <lib/log.h>
 #include <interrupts/interface.h>
 #include <filesystems/vfs.h>
 

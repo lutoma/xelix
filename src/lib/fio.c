@@ -19,10 +19,10 @@
 
 #include "fio.h"
 
-#include <common/log.h>
+#include "log.h"
 #include <filesystems/vfs.h>
 #include <memory/kmalloc.h>
-#include <common/string.h>
+#include "string.h"
 
 // Caution: Some^W most of those functions are untested, beware of the bugs ;)
 

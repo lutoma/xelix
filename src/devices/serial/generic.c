@@ -17,12 +17,12 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include <lib/generic.h>
 #ifdef WITH_SERIAL
 #include "interface.h"
 
-#include <common/log.h>
-#include <common/datetime.h>
+#include <lib/log.h>
+#include <lib/datetime.h>
 
 #define PORT 0x3f8
 #define CAN_RECV (inb(PORT+5) & 1)

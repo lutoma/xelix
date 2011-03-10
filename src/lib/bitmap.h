@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include "generic.h"
 
 typedef struct {
 	uint32 numbits;

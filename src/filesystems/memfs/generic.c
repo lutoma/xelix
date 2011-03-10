@@ -20,7 +20,7 @@
 #include "interface.h"
 
 #include <filesystems/vfs.h>
-#include <common/string.h>
+#include <lib/string.h>
 #include <memory/kmalloc.h>
 
 typedef struct

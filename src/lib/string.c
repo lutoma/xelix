@@ -20,7 +20,6 @@
 
 #include "string.h"
 
-#include <common/string.h>
 #include <memory/kmalloc.h>
 
 // Return the length of a string

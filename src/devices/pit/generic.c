@@ -19,7 +19,7 @@
 
 #include "interface.h"
 
-#include <common/log.h>
+#include <lib/log.h>
 #include <interrupts/interface.h>
 
 uint64 tick = 0;

@@ -20,7 +20,7 @@
 #include "interface.h"
 
 #include "fault.h"
-#include <common/log.h>
+#include <lib/log.h>
 
 // Check if CPU is running in protected mode.
 static bool isProtected()

@@ -19,7 +19,7 @@
 
 #include "datetime.h"
 
-#include <common/string.h>
+#include "string.h"
 #include <devices/pit/interface.h>
 
 // Get the current day, month, year, time etc.

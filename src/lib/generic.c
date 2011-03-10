@@ -18,9 +18,10 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
-#include <common/log.h>
-#include <common/string.h>
+#include "generic.h"
+
+#include "log.h"
+#include "string.h"
 #include <memory/kmalloc.h>
 #include <devices/serial/interface.h>
 #include <devices/display/interface.h>

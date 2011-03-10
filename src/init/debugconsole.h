@@ -1,4 +1,4 @@
 #pragma once
-#include <common/generic.h>
+#include <lib/generic.h>
 
 void debugconsole_init();

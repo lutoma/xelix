@@ -1,6 +1,7 @@
 #pragma once
 
-/* Copyright © 2010 Lukas Martini
+/* Copyright © 2010 Lukas Martini, Fritz Grimpen
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,8 +19,21 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include "generic.h"
 
-void log(const char *fmt, ...);
-void setLogLevel(int level);
-void log_init();
+// Standard configuration - May be overwritten by user.
+
+#pragma once
+
+#define PIT_RATE 500
+#define DEBUGCONSOLE_PROMPT "\n> "
+#define LOG_SAVE
+#define LOG_MAXSIZE 10000
+#define MEMORY_MAX_KMEM 0xBFFFFF
+#define BUGFIX_MAIL "lukas.martini@unionhost.de"
+#define IRC_CHANNEL "#xelix at irc.libertirc.net"
+
+#define WITH_SERIAL true
+#define WITH_DEBUGCONSOLE true
+#define WITH_SPEAKER true
+#define WITH_MEMFS true

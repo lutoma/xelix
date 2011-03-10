@@ -21,8 +21,8 @@
 
 #include "kmalloc.h"
 
-#include <common/log.h>
-#include <common/multiboot.h>
+#include <lib/log.h>
+#include <lib/multiboot.h>
 
 static uint32 memoryPosition;
 #define pagingEnabled false // FIXME

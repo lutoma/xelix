@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include <lib/generic.h>
 
 // A generic keymap for qwerty keyboards. To be replaced later by files.
 char keymap_en[512] = {

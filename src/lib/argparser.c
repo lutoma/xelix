@@ -19,8 +19,8 @@
 
 #include "argparser.h"
 
-#include <common/log.h>
-#include <common/string.h>
+#include "log.h"
+#include "string.h"
 #include <memory/kmalloc.h>
 
 char** arguments = NULL;

@@ -20,7 +20,7 @@
 
 #include "bitmap.h"
 
-#include <common/log.h>
+#include "log.h"
 #include <memory/kmalloc.h>
 
 /* returns the index of bitmap->bits[] or the offset in the

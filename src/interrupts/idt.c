@@ -19,7 +19,7 @@
 
 #include "idt.h"
 
-#include <common/log.h>
+#include <lib/log.h>
 
 // A struct describing an interrupt gate.
 typedef struct

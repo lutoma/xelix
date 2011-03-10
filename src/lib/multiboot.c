@@ -19,8 +19,8 @@
 
 #include "multiboot.h"
 
-#include <common/log.h>
-#include <common/string.h>
+#include "log.h"
+#include "string.h"
 
 static void printInfo(uint32 var, char* varname, char type)
 {

@@ -19,7 +19,7 @@
 
 #include "fault.h"
 
-#include <common/log.h>
+#include <lib/log.h>
 #include <interrupts/interface.h>
 
 static char* errorDescriptions[] = 

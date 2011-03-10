@@ -17,12 +17,12 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <common/generic.h>
+#include <lib/generic.h>
 #ifdef WITH_SPEAKER
 #include "interface.h"
 
-#include <common/log.h>
-#include <common/datetime.h>
+#include <lib/log.h>
+#include <lib/datetime.h>
 
 void speaker_on()
 {

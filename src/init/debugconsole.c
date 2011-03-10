@@ -20,14 +20,14 @@
 #include "debugconsole.h"
 
 #ifdef WITH_DEBUGCONSOLE
-#include <common/log.h>
-#include <common/string.h>
+#include <lib/log.h>
+#include <lib/string.h>
 #include <memory/kmalloc.h>
 #include <devices/display/interface.h>
 #include <devices/keyboard/interface.h>
-#include <common/datetime.h>
+#include <lib/datetime.h>
 #include <filesystems/vfs.h>
-#include <common/fio.h>
+#include <lib/fio.h>
 #include <tasks/scheduler.h>
 
 uint32 cursorPosition;
