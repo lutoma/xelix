@@ -25,24 +25,6 @@
 
 interruptHandler_t interruptHandlers[256];
 
-void interrupts_callback(registers_t regs)
-{
-	// That might look useless, but trust me, it isn't.
-	static bool inInterrupt = false;
-	
-	if(inInterrupt)
-		return; // Drop interrupt
-	inInterrupt = true;
-	
-	if (interruptHandlers[regs.int_no] != 0)
-	{
-		interruptHandler_t handler = interruptHandlers[regs.int_no];
-		handler(regs);
-	}
-	
-	inInterrupt = false;
-}
-
 // Send EOI (end of interrupt) signals to the PICs.
 static void sendEOI(bool slave)
 {
@@ -52,15 +34,28 @@ static void sendEOI(bool slave)
 		outb(0x20, 0x20);
 }
 
-// This gets called from our ASM irq handler stub.
-void irq_handler(registers_t regs)
+void interrupts_callback(registers_t regs)
 {
+	// That might look useless, but trust me, it isn't.
+	static bool inInterrupt = false;
+	
+	if(inInterrupt)
+		return; // Drop interrupt
+	inInterrupt = true;
+
 	// If this interrupt involved the slave, send a EOI to the slave.
 	if (regs.int_no >= 40)
 		sendEOI(true);
 
 	sendEOI(false); // Master
-	interrupts_callback(regs);
+	
+	if (interruptHandlers[regs.int_no] != 0)
+	{
+		interruptHandler_t handler = interruptHandlers[regs.int_no];
+		handler(regs);
+	}
+	
+	inInterrupt = false;
 }
 
 void interrupts_registerHandler(uint8 n, interruptHandler_t handler)

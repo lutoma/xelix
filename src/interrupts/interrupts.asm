@@ -1,5 +1,6 @@
 ; interrupts.asm: Hardware part of interrupt handling
 ; Copyright © 2010 Christoph Sünderhauf
+; Copyright © 2011 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -18,7 +19,6 @@
 
 
 [GLOBAL idt_flush]	 ; Allows the C code to call idt_flush().
-[GLOBAL irq0]
 
 idt_flush:
 	mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
@@ -31,7 +31,7 @@ idt_flush:
 		cli
 		push byte 0
 		push byte %1
-		jmp isr_common_stub
+		jmp commonStub
 %endmacro
 
 %macro ISR_ERRCODE 1
@@ -39,18 +39,18 @@ idt_flush:
 	isr%1:
 		cli
 		push byte %1
-		jmp isr_common_stub
+		jmp commonStub
 %endmacro
 
 ; This macro creates a stub for an IRQ - the first parameter is
 ; the IRQ number, the second is the ISR number it is remapped to.
 %macro IRQ 2
-	global irq%1
+	[GLOBAL irq%1]
 	irq%1:
 		cli
 		push byte 0
 		push byte %2
-		jmp irq_common_stub
+		jmp commonStub
 %endmacro
 
 ISR_NOERRCODE 0
@@ -86,15 +86,7 @@ ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
 
-irq0:
-	cli
-	call scheduler_select
-	push byte 0
-	push byte 32
-	jmp irq_common_stub
-
-[EXTERN scheduler_select]
-
+IRQ	0,	 32
 IRQ	1,	 33
 IRQ	2,	 34
 IRQ	3,	 35
@@ -111,7 +103,6 @@ IRQ  13,	 45
 IRQ  14,	 46
 IRQ  15,	 47
 
-
 ; syscalls
 global isr81
 extern syscalls_handler_stub
@@ -121,10 +112,10 @@ isr81:
 ; In interrupts.c
 [EXTERN interrupts_callback]
 
-; This is our common ISR stub. It saves the processor state, sets
-; up for kernel mode segments, calls the C-level fault handler,
+; This is our common Interrupt stub. It saves the processor state, sets
+; up for kernel mode segments, calls the C-level handler,
 ; and finally restores the stack frame.
-isr_common_stub:
+commonStub:
 	pusha			; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
 	mov ax, ds		; Lower 16-bits of eax = ds.
@@ -137,37 +128,6 @@ isr_common_stub:
 	mov gs, ax
 
 	call interrupts_callback
-
-	pop eax			; reload the original data segment descriptor
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-
-	popa			; Pops edi,esi,ebp...
-	add esp, 8		; Cleans up the pushed error code and pushed ISR number
-	sti
-	iret			; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
-
-; In irq.c
-[EXTERN irq_handler]
-
-; This is our common IRQ stub. It saves the processor state, sets
-; up for kernel mode segments, calls the C-level fault handler,
-; and finally restores the stack frame. 
-irq_common_stub:
-	pusha			; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-
-	mov ax, ds		; Lower 16-bits of eax = ds.
-	push eax		; save the data segment descriptor
-
-	mov ax, 0x10	; load the kernel data segment descriptor
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-
-	call irq_handler
 
 	pop ebx			; reload the original data segment descriptor
 	mov ds, bx
