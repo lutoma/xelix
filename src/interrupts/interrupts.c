@@ -1,5 +1,6 @@
 /* interrupts.c: Initialization of and interface to interrupts.
  * Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,7 +25,16 @@
 
 interruptHandler_t interruptHandlers[256];
 
-void interrupt_callback(registers_t regs)
+// Send EOI (end of interrupt) signals to the PICs.
+static void sendEOI(bool slave)
+{
+	if (slave)
+		outb(0xA0, 0x20);
+	else
+		outb(0x20, 0x20);
+}
+
+void interrupts_callback(registers_t regs)
 {
 	// That might look useless, but trust me, it isn't.
 	static bool inInterrupt = false;
@@ -32,6 +42,12 @@ void interrupt_callback(registers_t regs)
 	if(inInterrupt)
 		return; // Drop interrupt
 	inInterrupt = true;
+
+	// If this interrupt involved the slave, send a EOI to the slave.
+	if (regs.int_no >= 40)
+		sendEOI(true);
+
+	sendEOI(false); // Master
 	
 	if (interruptHandlers[regs.int_no] != 0)
 	{
@@ -42,7 +58,7 @@ void interrupt_callback(registers_t regs)
 	inInterrupt = false;
 }
 
-void interrupt_registerHandler(uint8 n, interruptHandler_t handler)
+void interrupts_registerHandler(uint8 n, interruptHandler_t handler)
 {
 	interruptHandlers[n] = handler;
 	log("interrupts: Registered IRQ handler for %d.\n", n);
@@ -53,6 +69,6 @@ void interrupts_init()
 	idt_init();
 
 	// set all interruptHandlers to zero
-	memset(interruptHandlers, 0, 256*sizeof(interruptHandler_t));
+	memset(interruptHandlers, NULL, 256*sizeof(interruptHandler_t));
 	log("interrupts: Initialized\n");
 }
