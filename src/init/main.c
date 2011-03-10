@@ -20,6 +20,7 @@
 #include <buildinfo.h>
 #include <common/multiboot.h>
 #include <common/generic.h>
+#include "init.h"
 #include <common/log.h>
 #include <common/datetime.h>
 #include <common/string.h>
@@ -79,39 +80,38 @@ static void checkIntLenghts()
 
 void kmain(multibootHeader_t *mbootPointer)
 {
-	// descriptor tables have to be created first
-	memory_init_preprotected(); // gdt
-	INIT(interrupts); // idt
+	memory_init_preprotected();
+	init(interrupts);
 
-	INIT(kmalloc);
-	INIT(display);
-	if(WITH_SERIAL) INIT(serial);
-	INIT(log);
+	init(kmalloc);
+	init(display);
+	if(WITH_SERIAL) init(serial);
+	init(log);
 	
 	compilerInfo();
 	checkIntLenghts();
-	INIT(multiboot, mbootPointer);
+	init(multiboot, mbootPointer);
 	multiboot_printInfo(mbootPointer);
 
-	INIT(argparser, (char*)mbootPointer->cmdLine);
+	init(argparser, (char*)mbootPointer->cmdLine);
 
 	if(mbootPointer->bootLoaderName != NULL && find_substr((char*)mbootPointer->bootLoaderName, "GNU GRUB") != -1)
 		init_haveGrub = true;
 	else
 		log("init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
 	
-	INIT(pit, PIT_RATE);
-	INIT(cpu);
+	init(pit, PIT_RATE);
+	init(cpu);
 	memory_init_postprotected();
 
 	if(mbootPointer->modsCount > 0)
 	{
-		INIT(vfs, (char**)mbootPointer->modsAddr);
+		init(vfs, (char**)mbootPointer->modsAddr);
 	}	else
 		PANIC("Could not load initrd (mbootPointer->modsCount <= 0)");
 
-	INIT(keyboard);
-	if(WITH_DEBUGCONSOLE) INIT(debugconsole);
+	init(keyboard);
+	if(WITH_DEBUGCONSOLE) init(debugconsole);
 
 	asm("sti");
 	/* Just in case they're disabled for whatever reason.
