@@ -111,7 +111,6 @@ void kmain(multibootHeader_t *mbootPointer)
 		panic("Could not load initrd (mbootPointer->modsCount <= 0)");
 
 	init(keyboard);
-	panic("testtest");
 	if(WITH_DEBUGCONSOLE) init(debugconsole);
 
 	asm("sti");
