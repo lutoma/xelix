@@ -71,3 +71,5 @@ runqemunox: xelix.bin
 	
 runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
+count:
+	find src -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 
