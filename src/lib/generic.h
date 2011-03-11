@@ -77,14 +77,12 @@ void vprintf(const char *fmt, void **arg);
 void printf(const char *fmt, ...);
 void clear(void);
 
-// to automatically have file names and line numbers
-//#define WARN(msg) warn(msg, __FILE__, __LINE__);
-#define PANIC(...) panic( __FILE__, __LINE__, 0, __VA_ARGS__);
-#define ASSERT(b) ((b) ? (void)0 : panic(#b, __FILE__, __LINE__, 1))
+// Don't use this one, use the macros below.
+void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...);
 
-// Don't use them, use the macros above.
-void panic(char *file, uint32 line, int assertionf, const char *reason, ...);
-void assert(int r);
+// to automatically have file names and line numbers
+#define panic(...) panic_raw( __FILE__, __LINE__, 0, __VA_ARGS__);
+#define assert(b) ((b) ? (void)0 : panic_raw(#b, __FILE__, __LINE__, 1))
 
 // Misc
 int (memcmp)(const void *s1, const void *s2, size_t n);

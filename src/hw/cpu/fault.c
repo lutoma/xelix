@@ -48,9 +48,9 @@ static char* errorDescriptions[] =
 static void faultHandler(registers_t regs)
 {
 	if(regs.int_no > 18)
-		PANIC("Unkown CPU error %d", regs.int_no);
+		panic("Unkown CPU error %d", regs.int_no);
 	if(regs.int_no <= 18) // Can't use else here because of macro
-		PANIC("CPU error %d (%s)", regs.int_no, errorDescriptions[regs.int_no]);
+		panic("CPU error %d (%s)", regs.int_no, errorDescriptions[regs.int_no]);
 }
 
 void cpu_initFaultHandler()

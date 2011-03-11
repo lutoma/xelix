@@ -35,7 +35,7 @@ static bool isProtected()
 // Todo: Implement it
 static void setProtected()
 {
-	PANIC("Can't [yet] switch to protected mode. Use a bootloader which automatically enables protected mode such as GNU GRUB.\n");
+	panic("Can't [yet] switch to protected mode. Use a bootloader which automatically enables protected mode such as GNU GRUB.\n");
 	// log("cpu: Switched to protected mode.\n");
 }
 

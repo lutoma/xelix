@@ -84,7 +84,7 @@ fsNode_t *memfs_init(uint32 location)
 	memfsHeaders = (memfsFileHeader_t *) (location+sizeof(memfsHeader_t));
 
 	if(memfsHeaders->magic != 0xBF)
-		PANIC("Corrupt/invalid initrd (Magic != 0xBF)");
+		panic("Corrupt/invalid initrd (Magic != 0xBF)");
 
 	// Initialise the root directory.
 	vfs_rootNodeCount = memfsHeader->fileCount;

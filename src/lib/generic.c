@@ -169,15 +169,8 @@ void clear(void)
 	display_clear();
 }
 
-// Warn. Use the WARN() macro that inserts the line.
-void warn(char *reason, char *file, uint32 line)
-{
-	asm volatile("cli"); // Disable interrupts.
-	log("\n\nWARNING: %s in %s at line %d", reason, file, line);
-}
-
 // Panic. Use the PANIC() macro that inserts the line.
-void panic(char *file, uint32 line, int assertionf, const char *reason, ...)
+void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
 {
 	// Disable interrupts.
 	asm volatile("cli");

@@ -66,7 +66,7 @@ void argparser_init(char* commandLine)
 	char* two = kmalloc(size);
 
 	if(one == NULL || two == NULL)
-		PANIC("Could not allocate ;_;\n");
+		panic("Unable to allocate!\n");
 
 	strcpy(one, commandLine);
 	strcpy(two, commandLine);

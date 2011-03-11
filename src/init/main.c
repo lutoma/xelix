@@ -66,15 +66,15 @@ static void compilerInfo()
 static void checkIntLenghts()
 {
 	log("init: Checking length of uint8... ");
-	ASSERT(sizeof(uint8) == 1);
+	assert(sizeof(uint8) == 1);
 	log("Right\n");
 	
 	log("init: Checking length of uint16... ");
-	ASSERT(sizeof(uint16) == 2);
+	assert(sizeof(uint16) == 2);
 	log("Right\n");
 	
 	log("init: Checking length of uint32... ");
-	ASSERT(sizeof(uint32) == 4);
+	assert(sizeof(uint32) == 4);
 	log("Right\n");
 }
 
@@ -108,9 +108,10 @@ void kmain(multibootHeader_t *mbootPointer)
 	{
 		init(vfs, (char**)mbootPointer->modsAddr);
 	}	else
-		PANIC("Could not load initrd (mbootPointer->modsCount <= 0)");
+		panic("Could not load initrd (mbootPointer->modsCount <= 0)");
 
 	init(keyboard);
+	panic("testtest");
 	if(WITH_DEBUGCONSOLE) init(debugconsole);
 
 	asm("sti");
