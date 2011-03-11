@@ -1,5 +1,5 @@
-/* serial.c: Driver for most serial ports
- * Copyright © 2010 Benjamin Richter
+/* generic.c: Support for builtin PC speakers
+ * Copyright © 2010 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,43 +18,36 @@
  */
 
 #include <lib/generic.h>
-#ifdef WITH_SERIAL
-#include "interface.h"
+#ifdef WITH_SPEAKER
+#include "speaker.h"
 
 #include <lib/log.h>
 #include <lib/datetime.h>
 
-#define PORT 0x3f8
-#define CAN_RECV (inb(PORT+5) & 1)
-#define CAN_SEND (inb(PORT+5) & 32)
-
-static void send(char c)
+void speaker_on()
 {
-	while (!CAN_SEND) {};
-	outb(PORT, c);
+	outb(0x61,inb(0x61) | 3);
 }
 
-char serial_recv()
+void speaker_off()
 {
-	while (!CAN_RECV)
-		sleep(0.0001);
-
-	return inb(PORT);
+	outb(0x61,inb(0x61) &~3);
 }
 
-void serial_print(char* s)
+void speaker_setFrequency(uint8 frequency)
 {
-	while(*s != '\0')
-		send(*(s++));
+	uint8 divisor;
+	divisor = 1193180L/frequency;
+	outb(0x43,0xB6);
+	outb(0x42,divisor&0xFF);
+	outb(0x42,divisor >> 8);
 }
 
-void serial_init()
+void speaker_beep(uint8 frequency, time_t seconds)
 {
-	// from http://wiki.osdev.org/Serial_Ports
-	// set up with divisor = 3 and 8 data bits, no parity, one stop bit
-
-	outb(PORT+1, 0x00); outb(PORT+3, 0x80); outb(PORT+1, 0x00); outb(PORT+0, 0x03);
-	outb(PORT+3, 0x03); outb(PORT+2, 0xC7); outb(PORT+4, 0x0B);
+	speaker_setFrequency(frequency);
+	speaker_on();
+	sleep(seconds);
+	speaker_off();
 }
-
 #endif

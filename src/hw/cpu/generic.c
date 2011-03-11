@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "interface.h"
+#include <hw/cpu.h>
 
 #include "fault.h"
 #include <lib/log.h>

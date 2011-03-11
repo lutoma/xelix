@@ -20,7 +20,7 @@
 #include "datetime.h"
 
 #include "string.h"
-#include <devices/pit/interface.h>
+#include <hw/pit.h>
 
 // Get the current day, month, year, time etc.
 int date(char dateStr)

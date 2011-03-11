@@ -23,8 +23,8 @@
 #include <lib/log.h>
 #include <lib/string.h>
 #include <memory/kmalloc.h>
-#include <devices/display/interface.h>
-#include <devices/keyboard/interface.h>
+#include <hw/display.h>
+#include <hw/keyboard.h>
 #include <lib/datetime.h>
 #include <filesystems/vfs.h>
 #include <lib/fio.h>

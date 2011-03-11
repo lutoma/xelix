@@ -23,9 +23,9 @@
 #include "log.h"
 #include "string.h"
 #include <memory/kmalloc.h>
-#include <devices/serial/interface.h>
-#include <devices/display/interface.h>
-#include <devices/pit/interface.h>
+#include <hw/serial.h>
+#include <hw/display.h>
+#include <hw/pit.h>
 #include <tasks/scheduler.h>
 
 // Memset function. Fills memory with something.

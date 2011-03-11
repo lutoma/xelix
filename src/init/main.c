@@ -24,18 +24,18 @@
 #include <lib/log.h>
 #include <lib/datetime.h>
 #include <lib/string.h>
-#include <devices/display/interface.h>
+#include <hw/display.h>
 #ifdef WITH_SERIAL
-#include <devices/serial/interface.h>
+#include <hw/serial.h>
 #endif
-#include <devices/cpu/interface.h>
-#include <devices/keyboard/interface.h>
+#include <hw/cpu.h>
+#include <hw/keyboard.h>
 #include <memory/interface.h>
 #include <interrupts/interface.h>
-#include <devices/pit/interface.h>
+#include <hw/pit.h>
 #include <memory/kmalloc.h>
 #ifdef WITH_SPEAKER
-#include <devices/speaker/interface.h>
+#include <hw/speaker.h>
 #endif
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
