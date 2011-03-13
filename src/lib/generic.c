@@ -27,6 +27,7 @@
 #include <hw/display.h>
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
+#include <interrupts/interface.h>
 
 // Memset function. Fills memory with something.
 void memset(void* ptr, uint8 fill, uint32 size)
@@ -168,14 +169,15 @@ void printf(const char *fmt, ...) {
  */
 void freeze(void)
 {
-	asm("cli; hlt;");
+	interrupts_disable();
+	asm volatile("hlt;");
 }
 
 // Panic. Use the PANIC() macro that inserts the line.
 void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
 {
 	// Disable interrupts.
-	asm volatile("cli");
+	interrupts_disable();
 
 	printf("\n");
 	printf("%%Kernel Panic!%%\n\n", 0x04);
@@ -223,9 +225,9 @@ int (memcmp)(const void *s1, const void *s2, size_t n)
 // Reboot the computer
 void reboot()
 {
+	interrupts_disable();
 	unsigned char good = 0x02;
 	log("Going to reboot NOW!");
-	asm volatile("cli"); //We don't want interrupts here
 	while ((good & 0x02) != 0)
 	good = inb(0x64);
 	outb(0x64, 0xFE);

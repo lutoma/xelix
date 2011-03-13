@@ -51,6 +51,9 @@ void interrupts_registerHandler(uint8 n, interruptHandler_t handler);
 // Legacy
 #define interrupt_registerHandler interrupts_registerHandler
 
+#define interrupts_disable() asm volatile("cli")
+
+
 // for internal use only!
 void interrupt_callback(registers_t regs);
 void interrupts_init();
