@@ -1,5 +1,9 @@
-/* generic.c: A generic & simple keyboard driver
- * Copyright © 2010 Christoph Sünderhauf
+/* generic.c: A generic keyboard driver. Should work for every PS2
+ * keyboard and for most USB keyboards (Depends on BIOS / Legacy
+ * support)
+ * 
+ * Copyright © 2010 Christoph Sünderhauf, Lukas Martini
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,6 +27,12 @@
 #include <lib/log.h>
 #include <interrupts/interface.h>
 #include <filesystems/vfs.h>
+#include <lib/datetime.h>
+#include <hw/display.h>
+#include <hw/pit.h>
+
+// Wait until the command buffer is empty, then send.
+#define send(C) while ((inb(0x64) & 0x2)) {}; outb(0x60, C);
 
 // Current modifier keys
 struct {
@@ -120,13 +130,76 @@ void keyboard_leaveFocus()
 	focusedFunction = NULL;
 }
 
+void keyboard_setLED(int num, bool state)
+{
+	
+}
+
+
+static void flush()
+{
+	log("keyboard: Flushing input buffer.\n");
+	while(inb(0x64) & 1)
+		// read scancode
+		log("keyboard: flush: Dropping scancode 0x%x.\n", inb(0x60));
+}
+
+// Identify keyboard. You should _not_ call this after initialization.
+static char* identify()
+{
+	/* XT    : Timeout (NOT Port[0x64].Bit[6] = true)
+	 * AT    : 0xFA
+	 * MF-II : 0xFA 0xAB 0x41
+	 */
+
+	send(0xF2);
+
+	// Wait for scancodes
+	uint64 startTick = pit_getTickNum();
+	while(true)
+	{
+		if(inb(0x64) & 1)
+			break;
+		
+		uint64 nowTick = pit_getTickNum();
+		
+		// Still no result after 0.5 seconds
+		if((startTick - nowTick) / PIT_RATE >= 0.5)
+			return "XT";
+	}
+	
+	uint8 one = inb(0x60);
+	uint8 two = inb(0x60);
+	uint8 three = inb(0x60);
+	
+	log("keyboard: identify: one = 0x%x, two = 0x%x, three = 0x%x.\n", one, two, three);
+
+	switch(one)
+	{
+		case 0xFA:
+			if(two == 0xAB && three == 0x41)
+				return "MF-II";
+			else
+				return "AT";
+	}
+	
+	return "Unknown";
+}
+
 void keyboard_init()
 {
-	currentKeymap = &keymap_en;
-	interrupt_registerHandler(IRQ1, &handler);
+	/* flush input buffer (maybe the user pressed keys before we handled
+	 * irqs or set up the idt)
+	 */
+	flush();
+	char* ident = identify();
+	log("keyboard: Identified type: %s\n", ident);
 	
-	// flush input buffer (maybe the user pressed keys before we handle irqs or set up the idt)
-	// see also: http://forum.osdev.org/viewtopic.php?p=176249
-	while(inb(0x64) & 1)
-		inb(0x60); // read scancode
+	send(0xF6); // Set standard values
+	send(0xF4); // Activate
+	
+	flush(); // Flush again
+	
+	currentKeymap = (char*)&keymap_en;
+	interrupt_registerHandler(IRQ1, &handler);
 }
