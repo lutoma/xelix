@@ -122,4 +122,6 @@ void kmain(multibootHeader_t *mbootPointer)
 	 */
 	while(true)
 		asm("hlt"); // Wait until interrupt fires
+		
+	panic("Kernel returned.");
 }

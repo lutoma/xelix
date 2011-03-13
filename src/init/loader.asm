@@ -35,6 +35,11 @@ _start:
 	push ebx
 	call kmain
 
+
 	; Assume something really bad happened and therefore halt
+	; This should _never ever_ be executed and means things are really
+	; screwed. Therefore, no printf here, as normally, the kernel should
+	; catch things like that himself using the panic() at the end of
+	; kmain().
 	cli
 	hlt
