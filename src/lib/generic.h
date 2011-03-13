@@ -45,12 +45,15 @@ typedef signed char sint8;
 typedef long int time_t;
 typedef long int size_t;
 typedef uint8 byte;
-typedef int bool;
+
+typedef enum { false = 0 , true = 1 } bool;
 
 #define NULL  0
 #define EOF  -1
-#define true  1
-#define false 0
+
+//typedef int bool;
+//#define true  1
+//#define false 0
 
 bool schedulingEnabled;
 #define SPAWN_FUNCTION process_create
