@@ -75,7 +75,9 @@ char *itoa (int num, int base);
 void print(char* s);
 void vprintf(const char *fmt, void **arg);
 void printf(const char *fmt, ...);
-void clear(void);
+
+extern void display_clear();
+#define display_clear() clear()
 
 // Freeze
 void freeze(void);

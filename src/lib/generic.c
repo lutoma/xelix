@@ -163,12 +163,6 @@ void printf(const char *fmt, ...) {
 	vprintf(fmt, (void **)(&fmt) + 1);
 }
 
-// Clear screen
-void clear(void)
-{
-	display_clear();
-}
-
 /* Freezes the kernel (without possibility to unfreeze).
  * Mainly used for debugging when developing and in panic(_raw).
  */
