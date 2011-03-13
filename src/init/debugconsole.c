@@ -55,7 +55,7 @@ static void executeCommand(char *command)
 		struct dirent *node = 0;
 
 		int i;
-		for(i = 0; node = vfs_rootNode->readdir(vfs_rootNode, i); i++)
+		for(i = 0; (node = vfs_rootNode->readdir(vfs_rootNode, i)); i++)
 		{
 			fsNode_t *fsNode = vfs_rootNode->finddir(vfs_rootNode, node->name);
 			int color;
@@ -72,7 +72,7 @@ static void executeCommand(char *command)
 		
 		char buf[1000];
 		int offset = 0;
-		int sz = fsNode->read(fsNode, offset, 100, buf);
+		uint32 sz = fsNode->read(fsNode, offset, 100, buf);
 
 		while(sz != 0)
 		{

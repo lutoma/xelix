@@ -20,6 +20,7 @@
 #include <hw/display.h>
 
 #include <memory/kmalloc.h>
+#include <lib/log.h>
 
 const uint32 columns = 80; // on-screen character grid
 const uint32 rows = 25;
@@ -83,7 +84,7 @@ void display_init()
 	color = 0x07;
 	
 	uint32 bufferSize = columns * rows * 5; // number of characters in buffer
-	buffer = kmalloc(sizeof(uint16) * bufferSize);
+	buffer = (uint16*)kmalloc(sizeof(uint16) * bufferSize);
 	bufferEnd = buffer + bufferSize;
 
 	display_clear();

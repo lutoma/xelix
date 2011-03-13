@@ -22,31 +22,11 @@
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <lib/string.h>
-/*
- * // Is the node a directory, and does it have a callback?
- * if ( (node->flags&0x7) == FS_DIRECTORY && node->readdir != 0 )
-*/
-struct dirent dirent;
-// Read directory [aka get content]
-static struct dirent *dummyReadDir(fsNode_t* node, uint32 index)
-{
-	if(node != vfs_rootNode || index > 1) // Note: this is only hardcoded sh*t and should be replaced ASAP!
-		return 0;
-
-	strcpy(dirent.name, node->name);
-	dirent.name[strlen(node->name)] = 0; // Make sure the string is NULL-terminated.
-	dirent.ino = node->inode;
-	return &dirent;
-}
-
-static fsNode_t *dummyFindDir(fsNode_t *node, char *name)
-{
-	return 0;
-}
+#include <filesystems/memfs/interface.h>
 
 fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readdir_type_t readdir, finddir_type_t finddir, fsNode_t *ptr, fsNode_t *parent)
 {
-	fsNode_t* node = kmalloc(sizeof(fsNode_t));
+	fsNode_t* node = (fsNode_t*)kmalloc(sizeof(fsNode_t));
 	strcpy(node->name, name);
 	
 	if(parent == NULL)
@@ -77,6 +57,6 @@ fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, ui
 void vfs_init(char** modules)
 {
 	// Load the initrd
-	fsNode_t *bla = memfs_init(modules[0]);
+	memfs_init((char*)modules[0]);
 }
 

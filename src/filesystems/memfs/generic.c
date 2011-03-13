@@ -19,6 +19,7 @@
 
 #include "interface.h"
 
+#include <lib/log.h>
 #include <filesystems/vfs.h>
 #include <lib/string.h>
 #include <memory/kmalloc.h>

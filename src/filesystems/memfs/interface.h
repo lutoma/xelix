@@ -20,3 +20,5 @@
 
 #include <lib/generic.h>
 #include <filesystems/vfs.h>
+
+fsNode_t *memfs_init(uint32 location);
