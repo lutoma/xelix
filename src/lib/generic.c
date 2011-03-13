@@ -173,7 +173,7 @@ void freeze(void)
 	asm volatile("hlt;");
 }
 
-// Panic. Use the PANIC() macro that inserts the line.
+// Panic. Use the panic() macro that inserts the line.
 void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
 {
 	// Disable interrupts.
