@@ -169,13 +169,21 @@ void clear(void)
 	display_clear();
 }
 
+/* Freezes the kernel (without possibility to unfreeze).
+ * Mainly used for debugging when developing and in panic(_raw).
+ */
+void freeze(void)
+{
+	asm("cli; hlt;");
+}
+
 // Panic. Use the PANIC() macro that inserts the line.
 void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
 {
 	// Disable interrupts.
 	asm volatile("cli");
 
-	clear();
+	printf("\n");
 	printf("%%Kernel Panic!%%\n\n", 0x04);
 	printf("Reason: ");
 	
@@ -189,22 +197,19 @@ void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
 	printf("Last known PIT ticknum: %d\n", pit_getTickNum());
 	
 	task_t* task = scheduler_getCurrentTask();
+	/* Can't pass this 1:1 and let printf() do the (null) magic as we've
+	 * got a struct here and even tough task may be NULL, with the
+	 * offset we could get something printf then shows.
+	 */
+	
 	if(task != NULL)
-		printf("Last running task PID: %d\n\n", task->pid);
+		printf("Last running task PID: %d\n", task->pid);
 	else
-		printf("No task was running or multitasking was disabled.\n\n");
+		printf("Last running task PID: (null)\n");	
 	
-	printf("If you can, please tell us what you did when the kernel panic occured.\n");
-	printf("Please also make a (manual) screenshot / note the screen output.\n\n");
-	
-	printf("You can contact us via:\n");
-	printf("\tMail: %s",  BUGFIX_MAIL);
-	printf("\tIRC: %\n\n",  IRC_CHANNEL);
-	
-	printf("Thanks!\n\n");
-	
+	printf("test\n");
 	//Sleep forever
-	asm("hlt;");
+	freeze();
 }
 
 // A Memcmp
@@ -230,5 +235,5 @@ void reboot()
 	while ((good & 0x02) != 0)
 	good = inb(0x64);
 	outb(0x64, 0xFE);
-	//frz();
+	freeze();
 }

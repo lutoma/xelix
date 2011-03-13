@@ -77,6 +77,9 @@ void vprintf(const char *fmt, void **arg);
 void printf(const char *fmt, ...);
 void clear(void);
 
+// Freeze
+void freeze(void);
+
 // Don't use this one, use the macros below.
 void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...);
 
