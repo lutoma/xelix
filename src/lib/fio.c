@@ -27,18 +27,28 @@
 // Caution: Some^W most of those functions are untested, beware of the bugs ;)
 
 // Get Node from Path, return NULL if error
-fsNode_t* fio_pathToNode(const char* path)
+fsNode_t* fio_pathToNode(const char* origPath)
 {
 	// Split path and iterate trough the single parts, going from / upwards.
 	static char* pch;
-	pch = strtok(path, "/");	
+	char* sp;
+
+	/* We want a throw-away version of path as strtok is kind of
+	 * destructive and increases the pointer
+	 */
+	char* path = (char*)kmalloc((strlen(origPath) + 1) * sizeof(char));
+	memcpy(path, (char*)origPath, sizeof(path) +1);
+	
+	pch = strtok_r(path, "/", &sp);	
 	fsNode_t* node = vfs_rootNode->finddir(vfs_rootNode, pch);
 
 	while(pch != NULL && node != NULL)
 	{
-		pch = strtok(NULL, "/");
+		pch = strtok_r(NULL, "/", &sp);
 		node = node->finddir(node, pch);
 	}
+	
+	kfree(path);
 	return node;
 }
 
@@ -48,14 +58,14 @@ FILE* fopen(const char* path, const char* modes)
 	
 	fsNode_t* node = fio_pathToNode(path);
 	if(node == NULL)
-		return;
+		return NULL;
 
 	// Tell the driver of the device this file is on we want to open it
 	if(node->open != NULL)
 		if(node->open(node) == 1)
 			return NULL;
 
-	FILE* fp = kmalloc(sizeof(FILE));
+	FILE* fp = (FILE*)kmalloc(sizeof(FILE));
 	fp->path = path;
 	fp->modes = modes;
 	fp->node = node;
@@ -72,14 +82,15 @@ int fclose(FILE* fp)
 		fp->node->close(fp->node);
 
 	kfree(fp);
+	return 0;
 }
 
 char fgetc(FILE* fp)
 {
 	if(fp->node->read == NULL)
 		return EOF;
-	static char c[1];
-	size_t size = fp->node->read(fp->node, fp->position, 1, c);
+	static uint8* c;
+	fp->node->read(fp->node, fp->position, 1, c);
 	fp->position++;
 	return c[0];
 }
@@ -89,7 +100,7 @@ int fputc(int c, FILE* fp)
 	if(fp->node->write == NULL)
 		return 1;
 
-	static char s[1];
+	static uint8* s;
 	return fp->node->write(fp->node, fp->position, 1, s);
 }
 /*

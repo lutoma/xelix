@@ -43,7 +43,7 @@ memfsFileHeader_t *memfsHeaders; // The list of file headers.
 struct dirent dirent;
 
 // Read single file
-static uint32 memfs_read(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer)
+static size_t memfs_read(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer)
 {
 	memfsFileHeader_t header = memfsHeaders[node->inode];
 	if (offset > header.length)
@@ -72,8 +72,7 @@ static fsNode_t *memfs_findDir(fsNode_t *node, char *name)
 	for (i = 0; i < vfs_rootNodeCount; i++)
 		if(!strcmp(name, vfs_rootNodes[i]->name))
 			return vfs_rootNodes[i];
-	return 0;
-
+	return NULL;
 }
 
 fsNode_t *memfs_init(uint32 location)

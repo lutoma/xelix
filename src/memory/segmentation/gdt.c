@@ -20,6 +20,8 @@
 
 #include "gdt.h"
 
+#include <lib/log.h>
+
 /* For internal use only */
 typedef struct
 {

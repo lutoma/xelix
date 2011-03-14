@@ -57,6 +57,6 @@ fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, ui
 void vfs_init(char** modules)
 {
 	// Load the initrd
-	memfs_init((char*)modules[0]);
+	memfs_init((uint32)modules[0]);
 }
 

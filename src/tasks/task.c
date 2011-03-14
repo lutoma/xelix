@@ -24,7 +24,10 @@
 #include <lib/log.h>
 #include <interrupts/interface.h>
 
-// Start process. The name parameter is here for future use.
+/* Start process. The name parameter is here for future use.
+ * We drop all parameters, the ... is only here to suppress warnings.
+ * (And for future use)
+ */
 void process_create(char name[100], void function())
 {
 	log("process: Spawned new process with name %s\n", name);

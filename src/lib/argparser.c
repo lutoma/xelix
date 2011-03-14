@@ -37,7 +37,7 @@ bool initialized = false;
 char* argparser_get(char* key)
 {
 	if((int)arguments == NULL || (int)values == NULL || parts == 0 || !initialized)
-		return -2;
+		return (char*)-2;
 	
 	/* Fixme: Find a solution which doesn't require this code to iterate
 	 * through the whole array.
@@ -47,12 +47,12 @@ char* argparser_get(char* key)
 		if(!strcmp(key, arguments[i]))
 			return values[i];
 		
-	return -1;
+	return (char*)-1;
 }
 
 void argparser_init(char* commandLine)
 {
-	if(commandLine == NULL || *commandLine == "")
+	if((int)commandLine == NULL || strlen(commandLine) < 1)
 		return;
 
 	log("argparser: Starting to parse\n");
@@ -62,10 +62,10 @@ void argparser_init(char* commandLine)
 	 */
 	uint32 size = strlen(commandLine) * sizeof(char);
 
-	char* one = kmalloc(size);
-	char* two = kmalloc(size);
+	char* one = (char*)kmalloc(size);
+	char* two = (char*)kmalloc(size);
 
-	if(one == NULL || two == NULL)
+	if((int)one == NULL || (int)two == NULL)
 		panic("Unable to allocate!\n");
 
 	strcpy(one, commandLine);
@@ -84,8 +84,8 @@ void argparser_init(char* commandLine)
 	log("argparser: Counted %d parts\n", parts);
 
 	// Allocate arrays
-	arguments = kmalloc(parts * sizeof(uint32));
-	values = kmalloc(parts * sizeof(uint32));
+	arguments = (char**)kmalloc(parts * sizeof(uint32));
+	values = (char**)kmalloc(parts * sizeof(uint32));
 	
 	if((int)arguments == NULL || (int)values == NULL)
 	{

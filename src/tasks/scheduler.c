@@ -34,7 +34,7 @@ static uint32 highestPid = -1;
  */
 void scheduler_add()
 {
-	task_t* thisTask = kmalloc(sizeof(task_t));
+	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
 	thisTask->pid = ++highestPid;
 	thisTask->parent = 0; // Implement me

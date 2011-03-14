@@ -32,7 +32,6 @@
 
 uint32 cursorPosition;
 char currentLine[256] = "";
-static char* currentDir = "/";
 
 // Print the command line prompt.
 static void printPrompt()
@@ -70,9 +69,9 @@ static void executeCommand(char *command)
 	{
 		fsNode_t *fsNode = vfs_rootNode->finddir(vfs_rootNode, "makememfs.c");
 		
-		char buf[1000];
+		uint8* buf = (uint8*)kmalloc(sizeof(char) * 100);
 		int offset = 0;
-		uint32 sz = fsNode->read(fsNode, offset, 100, buf);
+		uint8 sz = fsNode->read(fsNode, offset, 100, buf);
 
 		while(sz != 0)
 		{

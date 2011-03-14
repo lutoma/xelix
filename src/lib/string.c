@@ -64,7 +64,7 @@ char* strcat(char *dest, const char *src)
 // Return part of string
 char* substr(char* src, size_t start, size_t len)
 {
-	char *dest = kmalloc(len+1);
+	char *dest = (char*)kmalloc(len+1);
 	if (dest) {
 		memcpy(dest, src+start, len);
 		dest[len] = '\0';
