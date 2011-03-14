@@ -22,11 +22,6 @@
 
 // Making ponies fly.
 #define init(C, ...) {\
-	log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (%%", 0x03, __LINE__); \
-	if(schedulingEnabled) log("%%" SPAWN_FUNCTION_N ")%%\n", 0x03); \
-	else log("%%plain)%%\n", 0x03); \
-	if(schedulingEnabled) SPAWN_FUNCTION (#C "_AutoInit", & C ## _init); \
-	else C ## _init(__VA_ARGS__); \
-	log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (%%", 0x03, __LINE__); \
-	if(schedulingEnabled) log("%%" SPAWN_FUNCTION_N ")%%\n", 0x03); \
-	else log("%%plain)%%\n", 0x03); }
+	log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__); \
+	C ## _init(__VA_ARGS__); \
+	log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__); \
