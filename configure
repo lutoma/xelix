@@ -34,7 +34,7 @@ cfiles.sort()
 hfiles.sort()
 asmfiles.sort()
 
-makefile.write("xelix.bin: buildinfo.h")
+makefile.write("xelix.bin:")
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o")
 	
