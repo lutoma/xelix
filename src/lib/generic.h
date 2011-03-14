@@ -90,7 +90,7 @@ void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
 
 // to automatically have file names and line numbers
 #define panic(...) panic_raw( __FILE__, __LINE__, 0, __VA_ARGS__);
-#define assert(b) ((b) ? (void)0 : panic_raw(#b, __FILE__, __LINE__, 1))
+#define assert(b) ((b) ? (void)0 : panic_raw(__FILE__, __LINE__, 1, #b))
 
 // Misc
 int (memcmp)(const void *s1, const void *s2, size_t n);
