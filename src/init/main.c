@@ -78,8 +78,9 @@ static void checkIntLenghts()
 	log("Right\n");
 }
 
-void kmain(multibootHeader_t *mbootPointer)
+void kmain(multiboot_info_t *mbootPointer)
 {
+	init(multiboot, mbootPointer);
 	memory_init_preprotected();
 	init(interrupts);
 
@@ -90,7 +91,6 @@ void kmain(multibootHeader_t *mbootPointer)
 	
 	compilerInfo();
 	checkIntLenghts();
-	init(multiboot, mbootPointer);
 	multiboot_printInfo(mbootPointer);
 
 	init(argparser, (char*)mbootPointer->cmdLine);
@@ -104,11 +104,11 @@ void kmain(multibootHeader_t *mbootPointer)
 	init(cpu);
 	memory_init_postprotected();
 
-	if(mbootPointer->modsCount > 0)
-	{
-		init(vfs, (char**)mbootPointer->modsAddr);
-	}	else
-		panic("Could not load initrd (mbootPointer->modsCount <= 0)");
+	if(mbootPointer->modsCount < 1)
+		panic("Could not load initrd (multiboot_info->modsCount < 1).");
+	
+	
+	init(vfs, mbootPointer->modsAddr[0]);
 
 	init(keyboard);
 	if(WITH_DEBUGCONSOLE) init(debugconsole);

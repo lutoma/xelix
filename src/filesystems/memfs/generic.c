@@ -75,13 +75,14 @@ static fsNode_t *memfs_findDir(fsNode_t *node, char *name)
 	return NULL;
 }
 
-fsNode_t *memfs_init(uint32 location)
+fsNode_t *memfs_init(multiboot_module_t mod)
 {
-	log("memfs: Initializing at 0x%x\n", location);
+	
+	log("memfs: Initializing at 0x%x\n", mod.start);
 
 	// Initialise the main and file header pointers and populate the root directory.
-	memfsHeader = (memfsHeader_t *)location;
-	memfsHeaders = (memfsFileHeader_t *) (location+sizeof(memfsHeader_t));
+	memfsHeader = (memfsHeader_t *)mod.start;
+	memfsHeaders = (memfsFileHeader_t *) (mod.start + sizeof(memfsHeader_t));
 
 	if(memfsHeaders->magic != 0xBF)
 		panic("Corrupt/invalid initrd (Magic != 0xBF)");
@@ -99,7 +100,7 @@ fsNode_t *memfs_init(uint32 location)
 		// Edit the file's header - currently it holds the file offset
 		// relative to the start of the ramdisk. We want it relative to the start
 		// of memory.
-		memfsHeaders[i].offset += location;
+		memfsHeaders[i].offset += mod.start;
 		vfs_rootNodes[i] = vfs_createNode(memfsHeaders[i].name, 0, 0, 0, FS_FILE, i, memfsHeaders[i].length, 0, &memfs_read, NULL, NULL, NULL, NULL, NULL, NULL, vfs_rootNode);
 		vfs_rootNodes[i]->read = &memfs_read;
 		printf("memfs_read: 0x%x\n", vfs_rootNodes[i]->read);

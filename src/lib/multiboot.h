@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Lukas Martini
+/* Copyright © 2010, 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,47 +20,90 @@
 
 #include "generic.h"
 
-#define MULTIBOOT_FLAG_MEM     0x001
+#define MULTIBOOT_FLAG_MEM	 0x001
 #define MULTIBOOT_FLAG_DEVICE  0x002
 #define MULTIBOOT_FLAG_CMDLINE 0x004
-#define MULTIBOOT_FLAG_MODS    0x008
-#define MULTIBOOT_FLAG_AOUT    0x010
-#define MULTIBOOT_FLAG_ELF     0x020
-#define MULTIBOOT_FLAG_MMAP    0x040
+#define MULTIBOOT_FLAG_MODS	0x008
+#define MULTIBOOT_FLAG_AOUT	0x010
+#define MULTIBOOT_FLAG_ELF	 0x020
+#define MULTIBOOT_FLAG_MMAP	0x040
 #define MULTIBOOT_FLAG_CONFIG  0x080
 #define MULTIBOOT_FLAG_LOADER  0x100
-#define MULTIBOOT_FLAG_APM     0x200
-#define MULTIBOOT_FLAG_VBE     0x400
+#define MULTIBOOT_FLAG_APM	 0x200
+#define MULTIBOOT_FLAG_VBE	 0x400
 
-typedef struct {
-	uint32 flags;
-	uint32 memLower;
-	uint32 memUpper;
-	uint32 bootDevice;
-	uint32 cmdLine;
-	uint32 modsCount;
-	uint32 modsAddr;
+// The symbol table for a.out.
+typedef struct
+{
+	uint32 tabSize;
+	uint32 strSize;
+	uint32 addr;
+	uint32 reserved;
+} __attribute__((packed)) multiboot_aoutSymbolTable_t;
+     
+// The section header table for ELF.
+typedef struct
+{
 	uint32 num;
 	uint32 size;
 	uint32 addr;
 	uint32 shndx;
-	uint32 mmapLength;
-	uint32 mmapAddr;
+} __attribute__((packed)) multiboot_elfSectionHeaderTable_t;
+
+typedef struct
+{
+	uint32	size;
+	uint64	addr;
+	uint64	length;
+	uint32	type;
+} __attribute__((packed)) multiboot_memoryMap_t;
+
+typedef struct
+{
+	uint32	start;
+	uint32	end;
+	char*	cmdLine;
+	uint32	reserved;
+} __attribute__((packed)) multiboot_module_t;
+
+typedef struct
+{
+	uint32	flags;
+	uint32	memLower;
+	uint32	memUpper;
+	uint32	bootDevice;
+	char*	cmdLine;
+	uint32	modsCount;
+	multiboot_module_t*	modsAddr;
+
+	union
+	{
+		multiboot_aoutSymbolTable_t aoutSym;
+		multiboot_elfSectionHeaderTable_t elfSec;
+	} u;
+	
+	uint32	mmapLength;
+	uint32	mmapAddr;
+	
 	uint32 drivesLength;
 	uint32 drivesAddr;
+	
+	// ROM configuration table
 	uint32 configTable;
-	uint32 bootLoaderName;
+	
+	char* bootLoaderName;
 	uint32 apmTable;
+	
+	// Video
 	uint32 vbeControlInfo;
 	uint32 vbeModeInfo;
-	uint32 vbeMode;
-	uint32 vbeInterfaceSeg;
-	uint32 vbeInterfaceOff;
-	uint32 vbeInterfaceLen;
-} __attribute__((packed))
-multibootHeader_t;
+	uint16 vbeMode;
+	uint16 vbeInterfaceSeg;
+	uint16 vbeInterfaceOff;
+	uint16 vbeInterfaceLen;
+} __attribute__((packed)) multiboot_info_t;
 
-multibootHeader_t* multiboot_header;
+multiboot_info_t* multiboot_info;
 
 void multiboot_printInfo();
-void multiboot_init(multibootHeader_t* pointer);
+void multiboot_init(multiboot_info_t* pointer);

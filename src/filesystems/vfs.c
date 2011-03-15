@@ -54,9 +54,9 @@ fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, ui
 }
 
 // Initialize the filesystem abstraction system
-void vfs_init(char** modules)
+void vfs_init(multiboot_module_t mod)
 {
 	// Load the initrd
-	memfs_init((uint32)modules[0]);
+	memfs_init(mod);
 }
 

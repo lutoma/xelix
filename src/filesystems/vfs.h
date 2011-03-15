@@ -19,6 +19,7 @@
  */
 
 #include <lib/generic.h>
+#include <lib/multiboot.h>
 
 #define FS_FILE        0x01
 #define FS_DIRECTORY   0x02
@@ -70,4 +71,4 @@ fsNode_t* vfs_rootNode; // Our root directory node.
 fsNode_t** vfs_rootNodes; // Our root directory array.
 int vfs_rootNodeCount;
 
-void vfs_init(char** modules);
+void vfs_init(multiboot_module_t mod);
