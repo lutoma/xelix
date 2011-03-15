@@ -34,7 +34,7 @@ static void sendEOI(bool slave)
 		outb(0x20, 0x20);
 }
 
-void interrupts_callback(registers_t regs)
+void interrupts_callback(cpu_state_t regs)
 {
 	// That might look useless, but trust me, it isn't.
 	static bool inInterrupt = false;
@@ -44,14 +44,14 @@ void interrupts_callback(registers_t regs)
 	inInterrupt = true;
 
 	// If this interrupt involved the slave, send a EOI to the slave.
-	if (regs.int_no >= 40)
+	if (regs.interrupt >= 40)
 		sendEOI(true);
 
 	sendEOI(false); // Master
 	
-	if (interruptHandlers[regs.int_no] != 0)
+	if (interruptHandlers[regs.interrupt] != 0)
 	{
-		interruptHandler_t handler = interruptHandlers[regs.int_no];
+		interruptHandler_t handler = interruptHandlers[regs.interrupt];
 		handler(regs);
 	}
 	

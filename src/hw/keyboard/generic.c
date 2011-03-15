@@ -95,7 +95,7 @@ static void handleScancode(uint8 code, uint8 code2)
 }
 
 // Handles the IRQs we catch
-static void handler(registers_t regs)
+static void handler(cpu_state_t regs)
 {
 	static uint8 waitingForEscapeSequence = 0;
 	

@@ -26,7 +26,7 @@ uint64 tick = 0;
 extern void switchcontext(); // in ASM
 
 // The timer callback. Gets called every time the PIT fires.
-static void timerCallback(registers_t regs)
+static void timerCallback(cpu_state_t regs)
 {
 	tick++;
 }

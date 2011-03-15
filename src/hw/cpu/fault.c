@@ -45,12 +45,12 @@ static char* errorDescriptions[] =
 };
 
 // Handles the IRQs we catch
-static void faultHandler(registers_t regs)
+static void faultHandler(cpu_state_t regs)
 {
-	if(regs.int_no > 18)
-		panic("Unkown CPU error %d", regs.int_no);
-	if(regs.int_no <= 18) // Can't use else here because of macro
-		panic("CPU error %d (%s)", regs.int_no, errorDescriptions[regs.int_no]);
+	if(regs.interrupt > 18)
+		panic("Unkown CPU error %d", regs.interrupt);
+	if(regs.interrupt <= 18) // Can't use else here because of macro
+		panic("CPU error %d (%s)", regs.interrupt, errorDescriptions[regs.interrupt]);
 }
 
 void cpu_initFaultHandler()

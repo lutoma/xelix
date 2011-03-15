@@ -1,6 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,6 +20,7 @@
  */
 
 #include <lib/generic.h>
+#include <hw/cpu.h>
 
 #define IRQ0 32
 #define IRQ1 33
@@ -39,14 +41,7 @@
 
 #define interrupts_disable() asm volatile("cli")
 
-typedef struct {
-	uint32 ds;                  // Data segment selector
-	uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-	uint32 int_no, err_code;    // Interrupt number and error code (if applicable)
-	uint32 eip, cs, eflags, useresp, ss; // Pushed by the processor automatically. // This is what the processor expects to be in the stack when doing an iret. useresp and ss are only used when returning to another privilege level
-} registers_t;
-
-typedef void (*interruptHandler_t)(registers_t);
+typedef void (*interruptHandler_t)(cpu_state_t);
 
 void interrupts_registerHandler(uint8 n, interruptHandler_t handler);
 void interrupts_init();

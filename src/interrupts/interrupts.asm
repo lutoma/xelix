@@ -128,6 +128,7 @@ commonStub:
 	mov gs, ax
 
 	call interrupts_callback
+	;mov esp, eax
 
 	pop ebx			; reload the original data segment descriptor
 	mov ds, bx
