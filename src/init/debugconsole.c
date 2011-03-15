@@ -19,7 +19,6 @@
 
 #include "debugconsole.h"
 
-#ifdef WITH_DEBUGCONSOLE
 #include <lib/log.h>
 #include <lib/string.h>
 #include <memory/kmalloc.h>
@@ -39,7 +38,7 @@ static void printPrompt()
 	cursorPosition = 0;
 	int colorold = display_getColor();
 	display_setColor(0x07);
-	print(DEBUGCONSOLE_PROMPT);
+	print("\n> ");
 	display_setColor(colorold);
 }
 
@@ -139,4 +138,3 @@ void debugconsole_init()
 	keyboard_takeFocus(&handler);
 	printPrompt();
 }
-#endif

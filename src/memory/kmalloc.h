@@ -20,6 +20,8 @@
 
 #include <lib/generic.h>
 
+#define MEMORY_MAX_KMEM 0xBFFFFF
+
 // vanilla
 uint32 kmalloc(size_t sz); 
 // page aligned.

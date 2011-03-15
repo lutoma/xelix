@@ -17,10 +17,9 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#ifdef WITH_SERIAL
 #include "serial.h"
 
+#include <lib/generic.h>
 #include <lib/log.h>
 #include <lib/datetime.h>
 
@@ -56,5 +55,3 @@ void serial_init()
 	outb(PORT+1, 0x00); outb(PORT+3, 0x80); outb(PORT+1, 0x00); outb(PORT+0, 0x03);
 	outb(PORT+3, 0x03); outb(PORT+2, 0xC7); outb(PORT+4, 0x0B);
 }
-
-#endif

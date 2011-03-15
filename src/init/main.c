@@ -17,34 +17,27 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "init.h"
+
 #include <buildinfo.h>
 #include <lib/multiboot.h>
-#include <lib/generic.h>
-#include "init.h"
 #include <lib/log.h>
 #include <lib/datetime.h>
 #include <lib/string.h>
 #include <hw/display.h>
-#ifdef WITH_SERIAL
 #include <hw/serial.h>
-#endif
 #include <hw/cpu.h>
 #include <hw/keyboard.h>
 #include <memory/interface.h>
 #include <interrupts/interface.h>
 #include <hw/pit.h>
 #include <memory/kmalloc.h>
-#ifdef WITH_SPEAKER
 #include <hw/speaker.h>
-#endif
 #include <filesystems/vfs.h>
 #include <filesystems/memfs/interface.h>
 #include <tasks/task.h>
 #include <lib/argparser.h>
-
-#ifdef WITH_DEBUGCONSOLE
 #include <init/debugconsole.h>
-#endif
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -89,7 +82,7 @@ void kmain(multiboot_info_t *mbootPointer)
 
 	init(kmalloc);
 	init(display);
-	if(WITH_SERIAL) init(serial);
+	init(serial);
 	init(log);
 	
 	compilerInfo();
@@ -114,7 +107,7 @@ void kmain(multiboot_info_t *mbootPointer)
 	init(vfs, mbootPointer->modsAddr[0]);
 
 	init(keyboard);
-	if(WITH_DEBUGCONSOLE) init(debugconsole);
+	init(debugconsole);
 
 	asm("sti");
 	/* Just in case they're disabled for whatever reason.

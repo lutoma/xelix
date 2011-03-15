@@ -22,18 +22,14 @@
 #include <memory/kmalloc.h>
 
 int logsEnabled;
-#ifdef LOG_SAVE
 char* kernelLog;
-#endif
 
 // Logs something. Also prints it out.
 // FIXME: doesn't parse the saved stuff, needs improvement. Dirty hacks ftw.
 void log(const char *fmt, ...)
 {
-	#ifdef LOG_SAVE
 	if(strlen(kernelLog) + strlen(fmt) < LOG_MAXSIZE) // prevent an overflow that is likely to happen if the log gets long enough
 		kernelLog = strcat(kernelLog, fmt); // concatenate to kernellog
-	#endif
 	
 	if(logsEnabled)
 		vprintf(fmt, (void **)(&fmt) + 1);
@@ -42,10 +38,8 @@ void log(const char *fmt, ...)
 // Initialize log
 void log_init()
 {
-	#ifdef LOG_SAVE
 	kernelLog = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
 	kernelLog[0] = '\0'; // set kernel log to empty string
-	#endif
 	setLogLevel(1); //Enable logs
 }
 

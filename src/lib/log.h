@@ -20,6 +20,8 @@
 
 #include "generic.h"
 
+#define LOG_MAXSIZE 10000
+
 void log(const char *fmt, ...);
 void setLogLevel(int level);
 void log_init();
