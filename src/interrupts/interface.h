@@ -37,6 +37,8 @@
 #define IRQ14 46
 #define IRQ15 47
 
+#define interrupts_disable() asm volatile("cli")
+
 typedef struct {
 	uint32 ds;                  // Data segment selector
 	uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
@@ -44,14 +46,7 @@ typedef struct {
 	uint32 eip, cs, eflags, useresp, ss; // Pushed by the processor automatically. // This is what the processor expects to be in the stack when doing an iret. useresp and ss are only used when returning to another privilege level
 } registers_t;
 
-typedef void (*interruptHandler_t)(registers_t); // interruptHandler_t is the type of a function with the signature  void func(registers_t)
+typedef void (*interruptHandler_t)(registers_t);
 
-// registers an interruptHandler (a callback which is called when the specified irq interrupt (ie n=IRQ1 for keyboard) occurs
 void interrupts_registerHandler(uint8 n, interruptHandler_t handler);
-
-#define interrupts_disable() asm volatile("cli")
-
-
-// for internal use only!
-void interrupt_callback(registers_t regs);
 void interrupts_init();
