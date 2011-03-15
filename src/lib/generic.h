@@ -23,6 +23,10 @@
                                + __GNUC_MINOR__ * 100 \
                                + __GNUC_PATCHLEVEL__)
 
+#ifdef __GNUC__
+	#define __cdecl __attribute__((__cdecl__))
+#endif
+
 #define isdigit(C) ((C) >= '0' && (C) <= '9')
 #define DUMPVAR(C,D) printf("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
 #define DUMPVARS(D) DUMPVAR("%s", #D);

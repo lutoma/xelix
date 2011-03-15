@@ -21,7 +21,7 @@
 #include <interrupts/interface.h>
 
 // handles a syscall. The parameter gives the processor status for the systemcall
-uint32 syscallHandler(cpu_state_t regs)
+uint32 __cdecl syscallHandler(cpu_state_t regs)
 {
 	switch(regs.eax)
 	{

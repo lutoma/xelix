@@ -74,7 +74,7 @@ static void checkIntLenghts()
 /* This function gets called from loader.asm with the contents of ebx
  * (Which should normally be the pointer to multiboot_info.
  */
-void kmain(multiboot_info_t *mbootPointer)
+void __cdecl kmain(multiboot_info_t *mbootPointer)
 {
 	init(multiboot, mbootPointer);
 	memory_init_preprotected();

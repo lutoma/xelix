@@ -34,7 +34,7 @@ static void sendEOI(bool slave)
 		outb(0x20, 0x20);
 }
 
-void interrupts_callback(cpu_state_t regs)
+void __cdecl interrupts_callback(cpu_state_t regs)
 {
 	// That might look useless, but trust me, it isn't.
 	static bool inInterrupt = false;
