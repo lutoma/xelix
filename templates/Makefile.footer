@@ -4,11 +4,6 @@ buildinfo.h:
 	@printf "#define __BUILDSYS__ \"`uname -srop`\"\n" >> buildinfo.h
 	@printf "#define __BUILDDIST__ \"`cat /etc/*-release | head -n 1 | xargs echo`\"\n" >> buildinfo.h
 
-local.h:
-	tools/txtconfig.py
-
-config: clean local.h
-
 # how to compile .c to .o
 %.o: %.c
 	gcc -frecord-gcc-switches -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -o $@ -c $<
@@ -17,14 +12,11 @@ config: clean local.h
 %-asm.o: %.asm
 	nasm -f elf -o $@ $<
 
-
-makefile:
-	tools/makefile.py
-
 install: xelix.bin
 	sudo cp xelix.bin /boot/xelix || su -c 'cp xelix.bin /boot/xelix'
 
-mountDir:
+.PHONY: mount
+mount:
 	- mkdir mount
 	cp grub_floppy.img floppy.img
 	sudo losetup /dev/loop0 floppy.img || su -c 'losetup /dev/loop0 floppy.img'
@@ -36,7 +28,7 @@ unmount:
 	- rm -rf mount
 
 # create a boot image for usb-stick or floppy
-floppy.img: xelix.bin mountDir
+floppy.img: xelix.bin mount
 	sudo cp xelix.bin mount/kernel || su -c 'cp xelix.bin mount/kernel'
 	sleep 0.5
 	sudo umount mount || su -c 'umount mount'
@@ -71,5 +63,7 @@ runqemunox: xelix.bin
 	
 runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
+
+.PHONY: count
 count:
 	find src -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 

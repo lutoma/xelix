@@ -2,6 +2,7 @@
 # coding: utf8
 
 SOURCE_DIR = 'src'
+TEMPLATE_DIR = 'templates/'
 
 # Yes, this is indeed a dirty hackish crap-file
 
@@ -9,7 +10,7 @@ import os
 import re
 
 makefile = open("Makefile", "w");
-header = open('Makefile.header')
+header = open(TEMPLATE_DIR + 'Makefile.header')
 makefile.write(header.read())
 header.close()
 
@@ -59,6 +60,7 @@ for f in hfiles + cfiles:
 	makefile.write("\n");
 
 makefile.write("\n# clean\n");
+makefile.write(".PHONY: clean\n");
 makefile.write("clean:\n\trm -rf xelix.bin mount floppy.img buildinfo.h ")
 for f in asmfiles:
 	makefile.write(" " + f[:-4] + "-asm.o")
@@ -66,7 +68,7 @@ for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o")
 
 makefile.write("\n\n\n")
-footer = open('Makefile.footer')
+footer = open(TEMPLATE_DIR + 'Makefile.footer')
 makefile.write(footer.read())
 footer.close()
 makefile.close()
