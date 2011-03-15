@@ -43,7 +43,7 @@ void multiboot_printInfo()
 	printMbootHex(multiboot_info->flags);
 	printMbootInt(multiboot_info->memLower);
 	printMbootInt(multiboot_info->memUpper);
-	printMbootStr(multiboot_info->bootDevice);
+	printMbootHex(multiboot_info->bootDevice);
 	printMbootStr((uint32)multiboot_info->cmdLine);
 	printMbootInt(multiboot_info->modsCount);
 	printMbootHex((uint32)multiboot_info->modsAddr);
