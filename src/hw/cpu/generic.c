@@ -26,7 +26,7 @@
 static bool isProtected()
 {
 	uint32 v;
-	asm ( "mov %%cr0, %0":"=a"(v) );
+	asm ( "mov %0, %%cr0":"=a"(v) );
 	if(v & 1) return true;
 	else return false;
 }

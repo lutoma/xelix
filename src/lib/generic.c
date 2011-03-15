@@ -89,19 +89,19 @@ unsigned long atoi(const char *s) {
 // Write a byte out to the specified port
 void outb(uint16 port, uint8 value)
 {
-	 asm ("outb %1, %0" : : "Nd" (port), "a" (value));
+	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
 }
 
 // Write out a word to the specified port
 void outw(uint16 port, uint16 value)
 {
-	 asm ("outw %1, %0" : : "Nd" (port), "a" (value));
+	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
 }
 // Read a byte from the specified port
 uint8 inb(uint16 port)
 {
 	uint8 ret;
-	asm ("inb %1, %0" : "=a" (ret) : "Nd" (port));
+	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
 	return ret;
 }
 //Read a byte from the CMOS
