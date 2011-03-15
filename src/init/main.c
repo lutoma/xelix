@@ -78,6 +78,9 @@ static void checkIntLenghts()
 	log("Right\n");
 }
 
+/* This function gets called from loader.asm with the contents of ebx
+ * (Which should normally be the pointer to multiboot_info.
+ */
 void kmain(multiboot_info_t *mbootPointer)
 {
 	init(multiboot, mbootPointer);

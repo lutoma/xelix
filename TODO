@@ -1,4 +1,3 @@
-* Fix Multiboot header
 * Fix interrupthandler so we can modify registers
 * Flat binary loader
 * ELF loader
