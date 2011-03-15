@@ -58,7 +58,7 @@ void cpu_initFaultHandler()
 	// First 31 interrupts are CPU faults
 	int i;
 	for(i = 0; i < 32; i++)
-		interrupt_registerHandler(i, &faultHandler);
+		interrupts_registerHandler(i, &faultHandler);
 	
 	log("cpu: Registered CPU fault interrupt handlers.\n");
 }

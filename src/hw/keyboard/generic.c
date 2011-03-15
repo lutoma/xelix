@@ -201,5 +201,5 @@ void keyboard_init()
 	flush(); // Flush again
 	
 	currentKeymap = (char*)&keymap_en;
-	interrupt_registerHandler(IRQ1, &handler);
+	interrupts_registerHandler(IRQ1, &handler);
 }

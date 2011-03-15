@@ -48,8 +48,6 @@ typedef void (*interruptHandler_t)(registers_t); // interruptHandler_t is the ty
 
 // registers an interruptHandler (a callback which is called when the specified irq interrupt (ie n=IRQ1 for keyboard) occurs
 void interrupts_registerHandler(uint8 n, interruptHandler_t handler);
-// Legacy
-#define interrupt_registerHandler interrupts_registerHandler
 
 #define interrupts_disable() asm volatile("cli")
 

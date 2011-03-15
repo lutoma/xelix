@@ -36,7 +36,7 @@ void pit_init(uint16 frequency)
 {
 	log("pit: Setting frequency to %d Hz.\n", frequency);
 	// Firstly, register our timer callback.
-	interrupt_registerHandler(IRQ0, &timerCallback);
+	interrupts_registerHandler(IRQ0, &timerCallback);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is
