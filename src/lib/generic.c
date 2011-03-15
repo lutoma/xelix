@@ -174,7 +174,7 @@ void freeze(void)
 }
 
 // Panic. Use the panic() macro that inserts the line.
-void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
+void panic_raw(char *file, uint32 line, const char *reason, ...)
 {
 	// Disable interrupts.
 	interrupts_disable();
@@ -183,9 +183,7 @@ void panic_raw(char *file, uint32 line, int assertionf, const char *reason, ...)
 	printf("%%Kernel Panic!%%\n\n", 0x04);
 	printf("Reason: ");
 	
-	if(assertionf) log("Assertion \"");
 	vprintf(reason, (void **)(&reason) + 1);
-	if(assertionf) printf("\" failed");
 	
 	printf("\n");
 	printf("The file triggering the kernel panic was %s, line %d.\n\n", file, line);
