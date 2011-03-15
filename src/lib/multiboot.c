@@ -58,7 +58,7 @@ void multiboot_printInfo()
 	// ROM configuration table
 	printMbootHex(multiboot_info->configTable);
 	
-	printMbootStr((uint32)multiboot_info->bootLoaderName);
+	printMbootHex((uint32)multiboot_info->bootLoaderName);
 	printMbootHex(multiboot_info->apmTable);
 	
 	// Video
