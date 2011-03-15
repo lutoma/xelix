@@ -22,36 +22,36 @@ makefile:
 	tools/makefile.py
 
 install: xelix.bin
-	sudo cp xelix.bin /boot/xelix
+	sudo cp xelix.bin /boot/xelix || su -c 'cp xelix.bin /boot/xelix'
 
 mountDir:
 	- mkdir mount
 	cp grub_floppy.img floppy.img
-	sudo losetup /dev/loop0 floppy.img
-	sudo mount /dev/loop0 mount
+	sudo losetup /dev/loop0 floppy.img || su -c 'losetup /dev/loop0 floppy.img'
+	sudo mount /dev/loop0 mount || su -c 'mount /dev/loop0 mount'
 
 unmount:
-	sudo umount mount
-	sudo losetup -d /dev/loop0
+	sudo umount mount || su -c 'umount mount'
+	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
 	- rm -rf mount
 
 # create a boot image for usb-stick or floppy
 floppy.img: xelix.bin mountDir
-	sudo cp xelix.bin mount/kernel
+	sudo cp xelix.bin mount/kernel || su -c 'cp xelix.bin mount/kernel'
 	sleep 0.5
-	sudo umount mount
-	sudo losetup -d /dev/loop0
+	sudo umount mount || su -c 'umount mount'
+	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
 	- rm -rf mount
 
 #create an iso
 dist: floppy.img
 	- mkdir mount
 	cp grub_floppy.img floppy.img
-	sudo losetup /dev/loop0 floppy.img
-	sudo mount /dev/loop0 mount
+	sudo losetup /dev/loop0 floppy.img || su -c 'losetup /dev/loop0 floppy.img'
+	sudo mount /dev/loop0 mount || su -c 'mount /dev/loop0 mount'
 	mkisofs -o xelix.iso mount
-	sudo umount mount
-	sudo losetup -d /dev/loop0
+	sudo umount mount || su -c 'umount mount'
+	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
 	- rm -rf mount
 
 # running the kernel
