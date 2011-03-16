@@ -4,16 +4,16 @@ buildinfo.h:
 	@printf "#define __BUILDSYS__ \"`uname -srop`\"\n" >> buildinfo.h
 	@printf "#define __BUILDDIST__ \"`cat /etc/*-release | head -n 1 | xargs echo`\"\n" >> buildinfo.h
 
-# how to compile .c to .o
 %.o: %.c
 	gcc -frecord-gcc-switches -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -o $@ -c $<
 
-# how to compile file.asm to file-asm.o (rather than file.o because there exist c files with the same name, i.e. idt.c and and idt.asm would both correspond to idt.o)
 %-asm.o: %.asm
 	nasm -f elf -o $@ $<
 
+.PHONY: INSTALL
 install: xelix.bin
 	sudo cp xelix.bin /boot/xelix || su -c 'cp xelix.bin /boot/xelix'
+	sudo cp initrd.img /boot/xelix_initrd || su -c 'cp xelix.bin /boot/xelix_initrd'
 
 .PHONY: mount
 mount:
@@ -22,6 +22,7 @@ mount:
 	sudo losetup /dev/loop0 floppy.img || su -c 'losetup /dev/loop0 floppy.img'
 	sudo mount /dev/loop0 mount || su -c 'mount /dev/loop0 mount'
 
+.PHONY: unmount
 unmount:
 	sudo umount mount || su -c 'umount mount'
 	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
@@ -35,20 +36,20 @@ floppy.img: xelix.bin mount
 	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
 	- rm -rf mount
 
+.PHONY: runqemufloppy
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
+.PHONY: runbochsfloppy
 runbochsfloppy: floppy.img
 	bochs -f bochsrc.txt -q
 
+.PHONY: runqemu
 runqemu: xelix.bin
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin
 
-runqemunox: xelix.bin
-	# Exit with ^A-x
-	qemu -d cpu_reset -kernel xelix.bin -nographic
-	
+.PHONY: runvboxfloppy	
 runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
 

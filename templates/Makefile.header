@@ -2,3 +2,4 @@
 # are sure you know what you're doing.
 export LANG=C
 all: xelix.bin
+run: runqemufloppy
