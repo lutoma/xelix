@@ -41,6 +41,15 @@ runqemufloppy: floppy.img
 	- rm /var/qemu.log
 	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
+.PHONY: debugqemufloppy
+debugqemufloppy: floppy.img
+	- rm /var/qemu.log
+	qemu -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+
+.PHONY: gdb
+gdb:
+	gdb xelix.bin -ex "target remote :1234"
+
 .PHONY: runbochsfloppy
 runbochsfloppy: floppy.img
 	bochs -f bochsrc.txt -q
