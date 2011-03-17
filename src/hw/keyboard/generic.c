@@ -98,20 +98,20 @@ static void handler(cpu_state_t regs)
 	if(!focusedFunction)
 		return;
 
-	static uint8 waitingForEscapeSequence = 0;
+	static bool waitingForEscapeSequence;
 	
 	// read scancodes
 	uint8 code = inb(0x60);
 	
 	if (code == 0xe0)
-		waitingForEscapeSequence = 1; // escape sequence
+		waitingForEscapeSequence = true; // escape sequence
 	else
 	{
 		if(waitingForEscapeSequence)
 		{
 			// this is the second scancode to the escape sequence
 			handleScancode(0xe0, code);
-			waitingForEscapeSequence = 0;
+			waitingForEscapeSequence = false;
 		}
 		else
 			handleScancode(code, 0); // normal scancode
