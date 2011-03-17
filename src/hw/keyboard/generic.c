@@ -44,7 +44,7 @@ struct {
 	bool super:1;
 } modifiers;
 
-void (*focusedFunction)(char);
+void (*focusedFunction)(uint8);
 char* currentKeymap;
 
 // Handle a scancode. Calls the active function
@@ -81,15 +81,10 @@ static void handleScancode(uint8 code, uint8 code2)
 	if( code2 == 0x9d) // ctrl release
 		modifiers.controlr = false;
 	
-	if( currentKeymap[code] == NULL)
-		return;
-		
 	if( modifiers.shiftl | modifiers.shiftr )
-		code = currentKeymap[code + 256];
-	else
-		code = currentKeymap[code];
+		code = code + 256;
 
-	(*focusedFunction)((char)code);
+	(*focusedFunction)(code);
 }
 
 // Handles the IRQs we catch
@@ -119,7 +114,7 @@ static void handler(cpu_state_t regs)
 }
 
 // Take keyboard focus.
-void keyboard_takeFocus(void (*func)(char))
+void keyboard_takeFocus(void (*func)(uint8))
 {
 	focusedFunction = func;
 	log("keyboard: Application took focus.\n");
@@ -185,6 +180,14 @@ static char* identify()
 	}
 	
 	return "Unknown";
+}
+
+char keyboard_codeToChar(uint8 code)
+{
+	if(code > 512)
+		return (char)NULL;
+	
+	return currentKeymap[code];
 }
 
 void keyboard_init()
