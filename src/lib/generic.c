@@ -121,19 +121,28 @@ void writeCMOS(uint16 port,uint8 value) {
 // Print function
 void print(char* s)
 {
-	#ifdef WITH_SERIAL
 	serial_print(s);
-	#endif
 	display_print(s);
+}
+
+static void printChar(char c)
+{
+	display_printChar(c);
+	
+	char s[2];
+	s[0] = c;
+	s[1] = 0;
+	serial_print(s);
 }
 
 void vprintf(const char *fmt, void **arg) {
 	int state = 0;
+	
 	while (*fmt) {
 		if (*fmt == '%') {
 			++fmt;
 			switch (*fmt) {
-				case 'c': display_printChar(*(char *)arg); break;
+				case 'c': printChar(*(char *)arg); break;
 				// Print (null) if pointer == NULL.
 				case 's': print(*(char **)arg ? *(char **)arg : "(null)"); break;
 				case 'b': print(itoa(*(unsigned *)arg,  2)); break;
@@ -155,7 +164,7 @@ void vprintf(const char *fmt, void **arg) {
 			}
 			
 			++arg;
-		} else display_printChar(*fmt);
+		} else printChar(*fmt);
 		++fmt;
 	}
 }
