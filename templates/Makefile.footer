@@ -55,11 +55,11 @@ runbochsfloppy: floppy.img
 	bochs -f bochsrc.txt -q
 
 runqemu: xelix.bin
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img
 
 runqemunox: xelix.bin
-	# Exit with ^A-x
-	qemu -d cpu_reset -kernel xelix.bin -nographic
+	@echo "Exit with ^A-x"
+	qemu -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img
 	
 runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
