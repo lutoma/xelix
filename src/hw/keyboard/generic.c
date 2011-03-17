@@ -36,12 +36,12 @@
 
 // Current modifier keys
 struct {
-	int shiftl:1;
-	int shiftr:1;
-	int controll:1;
-	int controlr:1;
-	int alt:1;
-	int super:1;
+	bool shiftl:1;
+	bool shiftr:1;
+	bool controll:1;
+	bool controlr:1;
+	bool alt:1;
+	bool super:1;
 } modifiers;
 
 void (*focusedFunction)(char);
@@ -50,35 +50,36 @@ char* currentKeymap;
 // Handle a scancode. Calls the active function
 static void handleScancode(uint8 code, uint8 code2)
 {
-	if( code==0x2a) // shift press
-		modifiers.shiftl=1;
-	if( code==0xaa) // shift release
-		modifiers.shiftl=0;
-	if( code==0x36) // shift press
-		modifiers.shiftr=1;
-	if( code==0x36+0x80) // shift release
-		modifiers.shiftr=0;
-	if( code==0x1d) // ctrl press
-		modifiers.controll=1;
-	if( code==0x9d) // control release
-		modifiers.controll=0;
-	if( code2==0x1d) // ctrl press
-		modifiers.controlr=1;
-	if( code2==0x9d) // control release
-		modifiers.controlr=0;
-	if( code==0x38) // alt press
-		modifiers.alt = 1;
-	if( code==0xb8) // alt release
-		modifiers.alt=0;
-	if( code==0xe0 && code2==0x5b) // super press
-		modifiers.super=1;
-	if( code==0xe0 && code2==0xdb) // super release
-		modifiers.super=0;
+	switch(code)
+	{
+		case 0x2a: modifiers.shiftl = true; break;
+		case 0xaa: modifiers.shiftl = false; break;
+
+		case 0x36: modifiers.shiftr = true; break;
+		case 0xb6: modifiers.shiftr = false; break;
+
+		case 0x1d: modifiers.controll = true; break;
+		case 0x9d: modifiers.controll = false; break;
+
+		case 0x38: modifiers.alt = true; break;
+		case 0xb8: modifiers.alt = false; break;
+	}
 	
-	if( code==0xe0 && code2==0x49 ) // page up press
+
+	if( code == 0xe0 && code2 == 0x5b) // super press
+		modifiers.super = true;
+	if( code == 0xe0 && code2 == 0xdb) // super release
+		modifiers.super = false;
+	
+	if( code == 0xe0 && code2 == 0x49 ) // page up press
 		display_scrollUp();
-	if( code==0xe0 && code2==0x51 ) // page down press
+	if( code == 0xe0 && code2 == 0x51 ) // page down press
 		display_scrollDown();
+	
+	if( code2 == 0x1d) // ctrl press
+		modifiers.controlr = true;
+	if( code2 == 0x9d) // ctrl release
+		modifiers.controlr = false;
 	
 	if( currentKeymap[code] == NULL)
 		return;
