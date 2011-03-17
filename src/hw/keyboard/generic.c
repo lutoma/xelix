@@ -49,10 +49,7 @@ char* currentKeymap;
 
 // Handle a scancode. Calls the active function
 static void handleScancode(uint8 code, uint8 code2)
-{	
-	if(!focusedFunction)
-		return;
-	
+{
 	if( code==0x2a) // shift press
 		modifiers.shiftl=1;
 	if( code==0xaa) // shift release
@@ -97,6 +94,9 @@ static void handleScancode(uint8 code, uint8 code2)
 // Handles the IRQs we catch
 static void handler(cpu_state_t regs)
 {
+	if(!focusedFunction)
+		return;
+
 	static uint8 waitingForEscapeSequence = 0;
 	
 	// read scancodes
