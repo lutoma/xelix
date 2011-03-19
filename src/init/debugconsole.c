@@ -104,8 +104,13 @@ static void executeCommand(char *command)
 }
 
 // Handle keyboard input.
-static void handler(char c)
+static void handler(uint8 code)
 {
+	char c = keyboard_codeToChar(code);
+
+	if(c == NULL)
+		return;
+	
 	if(c == 0x8) //0x8 is the backspace key.
 	{
 		if(cursorPosition < 1) return; // We don't want the user to remove the prompt ;)

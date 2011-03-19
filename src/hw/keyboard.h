@@ -21,5 +21,6 @@
 #include <lib/generic.h>
 
 void keyboard_init(); // irqs have to be set up first!
-void keyboard_takeFocus(void (*func)(char));
+void keyboard_takeFocus(void (*func)(uint8));
 void keyboard_leaveFocus();
+char keyboard_codeToChar(uint8 code);

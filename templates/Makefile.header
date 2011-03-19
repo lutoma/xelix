@@ -3,3 +3,4 @@
 export LANG=C
 all: xelix.bin
 run: runqemufloppy
+debug: debugqemufloppy
