@@ -85,5 +85,9 @@ void kmalloc_init()
 	 * kernel. Therefore, we can securely assume that everything after
 	 * the last module's end should be free.
 	 */
-	memoryPosition = multiboot_info->modsAddr[multiboot_info->modsCount - 1].end;
+	if(multiboot_info->modsCount > 0) // Do we have at least one module?
+		memoryPosition = multiboot_info->modsAddr[multiboot_info->modsCount - 1].end;
+	else // Guess.
+		memoryPosition = 15 * 1024 ^ 2;
+
 }
