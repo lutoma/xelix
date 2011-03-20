@@ -90,7 +90,7 @@ void __cdecl kmain(multiboot_info_t *mbootPointer)
 
 	init(argparser, multiboot_info->cmdLine);
 
-	if(mbootPointer->bootLoaderName != NULL && find_substr(multiboot_info->bootLoaderName, "GNU GRUB") != -1)
+	if(mbootPointer->bootLoaderName != NULL && find_substr(multiboot_info->bootLoaderName, "GRUB") != -1)
 		init_haveGrub = true;
 	else
 		log("init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
