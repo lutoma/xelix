@@ -237,6 +237,6 @@ void reboot()
 {
 	interrupts_disable();
 	log("generic: Going to reboot NOW!");
-	keyboard_send(0xFE);
+	keyboard_sendKBC(0xFE);
 	freeze();
 }

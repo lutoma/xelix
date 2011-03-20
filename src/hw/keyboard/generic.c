@@ -31,8 +31,6 @@
 #include <hw/display.h>
 #include <hw/pit.h>
 
-#define send keyboard_send
-
 // Current modifier keys
 struct {
 	bool shiftl:1;
@@ -147,7 +145,7 @@ static char* identify()
 	 * MF-II : 0xFA 0xAB 0x41
 	 */
 
-	send(0xF2);
+	keyboard_sendKeyboard(0xF2);
 
 	// Wait for scancodes
 	uint64 startTick = pit_getTickNum();
@@ -198,8 +196,8 @@ void keyboard_init()
 	char* ident = identify();
 	log("keyboard: Identified type: %s\n", ident);
 	
-	send(0xF6); // Set standard values
-	send(0xF4); // Activate
+	keyboard_sendKeyboard(0xF6); // Set standard values
+	keyboard_sendKeyboard(0xF4); // Activate
 	
 	flush(); // Flush again
 	
