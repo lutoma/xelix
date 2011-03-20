@@ -40,6 +40,7 @@
 #define IRQ15 47
 
 #define interrupts_disable() asm volatile("cli")
+#define interrupts_enable() asm volatile("sti")
 
 typedef void (*interruptHandler_t)(cpu_state_t);
 

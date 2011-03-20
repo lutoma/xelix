@@ -108,12 +108,13 @@ void __cdecl kmain(multiboot_info_t *mbootPointer)
 	init(keyboard);
 	init(debugconsole);
 
-	asm("sti");
-	/* Just in case they're disabled for whatever reason.
-	 * Note, just in case that's not obvious:
+	// If they were disabled.
+	interrupts_enable();
+	
+	/* And now a comment from our old friend Captain Obvious:
 	 * If you disable interrupts in an interrupt handler and
-	 * forget to re-enable them, we're basically screwed, so
-	 * be a brave man and don't do that.
+	 * forget to re-enable them, the sky will fall on your head, so
+	 * thank you for not doing that.
 	 */
 	while(true)
 		asm("hlt"); // Wait until interrupt fires
