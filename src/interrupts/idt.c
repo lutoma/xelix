@@ -18,6 +18,7 @@
  */
 
 #include "idt.h"
+#include "interface.h"
 
 #include <lib/log.h>
 
