@@ -27,8 +27,8 @@
 static uint32 memoryPosition;
 #define pagingEnabled false // FIXME
 
-// For internal use (= In this file) only, see below.
-static uint32 __kmalloc(size_t sz, bool align, uint32 *phys)
+// Use macros.
+uint32 __kmalloc(size_t sz, bool align, uint32 *phys)
 {
 	// If the address is not already page-aligned
 	if (align == 1 && (memoryPosition & 0xFFFFF000))
@@ -49,34 +49,6 @@ static uint32 __kmalloc(size_t sz, bool align, uint32 *phys)
 void kfree(void *ptr)
 {
 	return;
-}
-
-/* A few shortcuts so one doesn't always have to pass all the
- * parameters all the time.
- */
-
-// vanilla
-uint32 kmalloc(size_t sz)
-{
-	return __kmalloc(sz, false, NULL);
-}
-
-// page aligned.
-uint32 kmalloc_a(size_t sz)
-{
-	return __kmalloc(sz, true, NULL);
-}
-
-// returns a physical address.
-uint32 kmalloc_p(size_t sz, uint32 *phys)
-{
-	return __kmalloc(sz, false, phys);
-}
-
-// page aligned and returns a physical address.
-uint32 kmalloc_ap(size_t sz, uint32 *phys)
-{
-	return __kmalloc(sz, true, phys);
 }
 
 void kmalloc_init()

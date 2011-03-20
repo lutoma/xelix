@@ -22,18 +22,18 @@
 
 #define MEMORY_MAX_KMEM 0xBFFFFF
 
-// vanilla
-uint32 kmalloc(size_t sz); 
-// page aligned.
-uint32 kmalloc_a(size_t sz);
-// returns a physical address.
-uint32 kmalloc_p(size_t sz, uint32 *phys);
-// page aligned and returns a physical address.
-uint32 kmalloc_ap(size_t sz, uint32 *phys);
 
-// Make it also work the other way round.
+// Use macros.
+uint32 __kmalloc(size_t sz, bool align, uint32 *phys);
+
+/* A few shortcuts so one doesn't always have to pass all the
+ * parameters all the time.
+ */ 
+#define kmalloc(sz) __kmalloc(sz, false, NULL)
+#define kmalloc_a(sz) __kmalloc(sz, true, NULL)
+#define kmalloc_p(sz, phys) __kmalloc(sz, false, phys)
+#define kmalloc_ap(sz, phys) __kmalloc(sz, true, phys)
 #define kmalloc_pa kmalloc_ap
 
 void kfree(void *ptr);
-
 void kmalloc_init();
