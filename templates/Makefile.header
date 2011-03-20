@@ -4,3 +4,7 @@ export LANG=C
 all: xelix.bin
 run: runqemufloppy
 debug: debugqemufloppy
+
+BUILDCOMP := \"$(shell whoami)@$(shell hostname)\"
+BUILDSYS := \"$(shell uname -srop)\"
+BUILDDIST := \"$(shell cat /etc/*-release | head -n 1)\"

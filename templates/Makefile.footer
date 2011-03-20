@@ -5,7 +5,7 @@ buildinfo.h:
 	@printf "#define __BUILDDIST__ \"`cat /etc/*-release | head -n 1 | xargs echo`\"\n" >> buildinfo.h
 
 %.o: %.c
-	gcc -frecord-gcc-switches -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -o $@ -c $<
+	gcc -frecord-gcc-switches -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "__BUILDDIST__=$(BUILDDIST)" -o $@ -c $<
 
 %-asm.o: %.asm
 	nasm -f elf -o $@ $<

@@ -19,7 +19,6 @@
 
 #include "init.h"
 
-#include <buildinfo.h>
 #include <lib/multiboot.h>
 #include <lib/log.h>
 #include <lib/datetime.h>

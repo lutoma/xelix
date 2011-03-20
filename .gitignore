@@ -4,5 +4,4 @@
 initrd.img
 floppy.img
 Makefile
-buildinfo.h
 xelix.bin
