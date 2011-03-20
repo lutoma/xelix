@@ -103,12 +103,6 @@ IRQ  13,	 45
 IRQ  14,	 46
 IRQ  15,	 47
 
-; syscalls
-global isr81
-extern syscalls_handler_stub
-isr81:
-	jmp syscalls_handler_stub
-
 ; In interrupts.c
 [EXTERN interrupts_callback]
 

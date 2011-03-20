@@ -93,8 +93,6 @@ extern void irq13();
 extern void irq14();
 extern void irq15();
 
-extern void isr81();
-
 idtEntry_t idtEntries[256];
 idtPtr_t idtPtr;
 
@@ -185,9 +183,6 @@ void idt_init()
 	setGate(46, (uint32)irq14 , 0x08, 0x8E);
 	setGate(47, (uint32)irq15 , 0x08, 0x8E);
 	
-	// syscalls
-	setGate(81, (uint32)isr81 , 0x08, 0x8E);
-
 	idt_flush((uint32)&idtPtr);
 	asm("sti"); // Enable interrupts. Usually a good idea if you want to use them...
 }
