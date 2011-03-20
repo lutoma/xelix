@@ -184,5 +184,5 @@ void idt_init()
 	setGate(47, (uint32)irq15 , 0x08, 0x8E);
 	
 	idt_flush((uint32)&idtPtr);
-	asm("sti"); // Enable interrupts. Usually a good idea if you want to use them...
+	interrupts_enable(); // Enable interrupts. Usually a good idea if you want to use them...
 }
