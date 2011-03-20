@@ -82,7 +82,7 @@ char* itoa(int num, int base)
 
 uint64 atoi(const char* s) {
   uint64 n = 0;
-  while (isdigit(*s)) n = 10 * n + *s++ - '0';
+  while (isCharDigit(*s)) n = 10 * n + *s++ - '0';
   return n;
 }
 
