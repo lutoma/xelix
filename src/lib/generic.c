@@ -38,7 +38,7 @@ void memset(void* ptr, uint8 fill, uint32 size)
 	for(; p < max; p++)
 		*p = fill;
 }
-// Our Memcpy
+// Memcpy
 void memcpy(void* dest, void* src, uint32 size)
 {
 	uint8* from = (uint8*) src;
@@ -54,14 +54,14 @@ void memcpy(void* dest, void* src, uint32 size)
 }
 
 // Small helper function
-static inline char to_digit(uint8 d)
+static inline char toDigit(uint8 d)
 {
 	return (d < 10 ? '0' : 'a' - 10) + d;
 }
 
 // A small itoa
 // Please note it's not standard c syntax.
-char *itoa(int num, int base)
+char* itoa(int num, int base)
 {
 	if (num == 0)
 		return "0"; 
@@ -73,15 +73,15 @@ char *itoa(int num, int base)
 
 	while ((num > 0) && (res >= buf))
 	{
-		*(--res) = to_digit(num % base);
+		*(--res) = toDigit(num % base);
 		num /= base;
 	}
 
 	return res;
 }
 
-unsigned long atoi(const char *s) {
-  unsigned long n = 0;
+uint64 atoi(const char* s) {
+  uint64 n = 0;
   while (isdigit(*s)) n = 10 * n + *s++ - '0';
   return n;
 }
@@ -105,19 +105,20 @@ uint8 inb(uint16 port)
 	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
 	return ret;
 }
+
 //Read a byte from the CMOS
 uint8 readCMOS (uint16 port)
 {
 	outb(0x70, port);
 	return inb(0x71);
 }
+
 //Write a byte into the CMOS
 void writeCMOS(uint16 port,uint8 value) {
   uint8 tmp = inb(0x70);
   outb(0x70, (tmp & 0x80) | (port & 0x7F));
   outb(0x71,value);
 }
-
 
 // Print function
 void print(char* s)
@@ -126,6 +127,7 @@ void print(char* s)
 	display_print(s);
 }
 
+// Print a single char
 static void printChar(char c)
 {
 	display_printChar(c);
@@ -136,6 +138,7 @@ static void printChar(char c)
 	serial_print(s);
 }
 
+// Printing a string, formatted with the stuff in the arg array
 void vprintf(const char *fmt, void **arg) {
 	bool state = false;
 	
@@ -211,21 +214,21 @@ void panic_raw(char *file, uint32 line, const char *reason, ...)
 	else
 		printf("Last running task PID: (null)\n");	
 	
-	printf("test\n");
 	//Sleep forever
 	freeze();
 }
 
 // A Memcmp
-int (memcmp)(const void *s1, const void *s2, size_t n)
+sint32 (memcmp)(const void *s1, const void *s2, size_t n)
 {
 	const unsigned char *us1 = (const unsigned char *) s1;
 	const unsigned char *us2 = (const unsigned char *) s2;
 	while (n-- != 0) {
-	if (*us1 != *us2)
-		return (*us1 < *us2) ? -1 : +1;
-	us1++;
-	us2++;
+		if (*us1 != *us2)
+			return (*us1 < *us2) ? -1 : +1;
+
+		us1++;
+		us2++;
 	}
 	return 0;
 }
