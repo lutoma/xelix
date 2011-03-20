@@ -81,6 +81,9 @@ uint32 kmalloc_ap(size_t sz, uint32 *phys)
 
 void kmalloc_init()
 {
-	// FIXME: Get from Multiboot header. Maybe.
-	memoryPosition = 5 * 1024 * 1024; // 15 MB.
+	/* The modules are the last things the bootloader loads after the
+	 * kernel. Therefore, we can securely assume that everything after
+	 * the last module's end should be free.
+	 */
+	memoryPosition = multiboot_info->modsAddr[multiboot_info->modsCount - 1].end;
 }
