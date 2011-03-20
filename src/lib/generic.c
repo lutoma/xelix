@@ -136,7 +136,7 @@ static void printChar(char c)
 }
 
 void vprintf(const char *fmt, void **arg) {
-	int state = 0;
+	bool state = false;
 	
 	while (*fmt) {
 		if (*fmt == '%') {
