@@ -20,6 +20,9 @@
 
 #include <lib/generic.h>
 
+// Wait until the command buffer is empty, then send.
+#define keyboard_send(C) while ((inb(0x64) & 0x2)) {}; outb(0x60, C);
+
 void keyboard_init(); // irqs have to be set up first!
 void keyboard_takeFocus(void (*func)(uint8));
 void keyboard_leaveFocus();

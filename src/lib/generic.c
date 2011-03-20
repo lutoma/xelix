@@ -26,6 +26,7 @@
 #include <hw/serial.h>
 #include <hw/display.h>
 #include <hw/pit.h>
+#include <hw/keyboard.h>
 #include <tasks/scheduler.h>
 #include <interrupts/interface.h>
 
@@ -229,14 +230,13 @@ int (memcmp)(const void *s1, const void *s2, size_t n)
 	return 0;
 }
 
-// Reboot the computer
+/* Reboot the computer. Uses the CPU reset function of the keyboard
+ * controller. That's right, no tripple faults here. Sorry.
+ */
 void reboot()
 {
 	interrupts_disable();
-	unsigned char good = 0x02;
-	log("Going to reboot NOW!");
-	while ((good & 0x02) != 0)
-	good = inb(0x64);
-	outb(0x64, 0xFE);
+	log("generic: Going to reboot NOW!");
+	keyboard_send(0xFE);
 	freeze();
 }

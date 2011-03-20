@@ -31,8 +31,7 @@
 #include <hw/display.h>
 #include <hw/pit.h>
 
-// Wait until the command buffer is empty, then send.
-#define send(C) while ((inb(0x64) & 0x2)) {}; outb(0x60, C);
+#define send keyboard_send
 
 // Current modifier keys
 struct {
