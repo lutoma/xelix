@@ -23,15 +23,15 @@
 #include <lib/generic.h>
 #include <interrupts/idt.h>
 
+#define EOI_MASTER 0x20
+#define EOI_SLAVE  0xA0
+
 interruptHandler_t interruptHandlers[256];
 
 // Send EOI (end of interrupt) signals to the PICs.
-static void sendEOI(bool slave)
+static void sendEOI(uint8 which)
 {
-	if (slave)
-		outb(0xA0, 0x20);
-	else
-		outb(0x20, 0x20);
+	outb(which, 0x20);
 }
 
 void __cdecl interrupts_callback(cpu_state_t regs)
@@ -43,17 +43,20 @@ void __cdecl interrupts_callback(cpu_state_t regs)
 		return; // Drop interrupt
 	inInterrupt = true;
 
-	// If this interrupt involved the slave, send a EOI to the slave.
-	if (regs.interrupt >= 40)
-		sendEOI(true);
-
-	sendEOI(false); // Master
-	
-	if (interruptHandlers[regs.interrupt] != 0)
+	// Is this an IRQ?
+	if(regs.interrupt > 31)
 	{
-		interruptHandler_t handler = interruptHandlers[regs.interrupt];
-		handler(regs);
+		// If this IRQ involved the slave, send a EOI to the slave.
+		if (regs.interrupt >= 40)
+			sendEOI(EOI_SLAVE);
+
+		sendEOI(EOI_MASTER); // Master
 	}
+
+	interruptHandler_t handler = interruptHandlers[regs.interrupt];
+
+	if(handler != NULL)
+		handler(regs);
 	
 	inInterrupt = false;
 }
@@ -61,14 +64,18 @@ void __cdecl interrupts_callback(cpu_state_t regs)
 void interrupts_registerHandler(uint8 n, interruptHandler_t handler)
 {
 	interruptHandlers[n] = handler;
-	log("interrupts: Registered IRQ handler for %d.\n", n);
+	
+	if(n > 31)
+		log("interrupts: Registered interrupt handler for IRQ %d.\n", n - 32);
+	else
+		log("interrupts: Registered interrupt handler for %d.\n", n);
 }
 
 void interrupts_init()
 {
 	idt_init();
 
-	// set all interruptHandlers to zero
-	memset(interruptHandlers, NULL, 256*sizeof(interruptHandler_t));
+	// set all interruptHandlers to NULL.
+	memset(interruptHandlers, NULL, 256 * sizeof(interruptHandler_t));
 	log("interrupts: Initialized\n");
 }
