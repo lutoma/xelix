@@ -1,5 +1,6 @@
 /* idt.c: Initialization of the IDT
  * Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -119,18 +120,24 @@ void idt_init()
 
 	memset(&idtEntries, 0, sizeof(idtEntry_t)*256);
 
-	// Remap the irq table.
-	outb(0x20, 0x11);
-	outb(0xA0, 0x11);
-	outb(0x21, 0x20);
-	outb(0xA1, 0x28);
-	outb(0x21, 0x04);
-	outb(0xA1, 0x02);
-	outb(0x21, 0x01);
-	outb(0xA1, 0x01);
-	outb(0x21, 0x0);
-	outb(0xA1, 0x0);
-	log("idt: Remapped IRQ table to ISRs 32-47.\n");
+	// Initialize master PIC
+	outb(0x20, 0x11); // The PICs initialization command
+	outb(0x21, 0x20); // Intnum for IRQ 0
+	outb(0x21, 0x04); // IRQ 2 = Slave
+	outb(0x21, 0x01); // ICW 4
+ 
+	// Initialize slave PIC
+	outb(0xa0, 0x11); // The PICs initialization command
+	outb(0xa1, 0x28); // Intnum for IRQ 8
+	outb(0xa1, 0x02); // IRQ 2 = Slave
+	outb(0xa1, 0x01); // ICW 4
+
+	// Activate all IRQs (demask)
+	outb(0x20, 0x0);
+	outb(0xa0, 0x0);
+
+	
+	log("idt: Initialized PICs / IRQs.\n");
 
 	// ISR
 	setGate( 0, (uint32)isr0  , 0x08, 0x8E);
