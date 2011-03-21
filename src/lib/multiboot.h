@@ -106,4 +106,3 @@ typedef struct
 multiboot_info_t* multiboot_info;
 
 void multiboot_printInfo();
-void multiboot_init(multiboot_info_t* pointer);

@@ -76,7 +76,8 @@ static void checkIntLenghts()
  */
 void __cdecl kmain(multiboot_info_t *mbootPointer)
 {
-	init(multiboot, mbootPointer);
+	multiboot_info = mbootPointer;
+	
 	init(gdt);
 	init(interrupts);
 

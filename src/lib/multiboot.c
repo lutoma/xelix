@@ -69,8 +69,3 @@ void multiboot_printInfo()
 	printMbootHex(multiboot_info->vbeInterfaceOff);
 	printMbootInt(multiboot_info->vbeInterfaceLen);
 }
-
-void multiboot_init(multiboot_info_t* pointer)
-{
-	multiboot_info = pointer;
-}
