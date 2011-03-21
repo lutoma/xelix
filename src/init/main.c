@@ -28,6 +28,7 @@
 #include <hw/cpu.h>
 #include <hw/keyboard.h>
 #include <memory/interface.h>
+#include <memory/gdt.h>
 #include <interrupts/interface.h>
 #include <hw/pit.h>
 #include <memory/kmalloc.h>
@@ -76,7 +77,7 @@ static void checkIntLenghts()
 void __cdecl kmain(multiboot_info_t *mbootPointer)
 {
 	init(multiboot, mbootPointer);
-	memory_init_preprotected();
+	init(gdt);
 	init(interrupts);
 
 	init(kmalloc);
@@ -97,7 +98,6 @@ void __cdecl kmain(multiboot_info_t *mbootPointer)
 	
 	init(pit, PIT_RATE);
 	init(cpu);
-	memory_init_postprotected();
 
 	if(mbootPointer->modsCount < 1)
 		panic("Could not load initrd (multiboot_info->modsCount < 1).");
