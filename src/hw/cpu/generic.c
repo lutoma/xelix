@@ -21,6 +21,7 @@
 
 #include "fault.h"
 #include <lib/log.h>
+#include <hw/cpu/cpuid.h>
 
 // Check if CPU is running in protected mode.
 static bool isProtected()
@@ -56,4 +57,5 @@ void cpu_init()
 		log("cpu: Already in protected mode.\n");
 		
 	cpu_initFaultHandler();
+	cpuid_init();
 }
