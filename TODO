@@ -2,3 +2,7 @@
 * Flat binary loader
 * ELF loader
 * Paging
+
+* Fix charmap so we can also display umlauts
+* VGA / VESA
+* Fix VFS
