@@ -1,4 +1,4 @@
-; loader.asm: Initial loader of the kernel
+; header.asm: Sets multiboot header
 ; Copyright © 2010, 2011 Lukas Martini
 
 ; This file is part of Xelix.
@@ -22,24 +22,7 @@ MBOOT_HEADER_MAGIC	equ 0x1BADB002
 MBOOT_HEADER_FLAGS	equ MBOOT_PAGE_ALIGN | MBOOT_MEM_INFO
 MBOOT_CHECKSUM		equ -(MBOOT_HEADER_MAGIC + MBOOT_HEADER_FLAGS)
 
-[BITS 32]
-[GLOBAL _start]
-[EXTERN kmain]
-
+ALIGN 4
 dd  MBOOT_HEADER_MAGIC
 dd  MBOOT_HEADER_FLAGS
 dd  MBOOT_CHECKSUM
-
-_start:
-	; Pass arguments to kmain [ebx contains pointer to multiboot information] [see also: cdecl]
-	push ebx
-	call kmain
-
-
-	; Assume something really bad happened and therefore halt
-	; This should _never ever_ be executed and means things are really
-	; screwed. Therefore, no printf here, as normally, the kernel should
-	; catch things like that himself using the panic() at the end of
-	; kmain().
-	cli
-	hlt

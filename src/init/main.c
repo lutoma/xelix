@@ -71,12 +71,18 @@ static void checkIntLenghts()
 	log("Right\n");
 }
 
-/* This function gets called from loader.asm with the contents of ebx
- * (Which should normally be the pointer to multiboot_info.
+/* This is the very first function of our kernel and gets called
+ * directly from the bootloader (GRUB etc.).
  */
-void __cdecl kmain(multiboot_info_t *mbootPointer)
+void __cdecl _start()
 {
-	multiboot_info = mbootPointer;
+	/* Fetch the pointer to the multiboot_info struct which should be in
+	 * EBX.
+	 */
+	asm("mov %0, ebx" : "=m" (multiboot_info));
+	
+	// Just some assertions to make sure things are ok.
+	assert(multiboot_info != NULL);
 	
 	init(gdt);
 	init(interrupts);
@@ -92,7 +98,7 @@ void __cdecl kmain(multiboot_info_t *mbootPointer)
 
 	init(argparser, multiboot_info->cmdLine);
 
-	if(mbootPointer->bootLoaderName != NULL && find_substr(multiboot_info->bootLoaderName, "GRUB") != -1)
+	if(multiboot_info->bootLoaderName != NULL && find_substr(multiboot_info->bootLoaderName, "GRUB") != -1)
 		init_haveGrub = true;
 	else
 		log("init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
@@ -100,11 +106,11 @@ void __cdecl kmain(multiboot_info_t *mbootPointer)
 	init(pit, PIT_RATE);
 	init(cpu);
 
-	if(mbootPointer->modsCount < 1)
+	if(multiboot_info->modsCount < 1)
 		panic("Could not load initrd (multiboot_info->modsCount < 1).");
 	
 	
-	init(vfs, mbootPointer->modsAddr[0]);
+	init(vfs, multiboot_info->modsAddr[0]);
 
 	init(keyboard);
 	init(debugconsole);
