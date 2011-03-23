@@ -24,7 +24,7 @@
 #include <lib/string.h>
 
 #define CMD_VENDOR			0
-#define CMD_GET_LAST_CMD	0x80000002
+#define CMD_GET_LAST_CMD	0x80000000
 #define CMD_INTEL_CPUNAME	0x80000002
 
 extern bool __cdecl cpuid_check(); // ASM.
@@ -126,5 +126,5 @@ void cpuid_init()
 		asm("mov %0, eax" : "=m" (cpuid_data->lastFunction));
 		log("cpuid: Highest supported extended function number: 0x%x.\n", cpuid_data->lastFunction);
 	}
-	
+
 }
