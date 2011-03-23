@@ -20,13 +20,29 @@
 
 #include <lib/generic.h>
 
+#define CPUID_VENDOR_UNKNOWN	0
+#define CPUID_VENDOR_AMD		1
+#define CPUID_VENDOR_CENTAUR	2
+#define CPUID_VENDOR_CYRIX		3
+#define CPUID_VENDOR_INTEL		4
+#define CPUID_VENDOR_NEXGEN		5
+#define CPUID_VENDOR_NSC		6
+#define CPUID_VENDOR_RISE		7
+#define CPUID_VENDOR_SIS		8
+#define CPUID_VENDOR_TRANSMETA	9
+#define CPUID_VENDOR_UMC		10
+#define CPUID_VENDOR_VIA		11
+
 /* This is by far not complete and only contains what I've implemented
  * so far. Feel free to add things. -- Lukas
  */
 typedef struct {
-	char vendor[13];
-	bool isIntel;
-	bool isAMD;
+	char	vendorName[13];
+	uint32	vendor;
+	uint32	lastFunction;
+	char*	cpuName;
 } cpuid_t;
+
+cpuid_t* cpuid_data;
 
 void cpuid_init();
