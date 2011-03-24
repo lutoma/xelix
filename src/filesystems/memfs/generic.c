@@ -88,8 +88,8 @@ fsNode_t *memfs_init(multiboot_module_t mod)
 		panic("Corrupt/invalid initrd (Magic != 0xBF)");
 
 	vfs_rootNode->read = &memfs_read;
-	vfs_rootNode->readdir = &memfs_readDir;
-	vfs_rootNode->finddir = &memfs_findDir;
+	vfs_rootNode->readDir = &memfs_readDir;
+	vfs_rootNode->findDir = &memfs_findDir;
 	
 	vfs_rootNodeCount = memfsHeader->fileCount;
 	

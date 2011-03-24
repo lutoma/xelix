@@ -24,7 +24,7 @@
 #include <lib/string.h>
 #include <filesystems/memfs/interface.h>
 
-fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readdir_type_t readdir, finddir_type_t finddir, fsNode_t *ptr, fsNode_t *parent)
+fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readDir_type_t readDir, findDir_type_t findDir, fsNode_t *ptr, fsNode_t *parent)
 {
 	fsNode_t* node = (fsNode_t*)kmalloc(sizeof(fsNode_t));
 	strcpy(node->name, name);
@@ -45,8 +45,8 @@ fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, ui
 	node->write = write;
 	node->open = open;
 	node->close = close;
-	node->readdir = readdir;
-	node->finddir = finddir;
+	node->readDir = readDir;
+	node->findDir = findDir;
 	node->ptr = ptr;
 	node->parent = parent;
 

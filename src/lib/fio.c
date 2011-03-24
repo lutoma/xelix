@@ -40,12 +40,12 @@ fsNode_t* fio_pathToNode(const char* origPath)
 	memcpy(path, (char*)origPath, sizeof(path) +1);
 	
 	pch = strtok_r(path, "/", &sp);	
-	fsNode_t* node = vfs_rootNode->finddir(vfs_rootNode, pch);
+	fsNode_t* node = vfs_rootNode->findDir(vfs_rootNode, pch);
 
 	while(pch != NULL && node != NULL)
 	{
 		pch = strtok_r(NULL, "/", &sp);
-		node = node->finddir(node, pch);
+		node = node->findDir(node, pch);
 	}
 	
 	kfree(path);

@@ -35,8 +35,8 @@ typedef size_t (*read_type_t)(struct fsNode*,uint32,uint32,uint8*);
 typedef uint32 (*write_type_t)(struct fsNode*,uint32,uint32,uint8*);
 typedef uint32 (*open_type_t)(struct fsNode*);
 typedef void (*close_type_t)(struct fsNode*);
-typedef struct dirent* (*readdir_type_t)(struct fsNode*,uint32);
-typedef struct fsNode* (*finddir_type_t)(struct fsNode*,char *name);
+typedef struct dirent* (*readDir_type_t)(struct fsNode*,uint32);
+typedef struct fsNode* (*findDir_type_t)(struct fsNode*,char *name);
 
 // __fsNode is only there for use in the function declarations above.
 typedef struct fsNode
@@ -53,8 +53,8 @@ typedef struct fsNode
    write_type_t write;
    open_type_t open;
    close_type_t close;
-   readdir_type_t readdir;
-   finddir_type_t finddir;
+   readDir_type_t readDir;
+   findDir_type_t findDir;
    struct fsNode *ptr; // Used by mountpoints and symlinks.
    struct fsNode *parent;
 } fsNode_t;
@@ -65,7 +65,7 @@ struct dirent // One of these is returned by the readdir call, according to POSI
   uint32 ino;     // Inode number. Required by POSIX.
 };
 
-fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readdir_type_t readdir, finddir_type_t finddir, fsNode_t *ptr, fsNode_t *parent);
+fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readDir_type_t readDir, findDir_type_t findDir, fsNode_t *ptr, fsNode_t *parent);
 
 fsNode_t* vfs_rootNode; // Our root directory node.
 fsNode_t** vfs_rootNodes; // Our root directory array.
