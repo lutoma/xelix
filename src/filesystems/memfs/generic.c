@@ -87,10 +87,12 @@ fsNode_t *memfs_init(multiboot_module_t mod)
 	if(memfsHeaders->magic != 0xBF)
 		panic("Corrupt/invalid initrd (Magic != 0xBF)");
 
-	// Initialise the root directory.
+	vfs_rootNode->read = &memfs_read;
+	vfs_rootNode->readdir = &memfs_readDir;
+	vfs_rootNode->finddir = &memfs_findDir;
+	
 	vfs_rootNodeCount = memfsHeader->fileCount;
-	vfs_rootNode = vfs_createNode("root", 0, 0, 0, FS_DIRECTORY, 0, 0, 0, &memfs_read, NULL, NULL, NULL, &memfs_readDir, &memfs_findDir, NULL, NULL); // RootNode is it's own parent, therefore NULL as last parameter.
-
+	
 	vfs_rootNodes = (fsNode_t**)kmalloc(sizeof(fsNode_t) * memfsHeader->fileCount);
 	log("memfs: Creating files.\n");
 	
