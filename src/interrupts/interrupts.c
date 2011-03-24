@@ -71,6 +71,24 @@ void interrupts_registerHandler(uint8 n, interruptHandler_t handler)
 		log("interrupts: Registered interrupt handler for %d.\n", n);
 }
 
+void interrupts_bulkRegisterHandler(uint8 start, uint8 end, interruptHandler_t handler)
+{
+		if(start >= end)
+		{
+			log("interrupts: Warning: Attempt to bulk register interrupt handlers with start >= end.\n");
+			return;
+		}
+		
+		sint32 i;
+		for(i = start; i <= end; i++)
+			interruptHandlers[i] = handler;
+
+		if(start > 31)
+			log("interrupts: Registered interrupt handler for IRQs %d -  %d.\n", start - 32, end - 32);
+		else
+			log("interrupts: Registered interrupt handlers for %d - %d.\n", start, end);
+}
+
 void interrupts_init()
 {
 	idt_init();
