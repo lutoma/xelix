@@ -74,6 +74,7 @@ char* substr(char* src, size_t start, size_t len)
 
 char* strtok(char *s, const char *delim)
 {
+	log("string: Warning: The usage of strtok is deprecated and dangerous. Please use strtok_r.\n");
 	static char *last;
 	return strtok_r(s, delim, &last);
 }
