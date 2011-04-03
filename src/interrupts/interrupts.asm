@@ -109,21 +109,37 @@ IRQ  15,	 47
 ; This is our common Interrupt stub. It saves the processor state, sets
 ; up for kernel mode segments, calls the C-level handler,
 ; and finally restores the stack frame.
+
+; As this is kinda complicated, i'll document every step here. (Mostly
+; for forgetful me ;)) -- Lukas
 commonStub:
+	; We have to push all the stuff in the cpu_state_t which
+	; interrupts_callback takes in reversed order
+	; (It's defined in hw/cpu.h). The cpu automatically pushes cs, eip,
+	; eflags, ss and esp. Our macros above push one byte containing the
+	; error code (if any) and another one containing the interrupt's
+	; number. The rest is up to us. Luckily, there's pusha to push 'em
+	; all.
 	pusha			; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
-	mov ax, ds		; Lower 16-bits of eax = ds.
-	push eax		; save the data segment descriptor
+	; Lower 16-bits of eax = ds. I'm not quite sure why we save that
+	; one, as this conversion could also be done in C code, but all the
+	; other kernels out there also do it that way, so i'll stick with
+	; that.
+	mov ax, ds
+	push eax
 
+	; ??? („What have the humans done? EXPLAIN! EXPLAIN! EXPLAIN!“)
 	mov ax, 0x10	; load the kernel data segment descriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 
+	; push esp
 	call interrupts_callback
-	;mov esp, eax
-
+	;add esp, 4
+	
 	pop ebx			; reload the original data segment descriptor
 	mov ds, bx
 	mov es, bx
