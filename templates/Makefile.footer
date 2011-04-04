@@ -56,7 +56,13 @@ runqemu: xelix.bin
 runqemunox: xelix.bin
 	@echo "Exit with ^A-x"
 	qemu -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img
-	
+
+xelix.iso: floppy.img
+	mkisofs -o xelix.iso -A Xelix -b floppy.img floppy.img
+
+.PHONY: iso
+iso: xelix.iso
+
 .PHONY: runvboxfloppy	
 runvboxfloppy: floppy.img
 	VBoxSDL -fda floppy.img --startvm Xelix
