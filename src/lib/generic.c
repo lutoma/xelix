@@ -106,6 +106,18 @@ uint8 inb(uint16 port)
 	return ret;
 }
 
+void outl(uint16 port, uint32 value)
+{
+	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
+}
+
+uint32 inl(uint16 port)
+{
+	uint32 ret;
+	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
+	return ret;
+}
+
 //Read a byte from the CMOS
 uint8 readCMOS (uint16 port)
 {

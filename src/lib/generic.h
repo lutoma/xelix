@@ -57,6 +57,8 @@ typedef enum { false = 0 , true = 1 } bool;
 void outb(uint16 port, uint8 value);
 void outw(uint16 port, uint16 value);
 uint8 inb(uint16 port);
+void outl(uint16 port, uint32 value);
+uint32 inl(uint16 port);
 uint8 readCMOS (uint16 port);
 void writeCMOS (uint16 port, uint8 value);
 void memset(void* ptr, uint8 fill, uint32 size);
