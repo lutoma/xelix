@@ -46,6 +46,12 @@ typedef enum { false = 0 , true = 1 } bool;
 #define NULL  0
 #define EOF  -1
 
+// Making ponies fly.
+#define init(C, ...) \
+	log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__); \
+	C ## _init(__VA_ARGS__); \
+	log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__);
+
 void outb(uint16_t port, uint8_t value);
 void outw(uint16_t port, uint16_t value);
 uint8_t inb(uint16_t port);

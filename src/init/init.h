@@ -20,10 +20,4 @@
 
 #include <lib/generic.h>
 
-// Making ponies fly.
-#define init(C, ...) \
-	log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__); \
-	C ## _init(__VA_ARGS__); \
-	log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__);
-
 bool init_haveGrub;
