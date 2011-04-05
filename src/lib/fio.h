@@ -27,7 +27,7 @@ typedef struct FILE
 	const char* path;
 	const char* modes;
 	fsNode_t* node;
-	uint32 position;
+	uint32_t position;
 } FILE;
 
 FILE *fopen(const char* path, const char* mode);

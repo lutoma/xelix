@@ -38,8 +38,8 @@
  */
 typedef struct {
 	char	vendorName[13];
-	uint32	vendor;
-	uint32	lastFunction;
+	uint32_t	vendor;
+	uint32_t	lastFunction;
 	char*	cpuName;
 } cpuid_t;
 

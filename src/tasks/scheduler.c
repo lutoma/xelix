@@ -26,7 +26,7 @@
 static task_t* firstTask = NULL;
 static task_t* lastTask = NULL;
 static task_t* currentTask = NULL;
-static uint32 highestPid = -1;
+static uint32_t highestPid = -1;
 
 /* Add new task to schedule. Assumes that the added task is
  * currently running and interrupts are disabled. Not to be called

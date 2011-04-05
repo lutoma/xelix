@@ -23,8 +23,8 @@
 void display_init();
 void display_print(char* s);
 void display_printChar(char c);
-void display_setColor(uint8 newcolor);
-uint8 display_getColor();
+void display_setColor(uint8_t newcolor);
+uint8_t display_getColor();
 
 // scrolling in the buffer
 void display_scrollUp();

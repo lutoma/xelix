@@ -89,7 +89,7 @@ char fgetc(FILE* fp)
 {
 	if(fp->node->read == NULL)
 		return EOF;
-	static uint8* c;
+	static uint8_t* c;
 	fp->node->read(fp->node, fp->position, 1, c);
 	fp->position++;
 	return c[0];
@@ -100,7 +100,7 @@ int fputc(int c, FILE* fp)
 	if(fp->node->write == NULL)
 		return 1;
 
-	static uint8* s;
+	static uint8_t* s;
 	return fp->node->write(fp->node, fp->position, 1, s);
 }
 /*

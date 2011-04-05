@@ -25,30 +25,31 @@
 /* For internal use only */
 typedef struct
 {
-	uint16 lowLimit; // The lower 16 bits of the limit.
-	uint16 lowBase; // The lower 16 bits of the base.
-	uint8  middleBase; // The next 8 bits of the base.
-	uint8  access; // Access flags, determine what ring this segment can be used in.
-	uint8  granularity;
-	uint8  highBase; // The last 8 bits of the base.
+	uint16_t lowLimit; // The lower 16 bits of the limit.
+	uint16_t lowBase; // The lower 16 bits of the base.
+	uint8_t  middleBase; // The next 8 bits of the base.
+	uint8_t  access; // Access flags, determine what ring this segment can be used in.
+	uint8_t  granularity;
+	uint8_t  highBase; // The last 8 bits of the base.
 } __attribute__((packed))
 entry_t;
 
 typedef struct
 {
-	uint16 limit; // The upper 16 bits of all selector limits.
-	uint32 base; // The address of the first gdt_entry_t struct.
+	uint16_t limit; // The upper 16 bits of all selector limits.
+	uint32_t base; // The address of the first gdt_entry_t struct.
 } __attribute__((packed))
 pointer_t;
 
 // Defined in gdt.asm
-extern void gdt_flush(uint32);
+extern void gdt_flush(uint32_t);
 
 static entry_t entries[5];
 static pointer_t pointer;
 
 // Set the value of one GDT entry.
-static void setGate(sint32 num, uint32 base, uint32 limit, uint8 access, uint8 gran)
+static void setGate(int32_t num, uint32_t base, uint32_t limit,
+					uint8_t access, uint8_t gran)
 {
 	if(num > 4)
 	{
@@ -72,7 +73,7 @@ static void setGate(sint32 num, uint32 base, uint32 limit, uint8 access, uint8 g
 void gdt_init()
 {
 	pointer.limit = (sizeof(entry_t) * 5) - 1;
-	pointer.base  = (uint32)&entries;
+	pointer.base  = (uint32_t)&entries;
 
 	setGate(0, 0, 0, 0, 0); // Null segment
 	setGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
@@ -80,5 +81,5 @@ void gdt_init()
 	setGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
 	setGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
 
-	gdt_flush((uint32)&pointer);
+	gdt_flush((uint32_t)&pointer);
 }

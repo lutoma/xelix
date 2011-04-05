@@ -49,7 +49,7 @@ char vendors[VENDORNUM][13] =
 /* Sends command and calls cpuid command. Also checks for maximum
  * supported function number.
  */
-static void sendCommand(uint32 command)
+static void sendCommand(uint32_t command)
 {
 	// If command > highest supported function and already initialized.
 	if(cpuid_data->lastFunction \
@@ -69,9 +69,9 @@ static void sendCommand(uint32 command)
 /* Converts vendor id we get from the CPU to a vendor num which we use
  * internally.
  */
-static uint32 vendorNameToVendor(char vendorName[13])
+static uint32_t vendorNameToVendor(char vendorName[13])
 {
-	uint32 i;
+	uint32_t i;
 	for(i = 0; i < VENDORNUM; i++)
 		if(!strcmp(vendorName, vendors[i]))
 			return i + 1;

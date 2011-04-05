@@ -31,24 +31,24 @@
 
 struct fsNode;
 
-typedef size_t (*read_type_t)(struct fsNode*,uint32,uint32,uint8*);
-typedef uint32 (*write_type_t)(struct fsNode*,uint32,uint32,uint8*);
-typedef uint32 (*open_type_t)(struct fsNode*);
+typedef size_t (*read_type_t)(struct fsNode*, uint32_t, uint32_t, uint8_t*);
+typedef uint32_t (*write_type_t)(struct fsNode*, uint32_t, uint32_t, uint8_t*);
+typedef uint32_t (*open_type_t)(struct fsNode*);
 typedef void (*close_type_t)(struct fsNode*);
-typedef struct dirent* (*readDir_type_t)(struct fsNode*,uint32);
-typedef struct fsNode* (*findDir_type_t)(struct fsNode*,char *name);
+typedef struct dirent* (*readDir_type_t)(struct fsNode*, uint32_t);
+typedef struct fsNode* (*findDir_type_t)(struct fsNode*, char* name);
 
 // __fsNode is only there for use in the function declarations above.
 typedef struct fsNode
 {
    char name[128];     // The filename.
-   uint32 mask;        // The permissions mask.
-   uint32 uid;         // The owning user.
-   uint32 gid;         // The owning group.
-   uint32 flags;       // Includes the node type. See #defines above.
-   uint32 inode;       // This is device-specific - provides a way for a filesystem to identify files.
-   uint32 length;      // Size of the file, in bytes.
-   uint32 impl;        // An implementation-defined number.
+   uint32_t mask;        // The permissions mask.
+   uint32_t uid;         // The owning user.
+   uint32_t gid;         // The owning group.
+   uint32_t flags;       // Includes the node type. See #defines above.
+   uint32_t inode;       // This is device-specific - provides a way for a filesystem to identify files.
+   uint32_t length;      // Size of the file, in bytes.
+   uint32_t impl;        // An implementation-defined number.
    read_type_t read;
    write_type_t write;
    open_type_t open;
@@ -62,10 +62,10 @@ typedef struct fsNode
 struct dirent // One of these is returned by the readdir call, according to POSIX.
 {
   char name[128]; // Filename.
-  uint32 ino;     // Inode number. Required by POSIX.
+  uint32_t ino;     // Inode number. Required by POSIX.
 };
 
-fsNode_t* vfs_createNode(char name[128], uint32 mask, uint32 uid, uint32 gid, uint32 flags, uint32 inode, uint32 length, uint32 impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readDir_type_t readDir, findDir_type_t findDir, fsNode_t *ptr, fsNode_t *parent);
+fsNode_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid, uint32_t gid, uint32_t flags, uint32_t inode, uint32_t length, uint32_t impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readDir_type_t readDir, findDir_type_t findDir, fsNode_t *ptr, fsNode_t *parent);
 
 fsNode_t* vfs_rootNode; // Our root directory node.
 fsNode_t** vfs_rootNodes; // Our root directory array.

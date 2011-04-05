@@ -26,10 +26,10 @@
 // Check if CPU is running in protected mode.
 static bool isProtected()
 {
-	uint32 v;
+	uint32_t v;
 	asm ( "mov %0, %%cr0":"=a"(v) );
 	if(v & 1) return true;
-	else return false;
+	return false;
 }
 
 // Set CPU in protected mode

@@ -26,15 +26,15 @@
 
 typedef struct
 {
-	uint32 fileCount; // The number of files in the ramdisk.
+	uint32_t fileCount; // The number of files in the ramdisk.
 } memfsHeader_t;
 
 typedef struct
 {
-	uint8 magic;   // Magic number, for error checking.
+	uint8_t magic;   // Magic number, for error checking.
 	char name[64];// Filename.
-	uint32 offset; // Offset in the initrd that the file starts.
-	uint32 length; // Length of the file.
+	uint32_t offset; // Offset in the initrd that the file starts.
+	uint32_t length; // Length of the file.
 } memfsFileHeader_t;
 
 
@@ -43,19 +43,19 @@ memfsFileHeader_t *memfsHeaders; // The list of file headers.
 struct dirent dirent;
 
 // Read single file
-static size_t memfs_read(fsNode_t *node, uint32 offset, uint32 size, uint8 *buffer)
+static size_t memfs_read(fsNode_t *node, uint32_t offset, uint32_t size, uint8_t *buffer)
 {
 	memfsFileHeader_t header = memfsHeaders[node->inode];
 	if (offset > header.length)
 		return 0;
 	if (offset+size > header.length)
 		size = header.length-offset;
-	memcpy(buffer, (uint8*) (header.offset+offset), size);
+	memcpy(buffer, (uint8_t*) (header.offset+offset), size);
 	return size;
 }
 
 // Read directory [aka get content]
-static struct dirent *memfs_readDir(fsNode_t *node, uint32 index)
+static struct dirent *memfs_readDir(fsNode_t *node, uint32_t index)
 {
 	if (index >= vfs_rootNodeCount)
 		return 0;

@@ -22,7 +22,7 @@
 #include "log.h"
 #include "string.h"
 
-static void printInfo(uint32 var, char* varname, char type)
+static void printInfo(uint32_t var, char* varname, char type)
 {
 	// Lazy coder was lazy
 	char* t;
@@ -44,9 +44,9 @@ void multiboot_printInfo()
 	printMbootInt(multiboot_info->memLower);
 	printMbootInt(multiboot_info->memUpper);
 	printMbootHex(multiboot_info->bootDevice);
-	printMbootStr((uint32)multiboot_info->cmdLine);
+	printMbootStr((uint32_t)multiboot_info->cmdLine);
 	printMbootInt(multiboot_info->modsCount);
-	printMbootHex((uint32)multiboot_info->modsAddr);
+	printMbootHex((uint32_t)multiboot_info->modsAddr);
 
 
 	printMbootInt(multiboot_info->mmapLength);
@@ -58,7 +58,7 @@ void multiboot_printInfo()
 	// ROM configuration table
 	printMbootHex(multiboot_info->configTable);
 	
-	printMbootStr((uint32)multiboot_info->bootLoaderName);
+	printMbootStr((uint32_t)multiboot_info->bootLoaderName);
 	printMbootHex(multiboot_info->apmTable);
 	
 	// Video

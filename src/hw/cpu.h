@@ -23,31 +23,31 @@
 
 typedef struct {
 	// Data segment selector
-	uint32 ds;
+	uint32_t ds;
 	
 	// Pushed by pusha.
-	uint32 edi;
-	uint32 esi;
-	uint32 ebp;
-	uint32 esp;
-	uint32 ebx;
-	uint32 edx;
-	uint32 ecx;
-	uint32 eax;
+	uint32_t edi;
+	uint32_t esi;
+	uint32_t ebp;
+	uint32_t esp;
+	uint32_t ebx;
+	uint32_t edx;
+	uint32_t ecx;
+	uint32_t eax;
 
 	// Interrupt number and error code (if applicable)
-	uint32 interrupt;
-	uint32 errCode;
+	uint32_t interrupt;
+	uint32_t errCode;
 	
 	/* Pushed by the processor automatically. This is what the processor
 	 * expects to be in the stack when doing an iret. useresp and ss are
 	 * only used when returning to another privilege level
 	 */
-	uint32 eip;
-	uint32 cs;
-	uint32 eflags;
-	uint32 useresp;
-	uint32 ss;
+	uint32_t eip;
+	uint32_t cs;
+	uint32_t eflags;
+	uint32_t useresp;
+	uint32_t ss;
 } cpu_state_t;
 
 void cpu_init();

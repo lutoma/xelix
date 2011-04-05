@@ -36,14 +36,14 @@ void speaker_off()
 
 void speaker_setFrequency(uint8 frequency)
 {
-	uint8 divisor;
+	uint8_t divisor;
 	divisor = 1193180L/frequency;
 	outb(0x43,0xB6);
 	outb(0x42,divisor&0xFF);
 	outb(0x42,divisor >> 8);
 }
 
-void speaker_beep(uint8 frequency, time_t seconds)
+void speaker_beep(uint8_t frequency, time_t seconds)
 {
 	speaker_setFrequency(frequency);
 	speaker_on();

@@ -55,22 +55,6 @@ static void compilerInfo()
 	log("\tDistribution: %s\n", __BUILDDIST__);
 }
 
-// Check if ints have the right length
-static void checkIntLenghts()
-{
-	log("init: Checking length of uint8... ");
-	assert(sizeof(uint8) == 1);
-	log("Right\n");
-	
-	log("init: Checking length of uint16... ");
-	assert(sizeof(uint16) == 2);
-	log("Right\n");
-	
-	log("init: Checking length of uint32... ");
-	assert(sizeof(uint32) == 4);
-	log("Right\n");
-}
-
 /* This is the very first function of our kernel and gets called
  * directly from the bootloader (GRUB etc.).
  */
@@ -93,7 +77,6 @@ void __cdecl _start()
 	init(log);
 	
 	compilerInfo();
-	checkIntLenghts();
 	multiboot_printInfo();
 
 	init(argparser, multiboot_info->cmdLine);

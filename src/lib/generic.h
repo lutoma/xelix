@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
+ 
+#include "stdint.h"
 
 #ifdef __GNUC__
 	#define GCC_VERSION (__GNUC__ * 10000 \
@@ -35,47 +37,37 @@
 #define isCharDigit(C) ((C) >= '0' && (C) <= '9')
 #define DUMPVAR(C,D) printf("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
 
-// Typedefs
-typedef unsigned long uint64;
-typedef signed long sint64;
-typedef unsigned int uint32;
-typedef signed int sint32;
-typedef unsigned short uint16;
-typedef signed short sint16;
-typedef unsigned char uint8;
-typedef signed char sint8;
-
-typedef sint64 time_t;
-typedef sint64 size_t;
-typedef uint8 byte;
+typedef int64_t time_t;
+typedef int64_t size_t;
+typedef uint8_t byte;
 
 typedef enum { false = 0 , true = 1 } bool;
 
 #define NULL  0
 #define EOF  -1
 
-void outb(uint16 port, uint8 value);
-void outw(uint16 port, uint16 value);
-uint8 inb(uint16 port);
-void outl(uint16 port, uint32 value);
-uint32 inl(uint16 port);
-uint8 readCMOS (uint16 port);
-void writeCMOS (uint16 port, uint8 value);
-void memset(void* ptr, uint8 fill, uint32 size);
-void memcpy(void* dest, void* src, uint32 size); 
+void outb(uint16_t port, uint8_t value);
+void outw(uint16_t port, uint16_t value);
+uint8_t inb(uint16_t port);
+void outl(uint16_t port, uint32_t value);
+uint32_t inl(uint16_t port);
+uint8_t readCMOS (uint16_t port);
+void writeCMOS (uint16_t port, uint8_t value);
+void memset(void* ptr, uint8_t fill, uint32_t size);
+void memcpy(void* dest, void* src, uint32_t size); 
 char* itoa (int num, int base);
 void print(char* s);
 void vprintf(const char* fmt, void** arg);
 void printf(const char* fmt, ...);
 void freeze(void);
-sint32 memcmp(const void* s1, const void* s2, size_t n);
+int32_t memcmp(const void* s1, const void* s2, size_t n);
 void reboot();
 
 extern void display_clear();
 #define clear() display_clear()
 
 // Don't use this one, use the macros below.
-void panic_raw(char *file, uint32 line, const char *reason, ...);
+void panic_raw(char *file, uint32_t line, const char *reason, ...);
 
 // to automatically have file names and line numbers
 #define panic(...) panic_raw( __FILE__, __LINE__, __VA_ARGS__);

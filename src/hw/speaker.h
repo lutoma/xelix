@@ -23,8 +23,8 @@
 
 void speaker_on();
 void speaker_off();
-void speaker_setFrequency(uint8 frequency);
-void speaker_beep(uint8 frequency, time_t seconds);
+void speaker_setFrequency(uint8_t frequency);
+void speaker_beep(uint8_t frequency, time_t seconds);
 void speaker_init();
 
 #endif

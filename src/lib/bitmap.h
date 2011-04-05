@@ -21,27 +21,27 @@
 #include "generic.h"
 
 typedef struct {
-	uint32 numbits;
+	uint32_t numbits;
 	/* an array large enough for numbits to fit in. Might 
 	 * (if numbits%8!=0) have some spare bits at the end
 	 */
-	uint32* bits;
+	uint32_t* bits;
 } bitmap_t;
 
 
 // creates a new bitmap.
 // CONTENT IS RANDOM!  - use bitmap_clearall() to clear the bitmap.
-bitmap_t bitmap_init(uint32 numbits);
+bitmap_t bitmap_init(uint32_t numbits);
 
 // returns 1 or 0
-uint8 bitmap_get(bitmap_t bitmap, uint32 bitnum);
+uint8_t bitmap_get(bitmap_t bitmap, uint32_t bitnum);
 // sets a bit (to 1)
-void bitmap_set(bitmap_t bitmap, uint32 bitnum);
+void bitmap_set(bitmap_t bitmap, uint32_t bitnum);
 // clears a bit (to 0)
-void bitmap_clear(bitmap_t bitmap, uint32 bitnum);
+void bitmap_clear(bitmap_t bitmap, uint32_t bitnum);
 
 // clears every bit to 0
 void bitmap_clearAll(bitmap_t bitmap);
 
 // finds the first bit set to 0    returns 0 if no cleared bit found (0 is also returned if the first bit is cleared)
-uint32 bitmap_findFirstClear(bitmap_t bitmap);
+uint32_t bitmap_findFirstClear(bitmap_t bitmap);

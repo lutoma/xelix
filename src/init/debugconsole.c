@@ -29,7 +29,7 @@
 #include <lib/fio.h>
 #include <tasks/scheduler.h>
 
-uint32 cursorPosition;
+uint32_t cursorPosition;
 char currentLine[256] = "";
 
 // Print the command line prompt.
@@ -68,9 +68,9 @@ static void executeCommand(char *command)
 	{
 		fsNode_t *fsNode = vfs_rootNode->findDir(vfs_rootNode, "makememfs.c");
 		
-		uint8* buf = (uint8*)kmalloc(sizeof(char) * 100);
+		uint8_t* buf = (uint8_t*)kmalloc(sizeof(char) * 100);
 		int offset = 0;
-		uint8 sz = fsNode->read(fsNode, offset, 100, buf);
+		uint8_t sz = fsNode->read(fsNode, offset, 100, buf);
 
 		while(sz != 0)
 		{
@@ -104,7 +104,7 @@ static void executeCommand(char *command)
 }
 
 // Handle keyboard input.
-static void handler(uint8 code)
+static void handler(uint8_t code)
 {
 	char c = keyboard_codeToChar(code);
 

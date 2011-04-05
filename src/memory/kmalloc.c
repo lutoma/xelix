@@ -24,11 +24,11 @@
 #include <lib/log.h>
 #include <lib/multiboot.h>
 
-static uint32 memoryPosition;
+static uint32_t memoryPosition;
 #define pagingEnabled false // FIXME
 
 // Use macros.
-uint32 __kmalloc(size_t sz, bool align, uint32 *phys)
+uint32_t __kmalloc(size_t sz, bool align, uint32_t *phys)
 {
 	// If the address is not already page-aligned
 	if (align == 1 && (memoryPosition & 0xFFFFF000))
@@ -41,7 +41,7 @@ uint32 __kmalloc(size_t sz, bool align, uint32 *phys)
 	if (phys)
 		*phys = memoryPosition;
 
-	uint32 tmp = memoryPosition;
+	uint32_t tmp = memoryPosition;
 	memoryPosition += sz;
 	return tmp;
 }

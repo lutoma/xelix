@@ -22,5 +22,5 @@
 
 #define PIT_RATE 500
 
-void pit_init(uint16 frequency);
-uint64 pit_getTickNum();
+void pit_init(uint16_t frequency);
+uint64_t pit_getTickNum();

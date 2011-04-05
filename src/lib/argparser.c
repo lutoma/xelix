@@ -25,7 +25,7 @@
 
 char** arguments = NULL;
 char** values = NULL;
-uint32 parts = 1;
+uint32_t parts = 1;
 bool initialized = false;
 
 /* Retrieve a single argument's key. Returns:
@@ -60,7 +60,7 @@ void argparser_init(char* commandLine)
 	/* Strtok_r destroys the source string. As we don't want that, copy
 	 * it twice (one for first run, two for second run).
 	 */
-	uint32 size = strlen(commandLine) * sizeof(char);
+	uint32_t size = strlen(commandLine) * sizeof(char);
 
 	char* one = (char*)kmalloc(size);
 	char* two = (char*)kmalloc(size);
@@ -84,8 +84,8 @@ void argparser_init(char* commandLine)
 	log("argparser: Counted %d parts\n", parts);
 
 	// Allocate arrays
-	arguments = (char**)kmalloc(parts * sizeof(uint32));
-	values = (char**)kmalloc(parts * sizeof(uint32));
+	arguments = (char**)kmalloc(parts * sizeof(uint32_t));
+	values = (char**)kmalloc(parts * sizeof(uint32_t));
 	
 	if((int)arguments == NULL || (int)values == NULL)
 	{

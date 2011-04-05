@@ -41,11 +41,11 @@ struct {
 	bool super:1;
 } modifiers;
 
-void (*focusedFunction)(uint8);
+void (*focusedFunction)(uint8_t);
 char* currentKeymap;
 
 // Handle a scancode. Calls the active function
-static void handleScancode(uint8 code, uint8 code2)
+static void handleScancode(uint8_t code, uint8_t code2)
 {
 	switch(code)
 	{
@@ -93,7 +93,7 @@ static void handler(cpu_state_t regs)
 	static bool waitingForEscapeSequence;
 	
 	// read scancodes
-	uint8 code = inb(0x60);
+	uint8_t code = inb(0x60);
 	
 	if (code == 0xe0)
 		waitingForEscapeSequence = true; // escape sequence
@@ -111,7 +111,7 @@ static void handler(cpu_state_t regs)
 }
 
 // Take keyboard focus.
-void keyboard_takeFocus(void (*func)(uint8))
+void keyboard_takeFocus(void (*func)(uint8_t))
 {
 	focusedFunction = func;
 	log("keyboard: Application took focus.\n");
@@ -148,22 +148,22 @@ static char* identify()
 	keyboard_sendKeyboard(0xF2);
 
 	// Wait for scancodes
-	uint64 startTick = pit_getTickNum();
+	uint64_t startTick = pit_getTickNum();
 	while(true)
 	{
 		if(inb(0x64) & 1)
 			break;
 		
-		uint64 nowTick = pit_getTickNum();
+		uint64_t nowTick = pit_getTickNum();
 		
 		// Still no result after 0.5 seconds
 		if((startTick - nowTick) / PIT_RATE >= 0.5)
 			return "XT";
 	}
 	
-	uint8 one = inb(0x60);
-	uint8 two = inb(0x60);
-	uint8 three = inb(0x60);
+	uint8_t one = inb(0x60);
+	uint8_t two = inb(0x60);
+	uint8_t three = inb(0x60);
 	
 	log("keyboard: identify: one = 0x%x, two = 0x%x, three = 0x%x.\n", one, two, three);
 
@@ -179,7 +179,7 @@ static char* identify()
 	return "Unknown";
 }
 
-char keyboard_codeToChar(uint8 code)
+char keyboard_codeToChar(uint8_t code)
 {
 	if(code > 512)
 		return (char)NULL;

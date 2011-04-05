@@ -31,18 +31,18 @@
 #include <interrupts/interface.h>
 
 // Memset function. Fills memory with something.
-void memset(void* ptr, uint8 fill, uint32 size)
+void memset(void* ptr, uint8_t fill, uint32_t size)
 {
-	uint8* p = (uint8*) ptr;
-	uint8* max = p+size;
+	uint8_t* p = (uint8_t*) ptr;
+	uint8_t* max = p+size;
 	for(; p < max; p++)
 		*p = fill;
 }
 // Memcpy
-void memcpy(void* dest, void* src, uint32 size)
+void memcpy(void* dest, void* src, uint32_t size)
 {
-	uint8* from = (uint8*) src;
-	uint8* to = (uint8*) dest;
+	uint8_t* from = (uint8_t*) src;
+	uint8_t* to = (uint8_t*) dest;
 	while(size > 0)
 	{
 		*to = *from;
@@ -54,7 +54,7 @@ void memcpy(void* dest, void* src, uint32 size)
 }
 
 // Small helper function
-static inline char toDigit(uint8 d)
+static inline char toDigit(uint8_t d)
 {
 	return (d < 10 ? '0' : 'a' - 10) + d;
 }
@@ -80,54 +80,54 @@ char* itoa(int num, int base)
 	return res;
 }
 
-uint64 atoi(const char* s) {
-  uint64 n = 0;
+uint64_t atoi(const char* s) {
+  uint64_t n = 0;
   while (isCharDigit(*s)) n = 10 * n + *s++ - '0';
   return n;
 }
 
 
 // Write a byte out to the specified port
-void outb(uint16 port, uint8 value)
+void outb(uint16_t port, uint8_t value)
 {
 	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
 }
 
 // Write out a word to the specified port
-void outw(uint16 port, uint16 value)
+void outw(uint16_t port, uint16_t value)
 {
 	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
 }
 // Read a byte from the specified port
-uint8 inb(uint16 port)
+uint8_t inb(uint16_t port)
 {
-	uint8 ret;
+	uint8_t ret;
 	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
 	return ret;
 }
 
-void outl(uint16 port, uint32 value)
+void outl(uint16_t port, uint32_t value)
 {
 	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
 }
 
-uint32 inl(uint16 port)
+uint32_t inl(uint16_t port)
 {
-	uint32 ret;
+	uint32_t ret;
 	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
 	return ret;
 }
 
 //Read a byte from the CMOS
-uint8 readCMOS (uint16 port)
+uint8_t readCMOS (uint16_t port)
 {
 	outb(0x70, port);
 	return inb(0x71);
 }
 
 //Write a byte into the CMOS
-void writeCMOS(uint16 port,uint8 value) {
-  uint8 tmp = inb(0x70);
+void writeCMOS(uint16_t port,uint8_t value) {
+  uint8_t tmp = inb(0x70);
   outb(0x70, (tmp & 0x80) | (port & 0x7F));
   outb(0x71,value);
 }
@@ -199,7 +199,7 @@ void freeze(void)
 }
 
 // Panic. Use the panic() macro that inserts the line.
-void panic_raw(char *file, uint32 line, const char *reason, ...)
+void panic_raw(char *file, uint32_t line, const char *reason, ...)
 {
 	// Disable interrupts.
 	interrupts_disable();
@@ -231,7 +231,7 @@ void panic_raw(char *file, uint32 line, const char *reason, ...)
 }
 
 // A Memcmp
-sint32 (memcmp)(const void *s1, const void *s2, size_t n)
+int32_t (memcmp)(const void *s1, const void *s2, size_t n)
 {
 	const unsigned char *us1 = (const unsigned char *) s1;
 	const unsigned char *us2 = (const unsigned char *) s2;

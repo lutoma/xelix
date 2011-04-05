@@ -29,7 +29,7 @@
 interruptHandler_t interruptHandlers[256];
 
 // Send EOI (end of interrupt) signals to the PICs.
-static void sendEOI(uint8 which)
+static void sendEOI(uint8_t which)
 {
 	outb(which, 0x20);
 }
@@ -61,7 +61,7 @@ void __cdecl interrupts_callback(cpu_state_t regs)
 	inInterrupt = false;
 }
 
-void interrupts_registerHandler(uint8 n, interruptHandler_t handler)
+void interrupts_registerHandler(uint8_t n, interruptHandler_t handler)
 {
 	interruptHandlers[n] = handler;
 	
@@ -71,7 +71,7 @@ void interrupts_registerHandler(uint8 n, interruptHandler_t handler)
 		log("interrupts: Registered interrupt handler for %d.\n", n);
 }
 
-void interrupts_bulkRegisterHandler(uint8 start, uint8 end, interruptHandler_t handler)
+void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interruptHandler_t handler)
 {
 		if(start >= end)
 		{
@@ -79,7 +79,7 @@ void interrupts_bulkRegisterHandler(uint8 start, uint8 end, interruptHandler_t h
 			return;
 		}
 		
-		sint32 i;
+		int32_t i;
 		for(i = start; i <= end; i++)
 			interruptHandlers[i] = handler;
 

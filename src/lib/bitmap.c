@@ -31,7 +31,7 @@
 #define offset(a) (a%(8*4))
 
 // returns 1 or 0
-uint8 bitmap_get(bitmap_t bitmap, uint32 bitnum)
+uint8_t bitmap_get(bitmap_t bitmap, uint32_t bitnum)
 {
 	if( bitnum >= bitmap.numbits )
 	{
@@ -46,7 +46,7 @@ uint8 bitmap_get(bitmap_t bitmap, uint32 bitnum)
 }
 
 // sets a bit (to 1)
-void bitmap_set(bitmap_t bitmap, uint32 bitnum)
+void bitmap_set(bitmap_t bitmap, uint32_t bitnum)
 {
 	if( bitnum >= bitmap.numbits )
 	{
@@ -59,7 +59,7 @@ void bitmap_set(bitmap_t bitmap, uint32 bitnum)
 
 
 // clears a bit (to 0)
-void bitmap_clear(bitmap_t bitmap, uint32 bitnum)
+void bitmap_clear(bitmap_t bitmap, uint32_t bitnum)
 {
 	if( bitnum >= bitmap.numbits )
 	{
@@ -73,12 +73,12 @@ void bitmap_clear(bitmap_t bitmap, uint32 bitnum)
 // clears every bit to 0
 void bitmap_clearAll(bitmap_t bitmap)
 {
-	memset(bitmap.bits, 0, sizeof(uint32) * (bitmap.numbits-1)/32+1);
+	memset(bitmap.bits, 0, sizeof(uint32_t) * (bitmap.numbits-1)/32+1);
 }
 
-uint32 bitmap_findFirstClear(bitmap_t bitmap)
+uint32_t bitmap_findFirstClear(bitmap_t bitmap)
 {
-	int i;
+	int32_t i;
 	for(i=0; i <= index(bitmap.numbits); i++)
 	{
 		if(bitmap.bits[i] == 0xffffffff)
@@ -94,7 +94,7 @@ uint32 bitmap_findFirstClear(bitmap_t bitmap)
 	return 0;
 }
 
-bitmap_t bitmap_init(uint32 numbits)
+bitmap_t bitmap_init(uint32_t numbits)
 {
 	if(numbits == 0)
 	{
@@ -104,6 +104,6 @@ bitmap_t bitmap_init(uint32 numbits)
 
 	bitmap_t bitmap;
 	bitmap.numbits = numbits;
-	bitmap.bits = (uint32*)kmalloc(sizeof(uint32) * (numbits-1)/32+1);
+	bitmap.bits = (uint32_t*)kmalloc(sizeof(uint32_t) * (numbits-1)/32+1);
 	return bitmap;
 }

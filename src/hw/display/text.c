@@ -22,13 +22,13 @@
 #include <memory/kmalloc.h>
 #include <lib/log.h>
 
-const uint32 columns = 80; // on-screen character grid
-const uint32 rows = 25;
+const uint32_t columns = 80; // on-screen character grid
+const uint32_t rows = 25;
 
 // Pointer to video memory
 // 80x25 Zeichen
 // short ist zwei Bytes: 1. Byte char, 2. Byte Farben
-uint16* const videoMemory = (uint16*) 0xB8000; 
+uint16_t* const videoMemory = (uint16_t*) 0xB8000; 
 
 
 // Buffer concept:
@@ -36,17 +36,17 @@ uint16* const videoMemory = (uint16*) 0xB8000;
 // The screen displays part of the buffer.
 // The buffer is wrap-around, i.e. when the end is reached it just continues at the beginning. (see also wrapAroundBuffer())
 
-uint16* buffer; // start of the buffer
-uint16* bufferEnd; // end of the buffer (points one beyond last character)
-uint16* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen.
-uint16* cursorPos; // points to current cursor position in buffer. This is directly after the last printed character. This is where new text is printed etc. (use wrapAroundBuffer() to ensure it does not point outside the buffer)
+uint16_t* buffer; // start of the buffer
+uint16_t* bufferEnd; // end of the buffer (points one beyond last character)
+uint16_t* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen.
+uint16_t* cursorPos; // points to current cursor position in buffer. This is directly after the last printed character. This is where new text is printed etc. (use wrapAroundBuffer() to ensure it does not point outside the buffer)
 
 
-uint8 color; // the current color
+uint8_t color; // the current color
 
 
 // wraps the given position in the buffer
-static uint16* wrapAroundBuffer(uint16* pos);
+static uint16_t* wrapAroundBuffer(uint16_t* pos);
 
 // copies the buffer to screen (starting at screenPos)
 static void copyBufferToScreen();
@@ -59,7 +59,7 @@ static void updateCursorPosition();
 void display_clear()
 {
 	// clear the screen
-	uint16* p = videoMemory;
+	uint16_t* p = videoMemory;
 	int i;
 	for(i=0; i<80*25; i++)
 	{
@@ -68,7 +68,7 @@ void display_clear()
 	}
 	
 	// clear buffer
-	uint16* ptr;
+	uint16_t* ptr;
 	for(ptr = buffer; ptr < bufferEnd; ptr++)
 	{
 		*ptr = color<<8 | ' ';
@@ -83,8 +83,8 @@ void display_init()
 {
 	color = 0x07;
 	
-	uint32 bufferSize = columns * rows * 5; // number of characters in buffer
-	buffer = (uint16*)kmalloc(sizeof(uint16) * bufferSize);
+	uint32_t bufferSize = columns * rows * 5; // number of characters in buffer
+	buffer = (uint16_t*)kmalloc(sizeof(uint16_t) * bufferSize);
 	bufferEnd = buffer + bufferSize;
 
 	display_clear();
@@ -177,7 +177,7 @@ void display_printChar(char c)
 	}
 	else if(c== '\t')
 	{ // tab
-		uint16* oldCursorPos = cursorPos;
+		uint16_t* oldCursorPos = cursorPos;
 		cursorPos = cursorPos - (cursorPos-buffer) % 4 + 4; // advance to next tabstop
 		cursorPos = wrapAroundBuffer(cursorPos);
 		// clear where the cursor advanced
@@ -198,7 +198,7 @@ void display_printChar(char c)
 }
 
 // Wrap the buffer
-static inline uint16* wrapAroundBuffer(uint16* pos)
+static inline uint16_t* wrapAroundBuffer(uint16_t* pos)
 {
 	if(pos >= bufferEnd)
 		return pos - ( bufferEnd - buffer );
@@ -211,9 +211,9 @@ static inline uint16* wrapAroundBuffer(uint16* pos)
 static void copyBufferToScreen()
 {
 	// copy correct part of buffer to screen
-	uint16* from = screenPos;
-	uint16* to = videoMemory;
-	uint32 count = columns*rows;
+	uint16_t* from = screenPos;
+	uint16_t* to = videoMemory;
+	uint32_t count = columns*rows;
 	while(count > 0)
 	{
 		*to = *from;
@@ -228,11 +228,11 @@ static void updateCursorPosition()
 {
 	// set cursor Position
 	
-	uint16* screenVirt = screenPos; // the screenPos mapped so that it is always before cursorPos, even if it is infront of the buffer
+	uint16_t* screenVirt = screenPos; // the screenPos mapped so that it is always before cursorPos, even if it is infront of the buffer
 	if(screenVirt > cursorPos)
 		screenVirt -= bufferEnd-buffer;
 	
-	uint16 cursorLocation = columns*rows; // relative position of cursor, initialise to outside of screen -> cursor not visible
+	uint16_t cursorLocation = columns*rows; // relative position of cursor, initialise to outside of screen -> cursor not visible
 	
 	if(cursorPos-screenVirt < columns*rows)
 	{ // cursor is in visible screen
@@ -266,13 +266,13 @@ void display_scrollDown()
 }
 
 // Set display color
-void display_setColor(uint8 newcolor)
+void display_setColor(uint8_t newcolor)
 {
 	color = newcolor;
 }
 
 // Get display color
-uint8 display_getColor()
+uint8_t display_getColor()
 {
 	return color;
 }

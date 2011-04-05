@@ -35,45 +35,45 @@
 // The symbol table for a.out.
 typedef struct
 {
-	uint32 tabSize;
-	uint32 strSize;
-	uint32 addr;
-	uint32 reserved;
+	uint32_t	 tabSize;
+	uint32_t 	strSize;
+	uint32_t 	addr;
+	uint32_t 	reserved;
 } __attribute__((packed)) multiboot_aoutSymbolTable_t;
      
 // The section header table for ELF.
 typedef struct
 {
-	uint32 num;
-	uint32 size;
-	uint32 addr;
-	uint32 shndx;
+	uint32_t	 num;
+	uint32_t	 size;
+	uint32_t 	addr;
+	uint32_t	 shndx;
 } __attribute__((packed)) multiboot_elfSectionHeaderTable_t;
 
 typedef struct
 {
-	uint32	size;
-	uint64	addr;
-	uint64	length;
-	uint32	type;
+	uint32_t	size;
+	uint64_t	addr;
+	uint64_t	length;
+	uint32_t	type;
 } __attribute__((packed)) multiboot_memoryMap_t;
 
 typedef struct
 {
-	uint32	start;
-	uint32	end;
-	char*	cmdLine;
-	uint32	reserved;
+	uint32_t	start;
+	uint32_t	end;
+	char*		cmdLine;
+	uint32_t	reserved;
 } __attribute__((packed)) multiboot_module_t;
 
 typedef struct
 {
-	uint32	flags;
-	uint32	memLower;
-	uint32	memUpper;
-	uint32	bootDevice;
+	uint32_t	flags;
+	uint32_t	memLower;
+	uint32_t	memUpper;
+	uint32_t	bootDevice;
 	char*	cmdLine;
-	uint32	modsCount;
+	uint32_t	modsCount;
 	multiboot_module_t*	modsAddr;
 
 	union
@@ -82,25 +82,25 @@ typedef struct
 		multiboot_elfSectionHeaderTable_t elfSec;
 	} u;
 	
-	uint32	mmapLength;
-	uint32	mmapAddr;
+	uint32_t	mmapLength;
+	uint32_t	mmapAddr;
 	
-	uint32 drivesLength;
-	uint32 drivesAddr;
+	uint32_t drivesLength;
+	uint32_t drivesAddr;
 	
 	// ROM configuration table
-	uint32 configTable;
+	uint32_t configTable;
 	
 	char* bootLoaderName;
-	uint32 apmTable;
+	uint32_t apmTable;
 	
 	// Video
-	uint32 vbeControlInfo;
-	uint32 vbeModeInfo;
-	uint16 vbeMode;
-	uint16 vbeInterfaceSeg;
-	uint16 vbeInterfaceOff;
-	uint16 vbeInterfaceLen;
+	uint32_t vbeControlInfo;
+	uint32_t vbeModeInfo;
+	uint16_t vbeMode;
+	uint16_t vbeInterfaceSeg;
+	uint16_t vbeInterfaceOff;
+	uint16_t vbeInterfaceLen;
 } __attribute__((packed)) multiboot_info_t;
 
 multiboot_info_t* multiboot_info;
