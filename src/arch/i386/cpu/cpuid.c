@@ -27,7 +27,7 @@
 #define CMD_GET_LAST_CMD	0x80000000
 #define CMD_INTEL_CPUNAME	0x80000002
 
-extern bool __cdecl cpuid_check(); // ASM.
+extern bool __attribute__((__cdecl__)) cpuid_check(); // ASM.
 
 #define VENDORNUM 11
 

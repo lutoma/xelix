@@ -35,7 +35,7 @@ static void sendEOI(uint8_t which)
  * 
  * Only here for EOIs.
  */
-void __cdecl interrupts_firstCallBack(cpu_state_t regs)
+void __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t regs)
 {
 	// Is this an IRQ?
 	if(regs.interrupt > 31)

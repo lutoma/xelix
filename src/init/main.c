@@ -58,7 +58,7 @@ static void compilerInfo()
 /* This is the very first function of our kernel and gets called
  * directly from the bootloader (GRUB etc.).
  */
-void __cdecl _start()
+void __attribute__((__cdecl__)) _start()
 {
 	/* Fetch the pointer to the multiboot_info struct which should be in
 	 * EBX.

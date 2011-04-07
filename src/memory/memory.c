@@ -22,7 +22,7 @@
 #include <lib/log.h>
 #include "kmalloc.h"
 
-extern bool __cdecl a20_check(); // ASM.
+extern bool __attribute__((__cdecl__)) a20_check(); // ASM.
 
 void memory_init()
 {
