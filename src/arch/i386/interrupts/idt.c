@@ -19,8 +19,8 @@
  */
 
 #include "idt.h"
-#include "interface.h"
 
+#include <interrupts/interface.h>
 #include <lib/log.h>
 
 // A struct describing an interrupt gate.

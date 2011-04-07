@@ -19,6 +19,7 @@
 
 #include <lib/generic.h>
 #include <interrupts/interface.h>
+#include "idt.h"
 
 #define EOI_MASTER 0x20
 #define EOI_SLAVE  0xA0
@@ -47,4 +48,9 @@ void __cdecl interrupts_firstCallBack(cpu_state_t regs)
 	}
 	
 	interrupts_callback(regs);
+}
+
+void arch_interrupts_init()
+{
+	idt_init();
 }

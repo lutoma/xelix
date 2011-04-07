@@ -21,7 +21,7 @@
 #include "interface.h"
 #include <lib/log.h>
 #include <lib/generic.h>
-#include <interrupts/idt.h>
+#include <arch/interrupts.h>
 
 interruptHandler_t interruptHandlers[256];
 
@@ -75,7 +75,7 @@ void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interruptHandler
 
 void interrupts_init()
 {
-	idt_init();
+	arch_interrupts_init();
 
 	// set all interruptHandlers to NULL.
 	memset(interruptHandlers, NULL, 256 * sizeof(interruptHandler_t));
