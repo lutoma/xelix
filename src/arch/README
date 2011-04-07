@@ -1,0 +1,8 @@
+Architecture dependent code portions
+------------------------------------
+
+You might ask yourself how things in here work.
+
+Actually, it's quite simple:
+No matter which architecture, we always use the same headers (= the ones in here).
+The only thing changing is the code which provides those functions in the headers, aka the stuff in the directories.

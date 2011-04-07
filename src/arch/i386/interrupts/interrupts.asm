@@ -104,7 +104,7 @@ IRQ  14,	 46
 IRQ  15,	 47
 
 ; In interrupts.c
-[EXTERN interrupts_callback]
+[EXTERN interrupts_firstCallBack]
 
 ; This is our common Interrupt stub. It saves the processor state, sets
 ; up for kernel mode segments, calls the C-level handler,
@@ -137,7 +137,7 @@ commonStub:
 	mov gs, ax
 	
  	; push esp
- 	call interrupts_callback
+ 	call interrupts_firstCallBack
  	;add esp, 4
 	
 	pop ebx			; reload the original data segment descriptor

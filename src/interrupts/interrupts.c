@@ -23,18 +23,12 @@
 #include <lib/generic.h>
 #include <interrupts/idt.h>
 
-#define EOI_MASTER 0x20
-#define EOI_SLAVE  0xA0
-
 interruptHandler_t interruptHandlers[256];
 
-// Send EOI (end of interrupt) signals to the PICs.
-static void sendEOI(uint8_t which)
-{
-	outb(which, 0x20);
-}
-
-void __cdecl interrupts_callback(cpu_state_t regs)
+/* This one get's called from the architecture-specific interrupt
+ * handlers, which do fiddling like EOIs (i386).
+ */
+void interrupts_callback(cpu_state_t regs)
 {
 	// That might look useless, but trust me, it isn't.
 	static bool inInterrupt = false;
@@ -42,16 +36,6 @@ void __cdecl interrupts_callback(cpu_state_t regs)
 	if(inInterrupt)
 		return; // Drop interrupt
 	inInterrupt = true;
-
-	// Is this an IRQ?
-	if(regs.interrupt > 31)
-	{
-		// If this IRQ involved the slave, send a EOI to the slave.
-		if (regs.interrupt >= 40)
-			sendEOI(EOI_SLAVE);
-
-		sendEOI(EOI_MASTER); // Master
-	}
 
 	interruptHandler_t handler = interruptHandlers[regs.interrupt];
 

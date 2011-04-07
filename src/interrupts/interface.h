@@ -44,6 +44,7 @@
 
 typedef void (*interruptHandler_t)(cpu_state_t);
 
+void interrupts_callback(cpu_state_t regs);
 void interrupts_registerHandler(uint8_t n, interruptHandler_t handler);
 void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interruptHandler_t handler);
 void interrupts_init();
