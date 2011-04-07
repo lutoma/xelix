@@ -27,8 +27,11 @@
 static uint32_t memoryPosition;
 #define pagingEnabled false // FIXME
 
-// Use macros.
-uint32_t __kmalloc(size_t sz, bool align, uint32_t *phys)
+/* Use the macros instead of directly calling this functions.
+ * For details on the __attribute__((alloc_size(1))), see the GCC
+ * documentation at http://is.gd/6gmEqk.
+ */
+uint32_t __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys)
 {
 	// If the address is not already page-aligned
 	if (align == 1 && (memoryPosition & 0xFFFFF000))

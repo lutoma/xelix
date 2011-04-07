@@ -24,7 +24,7 @@
 
 
 // Use macros.
-uint32_t __kmalloc(size_t sz, bool align, uint32_t *phys);
+uint32_t __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys);
 
 /* A few shortcuts so one doesn't always have to pass all the
  * parameters all the time.
