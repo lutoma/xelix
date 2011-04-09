@@ -25,14 +25,14 @@
 // How many lines to move up/down when scrolling.
 #define SCROLL_LINES 5
 
-const uint32_t columns = 80; // on-screen character grid
-const uint32_t rows = 25;
+// on-screen character grid
+#define COLUMNS 80
+#define ROWS 25
 
 // Pointer to video memory
 // 80x25 Zeichen
-// short ist zwei Bytes: 1. Byte char, 2. Byte Farben
+// 1st Byte char, 2nd nyte color
 uint16_t* const videoMemory = (uint16_t*) 0xB8000; 
-
 
 // Buffer concept:
 // Everything is written to the buffer (which is x number of lines).
@@ -43,22 +43,16 @@ uint16_t* buffer; // start of the buffer
 uint16_t* bufferEnd; // end of the buffer (points one beyond last character)
 uint16_t* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen.
 uint16_t* cursorPos; // points to current cursor position in buffer. This is directly after the last printed character. This is where new text is printed etc. (use wrapAroundBuffer() to ensure it does not point outside the buffer)
-
-
 uint8_t color; // the current color
-
 
 // wraps the given position in the buffer
 static uint16_t* wrapAroundBuffer(uint16_t* pos);
 
 // copies the buffer to screen (starting at screenPos)
 static void copyBufferToScreen();
-
 static void updateCursorPosition();
 
-
-
-/// Clear screen
+// Clear screen
 void display_clear()
 {
 	// clear the screen
@@ -86,7 +80,7 @@ void display_init()
 {
 	color = 0x07;
 	
-	uint32_t bufferSize = columns * rows * 5; // number of characters in buffer
+	uint32_t bufferSize = COLUMNS * ROWS * 5; // number of characters in buffer
 	buffer = (uint16_t*)kmalloc(sizeof(uint16_t) * bufferSize);
 	bufferEnd = buffer + bufferSize;
 
@@ -156,8 +150,8 @@ void display_print(char* s)
 	
 	// automatically set screenPos so the user sees the new content
 	screenPos = cursorPos;
-	screenPos = screenPos - (screenPos-buffer) % columns;
-	screenPos = screenPos - columns*(rows-1);
+	screenPos = screenPos - (screenPos-buffer) % COLUMNS;
+	screenPos = screenPos - COLUMNS * (ROWS - 1);
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
@@ -169,7 +163,7 @@ void display_printChar(char c)
 {
 	if(c == '\n')
 	{ // new line
-		cursorPos = cursorPos - (cursorPos-buffer) % columns + columns; // advance to next line
+		cursorPos = cursorPos - (cursorPos-buffer) % COLUMNS + COLUMNS; // advance to next line
 		cursorPos = wrapAroundBuffer(cursorPos);
 	}
 	else if(c== '\b') 
@@ -216,7 +210,7 @@ static void copyBufferToScreen()
 	// copy correct part of buffer to screen
 	uint16_t* from = screenPos;
 	uint16_t* to = videoMemory;
-	uint32_t count = columns*rows;
+	uint32_t count = COLUMNS * ROWS;
 	while(count > 0)
 	{
 		*to = *from;
@@ -235,9 +229,9 @@ static void updateCursorPosition()
 	if(screenVirt > cursorPos)
 		screenVirt -= bufferEnd-buffer;
 	
-	uint16_t cursorLocation = columns*rows; // relative position of cursor, initialise to outside of screen -> cursor not visible
+	uint16_t cursorLocation = COLUMNS * ROWS; // relative position of cursor, initialise to outside of screen -> cursor not visible
 	
-	if(cursorPos-screenVirt < columns*rows)
+	if(cursorPos-screenVirt < COLUMNS * ROWS)
 	{ // cursor is in visible screen
 		cursorLocation = cursorPos-screenVirt;
 	}
@@ -251,7 +245,7 @@ static void updateCursorPosition()
 // Scroll up the display
 void display_scrollUp()
 {
-	screenPos -= columns * SCROLL_LINES;
+	screenPos -= COLUMNS * SCROLL_LINES;
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
@@ -261,7 +255,7 @@ void display_scrollUp()
 // Scroll down the display
 void display_scrollDown()
 {
-	screenPos += columns * SCROLL_LINES;
+	screenPos += COLUMNS * SCROLL_LINES;
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
