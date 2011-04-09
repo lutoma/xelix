@@ -17,10 +17,10 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "multiboot.h"
+#include <arch/i386/lib/multiboot.h>
 
-#include "log.h"
-#include "string.h"
+#include <lib/log.h>
+#include <lib/string.h>
 
 static void printInfo(uint32_t var, char* varname, char type)
 {
@@ -38,7 +38,7 @@ static void printInfo(uint32_t var, char* varname, char type)
 #define printMbootInt(C) printInfo(C, #C, 'd');
 #define printMbootHex(C) printInfo(C, #C, 'd');
 
-void multiboot_printInfo()
+void arch_multiboot_printInfo()
 {
 	printMbootHex(multiboot_info->flags);
 	printMbootInt(multiboot_info->memLower);

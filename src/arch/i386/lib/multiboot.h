@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "generic.h"
+#include <lib/generic.h>
 
 #define MULTIBOOT_FLAG_MEM	 0x001
 #define MULTIBOOT_FLAG_DEVICE  0x002
@@ -105,4 +105,4 @@ typedef struct
 
 multiboot_info_t* multiboot_info;
 
-void multiboot_printInfo();
+void arch_multiboot_printInfo();

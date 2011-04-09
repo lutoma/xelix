@@ -18,8 +18,9 @@
  */
 
 #include "init.h"
-
-#include <lib/multiboot.h>
+#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
+	#include <arch/i386/lib/multiboot.h>
+#endif
 #include <lib/log.h>
 #include <lib/datetime.h>
 #include <lib/string.h>
@@ -82,7 +83,7 @@ void __attribute__((__cdecl__)) _start()
 	compilerInfo();
 	
 	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-		multiboot_printInfo();
+		arch_multiboot_printInfo();
 	#endif
 
 	init(argparser, multiboot_info->cmdLine);

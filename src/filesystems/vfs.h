@@ -19,7 +19,7 @@
  */
 
 #include <lib/generic.h>
-#include <lib/multiboot.h>
+#include <arch/i386/lib/multiboot.h>
 
 #define FS_FILE        0x01
 #define FS_DIRECTORY   0x02
