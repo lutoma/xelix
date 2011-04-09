@@ -27,6 +27,9 @@
 								   + __GNUC_PATCHLEVEL__)
 #endif
 
+#define ARCH_i386 0
+#define ARCH_amd64 1
+
 #define isCharDigit(C) ((C) >= '0' && (C) <= '9')
 #define DUMPVAR(C,D) printf("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
 
