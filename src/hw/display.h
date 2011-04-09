@@ -20,6 +20,9 @@
 
 #include <lib/generic.h>
 
+#define DISPLAY_DIRECTION_UP -1
+#define DISPLAY_DIRECTION_DOWN 1
+
 void display_init();
 void display_print(char* s);
 void display_printChar(char c);
@@ -27,7 +30,5 @@ void display_setColor(uint8_t newcolor);
 uint8_t display_getColor();
 
 // scrolling in the buffer
-void display_scrollUp();
-void display_scrollDown();
-
+void display_scroll(int32_t direction);
 void display_clear();

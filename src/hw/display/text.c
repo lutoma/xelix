@@ -1,5 +1,6 @@
 /* generic.c: Text mode display driver
  * Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -243,19 +244,12 @@ static void updateCursorPosition()
 }
 
 // Scroll up the display
-void display_scrollUp()
+// DISPLAY_DIRECTION_UP
+// DISPLAY_DIRECTION_DOWN
+void display_scroll(int32_t direction)
 {
-	screenPos -= COLUMNS * SCROLL_LINES;
-	screenPos = wrapAroundBuffer(screenPos);
-	
-	copyBufferToScreen();
-	updateCursorPosition();
-}
-
-// Scroll down the display
-void display_scrollDown()
-{
-	screenPos += COLUMNS * SCROLL_LINES;
+	// Direction is either 1 or -1.
+	screenPos += COLUMNS * SCROLL_LINES * direction;
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
