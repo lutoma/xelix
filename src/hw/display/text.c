@@ -22,6 +22,9 @@
 #include <memory/kmalloc.h>
 #include <lib/log.h>
 
+// How many lines to move up/down when scrolling.
+#define SCROLL_LINES 5
+
 const uint32_t columns = 80; // on-screen character grid
 const uint32_t rows = 25;
 
@@ -248,7 +251,7 @@ static void updateCursorPosition()
 // Scroll up the display
 void display_scrollUp()
 {
-	screenPos -= columns;
+	screenPos -= columns * SCROLL_LINES;
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
@@ -258,7 +261,7 @@ void display_scrollUp()
 // Scroll down the display
 void display_scrollDown()
 {
-	screenPos += columns;
+	screenPos += columns * SCROLL_LINES;
 	screenPos = wrapAroundBuffer(screenPos);
 	
 	copyBufferToScreen();
