@@ -21,16 +21,16 @@
  
 #include "stdint.h"
 
-#ifdef __GNUC__
-	#define GCC_VERSION (__GNUC__ * 10000 \
-								   + __GNUC_MINOR__ * 100 \
-								   + __GNUC_PATCHLEVEL__)
-#else
+#ifndef __GNUC__
 	#error It looks like you're trying to compile with a compiler \
 != GNU GCC. Please note that we make heavy use of GCC-specific things \
 and therefore, compiling with other compilers won't work. If you want \
 to try that anyway, remove this block in src/lib/generic.h.
 #endif
+
+#define GCC_VERSION (__GNUC__ * 10000 \
+							   + __GNUC_MINOR__ * 100 \
+							   + __GNUC_PATCHLEVEL__)
 
 #define ARCH_i386 0
 #define ARCH_amd64 1

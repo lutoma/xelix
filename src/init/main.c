@@ -49,7 +49,7 @@ static void compilerInfo()
 	#if GCC_VERSION > 30200
 		log("\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 	#else
-		log("\tCompiler: Unknown\n");
+		log("\tCompiler: GCC (< 3.2.0)\n");
 	#endif
 	log("\tBy: %s\n", __BUILDCOMP__);
 	log("\tOS: %s\n", __BUILDSYS__);
