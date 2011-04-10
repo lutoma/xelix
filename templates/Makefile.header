@@ -8,3 +8,8 @@ debug: debugqemufloppy
 BUILDCOMP := \"$(shell whoami)@$(shell hostname)\"
 BUILDSYS := \"$(shell uname -srop)\"
 BUILDDIST := \"$(shell cat /etc/*-release | head -n 1)\"
+VERSION := 0
+VERSION_MINOR := 1
+VERSION_PATCHLEVEL := 0
+VERSION_APPENDIX := \"-devel\"
+BUILD := 0
