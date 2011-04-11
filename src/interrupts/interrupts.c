@@ -28,7 +28,7 @@ interruptHandler_t interruptHandlers[256];
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
-void interrupts_callback(cpu_state_t regs)
+void interrupts_callback(cpu_state_t* regs)
 {
 	// That might look useless, but trust me, it isn't.
 	static bool inInterrupt = false;
@@ -37,7 +37,7 @@ void interrupts_callback(cpu_state_t regs)
 		return; // Drop interrupt
 	inInterrupt = true;
 
-	interruptHandler_t handler = interruptHandlers[regs.interrupt];
+	interruptHandler_t handler = interruptHandlers[regs->interrupt];
 
 	if(handler != NULL)
 		handler(regs);

@@ -85,7 +85,7 @@ static void handleScancode(uint8_t code, uint8_t code2)
 }
 
 // Handles the IRQs we catch
-static void handler(cpu_state_t regs)
+static void handler(cpu_state_t* regs)
 {
 	if(!focusedFunction)
 		return;

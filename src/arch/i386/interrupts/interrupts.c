@@ -35,13 +35,16 @@ static void sendEOI(uint8_t which)
  * 
  * Only here for EOIs.
  */
-void __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t regs)
+void __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t origRegs)
 {
+	// This is yet to be fixed in ASM
+	cpu_state_t* regs = &origRegs;
+	
 	// Is this an IRQ?
-	if(regs.interrupt > 31)
+	if(regs->interrupt > 31)
 	{
 		// If this IRQ involved the slave, send a EOI to the slave.
-		if (regs.interrupt >= 40)
+		if (regs->interrupt >= 40)
 			sendEOI(EOI_SLAVE);
 
 		sendEOI(EOI_MASTER); // Master
