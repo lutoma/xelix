@@ -35,7 +35,7 @@ static void sendEOI(uint8_t which)
  * 
  * Only here for EOIs.
  */
-void __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t* regs)
+cpu_state_t* __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t* regs)
 {
 	// Is this an IRQ?
 	if(regs->interrupt > 31)
@@ -47,7 +47,7 @@ void __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t* regs)
 		sendEOI(EOI_MASTER); // Master
 	}
 	
-	interrupts_callback(regs);
+	return interrupts_callback(regs);
 }
 
 void arch_interrupts_init()

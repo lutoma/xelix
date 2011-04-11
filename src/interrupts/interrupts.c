@@ -28,13 +28,13 @@ interruptHandler_t interruptHandlers[256];
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
-void interrupts_callback(cpu_state_t* regs)
+cpu_state_t* interrupts_callback(cpu_state_t* regs)
 {
 	// That might look useless, but trust me, it isn't.
 	static bool inInterrupt = false;
 	
 	if(inInterrupt)
-		return; // Drop interrupt
+		return regs; // Drop interrupt
 	inInterrupt = true;
 
 	interruptHandler_t handler = interruptHandlers[regs->interrupt];
@@ -43,6 +43,8 @@ void interrupts_callback(cpu_state_t* regs)
 		handler(regs);
 	
 	inInterrupt = false;
+	
+	return regs;
 }
 
 void interrupts_registerHandler(uint8_t n, interruptHandler_t handler)

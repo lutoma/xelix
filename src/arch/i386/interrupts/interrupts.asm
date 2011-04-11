@@ -138,7 +138,7 @@ commonStub:
 	
  	push esp
  	call interrupts_firstCallBack
- 	add esp, 4
+	mov esp, eax
 	
 	pop ebx			; reload the original data segment descriptor
 	mov ds, bx
