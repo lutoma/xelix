@@ -43,7 +43,7 @@
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
 {
-	log("Xelix v%d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
+	log("Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
 	log("\tCompiled at: %s %s\n", __DATE__, __TIME__);
 	// Test for GCC > 3.2.0
 	#if GCC_VERSION > 30200
