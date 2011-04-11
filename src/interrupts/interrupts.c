@@ -30,19 +30,10 @@ interruptHandler_t interruptHandlers[256];
  */
 cpu_state_t* interrupts_callback(cpu_state_t* regs)
 {
-	// That might look useless, but trust me, it isn't.
-	static bool inInterrupt = false;
-	
-	if(inInterrupt)
-		return regs; // Drop interrupt
-	inInterrupt = true;
-
 	interruptHandler_t handler = interruptHandlers[regs->interrupt];
 
 	if(handler != NULL)
 		handler(regs);
-	
-	inInterrupt = false;
 	
 	return regs;
 }
