@@ -35,11 +35,8 @@ static void sendEOI(uint8_t which)
  * 
  * Only here for EOIs.
  */
-void __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t origRegs)
+void __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t* regs)
 {
-	// This is yet to be fixed in ASM
-	cpu_state_t* regs = &origRegs;
-	
 	// Is this an IRQ?
 	if(regs->interrupt > 31)
 	{
