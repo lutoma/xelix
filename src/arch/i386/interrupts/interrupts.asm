@@ -129,24 +129,39 @@ commonStub:
 	mov ax, ds
 	push eax
 
-	; ??? („What have the humans done? EXPLAIN! EXPLAIN! EXPLAIN!“)
-	mov ax, 0x10	; load the kernel data segment descriptor
+	; load the kernel data segment descriptor
+	; Could also do this in C. maybe.
+	mov ax, 0x10
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 	
+	; Push the stack pointer (Function argument)
  	push esp
  	call interrupts_firstCallBack
+ 	
+ 	; Now load the stackpointer we got from the function
 	mov esp, eax
 	
-	pop ebx			; reload the original data segment descriptor
+	; reload the original data segment descriptor.
+	pop ebx	
 	mov ds, bx
 	mov es, bx
 	mov fs, bx
 	mov gs, bx
 
-	popa			; Pops edi,esi,ebp...
-	add esp, 8		; Cleans up the pushed error code and pushed ISR number
+	; Pops edi,esi,ebp...
+	popa
+	
+	; Cleans up the pushed error code and pushed ISR number
+	add esp, 8
+	
+	; Reenable interrupts
 	sti
-	iret			; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+	
+	; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP.
+	; Please note that this takes the stack pointer from the stack we've
+	; just loaded, so the stack we get from C always has ESP set to
+	; itself. 
+	iret
