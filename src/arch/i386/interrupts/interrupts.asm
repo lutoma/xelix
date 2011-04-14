@@ -17,14 +17,6 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
-
-[GLOBAL idt_flush]	 ; Allows the C code to call idt_flush().
-
-idt_flush:
-	mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
-	lidt [eax]		  ; Load the IDT pointer.
-	ret
-
 %macro ISR_NOERRCODE 1  ; define a macro, taking one parameter
 	[GLOBAL isr%1]		  ; %1 accesses the first parameter.
 	isr%1:

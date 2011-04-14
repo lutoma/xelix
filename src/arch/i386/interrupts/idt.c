@@ -98,7 +98,7 @@ extern void irq15();
 idtEntry_t idtEntries[256];
 idtPtr_t idtPtr;
 
-extern void idt_flush(uint32_t);
+extern void idt_load(uint32_t);
 static void setGate(uint8_t, uint32_t, uint16_t, uint8_t);
 
 static void setGate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
@@ -191,6 +191,6 @@ void idt_init()
 	setGate(46, (uint32_t)irq14 , 0x08, 0x8E);
 	setGate(47, (uint32_t)irq15 , 0x08, 0x8E);
 	
-	idt_flush((uint32_t)&idtPtr);
+	idt_load((uint32_t)&idtPtr);
 	interrupts_enable(); // Enable interrupts. Usually a good idea if you want to use them...
 }
