@@ -118,35 +118,60 @@ commonStub:
 	; (It's defined in hw/cpu.h). The cpu automatically pushes cs, eip,
 	; eflags, ss and esp. Our macros above push one byte containing the
 	; error code (if any) and another one containing the interrupt's
-	; number. The rest is up to us. Luckily, there's pusha to push 'em
-	; all.
-	pusha			; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-
-	; Lower 16-bits of eax = ds. I'm not quite sure why we save that
-	; one, as this conversion could also be done in C code, but all the
-	; other kernels out there also do it that way, so i'll stick with
-	; that.
+	; number. The rest is up to us. We intentionally don't use pusha
+	; (no need for esp).
+	push eax
+	push ecx
+	push edx
+	push ebx
+	push ebp
+	push esi
+	push edi
+	
+	; push ds
+	mov eax, 0
 	mov ax, ds
 	push eax
 
-	; ??? („What have the humans done? EXPLAIN! EXPLAIN! EXPLAIN!“)
-	mov ax, 0x10	; load the kernel data segment descriptor
+	; load the kernel data segment descriptor
+	mov ax, 0x10
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 	
+	; Push argument to ..
  	push esp
+ 	; Call C level interrupt handler
  	call interrupts_firstCallBack
+	; Take esp from stack
+	add esp, 4
+	
+	; Apply new stack
 	mov esp, eax
 	
-	pop ebx			; reload the original data segment descriptor
+	; reload the original data segment descriptor
+	pop ebx
 	mov ds, bx
 	mov es, bx
 	mov fs, bx
 	mov gs, bx
 
-	popa			; Pops edi,esi,ebp...
-	add esp, 8		; Cleans up the pushed error code and pushed ISR number
+	; Reload all the registers.
+	pop edi
+	pop esi
+	pop ebp
+	pop ebx
+	pop edx
+	pop ecx
+	pop eax
+
+	; Cleans up the pushed error code and pushed ISR number
+	add esp, 8
+
+	; Reenable interrupts
 	sti
-	iret			; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+	
+	; Now, quit interrupthandler. This automatically pops cs, eip,
+	; eflags, css and esp.
+	iret
