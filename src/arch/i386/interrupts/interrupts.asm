@@ -17,91 +17,279 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
-
-[GLOBAL idt_flush]	 ; Allows the C code to call idt_flush().
-
-idt_flush:
-	mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
-	lidt [eax]		  ; Load the IDT pointer.
-	ret
-
-%macro ISR_NOERRCODE 1  ; define a macro, taking one parameter
-	[GLOBAL isr%1]		  ; %1 accesses the first parameter.
-	isr%1:
+%macro INTERRUPT 1
+	[GLOBAL interrupts_handler%1]
+	interrupts_handler%1:
 		cli
-		push byte 0
-		push byte %1
+		push 0
+		push %1
 		jmp commonStub
 %endmacro
 
-%macro ISR_ERRCODE 1
-	[GLOBAL isr%1]
-	isr%1:
+%macro INTERRUPT_ERRCODE 1
+	[GLOBAL interrupts_handler%1]
+	interrupts_handler%1:
 		cli
-		push byte %1
+		push %1
 		jmp commonStub
 %endmacro
 
-; This macro creates a stub for an IRQ - the first parameter is
-; the IRQ number, the second is the ISR number it is remapped to.
-%macro IRQ 2
-	[GLOBAL irq%1]
-	irq%1:
-		cli
-		push byte 0
-		push byte %2
-		jmp commonStub
-%endmacro
-
-ISR_NOERRCODE 0
-ISR_NOERRCODE 1
-ISR_NOERRCODE 2
-ISR_NOERRCODE 3
-ISR_NOERRCODE 4
-ISR_NOERRCODE 5
-ISR_NOERRCODE 6
-ISR_NOERRCODE 7
-ISR_ERRCODE 8
-ISR_NOERRCODE 9
-ISR_ERRCODE 10
-ISR_ERRCODE 11
-ISR_ERRCODE 12
-ISR_ERRCODE 13
-ISR_ERRCODE 14
-ISR_NOERRCODE 15
-ISR_NOERRCODE 16
-ISR_NOERRCODE 17
-ISR_NOERRCODE 18
-ISR_NOERRCODE 19
-ISR_NOERRCODE 20
-ISR_NOERRCODE 21
-ISR_NOERRCODE 22
-ISR_NOERRCODE 23
-ISR_NOERRCODE 24
-ISR_NOERRCODE 25
-ISR_NOERRCODE 26
-ISR_NOERRCODE 27
-ISR_NOERRCODE 28
-ISR_NOERRCODE 29
-ISR_NOERRCODE 30
-ISR_NOERRCODE 31
-
-IRQ	0,	 32
-IRQ	1,	 33
-IRQ	2,	 34
-IRQ	3,	 35
-IRQ	4,	 36
-IRQ	5,	 37
-IRQ	6,	 38
-IRQ	7,	 39
-IRQ	8,	 40
-IRQ	9,	 41
-IRQ  10,	 42
-IRQ  11,	 43
-IRQ  12,	 44
-IRQ  13,	 45
-IRQ  14,	 46
-IRQ  15,	 47
+INTERRUPT 0
+INTERRUPT 1
+INTERRUPT 2
+INTERRUPT 3
+INTERRUPT 4
+INTERRUPT 5
+INTERRUPT 6
+INTERRUPT 7
+INTERRUPT_ERRCODE 8
+INTERRUPT 9
+INTERRUPT_ERRCODE 10
+INTERRUPT_ERRCODE 11
+INTERRUPT_ERRCODE 12
+INTERRUPT_ERRCODE 13
+INTERRUPT_ERRCODE 14
+INTERRUPT 15
+INTERRUPT 16
+INTERRUPT 17
+INTERRUPT 18
+INTERRUPT 19
+INTERRUPT 20
+INTERRUPT 21
+INTERRUPT 22
+INTERRUPT 23
+INTERRUPT 24
+INTERRUPT 25
+INTERRUPT 26
+INTERRUPT 27
+INTERRUPT 28
+INTERRUPT 29
+INTERRUPT 30
+INTERRUPT 31
+INTERRUPT 32
+INTERRUPT 33
+INTERRUPT 34
+INTERRUPT 35
+INTERRUPT 36
+INTERRUPT 37
+INTERRUPT 38
+INTERRUPT 39
+INTERRUPT 40
+INTERRUPT 41
+INTERRUPT 42
+INTERRUPT 43
+INTERRUPT 44
+INTERRUPT 45
+INTERRUPT 46
+INTERRUPT 47
+INTERRUPT 48
+INTERRUPT 49
+INTERRUPT 50
+INTERRUPT 51
+INTERRUPT 52
+INTERRUPT 53
+INTERRUPT 54
+INTERRUPT 55
+INTERRUPT 56
+INTERRUPT 57
+INTERRUPT 58
+INTERRUPT 59
+INTERRUPT 60
+INTERRUPT 61
+INTERRUPT 62
+INTERRUPT 63
+INTERRUPT 64
+INTERRUPT 65
+INTERRUPT 66
+INTERRUPT 67
+INTERRUPT 68
+INTERRUPT 69
+INTERRUPT 70
+INTERRUPT 71
+INTERRUPT 72
+INTERRUPT 73
+INTERRUPT 74
+INTERRUPT 75
+INTERRUPT 76
+INTERRUPT 77
+INTERRUPT 78
+INTERRUPT 79
+INTERRUPT 80
+INTERRUPT 81
+INTERRUPT 82
+INTERRUPT 83
+INTERRUPT 84
+INTERRUPT 85
+INTERRUPT 86
+INTERRUPT 87
+INTERRUPT 88
+INTERRUPT 89
+INTERRUPT 90
+INTERRUPT 91
+INTERRUPT 92
+INTERRUPT 93
+INTERRUPT 94
+INTERRUPT 95
+INTERRUPT 96
+INTERRUPT 97
+INTERRUPT 98
+INTERRUPT 99
+INTERRUPT 100
+INTERRUPT 101
+INTERRUPT 102
+INTERRUPT 103
+INTERRUPT 104
+INTERRUPT 105
+INTERRUPT 106
+INTERRUPT 107
+INTERRUPT 108
+INTERRUPT 109
+INTERRUPT 110
+INTERRUPT 111
+INTERRUPT 112
+INTERRUPT 113
+INTERRUPT 114
+INTERRUPT 115
+INTERRUPT 116
+INTERRUPT 117
+INTERRUPT 118
+INTERRUPT 119
+INTERRUPT 120
+INTERRUPT 121
+INTERRUPT 122
+INTERRUPT 123
+INTERRUPT 124
+INTERRUPT 125
+INTERRUPT 126
+INTERRUPT 127
+INTERRUPT 128
+INTERRUPT 129
+INTERRUPT 130
+INTERRUPT 131
+INTERRUPT 132
+INTERRUPT 133
+INTERRUPT 134
+INTERRUPT 135
+INTERRUPT 136
+INTERRUPT 137
+INTERRUPT 138
+INTERRUPT 139
+INTERRUPT 140
+INTERRUPT 141
+INTERRUPT 142
+INTERRUPT 143
+INTERRUPT 144
+INTERRUPT 145
+INTERRUPT 146
+INTERRUPT 147
+INTERRUPT 148
+INTERRUPT 149
+INTERRUPT 150
+INTERRUPT 151
+INTERRUPT 152
+INTERRUPT 153
+INTERRUPT 154
+INTERRUPT 155
+INTERRUPT 156
+INTERRUPT 157
+INTERRUPT 158
+INTERRUPT 159
+INTERRUPT 160
+INTERRUPT 161
+INTERRUPT 162
+INTERRUPT 163
+INTERRUPT 164
+INTERRUPT 165
+INTERRUPT 166
+INTERRUPT 167
+INTERRUPT 168
+INTERRUPT 169
+INTERRUPT 170
+INTERRUPT 171
+INTERRUPT 172
+INTERRUPT 173
+INTERRUPT 174
+INTERRUPT 175
+INTERRUPT 176
+INTERRUPT 177
+INTERRUPT 178
+INTERRUPT 179
+INTERRUPT 180
+INTERRUPT 181
+INTERRUPT 182
+INTERRUPT 183
+INTERRUPT 184
+INTERRUPT 185
+INTERRUPT 186
+INTERRUPT 187
+INTERRUPT 188
+INTERRUPT 189
+INTERRUPT 190
+INTERRUPT 191
+INTERRUPT 192
+INTERRUPT 193
+INTERRUPT 194
+INTERRUPT 195
+INTERRUPT 196
+INTERRUPT 197
+INTERRUPT 198
+INTERRUPT 199
+INTERRUPT 200
+INTERRUPT 201
+INTERRUPT 202
+INTERRUPT 203
+INTERRUPT 204
+INTERRUPT 205
+INTERRUPT 206
+INTERRUPT 207
+INTERRUPT 208
+INTERRUPT 209
+INTERRUPT 210
+INTERRUPT 211
+INTERRUPT 212
+INTERRUPT 213
+INTERRUPT 214
+INTERRUPT 215
+INTERRUPT 216
+INTERRUPT 217
+INTERRUPT 218
+INTERRUPT 219
+INTERRUPT 220
+INTERRUPT 221
+INTERRUPT 222
+INTERRUPT 223
+INTERRUPT 224
+INTERRUPT 225
+INTERRUPT 226
+INTERRUPT 227
+INTERRUPT 228
+INTERRUPT 229
+INTERRUPT 230
+INTERRUPT 231
+INTERRUPT 232
+INTERRUPT 233
+INTERRUPT 234
+INTERRUPT 235
+INTERRUPT 236
+INTERRUPT 237
+INTERRUPT 238
+INTERRUPT 239
+INTERRUPT 240
+INTERRUPT 241
+INTERRUPT 242
+INTERRUPT 243
+INTERRUPT 244
+INTERRUPT 245
+INTERRUPT 246
+INTERRUPT 247
+INTERRUPT 248
+INTERRUPT 249
+INTERRUPT 250
+INTERRUPT 251
+INTERRUPT 252
+INTERRUPT 253
+INTERRUPT 254
+INTERRUPT 255
 
 ; In interrupts.c
 [EXTERN interrupts_firstCallBack]
@@ -118,50 +306,60 @@ commonStub:
 	; (It's defined in hw/cpu.h). The cpu automatically pushes cs, eip,
 	; eflags, ss and esp. Our macros above push one byte containing the
 	; error code (if any) and another one containing the interrupt's
-	; number. The rest is up to us. Luckily, there's pusha to push 'em
-	; all.
-	pusha			; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-
-	; Lower 16-bits of eax = ds. I'm not quite sure why we save that
-	; one, as this conversion could also be done in C code, but all the
-	; other kernels out there also do it that way, so i'll stick with
-	; that.
+	; number. The rest is up to us. We intentionally don't use pusha
+	; (no need for esp).
+	push eax
+	push ecx
+	push edx
+	push ebx
+	push ebp
+	push esi
+	push edi
+	
+	; push ds
+	mov eax, 0
 	mov ax, ds
 	push eax
 
 	; load the kernel data segment descriptor
-	; Could also do this in C. maybe.
 	mov ax, 0x10
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 	
-	; Push the stack pointer (Function argument)
+	; Push argument to ..
  	push esp
+ 	; Call C level interrupt handler
  	call interrupts_firstCallBack
- 	
- 	; Now load the stackpointer we got from the function
+	; Take esp from stack
+	add esp, 4
+	
+	; Apply new stack
 	mov esp, eax
 	
-	; reload the original data segment descriptor.
-	pop ebx	
+	; reload the original data segment descriptor
+	pop ebx
 	mov ds, bx
 	mov es, bx
 	mov fs, bx
 	mov gs, bx
 
-	; Pops edi,esi,ebp...
-	popa
-	
+	; Reload all the registers.
+	pop edi
+	pop esi
+	pop ebp
+	pop ebx
+	pop edx
+	pop ecx
+	pop eax
+
 	; Cleans up the pushed error code and pushed ISR number
 	add esp, 8
-	
+
 	; Reenable interrupts
 	sti
 	
-	; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP.
-	; Please note that this takes the stack pointer from the stack we've
-	; just loaded, so the stack we get from C always has ESP set to
-	; itself. 
+	; Now, quit interrupthandler. This automatically pops cs, eip,
+	; eflags, css and esp.
 	iret

@@ -33,13 +33,15 @@ uint64_t highestPid = -1;
 void scheduler_add(void* entry)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
-	thisTask->state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));
 	
 	thisTask->pid = ++highestPid;
 	thisTask->parent = 0; // Implement me
 	thisTask->next = NULL;
 	
+	thisTask->state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));
 	memset(thisTask->state, 0, sizeof(cpu_state_t));
+	
+	thisTask->state->esp = (uint32_t)kmalloc(4096); // Stack
 	thisTask->state->eip = (uint32_t)entry;
 	thisTask->state->eflags = 0x200;
 	thisTask->state->cs = 0x08;
