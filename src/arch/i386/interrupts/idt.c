@@ -294,6 +294,11 @@ extern void interrupts_handler247(void);
 extern void interrupts_handler248(void);
 extern void interrupts_handler249(void);
 extern void interrupts_handler250(void);
+extern void interrupts_handler251(void);
+extern void interrupts_handler252(void);
+extern void interrupts_handler253(void);
+extern void interrupts_handler254(void);
+extern void interrupts_handler255(void);
 
 idtEntry_t idtEntries[256];
 idtPtr_t idtPtr;
@@ -591,6 +596,11 @@ void idt_init()
 	setGate(248, (uint32_t)interrupts_handler248, 0x08, 0x8E);
 	setGate(249, (uint32_t)interrupts_handler249, 0x08, 0x8E);
 	setGate(250, (uint32_t)interrupts_handler250, 0x08, 0x8E);
+	setGate(251, (uint32_t)interrupts_handler251, 0x08, 0x8E);
+	setGate(252, (uint32_t)interrupts_handler252, 0x08, 0x8E);
+	setGate(253, (uint32_t)interrupts_handler253, 0x08, 0x8E);
+	setGate(254, (uint32_t)interrupts_handler254, 0x08, 0x8E);
+	setGate(255, (uint32_t)interrupts_handler255, 0x08, 0x8E);
 
 	idt_load((uint32_t)&idtPtr);
 	interrupts_enable();
