@@ -196,8 +196,15 @@ void keyboard_init()
 	char* ident = identify();
 	log("keyboard: Identified type: %s\n", ident);
 	
-	keyboard_sendKeyboard(0xF6); // Set standard values
-	keyboard_sendKeyboard(0xF4); // Activate
+	// Reset to default values
+	keyboard_sendKeyboard(0xF6);
+
+	// Setting repeat rate to maximum
+	keyboard_sendKeyboard(0xF3); // CMD
+	keyboard_sendKeyboard(0b00000000); // Value
+
+	// Activate
+	keyboard_sendKeyboard(0xF4);
 	
 	flush(); // Flush again
 	
