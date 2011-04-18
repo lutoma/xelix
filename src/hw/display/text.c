@@ -24,7 +24,7 @@
 #include <lib/log.h>
 
 // How many lines to move up/down when scrolling.
-#define SCROLL_LINES 5
+#define SCROLL_LINES 24
 
 // on-screen character grid
 #define COLUMNS 80
