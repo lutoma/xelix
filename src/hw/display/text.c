@@ -23,12 +23,12 @@
 #include <memory/kmalloc.h>
 #include <lib/log.h>
 
-// How many lines to move up/down when scrolling.
-#define SCROLL_LINES 24
-
 // on-screen character grid
 #define COLUMNS 80
 #define ROWS 25
+
+// How many lines to move up/down when scrolling.
+#define SCROLL_LINES (ROWS - 1)
 
 // Pointer to video memory
 // 80x25 Zeichen
