@@ -81,5 +81,7 @@ void interrupts_init()
 
 	// set all interruptHandlers to NULL.
 	memset(interruptHandlers, NULL, 256 * sizeof(interruptHandler_t));
+	interrupts_enable();
+	
 	log("interrupts: Initialized\n");
 }

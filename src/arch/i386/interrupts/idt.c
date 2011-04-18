@@ -602,5 +602,4 @@ void idt_init()
 	setGate(255, (uint32_t)interrupts_handler255, 0x08, 0x8E);
 
 	idt_load(&idtPtr);
-	interrupts_enable();
 }
