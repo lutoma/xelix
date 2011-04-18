@@ -34,7 +34,7 @@
 #ifdef DEBUG
 	#define intDebug(args...) log(args);
 #else /* DEBUG */
-	#define intDebug
+	#define intDebug(args...)
 #endif /* DEBUG */
 
 task_t* firstTask = NULL;
