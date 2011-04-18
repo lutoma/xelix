@@ -64,10 +64,12 @@ void scheduler_add(void* entry)
 	// Now add this task to our task list. A lock would be nice here.
 	if(firstTask == NULL || lastTask == NULL)
 		// This is the first task
-		firstTask = lastTask = thisTask;
+		firstTask = thisTask;
 	else
 		// Obviously not the first task, append to list
 		lastTask->next = thisTask;
+	
+	lastTask = thisTask;
 		
 	log("scheduler: Registered new task with PID %d\n", thisTask->pid);
 }
