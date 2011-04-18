@@ -78,4 +78,4 @@ void panic_raw(char *file, uint32_t line, const char *reason, ...);
 
 // to automatically have file names and line numbers
 #define panic(...) panic_raw( __FILE__, __LINE__, __VA_ARGS__)
-#define assert(b) ((b) ? (void)0 : panic_raw(__FILE__, __LINE__, "Assertion \"" #b "\" failed"))
+#define assert(b) do { if(!(b)) panic_raw(__FILE__, __LINE__, "Assertion \"" #b "\" failed."); } while(0);
