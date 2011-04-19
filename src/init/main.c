@@ -108,9 +108,6 @@ void __attribute__((__cdecl__)) _start()
 
 	init(scheduler); // Intentionally last
 
-	// If they were disabled.
-	interrupts_enable();
-	
 	/* And now a comment from our old friend Captain Obvious:
 	 * If you disable interrupts in an interrupt handler and
 	 * forget to re-enable them, the sky will fall on your head, so
