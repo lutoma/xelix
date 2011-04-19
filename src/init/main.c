@@ -38,6 +38,7 @@
 #include <filesystems/memfs/interface.h>
 #include <tasks/task.h>
 #include <lib/argparser.h>
+#include <tasks/scheduler.h>
 #include <init/debugconsole.h>
 
 // Prints out compiler information, especially for GNU GCC
@@ -104,6 +105,8 @@ void __attribute__((__cdecl__)) _start()
 
 	init(keyboard);
 	init(debugconsole);
+
+	init(scheduler); // Intentionally last
 
 	// If they were disabled.
 	interrupts_enable();

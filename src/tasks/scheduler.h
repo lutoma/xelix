@@ -29,6 +29,9 @@ typedef struct task {
 	struct task* next;
 } task_t;
 
+bool scheduler_initialized;
+
 void scheduler_add();
 task_t* scheduler_getCurrentTask();
 task_t* scheduler_select(cpu_state_t* lastRegs);
+void scheduler_init();
