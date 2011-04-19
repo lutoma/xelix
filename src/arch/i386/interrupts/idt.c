@@ -303,8 +303,7 @@ extern void interrupts_handler255(void);
 idtEntry_t idtEntries[256];
 idtPtr_t idtPtr;
 
-extern void idt_load(uint32_t);
-static void setGate(uint8_t, uint32_t, uint16_t, uint8_t);
+extern void idt_load(void*);
 
 static void setGate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
 {
@@ -602,6 +601,5 @@ void idt_init()
 	setGate(254, (uint32_t)interrupts_handler254, 0x08, 0x8E);
 	setGate(255, (uint32_t)interrupts_handler255, 0x08, 0x8E);
 
-	idt_load((uint32_t)&idtPtr);
-	interrupts_enable();
+	idt_load(&idtPtr);
 }

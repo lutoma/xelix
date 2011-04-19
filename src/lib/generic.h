@@ -48,10 +48,13 @@ typedef enum { false = 0 , true = 1 } bool;
 #define EOF  -1
 
 // Making ponies fly.
-#define init(C, ...) \
-	log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__); \
-	C ## _init(__VA_ARGS__); \
-	log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #__VA_ARGS__ ")] (plain)\n%%", 0x03, __LINE__);
+#define init(C, args...) \
+	do \
+	{ \
+		log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n%%", 0x03, __LINE__); \
+		C ## _init(args); \
+		log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n%%", 0x03, __LINE__); \
+	} while(0);
 
 void outb(uint16_t port, uint8_t value);
 void outw(uint16_t port, uint16_t value);
@@ -77,5 +80,5 @@ extern void display_clear();
 void panic_raw(char *file, uint32_t line, const char *reason, ...);
 
 // to automatically have file names and line numbers
-#define panic(...) panic_raw( __FILE__, __LINE__, __VA_ARGS__);
-#define assert(b) ((b) ? (void)0 : panic_raw(__FILE__, __LINE__, "Assertion \"" #b "\" failed"))
+#define panic(args...) panic_raw( __FILE__, __LINE__, args)
+#define assert(b) do { if(!(b)) panic_raw(__FILE__, __LINE__, "Assertion \"" #b "\" failed."); } while(0);

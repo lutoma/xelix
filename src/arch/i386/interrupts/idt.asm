@@ -1,4 +1,4 @@
-; idt.asm: Description of what this file does
+; idt.asm: Function to load new Interrupt Descriptor Table.
 ; Copyright © 2010 Christoph Sünderhauf
 ; Copyright © 2011 Lukas Martini
 

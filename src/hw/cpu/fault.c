@@ -49,7 +49,7 @@ static void faultHandler(cpu_state_t* regs)
 {
 	if(regs->interrupt > 18)
 		panic("Unkown CPU error %d", regs->interrupt);
-	if(regs->interrupt <= 18) // Can't use else here because of macro
+	else
 		panic("CPU error %d (%s)", regs->interrupt, errorDescriptions[regs->interrupt]);
 }
 

@@ -37,6 +37,18 @@ static void sendEOI(uint8_t which)
  */
 cpu_state_t* __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t* regs)
 {
+	// Spurious interrupts
+	if(regs->interrupt == IRQ7)
+		return regs;
+	if(regs->interrupt == IRQ15)
+	{
+		/* We have to EOI the master PIC because it can't know it's
+		 * only a spurious interrupt
+		 */
+		sendEOI(EOI_MASTER);
+		return regs;
+	}
+	
 	// Is this an IRQ?
 	if(regs->interrupt > 31)
 	{
