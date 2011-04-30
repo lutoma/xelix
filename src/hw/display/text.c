@@ -86,58 +86,6 @@ void display_init()
 	bufferEnd = buffer + bufferSize;
 
 	display_clear();
-	
-	/*
-	// CHANGE FONT (http://www.cs.usfca.edu/~cruse/cs686f03/newzero.cpp)
-	#define GRAF_PORT 0x3CE		// for i/o to the Graphics Controller
-	#define TSEQ_PORT 0x3C4		// for i/o to the VGA Timer-Sequencer
-
-	// prologue (makes character ram accessible to the cpu)
-	outw( 0x0100, TSEQ_PORT );	// enter synchronous reset
-	outw( 0x0402, TSEQ_PORT );	// write only to map 2
-	outw( 0x0704, TSEQ_PORT );	// use sequential addressing
-	outw( 0x0300, TSEQ_PORT );	// leave synchronous reset
-	outw( 0x0204, GRAF_PORT );	// select map 2 for reads
-	outw( 0x0005, GRAF_PORT );	// disable odd-even addressing
-	outw( 0x0006, GRAF_PORT );	// map starts at 0xA000:0000
-
-unsigned char newglyph[ 16 ] = 	{
-				0x00,	// 00000000
-				0x00,	// 00000000
-				0x7C,	// 01111100
-				0x82,	// 10000010
-				0x82,	// 10000010
-				0x82,	// 10000010
-				0x82,   // 10000010
-				0x82,	// 10000010
-				0x82,	// 10000010
-				0x82,	// 10000010
-	*videoMemory = color<<8 | 'P';
-				0x82,	// 10000010
-				0x7C,	// 01111100
-				0x00,	// 00000000
-				0x00,	// 00000000
-				0x00,	// 00000000
-				0x00	// 00000000
-				};
-
-
-	// load our new image for '0' into character generator ram 
-	unsigned char	*vram = (unsigned char*) 0xA0000;
-	int		zlocn = '0' * 32;
-	int i;
-	for (i = 0; i < 16; i++) vram[ zlocn + i ] = newglyph[ i ];
-	
-	// epilogue (makes character ram inaccessible to the cpu)
-	outw( 0x0100, TSEQ_PORT );	// enter synchronous reset
-	outw( 0x0302, TSEQ_PORT );	// write to maps 0 and 1
-	outw( 0x0304, TSEQ_PORT );	// use odd-even addressing
-	outw( 0x0300, TSEQ_PORT );	// leave synchronous reset
-	outw( 0x0004, GRAF_PORT );	// select map 0 for reads
-	outw( 0x1005, GRAF_PORT );	// enable odd-even addressing
-	outw( 0x0E06, GRAF_PORT );	// map starts at 0xB800:0000
-	*/
-	
 	log("display: Initialized\n");
 }
 
