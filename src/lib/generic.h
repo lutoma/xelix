@@ -32,6 +32,8 @@ to try that anyway, remove this block in src/lib/generic.h.
 							   + __GNUC_MINOR__ * 100 \
 							   + __GNUC_PATCHLEVEL__)
 
+#define XELIX 1
+
 #define ARCH_i386 0
 #define ARCH_amd64 1
 
