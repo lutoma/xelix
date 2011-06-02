@@ -96,6 +96,10 @@ static void executeCommand(char *command)
 		int second = date('s');
 		int weekDay = getWeekDay(day, month, year);
 		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
+	}
+	else if(strcmp(command, "halt") == 0)
+	{
+		halt();
 	} else
 	{
 		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...

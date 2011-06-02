@@ -20,6 +20,7 @@
 #include "init.h"
 #if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 	#include <arch/i386/lib/multiboot.h>
+	#include <arch/i386/lib/acpi.h>
 #endif
 #include <lib/log.h>
 #include <lib/datetime.h>
@@ -96,6 +97,7 @@ void __attribute__((__cdecl__)) _start()
 	
 	init(pit, PIT_RATE);
 	init(cpu);
+	init(acpi);
 
 	if(multiboot_info->modsCount < 1)
 		panic("Could not load initrd (multiboot_info->modsCount < 1).");
