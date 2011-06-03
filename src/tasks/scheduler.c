@@ -19,7 +19,6 @@
 
 #include "scheduler.h"
 
-#include "dispatcher.h"
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <hw/cpu.h>
