@@ -15,6 +15,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * This Code is largely based on kaworu's post in the osdev.org board at
+ * http://forum.osdev.org/viewtopic.php?t=16990.
  */
 
 #include "acpi.h"
@@ -22,16 +25,19 @@
 #include <lib/log.h>
 #include <lib/datetime.h>
 
-uint32_t *smiCmd;
-uint8_t acpiEnableStr;
-uint8_t acpiDisableStr;
-uint32_t *pm1aCnt;
-uint32_t *pm1bCnt;
-uint32_t slpTypeA;
-uint32_t slpTypeB;
-uint32_t slpEn;
-uint32_t sciEn;
-uint8_t pm1CountLength;
+// Just a small macro to make things shorter
+#define acpiError(args...) do { log("acpi:" args); return -1; } while(false); 
+
+uint32_t*	smiCmd;
+uint8_t		enableStr;
+uint8_t		acpiDisableStr;
+uint32_t*	pm1aCnt;
+uint32_t*	pm1bCnt;
+uint32_t	slpTypeA;
+uint32_t	slpTypeB;
+uint32_t	slpEn;
+uint32_t	sciEn;
+uint8_t		pm1CountLength;
 
 struct RSDPtr
 {
@@ -50,7 +56,7 @@ struct FACP
 	uint32_t*	dsdt;
 	uint8_t		reserved1[4];
 	uint32_t*	smiCmd;
-	uint8_t		acpiEnableStr;
+	uint8_t		enableStr;
 	uint8_t		acpiDisableStr;
 	uint8_t		reserved2[10];
 	uint32_t*	pm1aCntBlk;
@@ -63,7 +69,7 @@ struct FACP
 static uint32_t* checkRSDP(uint32_t* ptr)
 {
 	char *sig = "RSD PTR ";
-	struct RSDPtr *rsdp = (struct RSDPtr*) ptr;
+	struct RSDPtr *rsdp = (struct RSDPtr*)ptr;
 	uint8_t* bptr;
 	uint8_t check = 0;
 	int i;
@@ -116,10 +122,11 @@ static uint32_t* getRSDT()
 	/* Search the Extended BIOS Data Area for the Root System
 	 * Description Pointer signature.
 	 */
-	for (addr = (uint32_t*) ebda; (int32_t)addr<ebda+1024; addr+= 0x10/sizeof(addr))
+	for(addr = (uint32_t*) ebda; (int32_t)addr < ebda+1024; addr += 0x10 / sizeof(addr))
 	{
 		rsdp = checkRSDP(addr);
-		if (rsdp != NULL)
+		
+		if(rsdp != NULL)
 			return rsdp;
 	}
 
@@ -129,7 +136,7 @@ static uint32_t* getRSDT()
 // Checks for a given header and validates checksum
 static int checkHeader(uint32_t* ptr, char* header)
 {
-	if (memcmp(ptr, header, 4) == 0)
+	if(memcmp(ptr, header, 4) == 0)
 	{
 		char* checkPtr = (char*)ptr;
 		int len = *(ptr + 1);
@@ -141,102 +148,71 @@ static int checkHeader(uint32_t* ptr, char* header)
 			checkPtr++;
 		}
 		
-		if (check == 0)
+		if(check == 0)
 			return 0;
 	}
 	
 	return -1;
 }
 
-int acpiEnable(void)
+static int enable()
 {
-	// check if acpi is enabled
-	if((inw((uint32_t) pm1aCnt) &sciEn) == 0)
-	{
-		// check if acpi can be enabled
-		if(smiCmd != 0 && acpiEnableStr != 0)
-		{
-			outb((uint32_t) smiCmd, acpiEnableStr); // send acpi enable command
-
-			// give 3 seconds time to enable acpi
-			int i;
-			for(i=0; i<300; i++ )
-			{
-				if((inw((uint32_t) pm1aCnt) &sciEn) == 1)
-					break;
-
-				sleep(10);
-			}
-			
-			if(pm1bCnt != 0)
-			{
-				for(; i<300; i++)
-				{
-					if((inw((uint32_t) pm1bCnt) &sciEn) == 1)
-						break;
-
-					sleep(10);
-				}
-			}
-			
-			if (i<300) {
-				log("acpi: Enabled.\n");
-				return 0;
-			} else {
-				log("acpi: Couldn't enable.\n");
-				return -1;
-			}
-
-		} else {
-			log("no known way to enable acpi.\n");
-			return -1;
-		}
-
-	} else {
+	// Check if acpi is already enabled
+	if((inw((uint32_t)pm1aCnt) & sciEn) != 0)
 		return 0;
+
+	// Check if acpi can be enabled
+	if(smiCmd == 0 || enableStr == 0)
+		acpiError("No known way to enable acpi.\n");
+	
+	// Send the ACPI enable command
+	outb((uint32_t)smiCmd, enableStr);
+
+	// Give 3 seconds time to enable acpi
+	int i;
+	for(i = 0; i < 4; i++ )
+	{
+		if((inw((uint32_t)pm1aCnt) & sciEn) == 1)
+			break;
+
+		sleep(1);
 	}
+			
+	if(pm1bCnt != 0)
+	{
+		for(; i < 8; i++)
+		{
+			if((inw((uint32_t) pm1bCnt) & sciEn) == 1)
+				break;
+
+			sleep(1);
+		}
+	}
+			
+	if (i >= 8)
+		acpiError("Couldn't enable.\n");
+
+	return 0;
 }
-
-
-/* bytecode of the \_S5 object
- *  -----------------------------------------
- * 		  | (optional) |	 |	 |	 |	
- * NameOP | \			 | _  | S  | 5  | _
- * 08	  | 5A			| 5F | 53 | 35 | 5F
- * 
- * -----------------------------------------------------------------------------------------------------------
- *			  |			  |				  | ( slpTypeA	) | ( slpTypeB	) | ( Reserved	) | (Reserved	 )
- * PackageOP | PkgLength | NumElements  | byteprefix Num | byteprefix Num | byteprefix Num | byteprefix Num
- * 12		  | 0A		  | 04			  | 0A			05  | 0A			 05 | 0A			05  | 0A			05
- *
- *Sometimes also:
- * PackageOP | PkgLength | NumElements | 
- * 12		  | 06		  | 04			 | 00 00 00 00
- *
- * (Pkglength bit 6-7 encode additional PkgLength bytes [shouldn't be the case here])
- */
- 
-// Just a small macro to make things shorter
-#define acpiInitError(args...) do {log("acpi:" args); return -1;} while(false); 
 
 int acpi_init()
 {
 	uint32_t* ptr = getRSDT();
 
 	// Check if ACPI is available on this pc (if the pointer is correct)
-	if(ptr == NULL || checkHeader(ptr, "RSDT") != 0)
-		acpiInitError("No ACPI available.\n");
+	if(ptr == NULL || checkHeader(ptr, "RSDT") == -1)
+		acpiError("No ACPI available.\n");
 
 	// The RSDT contains an unknown number of pointers to ACPI tables
 	int entries = *(ptr + 1);
 	entries = (entries - 36) / 4;
 	
-	// skip header information
+	// Skip header information
 	ptr += 36 / 4;
 
 	while(0 < entries--)
 	{
-		// check if the desired table is reached
+		// Check if the desired table is reached
 		if(checkHeader((uint32_t*)*ptr, "FACP") != 0)
 			continue;
 			
@@ -244,73 +220,73 @@ int acpi_init()
 		struct FACP* facp = (struct FACP*)*ptr;
 
 		if(checkHeader((uint32_t*)facp->dsdt, "DSDT") != 0)
-			acpiInitError("Invalid DSDT.\n");
+			acpiError("Invalid DSDT.\n");
 			
-		// search the \_S5 package in the dsdt
-		char* S5Addr = (char*)facp->dsdt +36; // skip header
-		int dsdtLength = *(facp->dsdt+1) -36;
+		// Search the \_S5 package in the dsdt
+		char* S5Addr = (char*)facp->dsdt + 36; // skip header
+		int dsdtLength = *(facp->dsdt+1) - 36;
 
-		while (0 < dsdtLength--)
+		while(0 < dsdtLength--)
 		{
-			if ( memcmp(S5Addr, "_S5_", 4) == 0)
+			if(memcmp(S5Addr, "_S5_", 4) == 0)
 				break;
 
 			S5Addr++;
 		}
 
-		// check if \_S5 was found
-		if (dsdtLength <= 0)
-			acpiInitError("\\_S5 not present.\n");
+		// Check if \_S5 was found
+		if(dsdtLength <= 0)
+			acpiError("\\_S5 not present.\n");
 		
-		// check for valid AML structure
-		if ( ( *(S5Addr-1) == 0x08 || ( *(S5Addr-2) == 0x08 && *(S5Addr-1) == '\\') ) && *(S5Addr+4) == 0x12 )
-		{
-			S5Addr += 5;
+		// Check for valid AML structure
+		if((*(S5Addr-1) != 0x08 && ( *(S5Addr-2) != 0x08 || *(S5Addr-1) == '\\') ) || *(S5Addr+4) != 0x12)
+			acpiError("\\_S5 parse error.\n");		
+
+		S5Addr += 5;
 			
-			// calculate PkgLength size
-			S5Addr += ((*S5Addr &0xC0) >> 6) +2;
+		// Calculate PkgLength size
+		S5Addr += ((*S5Addr &0xC0) >> 6) + 2;
 
-			if (*S5Addr == 0x0A)
-				S5Addr++;	// skip byteprefix
-
-			slpTypeA = *(S5Addr) << 10;
+		// Skip byteprefix
+		if (*S5Addr == 0x0A)
 			S5Addr++;
 
-			if (*S5Addr == 0x0A)
-				S5Addr++;	// skip byteprefix
+		slpTypeA = *(S5Addr) << 10;
+		S5Addr++;
 
-			slpTypeB = *(S5Addr)<<10;
-			smiCmd = facp->smiCmd;
+		// Skip byteprefix
+		if (*S5Addr == 0x0A)
+			S5Addr++;
 
-			acpiEnableStr = facp->acpiEnableStr;
-			acpiDisableStr = facp->acpiDisableStr;
-			pm1aCnt = facp->pm1aCntBlk;
-			pm1bCnt = facp->pm1bCntBlk;
-			pm1CountLength = facp->pm1CountLength;
+		slpTypeB = *(S5Addr)<<10;
+		smiCmd = facp->smiCmd;
 
-			slpEn = 1<<13;
-			sciEn = 1;
+		enableStr = facp->enableStr;
+		acpiDisableStr = facp->acpiDisableStr;
+		pm1aCnt = facp->pm1aCntBlk;
+		pm1bCnt = facp->pm1bCntBlk;
+		pm1CountLength = facp->pm1CountLength;
 
-			return 0;
+		slpEn = 1 << 13;
+		sciEn = 1;
 
-		} else 
-			acpiInitError("\\_S5 parse error.\n");
+		return 0;
 
 		ptr++;
 	}
 
-	acpiInitError("no valid FACP present.\n");
+	acpiError("no valid FACP present.\n");
 }
 
 void acpi_powerOff()
 {
-	// sciEn is set to 1 if acpi shutdown is possible.
-	if (sciEn == 0)
+	// sciEn is true if ACPI shutdown is possible.
+	if (!sciEn)
 		return;
 
-	acpiEnable();
+	enable();
 
-	// send the shutdown command
+	// Send the shutdown command
 	outw((unsigned int)pm1aCnt, slpTypeA | slpEn);
 
 	if(pm1bCnt != 0)
