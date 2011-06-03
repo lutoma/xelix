@@ -61,6 +61,7 @@ typedef enum { false = 0 , true = 1 } bool;
 void outb(uint16_t port, uint8_t value);
 void outw(uint16_t port, uint16_t value);
 uint8_t inb(uint16_t port);
+uint16_t inw(uint16_t port);
 void outl(uint16_t port, uint32_t value);
 uint32_t inl(uint16_t port);
 uint8_t readCMOS (uint16_t port);
@@ -74,6 +75,7 @@ void printf(const char* fmt, ...);
 void freeze(void);
 int32_t memcmp(const void* s1, const void* s2, size_t n);
 void reboot();
+void halt();
 
 extern void display_clear();
 #define clear() display_clear()

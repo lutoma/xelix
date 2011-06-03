@@ -19,19 +19,6 @@
  */
 
 #include <lib/generic.h>
-#include <hw/cpu.h>
 
-// Single linked list
-typedef struct task {
-	uint32_t pid;
-	uint32_t parent;
-	cpu_state_t* state;
-	struct task* next;
-} task_t;
-
-bool scheduler_initialized;
-
-void scheduler_add();
-task_t* scheduler_getCurrentTask();
-task_t* scheduler_select(cpu_state_t* lastRegs);
-void scheduler_init();
+int acpi_init();
+void acpi_powerOff();

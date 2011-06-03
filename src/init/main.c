@@ -20,6 +20,7 @@
 #include "init.h"
 #if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 	#include <arch/i386/lib/multiboot.h>
+	#include <arch/i386/lib/acpi.h>
 #endif
 #include <lib/log.h>
 #include <lib/datetime.h>
@@ -38,6 +39,7 @@
 #include <filesystems/memfs/interface.h>
 #include <tasks/task.h>
 #include <lib/argparser.h>
+#include <tasks/scheduler.h>
 #include <init/debugconsole.h>
 
 // Prints out compiler information, especially for GNU GCC
@@ -95,6 +97,7 @@ void __attribute__((__cdecl__)) _start()
 	
 	init(pit, PIT_RATE);
 	init(cpu);
+	init(acpi);
 
 	if(multiboot_info->modsCount < 1)
 		panic("Could not load initrd (multiboot_info->modsCount < 1).");
@@ -105,9 +108,8 @@ void __attribute__((__cdecl__)) _start()
 	init(keyboard);
 	init(debugconsole);
 
-	// If they were disabled.
-	interrupts_enable();
-	
+	init(scheduler); // Intentionally last
+
 	/* And now a comment from our old friend Captain Obvious:
 	 * If you disable interrupts in an interrupt handler and
 	 * forget to re-enable them, the sky will fall on your head, so

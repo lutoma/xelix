@@ -116,3 +116,8 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 		
 		return nextTask;
 }
+
+void scheduler_init()
+{
+	scheduler_initialized = true;
+}

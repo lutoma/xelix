@@ -30,6 +30,10 @@
 #include <tasks/scheduler.h>
 #include <interrupts/interface.h>
 
+#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
+	#include <arch/i386/lib/acpi.h>
+#endif
+
 // Memset function. Fills memory with something.
 void memset(void* ptr, uint8_t fill, uint32_t size)
 {
@@ -102,6 +106,14 @@ void outw(uint16_t port, uint16_t value)
 uint8_t inb(uint16_t port)
 {
 	uint8_t ret;
+	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
+	return ret;
+}
+
+// Read a word from the specified port
+uint16_t inw(uint16_t port)
+{
+	uint16_t ret;
 	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
 	return ret;
 }
@@ -253,5 +265,21 @@ void reboot()
 	interrupts_disable();
 	log("generic: Going to reboot NOW!");
 	keyboard_sendKBC(0xFE);
+	freeze();
+}
+
+
+void halt()
+{
+	log("generic: Going to halt NOW!");
+	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
+		acpi_powerOff();
+	#endif
+	
+	/* In case we don't have an x86(_64) architecture or the ACPI
+	 * poweroff didn't work for whatever reason, display a message
+	 * to tell the user he can manually turn of the PC now.
+	 */
+	printf("\n\nYou may turn off your PC now.\n");
 	freeze();
 }
