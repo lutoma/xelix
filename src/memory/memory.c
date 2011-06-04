@@ -20,6 +20,7 @@
 #include "memory.h"
 
 #include <lib/log.h>
+#include <init/init.h>
 #include "kmalloc.h"
 
 extern bool __attribute__((__cdecl__)) a20_check(); // ASM.
