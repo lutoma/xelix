@@ -60,13 +60,10 @@ fsNode_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
 }
 
 // Initialize the filesystem abstraction system
-void vfs_init(multiboot_module_t mod)
+void vfs_init()
 {
 	// Initialise the root directory.
 	vfs_rootNodeCount = 0;
 	vfs_rootNode = vfs_createNode("root", 0, 0, 0, FS_DIRECTORY, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); // RootNode is it's own parent, therefore NULL as last parameter.
-	
-	// Load the initrd
-	memfs_init(mod);
 }
 

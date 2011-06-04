@@ -99,11 +99,8 @@ void __attribute__((__cdecl__)) _start()
 	init(cpu);
 	init(acpi);
 
-	if(multiboot_info->modsCount < 1)
-		panic("Could not load initrd (multiboot_info->modsCount < 1).");
 	
-	
-	init(vfs, multiboot_info->modsAddr[0]);
+	init(vfs);
 
 	init(keyboard);
 	init(debugconsole);

@@ -71,4 +71,4 @@ fsNode_t* vfs_rootNode; // Our root directory node.
 fsNode_t** vfs_rootNodes; // Our root directory array.
 int vfs_rootNodeCount;
 
-void vfs_init(multiboot_module_t mod);
+void vfs_init();
