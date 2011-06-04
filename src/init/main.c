@@ -35,8 +35,8 @@
 #include <hw/pit.h>
 #include <memory/kmalloc.h>
 #include <hw/speaker.h>
-#include <filesystems/vfs.h>
-#include <filesystems/memfs/interface.h>
+#include <fs/vfs.h>
+#include <fs/memfs/interface.h>
 #include <tasks/task.h>
 #include <lib/argparser.h>
 #include <tasks/scheduler.h>

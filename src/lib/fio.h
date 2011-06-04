@@ -20,7 +20,7 @@
 
 #include "generic.h"
 
-#include <filesystems/vfs.h>
+#include <fs/vfs.h>
 
 typedef struct FILE
 {

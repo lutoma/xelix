@@ -20,7 +20,7 @@
 #include "fio.h"
 
 #include "log.h"
-#include <filesystems/vfs.h>
+#include <fs/vfs.h>
 #include <memory/kmalloc.h>
 #include "string.h"
 

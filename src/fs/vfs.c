@@ -22,7 +22,6 @@
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <lib/string.h>
-#include <filesystems/memfs/interface.h>
 
 fsNode_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
 						 uint32_t gid, uint32_t flags, uint32_t inode,

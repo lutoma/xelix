@@ -26,7 +26,6 @@
 #include "keymaps.h"
 #include <lib/log.h>
 #include <interrupts/interface.h>
-#include <filesystems/vfs.h>
 #include <lib/datetime.h>
 #include <hw/display.h>
 #include <hw/pit.h>

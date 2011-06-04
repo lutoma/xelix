@@ -20,6 +20,6 @@
 
 #include <lib/generic.h>
 #include <arch/i386/lib/multiboot.h>
-#include <filesystems/vfs.h>
+#include <fs/vfs.h>
 
 fsNode_t *memfs_init(multiboot_module_t mod);

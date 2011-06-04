@@ -25,7 +25,7 @@
 #include <hw/display.h>
 #include <hw/keyboard.h>
 #include <lib/datetime.h>
-#include <filesystems/vfs.h>
+#include <fs/vfs.h>
 #include <lib/fio.h>
 #include <tasks/scheduler.h>
 
