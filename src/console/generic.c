@@ -26,6 +26,7 @@
 console_t default_console;
 
 #include <console/driver/display.h>
+#include <console/driver/keyboard.h>
 #include <memory/kmalloc.h>
 
 void console_init()
@@ -35,12 +36,16 @@ void console_init()
 	default_console.info.cursor_x = 0;
 	default_console.info.cursor_y = 0;
 
-	default_console.input_driver = NULL;
 	default_console.input_filter = NULL;
 	default_console.output_filter = NULL;
 
+	default_console.input_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
+	console_driver_keyboard_init(default_console.input_driver);
+
 	default_console.output_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
 	console_driver_display_init(default_console.output_driver);
+
+	console_clear(NULL);
 }
 
 void console_clear(console_t *console)
@@ -90,10 +95,7 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 
 	while (i < length)
 	{
-		buffer[i] = console->output_driver->read(&console->info);
-
-		if (buffer[i] == -1)
-			break;
+		buffer[i] = console->input_driver->read(&console->info);
 
 		filter = console->input_filter;
 		while (filter != NULL)
