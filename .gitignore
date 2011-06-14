@@ -1,6 +1,7 @@
 *.o
 *.log
 *~
+.*.swp
 floppy.img
 Makefile
 xelix.bin
