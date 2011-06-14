@@ -20,6 +20,7 @@
 #include "init.h"
 #if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 	#include <arch/i386/lib/multiboot.h>
+	#include <arch/i386/lib/acpi.h>
 #endif
 #include <lib/log.h>
 #include <lib/datetime.h>
@@ -34,8 +35,8 @@
 #include <hw/pit.h>
 #include <memory/kmalloc.h>
 #include <hw/speaker.h>
-#include <filesystems/vfs.h>
-#include <filesystems/memfs/interface.h>
+#include <fs/vfs.h>
+#include <fs/memfs/interface.h>
 #include <tasks/task.h>
 #include <lib/argparser.h>
 #include <tasks/scheduler.h>
@@ -96,12 +97,10 @@ void __attribute__((__cdecl__)) _start()
 	
 	init(pit, PIT_RATE);
 	init(cpu);
+	init(acpi);
 
-	if(multiboot_info->modsCount < 1)
-		panic("Could not load initrd (multiboot_info->modsCount < 1).");
 	
-	
-	init(vfs, multiboot_info->modsAddr[0]);
+	init(vfs);
 
 	init(keyboard);
 	init(debugconsole);

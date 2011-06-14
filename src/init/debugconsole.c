@@ -25,7 +25,7 @@
 #include <hw/display.h>
 #include <hw/keyboard.h>
 #include <lib/datetime.h>
-#include <filesystems/vfs.h>
+#include <fs/vfs.h>
 #include <lib/fio.h>
 #include <tasks/scheduler.h>
 
@@ -50,6 +50,10 @@ static void executeCommand(char *command)
 	else if(strcmp(command, "clear") == 0) clear();
 	else if(strcmp(command, "ls") == 0)
 	{
+		// Check if root fs is initialised
+		if(vfs_rootNode->readDir == NULL)
+			return;
+		
 		struct dirent *node = 0;
 
 		int i;
@@ -62,22 +66,6 @@ static void executeCommand(char *command)
 			else
 				color = 0x07;
 			printf("%%%s%%  ", color, node->name);
-		}
-	}
-	else if(strcmp(command, "cat") == 0)
-	{
-		fsNode_t *fsNode = vfs_rootNode->findDir(vfs_rootNode, "makememfs.c");
-		
-		uint8_t* buf = (uint8_t*)kmalloc(sizeof(char) * 100);
-		int offset = 0;
-		uint8_t sz = fsNode->read(fsNode, offset, 100, buf);
-
-		while(sz != 0)
-		{
-			buf[sz] = 0; // Make sure it's NUL-terminated.
-			printf("%s", buf);
-			offset += 100;
-			sz = fsNode->read(fsNode, offset, 100, buf);
 		}
 	}
 	else if(strcmp(command, "pid") == 0)
@@ -96,7 +84,10 @@ static void executeCommand(char *command)
 		int second = date('s');
 		int weekDay = getWeekDay(day, month, year);
 		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
-	} else
+	}
+	else if(strcmp(command, "halt") == 0) halt();
+	else if(strcmp(command, "freeze") == 0) freeze();
+	else
 	{
 		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
 			printf("error: command '%s' not found.\n", command);

@@ -32,6 +32,8 @@ to try that anyway, remove this block in src/lib/generic.h.
 							   + __GNUC_MINOR__ * 100 \
 							   + __GNUC_PATCHLEVEL__)
 
+#define XELIX 1
+
 #define ARCH_i386 0
 #define ARCH_amd64 1
 
@@ -47,18 +49,10 @@ typedef enum { false = 0 , true = 1 } bool;
 #define NULL  0
 #define EOF  -1
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n%%", 0x03, __LINE__); \
-		C ## _init(args); \
-		log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n%%", 0x03, __LINE__); \
-	} while(0);
-
 void outb(uint16_t port, uint8_t value);
 void outw(uint16_t port, uint16_t value);
 uint8_t inb(uint16_t port);
+uint16_t inw(uint16_t port);
 void outl(uint16_t port, uint32_t value);
 uint32_t inl(uint16_t port);
 uint8_t readCMOS (uint16_t port);
@@ -72,6 +66,7 @@ void printf(const char* fmt, ...);
 void freeze(void);
 int32_t memcmp(const void* s1, const void* s2, size_t n);
 void reboot();
+void halt();
 
 extern void display_clear();
 #define clear() display_clear()

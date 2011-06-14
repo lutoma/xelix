@@ -20,4 +20,5 @@
 
 #include <lib/generic.h>
 
-// Your definitions
+int acpi_init();
+void acpi_powerOff();
