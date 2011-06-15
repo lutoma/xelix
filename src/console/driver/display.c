@@ -30,6 +30,14 @@ static int console_driver_display_write(console_info_t *info, char c)
 		info->cursor_y = 0;
 		return 0;
 	}
+	
+	if (c == 0x8)
+	{
+		info->cursor_y--;
+		uint16_t *pos = display_memory + info->cursor_x * info->columns + info->cursor_y;
+		*pos = (15 << 8) | ' ';
+		return 0;
+	}
 
 	while (info->cursor_x >= info->rows)
 	{
