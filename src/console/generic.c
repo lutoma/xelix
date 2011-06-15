@@ -44,15 +44,17 @@ void console_init()
 	default_console->output_filter = NULL;
 
 	default_console->input_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
-	console_driver_keyboard_init(default_console->input_driver);
-
 	default_console->output_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
+
+	console_driver_keyboard_init(default_console->input_driver);
 	console_driver_display_init(default_console->output_driver);
 
 	default_console->info.default_color.background = CONSOLE_COLOR_BLACK;
 	default_console->info.default_color.foreground = CONSOLE_COLOR_LGREY;
 
 	default_console->info.current_color = default_console->info.default_color;
+
+	default_console->info.nonblocking = 0;
 
 	console_clear(NULL);
 }
@@ -112,7 +114,11 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 		buffer[i] = console->input_driver->read(&console->info);
 
 		if (buffer[i] == 0)
+		{
+			if (console->info.nonblocking)
+				i++;
 			continue;
+		}
 
 		filter = console->input_filter;
 		while (filter != NULL)

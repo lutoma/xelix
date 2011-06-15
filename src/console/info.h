@@ -30,4 +30,6 @@ typedef struct {
 
 	console_color_t default_color;
 	console_color_t current_color;
+
+	uint8_t nonblocking;
 } console_info_t;
