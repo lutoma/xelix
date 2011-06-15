@@ -92,36 +92,43 @@ static void executeCommand(char *command)
 	}
 }
 
-// Handle keyboard input.
-static void handler(uint8_t code)
+static void loop()
 {
-	char c = keyboard_codeToChar(code);
+	int read_offset = 0;
+	int read;
 
-	if(c == NULL)
-		return;
-	
-	if(c == 0x8) //0x8 is the backspace key.
+	while (1)
 	{
-		if(cursorPosition < 1) return; // We don't want the user to remove the prompt ;)
-		cursorPosition--;
-		currentLine[strlen(currentLine) -1] = 0;
-		char s[2] = { c, 0 };
-		print(s);
-		return;
-	} else if(c == 0xA)
-	{
-		print("\n");
-		executeCommand(currentLine);
-		currentLine[0] = '\0';
 		printPrompt();
-		return;
-	}	else cursorPosition++;
 
-	if (strlen(currentLine) < sizeof(currentLine)-2) {
-	    char s[2] = { c, 0 };
-	    strcat(currentLine, s);
-	    print(s);
-        }
+		read_offset = 0;
+		while (1)
+		{
+			read = console_read(NULL, currentLine + read_offset, 1);
+
+			if (currentLine[read_offset] == 0x8)
+			{
+				if (read_offset == 0) continue;
+				currentLine[read_offset--] = 0;
+				currentLine[read_offset] = 0;
+				console_write2(NULL, "\x08");
+				continue;
+			}
+
+			if (read > 0)
+				console_write(NULL, currentLine + read_offset, 1);
+
+			if (currentLine[read_offset] == '\n')
+			{
+				currentLine[read_offset] = '\0';
+				break;
+			}
+
+			read_offset += read;
+		}
+
+		executeCommand(currentLine);
+	}
 }
 
 // Initialize the debug console.
@@ -129,6 +136,5 @@ void debugconsole_init()
 {
 	DUMPVAR("0x%x", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
-	keyboard_takeFocus(&handler);
-	printPrompt();
+	loop();
 }
