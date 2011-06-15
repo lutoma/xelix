@@ -106,6 +106,9 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 	{
 		buffer[i] = console->input_driver->read(&console->info);
 
+		if (buffer[i] == 0)
+			continue;
+
 		filter = console->input_filter;
 		while (filter != NULL)
 		{

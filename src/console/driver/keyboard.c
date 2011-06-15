@@ -41,6 +41,20 @@ static void console_driver_keyboard_focus(uint8_t code)
 	if (c == NULL)
 		return;
 
+	if (c == 0x8 && keyboard_buffer.offset > 0)
+	{
+		if (keyboard_buffer.size == 0 || keyboard_buffer.data == NULL)
+			return;
+
+		char *new_buffer = (char *)kmalloc(sizeof(char) * (keyboard_buffer.size - 1));
+		memcpy(new_buffer, keyboard_buffer.data, keyboard_buffer.size - 1);
+		kfree(keyboard_buffer.data);
+		keyboard_buffer.data = new_buffer;
+		keyboard_buffer.size--;
+		keyboard_buffer.offset--;
+		return;
+	}
+
 	if (keyboard_buffer.size <= keyboard_buffer.offset)
 	{
 		char *new_buffer = (char *)kmalloc(sizeof(char) * (keyboard_buffer.size + 1));
@@ -58,7 +72,7 @@ static void console_driver_keyboard_focus(uint8_t code)
 
 static char console_driver_keyboard_read(console_info_t *info)
 {
-	if (keyboard_buffer.size == 0)
+	if (keyboard_buffer.size == 0 || keyboard_buffer.offset == 0)
 		return 0;
 
 	char retval = keyboard_buffer.data[0];

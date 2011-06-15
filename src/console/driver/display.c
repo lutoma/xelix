@@ -41,6 +41,14 @@ static int console_driver_display_write(console_info_t *info, char c)
 	
 	if (c == 0x8)
 	{
+		if (info->cursor_y == 0 && info->cursor_x != 0)
+		{
+			info->cursor_y = info->columns;
+			info->cursor_x -= 1;
+		}
+		else if (info->cursor_x == 0)
+			return 0;
+
 		info->cursor_y--;
 		uint16_t *pos = display_memory + info->cursor_x * info->columns + info->cursor_y;
 		*pos = (color << 8) | ' ';
