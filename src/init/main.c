@@ -80,6 +80,7 @@ void __attribute__((__cdecl__)) _start()
 
 	init(kmalloc);
 	init(keyboard);
+	init(serial);
 	init(console);
 	init(log);
 	

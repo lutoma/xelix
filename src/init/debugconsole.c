@@ -110,19 +110,19 @@ static void loop()
 
 			// Remove cursor
 			console_write2(NULL, "\x08");
-			if (currentLine[read_offset] == 0x8)
+			if (currentLine[read_offset] == 0x8 || currentLine[read_offset] == 0x7f)
 			{
 				if (read_offset == 0) continue;
 				currentLine[read_offset--] = 0;
 				currentLine[read_offset] = 0;
-				console_write2(NULL, "\x8");
+				console_write2(NULL, "\x08");
 				continue;
 			}
 
 			if (read > 0)
 				console_write(NULL, currentLine + read_offset, 1);
 
-			if (currentLine[read_offset] == '\n')
+			if (currentLine[read_offset] == '\n' || currentLine[read_offset] == '\r')
 			{
 				currentLine[read_offset] = '\0';
 				break;

@@ -27,7 +27,9 @@ console_t *default_console = NULL;
 
 #include <console/driver/display.h>
 #include <console/driver/keyboard.h>
-#include <console/driver/serial.h>
+#ifdef CONSOLE_USE_SERIAL
+# include <console/driver/serial.h>
+#endif
 #include <memory/kmalloc.h>
 
 void console_init()
@@ -46,8 +48,13 @@ void console_init()
 	default_console->input_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
 	default_console->output_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
 
-	console_driver_keyboard_init(default_console->input_driver);
+#	ifdef CONSOLE_USE_SERIAL
+	console_driver_serial_init(default_console->output_driver);
+	console_driver_serial_init(default_console->input_driver);
+#	else
 	console_driver_display_init(default_console->output_driver);
+	console_driver_keyboard_init(default_console->input_driver);
+# endif
 
 	default_console->info.default_color.background = CONSOLE_COLOR_BLACK;
 	default_console->info.default_color.foreground = CONSOLE_COLOR_LGREY;
@@ -89,7 +96,10 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 		}
 
 		if (c == 0)
-			break;
+		{
+			i++;
+			continue;
+		}
 
 		retval = console->output_driver->write(&console->info, c);
 		if (retval == -1)
