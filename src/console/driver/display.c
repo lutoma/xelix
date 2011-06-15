@@ -88,6 +88,11 @@ console_driver_t *console_driver_display_init(console_driver_t *mem)
 	if (mem == NULL)
 		mem = (console_driver_t *)kmalloc(sizeof(console_driver_t));
 
+  outb(0x3D4,14);
+  outb(0x3D5,0x07);
+  outb(0x3D4,15);
+  outb(0x3D5,0xD0);
+
 	mem->write = console_driver_display_write;
 	mem->_clear = console_driver_display_clear;
 	mem->capabilities = CONSOLE_DRV_CAP_CLEAR;
