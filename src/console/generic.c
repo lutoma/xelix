@@ -50,7 +50,7 @@ void console_init()
 	console_driver_display_init(default_console->output_driver);
 
 	default_console->info.default_color.background = CONSOLE_COLOR_BLACK;
-	default_console->info.default_color.foreground = CONSOLE_COLOR_WHITE;
+	default_console->info.default_color.foreground = CONSOLE_COLOR_LGREY;
 
 	default_console->info.current_color = default_console->info.default_color;
 
