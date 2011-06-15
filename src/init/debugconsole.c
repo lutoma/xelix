@@ -37,10 +37,7 @@ char currentLine[256] = "";
 static void printPrompt()
 {
 	cursorPosition = 0;
-	int colorold = display_getColor();
-	display_setColor(0x07);
 	print("\n> ");
-	display_setColor(colorold);
 }
 
 // Execute a command
