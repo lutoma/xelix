@@ -182,9 +182,9 @@ void vprintf(const char *fmt, void **arg) {
 			{
 				if(!state)
 				{
-					//display_setColor(*(unsigned *)arg);
+					default_console->info.current_color.foreground = *(unsigned *)arg;
 				} else {
-					//display_setColor(0x07);
+					default_console->info.current_color = default_console->info.default_color;
 					--arg;
 				}
 				state = !state;

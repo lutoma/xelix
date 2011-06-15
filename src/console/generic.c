@@ -49,6 +49,11 @@ void console_init()
 	default_console->output_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
 	console_driver_display_init(default_console->output_driver);
 
+	default_console->info.default_color.background = CONSOLE_COLOR_BLACK;
+	default_console->info.default_color.foreground = CONSOLE_COLOR_WHITE;
+
+	default_console->info.current_color = default_console->info.default_color;
+
 	console_clear(NULL);
 }
 

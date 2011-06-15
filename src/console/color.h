@@ -19,15 +19,26 @@
  */
 
 #include <lib/generic.h>
-#include <console/color.h>
 
 typedef struct {
-	uint32_t cursor_x;
-	uint32_t cursor_y;
+	uint32_t background;
+	uint32_t foreground;
+} console_color_t;
 
-	uint32_t rows;
-	uint32_t columns;
+#define CONSOLE_COLOR_BLACK    0x0
+#define CONSOLE_COLOR_BLUE     0x1
+#define CONSOLE_COLOR_GREEN    0x2
+#define CONSOLE_COLOR_CYAN     0x3
+#define CONSOLE_COLOR_RED      0x4
+#define CONSOLE_COLOR_MAGENTA  0x5
+#define CONSOLE_COLOR_BROWM    0x6
+#define CONSOLE_COLOR_LGREY    0x7
+#define CONSOLE_COLOR_DGREY    0x8
+#define CONSOLE_COLOR_LBLUE    0x9
+#define CONSOLE_COLOR_LGREEN   0xa
+#define CONSOLE_COLOR_LCYAN    0xb
+#define CONSOLE_COLOR_LRED     0xc
+#define CONSOLE_COLOR_LMAGENTA 0xd
+#define CONSOLE_COLOR_YELLOW   0xe
+#define CONSOLE_COLOR_WHITE    0xf
 
-	console_color_t default_color;
-	console_color_t current_color;
-} console_info_t;

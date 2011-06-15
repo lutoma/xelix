@@ -18,12 +18,20 @@
  */
 
 #include <console/driver.h>
+#include <console/color.h>
 #include <memory/kmalloc.h>
 
 static uint16_t* const display_memory = (uint16_t*) 0xB8000;
 
+static char console_driver_display_packColor(console_color_t *color)
+{
+	return color->background << 4 | color->foreground;
+}
+
 static int console_driver_display_write(console_info_t *info, char c)
 {
+	char color = console_driver_display_packColor(&info->current_color);
+
 	if (c == '\n')
 	{
 		info->cursor_x++;
@@ -35,7 +43,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 	{
 		info->cursor_y--;
 		uint16_t *pos = display_memory + info->cursor_x * info->columns + info->cursor_y;
-		*pos = (15 << 8) | ' ';
+		*pos = (color << 8) | ' ';
 		return 0;
 	}
 
@@ -47,7 +55,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 	}
 
 	uint16_t *pos = display_memory + info->cursor_x * info->columns + info->cursor_y;
-	*pos = (15 << 8) | c;
+	*pos = (color << 8) | c;
 
 	info->cursor_y++;
 	if (info->cursor_y >= info->columns)
