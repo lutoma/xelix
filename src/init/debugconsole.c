@@ -104,14 +104,18 @@ static void loop()
 		read_offset = 0;
 		while (1)
 		{
+			// Write cursor
+			console_write2(NULL, "_");
 			read = console_read(NULL, currentLine + read_offset, 1);
 
+			// Remove cursor
+			console_write2(NULL, "\x08");
 			if (currentLine[read_offset] == 0x8)
 			{
 				if (read_offset == 0) continue;
 				currentLine[read_offset--] = 0;
 				currentLine[read_offset] = 0;
-				console_write2(NULL, "\x08");
+				console_write2(NULL, "\x8");
 				continue;
 			}
 
