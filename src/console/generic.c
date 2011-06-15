@@ -81,8 +81,13 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 		while (filter != NULL)
 		{
 			c = filter->callback(c, &(console->info));
+			if (c == 0)
+				break;
 			filter = filter->next;
 		}
+
+		if (c == 0)
+			break;
 
 		retval = console->output_driver->write(&console->info, c);
 		if (retval == -1)
