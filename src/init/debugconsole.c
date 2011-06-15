@@ -28,6 +28,7 @@
 #include <fs/vfs.h>
 #include <lib/fio.h>
 #include <tasks/scheduler.h>
+#include <console/interface.h>
 
 uint32_t cursorPosition;
 char currentLine[256] = "";
@@ -47,7 +48,7 @@ static void printPrompt()
 static void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
-	else if(strcmp(command, "clear") == 0) clear();
+	else if(strcmp(command, "clear") == 0) console_clear(NULL);
 	else if(strcmp(command, "ls") == 0)
 	{
 		// Check if root fs is initialised

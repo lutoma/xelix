@@ -41,6 +41,7 @@
 #include <lib/argparser.h>
 #include <tasks/scheduler.h>
 #include <init/debugconsole.h>
+#include <console/interface.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -78,8 +79,8 @@ void __attribute__((__cdecl__)) _start()
 	init(interrupts);
 
 	init(kmalloc);
-	init(display);
-	init(serial);
+	init(keyboard);
+	init(console);
 	init(log);
 	
 	compilerInfo();
@@ -102,7 +103,6 @@ void __attribute__((__cdecl__)) _start()
 	
 	init(vfs);
 
-	init(keyboard);
 	init(debugconsole);
 
 	init(scheduler); // Intentionally last

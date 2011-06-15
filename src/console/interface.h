@@ -33,7 +33,7 @@ typedef struct {
 	console_driver_t *output_driver;
 } console_t;
 
-console_t default_console;
+console_t *default_console;
 
 // Generate raw console, connected to the Display, Keyboard and the
 // ECMA-48-Filter

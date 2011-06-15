@@ -22,6 +22,7 @@
 
 #include "log.h"
 #include "string.h"
+#include <console/interface.h>
 #include <memory/kmalloc.h>
 #include <hw/serial.h>
 #include <hw/display.h>
@@ -147,19 +148,17 @@ void writeCMOS(uint16_t port,uint8_t value) {
 // Print function
 void print(char* s)
 {
-	serial_print(s);
-	display_print(s);
+	console_write(NULL, s, strlen(s));
 }
 
 // Print a single char
 static void printChar(char c)
 {
-	display_printChar(c);
-	
 	char s[2];
 	s[0] = c;
 	s[1] = 0;
-	serial_print(s);
+	
+	console_write(NULL, s, 1);
 }
 
 // Printing a string, formatted with the stuff in the arg array
@@ -183,9 +182,9 @@ void vprintf(const char *fmt, void **arg) {
 			{
 				if(!state)
 				{
-					display_setColor(*(unsigned *)arg);
+					//display_setColor(*(unsigned *)arg);
 				} else {
-					display_setColor(0x07);
+					//display_setColor(0x07);
 					--arg;
 				}
 				state = !state;

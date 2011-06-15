@@ -18,39 +18,43 @@
  */
 
 #include <console/interface.h>
-#define GET_CONSOLE(console) if (console == NULL)\
-	console = &default_console; \
+#define GET_CONSOLE(console, else) if (console == NULL)\
+	console = default_console; \
 	if (console == NULL) \
-		panic("Requested operation on undefined console");
+		else
 
-console_t default_console;
+console_t *default_console = NULL;
 
 #include <console/driver/display.h>
 #include <console/driver/keyboard.h>
+#include <console/driver/serial.h>
 #include <memory/kmalloc.h>
 
 void console_init()
 {
-	default_console.info.rows = 25;
-	default_console.info.columns = 80;
-	default_console.info.cursor_x = 0;
-	default_console.info.cursor_y = 0;
+	if (default_console == NULL)
+		default_console = (console_t *)kmalloc(sizeof(console_t));
 
-	default_console.input_filter = NULL;
-	default_console.output_filter = NULL;
+	default_console->info.rows = 25;
+	default_console->info.columns = 80;
+	default_console->info.cursor_x = 0;
+	default_console->info.cursor_y = 0;
 
-	default_console.input_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
-	console_driver_keyboard_init(default_console.input_driver);
+	default_console->input_filter = NULL;
+	default_console->output_filter = NULL;
 
-	default_console.output_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
-	console_driver_display_init(default_console.output_driver);
+	default_console->input_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
+	console_driver_keyboard_init(default_console->input_driver);
+
+	default_console->output_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
+	console_driver_display_init(default_console->output_driver);
 
 	console_clear(NULL);
 }
 
 void console_clear(console_t *console)
 {
-	GET_CONSOLE(console);
+	GET_CONSOLE(console, return);
 
 	if (console->output_driver->capabilities & CONSOLE_DRV_CAP_CLEAR)
 		console->output_driver->_clear(&console->info);
@@ -58,7 +62,7 @@ void console_clear(console_t *console)
 
 size_t console_write(console_t *console, const char *buffer, size_t length)
 {
-	GET_CONSOLE(console);
+	GET_CONSOLE(console, return 0);
 
 	console_filter_t *filter;
 	int i = 0;
@@ -87,7 +91,7 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 
 size_t console_read(console_t *console, char *buffer, size_t length)
 {
-	GET_CONSOLE(console);
+	GET_CONSOLE(console, return 0);
 
 	console_filter_t *filter;
 	int i = 0;

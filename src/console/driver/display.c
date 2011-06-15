@@ -31,17 +31,11 @@ static int console_driver_display_write(console_info_t *info, char c)
 		return 0;
 	}
 
-	if (c == '\t')
-	{
-		info->cursor_y += 4;
-		return 4;
-	}
-
 	while (info->cursor_x >= info->rows)
 	{
 		memcpy(display_memory, display_memory + 80, info->rows * info->columns * 2);
 		memset(display_memory + (info->rows * info->columns) - info->columns, 0, info->columns * 2);
-		info->cursor_y--;
+		info->cursor_x--;
 	}
 
 	uint16_t *pos = display_memory + info->cursor_x * info->columns + info->cursor_y;
