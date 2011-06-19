@@ -126,20 +126,20 @@ static void processControlSequence(console_info_t *info, strbuffer_t *buffer)
 	switch (strbuffer_chr(buffer, 2))
 	{
 		case 'A':
-			if (info->cursor_x)
-				info->cursor_x--;
-			break;
-		case 'B':
-			if (info->cursor_x < info->rows - 1)
-				info->cursor_x++;
-			break;
-		case 'C':
-			if (info->cursor_y < info->columns - 1)
-				info->cursor_y++;
-			break;
-		case 'D':
 			if (info->cursor_y)
 				info->cursor_y--;
+			break;
+		case 'B':
+			if (info->cursor_y < info->rows - 1)
+				info->cursor_y++;
+			break;
+		case 'C':
+			if (info->cursor_x < info->columns - 1)
+				info->cursor_x++;
+			break;
+		case 'D':
+			if (info->cursor_x)
+				info->cursor_x--;
 			break;
 		case 'm':
 			break;
