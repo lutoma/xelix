@@ -26,7 +26,99 @@ static dict_t *buffer_dictionary = NULL;
 
 static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
 {
+	int i = 2;
+	char c = 0;
+	char old_c = 0;
+	while (i < buffer->length)
+	{
+		old_c = c;
+		c = strbuffer_chr(buffer, i++);
+		if (c == 'm' || (c >= '0' && c <= '9' && old_c >= '0' && old_c <= '9'))
+			continue;
 
+		if (c == '0')
+		{
+			c = strbuffer_chr(buffer, i++);
+			if (c == 'm')
+				info->current_color = info->default_color;
+		}
+		else if (c == '1')
+		{
+			c = strbuffer_chr(buffer, i++);
+			if (c == 'm')
+				info->bold = 1;
+		}
+		else if (c == '2')
+		{
+			c = strbuffer_chr(buffer, i++);
+			if (c == '5')
+				info->blink = 0;
+			else if (c == '4')
+				info->underline = 0;
+			else if (c == '7')
+			{
+				uint32_t new_foreground = info->current_color.background;
+				uint32_t new_background = info->current_color.foreground;
+				info->current_color.background = new_background;
+				info->current_color.foreground = new_foreground;
+			}
+		}
+		else if (c == '3')
+		{
+			c = strbuffer_chr(buffer, i++);
+			if (c == '0')
+				info->current_color.foreground = CONSOLE_COLOR_BLACK;
+			else if (c == '1')
+				info->current_color.foreground = CONSOLE_COLOR_RED;
+			else if (c == '2')
+				info->current_color.foreground = CONSOLE_COLOR_GREEN;
+			else if (c == '3')
+				info->current_color.foreground = CONSOLE_COLOR_BROWN;
+			else if (c == '4')
+				info->current_color.foreground = CONSOLE_COLOR_BLUE;
+			else if (c == '5')
+				info->current_color.foreground = CONSOLE_COLOR_MAGENTA;
+			else if (c == '6')
+				info->current_color.foreground = CONSOLE_COLOR_CYAN;
+			else if (c == '7')
+				info->current_color.foreground = CONSOLE_COLOR_WHITE;
+			else if (c == '8' || c == '9')
+				info->current_color.foreground = info->default_color.foreground;
+		}
+		else if (c == '4')
+		{
+			c = strbuffer_chr(buffer, i++);
+			if (c == '0')
+				info->current_color.background = CONSOLE_COLOR_BLACK;
+			else if (c == '1')
+				info->current_color.background = CONSOLE_COLOR_RED;
+			else if (c == '2')
+				info->current_color.background = CONSOLE_COLOR_GREEN;
+			else if (c == '3')
+				info->current_color.background = CONSOLE_COLOR_BROWN;
+			else if (c == '4')
+				info->current_color.background = CONSOLE_COLOR_BLUE;
+			else if (c == '5')
+				info->current_color.background = CONSOLE_COLOR_MAGENTA;
+			else if (c == '6')
+				info->current_color.background = CONSOLE_COLOR_CYAN;
+			else if (c == '7')
+				info->current_color.background = CONSOLE_COLOR_WHITE;
+			else if (c == '9')
+				info->current_color.background = info->default_color.background;
+		}
+		else if (c == '7')
+		{
+			c = strbuffer_chr(buffer, i++);
+			if (c == 'm')
+			{
+				uint32_t new_foreground = info->current_color.background;
+				uint32_t new_background = info->current_color.foreground;
+				info->current_color.background = new_background;
+				info->current_color.foreground = new_foreground;
+			}
+		}
+	}
 }
 
 static void processControlSequence(console_info_t *info, strbuffer_t *buffer)

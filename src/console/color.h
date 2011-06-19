@@ -31,7 +31,7 @@ typedef struct {
 #define CONSOLE_COLOR_CYAN     0x3
 #define CONSOLE_COLOR_RED      0x4
 #define CONSOLE_COLOR_MAGENTA  0x5
-#define CONSOLE_COLOR_BROWM    0x6
+#define CONSOLE_COLOR_BROWN    0x6
 #define CONSOLE_COLOR_LGREY    0x7
 #define CONSOLE_COLOR_DGREY    0x8
 #define CONSOLE_COLOR_LBLUE    0x9
