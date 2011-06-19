@@ -170,21 +170,21 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, in
 		else if (c == 0x9b)
 		{
 			strbuffer_append(buffer, 27);
-			strbuffer_append(buffer, 91);
+			strbuffer_append(buffer, '[');
 		}
 		else
 			discard = 1;
 	}
 	else if (strbuffer_last(buffer) == 27)
 	{
-		if (c == 91)
+		if (c == '[')
 			strbuffer_append(buffer, c);
 		else
 			discard = 1;
 	}
 	else
 	{
-		if ((c >= 48 && c <= 57) || c == ';')
+		if ((c >= '0' && c <= '9') || c == ';')
 			strbuffer_append(buffer, c);
 		else if (c == 'm' || c == 'A' || c == 'B' || c == 'C' || c == 'D')
 		{
@@ -195,18 +195,17 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, in
 			discard = 1;
 	}
 
-	if (complete)
+	if (complete == 1)
 	{
 		processControlSequence(info, buffer);
-		discard = 1;
-	}
-
-	if (!discard)
-	{
+		strbuffer_clear(buffer);
 		return 0;
 	}
 
-	if (!complete)
+	if (discard == 0)
+		return 0;
+
+	if (complete == 0)
 	{
 		int i = 0;
 		while ( i < buffer->length )

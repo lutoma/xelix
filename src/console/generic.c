@@ -107,7 +107,6 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 
 		if (c == 0)
 		{
-			i++;
 			continue;
 		}
 
