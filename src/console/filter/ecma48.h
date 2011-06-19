@@ -19,18 +19,6 @@
  */
 
 #include <lib/generic.h>
-#include <console/info.h>
+#include <console/filter.h>
 
-struct console_filter {
-	// General callback for all actions etc.
-	char (*callback)(char, console_info_t *);
-
-	// Specific callbacks for read and write
-	char (*read_callback)(char, console_info_t *, char (*read)(console_info_t *));
-	char (*write_callback)(char, console_info_t *, int (*write)(console_info_t*, char));
-
-	struct console_filter *next;
-};
-
-typedef struct console_filter console_filter_t;
-
+console_filter_t *console_filter_ecma48_init(console_filter_t *filter);

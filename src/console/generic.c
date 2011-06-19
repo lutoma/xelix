@@ -30,6 +30,9 @@ console_t *default_console = NULL;
 #ifdef CONSOLE_USE_SERIAL
 # include <console/driver/serial.h>
 #endif
+#ifndef CONSOLE_NO_ECMA48
+#	include <console/filter/ecma48.h>
+#endif
 #include <memory/kmalloc.h>
 
 void console_init()
@@ -55,6 +58,10 @@ void console_init()
 	console_driver_display_init(default_console->output_driver);
 	console_driver_keyboard_init(default_console->input_driver);
 # endif
+
+#	ifndef CONSOLE_NO_ECMA48
+	default_console->output_filter = console_filter_ecma48_init(NULL);
+#	endif
 
 	default_console->info.default_color.background = CONSOLE_COLOR_BLACK;
 	default_console->info.default_color.foreground = CONSOLE_COLOR_LGREY;

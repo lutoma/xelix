@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2011 Fritz Grimpen
+/* ecma48.c: Filter for ECMA-48 Escape Sequences
+ * Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -18,19 +17,24 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <console/info.h>
+#include <console/filter/ecma48.h>
+#include <memory/kmalloc.h>
 
-struct console_filter {
-	// General callback for all actions etc.
-	char (*callback)(char, console_info_t *);
+static char console_filter_ecma48_writeCallback(char c, console_info_t *info, int (*_write)(console_info_t *, char))
+{
+	return c;
+}
 
-	// Specific callbacks for read and write
-	char (*read_callback)(char, console_info_t *, char (*read)(console_info_t *));
-	char (*write_callback)(char, console_info_t *, int (*write)(console_info_t*, char));
+console_filter_t *console_filter_ecma48_init(console_filter_t *filter)
+{
+	if (filter == NULL)
+		filter = (console_filter_t *)kmalloc(sizeof(console_filter_t));
 
-	struct console_filter *next;
-};
+	filter->callback = NULL;
+	filter->read_callback = NULL;
+	filter->write_callback = console_filter_ecma48_writeCallback;
 
-typedef struct console_filter console_filter_t;
+	filter->next = NULL;
 
+	return filter;
+}
