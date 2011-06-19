@@ -20,7 +20,13 @@
 #include <console/info.h>
 
 struct console_filter {
+	// General callback for all actions etc.
 	char (*callback)(char, console_info_t *);
+
+	// Specific callbacks for read and write
+	char (*read_callback)(char, console_info_t *, char (*read)(console_info_t *));
+	char (*write_callback)(char, console_info_t *, int (*write)(console_info_t*, char));
+
 	struct console_filter *next;
 };
 

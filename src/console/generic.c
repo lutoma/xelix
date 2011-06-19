@@ -89,7 +89,10 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 		filter = console->output_filter;
 		while (filter != NULL)
 		{
-			c = filter->callback(c, &(console->info));
+			if (filter->callback != NULL)
+				c = filter->callback(c, &(console->info));
+			if (filter->write_callback != NULL)
+				c = filter->write_callback(c, &(console->info), console->output_driver->write);
 			if (c == 0)
 				break;
 			filter = filter->next;
@@ -133,7 +136,10 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 		filter = console->input_filter;
 		while (filter != NULL)
 		{
-			buffer[i] = filter->callback(buffer[i], &console->info);
+			if (filter->callback != NULL)
+				buffer[i] = filter->callback(buffer[i], &console->info);
+			if (filter->read_callback != NULL)
+				buffer[i] = filter->read_callback(buffer[i], &console->info, console->input_driver->read);
 			filter = filter->next;
 		}
 
