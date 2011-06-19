@@ -24,9 +24,9 @@
 #define init(C, args...) \
 	do \
 	{ \
-		log("%%" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n%%", 0x03, __LINE__); \
+		log("\e[36m" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
 		C ## _init(args); \
-		log("%%" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n%%", 0x03, __LINE__); \
+		log("\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
 	} while(0);
 
 bool init_haveGrub;
