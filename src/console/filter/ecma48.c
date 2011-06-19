@@ -24,8 +24,36 @@
 
 static dict_t *buffer_dictionary = NULL;
 
+static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
+{
+
+}
+
 static void processControlSequence(console_info_t *info, strbuffer_t *buffer)
 {
+	switch (strbuffer_chr(buffer, 2))
+	{
+		case 'A':
+			if (info->cursor_y)
+				info->cursor_y--;
+			break;
+		case 'B':
+			if (info->cursor_y < info->rows - 1)
+				info->cursor_y++;
+			break;
+		case 'C':
+			if (info->cursor_x < info->columns - 1)
+				info->cursor_x++;
+			break;
+		case 'D':
+			if (info->cursor_x)
+				info->cursor_x--;
+			break;
+		case 'm':
+			break;
+		default:
+			processColorSequence(info, buffer);
+	}
 }
 
 static char console_filter_ecma48_writeCallback(char c, console_info_t *info, int (*_write)(console_info_t *, char))
