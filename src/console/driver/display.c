@@ -34,42 +34,42 @@ static int console_driver_display_write(console_info_t *info, char c)
 
 	if (c == '\n')
 	{
-		info->cursor_x++;
-		info->cursor_y = 0;
+		info->cursor_y++;
+		info->cursor_x = 0;
 		return 0;
 	}
 	
 	if (c == 0x8)
 	{
-		if (info->cursor_y == 0 && info->cursor_x != 0)
+		if (info->cursor_x == 0 && info->cursor_y != 0)
 		{
-			info->cursor_y = info->columns;
-			info->cursor_x -= 1;
+			info->cursor_x = info->columns;
+			info->cursor_y -= 1;
 		}
-		else if (info->cursor_x == 0)
+		else if (info->cursor_y == 0)
 			return 0;
 
-		info->cursor_y--;
-		uint16_t *pos = display_memory + info->cursor_x * info->columns + info->cursor_y;
+		info->cursor_x--;
+		uint16_t *pos = display_memory + info->cursor_y * info->columns + info->cursor_x;
 		*pos = (color << 8) | ' ';
 		return 0;
 	}
 
-	while (info->cursor_x >= info->rows)
+	while (info->cursor_y >= info->rows)
 	{
 		memcpy(display_memory, display_memory + 80, info->rows * info->columns * 2);
 		memset(display_memory + (info->rows * info->columns) - info->columns, 0, info->columns * 2);
-		info->cursor_x--;
+		info->cursor_y--;
 	}
 
-	uint16_t *pos = display_memory + info->cursor_x * info->columns + info->cursor_y;
+	uint16_t *pos = display_memory + info->cursor_y * info->columns + info->cursor_x;
 	*pos = (color << 8) | c;
 
-	info->cursor_y++;
-	if (info->cursor_y >= info->columns)
+	info->cursor_x++;
+	if (info->cursor_x >= info->columns)
 	{
-		info->cursor_y = info->cursor_y - info->columns;
-		info->cursor_x++;
+		info->cursor_x = info->cursor_x - info->columns;
+		info->cursor_y++;
 	}
 
 	return 1;
