@@ -47,12 +47,17 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, in
 	{
 		if (c == 27)
 			strbuffer_append(buffer, c);
+		else if (c == 0x9b)
+		{
+			strbuffer_append(buffer, 27);
+			strbuffer_append(buffer, 91);
+		}
 		else
 			discard = 1;
 	}
 	else if (strbuffer_last(buffer) == 27)
 	{
-		if (c == 92)
+		if (c == 91)
 			strbuffer_append(buffer, c);
 		else
 			discard = 1;
@@ -61,7 +66,7 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, in
 	{
 		if ((c >= 48 && c <= 57) || c == ';')
 			strbuffer_append(buffer, c);
-		else if (c == 'm')
+		else if (c == 'm' || c == 'A' || c == 'B' || c == 'C' || c == 'D')
 		{
 			strbuffer_append(buffer, c);
 			complete = 1;
