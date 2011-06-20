@@ -39,14 +39,12 @@ static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
 		if (c == '0')
 		{
 			c = strbuffer_chr(buffer, i++);
-			if (c == 'm')
-				info->current_color = info->default_color;
+			info->current_color = info->default_color;
 		}
 		else if (c == '1')
 		{
 			c = strbuffer_chr(buffer, i++);
-			if (c == 'm')
-				info->bold = 1;
+			info->bold = 1;
 		}
 		else if (c == '2')
 		{
@@ -110,42 +108,36 @@ static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
 		else if (c == '7')
 		{
 			c = strbuffer_chr(buffer, i++);
-			if (c == 'm')
-			{
-				uint32_t new_foreground = info->current_color.background;
-				uint32_t new_background = info->current_color.foreground;
-				info->current_color.background = new_background;
-				info->current_color.foreground = new_foreground;
-			}
+			uint32_t new_foreground = info->current_color.background;
+			uint32_t new_background = info->current_color.foreground;
+			info->current_color.background = new_background;
+			info->current_color.foreground = new_foreground;
 		}
 	}
 }
 
 static void processControlSequence(console_info_t *info, strbuffer_t *buffer)
 {
-	switch (strbuffer_chr(buffer, 2))
-	{
-		case 'A':
-			if (info->cursor_y)
-				info->cursor_y--;
-			break;
-		case 'B':
-			if (info->cursor_y < info->rows - 1)
+	if (strbuffer_last(buffer) == 'm')
+		processColorSequence(info, buffer);
+	else
+		switch (strbuffer_chr(buffer, 2))
+		{
+			case 'A':
+				if (info->cursor_y != 0)
+					info->cursor_y--;
+				break;
+			case 'B':
 				info->cursor_y++;
-			break;
-		case 'C':
-			if (info->cursor_x < info->columns - 1)
+				break;
+			case 'C':
 				info->cursor_x++;
-			break;
-		case 'D':
-			if (info->cursor_x)
-				info->cursor_x--;
-			break;
-		case 'm':
-			break;
-		default:
-			processColorSequence(info, buffer);
-	}
+				break;
+			case 'D':
+				if (info->cursor_x != 0)
+					info->cursor_x--;
+				break;
+		}
 }
 
 static char console_filter_ecma48_writeCallback(char c, console_info_t *info, int (*_write)(console_info_t *, char))
