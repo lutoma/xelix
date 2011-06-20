@@ -38,7 +38,7 @@ to try that anyway, remove this block in src/lib/generic.h.
 #define ARCH_amd64 1
 
 #define isCharDigit(C) ((C) >= '0' && (C) <= '9')
-#define DUMPVAR(C,D) printf("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
+#define DUMPVAR(C,D) printf("\e[32mdumpvar: %s="C" at %s:%d\e[0m\n", #D, D, __FILE__, __LINE__);
 
 typedef int64_t time_t;
 typedef int64_t size_t;
