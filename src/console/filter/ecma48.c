@@ -20,7 +20,7 @@
 #include <console/filter/ecma48.h>
 #include <memory/kmalloc.h>
 #include <lib/dict/dict.h>
-#include <lib/strbuffer.h>
+#include <lib/strbuffer/strbuffer.h>
 
 static dict_t *buffer_dictionary = NULL;
 
