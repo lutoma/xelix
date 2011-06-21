@@ -1,0 +1,3 @@
+[submodule "ext/strbuffer"]
+	path = ext/strbuffer
+	url = git://omnomnom.asia/strbuffer.git
