@@ -20,6 +20,10 @@
 
 #include "pci.h"
 
+// See src/drivers/bus/pci.c:[223:312] of
+// de2c63d437317cd9d042e1a6e6a93c0cc78859d7 of
+// git://git.etherboot.org/scm/gpxe.git
+
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8
 
