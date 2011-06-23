@@ -1,5 +1,6 @@
-/* pci.c: Description of what this file does
+/* pci.c: Simple PCI functions
  * Copyright © 2011 Barbers
+ * Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -19,11 +20,6 @@
 
 #include "pci.h"
 
-// Other header includes
-
-// Your code
-#define PCI_CONFIG_DATA    0x0CFC
-#define PCI_CONFIG_ADDRESS 0x0CF8
 /**
  * Liest ein Dword aus einem PCI-Konfigurations-Register
  *  @param bus Bus
@@ -32,27 +28,31 @@
  *  @param offset Registernummer
  *  @return Register content
  */
-int pci_config_read(int bus,int dev,int func,int offset) {
+int pci_config_read(int bus,int dev,int func,int offset)
+{
   int val;
   int address = 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
   outl(PCI_CONFIG_ADDRESS,address);
   val = inl(PCI_CONFIG_DATA);
   return val;
 }
-int pow (int basis, int potenz){
+
+int pow(int base, int exponent)
+{
 	int counter;
 	int ret;
-	ret = basis;
+	ret = base;
 	counter = 1;
-	while (counter <= potenz){
-		ret = ret * basis;
+	while (counter <= exponent){
+		ret = ret * base;
 		++counter;
 	}
-	printf("ergebnis von pow: %d\n",ret);
 	return ret;
 }
+
 //summiert die bits auf, nachdem sie nach  rechts vershcoben wurden
-int bitsum(int fullregister, int startbit, int stopbit){
+int bitsum(int fullregister, int startbit, int stopbit)
+{
 	int summe;
 	int stelle;
 	int zielstelle;
@@ -66,14 +66,14 @@ int bitsum(int fullregister, int startbit, int stopbit){
 		summe = summe + tmp;
 		stelle=stelle*2;
 	}
-	printf("ergebnis von bitsum: %d\n",summe);
 	return summe;
 }
-int get_vendor_id(int bus,int dev,int func) {
+
+int get_vendor_id(int bus,int dev,int func)
+{
 	int fullreg;
 	int vendor_id;
 	fullreg=pci_config_read(bus,dev,func,0x000);
-	printf("fullreg:%d\n",fullreg);
 	vendor_id=bitsum(fullreg,0,15);
 	return vendor_id;
 }

@@ -20,6 +20,9 @@
 
 #include <lib/generic.h>
 
+#define PCI_CONFIG_DATA    0x0CFC
+#define PCI_CONFIG_ADDRESS 0x0CF8
+
 int pci_config_read(int bus, int dev, int func, int offset);
 int pow(int base, int exponent);
 int bitsum(int fullregister, int startbit, int stopbit);
