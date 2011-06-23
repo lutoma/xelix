@@ -37,21 +37,8 @@ int pci_config_read(int bus,int dev,int func,int offset)
   return val;
 }
 
-int pow(int base, int exponent)
-{
-	int counter;
-	int ret;
-	ret = base;
-	counter = 1;
-	while (counter <= exponent){
-		ret = ret * base;
-		++counter;
-	}
-	return ret;
-}
-
 //summiert die bits auf, nachdem sie nach  rechts vershcoben wurden
-int bitsum(int fullregister, int startbit, int stopbit)
+static inline int bitsum(int fullregister, int startbit, int stopbit)
 {
 	int summe;
 	int stelle;
@@ -60,8 +47,9 @@ int bitsum(int fullregister, int startbit, int stopbit)
 	fullregister = fullregister >> startbit;
 	summe = 0;
 	stelle = 1;
-	zielstelle = pow(2,(stopbit-startbit))+1;
-	while ( stelle < zielstelle){
+	zielstelle = POW2(stopbit-startbit) + 1;
+	while ( stelle < zielstelle )
+	{
 		tmp = fullregister & stelle;
 		summe = summe + tmp;
 		stelle=stelle*2;
