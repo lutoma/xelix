@@ -20,8 +20,6 @@
 
 #include <lib/generic.h>
 
-#define PCI_CONFIG_DATA    0x0CFC
-#define PCI_CONFIG_ADDRESS 0x0CF8
-
 int pci_configRead(int bus, int dev, int func, int offset);
+void pci_configWrite(int bus, int dev, int func, int offset, int val);
 int pci_getVendorId(int bus, int dev, int func);

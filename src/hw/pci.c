@@ -20,24 +20,26 @@
 
 #include "pci.h"
 
-/**
- * Liest ein Dword aus einem PCI-Konfigurations-Register
- *  @param bus Bus
- *  @param dev GerĂ¤t
- *  @param func Funktion
- *  @param offset Registernummer
- *  @return Register content
- */
-int pci_config_read(int bus,int dev,int func,int offset)
+#define PCI_CONFIG_DATA    0x0CFC
+#define PCI_CONFIG_ADDRESS 0x0CF8
+
+static inline int pci_getAddress(int bus, int dev, int func, int offset)
 {
-  int val;
-  int address = 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
-  outl(PCI_CONFIG_ADDRESS,address);
-  val = inl(PCI_CONFIG_DATA);
-  return val;
+	return 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
 }
 
-//summiert die bits auf, nachdem sie nach  rechts vershcoben wurden
+int pci_configRead(int bus, int dev, int func, int offset)
+{
+  outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
+	return inl(PCI_CONFIG_DATA);
+}
+
+void pci_configWrite(int bus, int dev, int func, int offset, int val)
+{
+	outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
+	outl(PCI_CONFIG_DATA, val);
+}
+
 static inline int bitsum(int fullregister, int startbit, int stopbit)
 {
 	int summe;
@@ -48,20 +50,20 @@ static inline int bitsum(int fullregister, int startbit, int stopbit)
 	summe = 0;
 	stelle = 1;
 	zielstelle = POW2(stopbit-startbit) + 1;
-	while ( stelle < zielstelle )
+	while (stelle < zielstelle)
 	{
 		tmp = fullregister & stelle;
 		summe = summe + tmp;
-		stelle=stelle*2;
+		stelle = stelle*2;
 	}
 	return summe;
 }
 
-int get_vendor_id(int bus,int dev,int func)
+int pci_getVendorId(int bus,int dev,int func)
 {
 	int fullreg;
 	int vendor_id;
-	fullreg=pci_config_read(bus,dev,func,0x000);
-	vendor_id=bitsum(fullreg,0,15);
+	fullreg = pci_configRead(bus, dev, func, 0x000);
+	vendor_id = bitsum(fullreg, 0, 15);
 	return vendor_id;
 }
