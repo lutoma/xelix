@@ -40,6 +40,8 @@ to try that anyway, remove this block in src/lib/generic.h.
 #define isCharDigit(C) ((C) >= '0' && (C) <= '9')
 #define DUMPVAR(C,D) printf("\e[32mdumpvar: %s="C" at %s:%d\e[0m\n", #D, D, __FILE__, __LINE__);
 
+#define POW2(x) (2 << (x - 1))
+
 typedef int64_t time_t;
 typedef int64_t size_t;
 typedef uint8_t byte;
