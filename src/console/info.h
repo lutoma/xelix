@@ -32,6 +32,7 @@ typedef struct {
 	console_color_t current_color;
 
 	uint8_t nonblocking;
+	uint8_t reverse_video;
 	uint8_t bold;
 	uint8_t blink;
 	uint8_t underline;

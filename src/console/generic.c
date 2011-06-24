@@ -69,6 +69,10 @@ void console_init()
 	default_console->info.current_color = default_console->info.default_color;
 
 	default_console->info.nonblocking = 0;
+	default_console->info.reverse_video = 0;
+	default_console->info.bold = 0;
+	default_console->info.blink = 0;
+	default_console->info.underline = 0;
 
 	console_clear(NULL);
 }

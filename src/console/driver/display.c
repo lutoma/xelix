@@ -23,14 +23,17 @@
 
 static uint16_t* const display_memory = (uint16_t*) 0xB8000;
 
-static char console_driver_display_packColor(console_color_t *color)
+static char console_driver_display_packColor(console_info_t *info)
 {
-	return color->background << 4 | color->foreground;
+	if (info->reverse_video)
+		return info->current_color.foreground << 4 | info->current_color.background;
+
+	return info->current_color.background << 4 | info->current_color.foreground;
 }
 
 static int console_driver_display_write(console_info_t *info, char c)
 {
-	char color = console_driver_display_packColor(&info->current_color);
+	char color = console_driver_display_packColor(info);
 
 	if (c == '\n')
 	{

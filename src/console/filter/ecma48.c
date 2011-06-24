@@ -56,10 +56,7 @@ static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
 				info->underline = 0;
 			else if (c == '7')
 			{
-				uint32_t new_foreground = info->current_color.background;
-				uint32_t new_background = info->current_color.foreground;
-				info->current_color.background = new_background;
-				info->current_color.foreground = new_foreground;
+				info->reverse_video = 0;
 			}
 		}
 		else if (c == '3')
@@ -108,11 +105,7 @@ static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
 		}
 		else if (c == '7')
 		{
-			c = strbuffer_chr(buffer, i++);
-			uint32_t new_foreground = info->current_color.background;
-			uint32_t new_background = info->current_color.foreground;
-			info->current_color.background = new_background;
-			info->current_color.foreground = new_foreground;
+			info->reverse_video = 1;
 		}
 	}
 }
