@@ -22,7 +22,7 @@
 #include <console/info.h>
 
 #define CONSOLE_DRV_CAP_CLEAR 0x01
-#define CONSOLE_DRV_CAP_CALL  0x02
+#define CONSOLE_DRV_CAP_SCROLL  0x02
 
 typedef struct {
 	int (*write)(console_info_t*, char);
@@ -31,5 +31,5 @@ typedef struct {
 	int capabilities;
 
 	int (*_clear)(console_info_t *);
-	int (*call)(console_info_t *, int num, ...);
+	int (*scroll)(console_info_t *, int32_t);
 } console_driver_t;
