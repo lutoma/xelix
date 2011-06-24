@@ -29,6 +29,7 @@ console_t *default_console = NULL;
 #include <console/driver/keyboard.h>
 #ifdef CONSOLE_USE_SERIAL
 # include <console/driver/serial.h>
+#	define CONSOLE_NO_ECMA48
 #endif
 #ifndef CONSOLE_NO_ECMA48
 #	include <console/filter/ecma48.h>

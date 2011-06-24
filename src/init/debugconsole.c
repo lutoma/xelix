@@ -45,7 +45,7 @@ static void printPrompt()
 static void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
-	else if(strcmp(command, "clear") == 0) printf("\e[J");
+	else if(strcmp(command, "clear") == 0) printf("\e[H\e[2J");
 	else if(strcmp(command, "ls") == 0)
 	{
 		// Check if root fs is initialised

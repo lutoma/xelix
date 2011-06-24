@@ -23,6 +23,9 @@
 
 static int console_driver_serial_write(console_info_t *info, char c)
 {
+	if (c == 0x7f)
+		c = 0x8;
+
 	char cs[2];
 	cs[0] = c;
 	cs[1] = 0;
