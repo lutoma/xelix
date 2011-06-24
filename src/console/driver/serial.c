@@ -51,7 +51,7 @@ console_driver_t *console_driver_serial_init(console_driver_t *driver)
 	driver->read = console_driver_serial_read;
 	driver->write = console_driver_serial_write;
 	driver->_clear = console_driver_serial_clear;
-	driver->capabilities = 0;
+	driver->capabilities = CONSOLE_DRV_CAP_CLEAR;
 
 	return driver;
 }
