@@ -17,6 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <lib/generic.h>
 #include <console/filter/ecma48.h>
 #include <memory/kmalloc.h>
 #include <lib/dict/dict.h>
@@ -116,28 +117,66 @@ static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
 	}
 }
 
-static void processControlSequence(console_info_t *info, strbuffer_t *buffer)
+static void processControlSequence(console_info_t *info, strbuffer_t *buffer, console_driver_t *output)
 {
-	if (strbuffer_last(buffer) == 'm')
-		processColorSequence(info, buffer);
-	else
-		switch (strbuffer_chr(buffer, 2))
-		{
-			case 'A':
-				if (info->cursor_y != 0)
-					info->cursor_y--;
-				break;
-			case 'B':
+	int prefix = atoi(buffer->data + 2);
+	
+	switch (strbuffer_last(buffer))
+	{
+		case 'm':
+			processColorSequence(info, buffer);
+			break;
+		case 'A':
+			if (prefix == 0)
+				prefix = 1;
+			while (info->cursor_y != 0 && prefix != 0)
+			{
+				info->cursor_y--;
+				prefix--;
+			}
+			break;
+		case 'B':
+			if (prefix == 0)
+				prefix = 1;
+			while (prefix != 0)
+			{
 				info->cursor_y++;
-				break;
-			case 'C':
+				prefix--;
+			}
+			break;
+		case 'C':
+			if (prefix == 0)
+				prefix = 1;
+			while (prefix != 0)
+			{
 				info->cursor_x++;
-				break;
-			case 'D':
-				if (info->cursor_x != 0)
-					info->cursor_x--;
-				break;
-		}
+				prefix--;
+			}
+			break;
+		case 'D':
+			if (prefix == 0)
+				prefix = 1;
+			while (info->cursor_x != 0 && prefix != 0)
+			{
+				info->cursor_x--;
+				prefix--;
+			}
+			break;
+		case 'H':
+			info->cursor_x = 0;
+			info->cursor_y = 0;
+			break;
+		case 'J':
+			if (output->capabilities | CONSOLE_DRV_CAP_CLEAR)
+				output->_clear(info);
+			break;
+		default:
+			{
+				int i = 0;
+				while (i < buffer->length)
+					output->write(info, strbuffer_chr(buffer, i++));
+			}
+	}
 }
 
 static char console_filter_ecma48_writeCallback(char c, console_info_t *info, console_driver_t *output)
@@ -178,7 +217,7 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, co
 	{
 		if ((c >= '0' && c <= '9') || c == ';')
 			strbuffer_append(buffer, c);
-		else if (c == 'm' || c == 'A' || c == 'B' || c == 'C' || c == 'D')
+		else if (c == 'm' || c == 'A' || c == 'B' || c == 'C' || c == 'D' || c == 'H' || c == 'J')
 		{
 			strbuffer_append(buffer, c);
 			complete = 1;
@@ -189,7 +228,7 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, co
 
 	if (complete == 1)
 	{
-		processControlSequence(info, buffer);
+		processControlSequence(info, buffer, output);
 		strbuffer_clear(buffer);
 		return 0;
 	}

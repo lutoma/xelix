@@ -62,6 +62,7 @@ void writeCMOS (uint16_t port, uint8_t value);
 void memset(void* ptr, uint8_t fill, uint32_t size);
 void memcpy(void* dest, void* src, uint32_t size); 
 char* itoa (int num, int base);
+uint64_t atoi(const char *s);
 void print(char* s);
 void vprintf(const char* fmt, void** arg);
 void printf(const char* fmt, ...);
