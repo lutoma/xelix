@@ -102,7 +102,7 @@ static void loop()
 		printPrompt();
 
 		read_offset = 0;
-		while (read_offset < 256)
+		while (read_offset < 255)
 		{
 			// Write cursor
 			console_write2(NULL, "_");
