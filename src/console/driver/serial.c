@@ -37,6 +37,12 @@ static char console_driver_serial_read(console_info_t *info)
 	return serial_recv();
 }
 
+static int console_driver_serial_clear(console_info_t *info)
+{
+	serial_print("\e[H\e[2J");
+	return 0;
+}
+
 console_driver_t *console_driver_serial_init(console_driver_t *driver)
 {
 	if (driver == NULL)
@@ -44,6 +50,7 @@ console_driver_t *console_driver_serial_init(console_driver_t *driver)
 
 	driver->read = console_driver_serial_read;
 	driver->write = console_driver_serial_write;
+	driver->_clear = console_driver_serial_clear;
 	driver->capabilities = 0;
 
 	return driver;

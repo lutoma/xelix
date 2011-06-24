@@ -160,7 +160,7 @@ static void processControlSequence(console_info_t *info, strbuffer_t *buffer, co
 			info->cursor_y = 0;
 			break;
 		case 'J':
-			if (output->capabilities | CONSOLE_DRV_CAP_CLEAR)
+			if (output->capabilities & CONSOLE_DRV_CAP_CLEAR)
 				output->_clear(info);
 			break;
 		default:
