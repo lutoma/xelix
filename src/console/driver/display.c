@@ -42,7 +42,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 		return 0;
 	}
 	
-	if (c == 0x8)
+	if (c == 0x8 || c == 0x7f)
 	{
 		if (info->cursor_x == 0 && info->cursor_y != 0)
 		{

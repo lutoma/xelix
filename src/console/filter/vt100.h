@@ -19,24 +19,6 @@
  */
 
 #include <lib/generic.h>
-#include <console/color.h>
+#include <console/filter.h>
 
-typedef struct {
-	uint32_t cursor_x;
-	uint32_t cursor_y;
-
-	uint32_t rows;
-	uint32_t columns;
-
-	uint32_t tabstop;
-
-	console_color_t default_color;
-	console_color_t current_color;
-
-	uint8_t nonblocking;
-	uint8_t reverse_video;
-	uint8_t bold;
-	uint8_t blink;
-	uint8_t underline;
-	uint8_t newline_mode;
-} console_info_t;
+console_filter_t *console_filter_vt100_init(console_filter_t *filter);

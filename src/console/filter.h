@@ -37,6 +37,7 @@ struct console_filter {
 	// char <name>(char c, console_info_t *info, console_driver_t *output);
 	char (*write_callback)(char, console_info_t *, console_driver_t *);
 
+	// The next filter in the filter chain
 	struct console_filter *next;
 };
 

@@ -34,6 +34,7 @@ console_t *default_console = NULL;
 #ifndef CONSOLE_NO_ECMA48
 #	include <console/filter/ecma48.h>
 #endif
+#include <console/filter/vt100.h>
 #include <memory/kmalloc.h>
 
 void console_init()
@@ -43,8 +44,10 @@ void console_init()
 
 	default_console->info.rows = 25;
 	default_console->info.columns = 80;
+	default_console->info.tabstop = 8;
 	default_console->info.cursor_x = 0;
 	default_console->info.cursor_y = 0;
+	default_console->info.newline_mode = 1;
 
 	default_console->input_filter = NULL;
 	default_console->output_filter = NULL;
@@ -60,8 +63,10 @@ void console_init()
 	console_driver_keyboard_init(default_console->input_driver);
 # endif
 
+	default_console->output_filter = console_filter_vt100_init(NULL);
+
 #	ifndef CONSOLE_NO_ECMA48
-	default_console->output_filter = console_filter_ecma48_init(NULL);
+	default_console->output_filter->next = console_filter_ecma48_init(NULL);
 #	endif
 
 	default_console->info.default_color.background = CONSOLE_COLOR_BLACK;
