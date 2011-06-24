@@ -34,11 +34,6 @@ static char console_filter_vt100_writeCallback(char c, console_info_t *info, con
 #		endif
 		case 0x7f:
 			return 0x8;
-		case 0x9:
-			info->cursor_x = info->cursor_x + info->cursor_x % info->tabstop;
-			if (info->cursor_x >= info->columns)
-				info->cursor_x = info->columns - 1;
-			break;
 		default:
 			return c;
 	}
