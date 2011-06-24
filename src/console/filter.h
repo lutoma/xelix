@@ -20,14 +20,22 @@
 
 #include <lib/generic.h>
 #include <console/info.h>
+#include <console/driver.h>
 
 struct console_filter {
 	// General callback for all actions etc.
-	char (*callback)(char, console_info_t *);
+	// Preferred prototype:
+	// char <name>(char c, console_info_t *info, console_driver_t *input, console_driver_t *output);
+	char (*callback)(char, console_info_t *, console_driver_t *, console_driver_t *);
 
 	// Specific callbacks for read and write
-	char (*read_callback)(char, console_info_t *, char (*read)(console_info_t *));
-	char (*write_callback)(char, console_info_t *, int (*write)(console_info_t*, char));
+	// Preferred prototype:
+	// char <name>(char c, console_info_t *info, console_driver_t *input);
+	char (*read_callback)(char, console_info_t *, console_driver_t *);
+
+	// Preferred prototype:
+	// char <name>(char c, console_info_t *info, console_driver_t *output);
+	char (*write_callback)(char, console_info_t *, console_driver_t *);
 
 	struct console_filter *next;
 };

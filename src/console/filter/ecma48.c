@@ -140,7 +140,7 @@ static void processControlSequence(console_info_t *info, strbuffer_t *buffer)
 		}
 }
 
-static char console_filter_ecma48_writeCallback(char c, console_info_t *info, int (*_write)(console_info_t *, char))
+static char console_filter_ecma48_writeCallback(char c, console_info_t *info, console_driver_t *output)
 {
 	bool discard = 0;
 	bool complete = 0;
@@ -202,7 +202,7 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, in
 		int i = 0;
 		while ( i < buffer->length )
 		{
-			_write(info, strbuffer_chr(buffer, i++));
+			output->write(info, strbuffer_chr(buffer, i++));
 		}
 	}
 
