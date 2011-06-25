@@ -18,12 +18,13 @@ cfiles = [];
 hfiles = [];
 asmfiles = []
 
-for root, dirs, files in os.walk(SOURCE_DIR):
+for root, dirs, files in os.walk(SOURCE_DIR, True, None, True):
 	if ".git" in root or "tools" in root:
 		continue
-
+	
 	for f in files:
 		path = (root + "/" + f)
+		print path
 		if path.endswith(".c"):
 			cfiles.append(path)
 		elif path.endswith(".h"):

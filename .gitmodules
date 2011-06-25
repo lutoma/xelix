@@ -1,3 +1,6 @@
+[submodule "ext/strbuffer"]
+	path = ext/strbuffer
+	url = git://omnomnom.asia/strbuffer.git
 [submodule "ext/kdict"]
 	path = ext/kdict
 	url = git://git.ohai.su/libkdict.git

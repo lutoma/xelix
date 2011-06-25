@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -19,14 +19,17 @@
  */
 
 #include <lib/generic.h>
+#include <console/info.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log("\e[36m" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-		C ## _init(args); \
-		log("\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-	} while(0);
+#define CONSOLE_DRV_CAP_CLEAR 0x01
+#define CONSOLE_DRV_CAP_SCROLL  0x02
 
-bool init_haveGrub;
+typedef struct {
+	int (*write)(console_info_t*, char);
+	char (*read)(console_info_t*);
+
+	int capabilities;
+
+	int (*_clear)(console_info_t *);
+	int (*scroll)(console_info_t *, int32_t);
+} console_driver_t;

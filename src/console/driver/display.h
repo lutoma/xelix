@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -19,14 +19,7 @@
  */
 
 #include <lib/generic.h>
+#include <console/driver.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log("\e[36m" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-		C ## _init(args); \
-		log("\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-	} while(0);
+console_driver_t *console_driver_display_init(console_driver_t *mem);
 
-bool init_haveGrub;

@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -20,13 +20,25 @@
 
 #include <lib/generic.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log("\e[36m" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-		C ## _init(args); \
-		log("\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-	} while(0);
+typedef struct {
+	uint32_t background;
+	uint32_t foreground;
+} console_color_t;
 
-bool init_haveGrub;
+#define CONSOLE_COLOR_BLACK    0x0
+#define CONSOLE_COLOR_BLUE     0x1
+#define CONSOLE_COLOR_GREEN    0x2
+#define CONSOLE_COLOR_CYAN     0x3
+#define CONSOLE_COLOR_RED      0x4
+#define CONSOLE_COLOR_MAGENTA  0x5
+#define CONSOLE_COLOR_BROWN    0x6
+#define CONSOLE_COLOR_LGREY    0x7
+#define CONSOLE_COLOR_DGREY    0x8
+#define CONSOLE_COLOR_LBLUE    0x9
+#define CONSOLE_COLOR_LGREEN   0xa
+#define CONSOLE_COLOR_LCYAN    0xb
+#define CONSOLE_COLOR_LRED     0xc
+#define CONSOLE_COLOR_LMAGENTA 0xd
+#define CONSOLE_COLOR_YELLOW   0xe
+#define CONSOLE_COLOR_WHITE    0xf
+

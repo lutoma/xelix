@@ -28,6 +28,7 @@
 #include <fs/vfs.h>
 #include <lib/fio.h>
 #include <tasks/scheduler.h>
+#include <console/interface.h>
 
 uint32_t cursorPosition;
 char currentLine[256] = "";
@@ -36,10 +37,7 @@ char currentLine[256] = "";
 static void printPrompt()
 {
 	cursorPosition = 0;
-	int colorold = display_getColor();
-	display_setColor(0x07);
 	print("\n> ");
-	display_setColor(colorold);
 }
 
 // Execute a command
@@ -47,7 +45,7 @@ static void printPrompt()
 static void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
-	else if(strcmp(command, "clear") == 0) clear();
+	else if(strcmp(command, "clear") == 0) printf("\e[H\e[2J");
 	else if(strcmp(command, "ls") == 0)
 	{
 		// Check if root fs is initialised
@@ -94,36 +92,47 @@ static void executeCommand(char *command)
 	}
 }
 
-// Handle keyboard input.
-static void handler(uint8_t code)
+static void loop()
 {
-	char c = keyboard_codeToChar(code);
+	int read_offset = 0;
+	int read;
 
-	if(c == NULL)
-		return;
-	
-	if(c == 0x8) //0x8 is the backspace key.
+	while (1)
 	{
-		if(cursorPosition < 1) return; // We don't want the user to remove the prompt ;)
-		cursorPosition--;
-		currentLine[strlen(currentLine) -1] = 0;
-		char s[2] = { c, 0 };
-		print(s);
-		return;
-	} else if(c == 0xA)
-	{
-		print("\n");
-		executeCommand(currentLine);
-		currentLine[0] = '\0';
 		printPrompt();
-		return;
-	}	else cursorPosition++;
 
-	if (strlen(currentLine) < sizeof(currentLine)-2) {
-	    char s[2] = { c, 0 };
-	    strcat(currentLine, s);
-	    print(s);
-        }
+		read_offset = 0;
+		while (read_offset < 255)
+		{
+			// Write cursor
+			console_write2(NULL, "_");
+			read = console_read(NULL, currentLine + read_offset, 1);
+
+			// Remove cursor
+			console_write2(NULL, "\x08");
+			if (currentLine[read_offset] == 0x8 || currentLine[read_offset] == 0x7f)
+			{
+				if (read_offset == 0) continue;
+				currentLine[read_offset--] = 0;
+				currentLine[read_offset] = 0;
+				console_write2(NULL, "\x08");
+				continue;
+			}
+
+			if (read > 0)
+				console_write(NULL, currentLine + read_offset, 1);
+
+			if (currentLine[read_offset] == '\n' || currentLine[read_offset] == '\r')
+			{
+				currentLine[read_offset] = '\0';
+				break;
+			}
+
+			read_offset += read;
+		}
+
+		executeCommand(currentLine);
+	}
 }
 
 // Initialize the debug console.
@@ -131,6 +140,5 @@ void debugconsole_init()
 {
 	DUMPVAR("0x%x", currentLine);
 	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
-	keyboard_takeFocus(&handler);
-	printPrompt();
+	loop();
 }

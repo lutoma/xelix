@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -19,14 +19,24 @@
  */
 
 #include <lib/generic.h>
+#include <console/color.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log("\e[36m" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-		C ## _init(args); \
-		log("\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-	} while(0);
+typedef struct {
+	uint32_t cursor_x;
+	uint32_t cursor_y;
 
-bool init_haveGrub;
+	uint32_t rows;
+	uint32_t columns;
+
+	uint32_t tabstop;
+
+	console_color_t default_color;
+	console_color_t current_color;
+
+	uint8_t nonblocking;
+	uint8_t reverse_video;
+	uint8_t bold;
+	uint8_t blink;
+	uint8_t underline;
+	uint8_t newline_mode;
+} console_info_t;

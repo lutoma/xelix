@@ -38,7 +38,9 @@ to try that anyway, remove this block in src/lib/generic.h.
 #define ARCH_amd64 1
 
 #define isCharDigit(C) ((C) >= '0' && (C) <= '9')
-#define DUMPVAR(C,D) printf("%%dumpvar: %s="C" at %s:%d%%\n", 0x02, #D, D, __FILE__, __LINE__);
+#define DUMPVAR(C,D) printf("\e[32mdumpvar: %s="C" at %s:%d\e[0m\n", #D, D, __FILE__, __LINE__);
+
+#define POW2(x) (2 << (x - 1))
 
 #define POW2(x) (2 << (x - 1))
 
@@ -62,6 +64,7 @@ void writeCMOS (uint16_t port, uint8_t value);
 void memset(void* ptr, uint8_t fill, uint32_t size);
 void memcpy(void* dest, void* src, uint32_t size); 
 char* itoa (int num, int base);
+uint64_t atoi(const char *s);
 void print(char* s);
 void vprintf(const char* fmt, void** arg);
 void printf(const char* fmt, ...);
