@@ -1,0 +1,3 @@
+[submodule "ext/kdict"]
+	path = ext/kdict
+	url = git://git.ohai.su/libkdict.git
