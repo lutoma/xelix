@@ -33,16 +33,16 @@ floppy.img: xelix.bin mount
 .PHONY: runqemufloppy
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img || qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img -no-kvm
 
 .PHONY: debugqemufloppy
 debugqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+	qemu -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img || qemu -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img -no-kvm
 
 .PHONY: gdb
 gdb:
-	gdb xelix.bin -ex "target remote :1234"
+	gdb xelix.bin -ex "target remote :1234" || gdb xelix.bin -ex "target remote :1234" -no-kvm
 
 .PHONY: runbochsfloppy
 runbochsfloppy: floppy.img
@@ -50,12 +50,12 @@ runbochsfloppy: floppy.img
 
 .PHONY: runqemu
 runqemu: xelix.bin
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img
+	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img || qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img -no-kvm
 
 .PHONY: runqemunox
 runqemunox: xelix.bin
 	@echo "Exit with ^A-x"
-	qemu -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img
+	qemu -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img || qemu -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img -no-kvm
 
 xelix.iso: floppy.img
 	mkisofs -o xelix.iso -A Xelix -b floppy.img floppy.img
