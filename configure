@@ -8,6 +8,7 @@ TEMPLATE_DIR = 'templates/'
 
 import os
 import re
+import commands
 
 makefile = open("Makefile", "w");
 header = open(TEMPLATE_DIR + 'Makefile.header')
@@ -49,16 +50,12 @@ makefile.write("""
 """)
 
 for f in hfiles + cfiles:
-	makefile.write(f + ":")
-	fread = open(f, "r")
-	for line in fread:
-		m = re.search("#include <(.+)>", line)
-		if m != None:
-			if 'buildinfo.h' in m.group(1):
-				makefile.write(" {0}".format(m.group(1)))
-			else:
-				makefile.write(" {0}/{1}".format(SOURCE_DIR, m.group(1)))
-	makefile.write("\n");
+	deps = commands.getoutput("gcc -nostdinc -I src -MM {0} -MQ {0}".format(f))
+	deps = ''.join(deps.split('\\\n '))
+	deps = deps.split(' ')
+	deps = deps[0] + ' ' + ' '.join(deps[2:])
+
+	makefile.write('{0}\n'.format(deps))
 
 makefile.write("\n# clean\n");
 makefile.write(".PHONY: clean\n");
