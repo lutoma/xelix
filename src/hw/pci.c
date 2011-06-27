@@ -57,18 +57,16 @@ void pci_scan()
 	uint16_t vendor_id;
 	uint16_t device_id;
 
-	while (bus < 65535)
+	while (bus < 1)
 	{
 		device = 0;
 		while (device < 65535)
 		{
 			vendor_id = pci_getVendorId(bus, device, 0);
+			device_id = pci_getDeviceId(bus, device, 0);
 
-			if (vendor_id == 0x10ec)
-			{
-				device_id = pci_getDeviceId(bus, device, 0);
-				log("Realtek: 0x%x 0x%x Bus: %d Device: %d\n", vendor_id, device_id, bus, device);
-			}
+			if (vendor_id != 0xffff)
+				log("Detected PCI device %d [%x:%x] at bus %d\n", device, vendor_id, device_id, bus);
 
 			device++;
 		}
