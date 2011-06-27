@@ -1,3 +1,7 @@
+ifeq ($(shell which kvm | awk '{print substr($$0, 0, 2)}'),/)
+QEMU_FLAGS=-no-kvm
+endif
+
 %.o: %.c
 	gcc -frecord-gcc-switches -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "__BUILDDIST__=$(BUILDDIST)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" $(CFLAGS) -o $@ -c $<
 
@@ -33,16 +37,16 @@ floppy.img: xelix.bin mount
 .PHONY: runqemufloppy
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img || qemu -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img -no-kvm
+	qemu $(QEMU_FLAGS) -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
 .PHONY: debugqemufloppy
 debugqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img || qemu -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img -no-kvm
+	qemu $(QEMU_FLAGS) -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
 
 .PHONY: gdb
 gdb:
-	gdb xelix.bin -ex "target remote :1234" || gdb xelix.bin -ex "target remote :1234" -no-kvm
+	gdb xelix.bin -ex "target remote :1234"
 
 .PHONY: runbochsfloppy
 runbochsfloppy: floppy.img
@@ -50,12 +54,12 @@ runbochsfloppy: floppy.img
 
 .PHONY: runqemu
 runqemu: xelix.bin
-	qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img || qemu -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img -no-kvm
+	qemu $(QEMU_FLAGS) -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img
 
 .PHONY: runqemunox
 runqemunox: xelix.bin
 	@echo "Exit with ^A-x"
-	qemu -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img || qemu -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img -no-kvm
+	qemu $(QEMU_FLAGS) -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img
 
 xelix.iso: floppy.img
 	mkisofs -o xelix.iso -A Xelix -b floppy.img floppy.img
