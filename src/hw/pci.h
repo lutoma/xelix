@@ -20,6 +20,11 @@
 
 #include <lib/generic.h>
 
-int pci_configRead(int bus, int dev, int func, int offset);
-void pci_configWrite(int bus, int dev, int func, int offset, int val);
-int pci_getVendorId(int bus, int dev, int func);
+void pci_init();
+void pci_scan();
+
+uint32_t pci_configRead(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset);
+void pci_configWrite(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset, uint32_t val);
+uint16_t pci_getVendorId(uint16_t bus, uint16_t dev, uint16_t func);
+uint16_t pci_getDeviceId(uint16_t bus, uint16_t dev, uint16_t func);
+

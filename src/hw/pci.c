@@ -19,6 +19,7 @@
  */
 
 #include "pci.h"
+#include <lib/log.h>
 
 // See src/drivers/bus/pci.c:[223:312] of
 // de2c63d437317cd9d042e1a6e6a93c0cc78859d7 of
@@ -32,42 +33,55 @@ static inline int pci_getAddress(int bus, int dev, int func, int offset)
 	return 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
 }
 
-int pci_configRead(int bus, int dev, int func, int offset)
+uint32_t pci_configRead(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset)
 {
   outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
-	return inl(PCI_CONFIG_DATA);
+	return (inl(PCI_CONFIG_DATA) >> ((offset & 2) * 8)) & 0xffff;
 }
 
-void pci_configWrite(int bus, int dev, int func, int offset, int val)
+void pci_configWrite(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset, uint32_t val)
 {
 	outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
 	outl(PCI_CONFIG_DATA, val);
 }
 
-static inline int bitsum(int fullregister, int startbit, int stopbit)
+void pci_init()
 {
-	int summe;
-	int stelle;
-	int zielstelle;
-	int tmp;
-	fullregister = fullregister >> startbit;
-	summe = 0;
-	stelle = 1;
-	zielstelle = POW2(stopbit-startbit) + 1;
-	while (stelle < zielstelle)
-	{
-		tmp = fullregister & stelle;
-		summe = summe + tmp;
-		stelle = stelle*2;
-	}
-	return summe;
+	pci_scan();
 }
 
-int pci_getVendorId(int bus,int dev,int func)
+void pci_scan()
 {
-	int fullreg;
-	int vendor_id;
-	fullreg = pci_configRead(bus, dev, func, 0x000);
-	vendor_id = bitsum(fullreg, 0, 15);
-	return vendor_id;
+	uint16_t bus = 0;
+	uint16_t device = 0;
+	uint16_t vendor_id;
+	uint16_t device_id;
+
+	while (bus < 65535)
+	{
+		device = 0;
+		while (device < 65535)
+		{
+			vendor_id = pci_getVendorId(bus, device, 0);
+
+			if (vendor_id == 0x10ec)
+			{
+				device_id = pci_getDeviceId(bus, device, 0);
+				log("Realtek: 0x%x 0x%x Bus: %d Device: %d\n", vendor_id, device_id, bus, device);
+			}
+
+			device++;
+		}
+		bus++;
+	}
+}
+
+uint16_t pci_getDeviceId(uint16_t bus, uint16_t dev, uint16_t func)
+{
+	return (uint16_t)pci_configRead(bus, dev, func, 2);
+}
+
+uint16_t pci_getVendorId(uint16_t bus, uint16_t dev, uint16_t func)
+{
+	return (uint16_t)pci_configRead(bus, dev, func, 0x000);
 }
