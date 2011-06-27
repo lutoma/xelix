@@ -57,10 +57,10 @@ void pci_scan()
 	uint16_t vendor_id;
 	uint16_t device_id;
 
-	while (bus < 1)
+	while (bus < 256)
 	{
 		device = 0;
-		while (device < 65535)
+		while (device < 32)
 		{
 			vendor_id = pci_getVendorId(bus, device, 0);
 			device_id = pci_getDeviceId(bus, device, 0);

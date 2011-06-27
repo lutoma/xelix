@@ -42,6 +42,7 @@
 #include <tasks/scheduler.h>
 #include <init/debugconsole.h>
 #include <console/interface.h>
+#include <hw/pci.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -103,6 +104,7 @@ void __attribute__((__cdecl__)) _start()
 
 	
 	init(vfs);
+	init(pci);
 
 	init(debugconsole);
 
