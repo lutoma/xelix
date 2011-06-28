@@ -70,12 +70,79 @@ uint32_t pci_getClass(uint8_t bus, uint8_t dev, uint8_t func)
 	return pci_configRead(bus, dev, func, 0x8) >> 8;
 }
 
+uint8_t pci_getHeaderType(uint8_t bus, uint8_t dev, uint8_t func)
+{
+	return pci_configRead(bus, dev, func, 0xe) & 0x3;
+}
+
+// *trollface*
+// bar ∈ { x | x ∈ ℕ ∧ x ∈ [0, 5] }
+uint32_t pci_getBAR(uint8_t bus, uint8_t dev, uint8_t func, uint8_t bar)
+{
+	if (bar >= 6)
+		return 0;
+
+	uint8_t header_type = pci_getHeaderType(bus, dev, func);
+	if (header_type == 0x2 || (header_type == 0x1 && bar < 2))
+		return 0;
+
+	uint8_t _register = 0x10 + 0x4 * bar;
+	return pci_configRead(bus, dev, func, _register);
+}
+
+uint32_t pci_getIOBase(uint8_t bus, uint8_t dev, uint8_t func)
+{
+	uint8_t bars = 6 - pci_getHeaderType(bus, dev, func) * 4;
+	uint8_t i = 0;
+	uint32_t bar;
+
+	while (i < bars)
+	{
+		bar = pci_getBAR(bus, dev, func, i++);
+		if (bar & 0x1)
+			return bar & 0xfffffffc;
+	}
+
+	return 0;
+}
+
+// TODO Write correct code (This is not correct ;))
+uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func)
+{
+	uint8_t bars = 6 - pci_getHeaderType(bus, dev, func) * 4;
+	uint8_t i = 0;
+	uint32_t bar;
+
+	while ( bars < i)
+	{
+		bar = pci_getBAR(bus, dev, func, i++);
+		if ((bar & 0x1) == 0)
+			return bar & 0xfffffff0;
+	}
+
+	return 0;
+}
+
+void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func)
+{
+	device->vendor_id = pci_getVendorId(bus, dev, func);
+	device->device_id = pci_getDeviceId(bus, dev, func);
+	device->bus = bus;
+	device->dev = dev;
+	device->func = func;
+	device->revision = pci_getRevision(bus, dev, func);
+	device->class = pci_getClass(bus, dev, func);
+	device->iobase = pci_getIOBase(bus, dev, func);
+	device->membase = pci_getMemBase(bus, dev, func);
+	device->header_type = pci_getHeaderType(bus, dev, func);
+}
+
 void pci_init()
 {
 	memset(pci_devices, 0xff, 65536 * sizeof(pci_device_t));
 	int i = 0;
 	uint8_t bus, dev, func;
-	uint16_t vendor, device;
+	uint16_t vendor;
 
 	bus = 0;
 	while (bus < PCI_MAX_BUS)
@@ -89,17 +156,17 @@ void pci_init()
 				vendor = pci_getVendorId(bus, dev, func);
 				if (vendor != 0xffff)
 				{
-					device = pci_getDeviceId(bus, dev, func);
-
-					pci_devices[i].bus = bus;
-					pci_devices[i].dev = dev;
-					pci_devices[i].func = func;
-					pci_devices[i].vendor_id = vendor;
-					pci_devices[i].device_id = device;
-					pci_devices[i].revision = pci_getRevision(bus, dev, func);
-					pci_devices[i].class = pci_getClass(bus, dev, func);
-
-					log("pci: %d:%d.%d: Unknown Device [%x:%x] Revision %x Class %x\n", bus, dev, func, vendor, device, pci_devices[i].revision, pci_devices[i].class);
+					pci_loadDevice(pci_devices + i, bus, dev, func);
+					log("pci: %d:%d.%d: Unknown Device [%x:%x] Revision %x Class %x I/O-Base %x Type %x\n",
+							pci_devices[i].bus,
+							pci_devices[i].dev,
+							pci_devices[i].func,
+							pci_devices[i].vendor_id,
+							pci_devices[i].device_id,
+							pci_devices[i].revision,
+							pci_devices[i].class,
+							pci_devices[i].iobase,
+							pci_devices[i].header_type);
 					i++;
 				}
 

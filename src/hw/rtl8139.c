@@ -22,6 +22,10 @@
 
 static pci_device_t rtl8139_cards[1024];
 
+static void rtl8139_enableCard(pci_device_t *card)
+{
+}
+
 void rtl8139_init()
 {
 	memset(rtl8139_cards, 0, 1024 * sizeof(pci_device_t));
@@ -31,7 +35,10 @@ void rtl8139_init()
 	{
 		if (pci_devices[i].vendor_id == 0x10ec && pci_devices[i].device_id == 0x8139)
 		{
-			rtl8139_cards[j++] = pci_devices[i];
+			rtl8139_cards[j] = pci_devices[i];
+
+			rtl8139_enableCard(rtl8139_cards + j);
+			j++;
 			log("rtl8139: Detected RTL8139 at %d:%d.%d\n", pci_devices[i].bus, pci_devices[i].dev, pci_devices[i].func);
 		}
 		i++;

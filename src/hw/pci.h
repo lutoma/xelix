@@ -21,8 +21,8 @@
 #include <lib/generic.h>
 
 #define PCI_MAX_BUS  255
-#define PCI_MAX_DEV  31
-#define PCI_MAX_FUNC 7
+#define PCI_MAX_DEV  32
+#define PCI_MAX_FUNC 8
 
 typedef struct {
 	uint16_t vendor_id;
@@ -35,8 +35,9 @@ typedef struct {
 	uint8_t revision;
 
 	uint32_t class;
-	uint32_t ioaddr;
+	uint32_t iobase;
 	uint32_t membase;
+	uint8_t header_type;
 } pci_device_t;
 
 pci_device_t pci_devices[65536];
@@ -49,6 +50,12 @@ void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uin
 uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func);
 uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func);
 uint8_t pci_getRevision(uint8_t bus, uint8_t dev, uint8_t func);
+uint32_t pci_getClass(uint8_t bus, uint8_t dev, uint8_t func);
+uint8_t pci_getHeaderType(uint8_t bus, uint8_t dev, uint8_t func);
+uint32_t pci_getBAR(uint8_t bus, uint8_t dev, uint8_t func, uint8_t bar);
+uint32_t pci_getIOBase(uint8_t bus, uint8_t dev, uint8_t func);
+uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func);
+void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func);
 
 void pci_init();
 
