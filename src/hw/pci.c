@@ -72,7 +72,7 @@ uint32_t pci_getClass(uint8_t bus, uint8_t dev, uint8_t func)
 
 uint8_t pci_getHeaderType(uint8_t bus, uint8_t dev, uint8_t func)
 {
-	return pci_configRead(bus, dev, func, 0xe) & 0x3;
+	return pci_configRead(bus, dev, func, 0xe) & 127;	
 }
 
 // *trollface*
