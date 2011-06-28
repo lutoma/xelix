@@ -21,8 +21,8 @@
 #include <lib/generic.h>
 
 #define PCI_MAX_BUS  255
-#define PCI_MAX_DEV  32
-#define PCI_MAX_FUNC 8
+#define PCI_MAX_DEV  31
+#define PCI_MAX_FUNC 7
 
 uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
 void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
