@@ -123,6 +123,16 @@ uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func)
 	return 0;
 }
 
+uint8_t pci_getInterruptPin(uint8_t bus, uint8_t dev, uint8_t func)
+{
+	return pci_configRead(bus, dev, func, 0x3d);
+}
+
+uint8_t pci_getInterruptLine(uint8_t bus, uint8_t dev, uint8_t func)
+{
+	return pci_configRead(bus, dev, func, 0x3c);
+}
+
 void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func)
 {
 	device->vendor_id = pci_getVendorId(bus, dev, func);
@@ -135,6 +145,8 @@ void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func
 	device->iobase = pci_getIOBase(bus, dev, func);
 	device->membase = pci_getMemBase(bus, dev, func);
 	device->header_type = pci_getHeaderType(bus, dev, func);
+	device->interrupt_pin = pci_getInterruptPin(bus, dev, func);
+	device->interrupt_line = pci_getInterruptLine(bus, dev, func);
 }
 
 void pci_init()
@@ -157,7 +169,7 @@ void pci_init()
 				if (vendor != 0xffff)
 				{
 					pci_loadDevice(pci_devices + i, bus, dev, func);
-					log("pci: %d:%d.%d: Unknown Device [%x:%x] Revision %x Class %x I/O-Base %x Type %x\n",
+					log("pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d)\n",
 							pci_devices[i].bus,
 							pci_devices[i].dev,
 							pci_devices[i].func,
@@ -166,7 +178,8 @@ void pci_init()
 							pci_devices[i].revision,
 							pci_devices[i].class,
 							pci_devices[i].iobase,
-							pci_devices[i].header_type);
+							pci_devices[i].header_type,
+							pci_devices[i].interrupt_line);
 					i++;
 				}
 

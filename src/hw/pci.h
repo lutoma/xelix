@@ -38,6 +38,9 @@ typedef struct {
 	uint32_t iobase;
 	uint32_t membase;
 	uint8_t header_type;
+
+	uint8_t interrupt_pin;
+	uint8_t interrupt_line;
 } pci_device_t;
 
 pci_device_t pci_devices[65536];
@@ -55,6 +58,8 @@ uint8_t pci_getHeaderType(uint8_t bus, uint8_t dev, uint8_t func);
 uint32_t pci_getBAR(uint8_t bus, uint8_t dev, uint8_t func, uint8_t bar);
 uint32_t pci_getIOBase(uint8_t bus, uint8_t dev, uint8_t func);
 uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func);
+uint8_t pci_getInterruptPin(uint8_t bus, uint8_t dev, uint8_t func);
+uint8_t pci_getInterruptLine(uint8_t bus, uint8_t dev, uint8_t func);
 void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func);
 
 void pci_init();

@@ -19,14 +19,20 @@
 
 #include <hw/rtl8139.h>
 #include <lib/log.h>
-
+#include <interrupts/interface.h>
+#include <memory/kmalloc.h>
 
 struct rtl8139_card {
 	pci_device_t *device;
 	char mac_addr[6];
+	char *rx_buffer;
 };
 
 static struct rtl8139_card rtl8139_cards[1024];
+
+static void rtl8139_intHandler(cpu_state_t *state)
+{
+}
 
 static void rtl8139_enableCard(struct rtl8139_card *card)
 {
@@ -38,6 +44,22 @@ static void rtl8139_enableCard(struct rtl8139_card *card)
 	card->mac_addr[3] = inb(card->device->iobase + 3);
 	card->mac_addr[4] = inb(card->device->iobase + 4);
 	card->mac_addr[5] = inb(card->device->iobase + 5);
+
+	interrupts_registerHandler(card->device->interrupt_line, rtl8139_intHandler);
+
+	outb(card->device->iobase + 0x37, 2 << 3);
+	while ((inb(card->device->iobase + 0x37) & 16) != 0)
+		printf("V");
+	outb(card->device->iobase + 0x37, 2 << 2 | 2 << 1);
+
+	outl(card->device->iobase + 0x40, 0x03000700);
+	outl(card->device->iobase + 0x44, 0x0000070a);
+
+	card->rx_buffer = (char *)kmalloc(8192 + 16);
+	outl(card->device->iobase + 0x30, (uint32_t)card->rx_buffer);
+
+	outw(card->device->iobase + 0x3e, 0);
+	outw(card->device->iobase + 0x3c, 0xffff);
 }
 
 void rtl8139_init()
