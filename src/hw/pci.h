@@ -31,15 +31,24 @@ typedef struct {
 	uint8_t bus;
 	uint8_t dev;
 	uint8_t func;
+
+	uint8_t revision;
+
+	uint32_t class;
+	uint32_t ioaddr;
+	uint32_t membase;
 } pci_device_t;
 
 pci_device_t pci_devices[65536];
+
+#define PCI_EXPAND(device) device.bus, device.dev, device.func
 
 uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
 void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
 
 uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func);
 uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func);
+uint8_t pci_getRevision(uint8_t bus, uint8_t dev, uint8_t func);
 
 void pci_init();
 

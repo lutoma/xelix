@@ -20,13 +20,18 @@
 #include <hw/rtl8139.h>
 #include <lib/log.h>
 
+static pci_device_t rtl8139_cards[1024];
+
 void rtl8139_init()
 {
+	memset(rtl8139_cards, 0, 1024 * sizeof(pci_device_t));
 	int i = 0;
-	while (i < 65536)
+	int j = 0;
+	while (i < 65536 && j < 1024)
 	{
 		if (pci_devices[i].vendor_id == 0x10ec && pci_devices[i].device_id == 0x8139)
 		{
+			rtl8139_cards[j++] = pci_devices[i];
 			log("rtl8139: Detected RTL8139 at %d:%d.%d\n", pci_devices[i].bus, pci_devices[i].dev, pci_devices[i].func);
 		}
 		i++;

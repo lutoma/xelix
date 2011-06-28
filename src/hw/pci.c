@@ -38,6 +38,9 @@ static inline int pci_getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t
 uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
   outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
+	if ((offset & 2) == 0)
+		return inl(PCI_CONFIG_DATA);
+
 	return (inl(PCI_CONFIG_DATA) >> ((offset & 2) * 8)) & 0xffff;
 }
 
@@ -55,6 +58,16 @@ uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func)
 uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func)
 {
 	return (uint16_t)pci_configRead(bus, dev, func, 0);
+}
+
+uint8_t pci_getRevision(uint8_t bus, uint8_t dev, uint8_t func)
+{
+	return pci_configRead(bus, dev, func, 0x8);
+}
+
+uint32_t pci_getClass(uint8_t bus, uint8_t dev, uint8_t func)
+{
+	return pci_configRead(bus, dev, func, 0x8) >> 8;
 }
 
 void pci_init()
@@ -83,9 +96,11 @@ void pci_init()
 					pci_devices[i].func = func;
 					pci_devices[i].vendor_id = vendor;
 					pci_devices[i].device_id = device;
+					pci_devices[i].revision = pci_getRevision(bus, dev, func);
+					pci_devices[i].class = pci_getClass(bus, dev, func);
 
+					log("pci: %d:%d.%d: Unknown Device [%x:%x] Revision %x Class %x\n", bus, dev, func, vendor, device, pci_devices[i].revision, pci_devices[i].class);
 					i++;
-					log("pci: %d:%d.%d: Unknown Device [%x:%x]\n", bus, dev, func, vendor, device);
 				}
 
 				func++;
