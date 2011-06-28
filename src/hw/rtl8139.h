@@ -19,27 +19,6 @@
  */
 
 #include <lib/generic.h>
+#include <hw/pci.h>
 
-#define PCI_MAX_BUS  255
-#define PCI_MAX_DEV  31
-#define PCI_MAX_FUNC 7
-
-typedef struct {
-	uint16_t vendor_id;
-	uint16_t device_id;
-
-	uint8_t bus;
-	uint8_t dev;
-	uint8_t func;
-} pci_device_t;
-
-pci_device_t pci_devices[65536];
-
-uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
-void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
-
-uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func);
-uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func);
-
-void pci_init();
-
+void rtl8139_init();

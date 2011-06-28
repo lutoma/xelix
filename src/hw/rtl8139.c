@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2011 Fritz Grimpen
+/* rtl8139.c: Driver for the RTL8139 NIC
+ * Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -18,28 +17,18 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <hw/rtl8139.h>
+#include <lib/log.h>
 
-#define PCI_MAX_BUS  255
-#define PCI_MAX_DEV  31
-#define PCI_MAX_FUNC 7
-
-typedef struct {
-	uint16_t vendor_id;
-	uint16_t device_id;
-
-	uint8_t bus;
-	uint8_t dev;
-	uint8_t func;
-} pci_device_t;
-
-pci_device_t pci_devices[65536];
-
-uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
-void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
-
-uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func);
-uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func);
-
-void pci_init();
-
+void rtl8139_init()
+{
+	int i = 0;
+	while (i < 65536)
+	{
+		if (pci_devices[i].vendor_id == 0x10ec && pci_devices[i].device_id == 0x8139)
+		{
+			log("rtl8139: Detected RTL8139 at %d:%d.%d\n", pci_devices[i].bus, pci_devices[i].dev, pci_devices[i].func);
+		}
+		i++;
+	}
+}

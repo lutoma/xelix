@@ -28,6 +28,8 @@
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8
 
+pci_device_t pci_devices[65536];
+
 static inline int pci_getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
 	return 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
@@ -36,7 +38,7 @@ static inline int pci_getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t
 uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
   outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
-	return inl(PCI_CONFIG_DATA);
+	return (inl(PCI_CONFIG_DATA) >> ((offset & 2) * 8)) & 0xffff;
 }
 
 void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
@@ -57,6 +59,8 @@ uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func)
 
 void pci_init()
 {
+	memset(pci_devices, 0xff, 65536 * sizeof(pci_device_t));
+	int i = 0;
 	uint8_t bus, dev, func;
 	uint16_t vendor, device;
 
@@ -73,6 +77,14 @@ void pci_init()
 				if (vendor != 0xffff)
 				{
 					device = pci_getDeviceId(bus, dev, func);
+
+					pci_devices[i].bus = bus;
+					pci_devices[i].dev = dev;
+					pci_devices[i].func = func;
+					pci_devices[i].vendor_id = vendor;
+					pci_devices[i].device_id = device;
+
+					i++;
 					log("pci: %d:%d.%d: Unknown Device [%x:%x]\n", bus, dev, func, vendor, device);
 				}
 
