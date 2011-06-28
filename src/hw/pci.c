@@ -28,58 +28,58 @@
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8
 
-static inline int pci_getAddress(int bus, int dev, int func, int offset)
+static inline int pci_getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
 	return 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
 }
 
-uint32_t pci_configRead(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset)
+uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
   outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
-	return (inl(PCI_CONFIG_DATA) >> ((offset & 2) * 8)) & 0xffff;
+	return inl(PCI_CONFIG_DATA);
 }
 
-void pci_configWrite(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset, uint32_t val)
+void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
 {
 	outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
 	outl(PCI_CONFIG_DATA, val);
 }
 
-void pci_init()
-{
-	pci_scan();
-}
-
-void pci_scan()
-{
-	uint16_t bus = 0;
-	uint16_t device = 0;
-	uint16_t vendor_id;
-	uint16_t device_id;
-
-	while (bus < 256)
-	{
-		device = 0;
-		while (device < 32)
-		{
-			vendor_id = pci_getVendorId(bus, device, 0);
-			device_id = pci_getDeviceId(bus, device, 0);
-
-			if (vendor_id != 0xffff)
-				log("Detected PCI device %d [%x:%x] at bus %d\n", device, vendor_id, device_id, bus);
-
-			device++;
-		}
-		bus++;
-	}
-}
-
-uint16_t pci_getDeviceId(uint16_t bus, uint16_t dev, uint16_t func)
+uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func)
 {
 	return (uint16_t)pci_configRead(bus, dev, func, 2);
 }
 
-uint16_t pci_getVendorId(uint16_t bus, uint16_t dev, uint16_t func)
+uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func)
 {
-	return (uint16_t)pci_configRead(bus, dev, func, 0x000);
+	return (uint16_t)pci_configRead(bus, dev, func, 0);
+}
+
+void pci_init()
+{
+	uint8_t bus, dev, func;
+	uint16_t vendor, device;
+
+	bus = 0;
+	while (bus < PCI_MAX_BUS)
+	{
+		dev = 0;
+		while (dev < PCI_MAX_DEV)
+		{
+			func = 0;
+			while (func < PCI_MAX_FUNC)
+			{
+				vendor = pci_getVendorId(bus, dev, func);
+				if (vendor != 0xffff)
+				{
+					device = pci_getDeviceId(bus, dev, func);
+					log("pci: %d:%d.%d: Unknown Device [%x:%x]\n", bus, dev, func, vendor, device);
+				}
+
+				func++;
+			}
+			dev++;
+		}
+		bus++;
+	}
 }

@@ -20,11 +20,15 @@
 
 #include <lib/generic.h>
 
-void pci_init();
-void pci_scan();
+#define PCI_MAX_BUS  255
+#define PCI_MAX_DEV  32
+#define PCI_MAX_FUNC 8
 
-uint32_t pci_configRead(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset);
-void pci_configWrite(uint16_t bus, uint16_t dev, uint16_t func, uint16_t offset, uint32_t val);
-uint16_t pci_getVendorId(uint16_t bus, uint16_t dev, uint16_t func);
-uint16_t pci_getDeviceId(uint16_t bus, uint16_t dev, uint16_t func);
+uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
+void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
+
+uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func);
+uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func);
+
+void pci_init();
 
