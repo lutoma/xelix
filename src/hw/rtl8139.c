@@ -20,26 +20,50 @@
 #include <hw/rtl8139.h>
 #include <lib/log.h>
 
-static pci_device_t rtl8139_cards[1024];
 
-static void rtl8139_enableCard(pci_device_t *card)
+struct rtl8139_card {
+	pci_device_t *device;
+	char mac_addr[6];
+};
+
+static struct rtl8139_card rtl8139_cards[1024];
+
+static void rtl8139_enableCard(struct rtl8139_card *card)
 {
+	/* Load MAC address */
+	memset(&card->mac_addr, 0, 6);
+	card->mac_addr[0] = inb(card->device->iobase);
+	card->mac_addr[1] = inb(card->device->iobase + 1);
+	card->mac_addr[2] = inb(card->device->iobase + 2);
+	card->mac_addr[3] = inb(card->device->iobase + 3);
+	card->mac_addr[4] = inb(card->device->iobase + 4);
+	card->mac_addr[5] = inb(card->device->iobase + 5);
 }
 
 void rtl8139_init()
 {
-	memset(rtl8139_cards, 0, 1024 * sizeof(pci_device_t));
+	memset(rtl8139_cards, 0, 1024 * sizeof(struct rtl8139_card));
 	int i = 0;
 	int j = 0;
 	while (i < 65536 && j < 1024)
 	{
 		if (pci_devices[i].vendor_id == 0x10ec && pci_devices[i].device_id == 0x8139)
 		{
-			rtl8139_cards[j] = pci_devices[i];
-
+			rtl8139_cards[j].device = pci_devices + i;
 			rtl8139_enableCard(rtl8139_cards + j);
+
+			log("rtl8139: %d:%d.%d: MAC Address %x:%x:%x:%x:%x:%x\n",
+					pci_devices[i].bus,
+					pci_devices[i].dev,
+					pci_devices[i].func,
+					rtl8139_cards[j].mac_addr[0],
+					rtl8139_cards[j].mac_addr[1],
+					rtl8139_cards[j].mac_addr[2],
+					rtl8139_cards[j].mac_addr[3],
+					rtl8139_cards[j].mac_addr[4],
+					rtl8139_cards[j].mac_addr[5]
+				 );
 			j++;
-			log("rtl8139: Detected RTL8139 at %d:%d.%d\n", pci_devices[i].bus, pci_devices[i].dev, pci_devices[i].func);
 		}
 		i++;
 	}
