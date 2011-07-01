@@ -149,6 +149,23 @@ void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func
 	device->interrupt_line = pci_getInterruptLine(bus, dev, func);
 }
 
+uint32_t pci_searchDevice(pci_device_t** devices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum)
+{
+	int i = 0;
+	int j = 0;
+
+	for(; i < 65536 && j < maxNum; i++)
+	{
+		if (pci_devices[i].vendor_id != vendorId || pci_devices[i].device_id != deviceId)
+			continue;
+
+		devices[j] = &pci_devices[i];
+		j++;
+	}
+
+	return j;
+}
+
 void pci_init()
 {
 	memset(pci_devices, 0xff, 65536 * sizeof(pci_device_t));

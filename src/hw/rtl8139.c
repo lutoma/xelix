@@ -65,28 +65,28 @@ static void rtl8139_enableCard(struct rtl8139_card *card)
 void rtl8139_init()
 {
 	memset(rtl8139_cards, 0, 1024 * sizeof(struct rtl8139_card));
-	int i = 0;
-	int j = 0;
-	while (i < 65536 && j < 1024)
-	{
-		if (pci_devices[i].vendor_id == 0x10ec && pci_devices[i].device_id == 0x8139)
-		{
-			rtl8139_cards[j].device = pci_devices + i;
-			rtl8139_enableCard(rtl8139_cards + j);
 
-			log("rtl8139: %d:%d.%d: MAC Address %x:%x:%x:%x:%x:%x\n",
-					pci_devices[i].bus,
-					pci_devices[i].dev,
-					pci_devices[i].func,
-					rtl8139_cards[j].mac_addr[0],
-					rtl8139_cards[j].mac_addr[1],
-					rtl8139_cards[j].mac_addr[2],
-					rtl8139_cards[j].mac_addr[3],
-					rtl8139_cards[j].mac_addr[4],
-					rtl8139_cards[j].mac_addr[5]
-				 );
-			j++;
-		}
-		i++;
+	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * 1024);
+	uint32_t numDevices = pci_searchDevice(devices, 0x10ec, 0x8139, 1024);
+	
+	log("rtl8139: Discovered %d device(s).\n", numDevices);
+	
+	int i;
+	for(i = 0; i < numDevices; i++)
+	{
+		rtl8139_cards[i].device = devices[i];
+		rtl8139_enableCard(&rtl8139_cards[i]);
+
+		log("rtl8139: %d:%d.%d: MAC Address %x:%x:%x:%x:%x:%x\n",
+				devices[i]->bus,
+				devices[i]->dev,
+				devices[i]->func,
+				rtl8139_cards[i].mac_addr[0],
+				rtl8139_cards[i].mac_addr[1],
+				rtl8139_cards[i].mac_addr[2],
+				rtl8139_cards[i].mac_addr[3],
+				rtl8139_cards[i].mac_addr[4],
+				rtl8139_cards[i].mac_addr[5]
+			 );
 	}
 }
