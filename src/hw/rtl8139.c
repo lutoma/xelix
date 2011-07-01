@@ -1,5 +1,6 @@
 /* rtl8139.c: Driver for the RTL8139 NIC
  * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,13 +23,19 @@
 #include <interrupts/interface.h>
 #include <memory/kmalloc.h>
 
+#define VENDOR_ID 0x10ec
+#define DEVICE_ID 0x8139
+
+// This driver will only support that many cards
+#define MAX_CARDS 50 
+
 struct rtl8139_card {
 	pci_device_t *device;
 	char mac_addr[6];
 	char *rx_buffer;
 };
 
-static struct rtl8139_card rtl8139_cards[1024];
+static struct rtl8139_card rtl8139_cards[MAX_CARDS];
 
 static void rtl8139_intHandler(cpu_state_t *state)
 {
@@ -64,10 +71,10 @@ static void rtl8139_enableCard(struct rtl8139_card *card)
 
 void rtl8139_init()
 {
-	memset(rtl8139_cards, 0, 1024 * sizeof(struct rtl8139_card));
+	memset(rtl8139_cards, 0, MAX_CARDS * sizeof(struct rtl8139_card));
 
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * 1024);
-	uint32_t numDevices = pci_searchDevice(devices, 0x10ec, 0x8139, 1024);
+	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * MAX_CARDS);
+	uint32_t numDevices = pci_searchDevice(devices, VENDOR_ID, DEVICE_ID, MAX_CARDS);
 	
 	log("rtl8139: Discovered %d device(s).\n", numDevices);
 	
