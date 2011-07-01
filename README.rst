@@ -23,10 +23,9 @@ here):
 Compiling
 ---------
 
- * (git submodule init)
- * (git submodule update)
- * make clean
+ * (git submodule update --init)
  * (./configure)
+ * (make clean)
  * make
 
 Steps in braces don't neccessarily have to be executed every time you
