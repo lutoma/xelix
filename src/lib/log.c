@@ -21,18 +21,39 @@
 #include "string.h"
 #include <memory/kmalloc.h>
 
-int logsEnabled;
+#define DEFAULT_LEVEL LOG_INFO
+#define DEFAULT_PRINTLOG true
+
 char* kernelLog;
+
+bool printLog;
+uint32_t logLevel;
 
 // Logs something. Also prints it out.
 // FIXME: doesn't parse the saved stuff, needs improvement. Dirty hacks ftw.
-void log(const char *fmt, ...)
+void log(uint32_t level, const char *fmt, ...)
 {
+	if(level > logLevel)
+		return;
+	
 	if(strlen(kernelLog) + strlen(fmt) < LOG_MAXSIZE) // prevent an overflow that is likely to happen if the log gets long enough
 		kernelLog = strcat(kernelLog, fmt); // concatenate to kernellog
 	
-	if(logsEnabled)
+	if(printLog)
 		vprintf(fmt, (void **)(&fmt) + 1);
+}
+
+void log_setLogLevel(uint32_t level)
+{
+	logLevel = level;
+	log(LOG_INFO, "log: Set log level to %d.\n", level);
+}
+
+void log_setPrintLog(bool yesno)
+{
+	if(yesno) log(LOG_INFO, "Enabled printing of log messages.\n");
+	else log(LOG_WARN, "log: disabled printing of log messages.\n");
+	printLog = yesno;
 }
 
 // Initialize log
@@ -40,14 +61,6 @@ void log_init()
 {
 	kernelLog = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
 	kernelLog[0] = '\0'; // set kernel log to empty string
-	setLogLevel(1); //Enable logs
-}
-
-// Set log level
-// Currently only off (0) and on (1).
-void setLogLevel(int level)
-{
-	if(level) log("Enabled printing of log messages.\n");
-	else log("log: Warning: disabled printing of log messages.\n");
-	logsEnabled = level;
+	log_setLogLevel(DEFAULT_LEVEL);
+	log_setPrintLog(DEFAULT_PRINTLOG);
 }

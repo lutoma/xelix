@@ -31,7 +31,7 @@ void memory_init()
 	
 	bool a20 = a20_check();
 	if(a20)
-		log("memory: A20 line already enabled.\n");
+		log(LOG_INFO, "memory: A20 line already enabled.\n");
 	else // Todo: Enable it.
-		log("memory: warning: A20 line is not enabled.\n");
+		log(LOG_WARN, "memory: A20 line is not enabled.\n");
 }

@@ -55,7 +55,7 @@ void argparser_init(char* commandLine)
 	if((int)commandLine == NULL || strlen(commandLine) < 1)
 		return;
 
-	log("argparser: Starting to parse\n");
+	log(LOG_DEBUG, "argparser: Starting to parse\n");
 
 	/* Strtok_r destroys the source string. As we don't want that, copy
 	 * it twice (one for first run, two for second run).
@@ -81,7 +81,7 @@ void argparser_init(char* commandLine)
 
 	kfree(one);
 	
-	log("argparser: Counted %d parts\n", parts);
+	log(LOG_INFO, "argparser: Counted %d parts\n", parts);
 
 	// Allocate arrays
 	arguments = (char**)kmalloc(parts * sizeof(uint32_t));
@@ -89,7 +89,7 @@ void argparser_init(char* commandLine)
 	
 	if((int)arguments == NULL || (int)values == NULL)
 	{
-		log("argparser: Warning: Could not allocate array, leaving NULL.\n");
+		log(LOG_ERR, "argparser: Could not allocate array, leaving NULL.\n");
 		return;
 	}	
 	

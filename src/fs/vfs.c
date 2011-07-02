@@ -37,7 +37,7 @@ fsNode_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
 	if(parent == NULL)
 			parent = node; // This node is it's own parent
 
-	log("vfs: Creating new node %s (flags 0x%x, parent %s).\n", name, flags, parent->name);
+	log(LOG_INFO, "vfs: Creating new node %s (flags 0x%x, parent %s).\n", name, flags, parent->name);
 	
 	node->mask = mask;
 	node->uid = uid;

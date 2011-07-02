@@ -341,7 +341,7 @@ void idt_init()
 	outb(0xa0, 0x0);
 
 	
-	log("idt: Initialized PICs / IRQs.\n");
+	log(LOG_INFO, "idt: Initialized PICs / IRQs.\n");
 
 	// preprocessor for would be quite cool here ;)
 	setGate(0, (uint32_t)interrupts_handler0, 0x08, 0x8E);

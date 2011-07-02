@@ -52,16 +52,16 @@ void interrupts_registerHandler(uint8_t n, interruptHandler_t handler)
 	interruptHandlers[n] = handler;
 	
 	if(n > 31)
-		log("interrupts: Registered interrupt handler for IRQ %d.\n", n - 32);
+		log(LOG_INFO, "interrupts: Registered interrupt handler for IRQ %d.\n", n - 32);
 	else
-		log("interrupts: Registered interrupt handler for %d.\n", n);
+		log(LOG_INFO, "interrupts: Registered interrupt handler for %d.\n", n);
 }
 
 void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interruptHandler_t handler)
 {
 		if(start >= end)
 		{
-			log("interrupts: Warning: Attempt to bulk register interrupt handlers with start >= end.\n");
+			log(LOG_WARN, "interrupts: Warning: Attempt to bulk register interrupt handlers with start >= end.\n");
 			return;
 		}
 		
@@ -70,9 +70,9 @@ void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interruptHandler
 			interruptHandlers[i] = handler;
 
 		if(start > 31)
-			log("interrupts: Registered interrupt handler for IRQs %d -  %d.\n", start - 32, end - 32);
+			log(LOG_INFO, "interrupts: Registered interrupt handler for IRQs %d -  %d.\n", start - 32, end - 32);
 		else
-			log("interrupts: Registered interrupt handlers for %d - %d.\n", start, end);
+			log(LOG_INFO, "interrupts: Registered interrupt handlers for %d - %d.\n", start, end);
 }
 
 void interrupts_init()
@@ -83,5 +83,5 @@ void interrupts_init()
 	memset(interruptHandlers, NULL, 256 * sizeof(interruptHandler_t));
 	interrupts_enable();
 	
-	log("interrupts: Initialized\n");
+	log(LOG_INFO, "interrupts: Initialized\n");
 }

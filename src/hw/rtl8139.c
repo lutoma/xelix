@@ -82,7 +82,7 @@ static struct rtl8139_card rtl8139_cards[MAX_CARDS];
 
 static void rtl8139_intHandler(cpu_state_t *state)
 {
-	log("rtl8139: Got interrupt \\o/\n");
+	log(LOG_DEBUG, "rtl8139: Got interrupt \\o/\n");
 }
 
 static void rtl8139_enableCard(struct rtl8139_card *card)
@@ -123,7 +123,7 @@ void rtl8139_init()
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * MAX_CARDS);
 	uint32_t numDevices = pci_searchDevice(devices, VENDOR_ID, DEVICE_ID, MAX_CARDS);
 	
-	log("rtl8139: Discovered %d device(s).\n", numDevices);
+	log(LOG_INFO, "rtl8139: Discovered %d device(s).\n", numDevices);
 	
 	int i;
 	for(i = 0; i < numDevices; i++)
@@ -131,7 +131,7 @@ void rtl8139_init()
 		rtl8139_cards[i].device = devices[i];
 		rtl8139_enableCard(&rtl8139_cards[i]);
 
-		log("rtl8139: %d:%d.%d: MAC Address %x:%x:%x:%x:%x:%x\n",
+		log(LOG_INFO, "rtl8139: %d:%d.%d: MAC Address %x:%x:%x:%x:%x:%x\n",
 				devices[i]->bus,
 				devices[i]->dev,
 				devices[i]->func,

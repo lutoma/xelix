@@ -262,7 +262,7 @@ int32_t (memcmp)(const void *s1, const void *s2, size_t n)
 void reboot()
 {
 	interrupts_disable();
-	log("generic: Going to reboot NOW!");
+	log(LOG_WARN, "generic: Going to reboot NOW!");
 	keyboard_sendKBC(0xFE);
 	freeze();
 }
@@ -270,7 +270,7 @@ void reboot()
 
 void halt()
 {
-	log("generic: Going to halt NOW!");
+	log(LOG_WARN, "generic: Going to halt NOW!");
 	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 		acpi_powerOff();
 	#endif

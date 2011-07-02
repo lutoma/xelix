@@ -54,7 +54,7 @@ fsNode_t* fio_pathToNode(const char* origPath)
 
 FILE* fopen(const char* path, const char* modes)
 {
-	log("fio: Opening file %s, modes '%s'\n", path, modes);
+	log(LOG_DEBUG, "fio: Opening file %s, modes '%s'\n", path, modes);
 	
 	fsNode_t* node = fio_pathToNode(path);
 	if(node == NULL)
@@ -75,7 +75,7 @@ FILE* fopen(const char* path, const char* modes)
 
 int fclose(FILE* fp)
 {
-	log("fio: Closing file %s\n", fp->path);
+	log(LOG_DEBUG, "fio: Closing file %s\n", fp->path);
 	
 	// Tell the driver of the device this file is on we want to close it
 	if(fp->node->close != NULL)

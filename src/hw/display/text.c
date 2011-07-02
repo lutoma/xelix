@@ -86,7 +86,7 @@ void display_init()
 	bufferEnd = buffer + bufferSize;
 
 	display_clear();
-	log("display: Initialized\n");
+	log(LOG_INFO, "display: Initialized\n");
 }
 
 // The main print function which should always be used

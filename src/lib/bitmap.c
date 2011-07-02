@@ -35,7 +35,7 @@ uint8_t bitmap_get(bitmap_t bitmap, uint32_t bitnum)
 {
 	if( bitnum >= bitmap.numbits )
 	{
-		log("bitmap: Error: bitmap_get() called on a bit number which exceeds the size of the bitmap!");
+		log(LOG_ERR, "bitmap: bitmap_get() called on a bit number which exceeds the size of the bitmap!");
 		return 0;
 	}
 
@@ -50,7 +50,7 @@ void bitmap_set(bitmap_t bitmap, uint32_t bitnum)
 {
 	if( bitnum >= bitmap.numbits )
 	{
-		log("bitmap: Error: bitmap_set() called on a bit number which exceeds the size of the bitmap!");
+		log(LOG_ERR, "bitmap: bitmap_set() called on a bit number which exceeds the size of the bitmap!");
 		return;
 	}
 
@@ -63,7 +63,7 @@ void bitmap_clear(bitmap_t bitmap, uint32_t bitnum)
 {
 	if( bitnum >= bitmap.numbits )
 	{
-		log("bitmap: Error: bitmap_clear() called on a bit number which exceeds the size of the bitmap!");
+		log(LOG_ERR, "bitmap: bitmap_clear() called on a bit number which exceeds the size of the bitmap!");
 		return;
 	}
 
@@ -98,7 +98,7 @@ bitmap_t bitmap_init(uint32_t numbits)
 {
 	if(numbits == 0)
 	{
-		log("bitmap: Warning: Empty bitmap requested! Returning NULL.");
+		log(LOG_WARN, "bitmap: Empty bitmap requested! Returning NULL.");
 		return (bitmap_t){0, NULL};
 	}
 

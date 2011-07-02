@@ -34,7 +34,7 @@ static void timerCallback(cpu_state_t* regs)
 // Initialize the PIT
 void pit_init(uint16_t frequency)
 {
-	log("pit: Setting frequency to %d Hz.\n", frequency);
+	log(LOG_INFO, "pit: Setting frequency to %d Hz.\n", frequency);
 	// Firstly, register our timer callback.
 	interrupts_registerHandler(IRQ0, &timerCallback);
 

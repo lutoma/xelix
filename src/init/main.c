@@ -48,18 +48,18 @@
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
 {
-	log("Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
-	log("\tCompiled at: %s %s\n", __DATE__, __TIME__);
+	log(LOG_INFO, "Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
+	log(LOG_INFO, "\tCompiled at: %s %s\n", __DATE__, __TIME__);
 	// Test for GCC > 3.2.0
 	#if GCC_VERSION > 30200
-		log("\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+		log(LOG_INFO, "\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 	#else
-		log("\tCompiler: GCC (< 3.2.0)\n");
+		log(LOG_INFO, "\tCompiler: GCC (< 3.2.0)\n");
 	#endif
-	log("\tBy: %s\n", __BUILDCOMP__);
-	log("\tOS: %s\n", __BUILDSYS__);
-	log("\tDistribution: %s\n", __BUILDDIST__);
-	log("\tTarget Architecture: %s\n", ARCHNAME);
+	log(LOG_INFO, "\tBy: %s\n", __BUILDCOMP__);
+	log(LOG_INFO, "\tOS: %s\n", __BUILDSYS__);
+	log(LOG_INFO, "\tDistribution: %s\n", __BUILDDIST__);
+	log(LOG_INFO, "\tTarget Architecture: %s\n", ARCHNAME);
 }
 
 /* This is the very first function of our kernel and gets called
@@ -97,7 +97,7 @@ void __attribute__((__cdecl__)) _start()
 	if(multiboot_info->bootLoaderName != NULL && find_substr(multiboot_info->bootLoaderName, "GRUB") != -1)
 		init_haveGrub = true;
 	else
-		log("init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
+		log(LOG_WARN, "init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
 	
 	init(pit, PIT_RATE);
 	init(cpu);

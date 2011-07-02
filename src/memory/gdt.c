@@ -53,7 +53,7 @@ static void setGate(int32_t num, uint32_t base, uint32_t limit,
 {
 	if(num > 4)
 	{
-		log("gdt: Warning: Trying to set invalid gate %d.\n", num);
+		log(LOG_ERR, "gdt: Trying to set invalid gate %d.\n", num);
 		return;
 	}
 	

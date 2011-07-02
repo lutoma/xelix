@@ -139,6 +139,6 @@ static void loop()
 void debugconsole_init()
 {
 	DUMPVAR("0x%x", currentLine);
-	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
+	log_setPrintLog(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	loop();
 }

@@ -203,7 +203,7 @@ void pci_init()
 					continue;
 					
 				pci_loadDevice(devices + i, bus, dev, func);
-				log("pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d)\n",
+				log(LOG_INFO, "pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d)\n",
 						devices[i].bus,
 						devices[i].dev,
 						devices[i].func,
