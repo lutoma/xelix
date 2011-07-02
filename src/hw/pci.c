@@ -167,6 +167,24 @@ uint32_t pci_searchDevice(pci_device_t** returnDevices, uint16_t vendorId, uint1
 	return j;
 }
 
+uint32_t pci_searchByClass(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum)
+{
+	int i = 0;
+	int j = 0;
+
+	for(; i < 65536 && j < maxNum; i++)
+	{
+		if (devices[i].class != class)
+			continue;
+
+		returnDevices[j] = &devices[i];
+		j++;
+	}
+
+	return j;
+}
+
+
 void pci_init()
 {
 	memset(devices, 0xff, 65536 * sizeof(pci_device_t));

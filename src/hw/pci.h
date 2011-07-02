@@ -63,6 +63,7 @@ uint8_t pci_getInterruptPin(uint8_t bus, uint8_t dev, uint8_t func);
 uint8_t pci_getInterruptLine(uint8_t bus, uint8_t dev, uint8_t func);
 void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func);
 uint32_t pci_searchDevice(pci_device_t** devices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum);
+uint32_t pci_searchByClass(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum);
 
 void pci_init();
 
