@@ -25,6 +25,35 @@
 #define PCI_MAX_DEV  32
 #define PCI_MAX_FUNC 8
 
+// Devices built before class codes (i.e. pre PCI 2.0)
+#define PCI_CLASS_OLD			0x00
+// Mass storage controller
+#define PCI_CLASS_STORAGE		0x01
+// Network controller
+#define PCI_CLASS_NETWORK		0x02
+// Display controller
+#define PCI_CLASS_DISPLAY		0x03
+// Multimedia device
+#define PCI_CLASS_MULTIMEDIA	0x04
+// Memory Controller
+#define PCI_CLASS_MEMORY		0x05
+// Bridge device
+#define PCI_CLASS_BRIDGE		0x06
+// Simple communications controllers
+#define PCI_CLASS_SIMCOM		0x07
+// Base system peripherals
+#define PCI_CLASS_SYSPERIPHERAL	0x08
+// Input devices
+#define PCI_CLASS_INPUT			0x09
+// Docking Stations
+#define PCI_CLASS_DOCK			0x0A
+// Processors
+#define PCI_CLASS_PROCESSOR		0x0B
+// Serial bus controllers
+#define PCI_CLASS_SERIAL		0x0C
+// Misc
+#define PCI_CLASS_MISC			0xFF
+
 typedef struct {
 	uint16_t vendorID;
 	uint16_t deviceID;
