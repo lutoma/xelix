@@ -104,7 +104,7 @@ static void rtl8139_enableCard(struct rtl8139_card *card)
 	int_outl(card, REG_RECEIVE_CONFIGURATION, 0x0000070a);
 	int_outl(card, REG_TRANSMIT_CONFIGURATION, 0x03000700);
 
-	interrupts_registerHandler(card->device->interrupt_line, rtl8139_intHandler);
+	interrupts_registerHandler(card->device->interruptLine, rtl8139_intHandler);
 
 	// Set receive buffer
 	card->rx_buffer = (char *)kmalloc(8192 + 16);
