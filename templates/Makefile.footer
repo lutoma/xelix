@@ -1,5 +1,5 @@
 ifeq ($(shell which kvm | awk '{print substr($$0, 0, 2)}'),/)
-QEMU_FLAGS=-no-kvm
+QEMU_FLAGS += -no-kvm 
 endif
 
 %.o: %.c
