@@ -1,6 +1,7 @@
 /* pci.c: Simple PCI functions
  * Copyright © 2011 Barbers
  * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -28,7 +29,7 @@
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8
 
-pci_device_t pci_devices[65536];
+pci_device_t devices[65536];
 
 static inline int pci_getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
@@ -82,8 +83,8 @@ uint32_t pci_getBAR(uint8_t bus, uint8_t dev, uint8_t func, uint8_t bar)
 	if (bar >= 6)
 		return 0;
 
-	uint8_t header_type = pci_getHeaderType(bus, dev, func);
-	if (header_type == 0x2 || (header_type == 0x1 && bar < 2))
+	uint8_t headerType = pci_getHeaderType(bus, dev, func);
+	if (headerType == 0x2 || (headerType == 0x1 && bar < 2))
 		return 0;
 
 	uint8_t _register = 0x10 + 0x4 * bar;
@@ -135,8 +136,8 @@ uint8_t pci_getInterruptLine(uint8_t bus, uint8_t dev, uint8_t func)
 
 void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func)
 {
-	device->vendor_id = pci_getVendorId(bus, dev, func);
-	device->device_id = pci_getDeviceId(bus, dev, func);
+	device->vendorID = pci_getVendorId(bus, dev, func);
+	device->deviceID = pci_getDeviceId(bus, dev, func);
 	device->bus = bus;
 	device->dev = dev;
 	device->func = func;
@@ -144,22 +145,22 @@ void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func
 	device->class = pci_getClass(bus, dev, func);
 	device->iobase = pci_getIOBase(bus, dev, func);
 	device->membase = pci_getMemBase(bus, dev, func);
-	device->header_type = pci_getHeaderType(bus, dev, func);
-	device->interrupt_pin = pci_getInterruptPin(bus, dev, func);
-	device->interrupt_line = pci_getInterruptLine(bus, dev, func);
+	device->headerType = pci_getHeaderType(bus, dev, func);
+	device->interruptPin = pci_getInterruptPin(bus, dev, func);
+	device->interruptLine = pci_getInterruptLine(bus, dev, func);
 }
 
-uint32_t pci_searchDevice(pci_device_t** devices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum)
+uint32_t pci_searchDevice(pci_device_t** returnDevices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum)
 {
 	int i = 0;
 	int j = 0;
 
 	for(; i < 65536 && j < maxNum; i++)
 	{
-		if (pci_devices[i].vendor_id != vendorId || pci_devices[i].device_id != deviceId)
+		if (devices[i].vendorID != vendorId || devices[i].deviceID != deviceId)
 			continue;
 
-		devices[j] = &pci_devices[i];
+		returnDevices[j] = &devices[i];
 		j++;
 	}
 
@@ -168,42 +169,35 @@ uint32_t pci_searchDevice(pci_device_t** devices, uint16_t vendorId, uint16_t de
 
 void pci_init()
 {
-	memset(pci_devices, 0xff, 65536 * sizeof(pci_device_t));
+	memset(devices, 0xff, 65536 * sizeof(pci_device_t));
 	int i = 0;
 	uint8_t bus, dev, func;
 	uint16_t vendor;
 
-	bus = 0;
-	while (bus < PCI_MAX_BUS)
+	for(bus = 0; bus < PCI_MAX_BUS; bus++)
 	{
-		dev = 0;
-		while (dev < PCI_MAX_DEV)
+		for(dev = 0; dev < PCI_MAX_DEV; dev++)
 		{
-			func = 0;
-			while (func < PCI_MAX_FUNC)
+			for(func = 0; func < PCI_MAX_FUNC; func++)
 			{
 				vendor = pci_getVendorId(bus, dev, func);
-				if (vendor != 0xffff)
-				{
-					pci_loadDevice(pci_devices + i, bus, dev, func);
-					log("pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d)\n",
-							pci_devices[i].bus,
-							pci_devices[i].dev,
-							pci_devices[i].func,
-							pci_devices[i].vendor_id,
-							pci_devices[i].device_id,
-							pci_devices[i].revision,
-							pci_devices[i].class,
-							pci_devices[i].iobase,
-							pci_devices[i].header_type,
-							pci_devices[i].interrupt_line);
-					i++;
-				}
-
-				func++;
+				if (vendor == 0xffff)
+					continue;
+					
+				pci_loadDevice(devices + i, bus, dev, func);
+				log("pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d)\n",
+						devices[i].bus,
+						devices[i].dev,
+						devices[i].func,
+						devices[i].vendorID,
+						devices[i].deviceID,
+						devices[i].revision,
+						devices[i].class,
+						devices[i].iobase,
+						devices[i].headerType,
+						devices[i].interruptLine);
+				i++;
 			}
-			dev++;
 		}
-		bus++;
 	}
 }

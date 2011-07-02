@@ -1,6 +1,7 @@
 #pragma once
 
 /* Copyright © 2011 Fritz Grimpen
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -25,8 +26,8 @@
 #define PCI_MAX_FUNC 8
 
 typedef struct {
-	uint16_t vendor_id;
-	uint16_t device_id;
+	uint16_t vendorID;
+	uint16_t deviceID;
 
 	uint8_t bus;
 	uint8_t dev;
@@ -37,10 +38,10 @@ typedef struct {
 	uint32_t class;
 	uint32_t iobase;
 	uint32_t membase;
-	uint8_t header_type;
+	uint8_t headerType;
 
-	uint8_t interrupt_pin;
-	uint8_t interrupt_line;
+	uint8_t interruptPin;
+	uint8_t interruptLine;
 } pci_device_t;
 
 pci_device_t pci_devices[65536];
