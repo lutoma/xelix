@@ -23,6 +23,7 @@
 
 #define CONSOLE_DRV_CAP_CLEAR 0x01
 #define CONSOLE_DRV_CAP_SCROLL  0x02
+#define CONSOLE_DRV_CAP_SET_CURSOR 0x04
 
 typedef struct {
 	int (*write)(console_info_t*, char);
@@ -32,4 +33,5 @@ typedef struct {
 
 	int (*_clear)(console_info_t *);
 	int (*scroll)(console_info_t *, int32_t);
+	void (*setCursor)(console_info_t *, uint32_t, uint32_t);
 } console_driver_t;

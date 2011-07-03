@@ -23,6 +23,19 @@
 
 static uint16_t* const display_memory = (uint16_t*) 0xB8000;
 
+static void console_driver_display_setCursor(console_info_t *info, uint32_t x, uint32_t y)
+{
+	uint32_t columns = 80;
+	if (info != NULL)
+		columns = info->columns;
+
+	uint16_t tmp = y * columns + x;
+	outb(0x3d4, 14);
+	outb(0x3d5, tmp >> 8);
+	outb(0x3d4, 15);
+	outb(0x3d5, tmp);
+}
+
 static char console_driver_display_packColor(console_info_t *info)
 {
 	if (info->reverse_video)
@@ -39,6 +52,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 	{
 		info->cursor_y++;
 		info->cursor_x = 0;
+		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
 		return 0;
 	}
 	
@@ -55,6 +69,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 		info->cursor_x--;
 		uint16_t *pos = display_memory + info->cursor_y * info->columns + info->cursor_x;
 		*pos = (color << 8) | ' ';
+		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
 		return 0;
 	}
 
@@ -75,6 +90,8 @@ static int console_driver_display_write(console_info_t *info, char c)
 		info->cursor_y++;
 	}
 
+	console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
+
 	return 1;
 }
 
@@ -91,14 +108,14 @@ console_driver_t *console_driver_display_init(console_driver_t *mem)
 	if (mem == NULL)
 		mem = (console_driver_t *)kmalloc(sizeof(console_driver_t));
 
-  outb(0x3D4,14);
-  outb(0x3D5,0x07);
-  outb(0x3D4,15);
-  outb(0x3D5,0xD0);
+	console_driver_display_setCursor(NULL, 0, 0);
 
 	mem->write = console_driver_display_write;
 	mem->_clear = console_driver_display_clear;
-	mem->capabilities = CONSOLE_DRV_CAP_CLEAR;
+	mem->setCursor = console_driver_display_setCursor;
+
+	mem->capabilities = CONSOLE_DRV_CAP_CLEAR |
+		CONSOLE_DRV_CAP_SET_CURSOR;
 
 	return mem;
 }
