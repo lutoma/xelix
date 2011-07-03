@@ -39,10 +39,10 @@ static inline int pci_getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t
 uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
   outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
-	if ((offset & 2) == 0)
+	if (offset % 4 == 0)
 		return inl(PCI_CONFIG_DATA);
 
-	return (inl(PCI_CONFIG_DATA) >> ((offset & 2) * 8)) & 0xffff;
+	return (inl(PCI_CONFIG_DATA) >> ((offset % 4) * 8)) & 0xffff;
 }
 
 void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
@@ -203,7 +203,7 @@ void pci_init()
 					continue;
 					
 				pci_loadDevice(devices + i, bus, dev, func);
-				log(LOG_INFO, "pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d)\n",
+				log(LOG_INFO, "pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d pin %d)\n",
 						devices[i].bus,
 						devices[i].dev,
 						devices[i].func,
@@ -213,7 +213,8 @@ void pci_init()
 						devices[i].class,
 						devices[i].iobase,
 						devices[i].headerType,
-						devices[i].interruptLine);
+						devices[i].interruptLine,
+						devices[i].interruptPin);
 				i++;
 			}
 		}
