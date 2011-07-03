@@ -20,6 +20,7 @@
 
 #include <hw/rtl8139.h>
 #include <lib/log.h>
+#include <lib/portio.h>
 #include <interrupts/interface.h>
 #include <memory/kmalloc.h>
 
@@ -68,14 +69,17 @@
 #define ISR_TRANSMIT_OK				(1 << 2)
 #define ISR_RECEIVE_OK				(1 << 0)
 
-#define int_outb(card, port, value) outb(card ->device->iobase + port, value);
-#define int_outw(card, port, value) outw(card ->device->iobase + port, value);
-#define int_outl(card, port, value) outl(card ->device->iobase + port, value);
+#define int_out8(card, port, value) portio_out8(card ->device->iobase + port, value)
+#define int_out16(card, port, value) portio_out16(card ->device->iobase + port, value)
+#define int_out32(card, port, value) portio_out32(card ->device->iobase + port, value)
+
+#define int_in8(card, port) portio_in8(card ->device->iobase + port)
 
 struct rtl8139_card {
 	pci_device_t *device;
-	char mac_addr[6];
-	char *rx_buffer;
+	char macAddr[6];
+	char *rxBuffer;
+	uint8_t currentBuffer;
 };
 
 static struct rtl8139_card rtl8139_cards[MAX_CARDS];
@@ -88,36 +92,53 @@ static void rtl8139_intHandler(cpu_state_t *state)
 static void rtl8139_enableCard(struct rtl8139_card *card)
 {
 	// Reset card
-	int_outb(card, REG_COMMAND, CR_RESET);
+	int_out8(card, REG_COMMAND, CR_RESET);
+
+	// Wait until reset is finished
+	while((int_in8(card, REG_COMMAND) & REG_COMMAND) == CR_RESET);
+	log(LOG_DEBUG, "rtl8139: Reset finished.\n");
 
 	// Load MAC address
-	memset(&card->mac_addr, 0, 6);
-	card->mac_addr[0] = inb(card->device->iobase);
-	card->mac_addr[1] = inb(card->device->iobase + 1);
-	card->mac_addr[2] = inb(card->device->iobase + 2);
-	card->mac_addr[3] = inb(card->device->iobase + 3);
-	card->mac_addr[4] = inb(card->device->iobase + 4);
-	card->mac_addr[5] = inb(card->device->iobase + 5);
+	memset(&card->macAddr, 0, 6);
+	card->macAddr[0] = int_in8(card, 0);
+	card->macAddr[1] = int_in8(card, 1);
+	card->macAddr[2] = int_in8(card, 2);
+	card->macAddr[3] = int_in8(card, 3);
+	card->macAddr[4] = int_in8(card, 4);
+	card->macAddr[5] = int_in8(card, 5);
+	log(LOG_DEBUG, "rtl8139: Got MAC address.\n");
 
 	// Enable receiver and transmitter
-	int_outb(card, REG_COMMAND, CR_RECEIVER_ENABLE & CR_TRANSMITTER_ENABLE);
-	int_outl(card, REG_RECEIVE_CONFIGURATION, 0x0000070a);
-	int_outl(card, REG_TRANSMIT_CONFIGURATION, 0x03000700);
+	int_out8(card, REG_COMMAND, CR_RECEIVER_ENABLE | CR_TRANSMITTER_ENABLE);
+	log(LOG_DEBUG, "rtl8139: Enabled receiver / transmitter.\n");
+	
+	// Initialize RCR/TCR
+	// RBLEN = 00, 8K + 16 bytes rx ring buffer
+	int_out32(card, REG_RECEIVE_CONFIGURATION,
+			RCR_MXDMA_UNLIMITED |
+			RCR_ACCEPT_BROADCAST |
+			RCR_ACCEPT_PHYS_MATCH
+		);
+	
+	int_out32(card, REG_TRANSMIT_CONFIGURATION,
+			TCR_IFG_STANDARD |
+			TCR_MXDMA_2048
+		);
 
 	interrupts_registerHandler(card->device->interruptLine, rtl8139_intHandler);
 
-	// Set receive buffer
-	card->rx_buffer = (char *)kmalloc(8192 + 16);
-	int_outl(card, REG_RECEIVE_BUFFER, (uint32_t)card->rx_buffer);
-
-	int_outw(card, REG_INTERRUPT_STATUS, 0);
-	
 	// Enable all interrupt events
-	int_outw(card, REG_INTERRUPT_MASK, 0xffff);
+	int_out16(card, REG_INTERRUPT_STATUS, 0);
+	int_out16(card, REG_INTERRUPT_MASK, 0xffff);
+
+	// Set receive buffer
+	card->rxBuffer = (char *)kmalloc(8192 + 16);
+	int_out32(card, REG_RECEIVE_BUFFER, (uint32_t)card->rxBuffer);
 }
 
 void rtl8139_init()
 {
+	log_setLogLevel(LOG_DEBUG);
 	memset(rtl8139_cards, 0, MAX_CARDS * sizeof(struct rtl8139_card));
 
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * MAX_CARDS);
@@ -135,12 +156,12 @@ void rtl8139_init()
 				devices[i]->bus,
 				devices[i]->dev,
 				devices[i]->func,
-				rtl8139_cards[i].mac_addr[0],
-				rtl8139_cards[i].mac_addr[1],
-				rtl8139_cards[i].mac_addr[2],
-				rtl8139_cards[i].mac_addr[3],
-				rtl8139_cards[i].mac_addr[4],
-				rtl8139_cards[i].mac_addr[5]
+				rtl8139_cards[i].macAddr[0],
+				rtl8139_cards[i].macAddr[1],
+				rtl8139_cards[i].macAddr[2],
+				rtl8139_cards[i].macAddr[3],
+				rtl8139_cards[i].macAddr[4],
+				rtl8139_cards[i].macAddr[5]
 			 );
 	}
 }
