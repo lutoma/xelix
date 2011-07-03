@@ -91,46 +91,6 @@ uint64_t atoi(const char* s) {
   return n;
 }
 
-
-// Write a byte out to the specified port
-void outb(uint16_t port, uint8_t value)
-{
-	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
-}
-
-// Write out a word to the specified port
-void outw(uint16_t port, uint16_t value)
-{
-	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
-}
-// Read a byte from the specified port
-uint8_t inb(uint16_t port)
-{
-	uint8_t ret;
-	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
-	return ret;
-}
-
-// Read a word from the specified port
-uint16_t inw(uint16_t port)
-{
-	uint16_t ret;
-	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
-	return ret;
-}
-
-void outl(uint16_t port, uint32_t value)
-{
-	 asm ("out %0, %1" : : "Nd" (port), "a" (value));
-}
-
-uint32_t inl(uint16_t port)
-{
-	uint32_t ret;
-	asm ("in %0, %1" : "=a" (ret) : "Nd" (port));
-	return ret;
-}
-
 //Read a byte from the CMOS
 uint8_t readCMOS (uint16_t port)
 {

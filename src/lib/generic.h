@@ -20,6 +20,7 @@
  */
  
 #include "stdint.h"
+#include "portio.h"
 
 #ifndef __GNUC__
 	#error It looks like you're trying to compile with a compiler \
@@ -53,12 +54,6 @@ typedef enum { false = 0 , true = 1 } bool;
 #define NULL  0
 #define EOF  -1
 
-void outb(uint16_t port, uint8_t value);
-void outw(uint16_t port, uint16_t value);
-uint8_t inb(uint16_t port);
-uint16_t inw(uint16_t port);
-void outl(uint16_t port, uint32_t value);
-uint32_t inl(uint16_t port);
 uint8_t readCMOS (uint16_t port);
 void writeCMOS (uint16_t port, uint8_t value);
 void memset(void* ptr, uint8_t fill, uint32_t size);
