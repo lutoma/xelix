@@ -21,6 +21,10 @@
 #include <hw/serial.h>
 #include <memory/kmalloc.h>
 
+static void console_driver_serial_setCursor(console_info_t *info, uint32_t x, uint32_t y)
+{
+}
+
 static int console_driver_serial_write(console_info_t *info, char c)
 {
 	if (c == 0x7f)
@@ -54,7 +58,9 @@ console_driver_t *console_driver_serial_init(console_driver_t *driver)
 	driver->read = console_driver_serial_read;
 	driver->write = console_driver_serial_write;
 	driver->_clear = console_driver_serial_clear;
-	driver->capabilities = CONSOLE_DRV_CAP_CLEAR;
+	driver->setCursor = console_driver_serial_setCursor;
+	driver->capabilities = CONSOLE_DRV_CAP_CLEAR |
+		CONSOLE_DRV_CAP_SET_CURSOR;
 
 	return driver;
 }

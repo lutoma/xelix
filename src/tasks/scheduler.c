@@ -31,7 +31,7 @@
 #define STACKSIZE 4096
 
 #ifdef DEBUG
-	#define intDebug(args...) log(args);
+	#define intDebug(args...) log(LOG_DEBUG, args);
 #else /* DEBUG */
 	#define intDebug(args...)
 #endif /* DEBUG */
@@ -70,7 +70,7 @@ void scheduler_add(void* entry)
 	
 	lastTask = thisTask;
 		
-	log("scheduler: Registered new task with PID %d\n", thisTask->pid);
+	log(LOG_INFO, "scheduler: Registered new task with PID %d\n", thisTask->pid);
 }
 
 task_t* scheduler_getCurrentTask()

@@ -78,7 +78,7 @@ static fsNode_t *memfs_findDir(fsNode_t *node, char *name)
 fsNode_t *memfs_init(multiboot_module_t mod)
 {
 	
-	log("memfs: Initializing at 0x%x\n", mod.start);
+	log(LOG_INFO, "memfs: Initializing at 0x%x\n", mod.start);
 
 	// Initialise the main and file header pointers and populate the root directory.
 	memfsHeader = (memfsHeader_t *)mod.start;
@@ -94,7 +94,7 @@ fsNode_t *memfs_init(multiboot_module_t mod)
 	vfs_rootNodeCount = memfsHeader->fileCount;
 	
 	vfs_rootNodes = (fsNode_t**)kmalloc(sizeof(fsNode_t) * memfsHeader->fileCount);
-	log("memfs: Creating files.\n");
+	log(LOG_INFO, "memfs: Creating files.\n");
 	
 	int i;
 	for (i = 0; i < memfsHeader->fileCount; i++)

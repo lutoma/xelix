@@ -26,7 +26,7 @@
 #include <lib/datetime.h>
 
 // Just a small macro to make things shorter
-#define acpiError(args...) do { log("acpi:" args); return -1; } while(false); 
+#define acpiError(args...) do { log(LOG_ERR, "acpi:" args); return -1; } while(false); 
 
 uint32_t*	smiCmd;
 uint8_t		enableStr;
@@ -88,9 +88,9 @@ static uint32_t* checkRSDP(uint32_t* ptr)
 		// Found valid RSDP.
 		if (check == 0) {
 			 if (rsdp->revision == 0)
-				log("Found valid RSDP (ACPI 1).\n");
+				log(LOG_INFO, "Found valid RSDP (ACPI 1).\n");
 			else
-				log("Found valid RSDP (ACPI 2).\n");
+				log(LOG_INFO, "Found valid RSDP (ACPI 2).\n");
 
 			return (uint32_t*)rsdp->rsdtAddress;
 		}
@@ -292,5 +292,5 @@ void acpi_powerOff()
 	if(pm1bCnt != 0)
 		outw((unsigned int)pm1bCnt, slpTypeB | slpEn);
 
-	log("acpi: PowerOff failed.\n");
+	log(LOG_ERR, "acpi: PowerOff failed.\n");
 }

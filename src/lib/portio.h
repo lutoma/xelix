@@ -20,13 +20,23 @@
 
 #include <lib/generic.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log(LOG_INFO, "\e[36m" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-		C ## _init(args); \
-		log(LOG_INFO, "\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
-	} while(0);
+// Legacy
+#define outb(args...) portio_out8(args)
+#define outw(args...) portio_out16(args)
+#define outl(args...) portio_out32(args)
+#define outq(args...) portio_out64(args)
 
-bool init_haveGrub;
+#define inb(args...) portio_in8(args)
+#define inw(args...) portio_in16(args)
+#define inl(args...) portio_in32(args)
+#define inq(args...) portio_in64(args)
+
+void portio_out8(uint16_t port, uint8_t value);
+void portio_out16(uint16_t port, uint16_t value);
+void portio_out32(uint16_t port, uint32_t value);
+void portio_out64(uint16_t port, uint64_t value);
+
+uint8_t portio_in8(uint16_t port);
+uint16_t portio_in16(uint16_t port);
+uint32_t portio_in32(uint16_t port);
+uint64_t portio_in64(uint16_t port);

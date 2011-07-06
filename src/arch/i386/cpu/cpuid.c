@@ -87,7 +87,7 @@ void cpuid_init()
 	
 	if(!cpuid_check())
 	{
-		log("cpuid: No CPUID support, exiting.\n");
+		log(LOG_INFO, "cpuid: No CPUID support, exiting.\n");
 		return;
 	}
 
@@ -97,7 +97,7 @@ void cpuid_init()
 	 */
 	sendCommand(CMD_VENDOR);
 	asm("mov %0, eax" : "=m" (cpuid_data->lastFunction));
-	log("cpuid: Highest supported function number: 0x%x.\n", cpuid_data->lastFunction);
+	log(LOG_INFO, "cpuid: Highest supported function number: 0x%x.\n", cpuid_data->lastFunction);
 	
 	char tmp[5] = "    "; // sic.
 	
@@ -115,16 +115,16 @@ void cpuid_init()
 	
 	cpuid_data->vendorName[12] = 0;
 	
-	log("cpuid: vendorName: %s\n", cpuid_data->vendorName);
+	log(LOG_INFO, "cpuid: vendorName: %s\n", cpuid_data->vendorName);
 	
 	cpuid_data->vendor = vendorNameToVendor(cpuid_data->vendorName);
-	log("cpuid: vendor: %d.\n", cpuid_data->vendor);
+	log(LOG_INFO, "cpuid: vendor: %d.\n", cpuid_data->vendor);
 
 	if(cpuid_data->vendor == CPUID_VENDOR_INTEL || cpuid_data->vendor == CPUID_VENDOR_AMD)
 	{
 		sendCommand(CMD_GET_LAST_CMD);
 		asm("mov %0, eax" : "=m" (cpuid_data->lastFunction));
-		log("cpuid: Highest supported extended function number: 0x%x.\n", cpuid_data->lastFunction);
+		log(LOG_INFO, "cpuid: Highest supported extended function number: 0x%x.\n", cpuid_data->lastFunction);
 	}
 
 }

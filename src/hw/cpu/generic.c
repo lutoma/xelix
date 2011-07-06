@@ -54,7 +54,7 @@ void cpu_init()
 	if(!protected)
 		setProtected();
 	else
-		log("cpu: Already in protected mode.\n");
+		log(LOG_INFO, "cpu: Already in protected mode.\n");
 		
 	cpu_initFaultHandler();
 	arch_cpu_init();

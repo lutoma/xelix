@@ -31,7 +31,7 @@ static void printInfo(uint32_t var, char* varname, char type)
 	else
 		t = "multiboot: %s: %d\n";
 
-	log(t, varname, var);
+	log(LOG_INFO, t, varname, var);
 }
 
 #define printMbootStr(C) printInfo(C, #C, 's');

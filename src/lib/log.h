@@ -22,6 +22,14 @@
 
 #define LOG_MAXSIZE 10000
 
-void log(const char *fmt, ...);
-void setLogLevel(int level);
+// Logging levels
+// LOG_NONE is only supposed to be used in setLogLevel().
+#define LOG_ERR			1
+#define LOG_WARN		2
+#define LOG_INFO		3
+#define LOG_DEBUG		4
+
+void log(uint32_t level, const char *fmt, ...);
+void log_setLogLevel(uint32_t level);
+void log_setPrintLog(bool yesno);
 void log_init();

@@ -25,7 +25,6 @@ for root, dirs, files in os.walk(SOURCE_DIR, True, None, True):
 	
 	for f in files:
 		path = (root + "/" + f)
-		print path
 		if path.endswith(".c"):
 			cfiles.append(path)
 		elif path.endswith(".h"):

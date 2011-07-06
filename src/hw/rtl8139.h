@@ -1,5 +1,6 @@
-/* memory.c: Memory initialization
- * Copyright © 2011 Lukas Martini
+#pragma once
+
+/* Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -17,21 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "memory.h"
+#include <lib/generic.h>
+#include <hw/pci.h>
 
-#include <lib/log.h>
-#include <init/init.h>
-#include "kmalloc.h"
-
-extern bool __attribute__((__cdecl__)) a20_check(); // ASM.
-
-void memory_init()
-{
-	init(kmalloc);
-	
-	bool a20 = a20_check();
-	if(a20)
-		log(LOG_INFO, "memory: A20 line already enabled.\n");
-	else // Todo: Enable it.
-		log(LOG_WARN, "memory: A20 line is not enabled.\n");
-}
+void rtl8139_init();

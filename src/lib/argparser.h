@@ -20,4 +20,5 @@
 
 #include "generic.h"
 
+char* argparser_get(char* key);
 void argparser_init(char* commandLine);

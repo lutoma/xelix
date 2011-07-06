@@ -30,7 +30,7 @@
  */
 void process_create(char name[100], void function())
 {
-	log("process: Spawned new process with name %s\n", name);
+	log(LOG_INFO, "process: Spawned new process with name %s\n", name);
 	(*function) (); // Run process
 	return;
 }

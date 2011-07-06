@@ -115,7 +115,7 @@ static void handler(cpu_state_t* regs)
 void keyboard_takeFocus(void (*func)(uint8_t))
 {
 	focusedFunction = func;
-	log("keyboard: Application took focus.\n");
+	log(LOG_INFO, "keyboard: Application took focus.\n");
 }
 
 // To drop the keyboard focus.
@@ -132,10 +132,10 @@ void keyboard_setLED(int num, bool state)
 
 static void flush()
 {
-	log("keyboard: Flushing input buffer.\n");
+	log(LOG_INFO, "keyboard: Flushing input buffer.\n");
 	while(inb(0x64) & 1)
 		// read scancode
-		log("keyboard: flush: Dropping scancode 0x%x.\n", inb(0x60));
+		log(LOG_INFO, "keyboard: flush: Dropping scancode 0x%x.\n", inb(0x60));
 }
 
 // Identify keyboard. You should _not_ call this after initialization.
@@ -166,7 +166,7 @@ static char* identify()
 	uint8_t two = inb(0x60);
 	uint8_t three = inb(0x60);
 	
-	log("keyboard: identify: one = 0x%x, two = 0x%x, three = 0x%x.\n", one, two, three);
+	log(LOG_INFO, "keyboard: identify: one = 0x%x, two = 0x%x, three = 0x%x.\n", one, two, three);
 
 	switch(one)
 	{
@@ -195,7 +195,7 @@ void keyboard_init()
 	 */
 	flush();
 	char* ident = identify();
-	log("keyboard: Identified type: %s\n", ident);
+	log(LOG_INFO, "keyboard: Identified type: %s\n", ident);
 	
 	// Reset to default values
 	keyboard_sendKeyboard(0xF6);

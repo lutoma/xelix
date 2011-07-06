@@ -13,3 +13,5 @@ VERSION_MINOR := 1
 VERSION_PATCHLEVEL := 0
 VERSION_APPENDIX := \"a\"
 BUILD := 0
+
+QEMU_FLAGS += -net nic -net user

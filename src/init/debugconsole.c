@@ -104,12 +104,8 @@ static void loop()
 		read_offset = 0;
 		while (read_offset < 255)
 		{
-			// Write cursor
-			console_write2(NULL, "_");
 			read = console_read(NULL, currentLine + read_offset, 1);
 
-			// Remove cursor
-			console_write2(NULL, "\x08");
 			if (currentLine[read_offset] == 0x8 || currentLine[read_offset] == 0x7f)
 			{
 				if (read_offset == 0) continue;
@@ -139,6 +135,6 @@ static void loop()
 void debugconsole_init()
 {
 	DUMPVAR("0x%x", currentLine);
-	setLogLevel(0); // We don't want stuff to pop up in our console - use the kernellog command.
+	log_setPrintLog(0); // We don't want stuff to pop up in our console - use the kernellog command.
 	loop();
 }
