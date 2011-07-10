@@ -18,7 +18,7 @@ BUILD := 0
 
 QEMU_FLAGS += -d cpu_reset -monitor stdio -ctrl-grab -net nic -net user
 
-ifeq ($(shell which kvm | awk '{print  substr($$0, 0, 2)}'),/)
+ifeq ($(shell which kvm 2> /dev/null | awk '{print  substr($$0, 0, 2)}'),/)
 	QEMU_FLAGS += -no-kvm
 endif
 
