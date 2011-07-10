@@ -65,7 +65,7 @@ static void compilerInfo()
 /* This is the very first function of our kernel and gets called
  * directly from the bootloader (GRUB etc.).
  */
-void __attribute__((__cdecl__)) _start()
+void __attribute__((__cdecl__)) main()
 {
 	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 		/* Fetch the pointer to the multiboot_info struct which should be in
