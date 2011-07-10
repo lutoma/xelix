@@ -2,21 +2,16 @@
 # coding: utf8
 
 SOURCE_DIR = 'src'
-TEMPLATE_DIR = 'templates/'
-
-# Yes, this is indeed a dirty hackish crap-file
 
 import os
 import re
 import commands
 
 makefile = open("Makefile", "w");
-header = open(TEMPLATE_DIR + 'Makefile.header')
-makefile.write(header.read())
-header.close()
+makefile.write("include Makefile.header\n\n")
 
-cfiles = [];
-hfiles = [];
+cfiles = []
+hfiles = []
 asmfiles = []
 
 for root, dirs, files in os.walk(SOURCE_DIR, True, None, True):
@@ -25,16 +20,15 @@ for root, dirs, files in os.walk(SOURCE_DIR, True, None, True):
 	
 	for f in files:
 		path = (root + "/" + f)
+
 		if path.endswith(".c"):
 			cfiles.append(path)
+
 		elif path.endswith(".h"):
 			hfiles.append(path)
+
 		elif path.endswith(".asm"):
 			asmfiles.append(path)
-
-cfiles.sort()
-hfiles.sort()
-asmfiles.sort()
 
 makefile.write("xelix.bin:")
 for f in asmfiles:
@@ -64,8 +58,6 @@ for f in asmfiles:
 for f in cfiles:
 	makefile.write(" " + f[:-2] + ".o")
 
-makefile.write("\n\n\n")
-footer = open(TEMPLATE_DIR + 'Makefile.footer')
-makefile.write(footer.read())
-footer.close()
+makefile.write("\n\n")
+makefile.write("include Makefile.footer")
 makefile.close()
