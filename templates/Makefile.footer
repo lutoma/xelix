@@ -37,12 +37,12 @@ floppy.img: xelix.bin mount
 .PHONY: runqemufloppy
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu $(QEMU_FLAGS) -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+	qemu $(QEMU_FLAGS) -fda floppy.img
 
 .PHONY: debugqemufloppy
 debugqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu $(QEMU_FLAGS) -s -S -d cpu_reset -monitor stdio -ctrl-grab -fda floppy.img
+	qemu $(QEMU_FLAGS) -s -S -fda floppy.img
 
 .PHONY: gdb
 gdb:
@@ -54,12 +54,12 @@ runbochsfloppy: floppy.img
 
 .PHONY: runqemu
 runqemu: xelix.bin
-	qemu $(QEMU_FLAGS) -d cpu_reset -monitor stdio -ctrl-grab -kernel xelix.bin -initrd initrd.img
+	qemu $(QEMU_FLAGS) -kernel xelix.bin -initrd initrd.img
 
 .PHONY: runqemunox
 runqemunox: xelix.bin
 	@echo "Exit with ^A-x"
-	qemu $(QEMU_FLAGS) -d cpu_reset -kernel xelix.bin -nographic -initrd initrd.img
+	qemu $(QEMU_FLAGS) -kernel xelix.bin -nographic -initrd initrd.img
 
 xelix.iso: floppy.img
 	mkisofs -o xelix.iso -A Xelix -b floppy.img floppy.img
@@ -78,3 +78,4 @@ strip: xelix.bin
 .PHONY: count
 count:
 	find src -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 
+

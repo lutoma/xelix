@@ -14,4 +14,4 @@ VERSION_PATCHLEVEL := 0
 VERSION_APPENDIX := \"a\"
 BUILD := 0
 
-QEMU_FLAGS += -net nic -net user
+QEMU_FLAGS += -d cpu_reset -monitor stdio -ctrl-grab -net nic -net user
