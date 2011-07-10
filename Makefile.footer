@@ -73,5 +73,8 @@ strip: xelix.bin
 
 .PHONY: count
 count:
-	find src -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 
+	find -L src -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 
 
+.PHONY: clean
+clean:
+	find -L src -type f -iregex "^.*\.o" | xargs rm -f
