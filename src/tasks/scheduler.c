@@ -49,16 +49,20 @@ void scheduler_add(void* entry)
 	thisTask->pid = ++highestPid;
 	thisTask->parent = 0; // Implement me
 	thisTask->next = NULL;
+
+	void* stack = kmalloc(STACKSIZE);
+	memset(stack, 0, STACKSIZE);
 	
-	thisTask->state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));
-	memset(thisTask->state, 0, sizeof(cpu_state_t));
+	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t);
 	
 	// Stack
-	thisTask->state->esp = (uint32_t)kmalloc(STACKSIZE) + STACKSIZE;
+	thisTask->state->esp = stack + STACKSIZE;
 	// Instruction pointer (= start of the program)
-	thisTask->state->eip = (uint32_t)entry;
+	thisTask->state->eip = entry;
 	thisTask->state->eflags = 0x200;
 	thisTask->state->cs = 0x08;
+	thisTask->state->ds = 0x10;
+	thisTask->state->ss = 0x10;
 
 	// Now add this task to our task list. A lock would be nice here.
 	if(firstTask == NULL || lastTask == NULL)
