@@ -11,7 +11,6 @@ Dependencies
  * GNU GCC (>= 4.4.3)
  * NASM
  * GNU Binutils
- * Python 2 (>= 2.6)
  
 Also, the following libraries are being used (Git fetches them
 automatically, but for the sake of completeness, they're still listed
