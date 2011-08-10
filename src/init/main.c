@@ -108,8 +108,7 @@ void __attribute__((__cdecl__)) main()
 	init(pci);
 	init(rtl8139);
 
-	init(debugconsole);
-
+	scheduler_add(debugconsole_init);
 	init(scheduler); // Intentionally last
 
 	/* And now a comment from our old friend Captain Obvious:
