@@ -34,7 +34,7 @@ static struct keyboard_buffer keyboard_buffer = {
 	.offset = 0
 };
 
-static void console_driver_keyboard_focus(uint8_t code)
+static void console_driver_keyboard_focus(uint16_t code)
 {
 	char c = keyboard_codeToChar(code);
 

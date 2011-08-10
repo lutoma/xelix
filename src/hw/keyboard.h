@@ -25,6 +25,6 @@
 #define keyboard_sendKBC(C) while ((inb(0x64) & 0x2)) {}; outb(0x64, C);
 
 void keyboard_init(); // irqs have to be set up first!
-void keyboard_takeFocus(void (*func)(uint8_t));
+void keyboard_takeFocus(void (*func)(uint16_t));
 void keyboard_leaveFocus();
-char keyboard_codeToChar(uint8_t code);
+char keyboard_codeToChar(uint16_t code);
