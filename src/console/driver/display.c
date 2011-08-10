@@ -97,9 +97,15 @@ static int console_driver_display_write(console_info_t *info, char c)
 
 static int console_driver_display_clear(console_info_t *info)
 {
-	memset(display_memory, 0, info->rows * info->columns * 2);
 	info->cursor_x = 0;
 	info->cursor_y = 0;
+
+  int i = 0;
+	char color = console_driver_display_packColor(info);
+	while (i < info->columns * info->rows)
+		display_memory[i++] = (color << 8) | ' ';
+
+	console_driver_display_setCursor(NULL, 0, 0);
 	return 0;
 }
 
