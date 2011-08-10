@@ -76,10 +76,10 @@ void gdt_init()
 	pointer.base  = (uint32_t)&entries;
 
 	setGate(0, 0, 0, 0, 0); // Null segment
-	setGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
-	setGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data segment
-	setGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
-	setGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
+	setGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // 0x04: User mode Code segment
+	setGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // 0x08: Kernel Code segment
+	setGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // 0x0C: User mode Data segment
+	setGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // 0x10: Kernel Data segment
 
 	gdt_flush((uint32_t)&pointer);
 }

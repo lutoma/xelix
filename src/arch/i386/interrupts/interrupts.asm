@@ -322,7 +322,7 @@ commonStub:
 	push eax
 
 	; load the kernel data segment descriptor
-	mov ax, 0x10
+	mov ax, 0x08
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
