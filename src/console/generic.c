@@ -36,6 +36,12 @@ console_t *default_console = NULL;
 #endif
 #include <console/filter/vt100.h>
 #include <memory/kmalloc.h>
+#ifndef CONSOLE_DEFAULT_FG
+#	define CONSOLE_DEFAULT_FG CONSOLE_COLOR_LGREY
+#endif
+#ifndef CONSOLE_DEFAULT_BG
+#	define CONSOLE_DEFAULT_BG CONSOLE_COLOR_BLACK
+#endif
 
 void console_init()
 {
@@ -69,8 +75,8 @@ void console_init()
 	default_console->output_filter->next = console_filter_ecma48_init(NULL);
 #	endif
 
-	default_console->info.default_color.background = CONSOLE_COLOR_BLACK;
-	default_console->info.default_color.foreground = CONSOLE_COLOR_LGREY;
+	default_console->info.default_color.background = CONSOLE_DEFAULT_BG;
+	default_console->info.default_color.foreground = CONSOLE_DEFAULT_FG;
 
 	default_console->info.current_color = default_console->info.default_color;
 
