@@ -41,10 +41,10 @@ typedef struct {
 	 * expects to be in the stack when doing an iret. useresp and ss are
 	 * only used when returning to another privilege level
 	 */
-	uint32_t eip;
+	void* eip;
 	uint32_t cs;
 	uint32_t eflags;
-	uint32_t esp;
+	void* esp;
 	uint32_t ss;
 } __attribute__((__packed__)) cpu_state_t;
 
