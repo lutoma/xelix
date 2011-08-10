@@ -1,5 +1,5 @@
 %.o: %.c
-	gcc -frecord-gcc-switches -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "__BUILDDIST__=$(BUILDDIST)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" $(CFLAGS) -o $@ -c $<
+	gcc $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
 	nasm -f elf -o $@ $<
