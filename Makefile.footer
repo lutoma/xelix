@@ -2,7 +2,7 @@
 	gcc $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
-	nasm -f elf -o $@ $<
+	nasm -f elf -g -o $@ $<
 
 .PHONY: INSTALL
 install: xelix.bin
