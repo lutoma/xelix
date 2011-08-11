@@ -56,7 +56,6 @@ static void faultHandler(cpu_state_t* regs)
 
 void cpu_initFaultHandler()
 {
-	interrupts_bulkRegisterHandler(1, 2, &faultHandler);
-	interrupts_bulkRegisterHandler(4, 31, &faultHandler);
+	interrupts_bulkRegisterHandler(1, 0x1F, &faultHandler);
 	log(LOG_INFO, "cpu: Registered CPU fault interrupt handlers.\n");
 }
