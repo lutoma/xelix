@@ -82,6 +82,7 @@ void __attribute__((__cdecl__)) main()
 
 	init(kmalloc);
 	init(keyboard);
+	init(pit, PIT_RATE);
 	init(serial);
 	init(console);
 	init(log);
@@ -99,7 +100,6 @@ void __attribute__((__cdecl__)) main()
 	else
 		log(LOG_WARN, "init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
 	
-	init(pit, PIT_RATE);
 	init(cpu);
 	init(acpi);
 
