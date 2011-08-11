@@ -5,7 +5,6 @@ export LANG=C
 
 all: xelix.bin
 run: runqemu
-debug: debugqemufloppy
 
 BUILDCOMP := \"$(shell whoami)@$(shell hostname)\"
 BUILDSYS := \"$(shell uname -srop)\"
