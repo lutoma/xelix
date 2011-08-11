@@ -71,7 +71,7 @@ char* itoa(int num, int base)
 	if (num == 0)
 		return "0"; 
 	
-	char buf[8 * sizeof(num) + 1];
+	static char buf[8 * sizeof(num) + 1];
 	char *res = buf + 8 * sizeof(num);
 
 	*--res = '\0';
