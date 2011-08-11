@@ -19,7 +19,9 @@
 
 #include "log.h"
 #include "string.h"
+#include "print.h"
 #include <memory/kmalloc.h>
+#include <lib/datetime.h>
 
 #define DEFAULT_LEVEL LOG_INFO
 #define DEFAULT_PRINTLOG true
@@ -35,12 +37,12 @@ void log(uint32_t level, const char *fmt, ...)
 {
 	if(level > logLevel)
 		return;
-	
+
 	if(strlen(kernelLog) + strlen(fmt) < LOG_MAXSIZE) // prevent an overflow that is likely to happen if the log gets long enough
 		kernelLog = strcat(kernelLog, fmt); // concatenate to kernellog
 	
 	if(printLog)
-		vprintf(fmt, (void **)(&fmt) + 1);
+		vprintf(fmt, (void**)(&fmt) + 1);
 }
 
 void log_setLogLevel(uint32_t level)

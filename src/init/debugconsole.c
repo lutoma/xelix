@@ -20,6 +20,7 @@
 #include "debugconsole.h"
 
 #include <lib/log.h>
+#include <lib/print.h>
 #include <lib/string.h>
 #include <memory/kmalloc.h>
 #include <hw/display.h>

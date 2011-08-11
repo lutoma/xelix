@@ -22,7 +22,7 @@
 
 #include "log.h"
 #include "string.h"
-#include <console/interface.h>
+#include "print.h"
 #include <memory/kmalloc.h>
 #include <hw/serial.h>
 #include <hw/display.h>
@@ -103,61 +103,6 @@ void writeCMOS(uint16_t port,uint8_t value) {
   uint8_t tmp = inb(0x70);
   outb(0x70, (tmp & 0x80) | (port & 0x7F));
   outb(0x71,value);
-}
-
-// Print function
-void print(char* s)
-{
-	console_write(NULL, s, strlen(s));
-}
-
-// Print a single char
-static void printChar(char c)
-{
-	char s[2];
-	s[0] = c;
-	s[1] = 0;
-	
-	console_write(NULL, s, 1);
-}
-
-// Printing a string, formatted with the stuff in the arg array
-void vprintf(const char *fmt, void **arg) {
-	bool state = false;
-	
-	while (*fmt) {
-		if (*fmt == '%') {
-			++fmt;
-			switch (*fmt) {
-				case 'c': printChar(*(char *)arg); break;
-				// Print (null) if pointer == NULL.
-				case 's': print(*(char **)arg ? *(char **)arg : "(null)"); break;
-				case 'b': print(itoa(*(unsigned *)arg,  2)); break;
-				case 'd': print(itoa(*(unsigned *)arg, 10)); break;
-				case 'x': print(itoa(*(unsigned *)arg, 16)); break;
-				case 't': print(*(unsigned *)arg ? "true" : "false"); break;
-			}
-
-			if(*fmt == '%')
-			{
-				if(!state)
-				{
-					default_console->info.current_color.foreground = *(unsigned *)arg;
-				} else {
-					default_console->info.current_color = default_console->info.default_color;
-					--arg;
-				}
-				state = !state;
-			}
-			
-			++arg;
-		} else printChar(*fmt);
-		++fmt;
-	}
-}
-
-void printf(const char *fmt, ...) {
-	vprintf(fmt, (void **)(&fmt) + 1);
 }
 
 /* Freezes the kernel (without possibility to unfreeze).
