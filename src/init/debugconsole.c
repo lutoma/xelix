@@ -87,6 +87,7 @@ static void executeCommand(char *command)
 	}
 	else if(strcmp(command, "halt") == 0) halt();
 	else if(strcmp(command, "freeze") == 0) freeze();
+	else if(strcmp(command, "panic") == 0) panic("Test panic for debugging");
 	else
 	{
 		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
