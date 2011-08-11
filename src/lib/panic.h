@@ -23,8 +23,9 @@
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
 
+void dumpCpuState(cpu_state_t* regs);
 
-#define panic(args...) asm("int 0x3")
+#define panic(args...) asm("int 0x30")
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
 
 void panic_init();
