@@ -48,10 +48,16 @@ static int console_driver_display_write(console_info_t *info, char c)
 {
 	char color = console_driver_display_packColor(info);
 
-	if (c == '\n')
+	if (c == '\n' || c == '\v')
 	{
 		info->cursor_y++;
 		info->cursor_x = 0;
+		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
+		return 0;
+	}
+	else if (c == '\t')
+	{
+		info->cursor_x =info->cursor_x + info->tabstop - (info->cursor_x % info->tabstop);
 		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
 		return 0;
 	}
