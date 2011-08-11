@@ -65,17 +65,9 @@ static void compilerInfo()
 /* This is the very first function of our kernel and gets called
  * directly from the bootloader (GRUB etc.).
  */
-void __attribute__((__cdecl__)) main()
+void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 {
-	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-		/* Fetch the pointer to the multiboot_info struct which should be in
-		 * EBX.
-		 */
-		asm("mov %0, ebx" : "=m" (multiboot_info));
-		
-		// Just some assertions to make sure things are ok.
-		assert(multiboot_info != NULL);
-	#endif
+	multiboot_info = mBoot;
 
 	init(gdt);
 	init(interrupts);

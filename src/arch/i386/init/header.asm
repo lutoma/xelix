@@ -29,3 +29,11 @@ dd  MBOOT_HEADER_FLAGS
 dd  MBOOT_CHECKSUM
 
 SECTION text
+EXTERN main
+GLOBAL _start
+
+_start:
+	mov ebp, 0
+	mov esp, 0x1000
+	push ebx
+	call main
