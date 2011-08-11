@@ -22,14 +22,12 @@
 #include "generic.h"
 #include "print.h"
 #include <console/interface.h>
+#include <interrupts/interface.h>
+#include <hw/cpu.h>
 
-#define dumpRegister(reg) \
-	asm("mov %0, " reg : "=m" (temp)); \
-	printf("%s = 0x%x%s", reg, temp, (num % 4) ? "   " : "\n"); \
-	num++
 
 // Panic. Use the panic() macro that inserts the line.
-void panic_raw(char *file, uint32_t line, const char *reason, ...)
+static void panicHandler(cpu_state_t* regs)
 {
 	// Disable interrupts.
 	interrupts_disable();
@@ -37,11 +35,8 @@ void panic_raw(char *file, uint32_t line, const char *reason, ...)
 
 	printf("%%Kernel Panic!%%\n\n", 0x04);
 	
-	vprintf(reason, (void**)(&reason) + 1);	
-	printf("\n\n");
 
 	printf("Technical information:\n\n");
-	printf("Caller: %s, line %d.\n", file, line);
 	printf("Last PIT ticknum: %d\n", pit_getTickNum());
 	
 	task_t* task = scheduler_getCurrentTask();
@@ -52,26 +47,11 @@ void panic_raw(char *file, uint32_t line, const char *reason, ...)
 		printf("Last task PID: (null)\n\n");
 
 
-	uint32_t temp, num = 1;
-
-	// EAX, EBX, ECX, EDX, EDI, ESI, EBP, ESP, EIP, EFLAGS
-
-	printf("Register contents:\n\n");
-	dumpRegister("eax");
-	dumpRegister("ebx");
-	dumpRegister("ecx");
-	dumpRegister("edx");	
-	dumpRegister("edi");	
-	dumpRegister("esi");	
-	dumpRegister("ebp");	
-	dumpRegister("esp");
-
-	// Get eflags
-	asm("pushf; pop eax;" ::: "eax");
-	asm("mov %0, eax" : "=m" (temp));
-	printf("eflags = 0x%x%s", temp, (num % 4) ? "   " : "\n");
-	num++;
-
 	//Sleep forever
 	freeze();
+}
+
+void panic_init()
+{
+	interrupts_registerHandler(0x03, panicHandler);
 }

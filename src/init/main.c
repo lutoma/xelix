@@ -76,9 +76,10 @@ void __attribute__((__cdecl__)) main()
 		// Just some assertions to make sure things are ok.
 		assert(multiboot_info != NULL);
 	#endif
-	
+
 	init(gdt);
 	init(interrupts);
+	init(panic);
 
 	init(kmalloc);
 	init(keyboard);

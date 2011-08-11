@@ -23,8 +23,8 @@
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
 
-// Don't use this one, use the macro below.
-void panic_raw(char *file, uint32_t line, const char *reason, ...);
 
-#define panic(args...) panic_raw( __FILE__, __LINE__, args)
-#define assert(b) do { if(!(b)) panic_raw(__FILE__, __LINE__, "Assertion \"" #b "\" failed."); } while(0)
+#define panic(args...) asm("int 0x3")
+#define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
+
+void panic_init();
