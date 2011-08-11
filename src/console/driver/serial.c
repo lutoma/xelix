@@ -27,8 +27,11 @@ static void console_driver_serial_setCursor(console_info_t *info, uint32_t x, ui
 
 static int console_driver_serial_write(console_info_t *info, char c)
 {
-	if (c == 0x7f)
-		c = 0x8;
+	if (c == 0x8 || c == 0x7f)
+	{
+		serial_print("\b \b");
+		return 1;
+	}
 
 	char cs[2];
 	cs[0] = c;
@@ -41,7 +44,11 @@ static int console_driver_serial_write(console_info_t *info, char c)
 
 static char console_driver_serial_read(console_info_t *info)
 {
-	return serial_recv();
+	char c = serial_recv();
+	if (c < 0x20 && c != '\n' && c != '\r')
+		return 0;
+
+	return c;
 }
 
 static int console_driver_serial_clear(console_info_t *info)
