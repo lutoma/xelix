@@ -36,7 +36,6 @@
 #include <memory/kmalloc.h>
 #include <hw/speaker.h>
 #include <fs/vfs.h>
-#include <fs/memfs/interface.h>
 #include <tasks/task.h>
 #include <lib/argparser.h>
 #include <tasks/scheduler.h>
