@@ -53,10 +53,15 @@ void scheduler_add(void* entry)
 	void* stack = kmalloc(STACKSIZE);
 	memset(stack, 0, STACKSIZE);
 	
-	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t);
+	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 2;
 	
 	// Stack
-	thisTask->state->esp = stack + STACKSIZE;
+	thisTask->state->esp = stack + STACKSIZE - 2;
+	thisTask->state->ebp = thisTask->state->esp;
+
+	*(thisTask->state->ebp + 1) = NULL; // return addr
+	*(thisTask->state->ebp + 2) = NULL; // base pointer 
+	
 	// Instruction pointer (= start of the program)
 	thisTask->state->eip = entry;
 	thisTask->state->eflags = 0x200;
