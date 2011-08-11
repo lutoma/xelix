@@ -22,6 +22,7 @@
 #include "log.h"
 #include "string.h"
 #include <memory/kmalloc.h>
+#include <lib/panic.h>
 
 char** arguments = NULL;
 char** values = NULL;

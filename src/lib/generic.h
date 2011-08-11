@@ -70,10 +70,3 @@ void halt();
 
 extern void display_clear();
 #define clear() display_clear()
-
-// Don't use this one, use the macros below.
-void panic_raw(char *file, uint32_t line, const char *reason, ...);
-
-// to automatically have file names and line numbers
-#define panic(args...) panic_raw( __FILE__, __LINE__, args)
-#define assert(b) do { if(!(b)) panic_raw(__FILE__, __LINE__, "Assertion \"" #b "\" failed."); } while(0)

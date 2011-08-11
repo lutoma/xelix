@@ -21,6 +21,7 @@
 
 #include "fault.h"
 #include <lib/log.h>
+#include <lib/panic.h>
 #include <arch/cpu.h>
 
 // Check if CPU is running in protected mode.

@@ -20,6 +20,7 @@
 #include "fault.h"
 
 #include <lib/log.h>
+#include <lib/panic.h>
 #include <interrupts/interface.h>
 
 static char* errorDescriptions[] = 

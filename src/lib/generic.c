@@ -169,38 +169,6 @@ void freeze(void)
 	asm volatile("hlt;");
 }
 
-// Panic. Use the panic() macro that inserts the line.
-void panic_raw(char *file, uint32_t line, const char *reason, ...)
-{
-	// Disable interrupts.
-	interrupts_disable();
-
-	printf("\n");
-	printf("%%Kernel Panic!%%\n\n", 0x04);
-	printf("Reason: ");
-	
-	vprintf(reason, (void **)(&reason) + 1);
-	
-	printf("\n");
-	printf("The file triggering the kernel panic was %s, line %d.\n\n", file, line);
-	
-	printf("Last known PIT ticknum: %d\n", pit_getTickNum());
-	
-	task_t* task = scheduler_getCurrentTask();
-	/* Can't pass this 1:1 and let printf() do the (null) magic as we've
-	 * got a struct here and even tough task may be NULL, with the
-	 * offset we could get something printf then shows.
-	 */
-	
-	if(task != NULL)
-		printf("Last running task PID: %d\n", task->pid);
-	else
-		printf("Last running task PID: (null)\n");	
-	
-	//Sleep forever
-	freeze();
-}
-
 // A Memcmp
 int32_t (memcmp)(const void *s1, const void *s2, size_t n)
 {

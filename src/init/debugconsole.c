@@ -29,6 +29,7 @@
 #include <lib/fio.h>
 #include <tasks/scheduler.h>
 #include <console/interface.h>
+#include <lib/panic.h>
 
 uint32_t cursorPosition;
 char currentLine[256] = "";
