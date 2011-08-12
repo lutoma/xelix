@@ -59,10 +59,11 @@ int elf_load(elf_t* bin)
 	void* addr = NULL;
 	for(int i = 0; i < bin->phnum; i++, phead++)
 	{
-		if(phead->type != 1)
-			continue;
-
-		addr = (void*)bin + (bin->entry - phead->virtaddr);
+		if(phead->type == 1)
+		{
+			addr = (void*)bin + (bin->entry - phead->virtaddr);
+			break;
+		}
 	}
 
 	if(addr == NULL)
