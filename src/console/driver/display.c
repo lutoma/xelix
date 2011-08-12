@@ -57,9 +57,12 @@ static int console_driver_display_write(console_info_t *info, char c)
 	}
 	else if (c == '\t')
 	{
-		info->cursor_x =info->cursor_x + info->tabstop - (info->cursor_x % info->tabstop);
+		uint32_t columns = info->tabstop - (info->cursor_x % info->tabstop);
+		info->cursor_x = info->cursor_x + columns;
+		if (info->cursor_x >= info->columns)
+			info->cursor_x = info->columns - 1;
 		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
-		return 0;
+		return columns;
 	}
 	
 	if (c == 0x8 || c == 0x7f)
