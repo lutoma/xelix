@@ -27,10 +27,12 @@
 
 void dumpCpuState(cpu_state_t* regs) {
 	printf("CPU State:\n");
-	printf("EAX:0x%x    EBX:0x%x    ECX:0x%x    EDX:0x%x\n",
+	printf("EAX=0x%x\tEBX=0x%x\tECX=0x%x\tEDX=0x%x\n",
 		regs->eax, regs->ebx, regs->ecx, regs->edx);
-	printf("ESI:0x%x    EDI:0x%x    ESP:0x%x    EBP:0x%x\n",
+	printf("ESI=0x%x\tEDI=0x%x\tESP=0x%x\tEBP=0x%x\n",
 		regs->esi, regs->edi, regs->esp, regs->ebp);
+	printf("DS=0x%x\tSS=0x%x\tCS=0x%x\tEFLAGS=0x%x\n",
+		regs->ds, regs->ss, regs->cs, regs->eflags);
 
 	printf("\n");
 	printf("Return Addresses:\n");
