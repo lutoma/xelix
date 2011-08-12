@@ -44,6 +44,7 @@
 #include <console/interface.h>
 #include <hw/pci.h>
 #include <hw/rtl8139.h>
+#include <tasks/elf.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -100,6 +101,9 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(vfs);
 	init(pci);
 	init(rtl8139);
+
+	for(int i = 0; i < multiboot_info->modsCount; i++)
+		elf_load((void*)multiboot_info->modsAddr[i].start);
 
 	scheduler_add(debugconsole_init);
 	init(scheduler); // Intentionally last
