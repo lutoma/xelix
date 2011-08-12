@@ -51,9 +51,9 @@ static void panicHandler(cpu_state_t* regs)
 	task_t* task = scheduler_getCurrentTask();
 	
 	if(task != NULL)
-		printf("Last task PID: %d\n\n", task->pid);
+		printf("Running task: %d\n\n", task->pid);
 	else
-		printf("Last task PID: (null)\n\n");
+		printf("Running task: [No task running]\n\n");
 
 	dumpCpuState(regs);
 
