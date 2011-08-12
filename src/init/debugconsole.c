@@ -87,6 +87,7 @@ static void executeCommand(char *command)
 	}
 	else if(strcmp(command, "halt") == 0) halt();
 	else if(strcmp(command, "freeze") == 0) freeze();
+	else if(strcmp(command, "kill") == 0) scheduler_terminateCurrentTask();
 	else if(strcmp(command, "panic") == 0) panic("Test panic for debugging");
 	else
 	{

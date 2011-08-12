@@ -22,45 +22,48 @@
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <hw/cpu.h>
+#include <interrupts/interface.h>
+#include <lib/panic.h>
 
-/* You most probably don't want to touch this one. Uncommenting this
- * line will get you many many debug lines. And by many I mean 'about
- * 1000 per second'.
- */
-//#define DEBUG
 #define STACKSIZE 4096
+#define STATE_OFF 0
+#define STATE_INITIALIZING 1
+#define STATE_INITIALIZED 2
 
-#ifdef DEBUG
-	#define intDebug(args...) log(LOG_DEBUG, args);
-#else /* DEBUG */
-	#define intDebug(args...)
-#endif /* DEBUG */
-
-task_t* firstTask = NULL;
 task_t* currentTask = NULL;
-task_t* lastTask = NULL;
 uint64_t highestPid = -1;
+
+void scheduler_terminateCurrentTask()
+{
+	log(LOG_DEBUG, "scheduler: Deleting current task\n");
+
+	if(currentTask->next == currentTask)
+		currentTask = NULL;
+	else
+	{
+		currentTask->next->last = currentTask->last;
+		currentTask->last->next = currentTask->next;
+	}
+	
+	while(true) asm("hlt");
+}
 
 // Add new task to schedule. task.c provides an interface to this.
 void scheduler_add(void* entry)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
-	thisTask->pid = ++highestPid;
-	thisTask->parent = 0; // Implement me
-	thisTask->next = NULL;
-
 	void* stack = kmalloc(STACKSIZE);
 	memset(stack, 0, STACKSIZE);
 	
-	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 2;
+	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
 	
 	// Stack
-	thisTask->state->esp = stack + STACKSIZE - 2;
+	thisTask->state->esp = stack + STACKSIZE - 3;
 	thisTask->state->ebp = thisTask->state->esp;
 
-	*(thisTask->state->ebp + 1) = NULL; // return addr
-	*(thisTask->state->ebp + 2) = NULL; // base pointer 
+	*(thisTask->state->ebp + 1) = scheduler_terminateCurrentTask;
+	*(thisTask->state->ebp + 2) = NULL; // base pointer
 	
 	// Instruction pointer (= start of the program)
 	thisTask->state->eip = entry;
@@ -69,16 +72,25 @@ void scheduler_add(void* entry)
 	thisTask->state->ds = 0x10;
 	thisTask->state->ss = 0x10;
 
-	// Now add this task to our task list. A lock would be nice here.
-	if(firstTask == NULL || lastTask == NULL)
-		// This is the first task
-		firstTask = thisTask;
-	else
-		// Obviously not the first task, append to list
-		lastTask->next = thisTask;
+	thisTask->pid = ++highestPid;
+	thisTask->parent = 0; // Implement me
+
+	interrupts_disable();
+
+	// No task yet?
+	if(currentTask == NULL)
+	{
+		currentTask = thisTask;
+		thisTask->next = thisTask;
+		thisTask->last = thisTask;
+	} else {
+		thisTask->next = currentTask->next;
+		thisTask->last = currentTask;
+		currentTask->next = thisTask;
+	}
+
+	interrupts_enable();
 	
-	lastTask = thisTask;
-		
 	log(LOG_INFO, "scheduler: Registered new task with PID %d\n", thisTask->pid);
 }
 
@@ -90,42 +102,25 @@ task_t* scheduler_getCurrentTask()
 // Called by the PIT a few hundred times per second.
 task_t* scheduler_select(cpu_state_t* lastRegs)
 {
-		intDebug("scheduler: scheduling...\n");
-		// No task at all
-		if(firstTask == NULL)
-			return (task_t*)NULL;
-		
-		// We have at least one task
-		task_t* nextTask = NULL;
-		
-		intDebug("scheduler: Got at least one task...\n");
-		
-		// Is there a task currently running?
-		if(currentTask != NULL)
-		{
-			intDebug("scheduler: currentTask at 0x%x\n",
-					(int)currentTask);
-			
-			currentTask->state = lastRegs; // Save it's state.
-			
-			// Look for next task
-			if(currentTask->next != NULL)
-				nextTask = currentTask->next;
-		}
-		
-		// No nextTask set yet? Take the first one
-		if(nextTask == NULL)
-			nextTask = firstTask;
-		
-		currentTask = nextTask;
-		intDebug("scheduler: returning task at 0x%x with state at 0x%x \
-				(esp 0x%x)\n", (int)nextTask, (int)nextTask->state,
-				nextTask->state->esp);
-		
-		return nextTask;
+	if(currentTask == NULL || currentTask->next == NULL)
+		panic("scheduler: No tasks left - init killed?");
+
+	if(scheduler_state == STATE_INITIALIZING)
+	{
+		scheduler_state = STATE_INITIALIZED;
+		return currentTask;
+	}
+
+	if(currentTask == currentTask->next)
+		return NULL;
+	
+	currentTask->state = lastRegs;
+	currentTask = currentTask->next;
+
+	return currentTask;
 }
 
 void scheduler_init()
 {
-	scheduler_initialized = true;
+	scheduler_state = STATE_INITIALIZING;
 }

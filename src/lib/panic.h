@@ -18,14 +18,15 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include "generic.h"
+#include "print.h"
 #include <interrupts/interface.h>
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
 
 void dumpCpuState(cpu_state_t* regs);
 
-#define panic(args...) asm("int 0x30")
+#define panic(args...) do { printf(args); print("\n"); asm("int 0x30"); } while(0)
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
 
 void panic_init();

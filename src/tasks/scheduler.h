@@ -27,11 +27,13 @@ typedef struct task {
 	uint32_t parent;
 	cpu_state_t* state;
 	struct task* next;
+	struct task* last;
 } task_t;
 
-bool scheduler_initialized;
+int scheduler_state;
 
 void scheduler_add();
+void scheduler_terminateCurrentTask();
 task_t* scheduler_getCurrentTask();
 task_t* scheduler_select(cpu_state_t* lastRegs);
 void scheduler_init();

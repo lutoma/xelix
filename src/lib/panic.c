@@ -43,7 +43,6 @@ void dumpCpuState(cpu_state_t* regs) {
 
 static void panicHandler(cpu_state_t* regs)
 {
-	console_clear(NULL);
 	printf("%%Kernel Panic!%%\n\n", 0x04);
 
 	printf("Technical information:\n\n");

@@ -22,7 +22,7 @@
 #include <lib/log.h>
 #include <lib/panic.h>
 #include <interrupts/interface.h>
-/*
+
 static char* errorDescriptions[] = 
 {
 	"Division by zero exception",
@@ -44,7 +44,7 @@ static char* errorDescriptions[] =
 	"Alignment check exception",
 	"Machine check exception"
 };
-*/
+
 // Handles the IRQs we catch
 static void faultHandler(cpu_state_t* regs)
 {
