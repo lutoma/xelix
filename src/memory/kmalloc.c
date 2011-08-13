@@ -24,7 +24,7 @@
 #include <lib/log.h>
 #include <arch/i386/lib/multiboot.h>
 
-static uint32_t memoryPosition;
+uint32_t memoryPosition;
 #define pagingEnabled false // FIXME
 
 /* Use the macros instead of directly calling this functions.
@@ -52,6 +52,12 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 void kfree(void *ptr)
 {
 	return;
+}
+
+
+uint32_t kmalloc_getMemoryPosition()
+{
+	return memoryPosition;
 }
 
 void kmalloc_init()

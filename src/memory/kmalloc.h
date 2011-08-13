@@ -36,4 +36,5 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 #define kmalloc_pa kmalloc_ap
 
 void kfree(void *ptr);
+uint32_t kmalloc_getMemoryPosition();
 void kmalloc_init();
