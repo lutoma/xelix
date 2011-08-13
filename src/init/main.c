@@ -46,6 +46,7 @@
 #include <hw/rtl8139.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
+#include <memory/paging.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -75,6 +76,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(interrupts);
 	init(panic);
 
+	
 	init(kmalloc);
 	init(keyboard);
 	init(pit, PIT_RATE);
@@ -103,6 +105,8 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(pci);
 	init(rtl8139);
 	init(syscall);
+
+	init(paging);
 
 	for(int i = 0; i < multiboot_info->modsCount; i++)
 		elf_load((void*)multiboot_info->modsAddr[i].start);
