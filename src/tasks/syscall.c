@@ -1,5 +1,5 @@
 /* syscall.c: Syscalls
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011 Lukas Martini, Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -37,17 +37,15 @@ static int syscall_print(cpu_state_t *regs)
 	return print((char *)regs->ecx);
 }
 
-#define JUMP_TABLE_SIZE 0x10
-
-static syscall_t jump_table[JUMP_TABLE_SIZE] = {
-	syscall_print,
-	syscall_exit,
+static syscall_t jump_table[] = {
+	syscall_print,   /* 0 */
+	syscall_exit,    /* 1 */
 };
 
 static void intHandler(cpu_state_t* regs)
 {
 	syscall_t call = jump_table[regs->eax];
-	if (regs->eax >= JUMP_TABLE_SIZE || call == NULL)
+	if (regs->eax >= sizeof(jump_table) / sizeof(syscall_t) || call == NULL)
 	{
 		log(LOG_INFO, "syscall: Invalid syscall %d\n", regs->eax);
 		regs->eax = -1;
