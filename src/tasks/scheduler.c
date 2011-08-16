@@ -73,7 +73,7 @@ void scheduler_add(void* entry)
 	thisTask->state->ss = 0x10;
 
 	thisTask->pid = ++highestPid;
-	thisTask->parent = 0; // Implement me
+	thisTask->parent = (currentTask == NULL) ? 0 : currentTask->pid; // Implement me
 
 	interrupts_disable();
 

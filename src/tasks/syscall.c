@@ -37,9 +37,21 @@ static int syscall_print(cpu_state_t *regs)
 	return print((char *)regs->ecx);
 }
 
+static int syscall_getpid(cpu_state_t *regs)
+{
+	return scheduler_getCurrentTask()->pid;
+}
+
+static int syscall_getppid(cpu_state_t *regs)
+{
+	return scheduler_getCurrentTask()->parent;
+}
+
 static syscall_t jump_table[] = {
 	syscall_print,   /* 0 */
 	syscall_exit,    /* 1 */
+	syscall_getpid,  /* 2 */
+	syscall_getppid, /* 3 */
 };
 
 static void intHandler(cpu_state_t* regs)
