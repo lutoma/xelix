@@ -25,9 +25,9 @@
 #include <console/interface.h>
 
 // Print function
-void print(const char* s)
+int print(const char* s)
 {
-	console_write(NULL, s, strlen(s));
+	return console_write(NULL, s, strlen(s));
 }
 
 // Print a single char

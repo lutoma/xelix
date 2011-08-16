@@ -21,7 +21,7 @@
 #include "generic.h"
 #include "stdarg.h"
 
-void print(const char* s);
+int print(const char* s);
 void printChar(const char c);
 
 void vprintf(const char *fmt, void** arg);

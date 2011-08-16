@@ -22,11 +22,39 @@
 #include <interrupts/interface.h>
 #include <lib/log.h>
 #include <lib/print.h>
+#include <tasks/scheduler.h>
+
+typedef int (*syscall_t)(cpu_state_t *);
+
+static int syscall_exit(cpu_state_t *regs)
+{
+	scheduler_terminateCurrentTask();
+	return 0;
+}
+
+static int syscall_print(cpu_state_t *regs)
+{
+	return print((char *)regs->ecx);
+}
+
+#define JUMP_TABLE_SIZE 0x10
+
+static syscall_t jump_table[JUMP_TABLE_SIZE] = {
+	syscall_print,
+	syscall_exit,
+};
 
 static void intHandler(cpu_state_t* regs)
 {
-	if(regs->eax == 0)
-		print((char*)regs->ecx);
+	syscall_t call = jump_table[regs->eax];
+	if (regs->eax >= JUMP_TABLE_SIZE || call == NULL)
+	{
+		log(LOG_INFO, "syscall: Invalid syscall %d\n", regs->eax);
+		regs->eax = -1;
+		return;
+	}
+
+	regs->eax = call(regs);
 }
 
 void syscall_init()
