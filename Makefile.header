@@ -15,12 +15,13 @@ VERSION_PATCHLEVEL := 0
 VERSION_APPENDIX := \"a\"
 BUILD := 0
 
-MAKE_CFLAGS = -frecord-gcc-switches -g -std=gnu99 -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "__BUILDDIST__=$(BUILDDIST)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" 
+MAKE_CFLAGS = -frecord-gcc-switches -g -std=gnu99 -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "__BUILDDIST__=$(BUILDDIST)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" -pipe
 
 MAKE_CFLAGS += $(CFLAGS)
-QEMU_FLAGS += -d cpu_reset -monitor stdio -ctrl-grab -net nic -net user
+MAKE_QEMU_FLAGS = -d cpu_reset -ctrl-grab -net nic -net user
+MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 
 ifeq ($(shell which kvm 2> /dev/null | awk '{print  substr($$0, 0, 2)}'),/)
-	QEMU_FLAGS += -no-kvm
+	MAKE_QEMU_FLAGS += -no-kvm
 endif
 

@@ -33,7 +33,7 @@ floppy.img: xelix.bin mount
 .PHONY: runqemufloppy
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu $(QEMU_FLAGS) -fda floppy.img
+	qemu $(MAKE_QEMU_FLAGS) -monitor stdio -fda floppy.img
 
 .PHONY: gdb
 gdb:
@@ -45,12 +45,12 @@ runbochsfloppy: floppy.img
 
 .PHONY: runqemu
 runqemu: xelix.bin
-	qemu $(QEMU_FLAGS) -kernel xelix.bin -initrd initrd.img
+	qemu $(MAKE_QEMU_FLAGS) -monitor stdio -kernel xelix.bin -initrd initrd.img
 
 .PHONY: runqemunox
 runqemunox: xelix.bin
 	@echo "Exit with ^A-x"
-	qemu $(QEMU_FLAGS) -kernel xelix.bin -nographic -initrd initrd.img
+	qemu $(MAKE_QEMU_FLAGS) -kernel xelix.bin -nographic -initrd initrd.img
 
 xelix.iso: floppy.img
 	mkisofs -o xelix.iso -A Xelix -b floppy.img floppy.img
