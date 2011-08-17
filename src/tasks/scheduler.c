@@ -48,6 +48,14 @@ void scheduler_terminateCurrentTask()
 	while(true) asm("hlt");
 }
 
+void scheduler_remove(task_t *t)
+{
+	log(LOG_DEBUG, "scheduler: Deleting task %d\n", t->pid);
+
+	t->next->last = t->last;
+	t->last->next = t->next;
+}
+
 // Add new task to schedule. task.c provides an interface to this.
 void scheduler_add(void* entry)
 {
@@ -74,6 +82,7 @@ void scheduler_add(void* entry)
 
 	thisTask->pid = ++highestPid;
 	thisTask->parent = (currentTask == NULL) ? 0 : currentTask->pid; // Implement me
+	thisTask->task_state = TASK_STATE_RUNNING;
 
 	interrupts_disable();
 
@@ -111,11 +120,15 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 		return currentTask;
 	}
 
-	if(currentTask == currentTask->next)
-		return NULL;
-	
 	currentTask->state = lastRegs;
-	currentTask = currentTask->next;
+	do
+	{
+		currentTask = currentTask->next;
+		if (currentTask->task_state == TASK_STATE_KILLED ||
+				currentTask->task_state == TASK_STATE_TERMINATED)
+			scheduler_remove(currentTask);
+	}
+	while (currentTask->task_state != TASK_STATE_RUNNING);
 
 	return currentTask;
 }

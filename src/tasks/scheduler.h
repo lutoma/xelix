@@ -28,6 +28,15 @@ typedef struct task {
 	cpu_state_t* state;
 	struct task* next;
 	struct task* last;
+
+	// Current task state
+	enum {
+		TASK_STATE_KILLED,
+		TASK_STATE_TERMINATED,
+		TASK_STATE_BLOCKING,
+		TASK_STATE_STOPPED,
+		TASK_STATE_RUNNING
+	} task_state;
 } task_t;
 
 int scheduler_state;

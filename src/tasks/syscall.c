@@ -30,7 +30,7 @@ typedef int (*syscall_t)(cpu_state_t *);
 
 static int syscall_exit(cpu_state_t *regs)
 {
-	scheduler_terminateCurrentTask();
+	scheduler_getCurrentTask()->task_state = TASK_STATE_TERMINATED;
 	return 0;
 }
 
