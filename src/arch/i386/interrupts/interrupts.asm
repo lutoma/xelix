@@ -20,7 +20,6 @@
 %macro INTERRUPT 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
-		cli
 		push 0
 		push %1
 		jmp commonStub
@@ -29,7 +28,6 @@
 %macro INTERRUPT_ERRCODE 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
-		cli
 		push %1
 		jmp commonStub
 %endmacro
@@ -126,9 +124,6 @@ commonStub:
 	; Cleans up the pushed error code and pushed ISR number
 	add esp, 8
 
-	; Reenable interrupts
-	sti
-	
 	; Now, quit interrupthandler. This automatically pops cs, eip,
 	; eflags, css and esp.
 	iret
