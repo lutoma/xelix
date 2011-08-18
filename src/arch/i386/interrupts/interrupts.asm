@@ -84,7 +84,7 @@ commonStub:
 	push edi
 	
 	; push ds
-	mov eax, 0
+	xor eax, eax ; Move 0 to eax by xor-ing it with itself
 	mov ax, ds
 	push eax
 
@@ -97,10 +97,12 @@ commonStub:
 	
 	; Push argument to ..
  	push esp
+
  	; Call C level interrupt handler
  	call interrupts_firstCallBack
-	; Take esp from stack
-	add esp, 4
+
+	; Take esp from stack. This is uncommented as we directly apply a new stack
+	;add esp, 4
 	
 	; Apply new stack
 	mov esp, eax
