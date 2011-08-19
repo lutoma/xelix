@@ -1,0 +1,15 @@
+set -v
+
+git pull
+git submodule update --init
+./configure
+make clean
+make
+
+num=`cat .buildnum`
+num=$((num+1))
+echo "$num" > .buildnum
+
+mv xelix.bin builds/xelix-build-$num.bin
+ln -s xelix-build-$num.bin builds/xelix-build-latest.bin
+
