@@ -13,7 +13,10 @@ VERSION := 0
 VERSION_MINOR := 1
 VERSION_PATCHLEVEL := 0
 VERSION_APPENDIX := \"a\"
-BUILD := 0
+
+ifeq ($(BUILD),)
+	BUILD := 0
+endif
 
 MAKE_CFLAGS = -frecord-gcc-switches -g -std=gnu99 -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "__BUILDDIST__=$(BUILDDIST)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" -pipe
 
