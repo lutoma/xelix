@@ -1,5 +1,6 @@
 set -v
 
+git clean -fd
 git pull
 git submodule update --init
 ./configure
@@ -11,5 +12,6 @@ num=$((num+1))
 echo "$num" > .buildnum
 
 mv xelix.bin builds/xelix-build-$num.bin
+rm builds/xelix-build-latest.bin
 ln -s xelix-build-$num.bin builds/xelix-build-latest.bin
 
