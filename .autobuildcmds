@@ -1,6 +1,6 @@
 set -v
 
-git clean -fd
+git reset --hard
 git pull
 git submodule update --init
 ./configure
