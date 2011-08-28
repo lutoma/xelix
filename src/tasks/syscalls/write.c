@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* write.c: Write Syscall
+ * Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -18,12 +17,14 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <interrupts/interface.h>
+#include "write.h"
+#include <console/interface.h>
 
-#define SYSCALL_INTERRUPT 0x31
-#define SYSCALL_INTERRUPT1 0x80
+int sys_write(cpu_state_t *regs)
+{
+	if (regs->ebx == 1 || regs->ebx == 2)
+		return console_write(NULL, (char *)regs->ecx, regs->edx);
 
-typedef int (*syscall_t)(cpu_state_t *);
+	return -1;
+}
 
-void syscall_init();

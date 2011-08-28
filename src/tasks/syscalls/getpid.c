@@ -1,5 +1,5 @@
-/* syscall.c: Syscalls
- * Copyright © 2011 Lukas Martini, Fritz Grimpen
+/* getpid.c: getpid syscall
+ * Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -17,30 +17,10 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "syscall.h"
-#include <lib/generic.h>
-#include <interrupts/interface.h>
-#include <lib/log.h>
+#include "getpid.h"
 #include <tasks/scheduler.h>
-#include <lib/print.h>
 
-#include "syscalls.h"
-
-static void intHandler(cpu_state_t* regs)
+int sys_getpid(cpu_state_t *regs)
 {
-	syscall_t call = syscall_table[regs->eax];
-	if (regs->eax >= sizeof(syscall_table) / sizeof(syscall_t) || call == NULL)
-	{
-		log(LOG_INFO, "syscall: Invalid syscall %d\n", regs->eax);
-		regs->eax = -1;
-		return;
-	}
-
-	regs->eax = call(regs);
-}
-
-void syscall_init()
-{
-	interrupts_registerHandler(SYSCALL_INTERRUPT, intHandler);
-	interrupts_registerHandler(SYSCALL_INTERRUPT1, intHandler);
+	return scheduler_getCurrentTask()->pid;
 }
