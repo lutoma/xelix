@@ -20,7 +20,7 @@
 #include "exit.h"
 #include <tasks/scheduler.h>
 
-int sys_exit(cpu_state_t *regs)
+int sys_exit(struct syscall syscall)
 {
 	scheduler_getCurrentTask()->task_state = TASK_STATE_TERMINATED;
 	return 0;

@@ -20,4 +20,4 @@
 
 #include <tasks/syscall.h>
 
-int sys_getppid(cpu_state_t *regs);
+int sys_getppid(struct syscall syscall);

@@ -37,6 +37,12 @@ typedef struct task {
 		TASK_STATE_STOPPED,
 		TASK_STATE_RUNNING
 	} task_state;
+
+	// Syscall calling convention (Linux or Unix)
+	enum {
+		TASK_SYSCONV_LINUX,
+		TASK_SYSCONV_UNIX
+	} sys_call_conv;
 } task_t;
 
 int scheduler_state;

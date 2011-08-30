@@ -83,6 +83,7 @@ void scheduler_add(void* entry)
 	thisTask->pid = ++highestPid;
 	thisTask->parent = (currentTask == NULL) ? 0 : currentTask->pid; // Implement me
 	thisTask->task_state = TASK_STATE_RUNNING;
+	thisTask->sys_call_conv = TASK_SYSCONV_LINUX;
 
 	interrupts_disable();
 

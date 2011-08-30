@@ -20,4 +20,4 @@
 
 #include <tasks/syscall.h>
 
-int sys_write(cpu_state_t *regs);
+int sys_write(struct syscall syscall);

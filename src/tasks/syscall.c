@@ -28,15 +28,39 @@
 
 static void intHandler(cpu_state_t* regs)
 {
-	syscall_t call = syscall_table[regs->eax];
-	if (regs->eax >= sizeof(syscall_table) / sizeof(syscall_t) || call == NULL)
+	struct syscall syscall;
+	if (scheduler_getCurrentTask()->sys_call_conv == TASK_SYSCONV_LINUX)
 	{
-		log(LOG_INFO, "syscall: Invalid syscall %d\n", regs->eax);
-		regs->eax = -1;
+		// Linux syscall calling convention
+		syscall.num = regs->eax;
+		syscall.params[0] = regs->ebx;
+		syscall.params[1] = regs->ecx;
+		syscall.params[2] = regs->edx;
+		syscall.params[3] = regs->esi;
+		syscall.params[4] = regs->edi;
+		syscall.params[5] = (int)regs->ebp;
+	}
+	else
+	{
+		// Unix syscall calling convention
+		syscall.num = regs->eax;
+		syscall.params[0] = *((int *)regs->esp + sizeof(int));
+		syscall.params[1] = *((int *)regs->esp + sizeof(int) * 2);
+		syscall.params[2] = *((int *)regs->esp + sizeof(int) * 3);
+		syscall.params[3] = *((int *)regs->esp + sizeof(int) * 4);
+		syscall.params[4] = *((int *)regs->esp + sizeof(int) * 5);
+		syscall.params[5] = *((int *)regs->esp + sizeof(int) * 6);
+	}
+
+	syscall_t call = syscall_table[syscall.num];
+	if (syscall.num >= sizeof(syscall_table) / sizeof(syscall_t) || call == NULL)
+	{
+		log(LOG_INFO, "syscall: Invalid syscall %d\n", syscall.num);
+		syscall.num = -1;
 		return;
 	}
 
-	regs->eax = call(regs);
+	regs->eax = call(syscall);
 }
 
 void syscall_init()

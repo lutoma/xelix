@@ -20,10 +20,10 @@
 #include "write.h"
 #include <console/interface.h>
 
-int sys_write(cpu_state_t *regs)
+int sys_write(struct syscall syscall)
 {
-	if (regs->ebx == 1 || regs->ebx == 2)
-		return console_write(NULL, (char *)regs->ecx, regs->edx);
+	if (syscall.params[0] == 1 || syscall.params[0] == 2)
+		return console_write(NULL, (char *)syscall.params[1], syscall.params[2]);
 
 	return -1;
 }

@@ -20,7 +20,7 @@
 #include "getpid.h"
 #include <tasks/scheduler.h>
 
-int sys_getpid(cpu_state_t *regs)
+int sys_getpid(struct syscall syscall)
 {
 	return scheduler_getCurrentTask()->pid;
 }

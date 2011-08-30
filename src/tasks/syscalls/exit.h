@@ -20,4 +20,4 @@
 
 #include <tasks/syscall.h>
 
-int sys_exit(cpu_state_t *regs);
+int sys_exit(struct syscall syscall);

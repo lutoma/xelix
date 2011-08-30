@@ -24,6 +24,12 @@
 #define SYSCALL_INTERRUPT 0x31
 #define SYSCALL_INTERRUPT1 0x80
 
-typedef int (*syscall_t)(cpu_state_t *);
+struct syscall
+{
+	int num;
+	int params[6];
+};
+
+typedef int (*syscall_t)(struct syscall);
 
 void syscall_init();
