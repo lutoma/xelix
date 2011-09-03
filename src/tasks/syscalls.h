@@ -21,13 +21,14 @@
 #include <lib/generic.h>
 #include <tasks/syscall.h>
 
+#include "syscalls/chg_sys_conv.h"
 #include "syscalls/write.h"
 #include "syscalls/exit.h"
 #include "syscalls/getpid.h"
 #include "syscalls/getppid.h"
 
 syscall_t syscall_table[] = {
-	NULL, // 0
+	sys_chg_sys_conv, // 0
 	sys_exit, // 1
 	NULL, // 2
 	NULL,
