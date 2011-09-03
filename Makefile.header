@@ -6,6 +6,10 @@ export LANG=C
 all: xelix.bin
 run: runqemu
 
+CC := gcc
+LD := ld
+AS := nasm
+
 BUILDCOMP := \"$(shell whoami)@$(shell hostname)\"
 BUILDSYS := \"$(shell uname -srop)\"
 BUILDDIST := \"$(shell cat /etc/*-release | head -n 1)\"

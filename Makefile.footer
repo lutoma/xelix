@@ -1,8 +1,8 @@
 %.o: %.c
-	gcc $(MAKE_CFLAGS) -o $@ -c $<
+	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
-	nasm -f elf -g -o $@ $<
+	$(AS) -f elf -g -o $@ $(ASFLAGS) $<
 
 .PHONY: INSTALL
 install: xelix.bin
@@ -46,6 +46,10 @@ runbochsfloppy: floppy.img
 .PHONY: runqemu
 runqemu: xelix.bin
 	qemu -monitor stdio -kernel xelix.bin -initrd initrd.img $(MAKE_QEMU_FLAGS)
+
+.PHONY: runqemudebug
+runqemudebug: xelix.bin
+	qemu -kernel xelix.bin -initrd initrd.img $(MAKE_QEMU_FLAGS)
 
 .PHONY: runqemunox
 runqemunox: xelix.bin

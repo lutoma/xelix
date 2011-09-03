@@ -40,7 +40,7 @@ do
 done
 
 echo >> Makefile
-echo "	ld -melf_i386 -T linker.ld -nostdlib -o xelix.bin $^" >> Makefile
+echo "	\$(LD) -melf_i386 -T linker.ld -nostdlib -o xelix.bin \$(LDFLAGS) $^" >> Makefile
 echo "	chmod -x xelix.bin" >> Makefile
 
 
