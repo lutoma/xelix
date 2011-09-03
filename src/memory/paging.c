@@ -21,53 +21,68 @@
 #include <lib/generic.h>
 #include <memory/kmalloc.h>
 #include <lib/log.h>
+#include <lib/print.h>
+#include <lib/datetime.h>
 
-typedef struct
-{
-	bool present		: 1;	// Page present in memory
-	bool rw				: 1;	// Read-only if clear, readwrite if set
-	bool user			: 1;	// Supervisor level only if clear
-	bool accessed		: 1;	// Has the page been accessed since last refresh?
-	bool dirty			: 1;	// Has the page been written to since last refresh?
-	uint32_t unused		: 7;	// Unused / reserved
-	uint32_t frame		: 20;	// Frame address (shifted right 12 bits)
+typedef struct {
+	bool present    : 1;
+	bool rw         : 1;
+	bool user       : 1;
+	bool accessed   : 1;
+	bool dirty      : 1;
+	uint32_t unused : 7;
+	uint32_t frame  : 20;
 } page_t;
 
-typedef struct
-{
-	page_t pages[1024];
+typedef struct {
+	page_t nodes[1024];
+} page_directory_t;
+
+typedef struct {
+	page_t nodes[1024];
 } page_table_t;
 
-void* pageDirectory = NULL;
-page_table_t tables[1024];
-void* tablesPhysical[1024];
+// page_tables[PAGE_DIR]
+page_table_t page_tables[1024];
+page_directory_t page_directory;
 
 int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
 {
-	page_t page = tables[virtual / (1024 * 4)].pages[virtual % (1024 * 4) - 1];
+	// Align virtual and physical addresses to 4096 byte
+	virtual = virtual - virtual % 4096;
+	physical = physical - physical % 4096;
 
-	if(page.present)
+	uint32_t page_dir_offset = virtual >> 22;
+	uint32_t page_table_offset = (virtual >> 12) % 1024;
+
+	page_t *page_dir = &(page_directory.nodes[page_dir_offset]);
+	page_t *page_table = &(page_tables[page_dir_offset].nodes[page_table_offset]);
+	if (!page_dir->present)
+	{
+		page_dir->present = true;
+		page_dir->rw = rw;
+		page_dir->user = user;
+		page_dir->frame = (int)page_table >> 12;
+	}
+
+	if (page_table->present)
 		return 1;
 
-	page.present = true;
-	page.rw = rw;
-	page.user = user;
-	page.frame = physical >> 12;
+	page_table->present = true;
+	page_table->rw = rw;
+	page_table->user = user;
+	page_table->frame = physical >> 12;
 
 	return 0;
 }
 
 void paging_init()
 {
-	memset(tables, 0, sizeof(page_table_t) * 1024);
-	pageDirectory = &tables;
-	
-	// Map all the memory that has been kmalloc'd so far
-	for(int i = 1; i < (kmalloc_getMemoryPosition() / 4); i++)
-		paging_assign(i, i, 1, 0);
-	
+	for (int i = 0; i < 1861480 / 4096; i++)
+		paging_assign(i * 4096, i * 4096, 1, 0);
+
 	// Write the address of our page directory to cr3
-	asm volatile("mov cr3, %0":: "r"(&tablesPhysical));
+	asm volatile("mov cr3, %0":: "r"(&page_directory.nodes));
 
 	// Get the value of cr0
 	uint32_t cr0;
@@ -75,5 +90,6 @@ void paging_init()
 
 	// Enable the paging bit
 	cr0 |= 0x80000000;
-	//asm volatile("mov cr0, %0":: "r"(cr0));
+	asm volatile("mov cr0, %0":: "r"(cr0));	
+	while (1) ;
 }
