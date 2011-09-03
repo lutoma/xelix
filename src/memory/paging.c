@@ -78,6 +78,7 @@ int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
 
 void paging_init()
 {
+	return;
 	for (int i = 0; i < 1861480 / 4096; i++)
 		paging_assign(i * 4096, i * 4096, 1, 0);
 
@@ -91,5 +92,4 @@ void paging_init()
 	// Enable the paging bit
 	cr0 |= 0x80000000;
 	asm volatile("mov cr0, %0":: "r"(cr0));	
-	while (1) ;
 }
