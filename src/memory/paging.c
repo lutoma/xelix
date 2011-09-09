@@ -78,8 +78,8 @@ int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
 
 void paging_init()
 {
-	return;
-	for (int i = 0; i < 1861480 / 4096; i++)
+	//return;
+	for (int i = 0; i < 0xf424000 / 4096; i++)
 		paging_assign(i * 4096, i * 4096, 1, 0);
 
 	// Write the address of our page directory to cr3
