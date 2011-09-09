@@ -112,9 +112,6 @@ task_t* scheduler_getCurrentTask()
 // Called by the PIT a few hundred times per second.
 task_t* scheduler_select(cpu_state_t* lastRegs)
 {
-	if(currentTask == NULL || currentTask->next == NULL)
-		panic("scheduler: No tasks left - init killed?");
-
 	if(scheduler_state == STATE_INITIALIZING)
 	{
 		scheduler_state = STATE_INITIALIZED;
@@ -122,14 +119,25 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 	}
 
 	currentTask->state = lastRegs;
-	do
+
+	while (1)
 	{
 		currentTask = currentTask->next;
+		
 		if (currentTask->task_state == TASK_STATE_KILLED ||
 				currentTask->task_state == TASK_STATE_TERMINATED)
+		{
+			if (currentTask->next == currentTask)
+				currentTask->next = NULL;
 			scheduler_remove(currentTask);
+		}
+
+		if (currentTask == NULL || currentTask->task_state == TASK_STATE_RUNNING)
+			break;
 	}
-	while (currentTask->task_state != TASK_STATE_RUNNING);
+
+	if (currentTask == NULL)
+		panic("scheduler: No tasks left - init killed?");
 
 	return currentTask;
 }

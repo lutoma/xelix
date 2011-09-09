@@ -23,5 +23,6 @@
 int sys_exit(struct syscall syscall)
 {
 	scheduler_getCurrentTask()->task_state = TASK_STATE_TERMINATED;
+	asm("int 0x30");
 	return 0;
 }
