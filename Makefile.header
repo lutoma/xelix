@@ -24,7 +24,7 @@ MAKE_CFLAGS += $(CFLAGS)
 MAKE_QEMU_FLAGS = -d cpu_reset -ctrl-grab -net nic -net user
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 
-ifeq ($(shell which kvm 2> /dev/null | awk '{print  substr($$0, 0, 2)}'),/)
+ifeq ($(shell qemu -version | grep -o 'qemu-kvm'),qemu-kvm)
 	MAKE_QEMU_FLAGS += -no-kvm
 endif
 
