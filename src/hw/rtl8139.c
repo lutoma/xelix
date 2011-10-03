@@ -43,11 +43,12 @@
 #define REG_INTERRUPT_STATUS 0x3E
 #define REG_TRANSMIT_CONFIGURATION 0x40
 #define REG_RECEIVE_CONFIGURATION 0x44
+#define REG_CONFIG1 0x52
  
 // Control register values
-#define CR_RESET					(1 << 4)
+#define CR_RESET				(1 << 4)
 #define CR_RECEIVER_ENABLE			(1 << 3)
-#define CR_TRANSMITTER_ENABLE		(1 << 2)
+#define CR_TRANSMITTER_ENABLE			(1 << 2)
 #define CR_BUFFER_IS_EMPTY			(1 << 0)
  
 // Transmitter configuration
@@ -60,12 +61,12 @@
 #define RCR_MXDMA_512				(5 << 8)
 #define RCR_MXDMA_1024				(6 << 8)
 #define RCR_MXDMA_UNLIMITED			(7 << 8)
-#define RCR_ACCEPT_BROADCAST		(1 << 3)
-#define RCR_ACCEPT_MULTICAST		(1 << 2)
-#define RCR_ACCEPT_PHYS_MATCH		(1 << 1)
+#define RCR_ACCEPT_BROADCAST			(1 << 3)
+#define RCR_ACCEPT_MULTICAST			(1 << 2)
+#define RCR_ACCEPT_PHYS_MATCH			(1 << 1)
  
 // Interrupt status register
-#define ISR_RECEIVE_BUFFER_OVERFLOW	(1 << 4)
+#define ISR_RECEIVE_BUFFER_OVERFLOW		(1 << 4)
 #define ISR_TRANSMIT_OK				(1 << 2)
 #define ISR_RECEIVE_OK				(1 << 0)
 
@@ -89,8 +90,11 @@ static void rtl8139_intHandler(cpu_state_t *state)
 	log(LOG_DEBUG, "rtl8139: Got interrupt \\o/\n");
 }
 
-static void rtl8139_enableCard(struct rtl8139_card *card)
+static void enableCard(struct rtl8139_card *card)
 {
+	// Power on! (LWAKE + LWPTN to active high)
+	int_out8(card, REG_CONFIG1, 0);
+
 	// Reset card
 	int_out8(card, REG_COMMAND, CR_RESET);
 
@@ -108,10 +112,12 @@ static void rtl8139_enableCard(struct rtl8139_card *card)
 	card->macAddr[5] = int_in8(card, 5);
 	log(LOG_DEBUG, "rtl8139: Got MAC address.\n");
 
-	// Enable receiver and transmitter
-	int_out8(card, REG_COMMAND, CR_RECEIVER_ENABLE | CR_TRANSMITTER_ENABLE);
-	log(LOG_DEBUG, "rtl8139: Enabled receiver / transmitter.\n");
-	
+	// Enable all interrupt events
+	interrupts_registerHandler(card->device->interruptLine, rtl8139_intHandler);
+
+	int_out16(card, REG_INTERRUPT_MASK,  0x0005);
+	int_out16(card, REG_INTERRUPT_STATUS, 0);
+
 	// Initialize RCR/TCR
 	// RBLEN = 00, 8K + 16 bytes rx ring buffer
 	int_out32(card, REG_RECEIVE_CONFIGURATION,
@@ -125,15 +131,12 @@ static void rtl8139_enableCard(struct rtl8139_card *card)
 			TCR_MXDMA_2048
 		);
 
-	interrupts_registerHandler(card->device->interruptLine, rtl8139_intHandler);
-
-	// Enable all interrupt events
-	int_out16(card, REG_INTERRUPT_STATUS, 0);
-	int_out16(card, REG_INTERRUPT_MASK, 0xffff);
-
-	// Set receive buffer
-	card->rxBuffer = (char *)kmalloc(8192 + 16);
+	card->rxBuffer = (char *)kmalloc(8192 + 16 );
 	int_out32(card, REG_RECEIVE_BUFFER, (uint32_t)card->rxBuffer);
+
+	// Enable receiver and transmitter
+	int_out8(card, REG_COMMAND, CR_RECEIVER_ENABLE | CR_TRANSMITTER_ENABLE);
+	log(LOG_DEBUG, "rtl8139: Enabled receiver / transmitter.\n");
 }
 
 void rtl8139_init()
@@ -150,7 +153,7 @@ void rtl8139_init()
 	for(i = 0; i < numDevices; i++)
 	{
 		rtl8139_cards[i].device = devices[i];
-		rtl8139_enableCard(&rtl8139_cards[i]);
+		enableCard(&rtl8139_cards[i]);
 
 		log(LOG_INFO, "rtl8139: %d:%d.%d, iobase 0x%x, MAC Address %x:%x:%x:%x:%x:%x\n",
 				devices[i]->bus,
