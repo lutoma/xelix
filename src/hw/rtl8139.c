@@ -152,10 +152,11 @@ void rtl8139_init()
 		rtl8139_cards[i].device = devices[i];
 		rtl8139_enableCard(&rtl8139_cards[i]);
 
-		log(LOG_INFO, "rtl8139: %d:%d.%d: MAC Address %x:%x:%x:%x:%x:%x\n",
+		log(LOG_INFO, "rtl8139: %d:%d.%d, iobase 0x%x, MAC Address %x:%x:%x:%x:%x:%x\n",
 				devices[i]->bus,
 				devices[i]->dev,
 				devices[i]->func,
+				devices[i]->iobase,
 				rtl8139_cards[i].macAddr[0],
 				rtl8139_cards[i].macAddr[1],
 				rtl8139_cards[i].macAddr[2],
