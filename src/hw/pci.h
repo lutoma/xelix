@@ -80,16 +80,12 @@ pci_device_t pci_devices[65536];
 uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
 void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
 
-uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func);
-uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func);
-uint8_t pci_getRevision(uint8_t bus, uint8_t dev, uint8_t func);
-uint32_t pci_getClass(uint8_t bus, uint8_t dev, uint8_t func);
-uint8_t pci_getHeaderType(uint8_t bus, uint8_t dev, uint8_t func);
-uint32_t pci_getBAR(uint8_t bus, uint8_t dev, uint8_t func, uint8_t bar);
-uint32_t pci_getIOBase(uint8_t bus, uint8_t dev, uint8_t func);
-uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func);
-uint8_t pci_getInterruptPin(uint8_t bus, uint8_t dev, uint8_t func);
-uint8_t pci_getInterruptLine(uint8_t bus, uint8_t dev, uint8_t func);
+#define pci_getDeviceId(args...) (uint16_t)pci_configRead(args, 2)
+#define pci_getVendorId(args...) (uint16_t)pci_configRead(args, 0)
+#define pci_getRevision(args...) (uint16_t)pci_configRead(args, 0x8)
+#define pci_getClass(args...) ((uint16_t)pci_configRead(args, 0x8) >> 8)
+#define pci_getHeaderType(args...) ((uint16_t)pci_configRead(args, 0xe) & 127)
+
 void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func);
 uint32_t pci_searchDevice(pci_device_t** devices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum);
 uint32_t pci_searchByClass(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum);

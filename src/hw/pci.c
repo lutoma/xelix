@@ -51,31 +51,6 @@ void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uin
 	outl(PCI_CONFIG_DATA, val);
 }
 
-uint16_t pci_getDeviceId(uint8_t bus, uint8_t dev, uint8_t func)
-{
-	return (uint16_t)pci_configRead(bus, dev, func, 2);
-}
-
-uint16_t pci_getVendorId(uint8_t bus, uint8_t dev, uint8_t func)
-{
-	return (uint16_t)pci_configRead(bus, dev, func, 0);
-}
-
-uint8_t pci_getRevision(uint8_t bus, uint8_t dev, uint8_t func)
-{
-	return pci_configRead(bus, dev, func, 0x8);
-}
-
-uint32_t pci_getClass(uint8_t bus, uint8_t dev, uint8_t func)
-{
-	return pci_configRead(bus, dev, func, 0x8) >> 8;
-}
-
-uint8_t pci_getHeaderType(uint8_t bus, uint8_t dev, uint8_t func)
-{
-	return pci_configRead(bus, dev, func, 0xe) & 127;	
-}
-
 // *trollface*
 // bar ∈ { x | x ∈ ℕ ∧ x ∈ [0, 5] }
 uint32_t pci_getBAR(uint8_t bus, uint8_t dev, uint8_t func, uint8_t bar)
