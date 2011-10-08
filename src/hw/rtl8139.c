@@ -147,7 +147,7 @@ void rtl8139_init()
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * MAX_CARDS);
 	uint32_t numDevices = pci_searchDevice(devices, VENDOR_ID, DEVICE_ID, MAX_CARDS);
 	
-	log(LOG_INFO, "rtl8139: Discovered %d device(s).\n", numDevices);
+	log(LOG_INFO, "rtl8139: Discovered %d device%p.\n", numDevices);
 	
 	int i;
 	for(i = 0; i < numDevices; i++)

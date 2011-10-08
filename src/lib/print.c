@@ -68,7 +68,14 @@ void vprintf(const char *fmt, void** arg) {
 				}
 				state = !state;
 			}
-			
+
+			/* p stands for pluralize. If the last parameter wasn't 1,
+			 * print an 's'. Doesn't work for all words, but hey.
+			 */
+			if(*fmt == 'p')
+				if(*(unsigned*)(arg-1) != 1)
+					printChar('s');
+					
 			++arg;
 		} else printChar(*fmt);
 		++fmt;
