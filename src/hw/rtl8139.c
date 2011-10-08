@@ -113,7 +113,13 @@ static void enableCard(struct rtl8139_card *card)
 	log(LOG_DEBUG, "rtl8139: Got MAC address.\n");
 
 	// Enable all interrupt events
-	interrupts_registerHandler(card->device->interruptLine, rtl8139_intHandler);
+	if(card->device->interruptLine == 0xFF)
+	{
+		log(LOG_DEBUG, "rtl8139: Error: Card isn't connected to the PIC.");
+		return;
+	}
+	
+	interrupts_registerHandler(card->device->interruptLine + IRQ0, rtl8139_intHandler);
 
 	int_out16(card, REG_INTERRUPT_MASK,  0x0005);
 	int_out16(card, REG_INTERRUPT_STATUS, 0);
