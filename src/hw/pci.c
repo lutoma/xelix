@@ -31,14 +31,14 @@
 
 pci_device_t devices[65536];
 
-static inline int pci_getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
+static inline int getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
 	return 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
 }
 
 uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
-  outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
+  outl(PCI_CONFIG_ADDRESS, getAddress(bus, dev, func, offset));
 	if (offset % 4 == 0)
 		return inl(PCI_CONFIG_DATA);
 
@@ -47,7 +47,7 @@ uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 
 void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
 {
-	outl(PCI_CONFIG_ADDRESS, pci_getAddress(bus, dev, func, offset));
+	outl(PCI_CONFIG_ADDRESS, getAddress(bus, dev, func, offset));
 	outl(PCI_CONFIG_DATA, val);
 }
 
