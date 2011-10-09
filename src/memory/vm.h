@@ -36,6 +36,7 @@ struct vm_page
 
 	bool readonly:1;
 	bool cow:1; /* Copy-on-Write mechanism */
+	bool allocated:1;
 
 	void *cow_src_addr;
 	void *virt_addr;
@@ -50,8 +51,7 @@ int vm_add_page(struct vm_context *ctx, struct vm_page *pg);
 
 struct vm_page *vm_get_page_phys(struct vm_context *ctx, void *phys_addr);
 struct vm_page *vm_get_page_virt(struct vm_context *ctx, void *virt_addr);
-
-int vm_get_pages(struct vm_context *ctx, struct vm_page **dst, int size);
+struct vm_page *vm_get_page(struct vm_context *ctx, uint32_t offset);
 
 /* Remove pages in a specific context by physical or virtual address */
 struct vm_page *vm_rm_page_phys(struct vm_context *ctx, void *phys_addr);
