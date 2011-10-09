@@ -20,6 +20,7 @@
 
 #include <lib/generic.h>
 #include <hw/cpu.h>
+#include <memory/vm.h>
 
 // Single linked list
 typedef struct task {
@@ -28,6 +29,8 @@ typedef struct task {
 	cpu_state_t* state;
 	struct task* next;
 	struct task* last;
+
+	struct vm_context *memory_context;
 
 	// Current task state
 	enum {

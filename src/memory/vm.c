@@ -52,6 +52,13 @@ struct vm_context *vm_new()
 	return ctx;
 }
 
+struct vm_page *vm_new_page()
+{
+	struct vm_page *page = kmalloc(sizeof(struct vm_page));
+	memset(page, 0, sizeof(struct vm_page));
+	return page;
+}
+
 int vm_add_page(struct vm_context *ctx, struct vm_page *pg)
 {
 	struct vm_context_node *node = kmalloc(sizeof(struct vm_context_node));

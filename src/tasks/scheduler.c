@@ -56,6 +56,35 @@ void scheduler_remove(task_t *t)
 	t->last->next = t->next;
 }
 
+static struct vm_context *setupMemoryContext(void *stack)
+{
+	struct vm_context *ctx = vm_new();
+
+	struct vm_page *stackPage = vm_new_page();
+	stackPage->allocated = 1;
+	stackPage->section = VM_SECTION_STACK;
+	stackPage->virt_addr = (void *)0x7fffe000;
+	stackPage->phys_addr = stack;
+
+	struct vm_page *stackPage2 = vm_new_page();
+	stackPage2->section = VM_SECTION_STACK;
+	stackPage2->virt_addr = (void *)0x7fffd000;
+
+	vm_add_page(ctx, stackPage);
+	vm_add_page(ctx, stackPage2);
+
+	struct vm_page *intHandler = vm_new_page();
+	intHandler->section = VM_SECTION_KERNEL;
+	intHandler->readonly = 1;
+	intHandler->allocated = 1;
+	intHandler->virt_addr = (void *)0x7ffff000;
+	intHandler->phys_addr = (void *)0;
+
+	vm_add_page(ctx, intHandler);
+
+	return ctx;
+}
+
 // Add new task to schedule. task.c provides an interface to this.
 void scheduler_add(void* entry)
 {
@@ -65,6 +94,7 @@ void scheduler_add(void* entry)
 	memset(stack, 0, STACKSIZE);
 	
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
+	thisTask->memory_context = setupMemoryContext(stack);
 	
 	// Stack
 	thisTask->state->esp = stack + STACKSIZE - 3;

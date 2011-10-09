@@ -44,6 +44,7 @@ struct vm_page
 
 /* Generate new page context */
 struct vm_context *vm_new();
+struct vm_page *vm_new_page();
 
 int vm_add_page(struct vm_context *ctx, struct vm_page *pg);
 
