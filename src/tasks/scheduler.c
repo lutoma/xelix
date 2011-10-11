@@ -58,7 +58,11 @@ void scheduler_remove(task_t *t)
 
 static struct vm_context *setupMemoryContext(void *stack)
 {
+	log(LOG_DEBUG, "scheduler: Setup new Memory Context [%d]\n", stack);
 	struct vm_context *ctx = vm_new();
+	
+	/* Protect unused kernel space (0x7fff0000 - 0x7fffc000) */
+	int addr = 0x7fff0000;
 
 	struct vm_page *stackPage = vm_new_page();
 	stackPage->allocated = 1;
@@ -66,12 +70,30 @@ static struct vm_context *setupMemoryContext(void *stack)
 	stackPage->virt_addr = (void *)0x7fffe000;
 	stackPage->phys_addr = stack;
 
+	/* Additional stack space if already allocated stack is full */
+
 	struct vm_page *stackPage2 = vm_new_page();
 	stackPage2->section = VM_SECTION_STACK;
 	stackPage2->virt_addr = (void *)0x7fffd000;
 
 	vm_add_page(ctx, stackPage);
 	vm_add_page(ctx, stackPage2);
+
+	/* Map memory from 0x100000 to 0x17f000 (Kernel-related data) */
+	int addr = 0x100000;
+	while (pos <= 0x17f000)
+	{
+		struct vm_page *currPage = vm_new_page();
+		currPage->allocated = 1;
+		currPage->section = VM_SECTION_KERNEL;
+		currPage->readonly = 1;
+		currPage->virt_addr = (void *)pos;
+		currPage->phys_addr = (void *)pos;
+
+		pos += 4096;
+	}
+
+	/* Map unused interrupt handler */
 
 	struct vm_page *intHandler = vm_new_page();
 	intHandler->section = VM_SECTION_KERNEL;
@@ -90,7 +112,7 @@ void scheduler_add(void* entry)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
-	void* stack = kmalloc(STACKSIZE);
+	void* stack = kmalloc_a(STACKSIZE);
 	memset(stack, 0, STACKSIZE);
 	
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
