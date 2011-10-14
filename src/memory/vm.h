@@ -56,3 +56,9 @@ int vm_get_pages(struct vm_context *ctx, struct vm_page **dst, int size);
 /* Remove pages in a specific context by physical or virtual address */
 struct vm_page *vm_rm_page_phys(struct vm_context *ctx, void *phys_addr);
 struct vm_page *vm_rm_page_virt(struct vm_context *ctx, void *virt_addr);
+
+#ifdef __i386__
+#define PAGE_SIZE 4096
+#else
+#define PAGE_SIZE 0
+#endif

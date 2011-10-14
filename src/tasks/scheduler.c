@@ -24,8 +24,9 @@
 #include <hw/cpu.h>
 #include <interrupts/interface.h>
 #include <lib/panic.h>
+#include <memory/vm.h>
 
-#define STACKSIZE 4096
+#define STACKSIZE PAGE_SIZE
 #define STATE_OFF 0
 #define STATE_INITIALIZING 1
 #define STATE_INITIALIZED 2
@@ -73,7 +74,7 @@ static struct vm_context *setupMemoryContext(void *stack)
 
 		vm_add_page(ctx, currPage);
 
-		addr += 4096;
+		addr += PAGE_SIZE;
 	}
 
 	struct vm_page *stackPage = vm_new_page();
@@ -104,7 +105,7 @@ static struct vm_context *setupMemoryContext(void *stack)
 
 		vm_add_page(ctx, currPage);
 
-		pos += 4096;
+		pos += PAGE_SIZE;
 	}
 
 	/* Map unused interrupt handler */
