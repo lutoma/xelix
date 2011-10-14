@@ -34,6 +34,15 @@
 task_t* currentTask = NULL;
 uint64_t highestPid = -1;
 
+/* If we kill a process using scheduler_terminateCurrentTask, we also
+ * fire an IRQ to switch to the next process.  However, that way, the
+ * next process running would get less cpu time, as the next timer
+ * interrupt happens to be faster. Therefore, if this var is set, the
+ * scheduler 'skips' one tick, effectively giving the running process
+ * more time.
+ */
+bool skipnext = 0;
+
 void scheduler_terminateCurrentTask()
 {
 	log(LOG_DEBUG, "scheduler: Deleting current task\n");
@@ -45,8 +54,9 @@ void scheduler_terminateCurrentTask()
 		currentTask->next->last = currentTask->last;
 		currentTask->last->next = currentTask->next;
 	}
-	
-	while(true) asm("hlt");
+
+	skipnext = true;
+	while(true) asm("int 0x20; hlt");
 }
 
 void scheduler_remove(task_t *t)
@@ -186,6 +196,12 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 	}
 
 	currentTask->state = lastRegs;
+
+	if(skipnext == true)
+	{
+		skipnext = false;
+		return currentTask;
+	}
 
 	while (1)
 	{
