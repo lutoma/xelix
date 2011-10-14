@@ -61,7 +61,6 @@ static void compilerInfo()
 	#endif
 	log(LOG_INFO, "\tBy: %s\n", __BUILDCOMP__);
 	log(LOG_INFO, "\tOS: %s\n", __BUILDSYS__);
-	log(LOG_INFO, "\tDistribution: %s\n", __BUILDDIST__);
 	log(LOG_INFO, "\tTarget Architecture: %s\n", ARCHNAME);
 }
 
