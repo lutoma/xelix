@@ -63,6 +63,18 @@ static struct vm_context *setupMemoryContext(void *stack)
 	
 	/* Protect unused kernel space (0x7fff0000 - 0x7fffc000) */
 	int addr = 0x7fff0000;
+	while (addr <= 0x7fffc000)
+	{
+		struct vm_page *currPage = vm_new_page();
+		currPage->allocated = 0;
+		currPage->section = VM_SECTION_KERNEL;
+		currPage->readonly = 1;
+		currPage->virt_addr = (void *)addr;
+
+		vm_add_page(ctx, currPage);
+
+		addr += 4096;
+	}
 
 	struct vm_page *stackPage = vm_new_page();
 	stackPage->allocated = 1;
@@ -80,7 +92,7 @@ static struct vm_context *setupMemoryContext(void *stack)
 	vm_add_page(ctx, stackPage2);
 
 	/* Map memory from 0x100000 to 0x17f000 (Kernel-related data) */
-	int addr = 0x100000;
+	int pos = 0x100000;
 	while (pos <= 0x17f000)
 	{
 		struct vm_page *currPage = vm_new_page();
@@ -89,6 +101,8 @@ static struct vm_context *setupMemoryContext(void *stack)
 		currPage->readonly = 1;
 		currPage->virt_addr = (void *)pos;
 		currPage->phys_addr = (void *)pos;
+
+		vm_add_page(ctx, currPage);
 
 		pos += 4096;
 	}
