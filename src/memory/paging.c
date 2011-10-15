@@ -23,6 +23,7 @@
 #include <lib/log.h>
 #include <lib/print.h>
 #include <lib/datetime.h>
+#include <memory/vm.h>
 
 typedef struct {
 	bool present    : 1;
@@ -76,11 +77,24 @@ int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
 	return 0;
 }
 
+static void paging_vmIterator(struct vm_context *ctx, struct vm_page *pg, uint32_t offset)
+{
+	bool onlyRing0 = 0;
+	if (pg->section == VM_SECTION_KERNEL)
+		onlyRing0 = 1;
+
+	paging_assign((uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, pg->readonly, onlyRing0);
+}
+
+int paging_apply(struct vm_context *ctx)
+{
+	vm_iterate(ctx, paging_vmIterator);
+	return true;
+}
+
 void paging_init()
 {
-	//return;
-	for (int i = 0; i < 0xf424000 / 4096; i++)
-		paging_assign(i * 4096, i * 4096, 1, 0);
+	paging_apply(vm_kernelContext);
 
 	// Write the address of our page directory to cr3
 	asm volatile("mov cr3, %0":: "r"(&page_directory.nodes));

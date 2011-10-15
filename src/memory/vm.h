@@ -43,6 +43,12 @@ struct vm_page
 	void *phys_addr;
 };
 
+typedef void (*vm_iterator_t)(struct vm_context *, struct vm_page *, uint32_t);
+
+/* Initialize vm_kernelContext for paging_init() */
+void vm_init();
+struct vm_context *vm_kernelContext;
+
 /* Generate new page context */
 struct vm_context *vm_new();
 struct vm_page *vm_new_page();
@@ -56,6 +62,9 @@ struct vm_page *vm_get_page(struct vm_context *ctx, uint32_t offset);
 /* Remove pages in a specific context by physical or virtual address */
 struct vm_page *vm_rm_page_phys(struct vm_context *ctx, void *phys_addr);
 struct vm_page *vm_rm_page_virt(struct vm_context *ctx, void *virt_addr);
+
+/* Iterator */
+int vm_iterate(struct vm_context *ctx, vm_iterator_t callback);
 
 #ifdef __i386__
 #define PAGE_SIZE 4096

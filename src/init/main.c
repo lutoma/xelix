@@ -47,6 +47,7 @@
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
 #include <memory/paging.h>
+#include <memory/vm.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -98,13 +99,13 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	
 	init(cpu);
 	init(acpi);
-
 	
 	init(vfs);
 	init(pci);
 	init(rtl8139);
 	init(syscall);
 
+	init(vm);
 	init(paging);
 
 	for(int i = 0; i < multiboot_info->modsCount; i++)

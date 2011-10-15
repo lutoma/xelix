@@ -19,6 +19,7 @@
 
 #include "vm.h"
 #include <memory/kmalloc.h>
+#include <lib/print.h>
 
 #define FIND_NODE(node, cond) { \
 	while (!(cond) && node != NULL) \
@@ -33,19 +34,43 @@ struct vm_context_node
 
 struct vm_context
 {
-	struct vm_page *first_page;
-	struct vm_page *last_page;
-	uint32_t pages;
-
-	struct vm_context_node *node;
+	union {
+		struct vm_context_node *first_node;
+		struct vm_context_node *node;
+	};
+	struct vm_context_node *last_node;
+	union {
+		uint32_t pages;
+		uint32_t nodes;
+	};
 };
+
+/* Initialize kernel context */
+void vm_init()
+{
+	struct vm_context *ctx = vm_new();
+	
+	for (int i = 0; i < 0xf424000; i += 4096)
+	{
+		struct vm_page *page = vm_new_page();
+		page->section = VM_SECTION_KERNEL;
+		page->cow = 0;
+		page->allocated = 1;
+		page->virt_addr = (void *)i;
+		page->phys_addr = (void *)i;
+
+		vm_add_page(ctx, page);
+	}
+
+	vm_kernelContext = ctx;
+}
 
 struct vm_context *vm_new()
 {
 	struct vm_context *ctx = kmalloc(sizeof(struct vm_context));
 
-	ctx->first_page = NULL;
-	ctx->last_page = NULL;
+	ctx->first_node = NULL;
+	ctx->last_node = NULL;
 	ctx->node = NULL;
 	ctx->pages = 0;
 
@@ -59,6 +84,19 @@ struct vm_page *vm_new_page()
 	return page;
 }
 
+int vm_iterate(struct vm_context *ctx, vm_iterator_t iterator)
+{
+	struct vm_context_node *node = ctx->first_node;
+	int i = 0;
+	while (node != NULL && i < ctx->nodes)
+	{
+		iterator(ctx, node->page, i++);
+		node = node->next;
+	}
+
+	return i;
+}
+
 int vm_add_page(struct vm_context *ctx, struct vm_page *pg)
 {
 	struct vm_context_node *node = kmalloc(sizeof(struct vm_context_node));
@@ -67,18 +105,14 @@ int vm_add_page(struct vm_context *ctx, struct vm_page *pg)
 	if (ctx->node == NULL)
 	{
 		ctx->pages = 1;
-		ctx->first_page = pg;
-		ctx->last_page = pg;
+		ctx->first_node = node;
+		ctx->last_node = node;
 		ctx->node = node;
 		return 0;
 	}
 
-	struct vm_context_node *curr_node = ctx->node;
-	while (curr_node->next != NULL)
-		curr_node = curr_node->next;
-
-	curr_node->next = node;
-	ctx->last_page = pg;
+	ctx->last_node->next = node;
+	ctx->last_node = node;
 	++ctx->pages;
 
 	return 0;
@@ -136,9 +170,9 @@ struct vm_page *vm_rm_page_phys(struct vm_context *ctx, void *phys_addr)
 		return NULL;
 
 	if (node->next == NULL)
-		ctx->last_page = (prev_node != NULL) ? prev_node->page : NULL;
+		ctx->last_node = (prev_node != NULL) ? prev_node : NULL;
 	if (prev_node == NULL)
-		ctx->first_page = NULL;
+		ctx->first_node = NULL;
 	else
 		prev_node->next = node->next;
 
@@ -164,9 +198,9 @@ struct vm_page *vm_rm_page_virt(struct vm_context *ctx, void *virt_addr)
 		return NULL;
 
 	if (node->next == NULL)
-		ctx->last_page = (prev_node != NULL) ? prev_node->page : NULL;
+		ctx->last_node = (prev_node != NULL) ? prev_node : NULL;
 	if (prev_node == NULL)
-		ctx->first_page = NULL;
+		ctx->first_node = NULL;
 	else
 		prev_node->next = node->next;
 
