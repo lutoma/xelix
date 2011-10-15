@@ -24,11 +24,7 @@
 #define EOI_MASTER 0x20
 #define EOI_SLAVE  0xA0
 
-// Send EOI (end of interrupt) signals to the PICs.
-static void sendEOI(uint8_t which)
-{
-	outb(which, 0x20);
-}
+#define sendEOI(w) outb(w, 0x20)
 
 /* Gets called from interrupts.asm and calls the generic interrupt
  * handler in src/interrupts/interrupts.c.
