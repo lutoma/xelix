@@ -80,7 +80,7 @@ int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
 static void paging_vmIterator(struct vm_context *ctx, struct vm_page *pg, uint32_t offset)
 {
 	bool onlyRing0 = 0;
-	if (pg->section == VM_SECTION_KERNEL)
+	if (pg->section == VM_SECTION_KERNEL && pg->readonly == 0)
 		onlyRing0 = 1;
 
 	paging_assign((uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, pg->readonly, onlyRing0);
