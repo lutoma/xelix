@@ -52,57 +52,62 @@ struct list *list_alloc(void * (*allocator)(int len))
 
 void *list_append(struct list *l, void *data)
 {
-	l->length++;
+	struct list_node *node = kmalloc(sizeof(struct list_node));
 
-	struct list_node *node = kmalloc(sizeof(struct list));
-	node->list = l;
 	node->data = data;
-	node->next = NULL;
-	node->prev = l->last_node;
+	node->list = l;
 
-	if (l->last_node != NULL)
-		l->last_node->next = node;
-
-	l->last_node = node;
 	if (l->first_node == NULL)
+	{
 		l->first_node = node;
+		l->last_node = node;
+
+		return data;
+	}
+
+	node->prev = l->last_node;
+	l->last_node->next = node;
+	l->last_node = node;
 
 	return data;
 }
 
 void *list_prepend(struct list *l, void *data)
 {
-	l->length++;
+	struct list_node *node = kmalloc(sizeof(struct list_node));
 
-	struct list_node *node= kmalloc(sizeof(struct list));
-	node->list = l;
 	node->data = data;
-	node->next = l->first_node;
-	node->prev = NULL;
+	node->list = l;
 
-	if (l->first_node != NULL)
-		l->first_node->next = node;
-
-	l->first_node = node;
 	if (l->last_node == NULL)
+	{
+		l->first_node = node;
 		l->last_node = node;
+
+		return data;
+	}
+
+	node->next = l->first_node;
+	l->first_node->prev = node;
+	l->first_node = node;
 
 	return data;
 }
 
 void *list_get(struct list *l, int offset)
 {
-	if (offset >= l->length)
-		return NULL;
+	struct list_node *node = l->first_node;
+	int i = 0;
 
-	struct list_node *current_node = l->first_node;
-	int count = 0;
-	while (current_node != NULL && count != offset)
+	while (node != NULL && i < offset)
 	{
-		current_node = current_node->next;
-		count++;
+		node = node->next;
+		i++;
 	}
 
-	return current_node->data;
+	if (node == NULL)
+		return NULL;
+
+	return node->data;
 }
 
