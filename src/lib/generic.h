@@ -50,6 +50,14 @@ typedef enum { false = 0 , true = 1 } bool;
 #define NULL  0
 #define EOF  -1
 
+#ifdef __GNUC__
+	#define likely(x)       __builtin_expect((x),1)
+	#define unlikely(x)     __builtin_expect((x),0)
+#else
+	#define likely(x) (x)
+	#define unlikely(x) (x)
+#endif
+
 uint8_t readCMOS (uint16_t port);
 void writeCMOS (uint16_t port, uint8_t value);
 void memset(void* ptr, uint8_t fill, uint32_t size);
