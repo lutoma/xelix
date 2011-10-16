@@ -69,6 +69,6 @@ int elf_load(elf_t* bin)
 	if(addr == NULL)
 		return 1;
 
-	scheduler_add(addr);
+	scheduler_add(scheduler_newTask(addr, NULL));
 	return 0;
 }

@@ -50,7 +50,8 @@ typedef struct task {
 
 int scheduler_state;
 
-void scheduler_add();
+task_t *scheduler_newTask(void *entry, task_t *parent);
+void scheduler_add(task_t *task);
 void scheduler_terminateCurrentTask();
 task_t* scheduler_getCurrentTask();
 task_t* scheduler_select(cpu_state_t* lastRegs);

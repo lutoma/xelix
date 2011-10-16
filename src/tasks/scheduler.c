@@ -135,8 +135,7 @@ static struct vm_context *setupMemoryContext(void *stack)
 	return ctx;
 }
 
-// Add new task to schedule. task.c provides an interface to this.
-void scheduler_add(void* entry)
+task_t *scheduler_newTask(void *entry, task_t *parent)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
@@ -161,27 +160,33 @@ void scheduler_add(void* entry)
 	thisTask->state->ss = 0x10;
 
 	thisTask->pid = ++highestPid;
-	thisTask->parent = (currentTask == NULL) ? 0 : currentTask->pid; // Implement me
+	thisTask->parent = (parent == NULL) ? 0 : parent->pid; // Implement me
 	thisTask->task_state = TASK_STATE_RUNNING;
-	thisTask->sys_call_conv = TASK_SYSCONV_LINUX;
+	thisTask->sys_call_conv = (parent == NULL) ? TASK_SYSCONV_LINUX : parent->sys_call_conv;
 
+	return thisTask;
+}
+
+// Add new task to schedule. task.c provides an interface to this.
+void scheduler_add(task_t *task)
+{
 	interrupts_disable();
 
 	// No task yet?
 	if(currentTask == NULL)
 	{
-		currentTask = thisTask;
-		thisTask->next = thisTask;
-		thisTask->last = thisTask;
+		currentTask = task;
+		task->next = task;
+		task->last = task;
 	} else {
-		thisTask->next = currentTask->next;
-		thisTask->last = currentTask;
-		currentTask->next = thisTask;
+		task->next = currentTask->next;
+		task->last = currentTask;
+		currentTask->next = task;
 	}
 
 	interrupts_enable();
 	
-	log(LOG_INFO, "scheduler: Registered new task with PID %d\n", thisTask->pid);
+	log(LOG_INFO, "scheduler: Registered new task with PID %d\n", task->pid);
 }
 
 task_t* scheduler_getCurrentTask()

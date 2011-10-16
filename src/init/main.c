@@ -113,7 +113,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	for(int i = 0; i < multiboot_info->modsCount; i++)
 		elf_load((void*)multiboot_info->modsAddr[i].start);
 
-	scheduler_add(debugconsole_init);
+	scheduler_add(scheduler_newTask(debugconsole_init, NULL));
 	init(scheduler); // Intentionally last
 
 	/* And now a comment from our old friend Captain Obvious:
