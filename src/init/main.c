@@ -54,11 +54,13 @@ static void compilerInfo()
 {
 	log(LOG_INFO, "Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
 	log(LOG_INFO, "\tCompiled at: %s %s\n", __DATE__, __TIME__);
-	// Test for GCC > 3.2.0
-	#if GCC_VERSION > 30200
-		log(LOG_INFO, "\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-	#else
-		log(LOG_INFO, "\tCompiler: GCC (< 3.2.0)\n");
+	#ifdef __GNUC__
+		// Test for GCC > 3.2.0
+		#if GCC_VERSION > 30200
+			log(LOG_INFO, "\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+		#else
+			log(LOG_INFO, "\tCompiler: GCC (< 3.2.0)\n");
+		#endif
 	#endif
 	log(LOG_INFO, "\tBy: %s\n", __BUILDCOMP__);
 	log(LOG_INFO, "\tOS: %s\n", __BUILDSYS__);

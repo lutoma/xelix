@@ -22,9 +22,11 @@
 #include "stdint.h"
 #include "portio.h"
 
-#define GCC_VERSION (__GNUC__ * 10000 \
-							   + __GNUC_MINOR__ * 100 \
-							   + __GNUC_PATCHLEVEL__)
+#ifdef __GNUC__
+	#define GCC_VERSION (__GNUC__ * 10000 \
+								+ __GNUC_MINOR__ * 100 \
+								+ __GNUC_PATCHLEVEL__)
+#endif
 
 #define ARCH_i386 0
 #define ARCH_amd64 1
