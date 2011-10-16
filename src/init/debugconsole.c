@@ -48,26 +48,6 @@ static void executeCommand(char *command)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
 	else if(strcmp(command, "clear") == 0) printf("\e[H\e[2J");
-	else if(strcmp(command, "ls") == 0)
-	{
-		// Check if root fs is initialised
-		if(vfs_rootNode->readDir == NULL)
-			return;
-		
-		struct dirent *node = 0;
-
-		int i;
-		for(i = 0; (node = vfs_rootNode->readDir(vfs_rootNode, i)); i++)
-		{
-			fsNode_t *fsNode = vfs_rootNode->findDir(vfs_rootNode, node->name);
-			int color;
-			if((fsNode->flags&0x7) == FS_DIRECTORY)
-				color = 0x09;
-			else
-				color = 0x07;
-			printf("%%%s%%  ", color, node->name);
-		}
-	}
 	else if(strcmp(command, "pid") == 0)
 	{
 		task_t* proc = scheduler_getCurrentTask();

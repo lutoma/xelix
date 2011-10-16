@@ -23,15 +23,15 @@
 #include <memory/kmalloc.h>
 #include <lib/string.h>
 
-fsNode_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
+fs_node_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
 						 uint32_t gid, uint32_t flags, uint32_t inode,
 						 uint32_t length, uint32_t impl,
 						 read_type_t read, write_type_t write,
 						 open_type_t open, close_type_t close,
 						 readDir_type_t readDir, findDir_type_t findDir,
-						 fsNode_t *ptr, fsNode_t *parent)
+						 fs_node_t *ptr, fs_node_t *parent)
 {
-	fsNode_t* node = (fsNode_t*)kmalloc(sizeof(fsNode_t));
+	fs_node_t* node = (fs_node_t*)kmalloc(sizeof(fs_node_t));
 	strcpy(node->name, name);
 	
 	if(parent == NULL)

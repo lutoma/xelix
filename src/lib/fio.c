@@ -27,7 +27,7 @@
 // Caution: Some^W most of those functions are untested, beware of the bugs ;)
 
 // Get Node from Path, return NULL if error
-fsNode_t* fio_pathToNode(const char* origPath)
+fs_node_t* fio_pathToNode(const char* origPath)
 {
 	// Split path and iterate trough the single parts, going from / upwards.
 	static char* pch;
@@ -40,7 +40,7 @@ fsNode_t* fio_pathToNode(const char* origPath)
 	memcpy(path, (char*)origPath, sizeof(path) +1);
 	
 	pch = strtok_r(path, "/", &sp);	
-	fsNode_t* node = vfs_rootNode->findDir(vfs_rootNode, pch);
+	fs_node_t* node = vfs_rootNode->findDir(vfs_rootNode, pch);
 
 	while(pch != NULL && node != NULL)
 	{
@@ -56,7 +56,7 @@ FILE* fopen(const char* path, const char* modes)
 {
 	log(LOG_DEBUG, "fio: Opening file %s, modes '%s'\n", path, modes);
 	
-	fsNode_t* node = fio_pathToNode(path);
+	fs_node_t* node = fio_pathToNode(path);
 	if(node == NULL)
 		return NULL;
 
