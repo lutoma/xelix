@@ -41,7 +41,10 @@ uint64_t highestPid = -1;
  * scheduler 'skips' one tick, effectively giving the running process
  * more time.
  */
-bool skipnext = 0;
+#define SKIP_WAIT 2
+#define SKIP_NEXT 1
+#define SKIP_OFF  0
+int skipnext = SKIP_OFF;
 
 void scheduler_terminateCurrentTask()
 {
@@ -55,7 +58,7 @@ void scheduler_terminateCurrentTask()
 		currentTask->last->next = currentTask->next;
 	}
 
-	skipnext = true;
+	skipnext = SKIP_WAIT;
 	while(true) asm("int 0x20; hlt");
 }
 
@@ -197,9 +200,10 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 
 	currentTask->state = lastRegs;
 
-	if(skipnext == true)
+	if(skipnext == SKIP_WAIT) skipnext = SKIP_NEXT;
+	else if(skipnext == SKIP_NEXT)
 	{
-		skipnext = false;
+		skipnext = SKIP_OFF;
 		return currentTask;
 	}
 
