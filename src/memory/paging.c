@@ -88,6 +88,8 @@ static void paging_vmIterator(struct vm_context *ctx, struct vm_page *pg, uint32
 
 int paging_apply(struct vm_context *ctx)
 {
+	memset(current_page_tables, 0, sizeof(page_table_t) * 1024);
+	memset(current_page_directory, 0, sizeof(page_directory_t));
 	vm_iterate(ctx, paging_vmIterator);
 	return true;
 }
