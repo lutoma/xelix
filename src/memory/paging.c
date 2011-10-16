@@ -1,5 +1,5 @@
 /* paging.c: Paging intialization / allocation
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011 Lukas Martini, Fritz Grimpen
  *
  * This file is part of Xelix.
  *
