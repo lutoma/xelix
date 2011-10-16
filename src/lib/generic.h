@@ -33,15 +33,11 @@ to try that anyway, remove this block in src/lib/generic.h.
 							   + __GNUC_MINOR__ * 100 \
 							   + __GNUC_PATCHLEVEL__)
 
-#define XELIX 1
-
 #define ARCH_i386 0
 #define ARCH_amd64 1
 
 #define isCharDigit(C) ((C) >= '0' && (C) <= '9')
 #define DUMPVAR(C,D) printf("\e[32mdumpvar: %s="C" at %s:%d\e[0m\n", #D, D, __FILE__, __LINE__);
-
-#define POW2(x) (2 << (x - 1))
 
 #define POW2(x) (2 << (x - 1))
 
