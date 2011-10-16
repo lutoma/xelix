@@ -80,4 +80,4 @@ clean:
 
 .PHONY: tags
 tags:
-	find -name '*.c' -exec ctags -a {} \;
+	ctags -R
