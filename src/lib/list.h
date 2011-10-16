@@ -20,7 +20,7 @@
 
 #include <lib/generic.h>
 
-struct list;
+typedef struct list list_t;
 
 struct list *list_new();
 struct list *list_alloc(void * (*allocator)(int len));
