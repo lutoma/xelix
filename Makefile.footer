@@ -77,3 +77,7 @@ count:
 .PHONY: clean
 clean:
 	find -L src -type f -iregex "^.*\.o" | xargs rm -f
+
+.PHONY: tags
+tags:
+	find -name '*.c' -exec ctags -a {} \;
