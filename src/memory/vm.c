@@ -50,7 +50,7 @@ void vm_init()
 {
 	struct vm_context *ctx = vm_new();
 	
-	for (int i = 0; i < 0xf424000; i += 4096)
+	for (uint32_t i = 0; i <= 0xffffe000U; i += 4096)
 	{
 		struct vm_page *page = vm_new_page();
 		page->section = VM_SECTION_KERNEL;
