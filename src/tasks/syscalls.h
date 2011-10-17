@@ -29,6 +29,7 @@
 #include "syscalls/read.h"
 #include "syscalls/brk.h"
 #include "syscalls/mmap.h"
+#include "syscalls/munmap.h"
 
 syscall_t syscall_table[] = {
 	sys_chg_sys_conv, // 0
@@ -122,7 +123,7 @@ syscall_t syscall_table[] = {
 	NULL, // 88
 	NULL,
 	sys_mmap, // 90
-	NULL, // sys_munmap
+	sys_munmap,
 	NULL,
 	NULL,
 	NULL,
