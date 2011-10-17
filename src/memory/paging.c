@@ -93,7 +93,7 @@ static void paging_vmIterator(struct vm_context *ctx, struct vm_page *pg, uint32
 	if (pg->section == VM_SECTION_KERNEL && pg->readonly == 0)
 		onlyRing0 = 1;
 
-	paging_assign((uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, pg->readonly, onlyRing0);
+	paging_assign((uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, !pg->readonly, !onlyRing0);
 }
 
 int paging_apply(struct vm_context *ctx)
