@@ -102,6 +102,8 @@ int paging_apply(struct vm_context *ctx)
 	memset(current_page_directory, 0, sizeof(page_directory_t));
 	vm_iterate(ctx, paging_vmIterator);
 
+	vm_currentContext = ctx;
+
 	asm volatile("mov cr3, %0":: "r"(&(current_page_directory->nodes)));
 
 	if (current_page_tables == page_tables1)
