@@ -1,5 +1,5 @@
-/* vfs.c: Provices abstraction from the filesystem drivers
- * Copyright © 2010, 2011 Lukas Martini
+/* vfs.c: Virtual file system
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,52 +17,40 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// TODO: See doc/vfs.txt
+
 #include "vfs.h"
 
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <lib/string.h>
+#include <lib/list.h>
 
-fs_node_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
-						 uint32_t gid, uint32_t flags, uint32_t inode,
-						 uint32_t length, uint32_t impl,
-						 read_type_t read, write_type_t write,
-						 open_type_t open, close_type_t close,
-						 readDir_type_t readDir, findDir_type_t findDir,
-						 fs_node_t *ptr, fs_node_t *parent)
+#define MAX_MOUNTPOINTS 50
+
+vfs_node_t mountpoints[MAX_MOUNTPOINTS];
+uint32_t mountpoints_last_used = -1;
+
+/*
+vfs_storage_t* vfs_get_from_path(const char* path)
 {
-	fs_node_t* node = (fs_node_t*)kmalloc(sizeof(fs_node_t));
-	strcpy(node->name, name);
-	
-	if(parent == NULL)
-			parent = node; // This node is it's own parent
+	// Scalability & speed? Nope, chuck testa.
+	// TODO
+}*/
 
-	log(LOG_INFO, "vfs: Creating new node %s (flags 0x%x, parent %s).\n", name, flags, parent->name);
-	
-	node->mask = mask;
-	node->uid = uid;
-	node->gid = gid;
-	node->flags = flags;
-	node->inode = inode;
-	node->length = length;
-	node->impl = impl;
-	node->read = read;
-	node->write = write;
-	node->open = open;
-	node->close = close;
-	node->readDir = readDir;
-	node->findDir = findDir;
-	node->ptr = ptr;
-	node->parent = parent;
-
-	return node;
+vfs_storage_t* vfs_get_from_id(uint32_t id)
+{
+	// Scalability & speed? Nope, chuck testa.
+	return mountpoints[id].storage;
 }
 
-// Initialize the filesystem abstraction system
-void vfs_init()
+void vfs_mount(const char* path, vfs_storage_t* store)
 {
-	// Initialise the root directory.
-	vfs_rootNodeCount = 0;
-	vfs_rootNode = vfs_createNode("root", 0, 0, 0, FS_DIRECTORY, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); // RootNode is it's own parent, therefore NULL as last parameter.
+	uint32_t num = ++mountpoints_last_used;
+	mountpoints[num].path = path;
+	mountpoints[num].storage = store;
+	mountpoints[num].active = true;
 }
 
+// For future use
+void vfs_init(){}
