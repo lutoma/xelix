@@ -1,5 +1,6 @@
-/* brk.c: Legacy brk() syscall
- * Copyright © 2011 Fritz Grimpen
+#pragma once
+
+/* Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -17,24 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "brk.h"
-#include <memory/vm.h>
-#include <memory/kmalloc.h>
+#include <tasks/syscall.h>
 
-#define alignedMemoryPosition() (kmalloc_getMemoryPosition() + 4096 - (kmalloc_getMemoryPosition() % 4096))
-
-int sys_brk(struct syscall syscall)
-{
-	if (vm_currentContext == vm_kernelContext)
-	{
-		if (syscall.params[0] == 0)
-			return alignedMemoryPosition();
-
-		size_t allocationSize = syscall.params[0] - alignedMemoryPosition();
-		kmalloc_a(allocationSize);
-
-		return (int)alignedMemoryPosition();
-	}
-
-	return -1;
-}
+int sys_mmap(struct syscall syscall);

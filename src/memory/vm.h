@@ -47,8 +47,8 @@ typedef void (*vm_iterator_t)(struct vm_context *, struct vm_page *, uint32_t);
 
 /* Initialize vm_kernelContext for paging_init() */
 void vm_init();
-struct vm_context *vm_kernelContext = NULL;
-struct vm_context *vm_currentContext = NULL;
+struct vm_context *vm_kernelContext;
+struct vm_context *vm_currentContext;
 
 /* Generate new page context */
 struct vm_context *vm_new();
