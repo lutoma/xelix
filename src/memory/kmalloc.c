@@ -69,6 +69,6 @@ void kmalloc_init()
 	if(multiboot_info->modsCount > 0) // Do we have at least one module?
 		memoryPosition = multiboot_info->modsAddr[multiboot_info->modsCount - 1].end;
 	else // Guess.
-		memoryPosition = 15 * 1024 ^ 2;
+		memoryPosition = 15 * 1024 * 1024;
 
 }
