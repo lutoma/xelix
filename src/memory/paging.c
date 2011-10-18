@@ -24,6 +24,7 @@
 #include <lib/print.h>
 #include <lib/datetime.h>
 #include <memory/vm.h>
+#include <interrupts/interface.h>
 
 typedef struct {
 	bool present    : 1;
@@ -102,6 +103,7 @@ static void paging_vmIterator(struct vm_context *ctx, struct vm_page *pg, uint32
 
 int paging_apply(struct vm_context *ctx)
 {
+	interrupts_disable();
 	struct paging_context *pgCtx = vm_get_cache(ctx);
 	
 	if (pgCtx == NULL)
@@ -115,6 +117,7 @@ int paging_apply(struct vm_context *ctx)
 
 	vm_currentContext = ctx;
 	asm volatile("mov cr3, %0"::"r"(pgCtx));
+	interrupts_enable();
 
 	return true;
 }
