@@ -50,6 +50,7 @@ typedef void (*vm_iterator_t)(struct vm_context *, struct vm_page *, uint32_t);
 void vm_init();
 struct vm_context *vm_kernelContext;
 struct vm_context *vm_currentContext;
+struct vm_context *vm_processContext;
 
 /* Some callbacks for magic functions */
 void (*vm_applyPage)(struct vm_context *, struct vm_page *);

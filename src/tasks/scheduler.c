@@ -144,6 +144,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
 	thisTask->memory_context = setupMemoryContext(stack);
+	thisTask->memory_context = vm_kernelContext;
 	
 	// Stack
 	thisTask->state->esp = stack + STACKSIZE - 3;
