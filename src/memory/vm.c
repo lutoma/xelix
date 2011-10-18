@@ -46,6 +46,8 @@ struct vm_context
 		uint32_t pages;
 		uint32_t nodes;
 	};
+
+	void *cache;
 };
 
 /* Initialize kernel context */
@@ -118,8 +120,8 @@ int vm_add_page(struct vm_context *ctx, struct vm_page *pg)
 	ctx->last_node = node;
 	++ctx->pages;
 
-	if (ctx == vm_currentContext && vm_applyPage != NULL)
-		vm_applyPage(pg);
+	if (ctx->cache != NULL)
+		vm_applyPage(ctx, pg);
 
 	return 0;
 }
@@ -231,4 +233,14 @@ void vm_handle_fault(uint32_t code, void *addr, void *instr)
 
 	if (pg == NULL || pg->section == VM_SECTION_UNMAPPED)
 		panic("Page Fault at %d (Address %d)\n", instr, addr);
+}
+
+void vm_set_cache(struct vm_context *ctx, void *cache)
+{
+	ctx->cache = cache;
+}
+
+void *vm_get_cache(struct vm_context *ctx)
+{
+	return ctx->cache;
 }

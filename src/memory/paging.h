@@ -23,6 +23,8 @@
 
 #define paging_AlignAddr(x) ((x & 0xFFFFF000) + 0x1000)
 
-void paging_applyPage(struct vm_page *pg);
+struct paging_context;
+
+void paging_applyPage(struct vm_context *ctx, struct vm_page *pg);
 int paging_apply(struct vm_context *ctx);
 void paging_init();

@@ -52,7 +52,7 @@ struct vm_context *vm_kernelContext;
 struct vm_context *vm_currentContext;
 
 /* Some callbacks for magic functions */
-void (*vm_applyPage)(struct vm_page *);
+void (*vm_applyPage)(struct vm_context *, struct vm_page *);
 
 /* Generate new page context */
 struct vm_context *vm_new();
@@ -73,6 +73,10 @@ int vm_iterate(struct vm_context *ctx, vm_iterator_t callback);
 
 uint32_t vm_count_pages(struct vm_context *ctx);
 void vm_handle_fault(uint32_t code, void *addr, void *instruction);
+
+/* Get/Set cached paging context */
+void vm_set_cache(struct vm_context *ctx, void *cache);
+void *vm_get_cache(struct vm_context *ctx);
 
 #ifdef __i386__
 #define PAGE_SIZE 4096
