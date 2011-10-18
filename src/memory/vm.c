@@ -52,6 +52,8 @@ void vm_init()
 	
 	for (uint32_t i = 0; i <= 0xffffe000U; i += 4096)
 	{
+		if (i == 0x80000000)
+			continue;
 		struct vm_page *page = vm_new_page();
 		page->section = VM_SECTION_KERNEL;
 		page->cow = 0;

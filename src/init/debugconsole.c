@@ -58,6 +58,16 @@ static void executeCommand(char *command)
 	else if(strcmp(command, "freeze") == 0) freeze();
 	else if(strcmp(command, "panic") == 0) panic("Test panic for debugging");
 	else if(strcmp(command, "kill") == 0) asm("mov %eax, 1; int 0x80;");
+	else if(strcmp(command, "triplefault") == 0)
+	{
+		struct vm_context *ctx = vm_new();
+		paging_apply(ctx);
+	}
+	else if(strcmp(command, "pagefault") == 0)
+	{
+		char *ptr = (char*)0x80000000;
+		*ptr = 0x20;
+	}
 	else
 	{
 		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...

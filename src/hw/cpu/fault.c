@@ -38,18 +38,28 @@ static char* errorDescriptions[] =
 	"Segment not present (pushes an error code)",
 	"Stack fault (pushes an error code)",
 	"General protection fault (pushes an error code)",
-	"Page fault (pushes an error code)",
 	"Unknown interrupt exception",
+	"Page fault (pushes an error code)",
 	"Coprocessor fault",
 	"Alignment check exception",
 	"Machine check exception"
 };
+
+static void handlePageFault(cpu_state_t *regs)
+{
+	int cr2;
+	asm volatile("mov %0, cr2":"=r"(cr2));
+	printf("Page Fault [0x%x] [Error: 0x%x]\n", cr2, regs->errCode);
+	asm("cli; hlt");
+}
 
 // Handles the IRQs we catch
 static void faultHandler(cpu_state_t* regs)
 {
 	if(regs->interrupt > 18)
 		panic("Unkown CPU error %d", regs->interrupt);
+	else if(regs->interrupt == 14)
+		handlePageFault(regs);
 	else
 		panic("CPU error %d (%s)", regs->interrupt, errorDescriptions[regs->interrupt]);
 }
