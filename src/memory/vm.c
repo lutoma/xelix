@@ -20,11 +20,14 @@
 #include "vm.h"
 #include <memory/kmalloc.h>
 #include <lib/print.h>
+#include <lib/panic.h>
 
 #define FIND_NODE(node, cond) { \
 	while (!(cond) && node != NULL) \
 		node = node->next; \
 }
+
+#define GET_PAGE(a) (a - (a % PAGE_SIZE))
 
 struct vm_context_node
 {
@@ -52,8 +55,6 @@ void vm_init()
 	
 	for (uint32_t i = 0; i <= 0xffffe000U; i += 4096)
 	{
-		if (i == 0x80000000)
-			continue;
 		struct vm_page *page = vm_new_page();
 		page->section = VM_SECTION_KERNEL;
 		page->cow = 0;
@@ -116,6 +117,9 @@ int vm_add_page(struct vm_context *ctx, struct vm_page *pg)
 	ctx->last_node->next = node;
 	ctx->last_node = node;
 	++ctx->pages;
+
+	if (ctx == vm_currentContext && vm_applyPage != NULL)
+		vm_applyPage(pg);
 
 	return 0;
 }
@@ -212,4 +216,19 @@ struct vm_page *vm_rm_page_virt(struct vm_context *ctx, void *virt_addr)
 	kfree(node);
 	
 	return retval;
+}
+
+uint32_t vm_count_pages(struct vm_context *ctx)
+{
+	return ctx->pages;
+}
+
+void vm_handle_fault(uint32_t code, void *addr, void *instr)
+{
+	uint32_t addrInt = (uint32_t)addr;
+	struct vm_page *pg = vm_get_page_virt(vm_currentContext, (void *)GET_PAGE(addrInt));
+	printf("Fault\n");
+
+	if (pg == NULL || pg->section == VM_SECTION_UNMAPPED)
+		panic("Page Fault at %d (Address %d)\n", instr, addr);
 }
