@@ -65,8 +65,17 @@ static void executeCommand(char *command)
 	}
 	else if(strcmp(command, "pagefault") == 0)
 	{
-		char *ptr = (char*)0x80000000;
-		*ptr = 0x20;
+		char *ptr = (char*)0x00000000;
+		*ptr = 0x00;
+	}
+	else if(strcmp(command, "reload") == 0)
+	{
+		paging_apply(vm_kernelContext);
+	}
+	else if(strcmp(command, "rebuild") == 0)
+	{
+		vm_set_cache(vm_kernelContext, NULL);
+		paging_apply(vm_kernelContext);
 	}
 	else
 	{
