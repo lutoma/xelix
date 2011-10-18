@@ -58,7 +58,7 @@ int sys_mmap(struct syscall syscall)
 	for (int i = 0; i < newPages; ++i)
 	{
 		struct vm_page *newPage = vm_new_page();
-		newPage->section = VM_SECTION_DATA;
+		newPage->section = VM_SECTION_MMAP;
 		newPage->readonly = readonly;
 		newPage->allocated = 0;
 		newPage->virt_addr = addr + i * 4096;
