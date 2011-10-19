@@ -33,7 +33,7 @@ uint32_t logLevel;
 
 // Logs something. Also prints it out.
 // FIXME: doesn't parse the saved stuff, needs improvement. Dirty hacks ftw.
-void log(uint32_t level, const char *fmt, ...)
+ __attribute__((optimize(0))) void log(uint32_t level, const char *fmt, ...)
 {
 	if(level > logLevel)
 		return;
