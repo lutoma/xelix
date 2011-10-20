@@ -80,7 +80,7 @@ static uint32_t vendorNameToVendor(char vendorName[13])
 }
 
 // TODO: Find out why we have to re-send the command over and over again.
-void cpuid_init()
+void __attribute__((optimize(0))) cpuid_init()
 {
 	cpuid_data = (cpuid_t*)kmalloc(sizeof(cpuid_t));
 	memset(cpuid_data, 0, sizeof(cpuid_t));
