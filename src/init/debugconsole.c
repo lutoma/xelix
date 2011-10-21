@@ -54,17 +54,6 @@ static void executeCommand(char *command)
 		if(proc != NULL)
 			printf("procnum: %d\n", proc->pid);
 	}
-	else if(strcmp(command, "date") == 0)
-	{
-		int day = date('d');
-		int month = date('M');
-		int year = date('y');
-		int hour = date('h');
-		int minute = date('m');
-		int second = date('s');
-		int weekDay = getWeekDay(day, month, year);
-		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
-	}
 	else if(strcmp(command, "halt") == 0) halt();
 	else if(strcmp(command, "freeze") == 0) freeze();
 	else if(strcmp(command, "panic") == 0) panic("Test panic for debugging");
