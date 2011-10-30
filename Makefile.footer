@@ -7,7 +7,6 @@
 .PHONY: INSTALL
 install: xelix.bin
 	sudo cp xelix.bin /boot/xelix || su -c 'cp xelix.bin /boot/xelix'
-	sudo cp initrd.img /boot/xelix_initrd || su -c 'cp xelix.bin /boot/xelix_initrd'
 
 .PHONY: mount
 mount:
@@ -24,7 +23,6 @@ unmount:
 
 floppy.img: xelix.bin mount
 	sudo cp xelix.bin mount/kernel || su -c 'cp xelix.bin mount/kernel'
-	sudo cp initrd.img mount/ || su -c 'cp initrd.img mount/'
 	sleep 0.5
 	sudo umount mount || su -c 'umount mount'
 	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
@@ -45,16 +43,12 @@ runbochsfloppy: floppy.img
 
 .PHONY: runqemu
 runqemu: xelix.bin
-	qemu -monitor stdio -kernel xelix.bin -initrd initrd.img $(MAKE_QEMU_FLAGS)
-
-.PHONY: runqemudebug
-runqemudebug: xelix.bin
-	qemu -kernel xelix.bin -initrd initrd.img $(MAKE_QEMU_FLAGS)
+	qemu -monitor stdio -kernel xelix.bin $(MAKE_QEMU_FLAGS)
 
 .PHONY: runqemunox
 runqemunox: xelix.bin
 	@echo "Exit with ^A-x"
-	qemu -kernel xelix.bin -nographic -initrd initrd.img $(MAKE_QEMU_FLAGS)
+	qemu -kernel xelix.bin -nographic $(MAKE_QEMU_FLAGS)
 
 xelix.iso: floppy.img
 	mkisofs -o xelix.iso -A Xelix -b floppy.img floppy.img
