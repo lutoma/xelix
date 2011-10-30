@@ -65,7 +65,7 @@ static void executeCommand(char *command)
 	}
 }
 
-static void loop()
+void debugconsole_init()
 {
 	int read_offset = 0;
 	int read;
@@ -102,12 +102,4 @@ static void loop()
 
 		executeCommand(currentLine);
 	}
-}
-
-// Initialize the debug console.
-void debugconsole_init()
-{
-	DUMPVAR("0x%x", currentLine);
-	log_setPrintLog(0); // We don't want stuff to pop up in our console - use the kernellog command.
-	loop();
 }
