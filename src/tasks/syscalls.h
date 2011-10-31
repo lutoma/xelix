@@ -26,12 +26,13 @@
 #include "syscalls/exit.h"
 #include "syscalls/getpid.h"
 #include "syscalls/getppid.h"
+#include "syscalls/read.h"
 
 syscall_t syscall_table[] = {
 	sys_chg_sys_conv, // 0
 	sys_exit, // 1
 	NULL, // 2
-	NULL,
+	sys_read,
 	sys_write, // 4
 	NULL,
 	NULL,
