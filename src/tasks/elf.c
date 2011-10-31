@@ -55,16 +55,26 @@ int elf_load(elf_t* bin)
 		fail("elf: elf_load: This elf file doesn't have an entry point\n");
 
 	elf_program_t* phead = ((void*)bin + bin->phoff);
-
 	void* addr = NULL;
+	
+	
 	for(int i = 0; i < bin->phnum; i++, phead++)
 	{
+	#ifndef CRAZY_ELF_LOADER
 		if(phead->type == 1)
 		{
 			addr = (void*)bin + (bin->entry - phead->virtaddr);
 			break;
 		}
+	#else
+		memset(phead->virtaddr, 0, phead->filesize);
+		memcpy(phead->virtaddr, (void*)bin + phead->offset, phead->filesize);	
+	#endif
 	}
+
+	#ifdef CRAZY_ELF_LOADER
+	addr = bin->entry;
+	#endif
 
 	if(addr == NULL)
 		return 1;
