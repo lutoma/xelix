@@ -156,7 +156,7 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 		}
 		
 		if(unlikely(buffer[i] == '\n' || buffer[i] == '\r'))
-			return read++;
+			return ++read;
 		
 		console_write(NULL, (char*)&buffer[i], 1);
 
