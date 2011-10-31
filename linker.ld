@@ -1,2 +1,4 @@
-INPUT(crt0.o)
-ENTRY(_start)
+STARTUP(crt0.o)
+ENTRY(__crt0_entry)
+SEARCH_DIR(.)
+OUTPUT_ARCH(i386)

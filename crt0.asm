@@ -1,8 +1,8 @@
 SECTION .text
-GLOBAL _start
+GLOBAL __crt0_entry
 EXTERN main
 
-_start:
+__crt0_entry:
 	call main
 	
 	; Exit
@@ -11,7 +11,6 @@ _start:
 
 	; Loop in case we haven't rescheduled yet
 j:	hlt
-	nop
 	nop
 	nop
 	jmp j
