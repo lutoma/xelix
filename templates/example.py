@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-# <filename>.py: Description of what this file does
 # Copyright © <year> <your name>
 
 # This file is part of Xelix.

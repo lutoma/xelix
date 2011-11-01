@@ -1,4 +1,3 @@
-; <filename>.asm: Description of what this file does
 ; Copyright © <year> <your name>
 
 ; This file is part of Xelix.
