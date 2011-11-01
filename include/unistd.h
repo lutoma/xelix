@@ -18,14 +18,7 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <unistd.h>
+#define STDIN_FILENO 0;
+#define STDOUT_FILENO 1;
+#define STDERR_FILENO 2;
 
-// Should work fine for now
-typedef void FILE;
-
-// The numbers are defined in unistd.h
-FILE* stdin = (FILE*)STDIN_FILENO;
-FILE* stdout = (FILE*)STDOUT_FILENO;
-FILE* stderr = (FILE*)STDERR_FILENO;
-
-void print(const char* string);
