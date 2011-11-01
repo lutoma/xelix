@@ -1,8 +1,8 @@
 SECTION .text
-GLOBAL __crt0_entry
+GLOBAL _start
 EXTERN main
 
-__crt0_entry:
+_start:
 	call main
 	
 	; Exit
