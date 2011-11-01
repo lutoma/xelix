@@ -1,5 +1,3 @@
-#pragma once
-
 /* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
@@ -18,8 +16,12 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stddef.h>
+#include <stdint.h>
 
-void memcpy(void* dest, void* src, uint32_t size);
-void memset(void* ptr, uint8_t fill, uint32_t size);
-size_t strlen(const char* str);
+void memset(void* ptr, uint8_t fill, uint32_t size)
+{
+	uint8_t* p = (uint8_t*) ptr;
+	uint8_t* max = p+size;
+	for(; p < max; p++)
+	*p = fill;
+}
