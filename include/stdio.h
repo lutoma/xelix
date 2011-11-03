@@ -24,8 +24,14 @@
 typedef void FILE;
 
 // The numbers are defined in unistd.h
-FILE* stdin = (FILE*)STDIN_FILENO;
-FILE* stdout = (FILE*)STDOUT_FILENO;
-FILE* stderr = (FILE*)STDERR_FILENO;
+#ifdef __INLIBC
+	FILE* stdin = (FILE*)STDIN_FILENO;
+	FILE* stdout = (FILE*)STDOUT_FILENO;
+	FILE* stderr = (FILE*)STDERR_FILENO;
+#else
+	extern FILE* stdin;
+	extern FILE* stdout;
+	extern FILE* stderr;
+#endif
 
 void print(const char* string);

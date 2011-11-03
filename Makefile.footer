@@ -1,5 +1,5 @@
 %.o: %.c
-	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
+	$(CC) $(MAKE_CFLAGS) -D "__INLIBC" -o $@ -c $<
 
 %-asm.o: %.asm
 	$(AS) -f elf -g -o $@ $(ASFLAGS) $<
