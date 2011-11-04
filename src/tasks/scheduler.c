@@ -37,8 +37,7 @@ uint64_t highestPid = -1;
 /* If we kill a process using scheduler_terminateCurrentTask, we also
  * fire an IRQ to switch to the next process.  However, that way, the
  * next process running would get less cpu time, as the next timer
- * interrupt happens to be faster. Therefore, if this var is set, the
- * scheduler 'skips' one tick, effectively giving the running process
+ * interrupt happens to be faster. Therefore, if this var is set, the * scheduler 'skips' one tick, effectively giving the running process
  * more time.
  */
 #define SKIP_WAIT 2
@@ -76,8 +75,7 @@ static struct vm_context *setupMemoryContext(void *stack)
 	struct vm_context *ctx = vm_new();
 	
 	/* Protect unused kernel space (0x7fff0000 - 0x7fffc000) */
-	int addr = 0x7fff0000;
-	while (addr <= 0x7fffc000)
+	for(int addr = 0x7fff0000; addr <= 0x7fffc000; addr += PAGE_SIZE)
 	{
 		struct vm_page *currPage = vm_new_page();
 		currPage->allocated = 0;
@@ -86,8 +84,6 @@ static struct vm_context *setupMemoryContext(void *stack)
 		currPage->virt_addr = (void *)addr;
 
 		vm_add_page(ctx, currPage);
-
-		addr += PAGE_SIZE;
 	}
 
 	struct vm_page *stackPage = vm_new_page();
