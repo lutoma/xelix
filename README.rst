@@ -4,25 +4,17 @@ Xelix README
 Xelix is an open source (GPL v3+ licensed) kernel, mainly for learning
 how things work inside of a computer. It currently only supports x86.
 
-Dependencies
+You'll need
 ------------
 
  * GNU Make
- * GNU GCC (>= 4.4.3)
+ * GNU CC (>= 4.4.3)
  * NASM
  * GNU Binutils
  
-Also, the following libraries are being used (Git fetches them
-automatically, but for the sake of completeness, they're still listed
-here):
-
- * Libkdict
- * Libstrbuffer
-
 Compiling
 ---------
 
- * (git submodule update --init)
  * (./configure)
  * (make clean)
  * make
