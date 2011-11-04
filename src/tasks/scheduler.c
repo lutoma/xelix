@@ -132,6 +132,12 @@ static struct vm_context *setupMemoryContext(void *stack)
 	return ctx;
 }
 
+
+/* Setup a new task, including the necessary paging context.
+ * However, mapping the program itself into the context is
+ * UP TO YOU as the scheduler has no clue about how long
+ * your program is.
+ */
 task_t *scheduler_newTask(void *entry, task_t *parent)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
@@ -165,7 +171,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	return thisTask;
 }
 
-// Add new task to schedule. task.c provides an interface to this.
+// Add new task to schedule.
 void scheduler_add(task_t *task)
 {
 	interrupts_disable();
