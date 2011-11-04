@@ -63,7 +63,7 @@ static void faultHandler(cpu_state_t* regs)
 	else if(regs->interrupt == 14)
 		handlePageFault(regs);
 	else
-		panic("CPU error %d (%s)", regs->interrupt, errorDescriptions[regs->interrupt]);
+		panic("CPU error %d (%s) at %x", regs->interrupt, errorDescriptions[regs->interrupt], regs->eip);
 }
 
 void cpu_initFaultHandler()
