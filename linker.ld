@@ -23,9 +23,5 @@ SECTIONS
 
 	.bss ALIGN(4096) : {
 		*(.bss)
-		page_directory1 += ALIGN(4096);
-		page_tables1 += ALIGN(4096);
-		page_directory2 += ALIGN(4096);
-		page_tables2 += ALIGN(4096);
 	}
 }

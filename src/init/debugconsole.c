@@ -31,6 +31,7 @@
 #include <tasks/scheduler.h>
 #include <console/interface.h>
 #include <lib/panic.h>
+#include <memory/paging.h>
 
 uint32_t cursorPosition;
 char currentLine[256] = "";
