@@ -37,7 +37,8 @@ uint64_t highestPid = -1;
 /* If we kill a process using scheduler_terminateCurrentTask, we also
  * fire an IRQ to switch to the next process.  However, that way, the
  * next process running would get less cpu time, as the next timer
- * interrupt happens to be faster. Therefore, if this var is set, the * scheduler 'skips' one tick, effectively giving the running process
+ * interrupt happens to be faster. Therefore, if this var is set, the
+ * scheduler 'skips' one tick, effectively giving the running process
  * more time.
  */
 #define SKIP_WAIT 2
