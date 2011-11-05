@@ -28,7 +28,7 @@
 	bool printlog = LOG_PRINT ;
 #endif
 
-static char* log;
+static char* klog;
 static bool initialized = false;
 
 // Logs something. Also prints it out.
@@ -36,8 +36,8 @@ __attribute__((optimize(0))) void log(uint32_t level, const char *fmt, ...)
 {
 	if(unlikely(!initialized)) return;
 
-	if(unlikely(strlen(kernelLog) + strlen(fmt) < LOG_MAXSIZE))
-		kernelLog = strcat(kernelLog, fmt); // concatenate to kernellog
+	if(unlikely(strlen(klog) + strlen(fmt) < LOG_MAXSIZE))
+		klog = strcat(klog, fmt); // concatenate to kernellog
 	
 	if(printlog)
 		vprintf(fmt, (void**)(&fmt) + 1);
@@ -53,7 +53,7 @@ void log_setPrintLog(bool yesno)
 // Initialize log
 void log_init()
 {
-	log = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
-	*log = 0;
+	klog = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
+	*klog = 0;
 	initialized = true;
 }
