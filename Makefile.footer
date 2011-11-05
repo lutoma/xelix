@@ -33,6 +33,11 @@ runqemufloppy: floppy.img
 	- rm /var/qemu.log
 	qemu -monitor stdio -fda floppy.img $(MAKE_QEMU_FLAGS)
 
+.PHONY: debugqemufloppy
+debugqemufloppy: floppy.img
+	- rm /var/qemu.log
+	qemu $(QEMU_FLAGS) -s -S -fda floppy.img
+
 .PHONY: gdb
 gdb:
 	gdb xelix.bin -ex "target remote :1234"
