@@ -80,7 +80,9 @@ void vm_set_cache(struct vm_context *ctx, void *cache);
 void *vm_get_cache(struct vm_context *ctx);
 
 #ifdef __i386__
-#define PAGE_SIZE 4096
+	#define PAGE_SIZE 4096
+	#define VM_ALIGN(x) ((x & 0xFFFFF000) + 0x1000)
 #else
-#define PAGE_SIZE 0
+	#define PAGE_SIZE 0
+	#define VM_ALIGN(x) (x)
 #endif
