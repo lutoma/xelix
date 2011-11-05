@@ -72,6 +72,12 @@ count:
 clean:
 	find -L src -type f -iregex "^.*\.o" | xargs rm -f
 
-.PHONY: tags
+PHONY: tags
 tags:
 	ctags -R
+
+
+.PHONY: runqemudebug
+runqemudebug: xelix.bin
+	qemu -kernel xelix.bin $(MAKE_QEMU_FLAGS)
+
