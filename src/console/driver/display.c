@@ -21,7 +21,22 @@
 #include <console/color.h>
 #include <memory/kmalloc.h>
 
-static uint16_t* const display_memory = (uint16_t*) 0xB8000;
+#ifndef CONSOLE_SCROLL_PAGES
+#define CONSOLE_SCROLL_PAGES 8
+#endif
+
+static uint16_t* const hardware_memory = (uint16_t*) 0xB8000;
+static uint16_t display_memory[25 * 80 * CONSOLE_SCROLL_PAGES];
+static uint8_t currentPage;
+
+#define DISP_CHAR(x, y) (display_memory + ( 25 * 80 * (CONSOLE_SCROLL_PAGES - 1)) + x + y * 80)
+#define DISP_PAGE(n) (display_memory + 25 * 80 * n)
+#define DISP_LAST_PAGE (display_memory + (25 * 80 * (CONSOLE_SCROLL_PAGES - 1)))
+#define DISP_LAST_LINE (display_memory + 25 * 80 * CONSOLE_SCROLL_PAGES - 80)
+#define DISP_BYTES (25 * 80 * 2 * CONSOLE_SCROLL_PAGES)
+#define DISP_PAGE_SIZE ( 25 * 80 * 2)
+#define DISP_LINE_SIZE ( 80 * 2)
+#define DISP_CHAR_SIZE ( 2 )
 
 static void console_driver_display_setCursor(console_info_t *info, uint32_t x, uint32_t y)
 {
@@ -52,7 +67,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 	{
 		info->cursor_y++;
 		info->cursor_x = 0;
-		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
+		goto return_write;
 		return 0;
 	}
 	else if (c == '\t')
@@ -61,8 +76,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 		info->cursor_x = info->cursor_x + columns;
 		if (info->cursor_x >= info->columns)
 			info->cursor_x = info->columns - 1;
-		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
-		return columns;
+		goto return_write;
 	}
 	
 	if (c == 0x8 || c == 0x7f)
@@ -76,20 +90,19 @@ static int console_driver_display_write(console_info_t *info, char c)
 			return 0;
 
 		info->cursor_x--;
-		uint16_t *pos = display_memory + info->cursor_y * info->columns + info->cursor_x;
+		uint16_t *pos = DISP_CHAR(info->cursor_x, info->cursor_y);
 		*pos = (color << 8) | ' ';
-		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
-		return 0;
+		goto return_write;
 	}
 
 	while (info->cursor_y >= info->rows)
 	{
-		memcpy(display_memory, display_memory + 80, info->rows * info->columns * 2);
-		memset(display_memory + (info->rows * info->columns) - info->columns, 0, info->columns * 2);
+		memcpy(DISP_PAGE(0), DISP_PAGE(0) + 80, DISP_BYTES - DISP_LINE_SIZE);
+		memset(DISP_LAST_LINE, 0, DISP_LINE_SIZE);
 		info->cursor_y--;
 	}
 
-	uint16_t *pos = display_memory + info->cursor_y * info->columns + info->cursor_x;
+	uint16_t *pos = DISP_CHAR(info->cursor_x, info->cursor_y);
 	*pos = (color << 8) | c;
 
 	info->cursor_x++;
@@ -99,23 +112,34 @@ static int console_driver_display_write(console_info_t *info, char c)
 		info->cursor_y++;
 	}
 
+return_write:
 	console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
+	memcpy(hardware_memory, DISP_LAST_PAGE, DISP_PAGE_SIZE);
 
 	return 1;
 }
 
 static int console_driver_display_clear(console_info_t *info)
 {
+	memcpy(DISP_PAGE(0), DISP_PAGE(1), DISP_BYTES - DISP_PAGE_SIZE);
+	memset(DISP_LAST_PAGE, 0, DISP_PAGE_SIZE);
 	info->cursor_x = 0;
 	info->cursor_y = 0;
-
-  int i = 0;
-	char color = console_driver_display_packColor(info);
-	while (i < info->columns * info->rows)
-		display_memory[i++] = (color << 8) | ' ';
-
 	console_driver_display_setCursor(NULL, 0, 0);
 	return 0;
+}
+
+static int console_driver_display_scroll(console_info_t *info, int32_t page)
+{
+	if (page == 0)
+		return 0;
+
+	currentPage = currentPage + page;
+	uint32_t offset = CONSOLE_SCROLL_PAGES - (currentPage % 8) - 1;
+	uint16_t *newPage = DISP_PAGE(offset);
+
+	memcpy(hardware_memory, newPage, DISP_PAGE_SIZE);
+	return offset;
 }
 
 console_driver_t *console_driver_display_init(console_driver_t *mem)
@@ -128,9 +152,11 @@ console_driver_t *console_driver_display_init(console_driver_t *mem)
 	mem->write = console_driver_display_write;
 	mem->_clear = console_driver_display_clear;
 	mem->setCursor = console_driver_display_setCursor;
+	mem->scroll = console_driver_display_scroll;
 
 	mem->capabilities = CONSOLE_DRV_CAP_CLEAR |
-		CONSOLE_DRV_CAP_SET_CURSOR;
+		CONSOLE_DRV_CAP_SET_CURSOR |
+		CONSOLE_DRV_CAP_SCROLL;
 
 	return mem;
 }
