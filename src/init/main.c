@@ -76,8 +76,6 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(gdt);
 	init(interrupts);
 	init(panic);
-
-	
 	init(kmalloc);
 	init(keyboard);
 	init(pit, PIT_RATE);
@@ -92,20 +90,12 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	#endif
 
 	init(argparser, multiboot_info->cmdLine);
-
-	if(multiboot_info->bootLoaderName != NULL && find_substr(multiboot_info->bootLoaderName, "GRUB") != -1)
-		init_haveGrub = true;
-	else
-		log(LOG_WARN, "init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
-	
 	init(cpu);
-	init(acpi);
-	
+	init(acpi);	
 	init(vfs);
 	init(pci);
 	init(rtl8139);
 	init(syscall);
-
 	init(vm);
 	init(paging);
 
