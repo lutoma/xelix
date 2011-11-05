@@ -20,7 +20,7 @@
 // Thanks to Fritz Grimpen who wrote our original kmalloc.
 
 #include "kmalloc.h"
-
+#include "vm.h"
 #include <lib/log.h>
 #include <arch/i386/lib/multiboot.h>
 
@@ -35,11 +35,7 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 {
 	// If the address is not already page-aligned
 	if (align == 1 && (memoryPosition & 0xFFFFF000))
-	{
-		// Align it.
-		memoryPosition &= 0xFFFFF000;
-		memoryPosition += 0x1000;
-	}
+		memoryPosition = VM_ALIGN(memoryPosition);
 
 	if (phys)
 		*phys = memoryPosition;
