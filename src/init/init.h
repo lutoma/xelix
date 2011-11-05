@@ -26,7 +26,7 @@
 	{ \
 		log(LOG_INFO, "\e[36m" #C ": Initializing at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
 		C ## _init(args); \
-		log(LOG_INFO, "\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
+		log(LOG_ALWAYS, "\e[36m" #C ": Initialized at " __FILE__ ":%d [" #C "_init(" #args ")] (plain)\n\e[0m", __LINE__); \
 	} while(0);
 
 bool init_haveGrub;

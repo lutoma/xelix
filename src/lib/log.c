@@ -21,48 +21,39 @@
 #include "string.h"
 #include "print.h"
 #include <memory/kmalloc.h>
-#include <lib/datetime.h>
 
-#define DEFAULT_LEVEL LOG_INFO
-#define DEFAULT_PRINTLOG true
+#ifndef LOG_PRINT
+	bool printlog = true;
+#else
+	bool printlog = LOG_PRINT ;
+#endif
 
-char* kernelLog;
-
-bool printLog;
-uint32_t logLevel;
+static char* log;
+static bool initialized = false;
 
 // Logs something. Also prints it out.
-// FIXME: doesn't parse the saved stuff, needs improvement. Dirty hacks ftw.
- __attribute__((optimize(0))) void log(uint32_t level, const char *fmt, ...)
+__attribute__((optimize(0))) void log(uint32_t level, const char *fmt, ...)
 {
-	if(level > logLevel)
-		return;
+	if(unlikely(!initialized)) return;
 
-	if(strlen(kernelLog) + strlen(fmt) < LOG_MAXSIZE) // prevent an overflow that is likely to happen if the log gets long enough
+	if(unlikely(strlen(kernelLog) + strlen(fmt) < LOG_MAXSIZE))
 		kernelLog = strcat(kernelLog, fmt); // concatenate to kernellog
 	
-	if(printLog)
+	if(printlog)
 		vprintf(fmt, (void**)(&fmt) + 1);
-}
-
-void log_setLogLevel(uint32_t level)
-{
-	logLevel = level;
-	log(LOG_INFO, "log: Set log level to %d.\n", level);
 }
 
 void log_setPrintLog(bool yesno)
 {
 	if(yesno) log(LOG_INFO, "Enabled printing of log messages.\n");
 	else log(LOG_WARN, "log: disabled printing of log messages.\n");
-	printLog = yesno;
+	printlog = yesno;
 }
 
 // Initialize log
 void log_init()
 {
-	kernelLog = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
-	kernelLog[0] = '\0'; // set kernel log to empty string
-	log_setLogLevel(DEFAULT_LEVEL);
-	log_setPrintLog(DEFAULT_PRINTLOG);
+	log = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
+	*log = 0;
+	initialized = true;
 }
