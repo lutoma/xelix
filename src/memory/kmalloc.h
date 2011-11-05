@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Christoph Sünderhauf
+/* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,9 +19,6 @@
  */
 
 #include <lib/generic.h>
-
-#define MEMORY_MAX_KMEM 0xBFFFFF
-
 
 // Use macros.
 void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys);
