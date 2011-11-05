@@ -97,6 +97,16 @@ void console_clear(console_t *console)
 		console->output_driver->_clear(&console->info);
 }
 
+size_t console_scroll(console_t *console, int32_t pages)
+{
+	GET_CONSOLE(console, return 0);
+
+	if (console->output_driver->capabilities & CONSOLE_DRV_CAP_SCROLL)
+		return console->output_driver->scroll(&console->info, pages);
+
+	return 0;
+}
+
 size_t console_write(console_t *console, const char *buffer, size_t length)
 {
 	GET_CONSOLE(console, return 0);
