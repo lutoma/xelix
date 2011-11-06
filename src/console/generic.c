@@ -1,5 +1,5 @@
 /* generic.c: Generic terminal access
- * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2011 Fritz Grimpen, Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -165,7 +165,7 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 			continue;
 		}
 		
-		console_write(NULL, (char*)&buffer[i], 1);
+		console_write(console, (char*)&buffer[i], 1);
 
 		if(unlikely(buffer[i] == '\n' || buffer[i] == '\r'))
 			return ++read;
