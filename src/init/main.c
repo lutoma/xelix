@@ -105,7 +105,10 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	if(multiboot_info->modsCount < 1)
 		scheduler_add(scheduler_newTask(debugconsole_init, NULL));
 
-	init(scheduler); // Intentionally last
+	/* Is intentionally last. It's also intentional that the init()
+	 * macro isn't used here. Seriously, don't mess around here.
+	 */
+	scheduler_init();
 
 	/* And now a comment from our old friend Captain Obvious:
 	 * If you disable interrupts in an interrupt handler and
