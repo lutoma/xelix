@@ -19,7 +19,7 @@
 # along with Xelix. If not, see <http://www.gnu.org/licenses/>.
 
 # Update submodules
-git submodule update --init
+git submodule update --init 1> /dev/null
 
 # Get files
 files=`find -L src -type f -iregex "^.*\.\(c\|asm\)" | tr '\n' '  '`
