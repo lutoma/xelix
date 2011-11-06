@@ -165,10 +165,10 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 			continue;
 		}
 		
+		console_write(NULL, (char*)&buffer[i], 1);
+
 		if(unlikely(buffer[i] == '\n' || buffer[i] == '\r'))
 			return ++read;
-		
-		console_write(NULL, (char*)&buffer[i], 1);
 
 		filter = console->input_filter;
 		while (filter != NULL)
