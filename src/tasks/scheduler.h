@@ -25,7 +25,7 @@
 // Single linked list
 typedef struct task {
 	uint32_t pid;
-	uint32_t parent;
+	struct task *parent;
 	cpu_state_t* state;
 	struct task* next;
 	struct task* last;
