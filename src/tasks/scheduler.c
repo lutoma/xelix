@@ -148,7 +148,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
 	thisTask->memory_context = setupMemoryContext(stack);
 	thisTask->memory_context = vm_kernelContext;
-	
+
 	// Stack
 	thisTask->state->esp = stack + STACKSIZE - 3;
 	thisTask->state->ebp = thisTask->state->esp;
@@ -164,7 +164,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	thisTask->state->ss = 0x10;
 
 	thisTask->pid = ++highestPid;
-	thisTask->parent = (parent == NULL) ? 0 : parent->pid; // Implement me
+	thisTask->parent = parent;
 	thisTask->task_state = TASK_STATE_RUNNING;
 	thisTask->sys_call_conv = (parent == NULL) ? TASK_SYSCONV_LINUX : parent->sys_call_conv;
 
