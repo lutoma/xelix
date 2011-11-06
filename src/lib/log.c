@@ -21,6 +21,7 @@
 #include "string.h"
 #include "print.h"
 #include <memory/kmalloc.h>
+#include <hw/pit.h>
 
 #ifndef LOG_PRINT
 	bool printlog = true;
@@ -40,7 +41,10 @@ __attribute__((optimize(0))) void log(uint32_t level, const char *fmt, ...)
 		klog = strcat(klog, fmt); // concatenate to kernellog
 	
 	if(printlog)
+	{
+		printf("[%d:%d] ", pit_getTickNum() / PIT_RATE, pit_getTickNum());
 		vprintf(fmt, (void**)(&fmt) + 1);
+	}
 }
 
 void log_setPrintLog(bool yesno)
