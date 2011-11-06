@@ -165,6 +165,18 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 			continue;
 		}
 		
+		// Backspace
+		if(unlikely(buffer[i] == 0x8 || buffer[i] == 0x7f))
+		{
+			if(read <= 0)
+				continue;
+			console_write(console, (char*)&buffer[i], 1);
+
+			read--; 
+			i--;
+			continue;
+		}
+
 		console_write(console, (char*)&buffer[i], 1);
 
 		if(unlikely(buffer[i] == '\n' || buffer[i] == '\r'))
