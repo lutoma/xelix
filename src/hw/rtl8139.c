@@ -147,7 +147,6 @@ static void enableCard(struct rtl8139_card *card)
 
 void rtl8139_init()
 {
-	log_setLogLevel(LOG_DEBUG);
 	memset(rtl8139_cards, 0, MAX_CARDS * sizeof(struct rtl8139_card));
 
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * MAX_CARDS);
