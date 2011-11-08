@@ -2,4 +2,4 @@ Interrupts
 ==========
 
 0x30: Kernel panic
-0x31: Syscalls
+0x80: Syscalls

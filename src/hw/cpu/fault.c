@@ -22,6 +22,8 @@
 #include <lib/log.h>
 #include <lib/panic.h>
 #include <interrupts/interface.h>
+#include <memory/vm.h>
+#include <memory/paging.h>
 
 static char* errorDescriptions[] = 
 {
@@ -38,20 +40,30 @@ static char* errorDescriptions[] =
 	"Segment not present (pushes an error code)",
 	"Stack fault (pushes an error code)",
 	"General protection fault (pushes an error code)",
-	"Page fault (pushes an error code)",
 	"Unknown interrupt exception",
+	"Page fault (pushes an error code)",
 	"Coprocessor fault",
 	"Alignment check exception",
 	"Machine check exception"
 };
+
+static void handlePageFault(cpu_state_t *regs)
+{
+	int cr2;
+	asm volatile("mov %0, cr2":"=r"(cr2));
+	
+	vm_handle_fault(regs->errCode, (void *)cr2, regs->eip);
+}
 
 // Handles the IRQs we catch
 static void faultHandler(cpu_state_t* regs)
 {
 	if(regs->interrupt > 18)
 		panic("Unkown CPU error %d", regs->interrupt);
+	else if(regs->interrupt == 14)
+		handlePageFault(regs);
 	else
-		panic("CPU error %d (%s)", regs->interrupt, errorDescriptions[regs->interrupt]);
+		panic("CPU error %d (%s) at %x", regs->interrupt, errorDescriptions[regs->interrupt], regs->eip);
 }
 
 void cpu_initFaultHandler()

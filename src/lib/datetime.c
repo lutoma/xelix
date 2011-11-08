@@ -21,6 +21,7 @@
 
 #include "string.h"
 #include <hw/pit.h>
+#include <memory/kmalloc.h>
 
 // Get the current day, month, year, time etc.
 int date(char dateStr)
@@ -63,49 +64,13 @@ int date(char dateStr)
 	return nowDate;
 }
 
-// Convert month number to month name
-char* monthToString(int month, int shortVersion)
-{
-	char* monthString;
-	char* longNames[12];
-	
-	longNames[0] = "January";
-	longNames[1] = "February";
-	longNames[2] = "March";
-	longNames[3] = "April";
-	longNames[4] = "May";
-	longNames[5] = "June";
-	longNames[6] = "July";
-	longNames[7] = "August";
-	longNames[8] = "September";
-	longNames[9] = "October";
-	longNames[10] = "November";
-	longNames[11] = "December";
-	
-	monthString = longNames[month -1];
-	if(shortVersion) monthString = substr(monthString, 0, 3);
-	return monthString;
-}
-
 // Calculate weekday
 //See http://de.wikipedia.org/wiki/Wochentagsberechnung for details
 int getWeekDay(int dayOfMonth, int month, int year)
 {
+	static int monthNums[] = {0, 3, 3, 6, 1, 4, 6, 2, 5, 0, 3, 5};
+
 	int dayNum = dayOfMonth % 7;
-	
-	int monthNums[12];
-	monthNums[0] = 0;
-	monthNums[1] = 3;
-	monthNums[2] = 3;
-	monthNums[3] = 6;
-	monthNums[4] = 1;
-	monthNums[5] = 4;
-	monthNums[6] = 6;
-	monthNums[7] = 2;
-	monthNums[8] = 5;
-	monthNums[9] = 0;
-	monthNums[10] = 3;
-	monthNums[11] = 5;
 	int monthNum = monthNums[month - 1];
 	
 	int yearNum = ((year / 10 % 10) * 10); // Get last two digits
@@ -115,26 +80,6 @@ int getWeekDay(int dayOfMonth, int month, int year)
 	centuryNum = (3 - (centuryNum % 4)) * 2;
 
 	return (dayNum + monthNum + yearNum + centuryNum) % 7;
-}
-
-// Convert weekday number to weekday name
-char* dayToString(int day, int shortVersion)
-{
-	char* dayString;
-	char* longNames[7];
-	
-	longNames[0] = "Monday";
-	longNames[1] = "Tuesday";
-	longNames[2] = "Wednesday";
-	longNames[3] = "Thursday";
-	longNames[4] = "Friday";
-	longNames[5] = "Saturday";
-	longNames[6] = "Sunday";
-	
-	dayString = longNames[day-1];
-	if(shortVersion)
-		dayString = substr(dayString, 0, 3);
-	return dayString;
 }
 
 // Sleep x seconds

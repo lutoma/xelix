@@ -18,6 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Xelix. If not, see <http://www.gnu.org/licenses/>.
 
+# Update submodules
+git submodule update --init 1> /dev/null
+
 # Get files
 files=`find -L src -type f -iregex "^.*\.\(c\|asm\)" | tr '\n' '  '`
 

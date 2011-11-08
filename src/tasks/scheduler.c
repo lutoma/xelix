@@ -76,8 +76,7 @@ static struct vm_context *setupMemoryContext(void *stack)
 	struct vm_context *ctx = vm_new();
 	
 	/* Protect unused kernel space (0x7fff0000 - 0x7fffc000) */
-	int addr = 0x7fff0000;
-	while (addr <= 0x7fffc000)
+	for(int addr = 0x7fff0000; addr <= 0x7fffc000; addr += PAGE_SIZE)
 	{
 		struct vm_page *currPage = vm_new_page();
 		currPage->allocated = 0;
@@ -86,8 +85,6 @@ static struct vm_context *setupMemoryContext(void *stack)
 		currPage->virt_addr = (void *)addr;
 
 		vm_add_page(ctx, currPage);
-
-		addr += PAGE_SIZE;
 	}
 
 	struct vm_page *stackPage = vm_new_page();
@@ -135,6 +132,12 @@ static struct vm_context *setupMemoryContext(void *stack)
 	return ctx;
 }
 
+
+/* Setup a new task, including the necessary paging context.
+ * However, mapping the program itself into the context is
+ * UP TO YOU as the scheduler has no clue about how long
+ * your program is.
+ */
 task_t *scheduler_newTask(void *entry, task_t *parent)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
@@ -144,7 +147,8 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
 	thisTask->memory_context = setupMemoryContext(stack);
-	
+	thisTask->memory_context = vm_kernelContext;
+
 	// Stack
 	thisTask->state->esp = stack + STACKSIZE - 3;
 	thisTask->state->ebp = thisTask->state->esp;
@@ -160,14 +164,14 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	thisTask->state->ss = 0x10;
 
 	thisTask->pid = ++highestPid;
-	thisTask->parent = (parent == NULL) ? 0 : parent->pid; // Implement me
+	thisTask->parent = parent;
 	thisTask->task_state = TASK_STATE_RUNNING;
 	thisTask->sys_call_conv = (parent == NULL) ? TASK_SYSCONV_LINUX : parent->sys_call_conv;
 
 	return thisTask;
 }
 
-// Add new task to schedule. task.c provides an interface to this.
+// Add new task to schedule.
 void scheduler_add(task_t *task)
 {
 	interrupts_disable();

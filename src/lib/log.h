@@ -28,6 +28,7 @@
 #define LOG_WARN		2
 #define LOG_INFO		3
 #define LOG_DEBUG		4
+#define LOG_ALWAYS		9001 // It's over 9000
 
 void log(uint32_t level, const char *fmt, ...);
 void log_setLogLevel(uint32_t level);

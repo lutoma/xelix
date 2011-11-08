@@ -1,5 +1,5 @@
 /* generic.c: Generic terminal access
- * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2011 Fritz Grimpen, Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -97,6 +97,16 @@ void console_clear(console_t *console)
 		console->output_driver->_clear(&console->info);
 }
 
+size_t console_scroll(console_t *console, int32_t pages)
+{
+	GET_CONSOLE(console, return 0);
+
+	if (console->output_driver->capabilities & CONSOLE_DRV_CAP_SCROLL)
+		return console->output_driver->scroll(&console->info, pages);
+
+	return 0;
+}
+
 size_t console_write(console_t *console, const char *buffer, size_t length)
 {
 	GET_CONSOLE(console, return 0);
@@ -148,12 +158,29 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 	{
 		buffer[i] = console->input_driver->read(&console->info);
 
-		if (buffer[i] == 0)
+		if(unlikely(buffer[i] == 0))
 		{
 			if (console->info.nonblocking)
 				i++;
 			continue;
 		}
+		
+		// Backspace
+		if(unlikely(buffer[i] == 0x8 || buffer[i] == 0x7f))
+		{
+			if(read <= 0)
+				continue;
+			console_write(console, (char*)&buffer[i], 1);
+
+			read--; 
+			i--;
+			continue;
+		}
+
+		console_write(console, (char*)&buffer[i], 1);
+
+		if(unlikely(buffer[i] == '\n' || buffer[i] == '\r'))
+			return ++read;
 
 		filter = console->input_filter;
 		while (filter != NULL)

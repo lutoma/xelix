@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -18,15 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <tasks/syscall.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log(LOG_INFO, "init: Starting to initialize " #C "\n"); \
-		C ## _init(args); \
-		log(LOG_INFO, "init: Initialized " #C "\n"); \
-	} while(0);
-
-bool init_haveGrub;
+int sys_read(struct syscall syscall);

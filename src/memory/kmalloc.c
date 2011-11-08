@@ -20,12 +20,11 @@
 // Thanks to Fritz Grimpen who wrote our original kmalloc.
 
 #include "kmalloc.h"
-
+#include "vm.h"
 #include <lib/log.h>
 #include <arch/i386/lib/multiboot.h>
 
 uint32_t memoryPosition;
-#define pagingEnabled false // FIXME
 
 /* Use the macros instead of directly calling this functions.
  * For details on the __attribute__((alloc_size(1))), see the GCC
@@ -35,11 +34,7 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 {
 	// If the address is not already page-aligned
 	if (align == 1 && (memoryPosition & 0xFFFFF000))
-	{
-		// Align it.
-		memoryPosition &= 0xFFFFF000;
-		memoryPosition += 0x1000;
-	}
+		memoryPosition = VM_ALIGN(memoryPosition);
 
 	if (phys)
 		*phys = memoryPosition;
@@ -69,6 +64,6 @@ void kmalloc_init()
 	if(multiboot_info->modsCount > 0) // Do we have at least one module?
 		memoryPosition = multiboot_info->modsAddr[multiboot_info->modsCount - 1].end;
 	else // Guess.
-		memoryPosition = 15 * 1024 ^ 2;
+		memoryPosition = 15 * 1024 * 1024;
 
 }

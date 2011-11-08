@@ -37,7 +37,6 @@
 #include <memory/kmalloc.h>
 #include <hw/speaker.h>
 #include <fs/vfs.h>
-#include <tasks/task.h>
 #include <lib/argparser.h>
 #include <tasks/scheduler.h>
 #include <init/debugconsole.h>
@@ -77,8 +76,6 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(gdt);
 	init(interrupts);
 	init(panic);
-
-	
 	init(kmalloc);
 	init(keyboard);
 	init(pit, PIT_RATE);
@@ -93,28 +90,25 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	#endif
 
 	init(argparser, multiboot_info->cmdLine);
-
-	if(multiboot_info->bootLoaderName != NULL && find_substr(multiboot_info->bootLoaderName, "GRUB") != -1)
-		init_haveGrub = true;
-	else
-		log(LOG_WARN, "init: It looks like you don't use GNU GRUB as bootloader. Please note that we only support GRUB and things might be broken.\n");
-	
 	init(cpu);
-	init(acpi);
-	
+	init(acpi);	
 	init(vfs);
 	init(pci);
 	init(rtl8139);
 	init(syscall);
-
 	init(vm);
 	init(paging);
 
-	for(int i = 0; i < multiboot_info->modsCount; i++)
-		elf_load((void*)multiboot_info->modsAddr[i].start);
+	if(multiboot_info->modsCount)
+		elf_load((void*)multiboot_info->modsAddr[0].start);
 
-	scheduler_add(scheduler_newTask(debugconsole_init, NULL));
-	init(scheduler); // Intentionally last
+	if(multiboot_info->modsCount < 1)
+		scheduler_add(scheduler_newTask(debugconsole_init, NULL));
+
+	/* Is intentionally last. It's also intentional that the init()
+	 * macro isn't used here. Seriously, don't mess around here.
+	 */
+	scheduler_init();
 
 	/* And now a comment from our old friend Captain Obvious:
 	 * If you disable interrupts in an interrupt handler and

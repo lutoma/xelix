@@ -24,6 +24,7 @@
 #include <lib/print.h>
 #include <lib/datetime.h>
 #include <memory/vm.h>
+#include <interrupts/interface.h>
 
 typedef struct {
 	bool present    : 1;
@@ -43,21 +44,12 @@ typedef struct {
 	page_t nodes[1024];
 } page_table_t;
 
-// page_tables[PAGE_DIR]
-page_table_t page_tables1[1024];
-page_directory_t page_directory1;
+struct paging_context {
+	page_directory_t directory;
+	page_table_t tables[1024];
+};
 
-page_table_t page_tables2[1024];
-page_directory_t page_directory2;
-
-enum {
-	PG_DIR_1,
-	PG_DIR_2
-} current_page_dir = PG_DIR_1;
-page_table_t *current_page_tables = page_tables1;
-page_directory_t *current_page_directory = &page_directory1;
-
-int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
+static int paging_assign(struct paging_context *ctx, uint32_t virtual, uint32_t physical, bool rw, bool user, bool mapped)
 {
 	// Align virtual and physical addresses to 4096 byte
 	virtual = virtual - virtual % 4096;
@@ -66,20 +58,20 @@ int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
 	uint32_t page_dir_offset = virtual >> 22;
 	uint32_t page_table_offset = (virtual >> 12) % 1024;
 
-	page_t *page_dir = &(current_page_directory->nodes[page_dir_offset]);
-	page_t *page_table = &(current_page_tables[page_dir_offset].nodes[page_table_offset]);
+	page_t *page_dir = &(ctx->directory.nodes[page_dir_offset]);
+	page_t *page_table = &(ctx->tables[page_dir_offset].nodes[page_table_offset]);
 	if (!page_dir->present)
 	{
 		page_dir->present = true;
-		page_dir->rw = rw;
-		page_dir->user = user;
+		page_dir->rw = 1;
+		page_dir->user = 1;
 		page_dir->frame = (int)page_table >> 12;
 	}
 
 	if (page_table->present)
 		return 1;
 
-	page_table->present = true;
+	page_table->present = mapped;
 	page_table->rw = rw;
 	page_table->user = user;
 	page_table->frame = physical >> 12;
@@ -87,38 +79,52 @@ int paging_assign(uint32_t virtual, uint32_t physical, bool rw, bool user)
 	return 0;
 }
 
+void paging_applyPage(struct vm_context *ctx, struct vm_page *pg)
+{
+	struct paging_context *pgCtx = vm_get_cache(ctx);
+	bool user = true;
+	bool write = !pg->readonly;
+
+	if (pg->section == VM_SECTION_KERNEL && write == true)
+		user = false;
+	else if (pg->section == VM_SECTION_STACK && pg->allocated == 0)
+		return;
+
+	if (pg->section == VM_SECTION_UNMAPPED)
+		paging_assign(pgCtx, (uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, write, user, false);
+	else
+		paging_assign(pgCtx, (uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, write, user, true);
+}
+
 static void paging_vmIterator(struct vm_context *ctx, struct vm_page *pg, uint32_t offset)
 {
-	bool onlyRing0 = 0;
-	if (pg->section == VM_SECTION_KERNEL && pg->readonly == 0)
-		onlyRing0 = 1;
-
-	paging_assign((uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, !pg->readonly, !onlyRing0);
+	paging_applyPage(ctx, pg);
 }
 
 int paging_apply(struct vm_context *ctx)
 {
-	memset(current_page_tables, 0, sizeof(page_table_t) * 1024);
-	memset(current_page_directory, 0, sizeof(page_directory_t));
-	vm_iterate(ctx, paging_vmIterator);
+	interrupts_disable();
+	struct paging_context *pgCtx = vm_get_cache(ctx);
+	
+	if (pgCtx == NULL)
+	{
+		/* Build paging context for vm_context */
+		pgCtx = kmalloc_a(sizeof(struct paging_context));
+		vm_set_cache(ctx, pgCtx);
+		
+		vm_iterate(ctx, paging_vmIterator);
+	}
 
-	asm volatile("mov cr3, %0":: "r"(&(current_page_directory->nodes)));
-
-	if (current_page_tables == page_tables1)
-		current_page_tables = page_tables2;
-	else if (current_page_tables == page_tables2)
-		current_page_tables = page_tables1;
-
-	if (current_page_directory == &page_directory1)
-		current_page_directory = &page_directory2;
-	else if (current_page_directory == &page_directory2)
-		current_page_directory = &page_directory1;
+	vm_currentContext = ctx;
+	asm volatile("mov cr3, %0"::"r"(pgCtx));
+	interrupts_enable();
 
 	return true;
 }
 
 void paging_init()
 {
+	vm_applyPage = paging_applyPage;
 	paging_apply(vm_kernelContext);
 
 	// Get the value of cr0

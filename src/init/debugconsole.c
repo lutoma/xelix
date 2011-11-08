@@ -30,6 +30,7 @@
 #include <tasks/scheduler.h>
 #include <console/interface.h>
 #include <lib/panic.h>
+#include <memory/paging.h>
 
 uint32_t cursorPosition;
 char currentLine[256] = "";
@@ -53,21 +54,29 @@ static void executeCommand(char *command)
 		if(proc != NULL)
 			printf("procnum: %d\n", proc->pid);
 	}
-	else if(strcmp(command, "date") == 0)
-	{
-		int day = date('d');
-		int month = date('M');
-		int year = date('y');
-		int hour = date('h');
-		int minute = date('m');
-		int second = date('s');
-		int weekDay = getWeekDay(day, month, year);
-		printf("%s %s %d %d:%d:%d UTC %d",dayToString(weekDay,1), monthToString(month,1), day, hour, minute, second, year);
-	}
 	else if(strcmp(command, "halt") == 0) halt();
 	else if(strcmp(command, "freeze") == 0) freeze();
 	else if(strcmp(command, "panic") == 0) panic("Test panic for debugging");
 	else if(strcmp(command, "kill") == 0) asm("mov %eax, 1; int 0x80;");
+	else if(strcmp(command, "triplefault") == 0)
+	{
+		struct vm_context *ctx = vm_new();
+		paging_apply(ctx);
+	}
+	else if(strcmp(command, "pagefault") == 0)
+	{
+		char *ptr = (char*)0x00000000;
+		*ptr = 0x00;
+	}
+	else if(strcmp(command, "reload") == 0)
+	{
+		paging_apply(vm_kernelContext);
+	}
+	else if(strcmp(command, "rebuild") == 0)
+	{
+		vm_set_cache(vm_kernelContext, NULL);
+		paging_apply(vm_kernelContext);
+	}
 	else
 	{
 		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
@@ -75,7 +84,7 @@ static void executeCommand(char *command)
 	}
 }
 
-static void loop()
+void debugconsole_init()
 {
 	int read_offset = 0;
 	int read;
@@ -98,9 +107,6 @@ static void loop()
 				continue;
 			}
 
-			if (read > 0)
-				console_write(NULL, currentLine + read_offset, 1);
-
 			if (currentLine[read_offset] == '\n' || currentLine[read_offset] == '\r')
 			{
 				currentLine[read_offset] = '\0';
@@ -112,12 +118,4 @@ static void loop()
 
 		executeCommand(currentLine);
 	}
-}
-
-// Initialize the debug console.
-void debugconsole_init()
-{
-	DUMPVAR("0x%x", currentLine);
-	log_setPrintLog(0); // We don't want stuff to pop up in our console - use the kernellog command.
-	loop();
 }

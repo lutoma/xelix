@@ -1,5 +1,5 @@
-/* task.c: Some nice-to-have functions for easier task handling.
- * Copyright © 2010, 2011 Lukas Martini
+/* brk.c: Legacy brk() syscall
+ * Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -14,23 +14,27 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "task.h"
-
-#include "scheduler.h"
+#include "brk.h"
+#include <memory/vm.h>
 #include <memory/kmalloc.h>
-#include <lib/log.h>
-#include <interrupts/interface.h>
 
-/* Start process. The name parameter is here for future use.
- * We drop all parameters, the ... is only here to suppress warnings.
- * (And for future use)
- */
-void process_create(char name[100], void function())
+#define alignedMemoryPosition() (kmalloc_getMemoryPosition() + 4096 - (kmalloc_getMemoryPosition() % 4096))
+
+int sys_brk(struct syscall syscall)
 {
-	log(LOG_INFO, "process: Spawned new process with name %s\n", name);
-	(*function) (); // Run process
-	return;
+	if (vm_currentContext == vm_kernelContext)
+	{
+		if (syscall.params[0] == 0)
+			return alignedMemoryPosition();
+
+		size_t allocationSize = syscall.params[0] - alignedMemoryPosition();
+		kmalloc_a(allocationSize);
+
+		return (int)alignedMemoryPosition();
+	}
+
+	return -1;
 }

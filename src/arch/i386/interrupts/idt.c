@@ -393,7 +393,7 @@ void idt_init()
 	setGate(46, (uint32_t)interrupts_handler46, 0x08, 0x8E);
 	setGate(47, (uint32_t)interrupts_handler47, 0x08, 0x8E);
 	setGate(48, (uint32_t)interrupts_handler48, 0x08, 0x8F);
-	setGate(49, (uint32_t)interrupts_handler49, 0x08, 0x8F);
+	setGate(49, (uint32_t)interrupts_handler49, 0x08, 0x8E);
 	setGate(50, (uint32_t)interrupts_handler50, 0x08, 0x8E);
 	setGate(51, (uint32_t)interrupts_handler51, 0x08, 0x8E);
 	setGate(52, (uint32_t)interrupts_handler52, 0x08, 0x8E);
@@ -472,7 +472,7 @@ void idt_init()
 	setGate(125, (uint32_t)interrupts_handler125, 0x08, 0x8E);
 	setGate(126, (uint32_t)interrupts_handler126, 0x08, 0x8E);
 	setGate(127, (uint32_t)interrupts_handler127, 0x08, 0x8E);
-	setGate(128, (uint32_t)interrupts_handler128, 0x08, 0x8E);
+	setGate(128, (uint32_t)interrupts_handler128, 0x08, 0x8F);
 	setGate(129, (uint32_t)interrupts_handler129, 0x08, 0x8E);
 	setGate(130, (uint32_t)interrupts_handler130, 0x08, 0x8E);
 	setGate(131, (uint32_t)interrupts_handler131, 0x08, 0x8E);

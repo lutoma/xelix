@@ -26,12 +26,16 @@
 #include "syscalls/exit.h"
 #include "syscalls/getpid.h"
 #include "syscalls/getppid.h"
+#include "syscalls/read.h"
+#include "syscalls/brk.h"
+#include "syscalls/mmap.h"
+#include "syscalls/munmap.h"
 
 syscall_t syscall_table[] = {
 	sys_chg_sys_conv, // 0
 	sys_exit, // 1
 	NULL, // 2
-	NULL,
+	sys_read,
 	sys_write, // 4
 	NULL,
 	NULL,
@@ -73,7 +77,7 @@ syscall_t syscall_table[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	sys_brk, // 45
 	NULL,
 	NULL,
 	NULL, // 48
@@ -93,5 +97,39 @@ syscall_t syscall_table[] = {
 	NULL,
 	NULL,
 	sys_getppid, // 64
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, // 72
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, // 80
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, // 88
+	NULL,
+	sys_mmap, // 90
+	sys_munmap,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL, // 96
+	NULL,
+	NULL,
 };
 

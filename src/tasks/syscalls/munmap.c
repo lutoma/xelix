@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* munmap.c: Implementation of the munmap syscall
+ * Copyright © 2011 Fritz Grimpen
  *
  * This file is part of Xelix.
  *
@@ -18,15 +17,18 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include "munmap.h"
+#include <memory/vm.h>
+#include <memory/paging.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log(LOG_INFO, "init: Starting to initialize " #C "\n"); \
-		C ## _init(args); \
-		log(LOG_INFO, "init: Initialized " #C "\n"); \
-	} while(0);
+int sys_munmap(struct syscall syscall)
+{
+	void *addr = (void*)syscall.params[0];
+	size_t length = syscall.params[1];
 
-bool init_haveGrub;
+	int pages = length / 4096;
+	for (int i = 0; i < pages; ++i)
+		vm_rm_page_virt(vm_currentContext, (void*)addr + i * 4096);
+
+	return 0;
+}

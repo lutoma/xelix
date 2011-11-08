@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* read.c: Write Syscall
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,15 +17,14 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include "write.h"
+#include <console/interface.h>
+#include <lib/datetime.h>
 
-// Making ponies fly.
-#define init(C, args...) \
-	do \
-	{ \
-		log(LOG_INFO, "init: Starting to initialize " #C "\n"); \
-		C ## _init(args); \
-		log(LOG_INFO, "init: Initialized " #C "\n"); \
-	} while(0);
+int sys_read(struct syscall syscall)
+{
+	if (syscall.params[0] == 0)
+		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
 
-bool init_haveGrub;
+	return -1;
+}

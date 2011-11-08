@@ -29,6 +29,7 @@
 #include <lib/datetime.h>
 #include <hw/display.h>
 #include <hw/pit.h>
+#include <console/interface.h>
 
 // Current modifier keys
 struct {
@@ -67,12 +68,10 @@ static void handleScancode(uint8_t code, uint8_t code2)
 	if( code == 0xe0 && code2 == 0xdb) // super release
 		modifiers.super = false;
 	
-	/* This will cause epic dysfunction if used with console
 	if( code == 0xe0 && code2 == 0x49 ) // page up press
-		display_scroll(DISPLAY_DIRECTION_UP);
+		console_scroll(NULL, 1);
 	if( code == 0xe0 && code2 == 0x51 ) // page down press
-		display_scroll(DISPLAY_DIRECTION_DOWN);
-	*/
+		console_scroll(NULL, -1);
 	
 	if( code2 == 0x1d) // ctrl press
 		modifiers.controlr = true;
