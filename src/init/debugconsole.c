@@ -108,9 +108,6 @@ void debugconsole_init()
 				continue;
 			}
 
-			if (read > 0)
-				console_write(NULL, currentLine + read_offset, 1);
-
 			if (currentLine[read_offset] == '\n' || currentLine[read_offset] == '\r')
 			{
 				currentLine[read_offset] = '\0';

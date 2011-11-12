@@ -3,6 +3,7 @@
 
 all: xelix.bin
 run: runqemu
+debug: debugqemufloppy
 
 CC := gcc
 LD := ld
@@ -24,8 +25,4 @@ MAKE_CFLAGS = -O2 -frecord-gcc-switches -g -std=gnu99 -Wall -Werror -m32 -I . -I
 MAKE_CFLAGS += $(CFLAGS)
 MAKE_QEMU_FLAGS =-d cpu_reset -ctrl-grab -net nic -net user -m 250
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
-
-ifeq ($(shell qemu -version | grep -o 'qemu-kvm'),qemu-kvm)
-	MAKE_QEMU_FLAGS += -no-kvm
-endif
 
