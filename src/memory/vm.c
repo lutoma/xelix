@@ -78,6 +78,7 @@ struct vm_context *vm_new()
 	ctx->last_node = NULL;
 	ctx->node = NULL;
 	ctx->pages = 0;
+	ctx->cache = NULL;
 
 	return ctx;
 }
