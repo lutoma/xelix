@@ -27,6 +27,7 @@ The following header files are partially implemented:
 <stdlib.h>
 <string.h>
 <unistd.h>
+<stdarg.h> - GCC only
 
 The following header files are completely missing:
 
@@ -73,7 +74,6 @@ The following header files are completely missing:
 <setjmp.h>
 <signal.h>
 <spawn.h>
-<stdarg.h>
 <stdbool.h>
 <strings.h>
 <stropts.h>
