@@ -20,4 +20,19 @@
 
 #include <stdint.h>
 
+#define NULL 0
+
+#ifdef __GNUC__
+  #define offsetof(st, m) __builtin_offsetof(st, m)
+#else
+  #define offsetof(st, m) \
+     ((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
+#endif
+
 typedef uint64_t size_t;
+typedef uint32_t ptrdiff_t;
+
+/* wchar_t usually is 2 or 4 bytes, but too many doesn't hurt. Change it
+ * if you want to.
+ */
+typedef uint8_t wchar_t;
