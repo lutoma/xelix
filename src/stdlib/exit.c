@@ -18,6 +18,13 @@
 
 #include <stdlib.h>
 
+// Todo: http://www.mkssoftware.com/docs/man3/exit.3.asp
+
+void _exit(int status)
+{
+	asm("mov eax, 1; int 0x80;" ::: "eax");
+}
+
 void exit(int status)
 {
 	asm("mov eax, 1; int 0x80;" ::: "eax");

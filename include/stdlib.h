@@ -18,4 +18,17 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// stdlib.h is supposed to include all the stddef.h stuff
+#include <stddef.h>
+
+// Return values
+#define EXIT_FAILURE -1
+#define EXIT_SUCCESS  0
+
+// Should be an own function as of POSIX
+#define _Exit _exit
+
+// Disregards atexit()
+void _exit(int status);
+// Cares about atexit()
 void exit(int status);
