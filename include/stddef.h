@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-#define NULL 0
+#define NULL (void*)0
 
 #ifdef __GNUC__
   #define offsetof(st, m) __builtin_offsetof(st, m)
