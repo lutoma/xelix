@@ -19,6 +19,10 @@
  */
 
 #include <unistd.h>
+// For NULL, which should also be defined in here
+#include <stddef.h>
+
+#define EOF -1
 
 // Should work fine for now
 typedef void FILE;
