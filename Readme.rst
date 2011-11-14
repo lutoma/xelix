@@ -19,6 +19,7 @@ The following header files are considered complete (As of the The Open
 Group Base Specifications Issue 6 [Better known as POSIX]):
 
 <stddef.h>
+<errno.h>
 
 The following header files are partially implemented:
 
@@ -39,7 +40,6 @@ The following header files are completely missing:
 <ctype.h>
 <dirent.h>
 <dlfcn.h>
-<errno.h>
 <fcntl.h>
 <fenv.h>
 <float.h>

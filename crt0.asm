@@ -1,3 +1,8 @@
+SECTIOn .data
+GLOBAL errno
+
+errno:  resb 32
+
 SECTION .text
 GLOBAL _start
 EXTERN main
