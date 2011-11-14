@@ -24,18 +24,15 @@
 
 #define EOF -1
 
-// Should work fine for now
-typedef void FILE;
+// When changing this: DON'T FORGET TO CHANGE THE DEFINITION IN CRT0
+typedef struct {
+  uint64_t num;
+  char filename[512];
+  uint32_t offset;
+} FILE;
 
-// The numbers are defined in unistd.h
-#ifdef __INLIBC
-	FILE* stdin = (FILE*)STDIN_FILENO;
-	FILE* stdout = (FILE*)STDOUT_FILENO;
-	FILE* stderr = (FILE*)STDERR_FILENO;
-#else
-	extern FILE* stdin;
-	extern FILE* stdout;
-	extern FILE* stderr;
-#endif
+extern FILE* stdin;
+extern FILE* stdout;
+extern FILE* stderr;
 
 void print(const char* string);
