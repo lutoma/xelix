@@ -29,6 +29,8 @@ static uint16_t* const hardware_memory = (uint16_t*) 0xB8000;
 static uint16_t display_memory[25 * 80 * CONSOLE_SCROLL_PAGES];
 static uint8_t currentPage;
 
+#define HW_CHAR(x, y) (hardware_memory + x + y * 80)
+#define HW_LAST_LINE (hardware_memory + 24 * 80)
 #define DISP_CHAR(x, y) (display_memory + ( 25 * 80 * (CONSOLE_SCROLL_PAGES - 1)) + x + y * 80)
 #define DISP_PAGE(n) (display_memory + 25 * 80 * n)
 #define DISP_LAST_PAGE (display_memory + (25 * 80 * (CONSOLE_SCROLL_PAGES - 1)))
@@ -37,6 +39,11 @@ static uint8_t currentPage;
 #define DISP_PAGE_SIZE ( 25 * 80 * 2)
 #define DISP_LINE_SIZE ( 80 * 2)
 #define DISP_CHAR_SIZE ( 2 )
+
+#define DISP_WRITE(x, y, c) { \
+	*HW_CHAR(x, y) = c; \
+	*DISP_CHAR(x, y) = c; \
+} 
 
 static void console_driver_display_setCursor(console_info_t *info, uint32_t x, uint32_t y)
 {
@@ -55,12 +62,17 @@ static char console_driver_display_packColor(console_info_t *info)
 {
 	if (info->reverse_video)
 		return info->current_color.foreground << 4 | info->current_color.background;
-
 	return info->current_color.background << 4 | info->current_color.foreground;
 }
 
 static int console_driver_display_write(console_info_t *info, char c)
 {
+	if (currentPage != 0)
+	{
+		currentPage = 0;
+		memcpy(hardware_memory, DISP_LAST_PAGE, DISP_PAGE_SIZE);
+	}
+
 	char color = console_driver_display_packColor(info);
 
 	if (c == '\n' || c == '\v')
@@ -90,20 +102,20 @@ static int console_driver_display_write(console_info_t *info, char c)
 			return 0;
 
 		info->cursor_x--;
-		uint16_t *pos = DISP_CHAR(info->cursor_x, info->cursor_y);
-		*pos = (color << 8) | ' ';
+		DISP_WRITE(info->cursor_x, info->cursor_y, (color << 8) | ' ');
 		goto return_write;
 	}
 
 	while (info->cursor_y >= info->rows)
 	{
 		memcpy(DISP_PAGE(0), DISP_PAGE(0) + 80, DISP_BYTES - DISP_LINE_SIZE);
+		memcpy(hardware_memory, hardware_memory + 80, DISP_PAGE_SIZE - DISP_LINE_SIZE);
 		memset(DISP_LAST_LINE, 0, DISP_LINE_SIZE);
+		memset(HW_LAST_LINE, 0, DISP_LINE_SIZE);
 		info->cursor_y--;
 	}
 
-	uint16_t *pos = DISP_CHAR(info->cursor_x, info->cursor_y);
-	*pos = (color << 8) | c;
+	DISP_WRITE(info->cursor_x, info->cursor_y, (color << 8) | c);
 
 	info->cursor_x++;
 	if (info->cursor_x >= info->columns)
@@ -114,7 +126,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 
 return_write:
 	console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
-	memcpy(hardware_memory, DISP_LAST_PAGE, DISP_PAGE_SIZE);
+	//memcpy(hardware_memory, DISP_LAST_PAGE, DISP_PAGE_SIZE);
 
 	return 1;
 }
@@ -123,6 +135,7 @@ static int console_driver_display_clear(console_info_t *info)
 {
 	memcpy(DISP_PAGE(0), DISP_PAGE(1), DISP_BYTES - DISP_PAGE_SIZE);
 	memset(DISP_LAST_PAGE, 0, DISP_PAGE_SIZE);
+	memset(hardware_memory, 0, DISP_PAGE_SIZE);
 	info->cursor_x = 0;
 	info->cursor_y = 0;
 	console_driver_display_setCursor(NULL, 0, 0);
