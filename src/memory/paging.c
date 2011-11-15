@@ -110,6 +110,12 @@ int paging_apply(struct vm_context *ctx)
 	{
 		/* Build paging context for vm_context */
 		pgCtx = kmalloc_a(sizeof(struct paging_context));
+		if (pgCtx == NULL)
+		{
+			interrupts_enable();
+			return false;
+		}
+		memset(pgCtx, 0, sizeof(struct paging_context));
 		vm_set_cache(ctx, pgCtx);
 		
 		vm_iterate(ctx, paging_vmIterator);
