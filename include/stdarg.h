@@ -19,10 +19,11 @@
  */
   
 
-// No GCC or no variable argument counts – The choice is yours.
-#ifdef __GNUC__
-  typedef __builtin_va_list       va_list;
-  #define va_start(ap, X)         __builtin_va_start(ap, X)
-  #define va_arg(ap, type)        __builtin_va_arg(ap, type)
-  #define va_end(ap)              __builtin_va_end(ap)
-#endif
+typedef char* va_list;
+
+#define _va_round(type) (((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+#define va_start(ap, arg) (ap = ((char*)&(arg) + _va_round(arg)))
+#define va_arg(ap, type) (ap += _va_round(type), *((type*)(ap - _va_round(type))))
+
+// Obviously todo
+#define va_end(ap)
