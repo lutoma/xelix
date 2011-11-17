@@ -24,7 +24,7 @@
 
 void* malloc(size_t size)
 {
-	void* addr = -1;
+	void* addr = (void*)-1;
 	asm("mov eax, 7;"
 		"mov ebx, 0;"
 		"mov ecx,%0;"
