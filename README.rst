@@ -15,9 +15,11 @@ You'll need
 Compiling
 ---------
 
- * (./configure)
- * (make clean)
- * make
+::
+
+    (./configure)
+    (make clean)
+    make
 
 Steps in braces don't neccessarily have to be executed every time you
 compile Xelix. If you're compiling the first time, run them.
