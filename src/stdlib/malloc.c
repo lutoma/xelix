@@ -1,5 +1,3 @@
-#pragma once
-
 /* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xlibc.
@@ -18,18 +16,21 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// stdlib.h is supposed to include all the stddef.h stuff
+/* Todo: Currently we return a full page for every request, wasting
+ * tremendous amounts of memory. This should be fixed.
+ */
+
 #include <stddef.h>
 
-// Return values
-#define EXIT_FAILURE -1
-#define EXIT_SUCCESS  0
-
-// Should be an own function as of POSIX
-#define _Exit _exit
-
-// Disregards atexit()
-void _exit(int status);
-// Cares about atexit()
-void exit(int status);
-void* malloc(size_t size);
+void* malloc(size_t size)
+{
+	void* addr = -1;
+	asm("mov eax, 7;"
+		"mov ebx, 0;"
+		"mov ecx,%0;"
+		"mov edx, 0;"
+		"int 0x80;	"
+		"mov %1,eax;"
+	: "=r" (addr) : "r" (size) : "eax", "ebx", "ecx", "edx");
+	return addr;
+}
