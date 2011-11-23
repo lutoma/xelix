@@ -106,16 +106,6 @@ static char* identify()
 	return "Unknown";
 }
 
-char keyboard_codeToChar(uint16_t code)
-{
-	if(code > 512)
-		return (char)NULL;
-	
-	return currentKeymap[code];
-}
-
-// modified after here
-
 // Handle a scancode. Calls the active function
 static void handleScancode(uint8_t code, uint8_t code2)
 {
@@ -154,9 +144,11 @@ static void handleScancode(uint8_t code, uint8_t code2)
 	if( modifiers.shiftl | modifiers.shiftr )
 		dcode += 256;
 
-	char c = keyboard_codeToChar(dcode);
-
-	if (c == NULL)
+	if(code > 512)
+		return;
+	
+	char c = currentKeymap[code];
+	if(code > 512 || c == NULL)
 		return;
 
 	if (c == 0x8 && keyboard_buffer.offset > 0)
