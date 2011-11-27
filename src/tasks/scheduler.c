@@ -153,7 +153,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	thisTask->state->esp = stack + STACKSIZE - 3;
 	thisTask->state->ebp = thisTask->state->esp;
 
-	*(thisTask->state->ebp + 1) = scheduler_terminateCurrentTask;
+	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminateCurrentTask;
 	*(thisTask->state->ebp + 2) = NULL; // base pointer
 	
 	// Instruction pointer (= start of the program)

@@ -36,10 +36,10 @@ void dumpCpuState(cpu_state_t* regs) {
 
 	printf("\n");
 	printf("Return Addresses:\n");
-	void** bp = regs->ebp;
+	uint8_t* bp = regs->ebp;
 	do {
 		printf("* 0x%x\n", *(bp + 2));
-		bp = *(bp + 1);
+		bp = (uint8_t*)*((uint32_t *)bp + 1);
 	} while (bp);
 }
 
