@@ -73,6 +73,8 @@ struct vm_page *vm_rm_page_virt(struct vm_context *ctx, void *virt_addr);
 int vm_iterate(struct vm_context *ctx, vm_iterator_t callback);
 
 uint32_t vm_count_pages(struct vm_context *ctx);
+void vm_dump_page(struct vm_page *pg);
+void vm_dump(struct vm_context *ctx);
 void vm_handle_fault(uint32_t code, void *addr, void *instruction);
 
 /* Get/Set cached paging context */

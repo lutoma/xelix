@@ -245,3 +245,51 @@ void *vm_get_cache(struct vm_context *ctx)
 {
 	return ctx->cache;
 }
+
+static void vm_dump_page_internal(struct vm_context *ctx, struct vm_page *pg, uint32_t i)
+{
+	char *typeString = "UNKNOWN";
+	switch (pg->section)
+	{
+		case VM_SECTION_STACK:
+			typeString = "STACK";
+			break;
+		case VM_SECTION_CODE:
+			typeString = "CODE";
+			break;
+		case VM_SECTION_DATA:
+			typeString = "DATA";
+			break;
+		case VM_SECTION_HEAP:
+			typeString = "HEAP";
+			break;
+		case VM_SECTION_MMAP:
+			typeString = "MMAP";
+			break;
+		case VM_SECTION_KERNEL:
+			typeString = "KERNEL";
+			break;
+		case VM_SECTION_UNMAPPED:
+			typeString = "UNMAPPED";
+			break;
+	}
+
+	printf("[%s] Virt 0x%x Phys 0x%x Cow 0x%x ro:%d alloc:%d cow:%d\n",
+			typeString,
+			pg->virt_addr,
+			pg->phys_addr,
+			pg->cow_src_addr,
+			pg->readonly,
+			pg->allocated,
+			pg->cow);
+}
+
+void vm_dump(struct vm_context *ctx)
+{
+	vm_iterate(ctx, vm_dump_page_internal);
+}
+
+void vm_dump_page(struct vm_page *pg)
+{
+	vm_dump_page_internal(NULL, pg, 0);
+}
