@@ -27,7 +27,7 @@
 #define CAN_RECV (inb(PORT+5) & 1)
 #define CAN_SEND (inb(PORT+5) & 32)
 
-static void send(char c)
+void serial_send(char c)
 {
 	while (!CAN_SEND) {};
 	outb(PORT, c);
@@ -44,7 +44,7 @@ char serial_recv()
 void serial_print(char* s)
 {
 	while(*s != '\0')
-		send(*(s++));
+		serial_send(*(s++));
 }
 
 void serial_init()
