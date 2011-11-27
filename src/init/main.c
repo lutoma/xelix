@@ -29,7 +29,6 @@
 #include <hw/display.h>
 #include <hw/serial.h>
 #include <hw/cpu.h>
-#include <hw/keyboard.h>
 #include <memory/interface.h>
 #include <memory/gdt.h>
 #include <interrupts/interface.h>
@@ -77,7 +76,6 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(interrupts);
 	init(panic);
 	init(kmalloc);
-	init(keyboard);
 	init(pit, PIT_RATE);
 	init(serial);
 	init(console);
