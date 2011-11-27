@@ -44,7 +44,6 @@ size_t slip_recv(uint8_t* buf)
 		switch(c)
 		{
 			case END:
-				buf[rlen] = 0;
 				return rlen;
 			case ESC:
 				c = serial_recv();
