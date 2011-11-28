@@ -232,9 +232,6 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 			break;
 	}
 
-	if (unlikely(currentTask == NULL))
-		panic("scheduler: No tasks left - init killed?");
-
 	return currentTask;
 }
 
