@@ -29,7 +29,10 @@ uint32_t registered_device_count;
 
 void net_receive(net_device_t* origin, int target, size_t size, uint8_t* data)
 {
-	log(LOG_DEBUG, "net: net_receive: Received &d bytes from %s with target %d.\n", size, origin->name, target);
+	if(size < 1)
+		return;
+	
+	log(LOG_DEBUG, "net: net_receive: Received %d bytes from %s with target %d.\n", size, origin->name, target);
 }
 
 void net_register_device(net_device_t* device)
