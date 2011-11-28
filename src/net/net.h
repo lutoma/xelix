@@ -25,3 +25,6 @@ typedef struct {
 } net_device_t;
 
 #define NET_PROTO_IP4 0
+
+void net_receive(net_device_t* origin, int target, void* data);
+void net_register_device(net_device_t* device);

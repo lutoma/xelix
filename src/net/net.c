@@ -21,17 +21,19 @@
 
 #include <lib/log.h>
 #include <tasks/scheduler.h>
+#include <memory/kmalloc.h>
 
 #define MAX_DEVICES 51
 net_device_t registered_devices[MAX_DEVICES];
 uint32_t registered_device_count;
 
-void net_incoming(net_device_t* origin, int target, void* data)
+void net_receive(net_device_t* origin, int target, void* data)
 {
-	log(LOG_DEBUG, "net: net_incoming: Incoming packet from %s with target %d.\n", origin->name, target);
+	log(LOG_DEBUG, "net: net_receive: Incoming packet from %s with target %d.\n", origin->name, target);
 }
 
 void net_register_device(net_device_t* device)
 {
-	registered_devices[registered_device_count++] = device;
+	registered_devices[registered_device_count++] = *device;
+	kfree(device);
 }
