@@ -22,39 +22,53 @@
 #include "slip.h"
 
 #include <lib/log.h>
+#include <memory/kmalloc.h>
+#include <interrupts/interface.h>
 #include <hw/serial.h>
+#include <net/net.h>
 
-#define END		0300 // indicates end of packet
-#define ESC		0333 // indicates byte stuffing
-#define ESC_END	0334 // ESC ESC_END means END data byte
-#define ESC_ESC	0335 // ESC ESC_ESC means ESC data byte
+#define BUFSIZE	1006
+#define END		0xc0 // indicates end of packet
+#define ESC		0xdb // indicates byte stuffing
+#define ESC_END	0xdc // ESC ESC_END means END data byte
+#define ESC_ESC	0xdd // ESC ESC_ESC means ESC data byte
 
-size_t slip_recv(uint8_t* buf)
+net_device_t* mydev;
+uint8_t* buf;
+bool in_progress;
+bool escape;
+int bufpos;
+
+void slip_receive(cpu_state_t* state)
 {
-	uint8_t d;
-	while((d = serial_recv()))
-		if(d == END) break;
+	uint8_t c = serial_recv();
 
-	log(LOG_DEBUG, "slip: slip_recv: Received packet start sequence.\n");
-	
-	uint8_t c;
-	size_t rlen = 0;
-	while(rlen < SLIP_BUFLEN && (c = serial_recv()))
-	{	
-		switch(c)
-		{
-			case END:
-				return rlen;
-			case ESC:
-				c = serial_recv();
-				if(c == ESC_END) c = END;
-				else if(c == ESC_ESC) c = ESC;
-			default:
-				buf[rlen++] = c;
-		}			
+	if(!in_progress)
+	{
+		if(c != END)
+			return;
+		
+		buf = (uint8_t*)kmalloc(sizeof(uint8_t) * BUFSIZE);		
+		in_progress = true;
+		return;
 	}
 	
-	return rlen;
+	if((c == END && in_progress) || bufpos >= BUFSIZE)
+	{
+		in_progress = false;
+		net_receive(mydev, 0, bufpos, buf);
+		bufpos = -1;
+	}
+	
+	switch(c)
+	{
+		case ESC:
+			c = serial_recv();
+			if(c == ESC_END) c = END;
+			else if(c == ESC_ESC) c = ESC;
+		default:
+			buf[bufpos++] = c;
+	}
 }
 
 void slip_send(uint8_t* buf, size_t len)
@@ -80,4 +94,15 @@ void slip_send(uint8_t* buf, size_t len)
 	}
 
 	serial_send(END);
+}
+
+void slip_init()
+{
+	mydev = (net_device_t*)kmalloc(sizeof(net_device_t));
+	memcpy(mydev->name, "slip", 5);
+	net_register_device(mydev);
+	bufpos = -1;
+
+	// Hook up to the serial port #1 interrupt
+	interrupts_registerHandler(IRQ4, slip_receive);
 }

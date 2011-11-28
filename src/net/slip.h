@@ -20,7 +20,5 @@
 
 #include <lib/generic.h>
 
-#define SLIP_BUFLEN 1006
-
-size_t slip_recv(uint8_t* buf);
 void slip_send(uint8_t* buf, size_t len);
+void slip_init();
