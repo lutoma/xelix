@@ -21,7 +21,9 @@
 #include <lib/generic.h>
 
 typedef struct {
-	char name[128];
+	char name[15];
+	char driver_name[15];
+	char long_driver_name[256];
 } net_device_t;
 
 #define NET_PROTO_IP4 0
