@@ -51,7 +51,12 @@ void serial_init()
 {
 	// from http://wiki.osdev.org/Serial_Ports
 	// set up with divisor = 3 and 8 data bits, no parity, one stop bit
-
-	outb(PORT+1, 0x00); outb(PORT+3, 0x80); outb(PORT+1, 0x00); outb(PORT+0, 0x03);
-	outb(PORT+3, 0x03); outb(PORT+2, 0xC7); outb(PORT+4, 0x0B);
+	// IRQs enabled
+	outb(PORT+1, 0x1);
+	outb(PORT+3, 0x80);
+	outb(PORT+1, 0x00);
+	outb(PORT+0, 0x03);
+	outb(PORT+3, 0x03);
+	outb(PORT+2, 0xC7);
+	outb(PORT+4, 0x0B);
 }
