@@ -22,6 +22,9 @@
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <memory/kmalloc.h>
+#include <net/ip4.h>
+#include <lib/string.h>
+#include <net/slip.h>
 
 #define MAX_DEVICES 51
 net_device_t registered_devices[MAX_DEVICES];
@@ -32,7 +35,15 @@ void net_receive(net_device_t* origin, int target, size_t size, uint8_t* data)
 	if(size < 1)
 		return;
 	
-	log(LOG_DEBUG, "net: net_receive: Received %d bytes from %s with target %d.\n", size, origin->name, target);
+	if(target == NET_PROTO_IP4)
+		ip4_receive(origin, size, data);
+}
+
+void net_send(net_device_t* target, int origin, size_t size, uint8_t* data)
+{
+	// Hardcoding for fun and profit
+	if(!strcmp(target->driver_name, "slip"))
+		slip_send(data, size);
 }
 
 void net_register_device(net_device_t* device)
@@ -40,3 +51,25 @@ void net_register_device(net_device_t* device)
 	registered_devices[registered_device_count++] = *device;
 	kfree(device);
 }
+
+// Calculate checksum for TCP, ICMP and IP packets
+uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum)
+{
+	// Calculate the sum of 16bit words
+	while(length > 1)
+	{
+		sum += 0xFFFF & (*buf << 8 | *(buf + 1));
+		buf += 2;
+		length -= 2;
+	}
+
+	if(length)
+		sum += (0xFF & *buf) << 8;
+
+	while(sum >> 16)
+		sum = (sum & 0xFFFF) + (sum >> 16);
+	
+	// Build 1's complement
+	return((uint16_t)sum ^ 0xFFFF);
+}
+
