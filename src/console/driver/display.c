@@ -65,6 +65,16 @@ static char console_driver_display_packColor(console_info_t *info)
 	return info->current_color.background << 4 | info->current_color.foreground;
 }
 
+static void display_memset(uint16_t *ptr, uint16_t w, int words)
+{
+	while (words > 0)
+	{
+		*ptr = w;
+		--words;
+		++ptr;
+	}
+}
+
 static int console_driver_display_write(console_info_t *info, char c)
 {
 	if (currentPage != 0)
@@ -110,8 +120,8 @@ static int console_driver_display_write(console_info_t *info, char c)
 	{
 		memcpy(DISP_PAGE(0), DISP_PAGE(0) + 80, DISP_BYTES - DISP_LINE_SIZE);
 		memcpy(hardware_memory, hardware_memory + 80, DISP_PAGE_SIZE - DISP_LINE_SIZE);
-		memset(DISP_LAST_LINE, 0, DISP_LINE_SIZE);
-		memset(HW_LAST_LINE, 0, DISP_LINE_SIZE);
+		display_memset(DISP_LAST_LINE, (color << 8) | ' ', 80);
+		display_memset(HW_LAST_LINE, (color << 8) | ' ', 80);
 		info->cursor_y--;
 	}
 
@@ -133,9 +143,11 @@ return_write:
 
 static int console_driver_display_clear(console_info_t *info)
 {
+	char color = console_driver_display_packColor(info);
+
 	memcpy(DISP_PAGE(0), DISP_PAGE(1), DISP_BYTES - DISP_PAGE_SIZE);
-	memset(DISP_LAST_PAGE, 0, DISP_PAGE_SIZE);
-	memset(hardware_memory, 0, DISP_PAGE_SIZE);
+	display_memset(DISP_LAST_PAGE, (color << 8) | ' ', 25 * 80);
+	display_memset(hardware_memory, (color << 8) | ' ', 25 * 80);
 	info->cursor_x = 0;
 	info->cursor_y = 0;
 	console_driver_display_setCursor(NULL, 0, 0);
@@ -152,6 +164,10 @@ static int console_driver_display_scroll(console_info_t *info, int32_t page)
 	uint16_t *newPage = DISP_PAGE(offset);
 
 	memcpy(hardware_memory, newPage, DISP_PAGE_SIZE);
+	if (currentPage != 0)
+		console_driver_display_setCursor(info, 80, 25);
+	else
+		console_driver_display_setCursor(info, info->cursor_x, info->cursor_y);
 	return offset;
 }
 
