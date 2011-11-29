@@ -56,7 +56,8 @@ void slip_receive(cpu_state_t* state)
 	if((c == END && in_progress) || bufpos >= BUFSIZE)
 	{
 		in_progress = false;
-		net_receive(mydev, 0, bufpos, buf);
+		// TODO IPv6 support
+		net_receive(mydev, NET_PROTO_IP4, bufpos, buf);
 		bufpos = -1;
 	}
 	
@@ -99,7 +100,9 @@ void slip_send(uint8_t* buf, size_t len)
 void slip_init()
 {
 	mydev = (net_device_t*)kmalloc(sizeof(net_device_t));
-	memcpy(mydev->name, "slip", 5);
+	memcpy(mydev->name, "slip0", 6);
+	memcpy(mydev->driver_name, "slip", 5);
+	memcpy(mydev->long_driver_name, "Serial Line IP", 15);
 	net_register_device(mydev);
 	bufpos = -1;
 

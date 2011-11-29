@@ -19,16 +19,30 @@
  */
 
 #include <lib/generic.h>
+#include <net/net.h>
+
+#define IP4_TOS_ICMP 0
 
 typedef struct {
-	char name[15];
-	char driver_name[15];
-	char long_driver_name[256];
-} net_device_t;
+	unsigned int hl:4; /* both fields are 4 bits */
+	unsigned int version:4;
+	uint8_t	tos;
+	uint16_t len;
+	uint16_t id;
+	uint16_t off;
+	uint8_t ttl;
+	uint8_t p;
+	uint16_t checksum;
+	uint32_t src;
+	uint32_t dst;
+} ip4_header_t;
 
-#define NET_PROTO_IP4 0
+typedef struct {
+	unsigned char type;
+	unsigned char code;
+	unsigned short int checksum;
+	unsigned short int id;
+	unsigned short int sequence;
+} ip4_icmp_header_t;
 
-void net_receive(net_device_t* origin, int target, size_t size, uint8_t* data);
-void net_send(net_device_t* target, int origin, size_t size, uint8_t* data);
-void net_register_device(net_device_t* device);
-uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum);
+void ip4_receive(net_device_t* origin, size_t size, void* raw);
