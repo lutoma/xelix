@@ -19,6 +19,7 @@
 
 #include "ip4.h"
 #include <lib/log.h>
+#include <lib/endian.h>
 #include <net/slip.h>
 
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
@@ -36,7 +37,7 @@ static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 	//if(packet->type != 8)
 	//	return;
 		
-	log(LOG_DEBUG, "ip4: Incoming ping packet, icmp_sequence=%d\n", ip_packet->tos, packet->type, packet->code, packet->sequence);
+	log(LOG_DEBUG, "ip4: Incoming ping packet ip_src=0x%x icmp_req=%d\n", ip_packet->tos, packet->type, packet->code, packet->sequence, ip_packet->src, packet->sequence);
 
 	// We can reuse the existing packet as the most stuff stays unmodified
 	uint32_t orig_src = ip_packet->src;
@@ -54,8 +55,9 @@ void ip4_receive(net_device_t* origin, size_t size, void* raw)
 {
 	ip4_header_t* packet = (ip4_header_t*)raw;
 	// TODO Send an ICMP TTL exceeded packet here
-	//if(unlikely(packet->ttl-- <= 0))
-	//	return;
+	if(unlikely(packet->ttl <= 0))
+		return;
+	packet->ttl--;
 
 	if(packet->tos == IP4_TOS_ICMP)
 	{
