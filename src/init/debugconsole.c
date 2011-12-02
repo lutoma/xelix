@@ -89,6 +89,7 @@ void debugconsole_init()
 {
 	int read_offset = 0;
 	int read;
+	default_console->info.handle_backspace = 0;
 
 	while (1)
 	{
