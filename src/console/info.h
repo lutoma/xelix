@@ -39,4 +39,6 @@ typedef struct {
 	uint8_t blink;
 	uint8_t underline;
 	uint8_t newline_mode;
+	uint8_t auto_echo;
+	uint8_t handle_backspace;
 } console_info_t;
