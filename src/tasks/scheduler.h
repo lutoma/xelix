@@ -56,3 +56,8 @@ void scheduler_terminateCurrentTask();
 task_t* scheduler_getCurrentTask();
 task_t* scheduler_select(cpu_state_t* lastRegs);
 void scheduler_init();
+
+static inline void scheduler_yield()
+{
+	asm("int 0x30");
+}
