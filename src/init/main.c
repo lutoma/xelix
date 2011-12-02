@@ -98,8 +98,10 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(vm);
 	init(paging);
 	
+#	ifndef XELIX_WITHOUT_SLIP
 	// Networking
 	init(slip);
+#	endif
 
 	if(multiboot_info->modsCount)
 		elf_load((void*)multiboot_info->modsAddr[0].start);
