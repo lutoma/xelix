@@ -66,7 +66,5 @@ int sys_mmap(struct syscall syscall)
 		vm_add_page(vm_currentContext, newPage);
 	}
 
-	paging_apply(vm_currentContext);
-
 	return (int) addr;
 }
