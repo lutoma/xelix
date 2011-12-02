@@ -70,14 +70,14 @@ static void executeCommand(char *command)
 		*ptr = 0x00;
 	}
 	else if(strcmp(command, "reload") == 0)
-	{
 		paging_apply(vm_kernelContext);
-	}
 	else if(strcmp(command, "rebuild") == 0)
 	{
 		vm_set_cache(vm_kernelContext, NULL);
 		paging_apply(vm_kernelContext);
 	}
+	else if(strcmp(command, "dump") == 0)
+		vm_dump(vm_currentContext);
 	else
 	{
 		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
