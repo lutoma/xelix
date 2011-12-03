@@ -159,7 +159,7 @@ static int console_driver_display_scroll(console_info_t *info, int32_t page)
 	if (page == 0)
 		return 0;
 
-	currentPage = currentPage + page;
+	currentPage = (currentPage + page) % CONSOLE_SCROLL_PAGES;
 	uint32_t offset = CONSOLE_SCROLL_PAGES - (currentPage % 8) - 1;
 	uint16_t *newPage = DISP_PAGE(offset);
 
