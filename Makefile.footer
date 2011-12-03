@@ -68,10 +68,9 @@ count:
 clean:
 	find -L src -type f -iregex "^.*\.o" | xargs rm -f
 
-PHONY: tags
+.PHONY: tags
 tags:
 	ctags -R
-
 
 .PHONY: runqemudebug
 runqemudebug: xelix.bin
