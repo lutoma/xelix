@@ -51,6 +51,7 @@ void vm_init();
 struct vm_context *vm_kernelContext;
 struct vm_context *vm_currentContext;
 struct vm_context *vm_processContext;
+void *vm_faultAddress;
 
 /* Some callbacks for magic functions */
 void (*vm_applyPage)(struct vm_context *, struct vm_page *);

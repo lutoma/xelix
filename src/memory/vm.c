@@ -55,8 +55,18 @@ void vm_init()
 {
 	struct vm_context *ctx = vm_new();
 	
-	for (uint32_t i = 0; i <= 0xffffe000U; i += 4096)
+	vm_faultAddress = kmalloc_a(PAGE_SIZE);
+
+	struct vm_page *debugPage = vm_new_page();
+	debugPage->section = VM_SECTION_UNMAPPED;
+	debugPage->virt_addr = vm_faultAddress;
+
+	vm_add_page(ctx, debugPage);
+	
+	for (char *i = (char*)0; i <= (char*)0xffffe000U; i += 4096)
 	{
+		if (i == vm_faultAddress)
+			continue;
 		struct vm_page *page = vm_new_page();
 		page->section = VM_SECTION_KERNEL;
 		page->cow = 0;
