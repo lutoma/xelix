@@ -18,6 +18,8 @@
  */
 
 #include "vm.h"
+
+#include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <lib/print.h>
 #include <lib/panic.h>
@@ -240,10 +242,15 @@ void vm_handle_fault(uint32_t code, void *addr, void *instr)
 {
 	uint32_t addrInt = (uint32_t)addr;
 	struct vm_page *pg = vm_get_page_virt(vm_currentContext, (void *)GET_PAGE(addrInt));
-	printf("Fault\n");
+	
+	if (pg->virt_addr == vm_faultAddress)
+	{
+		log(LOG_DEBUG, "Received debugging page fault\n");
+		return;
+	}
 
 	if (pg == NULL || pg->section == VM_SECTION_UNMAPPED)
-		panic("Page Fault at %d (Address %d)\n", instr, addr);
+		panic("Unexpected page fault at 0x%x (instruction %x)\n", addr, instr);
 }
 
 void vm_set_cache(struct vm_context *ctx, void *cache)
