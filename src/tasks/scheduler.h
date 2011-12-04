@@ -59,5 +59,5 @@ void scheduler_init();
 
 static inline void scheduler_yield()
 {
-	asm("int 0x30");
+	asm("int 0x31");
 }

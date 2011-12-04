@@ -40,7 +40,7 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 	if(handler != NULL)
 		handler(regs);
 	
-	if(regs->interrupt == IRQ0 && scheduler_state) // PIT
+	if((regs->interrupt == IRQ0 || regs->interrupt == 0x31) && scheduler_state) // PIT
 	{
 		
 		task_t* nowTask = scheduler_select(regs);
