@@ -57,7 +57,7 @@ void slip_receive(cpu_state_t* state)
 	{
 		in_progress = false;
 		// TODO IPv6 support
-		net_receive(mydev, NET_PROTO_IP4, bufpos, buf);
+		net_receive(mydev, NET_PROTO_RAW, bufpos, buf);
 		bufpos = -1;
 	}
 	
@@ -72,7 +72,7 @@ void slip_receive(cpu_state_t* state)
 	}
 }
 
-void slip_send(uint8_t* buf, size_t len)
+static void slip_send(net_device_t *dev, uint8_t* buf, size_t len)
 {
 	serial_send(END);
 
@@ -101,8 +101,9 @@ void slip_init()
 {
 	mydev = (net_device_t*)kmalloc(sizeof(net_device_t));
 	memcpy(mydev->name, "slip0", 6);
-	memcpy(mydev->driver_name, "slip", 5);
-	memcpy(mydev->long_driver_name, "Serial Line IP", 15);
+	mydev->proto = NET_PROTO_RAW;
+	mydev->mtu = 65535;
+	mydev->send = slip_send;
 	net_register_device(mydev);
 	bufpos = -1;
 

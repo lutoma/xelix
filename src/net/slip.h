@@ -20,5 +20,4 @@
 
 #include <lib/generic.h>
 
-void slip_send(uint8_t* buf, size_t len);
 void slip_init();

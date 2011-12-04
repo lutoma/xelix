@@ -20,20 +20,23 @@
 
 #include <lib/generic.h>
 
-typedef struct {
+typedef enum {
+	NET_PROTO_RAW,
+	NET_PROTO_ETH
+} net_l2proto_t;
+
+typedef struct net_device {
 	char name[15];
-	char driver_name[15];
-	char long_driver_name[256];
+	uint16_t mtu;
+	net_l2proto_t proto;
+
+	void (*send)(struct net_device*, uint8_t *, size_t);
+
+	/* For driver-dependent data */
+	void *data;
 } net_device_t;
 
-typedef enum {
-	NET_PROTO_IP4,
-	NET_PROTO_IP6,
-	NET_PROTO_ETH,
-	NET_PROTO_ARP
-} net_proto_t;
-
-void net_receive(net_device_t* origin, net_proto_t target, size_t size, uint8_t* data);
-void net_send(net_device_t* target, int origin, size_t size, uint8_t* data);
+void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t* data);
+void net_send(net_device_t* target, size_t size, uint8_t* data);
 void net_register_device(net_device_t* device);
 uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum);

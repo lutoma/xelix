@@ -19,19 +19,21 @@
 
 #include "ether.h"
 #include "net.h"
+#include "ip4.h"
+
+void *net_ether_getPayload(uint8_t *data)
+{
+	return data + sizeof(ether_frame_hdr_t);
+}
 
 void net_ether_receive(net_device_t *dev, uint8_t *data, size_t len)
 {
 	ether_frame_hdr_t *hdr = (ether_frame_hdr_t*)data;
 
-	int net_target = hdr->type;
-	
 	switch (hdr->type)
 	{
 		case 0x0008:
-			net_target = NET_PROTO_IP4;
+			ip4_receive(dev, NET_PROTO_ETH, len, data);
 			break;
 	}
-
-	net_receive(dev, net_target, len - sizeof(ether_frame_hdr_t), data + sizeof(ether_frame_hdr_t));
 }

@@ -27,4 +27,5 @@ typedef struct {
 	uint16_t type;
 } ether_frame_hdr_t;
 
+void *net_ether_getPayload(uint8_t *data);
 void net_ether_receive(net_device_t *dev, uint8_t *data, size_t len);

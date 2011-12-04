@@ -22,6 +22,7 @@
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <memory/kmalloc.h>
+#include <net/ether.h>
 #include <net/ip4.h>
 #include <lib/string.h>
 #include <net/slip.h>
@@ -30,25 +31,35 @@
 net_device_t *registered_devices[MAX_DEVICES];
 uint32_t registered_device_count;
 
-void net_receive(net_device_t* origin, net_proto_t target, size_t size, uint8_t* data)
+void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t* data)
 {
 	if(size < 1)
 		return;
 	
-	switch (target)
+	switch (proto)
 	{
-		case NET_PROTO_IP4:
-			ip4_receive(origin, size, data);
-		default:
-			return;
+		case NET_PROTO_ETH:
+			net_ether_receive(origin, data, size);
+			break;
+		case NET_PROTO_RAW:
+			ip4_receive(origin, proto, size, data);
+			break;
 	}
 }
 
-void net_send(net_device_t* target, int origin, size_t size, uint8_t* data)
+void net_send(net_device_t* target, size_t size, uint8_t* data)
 {
-	// Hardcoding for fun and profit
-	if(!strcmp(target->driver_name, "slip"))
-		slip_send(data, size);
+	if (target->mtu < size)
+	{
+		// FIXME Fixme :P
+		for (int off = 0; off < size; off += target->mtu)
+			net_send(target, target->mtu, data + off);
+
+		return;
+	}
+
+	if (target->send != NULL)
+		target->send(target, data, size);
 }
 
 void net_register_device(net_device_t* device)

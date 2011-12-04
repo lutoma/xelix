@@ -45,4 +45,4 @@ typedef struct {
 	unsigned short int sequence;
 } ip4_icmp_header_t;
 
-void ip4_receive(net_device_t* origin, size_t size, void* raw);
+void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw);

@@ -20,13 +20,13 @@
 #include "ip4.h"
 #include <lib/log.h>
 #include <lib/endian.h>
-#include <net/slip.h>
+#include <net/ether.h>
 
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
 {
 	//memset((void*)&packet->checksum, 0, sizeof(packet->checksum));
 	//packet->checksum = net_calculate_checksum((uint8_t*)packet, 16, 0);
-	net_send(target, NET_PROTO_IP4, size, (void*)packet);
+	net_send(target, size, (void*)packet);
 }
 
 static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_packet)
@@ -51,9 +51,14 @@ static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 	ip4_send(origin, size, ip_packet);
 }
 
-void ip4_receive(net_device_t* origin, size_t size, void* raw)
+void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw)
 {
-	ip4_header_t* packet = (ip4_header_t*)raw;
+	ip4_header_t *packet = NULL;
+
+	if (proto == NET_PROTO_ETH)
+		packet = net_ether_getPayload(raw);
+	else if (proto == NET_PROTO_RAW)
+		packet = raw;
 	// TODO Send an ICMP TTL exceeded packet here
 	if(unlikely(packet->ttl <= 0))
 		return;

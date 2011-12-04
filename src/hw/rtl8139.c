@@ -94,6 +94,10 @@ struct rtl8139_card {
 static int cards = 0;
 static struct rtl8139_card rtl8139_cards[MAX_CARDS];
 
+static void sendCallback(net_device_t *dev, uint8_t *data, size_t len)
+{
+}
+
 /* Copied from tyndur */
 static void receiveData(struct rtl8139_card *card)
 {
@@ -130,7 +134,7 @@ static void receiveData(struct rtl8139_card *card)
 			else
 				memcpy(data, rxBuffer, length - 4);
 
-			net_ether_receive(card->netDevice, data, length - 4);
+			net_receive(card->netDevice, NET_PROTO_ETH, length - 4, data);
 		}
 		
 		card->rxBufferOffset += length;
@@ -219,6 +223,14 @@ static void enableCard(struct rtl8139_card *card)
 	// Enable receiver and transmitter
 	int_out8(card, REG_COMMAND, CR_RECEIVER_ENABLE | CR_TRANSMITTER_ENABLE);
 	log(LOG_DEBUG, "rtl8139: Enabled receiver / transmitter.\n");
+
+	card->netDevice = kmalloc(sizeof(net_device_t));
+	card->netDevice->mtu = 1500;
+	card->netDevice->proto = NET_PROTO_ETH;
+	card->netDevice->send = sendCallback;
+	card->netDevice->data = card;
+
+	net_register_device(card->netDevice);
 }
 
 void rtl8139_init()
