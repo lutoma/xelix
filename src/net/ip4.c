@@ -21,15 +21,28 @@
 #include <lib/log.h>
 #include <lib/endian.h>
 #include <net/ether.h>
+#include <memory/kmalloc.h>
 
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
 {
 	//memset((void*)&packet->checksum, 0, sizeof(packet->checksum));
 	//packet->checksum = net_calculate_checksum((uint8_t*)packet, 16, 0);
+	
+	if (target->proto == NET_PROTO_ETH)
+	{
+		ether_frame_hdr_t *etherhdr = kmalloc(sizeof(ether_frame_hdr_t) + size);
+		/* TODO Implement some ARP things */
+		etherhdr->type = 0x0008;
+		memcpy(etherhdr + 1, packet, size);
+
+		net_send(target, size + sizeof(ether_frame_hdr_t), (uint8_t*)etherhdr);
+		return;
+	}
+
 	net_send(target, size, (void*)packet);
 }
 
-static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_packet)
+static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_packet, ether_frame_hdr_t *etherhdr)
 {
 	ip4_icmp_header_t* packet = (ip4_icmp_header_t*)(ip_packet + sizeof(ip4_header_t));
 	//size_t packet_size = size - sizeof(ip4_header_t);
@@ -37,7 +50,7 @@ static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 	//if(packet->type != 8)
 	//	return;
 		
-	log(LOG_DEBUG, "ip4: Incoming ping packet ip_src=0x%x icmp_req=%d\n", ip_packet->tos, packet->type, packet->code, packet->sequence, ip_packet->src, packet->sequence);
+	log(LOG_DEBUG, "ip4: Incoming ping packet ip_src=0x%x icmp_req=%d\n", ip_packet->src, packet->sequence);
 
 	// We can reuse the existing packet as the most stuff stays unmodified
 	uint32_t orig_src = ip_packet->src;
@@ -54,9 +67,13 @@ static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw)
 {
 	ip4_header_t *packet = NULL;
+	ether_frame_hdr_t *etherhdr = NULL;
 
 	if (proto == NET_PROTO_ETH)
+	{
 		packet = net_ether_getPayload(raw);
+		etherhdr = raw;
+	}
 	else if (proto == NET_PROTO_RAW)
 		packet = raw;
 	// TODO Send an ICMP TTL exceeded packet here
@@ -66,7 +83,7 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 
 	if(packet->tos == IP4_TOS_ICMP)
 	{
-		handle_icmp(origin, size, packet);
+		handle_icmp(origin, size, packet, etherhdr);
 		return;
 	}
 }
