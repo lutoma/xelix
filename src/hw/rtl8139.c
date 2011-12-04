@@ -23,6 +23,8 @@
 #include <lib/portio.h>
 #include <interrupts/interface.h>
 #include <memory/kmalloc.h>
+#include <net/ether.h>
+#include <net/net.h>
 
 #define VENDOR_ID 0x10ec
 #define DEVICE_ID 0x8139
@@ -70,6 +72,8 @@
 #define ISR_TRANSMIT_OK				(1 << 2)
 #define ISR_RECEIVE_OK				(1 << 0)
 
+#define RX_BUFFER_SIZE 2048
+
 #define int_out8(card, port, value) portio_out8(card ->device->iobase + port, value)
 #define int_out16(card, port, value) portio_out16(card ->device->iobase + port, value)
 #define int_out32(card, port, value) portio_out32(card ->device->iobase + port, value)
@@ -81,15 +85,58 @@ struct rtl8139_card {
 	pci_device_t *device;
 	char macAddr[6];
 	char *rxBuffer;
+	int rxBufferOffset;
 	uint8_t currentBuffer;
+
+	net_device_t *netDevice;
 };
 
 static int cards = 0;
 static struct rtl8139_card rtl8139_cards[MAX_CARDS];
 
-// TODO Implement this
+/* Copied from tyndur */
 static void receiveData(struct rtl8139_card *card)
 {
+	while (1)
+	{
+		uint8_t command = int_in8(card, REG_COMMAND);
+
+		if (command & CR_BUFFER_IS_EMPTY)
+			break;
+
+		char *rxBuffer = card->rxBuffer + card->rxBufferOffset;
+
+		uint16_t pHeader = *((uint16_t *)rxBuffer);
+		rxBuffer += 2;
+
+		if ((pHeader & 1) == 0)
+				break;
+		
+		uint16_t length = *((uint16_t *)rxBuffer);
+		rxBuffer += 2;
+
+		card->rxBufferOffset += 4;
+
+		if (length >= sizeof(ether_frame_hdr_t))
+		{
+			uint8_t *data = kmalloc(length - 4);
+			if ((card->rxBufferOffset + length - 4) >= RX_BUFFER_SIZE)
+			{
+				memcpy(data, rxBuffer, RX_BUFFER_SIZE - card->rxBufferOffset);
+				memcpy(data + RX_BUFFER_SIZE - card->rxBufferOffset,
+						card->rxBuffer,
+						(length - 4) - (RX_BUFFER_SIZE - card->rxBufferOffset));
+			}
+			else
+				memcpy(data, rxBuffer, length - 4);
+
+			net_ether_receive(card->netDevice, data, length - 4);
+		}
+		
+		card->rxBufferOffset += length;
+		card->rxBufferOffset = (card->rxBufferOffset + 3) & ~0x3;
+		card->rxBufferOffset %= RX_BUFFER_SIZE;
+	}
 }
 
 static void rtl8139_intHandler(cpu_state_t *state)
@@ -104,12 +151,12 @@ static void rtl8139_intHandler(cpu_state_t *state)
 
 		if (isr & ISR_TRANSMIT_OK)
 		{
-			receiveData(card);
 			new_isr |= ISR_TRANSMIT_OK;
 		}
 
 		if (isr & ISR_RECEIVE_OK)
 		{
+			receiveData(card);
 			new_isr |= ISR_RECEIVE_OK;
 		}
 
@@ -165,6 +212,8 @@ static void enableCard(struct rtl8139_card *card)
 		);
 
 	card->rxBuffer = (char *)kmalloc(8192 + 16 );
+	memset(card->rxBuffer, 0, 8192 + 16);
+	card->rxBufferOffset = 0;
 	int_out32(card, REG_RECEIVE_BUFFER, (uint32_t)card->rxBuffer);
 
 	// Enable receiver and transmitter
