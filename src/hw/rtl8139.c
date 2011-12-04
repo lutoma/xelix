@@ -75,6 +75,7 @@
 #define int_out32(card, port, value) portio_out32(card ->device->iobase + port, value)
 
 #define int_in8(card, port) portio_in8(card ->device->iobase + port)
+#define int_in16(card, port) portio_in16(card->device->iobase + port)
 
 struct rtl8139_card {
 	pci_device_t *device;
@@ -83,11 +84,37 @@ struct rtl8139_card {
 	uint8_t currentBuffer;
 };
 
+static int cards = 0;
 static struct rtl8139_card rtl8139_cards[MAX_CARDS];
+
+// TODO Implement this
+static void receiveData(struct rtl8139_card *card)
+{
+}
 
 static void rtl8139_intHandler(cpu_state_t *state)
 {
 	log(LOG_DEBUG, "rtl8139: Got interrupt \\o/\n");
+
+	for (int i = 0; i < cards; ++i)
+	{
+		struct rtl8139_card *card = rtl8139_cards + i;
+		uint16_t isr = int_in16(card, REG_INTERRUPT_STATUS);
+		uint16_t new_isr = 0;
+
+		if (isr & ISR_TRANSMIT_OK)
+		{
+			receiveData(card);
+			new_isr |= ISR_TRANSMIT_OK;
+		}
+
+		if (isr & ISR_RECEIVE_OK)
+		{
+			new_isr |= ISR_RECEIVE_OK;
+		}
+
+		int_out16(card, REG_INTERRUPT_STATUS, new_isr);
+	}
 }
 
 static void enableCard(struct rtl8139_card *card)
@@ -155,7 +182,7 @@ void rtl8139_init()
 	log(LOG_INFO, "rtl8139: Discovered %d device%p.\n", numDevices);
 	
 	int i;
-	for(i = 0; i < numDevices; i++)
+	for(i = 0; i < numDevices; ++i)
 	{
 		rtl8139_cards[i].device = devices[i];
 		enableCard(&rtl8139_cards[i]);
@@ -173,5 +200,7 @@ void rtl8139_init()
 				rtl8139_cards[i].macAddr[4],
 				rtl8139_cards[i].macAddr[5]
 			 );
+
+		++cards;
 	}
 }
