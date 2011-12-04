@@ -21,8 +21,7 @@
 #include <lib/generic.h>
 #include <interrupts/interface.h>
 
-#define SYSCALL_INTERRUPT 0x31
-#define SYSCALL_INTERRUPT1 0x80
+#define SYSCALL_INTERRUPT 0x80
 
 struct syscall
 {

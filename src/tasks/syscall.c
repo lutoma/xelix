@@ -66,5 +66,4 @@ static void intHandler(cpu_state_t* regs)
 void syscall_init()
 {
 	interrupts_registerHandler(SYSCALL_INTERRUPT, intHandler);
-	interrupts_registerHandler(SYSCALL_INTERRUPT1, intHandler);
 }
