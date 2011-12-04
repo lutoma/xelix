@@ -27,7 +27,7 @@
 #include <net/slip.h>
 
 #define MAX_DEVICES 51
-net_device_t registered_devices[MAX_DEVICES];
+net_device_t *registered_devices[MAX_DEVICES];
 uint32_t registered_device_count;
 
 void net_receive(net_device_t* origin, net_proto_t target, size_t size, uint8_t* data)
@@ -53,8 +53,7 @@ void net_send(net_device_t* target, int origin, size_t size, uint8_t* data)
 
 void net_register_device(net_device_t* device)
 {
-	registered_devices[registered_device_count++] = *device;
-	kfree(device);
+	registered_devices[registered_device_count++] = device;
 }
 
 // Calculate checksum for TCP, ICMP and IP packets
