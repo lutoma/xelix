@@ -30,13 +30,18 @@
 net_device_t registered_devices[MAX_DEVICES];
 uint32_t registered_device_count;
 
-void net_receive(net_device_t* origin, int target, size_t size, uint8_t* data)
+void net_receive(net_device_t* origin, net_proto_t target, size_t size, uint8_t* data)
 {
 	if(size < 1)
 		return;
 	
-	if(target == NET_PROTO_IP4)
-		ip4_receive(origin, size, data);
+	switch (target)
+	{
+		case NET_PROTO_IP4:
+			ip4_receive(origin, size, data);
+		default:
+			return;
+	}
 }
 
 void net_send(net_device_t* target, int origin, size_t size, uint8_t* data)

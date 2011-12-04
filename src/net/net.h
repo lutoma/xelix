@@ -26,9 +26,14 @@ typedef struct {
 	char long_driver_name[256];
 } net_device_t;
 
-#define NET_PROTO_IP4 0
+typedef enum {
+	NET_PROTO_IP4,
+	NET_PROTO_IP6,
+	NET_PROTO_ETH,
+	NET_PROTO_ARP
+} net_proto_t;
 
-void net_receive(net_device_t* origin, int target, size_t size, uint8_t* data);
+void net_receive(net_device_t* origin, net_proto_t target, size_t size, uint8_t* data);
 void net_send(net_device_t* target, int origin, size_t size, uint8_t* data);
 void net_register_device(net_device_t* device);
 uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum);
