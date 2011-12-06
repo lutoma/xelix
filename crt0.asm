@@ -9,13 +9,14 @@ EXTERN main
 
 _start:
 	; Push fake argc and argv
-	mov eax, 0
+	xor eax, eax
 	push eax
 	push eax
 
 	call main
 	
 	; Exit
+	add esp, 4
 	mov eax, 1
 	int 80h
 
