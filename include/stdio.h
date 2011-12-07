@@ -35,5 +35,10 @@ extern FILE* stdin;
 extern FILE* stdout;
 extern FILE* stderr;
 
-void print(const char* string);
 char* fgets(char* str, int num, FILE* fp);
+int fputs(const char* string, FILE* fp);
+static inline void print(const char* string)
+{
+        fputs(string, (FILE*)1);
+}
+

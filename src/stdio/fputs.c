@@ -20,14 +20,15 @@
 #include <stddef.h>
 #include <string.h>
 
-void print(const char* string)
+int fputs(const char* string, FILE* fp)
 {
 	size_t len = strlen(string);
 	asm __volatile__(
 		"mov eax, 3;"
-		"mov ebx, 1;"
-		"mov ecx, %0;"
-		"mov edx, %1;" 
+		"mov ebx, %0;"
+		"mov ecx, %1;"
+		"mov edx, %2;" 
 		"int 0x80;"
-	:: "r" (string), "r" (len) : "eax", "ebx", "ecx", "edx");
+	:: "r" (fp), "r" (string), "r" (len) : "eax", "ebx", "ecx", "edx");
+	return 0;
 }
