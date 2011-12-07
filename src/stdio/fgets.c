@@ -1,5 +1,3 @@
-#pragma once
-
 /* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xlibc.
@@ -13,27 +11,23 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
-*
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <unistd.h>
-// For NULL, which should also be defined in here
+#include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 
-#define EOF -1
-
-// When changing this: DON'T FORGET TO CHANGE THE DEFINITION IN CRT0
-typedef struct {
-  uint64_t num;
-  char filename[512];
-  uint32_t offset;
-} FILE;
-
-extern FILE* stdin;
-extern FILE* stdout;
-extern FILE* stderr;
-
-void print(const char* string);
-char* fgets(char* str, int num, FILE* fp);
+char* fgets(char* str, int num, FILE* fp)
+{
+	asm __volatile__(
+		"mov eax, 2;"
+		"mov ebx, %0;"
+		"mov ecx, %1;"
+		"mov edx, %2;" 
+		"int 0x80;"
+	:: "r" (fp), "r" (str), "r" (num) : "eax", "ebx", "ecx", "edx");
+	return str;
+}
