@@ -26,8 +26,10 @@
 #ifndef LOG_PRINT
 	bool printlog = true;
 #else
-	bool printlog = LOG_PRINT ;
+	bool printlog = LOG_PRINT;
 #endif
+
+static uint32_t logsize;
 
 static char* klog;
 static bool initialized = false;
@@ -37,9 +39,18 @@ __attribute__((optimize(0))) void log(uint32_t level, const char *fmt, ...)
 {
 	if(unlikely(!initialized)) return;
 
-	if(unlikely(strlen(klog) + strlen(fmt) < LOG_MAXSIZE))
-		klog = strcat(klog, fmt); // concatenate to kernellog
-	
+    if (strlen(klog) + strlen(fmt) > logsize)
+    {
+        logsize *= 2;
+        char* klog_tmp = (char*)kmalloc(logsize * sizeof(char));
+        *klog_tmp = 0;
+        strcpy(klog_tmp, klog);
+        kfree(klog);
+        klog = klog_tmp;
+    }
+
+	klog = strcat(klog, fmt); // concatenate to kernellog
+
 	if(printlog)
 	{
 		printf("[%d:%d] ", pit_getTickNum() / PIT_RATE, pit_getTickNum());
@@ -57,7 +68,8 @@ void log_setPrintLog(bool yesno)
 // Initialize log
 void log_init()
 {
-	klog = (char*)kmalloc(LOG_MAXSIZE * sizeof(char));
+	klog = (char*)kmalloc(LOG_INITSIZE * sizeof(char));
 	*klog = 0;
+    logsize = LOG_INITSIZE;
 	initialized = true;
 }

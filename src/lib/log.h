@@ -20,7 +20,7 @@
 
 #include "generic.h"
 
-#define LOG_MAXSIZE 10000
+#define LOG_INITSIZE 10000
 
 // Logging levels
 // LOG_NONE is only supposed to be used in setLogLevel().
