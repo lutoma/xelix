@@ -24,7 +24,7 @@ void print(const char* string)
 {
 	size_t len = strlen(string);
 	asm __volatile__(
-		"mov eax, 4;"
+		"mov eax, 3;"
 		"mov ebx, 1;"
 		"mov ecx, %0;"
 		"mov edx, %1;" 
