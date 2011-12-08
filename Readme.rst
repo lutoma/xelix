@@ -28,7 +28,9 @@ The following header files are partially implemented:
 <stdlib.h>
 <string.h>
 <unistd.h>
-<stdarg.h> - GCC only
+<stdarg.h>
+<sys/types.h>
+<inttypes.h>
 
 The following header files are completely missing:
 
@@ -49,7 +51,6 @@ The following header files are completely missing:
 <glob.h>
 <grp.h>
 <iconv.h>
-<inttypes.h>
 <iso646.h>
 <langinfo.h>
 <libgen.h>
@@ -90,7 +91,6 @@ The following header files are completely missing:
 <sys/time.h>
 <sys/timeb.h>
 <sys/times.h>
-<sys/types.h>
 <sys/uio.h>
 <sys/un.h>
 <sys/utsname.h>
