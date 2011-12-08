@@ -27,6 +27,8 @@
 
 #define HOST_NAME_MAX 64
 
+extern char** __environ;
+
 int gethostname(char* name, size_t len);
 int sethostname(const char* name, size_t len);
 

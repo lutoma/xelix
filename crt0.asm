@@ -1,7 +1,9 @@
 SECTIOn .data
 GLOBAL errno
+GLOBAL __environ
 
-errno:  resb 32
+errno: resb 32
+__environ: resb 32
 
 SECTION .text
 GLOBAL _start
