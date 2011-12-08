@@ -1,5 +1,3 @@
-#pragma once
-
 /* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xlibc.
@@ -20,11 +18,12 @@
  
 #include <stddef.h>
 
-#define STDIN_FILENO 0;
-#define STDOUT_FILENO 1;
-#define STDERR_FILENO 2;
-
-#define HOST_NAME_MAX 64
-
-int gethostname(char* name, size_t len);
-int sethostname(const char* name, size_t len);
+int sethostname(const char* name, size_t len)
+{
+	asm volatile("mov eax, 11;"
+	             "mov ebx, %0;"
+	             "mov ecx, %1;"
+	             "int 0x80;"
+	:: "r" (name), "r" (len) : "eax", "ebx", "ecx");
+	return 0;
+}

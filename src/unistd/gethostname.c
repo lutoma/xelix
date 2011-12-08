@@ -1,5 +1,3 @@
-#pragma once
-
 /* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xlibc.
@@ -17,14 +15,15 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include <stddef.h>
 
-#define STDIN_FILENO 0;
-#define STDOUT_FILENO 1;
-#define STDERR_FILENO 2;
-
-#define HOST_NAME_MAX 64
-
-int gethostname(char* name, size_t len);
-int sethostname(const char* name, size_t len);
+int gethostname(const char* name, size_t len)
+{
+	asm volatile("mov eax, 10;"
+	             "mov ebx, %0;"
+	             "mov ecx, %1;"
+	             "int 0x80;"
+	:: "r" (name), "r" (len) : "eax", "ebx", "ecx");
+	return 0;
+}
