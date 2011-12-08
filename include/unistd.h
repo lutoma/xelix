@@ -35,7 +35,7 @@ static inline uid_t getuid(void)
 	return 0;
 }
 
-static inline uid_t getuid(void)
+static inline uid_t geteuid(void)
 {
 	return 0;
 }
