@@ -1,7 +1,7 @@
 /* generic.c: A generic keyboard driver. Should work for every PS2
  * keyboard and for most USB keyboards (Depends on BIOS / Legacy
  * support)
- * 
+ *
  * Copyright © 2010 Christoph Sünderhauf, Lukas Martini
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
  *
@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "keymaps.h"
 #include <console/info.h>
 #include <hw/keyboard.h>
@@ -80,18 +80,18 @@ static char* identify()
 	{
 		if(inb(0x64) & 1)
 			break;
-		
+
 		uint64_t nowTick = pit_getTickNum();
-		
+
 		// Still no result after 0.5 seconds
 		if((startTick - nowTick) / PIT_RATE >= 0.5)
 			return "XT";
 	}
-	
+
 	uint8_t one = inb(0x60);
 	uint8_t two = inb(0x60);
 	uint8_t three = inb(0x60);
-	
+
 	log(LOG_INFO, "keyboard: identify: one = 0x%x, two = 0x%x, three = 0x%x.\n", one, two, three);
 
 	switch(one)
@@ -102,7 +102,7 @@ static char* identify()
 			else
 				return "AT";
 	}
-	
+
 	return "Unknown";
 }
 
@@ -123,31 +123,31 @@ static void handleScancode(uint8_t code, uint8_t code2)
 		case 0x38: modifiers.alt = true; break;
 		case 0xb8: modifiers.alt = false; break;
 	}
-	
+
 
 	if( code == 0xe0 && code2 == 0x5b) // super press
 		modifiers.super = true;
 	if( code == 0xe0 && code2 == 0xdb) // super release
 		modifiers.super = false;
-	
+
 	if( code == 0xe0 && code2 == 0x49 ) // page up press
 		console_scroll(NULL, 1);
 	if( code == 0xe0 && code2 == 0x51 ) // page down press
 		console_scroll(NULL, -1);
-	
+
 	if( code2 == 0x1d) // ctrl press
 		modifiers.controlr = true;
 	if( code2 == 0x9d) // ctrl release
 		modifiers.controlr = false;
-	
+
 	uint16_t dcode = code;
 	if( modifiers.shiftl | modifiers.shiftr )
 		dcode += 256;
 
 	if(code > 512)
 		return;
-	
-	char c = currentKeymap[code];
+
+	char c = currentKeymap[dcode];
 	if(code > 512 || c == NULL)
 		return;
 
@@ -184,10 +184,10 @@ static void handleScancode(uint8_t code, uint8_t code2)
 static void handler(cpu_state_t* regs)
 {
 	static bool waitingForEscapeSequence;
-	
+
 	// read scancodes
 	uint8_t code = inb(0x60);
-	
+
 	if (code == 0xe0)
 		waitingForEscapeSequence = true; // escape sequence
 	else
@@ -235,7 +235,7 @@ console_driver_t* console_driver_keyboard_init(console_driver_t* driver)
 	flush();
 	char* ident = identify();
 	log(LOG_INFO, "keyboard: Identified type: %s\n", ident);
-	
+
 	// Reset to default values
 	keyboard_sendKeyboard(0xF6);
 
@@ -245,9 +245,9 @@ console_driver_t* console_driver_keyboard_init(console_driver_t* driver)
 
 	// Activate
 	keyboard_sendKeyboard(0xF4);
-	
+
 	flush(); // Flush again
-	
+
 	currentKeymap = (char*)&keymap_en;
 	interrupts_registerHandler(IRQ1, &handler);
 
