@@ -110,6 +110,7 @@ void net_set_hostname(char* buffer, size_t len)
 		return;
 	
 	strcpy(hostname, buffer);
+	hostname[len] = 0;
 	hostname_setlen = len;
 	log(LOG_INFO, "net: New hostname: %s\n", hostname);
 }
