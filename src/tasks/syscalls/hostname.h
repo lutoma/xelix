@@ -19,26 +19,7 @@
  */
 
 #include <lib/generic.h>
+#include <tasks/syscall.h>
 
-typedef enum {
-	NET_PROTO_RAW,
-	NET_PROTO_ETH
-} net_l2proto_t;
-
-typedef struct net_device {
-	char name[15];
-	uint16_t mtu;
-	net_l2proto_t proto;
-
-	void (*send)(struct net_device*, uint8_t *, size_t);
-
-	/* For driver-dependent data */
-	void *data;
-} net_device_t;
-
-void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t* data);
-void net_send(net_device_t* target, size_t size, uint8_t* data);
-void net_register_device(net_device_t* device);
-uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum);
-void net_get_hostname(char* buffer, size_t len);
-void net_set_hostname(char* buffer, size_t len);
+int sys_get_hostname(struct syscall syscall);
+int sys_set_hostname(struct syscall syscall);

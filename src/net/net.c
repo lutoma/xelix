@@ -28,8 +28,12 @@
 #include <net/slip.h>
 
 #define MAX_DEVICES 51
+#define MAX_HOSTNAME_LEN 64
+
 net_device_t *registered_devices[MAX_DEVICES];
 uint32_t registered_device_count;
+char hostname[MAX_HOSTNAME_LEN];
+size_t hostname_setlen = 0;
 
 void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t* data)
 {
@@ -88,3 +92,24 @@ uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum)
 	return((uint16_t)sum ^ 0xFFFF);
 }
 
+void net_get_hostname(char* buffer, size_t maxlen)
+{
+	// TODO have a look at maxlen
+	if(hostname_setlen == 0)
+	{
+		strcpy(buffer, "(unnamed)");
+		return;
+	}
+	
+	strcpy(buffer, hostname);
+}
+
+void net_set_hostname(char* buffer, size_t len)
+{
+	if(len + 1 > MAX_HOSTNAME_LEN)
+		return;
+	
+	strcpy(hostname, buffer);
+	hostname_setlen = len;
+	log(LOG_INFO, "net: New hostname: %s\n", hostname);
+}
