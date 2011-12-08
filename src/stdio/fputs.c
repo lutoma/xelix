@@ -29,6 +29,6 @@ int fputs(const char* string, FILE* fp)
 		"mov ecx, %1;"
 		"mov edx, %2;" 
 		"int 0x80;"
-	:: "r" (fp), "r" (string), "r" (len) : "eax", "ebx", "ecx", "edx");
+	:: "r" (fp->num), "r" (string), "r" (len) : "eax", "ebx", "ecx", "edx");
 	return 0;
 }

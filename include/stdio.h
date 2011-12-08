@@ -24,21 +24,23 @@
 
 #define EOF -1
 
-// When changing this: DON'T FORGET TO CHANGE THE DEFINITION IN CRT0
 typedef struct {
   uint64_t num;
   char filename[512];
   uint32_t offset;
 } FILE;
 
-extern FILE* stdin;
-extern FILE* stdout;
-extern FILE* stderr;
+extern FILE _stdin;
+extern FILE _stdout;
+extern FILE _stderr;
+#define stdin &_stdin
+#define stdout &_stdout
+#define stderr &_stderr
 
 char* fgets(char* str, int num, FILE* fp);
 int fputs(const char* string, FILE* fp);
 static inline void print(const char* string)
 {
-        fputs(string, (FILE*)1);
+        fputs(string, stdout);
 }
 
