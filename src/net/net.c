@@ -96,7 +96,7 @@ void net_get_hostname(char* buffer, size_t maxlen)
 {
 	if(hostname_setlen == 0)
 	{
-		memcpy(buffer, hostname, maxlen);
+		memcpy(buffer, "(unnamed)", maxlen);
 		return;
 	}
 	
