@@ -18,24 +18,4 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include <stddef.h>
-#include <sys/types.h>
-
-#define STDIN_FILENO 0;
-#define STDOUT_FILENO 1;
-#define STDERR_FILENO 2;
-
-#define HOST_NAME_MAX 64
-
-int gethostname(char* name, size_t len);
-int sethostname(const char* name, size_t len);
-
-static inline uid_t getuid(void)
-{
-	return 0;
-}
-
-static inline uid_t getuid(void)
-{
-	return 0;
-}
+#include <stdint.h>

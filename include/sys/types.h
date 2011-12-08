@@ -17,25 +17,12 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+#include <stdint.h>
+// For size_t, ssize_t 
 #include <stddef.h>
-#include <sys/types.h>
 
-#define STDIN_FILENO 0;
-#define STDOUT_FILENO 1;
-#define STDERR_FILENO 2;
-
-#define HOST_NAME_MAX 64
-
-int gethostname(char* name, size_t len);
-int sethostname(const char* name, size_t len);
-
-static inline uid_t getuid(void)
-{
-	return 0;
-}
-
-static inline uid_t getuid(void)
-{
-	return 0;
-}
+typedef uint64_t id_t;
+typedef id_t uid_t;
+typedef id_t gid_t;
+typedef id_t pid_t;
