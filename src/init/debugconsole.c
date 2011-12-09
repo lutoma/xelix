@@ -77,7 +77,7 @@ static void executeCommand(char *command)
 		vm_dump(vm_currentContext);
 	else
 	{
-		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
+		if(strlen(command) > 0 && command[0] != '#')
 			printf("error: command '%s' not found.\n", command);
 	}
 }
