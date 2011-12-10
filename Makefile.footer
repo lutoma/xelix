@@ -62,7 +62,7 @@ strip: xelix.bin
 
 .PHONY: count
 count:
-	find -L src -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 
+	find -L {src,libc} -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 
 
 .PHONY: clean
 clean:
