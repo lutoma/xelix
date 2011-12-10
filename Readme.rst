@@ -20,6 +20,7 @@ Group Base Specifications Issue 6 [Better known as POSIX]):
 
 <stddef.h>
 <errno.h>
+<sys/utsname.h>
 
 The following header files are partially implemented:
 
@@ -93,7 +94,6 @@ The following header files are completely missing:
 <sys/times.h>
 <sys/uio.h>
 <sys/un.h>
-<sys/utsname.h>
 <sys/wait.h>
 <syslog.h>
 <tar.h>
