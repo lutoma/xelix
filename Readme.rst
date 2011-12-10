@@ -21,6 +21,7 @@ Group Base Specifications Issue 6 [Better known as POSIX]):
 <stddef.h>
 <errno.h>
 <sys/utsname.h>
+<stdbool.h>
 
 The following header files are partially implemented:
 
@@ -76,7 +77,6 @@ The following header files are completely missing:
 <setjmp.h>
 <signal.h>
 <spawn.h>
-<stdbool.h>
 <strings.h>
 <stropts.h>
 <sys/ipc.h>
