@@ -19,6 +19,7 @@
 
 #include <memory/vm.h>
 #include <memory/paging.h>
+#include <memory/kmalloc.h>
 #include "mmap.h"
 
 int sys_mmap(struct syscall syscall)
@@ -31,6 +32,9 @@ int sys_mmap(struct syscall syscall)
 	int fd = syscall->params[4];
 	int offset = syscall->params[5];
 	*/
+
+	// Hack until the paging stuff works.
+	return (int)kmalloc(length);
 
 	if (addr == NULL)
 	{
