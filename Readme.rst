@@ -23,6 +23,7 @@ Group Base Specifications Issue 6 [Better known as POSIX]):
 <sys/utsname.h>
 <stdbool.h>
 <iso646.h>
+<tar.h>
 
 The following header files are partially implemented:
 
@@ -96,7 +97,6 @@ The following header files are completely missing:
 <sys/un.h>
 <sys/wait.h>
 <syslog.h>
-<tar.h>
 <termios.h>
 <tgmath.h>
 <time.h>
