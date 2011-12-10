@@ -109,7 +109,6 @@ static char* identify()
 // Handle a scancode. Calls the active function
 static void handleScancode(uint8_t code, uint8_t code2)
 {
-	log(LOG_DEBUG, "Scancode is 0x%x\n", code);
 	switch(code)
 	{
 		case 0x2a: modifiers.shiftl = true; break;
