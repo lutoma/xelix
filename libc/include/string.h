@@ -26,3 +26,4 @@ size_t strlen(const char* str);
 char* strtok(char* str, const char* delim);
 char* strtok_r(char* s, const char* delim, char** last);
 char* strcpy(char* dest, const char* src);
+int strcmp(const char* str1, const char* str2);
