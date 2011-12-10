@@ -22,6 +22,7 @@ Group Base Specifications Issue 6 [Better known as POSIX]):
 <errno.h>
 <sys/utsname.h>
 <stdbool.h>
+<iso646.h>
 
 The following header files are partially implemented:
 
@@ -53,7 +54,6 @@ The following header files are completely missing:
 <glob.h>
 <grp.h>
 <iconv.h>
-<iso646.h>
 <langinfo.h>
 <libgen.h>
 <limits.h>
