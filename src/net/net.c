@@ -92,15 +92,15 @@ uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum)
 	return((uint16_t)sum ^ 0xFFFF);
 }
 
-void net_get_hostname(char* buffer, size_t maxlen)
+char* net_get_hostname(size_t maxlen)
 {
+	char* name;
 	if(hostname_setlen == 0)
-	{
-		memcpy(buffer, "(unnamed)", maxlen);
-		return;
-	}
-	
-	memcpy(buffer, hostname, maxlen);
+		name = "(unnamed)";
+	else
+		name = hostname;
+
+	return substr(name, 0, maxlen);
 }
 
 void net_set_hostname(char* buffer, size_t len)

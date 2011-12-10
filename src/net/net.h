@@ -40,5 +40,5 @@ void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t
 void net_send(net_device_t* target, size_t size, uint8_t* data);
 void net_register_device(net_device_t* device);
 uint16_t net_calculate_checksum(uint8_t *buf, uint16_t length, uint32_t sum);
-void net_get_hostname(char* buffer, size_t len);
+char* net_get_hostname(size_t maxlen);
 void net_set_hostname(char* buffer, size_t len);
