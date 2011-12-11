@@ -31,7 +31,7 @@ floppy.img: xelix.bin mount
 .PHONY: runqemufloppy
 runqemufloppy: floppy.img
 	- rm /var/qemu.log
-	qemu -monitor stdio -fda floppy.img $(MAKE_QEMU_FLAGS)
+	qemu -monitor stdio -fda floppy.img -serial pty $(MAKE_QEMU_FLAGS)
 
 .PHONY: runbochsfloppy
 runbochsfloppy: floppy.img
@@ -39,7 +39,7 @@ runbochsfloppy: floppy.img
 
 .PHONY: runqemu
 runqemu: xelix.bin
-	qemu -monitor stdio -kernel xelix.bin $(MAKE_QEMU_FLAGS)
+	qemu -monitor stdio -kernel xelix.bin -serial pty $(MAKE_QEMU_FLAGS)
 
 .PHONY: runqemunox
 runqemunox: xelix.bin
