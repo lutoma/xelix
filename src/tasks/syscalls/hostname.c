@@ -24,7 +24,8 @@
 
 int sys_get_hostname(struct syscall syscall)
 {
-	net_get_hostname((char*)syscall.params[0], syscall.params[1]);
+	char* name = net_get_hostname(syscall.params[1]);
+	memcpy((char*)syscall.params[0], name, syscall.params[1]);
 	return 0;
 }
 

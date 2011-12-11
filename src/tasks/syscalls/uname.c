@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* sys_hostname.c: Set/get hostname
+ * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,20 +17,28 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "generic.h"
-#include "print.h"
-#include <interrupts/interface.h>
-#include <hw/pit.h>
-#include <tasks/scheduler.h>
+#include "uname.h"
+#include <tasks/syscall.h>
+#include <net/net.h>
+#include <lib/string.h>
 
-#define PANIC_INFOMEM 0x100
-#define panic(error) do { \
-	interrupts_disable();  \
-	*((char**)PANIC_INFOMEM) = (char*)(error); \
-	asm("int 0x30"); \
-} while(0)
+struct utsname {
+	char sysname[20];
+	char nodename[64];
+	char release[20];
+	char version[20];
+	char machine[20];
+};
 
-#define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
+int sys_uname(struct syscall syscall)
+{
+	struct utsname* info = (struct utsname*)syscall.params[0];
+	strcpy(info->sysname, "Xelix");
+	strcpy(info->nodename, net_get_hostname(64));
+	// TODO change this once we have sprintf
+	strcpy(info->release, "derp");
+	strcpy(info->version, "derp");
+	strcpy(info->machine, "i386");
+	return 0;
+}
 
-void dumpCpuState(cpu_state_t* regs);
-void panic_init();

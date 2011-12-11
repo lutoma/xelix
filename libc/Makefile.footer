@@ -1,0 +1,11 @@
+%.o: %.c
+	$(CC) $(MAKE_CFLAGS) -D "__INLIBC" -o $@ -c $<
+
+%-asm.o: %.asm
+	$(AS) -f elf -g -o $@ $(ASFLAGS) $<
+
+.PHONY: clean
+clean:
+	find -L src -type f -iregex "^.*\.o" | xargs rm -f
+	rm crt0.o
+	rm libstdc.a

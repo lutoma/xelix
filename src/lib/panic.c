@@ -45,8 +45,7 @@ void dumpCpuState(cpu_state_t* regs) {
 
 static void panicHandler(cpu_state_t* regs)
 {
-	interrupts_disable();
-	printf("%%Kernel Panic!%%\n\n", 0x04);
+	printf("%%Kernel Panic: %s%%\n\n", 0x04, *((char**)PANIC_INFOMEM));
 
 	printf("Technical information:\n\n");
 	printf("Last PIT ticknum: %d\n", pit_getTickNum());
