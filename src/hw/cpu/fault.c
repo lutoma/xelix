@@ -59,11 +59,11 @@ static void handlePageFault(cpu_state_t *regs)
 static void faultHandler(cpu_state_t* regs)
 {
 	if(regs->interrupt > 18)
-		panic("Unkown CPU error %d", regs->interrupt);
+		panic("Unkown CPU error\n");
 	else if(regs->interrupt == 14)
 		handlePageFault(regs);
 	else
-		panic("CPU error %d (%s) at %x", regs->interrupt, errorDescriptions[regs->interrupt], regs->eip);
+		panic(errorDescriptions[regs->interrupt]);
 }
 
 void cpu_initFaultHandler()
