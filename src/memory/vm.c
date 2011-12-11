@@ -250,7 +250,7 @@ void vm_handle_fault(uint32_t code, void *addr, void *instr)
 	}
 
 	if (pg == NULL || pg->section == VM_SECTION_UNMAPPED)
-		panic("Unexpected page fault at 0x%x (instruction %x)\n", addr, instr);
+		panic("Unexpected page fault\n");
 }
 
 void vm_set_cache(struct vm_context *ctx, void *cache)
