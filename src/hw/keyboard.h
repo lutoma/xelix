@@ -29,4 +29,4 @@ void keyboard_init(); // irqs have to be set up first!
 void keyboard_takeFocus(void (*func)(uint16_t));
 void keyboard_leaveFocus();
 	console_driver_t *console_driver_keyboard_init(console_driver_t *driver);
-
+int keyboard_setlayout(char *layoutname);
