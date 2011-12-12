@@ -24,6 +24,7 @@
 #include <hw/cpu.h>
 #include <interrupts/interface.h>
 #include <lib/panic.h>
+#include <lib/string.h>
 #include <memory/vm.h>
 
 #define STACKSIZE PAGE_SIZE
@@ -48,7 +49,7 @@ int skipnext = SKIP_OFF;
 
 void scheduler_terminateCurrentTask()
 {
-	log(LOG_DEBUG, "scheduler: Deleting current task\n");
+	log(LOG_DEBUG, "scheduler: Deleting current task <%s>\n", currentTask->name);
 
 	if(currentTask->next == currentTask)
 		currentTask = NULL;
@@ -64,7 +65,7 @@ void scheduler_terminateCurrentTask()
 
 void scheduler_remove(task_t *t)
 {
-	log(LOG_DEBUG, "scheduler: Deleting task %d\n", t->pid);
+	log(LOG_DEBUG, "scheduler: Deleting task %d <%s>\n", t->pid, t->name);
 
 	t->next->last = t->last;
 	t->last->next = t->next;
@@ -138,7 +139,7 @@ static struct vm_context *setupMemoryContext(void *stack)
  * UP TO YOU as the scheduler has no clue about how long
  * your program is.
  */
-task_t *scheduler_newTask(void *entry, task_t *parent)
+task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME])
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
@@ -164,6 +165,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	thisTask->state->ss = 0x10;
 
 	thisTask->pid = ++highestPid;
+	strcpy(thisTask->name, name);
 	thisTask->parent = parent;
 	thisTask->task_state = TASK_STATE_RUNNING;
 	thisTask->sys_call_conv = (parent == NULL) ? TASK_SYSCONV_LINUX : parent->sys_call_conv;
@@ -190,7 +192,7 @@ void scheduler_add(task_t *task)
 
 	interrupts_enable();
 	
-	log(LOG_INFO, "scheduler: Registered new task with PID %d\n", task->pid);
+	log(LOG_INFO, "scheduler: Registered new task with PID %d <%s>\n", task->pid, task->name);
 }
 
 task_t* scheduler_getCurrentTask()

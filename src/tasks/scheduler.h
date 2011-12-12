@@ -22,9 +22,12 @@
 #include <hw/cpu.h>
 #include <memory/vm.h>
 
+#define SCHEDULER_MAXNAME 256
+
 // Single linked list
 typedef struct task {
 	uint32_t pid;
+	char name[SCHEDULER_MAXNAME];
 	struct task *parent;
 	cpu_state_t* state;
 	struct task* next;
@@ -50,7 +53,7 @@ typedef struct task {
 
 int scheduler_state;
 
-task_t *scheduler_newTask(void *entry, task_t *parent);
+task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME]);
 void scheduler_add(task_t *task);
 void scheduler_terminateCurrentTask();
 task_t* scheduler_getCurrentTask();

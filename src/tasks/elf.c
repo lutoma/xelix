@@ -28,7 +28,7 @@
 
 char header[4] = {0x7f, 'E', 'L', 'F'};
 
-int elf_load(elf_t* bin)
+int elf_load(elf_t* bin, char name[SCHEDULER_MAXNAME])
 {
 	if(bin->ident.magic[0] != header[0]
 	|| bin->ident.magic[1] != header[1]
@@ -63,6 +63,6 @@ int elf_load(elf_t* bin)
 		memcpy(phead->virtaddr, (void*)bin + phead->offset, phead->filesize);	
 	}
 
-	scheduler_add(scheduler_newTask(bin->entry, NULL));
+	scheduler_add(scheduler_newTask(bin->entry, NULL, name));
 	return 0;
 }
