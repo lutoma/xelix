@@ -18,14 +18,14 @@
  */
 
 #include "brk.h"
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <memory/kmalloc.h>
 
 #define alignedMemoryPosition() (kmalloc_getMemoryPosition() + 4096 - (kmalloc_getMemoryPosition() % 4096))
 
 int sys_brk(struct syscall syscall)
 {
-	if (vm_currentContext == vm_kernelContext)
+	if (vmem_currentContext == vmem_kernelContext)
 	{
 		if (syscall.params[0] == 0)
 			return alignedMemoryPosition();

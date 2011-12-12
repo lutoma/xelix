@@ -22,7 +22,7 @@
 #include <lib/log.h>
 #include <lib/panic.h>
 #include <interrupts/interface.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <memory/paging.h>
 
 static char* errorDescriptions[] = 
@@ -52,7 +52,7 @@ static void handlePageFault(cpu_state_t *regs)
 	int cr2;
 	asm volatile("mov %0, cr2":"=r"(cr2));
 	
-	vm_handle_fault(regs->errCode, (void *)cr2, regs->eip);
+	vmem_handle_fault(regs->errCode, (void *)cr2, regs->eip);
 }
 
 // Handles the IRQs we catch

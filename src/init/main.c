@@ -45,7 +45,7 @@
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
 #include <memory/paging.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <net/slip.h>
 
 // Prints out compiler information, especially for GNU GCC
@@ -95,7 +95,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(pci);
 	init(rtl8139);
 	init(syscall);
-	init(vm);
+	init(vmem);
 	init(paging);
 	
 #	ifndef XELIX_WITHOUT_SLIP

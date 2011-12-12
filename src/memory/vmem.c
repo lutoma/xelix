@@ -17,8 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "vm.h"
-
+#include "vmem.h"
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <lib/print.h>
@@ -31,19 +30,19 @@
 
 #define GET_PAGE(a) (a - (a % PAGE_SIZE))
 
-struct vm_context_node
+struct vmem_context_node
 {
-	struct vm_page *page;
-	struct vm_context_node *next;
+	struct vmem_page *page;
+	struct vmem_context_node *next;
 };
 
-struct vm_context
+struct vmem_context
 {
 	union {
-		struct vm_context_node *first_node;
-		struct vm_context_node *node;
+		struct vmem_context_node *first_node;
+		struct vmem_context_node *node;
 	};
-	struct vm_context_node *last_node;
+	struct vmem_context_node *last_node;
 	union {
 		uint32_t pages;
 		uint32_t nodes;
@@ -53,38 +52,38 @@ struct vm_context
 };
 
 /* Initialize kernel context */
-void vm_init()
+void vmem_init()
 {
-	struct vm_context *ctx = vm_new();
+	struct vmem_context *ctx = vmem_new();
 	
-	vm_faultAddress = kmalloc_a(PAGE_SIZE);
+	vmem_faultAddress = kmalloc_a(PAGE_SIZE);
 
-	struct vm_page *debugPage = vm_new_page();
-	debugPage->section = VM_SECTION_UNMAPPED;
-	debugPage->virt_addr = vm_faultAddress;
+	struct vmem_page *debugPage = vmem_new_page();
+	debugPage->section = VMEM_SECTION_UNMAPPED;
+	debugPage->virt_addr = vmem_faultAddress;
 
-	vm_add_page(ctx, debugPage);
+	vmem_add_page(ctx, debugPage);
 	
 	for (char *i = (char*)0; i <= (char*)0xffffe000U; i += 4096)
 	{
-		if (i == vm_faultAddress)
+		if (i == vmem_faultAddress)
 			continue;
-		struct vm_page *page = vm_new_page();
-		page->section = VM_SECTION_KERNEL;
+		struct vmem_page *page = vmem_new_page();
+		page->section = VMEM_SECTION_KERNEL;
 		page->cow = 0;
 		page->allocated = 1;
 		page->virt_addr = (void *)i;
 		page->phys_addr = (void *)i;
 
-		vm_add_page(ctx, page);
+		vmem_add_page(ctx, page);
 	}
 
-	vm_kernelContext = ctx;
+	vmem_kernelContext = ctx;
 }
 
-struct vm_context *vm_new()
+struct vmem_context *vmem_new()
 {
-	struct vm_context *ctx = kmalloc(sizeof(struct vm_context));
+	struct vmem_context *ctx = kmalloc(sizeof(struct vmem_context));
 
 	ctx->first_node = NULL;
 	ctx->last_node = NULL;
@@ -95,16 +94,16 @@ struct vm_context *vm_new()
 	return ctx;
 }
 
-struct vm_page *vm_new_page()
+struct vmem_page *vmem_new_page()
 {
-	struct vm_page *page = kmalloc(sizeof(struct vm_page));
-	memset(page, 0, sizeof(struct vm_page));
+	struct vmem_page *page = kmalloc(sizeof(struct vmem_page));
+	memset(page, 0, sizeof(struct vmem_page));
 	return page;
 }
 
-int vm_iterate(struct vm_context *ctx, vm_iterator_t iterator)
+int vmem_iterate(struct vmem_context *ctx, vmem_iterator_t iterator)
 {
-	struct vm_context_node *node = ctx->first_node;
+	struct vmem_context_node *node = ctx->first_node;
 	int i = 0;
 	while (node != NULL && i < ctx->nodes)
 	{
@@ -115,9 +114,9 @@ int vm_iterate(struct vm_context *ctx, vm_iterator_t iterator)
 	return i;
 }
 
-int vm_add_page(struct vm_context *ctx, struct vm_page *pg)
+int vmem_add_page(struct vmem_context *ctx, struct vmem_page *pg)
 {
-	struct vm_context_node *node = kmalloc(sizeof(struct vm_context_node));
+	struct vmem_context_node *node = kmalloc(sizeof(struct vmem_context_node));
 	node->page = pg;
 	node->next = NULL;
 	if (ctx->node == NULL)
@@ -134,14 +133,14 @@ int vm_add_page(struct vm_context *ctx, struct vm_page *pg)
 	++ctx->pages;
 
 	if (ctx->cache != NULL)
-		vm_applyPage(ctx, pg);
+		vmem_applyPage(ctx, pg);
 
 	return 0;
 }
 
-struct vm_page *vm_get_page_phys(struct vm_context *ctx, void *phys_addr)
+struct vmem_page *vmem_get_page_phys(struct vmem_context *ctx, void *phys_addr)
 {
-	struct vm_context_node *node = ctx->node;
+	struct vmem_context_node *node = ctx->node;
 
 	FIND_NODE(node, node->page->phys_addr == phys_addr);
 
@@ -150,9 +149,9 @@ struct vm_page *vm_get_page_phys(struct vm_context *ctx, void *phys_addr)
 	return node->page;
 }
 
-struct vm_page *vm_get_page_virt(struct vm_context *ctx, void *virt_addr)
+struct vmem_page *vmem_get_page_virt(struct vmem_context *ctx, void *virt_addr)
 {
-	struct vm_context_node *node = ctx->node;
+	struct vmem_context_node *node = ctx->node;
 
 	FIND_NODE(node, node->page->virt_addr == virt_addr);
 
@@ -161,9 +160,9 @@ struct vm_page *vm_get_page_virt(struct vm_context *ctx, void *virt_addr)
 	return node->page;
 }
 
-struct vm_page *vm_get_page(struct vm_context *ctx, uint32_t offset)
+struct vmem_page *vmem_get_page(struct vmem_context *ctx, uint32_t offset)
 {
-	struct vm_context_node *node = ctx->node;
+	struct vmem_context_node *node = ctx->node;
 
 	while (offset > 0 && node != NULL)
 	{
@@ -176,10 +175,10 @@ struct vm_page *vm_get_page(struct vm_context *ctx, uint32_t offset)
 	return node->page;
 }
 
-struct vm_page *vm_rm_page_phys(struct vm_context *ctx, void *phys_addr)
+struct vmem_page *vmem_rm_page_phys(struct vmem_context *ctx, void *phys_addr)
 {
-	struct vm_context_node *node = ctx->node;
-	struct vm_context_node *prev_node = NULL;
+	struct vmem_context_node *node = ctx->node;
+	struct vmem_context_node *prev_node = NULL;
 
 	while (node != NULL && node->page->phys_addr != phys_addr)
 	{
@@ -198,16 +197,16 @@ struct vm_page *vm_rm_page_phys(struct vm_context *ctx, void *phys_addr)
 		prev_node->next = node->next;
 
 	--ctx->pages;
-	struct vm_page *retval = node->page;
+	struct vmem_page *retval = node->page;
 	kfree(node);
 	
 	return retval;
 }
 
-struct vm_page *vm_rm_page_virt(struct vm_context *ctx, void *virt_addr)
+struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr)
 {
-	struct vm_context_node *node = ctx->node;
-	struct vm_context_node *prev_node = NULL;
+	struct vmem_context_node *node = ctx->node;
+	struct vmem_context_node *prev_node = NULL;
 
 	while (node != NULL && node->page->virt_addr != virt_addr)
 	{
@@ -227,66 +226,66 @@ struct vm_page *vm_rm_page_virt(struct vm_context *ctx, void *virt_addr)
 
 	--ctx->pages;
 	
-	struct vm_page *retval = node->page;
+	struct vmem_page *retval = node->page;
 	kfree(node);
 	
 	return retval;
 }
 
-uint32_t vm_count_pages(struct vm_context *ctx)
+uint32_t vmem_count_pages(struct vmem_context *ctx)
 {
 	return ctx->pages;
 }
 
-void vm_handle_fault(uint32_t code, void *addr, void *instr)
+void vmem_handle_fault(uint32_t code, void *addr, void *instr)
 {
 	uint32_t addrInt = (uint32_t)addr;
-	struct vm_page *pg = vm_get_page_virt(vm_currentContext, (void *)GET_PAGE(addrInt));
+	struct vmem_page *pg = vmem_get_page_virt(vmem_currentContext, (void *)GET_PAGE(addrInt));
 	
-	if (pg->virt_addr == vm_faultAddress)
+	if (pg->virt_addr == vmem_faultAddress)
 	{
 		log(LOG_DEBUG, "Received debugging page fault\n");
 		return;
 	}
 
-	if (pg == NULL || pg->section == VM_SECTION_UNMAPPED)
+	if (pg == NULL || pg->section == VMEM_SECTION_UNMAPPED)
 		panic("Unexpected page fault\n");
 }
 
-void vm_set_cache(struct vm_context *ctx, void *cache)
+void vmem_set_cache(struct vmem_context *ctx, void *cache)
 {
 	ctx->cache = cache;
 }
 
-void *vm_get_cache(struct vm_context *ctx)
+void *vmem_get_cache(struct vmem_context *ctx)
 {
 	return ctx->cache;
 }
 
-static void vm_dump_page_internal(struct vm_context *ctx, struct vm_page *pg, uint32_t i)
+static void vmem_dump_page_internal(struct vmem_context *ctx, struct vmem_page *pg, uint32_t i)
 {
 	char *typeString = "UNKNOWN";
 	switch (pg->section)
 	{
-		case VM_SECTION_STACK:
+		case VMEM_SECTION_STACK:
 			typeString = "STACK";
 			break;
-		case VM_SECTION_CODE:
+		case VMEM_SECTION_CODE:
 			typeString = "CODE";
 			break;
-		case VM_SECTION_DATA:
+		case VMEM_SECTION_DATA:
 			typeString = "DATA";
 			break;
-		case VM_SECTION_HEAP:
+		case VMEM_SECTION_HEAP:
 			typeString = "HEAP";
 			break;
-		case VM_SECTION_MMAP:
+		case VMEM_SECTION_MMAP:
 			typeString = "MMAP";
 			break;
-		case VM_SECTION_KERNEL:
+		case VMEM_SECTION_KERNEL:
 			typeString = "KERNEL";
 			break;
-		case VM_SECTION_UNMAPPED:
+		case VMEM_SECTION_UNMAPPED:
 			typeString = "UNMAPPED";
 			break;
 	}
@@ -301,12 +300,12 @@ static void vm_dump_page_internal(struct vm_context *ctx, struct vm_page *pg, ui
 			pg->cow);
 }
 
-void vm_dump(struct vm_context *ctx)
+void vmem_dump(struct vmem_context *ctx)
 {
-	vm_iterate(ctx, vm_dump_page_internal);
+	vmem_iterate(ctx, vmem_dump_page_internal);
 }
 
-void vm_dump_page(struct vm_page *pg)
+void vmem_dump_page(struct vmem_page *pg)
 {
-	vm_dump_page_internal(NULL, pg, 0);
+	vmem_dump_page_internal(NULL, pg, 0);
 }

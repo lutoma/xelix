@@ -20,7 +20,7 @@
 
 #include <lib/generic.h>
 #include <hw/cpu.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 
 #define SCHEDULER_MAXNAME 256
 
@@ -33,7 +33,7 @@ typedef struct task {
 	struct task* next;
 	struct task* last;
 
-	struct vm_context *memory_context;
+	struct vmem_context *memory_context;
 
 	// Current task state
 	enum {

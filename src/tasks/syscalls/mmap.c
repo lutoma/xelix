@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <memory/paging.h>
 #include <memory/kmalloc.h>
 #include "mmap.h"
@@ -42,7 +42,7 @@ int sys_mmap(struct syscall syscall)
 		uint32_t tmpLength = length;
 		while (1)
 		{
-			struct vm_page *currPage = vm_get_page_virt(vm_currentContext, (void *)counter);
+			struct vmem_page *currPage = vmem_get_page_virt(vmem_currentContext, (void *)counter);
 
 			if (currPage == NULL && length == 0)
 			{
@@ -61,13 +61,13 @@ int sys_mmap(struct syscall syscall)
 	int newPages = length / 4096;
 	for (int i = 0; i < newPages; ++i)
 	{
-		struct vm_page *newPage = vm_new_page();
-		newPage->section = VM_SECTION_MMAP;
+		struct vmem_page *newPage = vmem_new_page();
+		newPage->section = VMEM_SECTION_MMAP;
 		newPage->readonly = readonly;
 		newPage->allocated = 0;
 		newPage->virt_addr = addr + i * 4096;
 
-		vm_add_page(vm_currentContext, newPage);
+		vmem_add_page(vmem_currentContext, newPage);
 	}
 
 	return (int) addr;

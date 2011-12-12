@@ -61,20 +61,20 @@ static void executeCommand(char *command, int argc, char **argv)
 	else if(strcmp(command, "kill") == 0) asm("mov %eax, 1; int 0x80;");
 	else if(strcmp(command, "triplefault") == 0)
 	{
-		struct vm_context *ctx = vm_new();
+		struct vmem_context *ctx = vmem_new();
 		paging_apply(ctx);
 	}
 	else if(strcmp(command, "pagefault") == 0)
-		*((char *)vm_faultAddress) = 0;
+		*((char *)vmem_faultAddress) = 0;
 	else if(strcmp(command, "reload") == 0)
-		paging_apply(vm_kernelContext);
+		paging_apply(vmem_kernelContext);
 	else if(strcmp(command, "rebuild") == 0)
 	{
-		vm_set_cache(vm_kernelContext, NULL);
-		paging_apply(vm_kernelContext);
+		vmem_set_cache(vmem_kernelContext, NULL);
+		paging_apply(vmem_kernelContext);
 	}
 	else if(strcmp(command, "dump") == 0)
-		vm_dump(vm_currentContext);
+		vmem_dump(vmem_currentContext);
     else if (strcmp(command, "kb") == 0)
     {
         if (argc != 1)

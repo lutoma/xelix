@@ -25,7 +25,7 @@
 #include <interrupts/interface.h>
 #include <lib/panic.h>
 #include <lib/string.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 
 #define STACKSIZE PAGE_SIZE
 #define STATE_OFF 0
@@ -76,64 +76,64 @@ void scheduler_remove(task_t *t)
 	t->last->next = t->next;
 }
 
-static struct vm_context *setupMemoryContext(void *stack)
+static struct vmem_context *setupMemoryContext(void *stack)
 {
 	log(LOG_DEBUG, "scheduler: Setup new Memory Context [%d]\n", stack);
-	struct vm_context *ctx = vm_new();
+	struct vmem_context *ctx = vmem_new();
 	
 	/* Protect unused kernel space (0x7fff0000 - 0x7fffc000) */
 	for(int addr = 0x7fff0000; addr <= 0x7fffc000; addr += PAGE_SIZE)
 	{
-		struct vm_page *currPage = vm_new_page();
+		struct vmem_page *currPage = vmem_new_page();
 		currPage->allocated = 0;
-		currPage->section = VM_SECTION_KERNEL;
+		currPage->section = VMEM_SECTION_KERNEL;
 		currPage->readonly = 1;
 		currPage->virt_addr = (void *)addr;
 
-		vm_add_page(ctx, currPage);
+		vmem_add_page(ctx, currPage);
 	}
 
-	struct vm_page *stackPage = vm_new_page();
+	struct vmem_page *stackPage = vmem_new_page();
 	stackPage->allocated = 1;
-	stackPage->section = VM_SECTION_STACK;
+	stackPage->section = VMEM_SECTION_STACK;
 	stackPage->virt_addr = (void *)0x7fffe000;
 	stackPage->phys_addr = stack;
 
 	/* Additional stack space if already allocated stack is full */
 
-	struct vm_page *stackPage2 = vm_new_page();
-	stackPage2->section = VM_SECTION_STACK;
+	struct vmem_page *stackPage2 = vmem_new_page();
+	stackPage2->section = VMEM_SECTION_STACK;
 	stackPage2->virt_addr = (void *)0x7fffd000;
 
-	vm_add_page(ctx, stackPage);
-	vm_add_page(ctx, stackPage2);
+	vmem_add_page(ctx, stackPage);
+	vmem_add_page(ctx, stackPage2);
 
 	/* Map memory from 0x100000 to 0x17f000 (Kernel-related data) */
 	int pos = 0x100000;
 	while (pos <= 0x17f000)
 	{
-		struct vm_page *currPage = vm_new_page();
+		struct vmem_page *currPage = vmem_new_page();
 		currPage->allocated = 1;
-		currPage->section = VM_SECTION_KERNEL;
+		currPage->section = VMEM_SECTION_KERNEL;
 		currPage->readonly = 1;
 		currPage->virt_addr = (void *)pos;
 		currPage->phys_addr = (void *)pos;
 
-		vm_add_page(ctx, currPage);
+		vmem_add_page(ctx, currPage);
 
 		pos += PAGE_SIZE;
 	}
 
 	/* Map unused interrupt handler */
 
-	struct vm_page *intHandler = vm_new_page();
-	intHandler->section = VM_SECTION_KERNEL;
+	struct vmem_page *intHandler = vmem_new_page();
+	intHandler->section = VMEM_SECTION_KERNEL;
 	intHandler->readonly = 1;
 	intHandler->allocated = 1;
 	intHandler->virt_addr = (void *)0x7ffff000;
 	intHandler->phys_addr = (void *)0;
 
-	vm_add_page(ctx, intHandler);
+	vmem_add_page(ctx, intHandler);
 
 	return ctx;
 }
@@ -153,7 +153,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNA
 	
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
 	thisTask->memory_context = setupMemoryContext(stack);
-	thisTask->memory_context = vm_kernelContext;
+	thisTask->memory_context = vmem_kernelContext;
 
 	// Stack
 	thisTask->state->esp = stack + STACKSIZE - 3;

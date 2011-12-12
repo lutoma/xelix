@@ -23,7 +23,7 @@
 #include <lib/log.h>
 #include <lib/print.h>
 #include <lib/datetime.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <interrupts/interface.h>
 
 typedef struct {
@@ -79,45 +79,45 @@ static int paging_assign(struct paging_context *ctx, uint32_t virtual, uint32_t 
 	return 0;
 }
 
-void paging_applyPage(struct vm_context *ctx, struct vm_page *pg)
+void paging_applyPage(struct vmem_context *ctx, struct vmem_page *pg)
 {
-	struct paging_context *pgCtx = vm_get_cache(ctx);
+	struct paging_context *pgCtx = vmem_get_cache(ctx);
 	bool user = true;
 	bool write = !pg->readonly;
 
-	if (pg->section == VM_SECTION_KERNEL && write == true)
+	if (pg->section == VMEM_SECTION_KERNEL && write == true)
 		user = false;
-	else if (pg->section == VM_SECTION_STACK && pg->allocated == 0)
+	else if (pg->section == VMEM_SECTION_STACK && pg->allocated == 0)
 		return;
 
-	if (pg->section == VM_SECTION_UNMAPPED)
+	if (pg->section == VMEM_SECTION_UNMAPPED)
 		paging_assign(pgCtx, (uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, write, user, false);
 	else
 		paging_assign(pgCtx, (uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, write, user, true);
 }
 
-static void paging_vmIterator(struct vm_context *ctx, struct vm_page *pg, uint32_t offset)
+static void paging_vmIterator(struct vmem_context *ctx, struct vmem_page *pg, uint32_t offset)
 {
 	paging_applyPage(ctx, pg);
 }
 
-int paging_apply(struct vm_context *ctx)
+int paging_apply(struct vmem_context *ctx)
 {
-	struct paging_context *pgCtx = vm_get_cache(ctx);
+	struct paging_context *pgCtx = vmem_get_cache(ctx);
 	
 	if (pgCtx == NULL)
 	{
-		/* Build paging context for vm_context */
+		/* Build paging context for vmem_context */
 		pgCtx = kmalloc_a(sizeof(struct paging_context));
 		if (pgCtx == NULL)
 			return false;
 		memset(pgCtx, 0, sizeof(struct paging_context));
-		vm_set_cache(ctx, pgCtx);
+		vmem_set_cache(ctx, pgCtx);
 		
-		vm_iterate(ctx, paging_vmIterator);
+		vmem_iterate(ctx, paging_vmIterator);
 	}
 
-	vm_currentContext = ctx;
+	vmem_currentContext = ctx;
 	asm volatile("mov cr3, %0"::"r"(pgCtx));
 
 	return true;
@@ -125,8 +125,8 @@ int paging_apply(struct vm_context *ctx)
 
 void paging_init()
 {
-	vm_applyPage = paging_applyPage;
-	paging_apply(vm_kernelContext);
+	vmem_applyPage = paging_applyPage;
+	paging_apply(vmem_kernelContext);
 
 	// Get the value of cr0
 	uint32_t cr0;

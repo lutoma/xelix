@@ -18,7 +18,7 @@
  */
 
 #include "munmap.h"
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <memory/paging.h>
 
 int sys_munmap(struct syscall syscall)
@@ -28,7 +28,7 @@ int sys_munmap(struct syscall syscall)
 
 	int pages = length / 4096;
 	for (int i = 0; i < pages; ++i)
-		vm_rm_page_virt(vm_currentContext, (void*)addr + i * 4096);
+		vmem_rm_page_virt(vmem_currentContext, (void*)addr + i * 4096);
 
 	return 0;
 }

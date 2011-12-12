@@ -19,7 +19,5 @@
  */
 
 #include <tasks/syscall.h>
-#include <memory/vm.h>
-#include <memory/paging.h>
 
 int sys_munmap(struct syscall syscall);

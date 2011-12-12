@@ -31,6 +31,7 @@ extern char** __environ;
 
 int gethostname(char* name, size_t len);
 int sethostname(const char* name, size_t len);
+pid_t fork(void);
 
 static inline uid_t getuid(void)
 {
