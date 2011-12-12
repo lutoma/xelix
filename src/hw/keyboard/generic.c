@@ -27,10 +27,13 @@
 #include <memory/kmalloc.h>
 #include <console/interface.h>
 #include <lib/log.h>
+#include <lib/string.h>
 #include <interrupts/interface.h>
 #include <lib/datetime.h>
 #include <hw/display.h>
 #include <hw/pit.h>
+
+#include <lib/dict.h>
 
 struct keyboard_buffer {
 	char *data;
@@ -54,7 +57,19 @@ struct {
 	bool super:1;
 } modifiers;
 
-char* currentKeymap;
+static dict_t* dictionary;
+static char* currentKeymap;
+
+int keyboard_setlayout(char *layoutname)
+{
+    void *retval = dict_get(dictionary, layoutname);
+    if ((int) retval != -1)
+        currentKeymap = (char *) retval;
+    else
+        return -1;
+
+    return 1;
+}
 
 static void flush()
 {
@@ -124,7 +139,6 @@ static void handleScancode(uint8_t code, uint8_t code2)
 		case 0xb8: modifiers.alt = false; break;
 	}
 
-
 	if( code == 0xe0 && code2 == 0x5b) // super press
 		modifiers.super = true;
 	if( code == 0xe0 && code2 == 0xdb) // super release
@@ -151,11 +165,13 @@ static void handleScancode(uint8_t code, uint8_t code2)
 	if(code > 512 || c == NULL)
 		return;
 
+    // 0x8 is backspace, in which case we delete a byte from the buffer
 	if (c == 0x8 && keyboard_buffer.offset > 0)
 	{
 		if (keyboard_buffer.size == 0 || keyboard_buffer.data == NULL)
 			return;
 
+        // XXX: is it really necessary to actually shrink the buffer?
 		char *new_buffer = (char *)kmalloc(sizeof(char) * (keyboard_buffer.size - 1));
 		memcpy(new_buffer, keyboard_buffer.data, keyboard_buffer.size - 1);
 		kfree(keyboard_buffer.data);
@@ -248,7 +264,12 @@ console_driver_t* console_driver_keyboard_init(console_driver_t* driver)
 
 	flush(); // Flush again
 
-	currentKeymap = (char*)&keymap_en;
+    // load keymaps
+    dictionary = dict_new();
+    dict_set(dictionary, "en", keymap_en);
+    dict_set(dictionary, "de", keymap_de);
+	currentKeymap = keymap_en;
+
 	interrupts_registerHandler(IRQ1, &handler);
 
 	if (driver == NULL)
