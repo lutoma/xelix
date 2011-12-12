@@ -265,7 +265,7 @@ console_driver_t* console_driver_keyboard_init(console_driver_t* driver)
 	flush(); // Flush again
 
     // load keymaps
-    dictionary = dict_new();
+    dictionary = dict_new(1);
     dict_set(dictionary, "en", keymap_en);
     dict_set(dictionary, "de", keymap_de);
 	currentKeymap = keymap_en;
