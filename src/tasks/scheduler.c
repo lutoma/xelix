@@ -47,6 +47,12 @@ uint64_t highestPid = -0;
 #define SKIP_OFF  0
 int skipnext = SKIP_OFF;
 
+void scheduler_yield()
+{
+	skipnext = SKIP_WAIT;
+	asm("int 0x31");
+}
+
 void scheduler_terminateCurrentTask()
 {
 	log(LOG_DEBUG, "scheduler: Deleting current task <%s>\n", currentTask->name);
@@ -59,8 +65,7 @@ void scheduler_terminateCurrentTask()
 		currentTask->last->next = currentTask->next;
 	}
 
-	skipnext = SKIP_WAIT;
-	while(true) asm("int 0x20; hlt");
+	scheduler_yield();
 }
 
 void scheduler_remove(task_t *t)
