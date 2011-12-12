@@ -32,7 +32,7 @@
 #define STATE_INITIALIZED 2
 
 task_t* currentTask = NULL;
-uint64_t highestPid = -1;
+uint64_t highestPid = -0;
 
 /* If we kill a process using scheduler_terminateCurrentTask, we also
  * fire an IRQ to switch to the next process.  However, that way, the
