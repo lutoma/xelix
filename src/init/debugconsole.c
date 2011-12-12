@@ -45,7 +45,7 @@ static void printPrompt()
 
 // Execute a command
 // Yes, this is only a bunch of hardcoded crap
-static void executeCommand(char *command)
+static void executeCommand(char *command, int argc, char **argv)
 {
 	if(strcmp(command, "reboot") == 0) reboot();
 	else if(strcmp(command, "clear") == 0) printf("\e[H\e[2J");
@@ -75,9 +75,23 @@ static void executeCommand(char *command)
 	}
 	else if(strcmp(command, "dump") == 0)
 		vm_dump(vm_currentContext);
+    else if (strcmp(command, "kb") == 0)
+    {
+        if (argc != 1)
+        {
+            printf("usage: kb <layoutname>\n");
+            return;
+        }
+
+        if (keyboard_setlayout(argv[0]) == -1)
+        {
+            printf("unknown layout\n");
+            return;
+        }
+    }
 	else
 	{
-		if(strlen(command) > 0 && command[0] != '-') // Note: I wanted / still want # for comments, however our keyboard driver doesn't know it...
+		if(strlen(command) > 0 && command[0] != '#')
 			printf("error: command '%s' not found.\n", command);
 	}
 }
@@ -115,6 +129,17 @@ void debugconsole_init()
 			read_offset += read;
 		}
 
-		executeCommand(currentLine);
+        char *strtok;
+        char *command = kmalloc(sizeof(char) * 255);
+        char *arg = kmalloc(sizeof(char) * 32);
+        char **argv = kmalloc(sizeof(char*) * 32);
+        uint8_t argc = 0;
+
+        command = strtok_r(currentLine, " ", &strtok);
+        while ((arg = strtok_r(NULL, " ", &strtok))) {
+            argv[argc++] = arg;
+        }
+
+		executeCommand(command, argc, argv);
 	}
 }
