@@ -228,6 +228,7 @@ static void enableCard(struct rtl8139_card *card)
 	card->netDevice = kmalloc(sizeof(net_device_t));
 	strcpy(card->netDevice->name, "eth");
 	strcpy(card->netDevice->name + 3, itoa(net_ether_offset++, 10));
+	memcpy(card->netDevice->hwaddr, card->macAddr, 6);
 	card->netDevice->mtu = 1500;
 	card->netDevice->proto = NET_PROTO_ETH;
 	card->netDevice->send = sendCallback;
