@@ -68,6 +68,7 @@ void net_send(net_device_t* target, size_t size, uint8_t* data)
 
 void net_register_device(net_device_t* device)
 {
+	log(LOG_INFO, "net: New device: %s MTU %d\n", device->name, device->mtu);
 	registered_devices[registered_device_count++] = device;
 }
 
