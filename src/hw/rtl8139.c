@@ -19,6 +19,8 @@
  */
 
 #include <hw/rtl8139.h>
+#include <hw/pci.h>
+
 #include <lib/log.h>
 #include <lib/portio.h>
 #include <interrupts/interface.h>
