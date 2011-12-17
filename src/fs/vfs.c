@@ -23,15 +23,9 @@
 #include <memory/kmalloc.h>
 #include <lib/string.h>
 
-fs_node_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
-						 uint32_t gid, uint32_t flags, uint32_t inode,
-						 uint32_t length, uint32_t impl,
-						 read_type_t read, write_type_t write,
-						 open_type_t open, close_type_t close,
-						 readDir_type_t readDir, findDir_type_t findDir,
-						 fs_node_t *ptr, fs_node_t *parent)
+vfs_node_t* vfs_create_node(char name[128], uint32_t mask, uint32_t uid, uint32_t gid, uint32_t flags, uint32_t inode, uint32_t length, uint32_t impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readdir_type_t readdir, finddir_type_t finddir, vfs_node_t* ptr, vfs_node_t* parent)
 {
-	fs_node_t* node = (fs_node_t*)kmalloc(sizeof(fs_node_t));
+	vfs_node_t* node = (vfs_node_t*)kmalloc(sizeof(vfs_node_t));
 	strcpy(node->name, name);
 	
 	if(parent == NULL)
@@ -50,8 +44,8 @@ fs_node_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
 	node->write = write;
 	node->open = open;
 	node->close = close;
-	node->readDir = readDir;
-	node->findDir = findDir;
+	node->readdir = readdir;
+	node->finddir = finddir;
 	node->ptr = ptr;
 	node->parent = parent;
 
@@ -62,7 +56,7 @@ fs_node_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid,
 void vfs_init()
 {
 	// Initialise the root directory.
-	vfs_rootNodeCount = 0;
-	vfs_rootNode = vfs_createNode("root", 0, 0, 0, FS_DIRECTORY, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); // RootNode is it's own parent, therefore NULL as last parameter.
+	vfs_rootnodecount = 0;
+	vfs_rootnode = vfs_create_node("root", 0, 0, 0, FS_DIRECTORY, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); // RootNode is it's own parent, therefore NULL as last parameter.
 }
 

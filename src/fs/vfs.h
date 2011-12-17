@@ -29,17 +29,17 @@
 #define FS_SYMLINK     0x06
 #define FS_MOUNTPOINT  0x08 // Is the file an active mountpoint?
 
-struct fs_node;
+struct vfs_node;
 
-typedef size_t (*read_type_t)(struct fs_node*, uint32_t, uint32_t, uint8_t*);
-typedef uint32_t (*write_type_t)(struct fs_node*, uint32_t, uint32_t, uint8_t*);
-typedef uint32_t (*open_type_t)(struct fs_node*);
-typedef void (*close_type_t)(struct fs_node*);
-typedef struct dirent* (*readDir_type_t)(struct fs_node*, uint32_t);
-typedef struct fs_node* (*findDir_type_t)(struct fs_node*, char* name);
+typedef size_t (*read_type_t)(struct vfs_node*, uint32_t, uint32_t, uint8_t*);
+typedef uint32_t (*write_type_t)(struct vfs_node*, uint32_t, uint32_t, uint8_t*);
+typedef uint32_t (*open_type_t)(struct vfs_node*);
+typedef void (*close_type_t)(struct vfs_node*);
+typedef struct dirent* (*readdir_type_t)(struct vfs_node*, uint32_t);
+typedef struct vfs_node* (*finddir_type_t)(struct vfs_node*, char* name);
 
 // __fsNode is only there for use in the function declarations above.
-typedef struct fs_node
+typedef struct vfs_node
 {
    char name[128];     // The filename.
    uint32_t mask;        // The permissions mask.
@@ -53,11 +53,11 @@ typedef struct fs_node
    write_type_t write;
    open_type_t open;
    close_type_t close;
-   readDir_type_t readDir;
-   findDir_type_t findDir;
-   struct fs_node *ptr; // Used by mountpoints and symlinks.
-   struct fs_node *parent;
-} fs_node_t;
+   readdir_type_t readdir;
+   finddir_type_t finddir;
+   struct vfs_node* ptr; // Used by mountpoints and symlinks.
+   struct vfs_node* parent;
+} vfs_node_t;
 
 struct dirent // One of these is returned by the readdir call, according to POSIX.
 {
@@ -65,10 +65,10 @@ struct dirent // One of these is returned by the readdir call, according to POSI
   uint32_t ino;     // Inode number. Required by POSIX.
 };
 
-fs_node_t* vfs_createNode(char name[128], uint32_t mask, uint32_t uid, uint32_t gid, uint32_t flags, uint32_t inode, uint32_t length, uint32_t impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readDir_type_t readDir, findDir_type_t findDir, fs_node_t *ptr, fs_node_t *parent);
+vfs_node_t* vfs_create_node(char name[128], uint32_t mask, uint32_t uid, uint32_t gid, uint32_t flags, uint32_t inode, uint32_t length, uint32_t impl, read_type_t read, write_type_t write, open_type_t open, close_type_t close, readdir_type_t readdir, finddir_type_t finddir, vfs_node_t *ptr, vfs_node_t *parent);
 
-fs_node_t* vfs_rootNode; // Our root directory node.
-fs_node_t** vfs_rootNodes; // Our root directory array.
-int vfs_rootNodeCount;
+vfs_node_t* vfs_rootnode; // Our root directory node.
+vfs_node_t** vfs_rootnodes; // Our root directory array.
+int vfs_rootnodecount;
 
 void vfs_init();
