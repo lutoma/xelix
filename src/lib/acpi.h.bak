@@ -1,4 +1,0 @@
-#pragma once
-#include <common/generic.h>
-
-void acpiPowerOff(void);
