@@ -27,7 +27,6 @@
 #include <hw/keyboard.h>
 #include <lib/datetime.h>
 #include <fs/vfs.h>
-#include <lib/fio.h>
 #include <tasks/scheduler.h>
 #include <console/interface.h>
 #include <lib/panic.h>
