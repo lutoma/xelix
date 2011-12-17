@@ -47,6 +47,7 @@
 #include <memory/paging.h>
 #include <memory/vmem.h>
 #include <net/slip.h>
+#include <hw/ata.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -93,15 +94,16 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(acpi);	
 	init(vfs);
 	init(pci);
-	init(rtl8139);
 	init(syscall);
 	init(vmem);
 	init(paging);
-	
-#	ifndef XELIX_WITHOUT_SLIP
+	init(ata);
+
 	// Networking
-	init(slip);
-#	endif
+	init(rtl8139);
+	#ifndef XELIX_WITHOUT_SLIP
+		init(slip);
+	#endif
 
 	if(multiboot_info->modsCount)
 		elf_load((void*)multiboot_info->modsAddr[0].start, "initrd");

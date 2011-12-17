@@ -19,6 +19,7 @@
  */
 
 #include <lib/generic.h>
+#include <lib/stdint.h>
 
 // Legacy
 #define outb(args...) portio_out8(args)
