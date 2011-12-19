@@ -15,8 +15,6 @@ You'll need
 Compiling
 ---------
 
-::
-
     (./configure)
     (make clean)
     make
