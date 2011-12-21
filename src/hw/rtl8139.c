@@ -75,7 +75,7 @@
 #define ISR_TRANSMIT_OK				(1 << 2)
 #define ISR_RECEIVE_OK				(1 << 0)
 
-#define RX_BUFFER_SIZE 2048
+#define RX_BUFFER_SIZE 8192
 
 #define int_out8(card, port, value) portio_out8(card ->device->iobase + port, value)
 #define int_out16(card, port, value) portio_out16(card ->device->iobase + port, value)
