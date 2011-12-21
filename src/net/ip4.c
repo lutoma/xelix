@@ -23,6 +23,25 @@
 #include <net/ether.h>
 #include <memory/kmalloc.h>
 
+void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
+
+void ip4_send_ether(net_device_t *target, size_t size, ip4_header_t *packet, ether_frame_hdr_t *hdr)
+{
+	if (target->proto != NET_PROTO_ETH)
+	{
+		ip4_send(target, size, packet);
+		return;
+	}
+
+	ether_frame_hdr_t *etherhdr = kmalloc(sizeof(ether_frame_hdr_t) + size);
+	memset(etherhdr, 0, sizeof(ether_frame_hdr_t));
+	if (hdr != NULL)
+		memcpy(etherhdr, hdr, sizeof(ether_frame_hdr_t));
+	memcpy(etherhdr + 1, packet, size);
+
+	net_send(target, size + sizeof(ether_frame_hdr_t), (uint8_t*)etherhdr);
+}
+
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
 {
 	//memset((void*)&packet->checksum, 0, sizeof(packet->checksum));
@@ -30,12 +49,8 @@ void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
 	
 	if (target->proto == NET_PROTO_ETH)
 	{
-		ether_frame_hdr_t *etherhdr = kmalloc(sizeof(ether_frame_hdr_t) + size);
 		/* TODO Implement some ARP things */
-		etherhdr->type = 0x0008;
-		memcpy(etherhdr + 1, packet, size);
-
-		net_send(target, size + sizeof(ether_frame_hdr_t), (uint8_t*)etherhdr);
+		ip4_send_ether(target, size, packet, NULL);
 		return;
 	}
 
@@ -60,8 +75,12 @@ static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 	packet->code = 0;
 	//memset((void*)&packet->checksum, 0, sizeof(packet->checksum));
 	//packet->checksum = net_calculate_checksum((uint8_t*)packet, packet_size, 0);
+	char destination[6];
+	memcpy(destination, etherhdr->source, 6);
+	memcpy(etherhdr->source, etherhdr->destination, 6);
+	memcpy(etherhdr->destination, destination, 6);
 	
-	ip4_send(origin, size, ip_packet);
+	ip4_send_ether(origin, size, ip_packet, etherhdr);
 }
 
 void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw)
