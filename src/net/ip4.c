@@ -23,10 +23,15 @@
 #include <net/ether.h>
 #include <memory/kmalloc.h>
 
+int ip_id = 1;
+
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
 
 void ip4_send_ether(net_device_t *target, size_t size, ip4_header_t *packet, ether_frame_hdr_t *hdr)
 {
+	packet->checksum = 0;
+	packet->checksum = endian_swap16(net_calculate_checksum((uint8_t*)packet, sizeof(ip4_header_t), 0));
+
 	if (target->proto != NET_PROTO_ETH)
 	{
 		ip4_send(target, size, packet);
@@ -60,21 +65,24 @@ void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
 static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_packet, ether_frame_hdr_t *etherhdr)
 {
 	ip4_icmp_header_t* packet = (ip4_icmp_header_t*)(ip_packet + 1);
-	//size_t packet_size = size - sizeof(ip4_header_t);
+	size_t packet_size = size - sizeof(ip4_header_t);
 
 	//if(packet->type != 8)
 	//	return;
 		
-	log(LOG_DEBUG, "ip4: Incoming ping packet ip_src=0x%x icmp_req=%d\n", ip_packet->src, packet->sequence);
+	log(LOG_DEBUG, "ip4: Incoming ping packet ip_src=0x%x icmp_req=%d\n", ip_packet->src, endian_swap16(packet->sequence));
 
 	// We can reuse the existing packet as the most stuff stays unmodified
 	uint32_t orig_src = ip_packet->src;
 	ip_packet->src = ip_packet->dst;
 	ip_packet->dst = orig_src;
+
 	packet->type = 0;
 	packet->code = 0;
-	//memset((void*)&packet->checksum, 0, sizeof(packet->checksum));
-	//packet->checksum = net_calculate_checksum((uint8_t*)packet, packet_size, 0);
+
+	packet->checksum = 0;
+	packet->checksum = endian_swap16(net_calculate_checksum((uint8_t*)packet, packet_size, 0));
+
 	char destination[6];
 	memcpy(destination, etherhdr->source, 6);
 	memcpy(etherhdr->source, etherhdr->destination, 6);
@@ -102,7 +110,7 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 
 	if(packet->tos == IP4_TOS_ICMP)
 	{
-		handle_icmp(origin, size, packet, etherhdr);
+		handle_icmp(origin, size - sizeof(ether_frame_hdr_t), packet, etherhdr);
 		return;
 	}
 }
