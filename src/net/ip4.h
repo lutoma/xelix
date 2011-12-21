@@ -38,11 +38,11 @@ typedef struct {
 } ip4_header_t;
 
 typedef struct {
-	unsigned char type;
-	unsigned char code;
-	unsigned short int checksum;
-	unsigned short int id;
-	unsigned short int sequence;
+	uint8_t type;
+	uint8_t code;
+	uint16_t checksum;
+	uint16_t id;
+	uint16_t sequence;
 } ip4_icmp_header_t;
 
 void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw);
