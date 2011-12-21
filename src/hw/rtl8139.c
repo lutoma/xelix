@@ -87,9 +87,13 @@
 struct rtl8139_card {
 	pci_device_t *device;
 	char macAddr[6];
+
 	char *rxBuffer;
 	int rxBufferOffset;
-	uint8_t currentBuffer;
+
+	char *txBuffer;
+	bool txBufferUsed:1;
+	uint8_t curBuffer;
 
 	net_device_t *netDevice;
 };
@@ -99,6 +103,30 @@ static struct rtl8139_card rtl8139_cards[MAX_CARDS];
 
 static void sendCallback(net_device_t *dev, uint8_t *data, size_t len)
 {
+	struct rtl8139_card *card = dev->data;
+
+	while (card->txBufferUsed) log(LOG_DEBUG, "rtl8139: Wait for buffer\n");
+
+	memcpy(card->txBuffer, data, len);
+	if (len < 60)
+	{
+		memset(card->txBuffer + len, 0, 60 - len);
+		len = 60;
+	}
+
+	uint8_t curBuffer = card->curBuffer++;
+	card->curBuffer %= 4;
+
+	int_out32(card, REG_TRANSMIT_ADDR0 + (4 * curBuffer), (uint32_t)card->txBuffer);
+	int_out32(card, REG_TRANSMIT_STATUS0 + (4 * curBuffer), len);
+
+	log(LOG_DEBUG, "rtl8139: Queued data for sending\n");
+}
+
+static void transmitData(struct rtl8139_card *card)
+{
+	log(LOG_DEBUG, "rtl8139: Transmitted data successfully\n");
+	card->txBufferUsed = 0;
 }
 
 /* Copied from tyndur */
@@ -159,6 +187,7 @@ static void rtl8139_intHandler(cpu_state_t *state)
 		if (isr & ISR_TRANSMIT_OK)
 		{
 			new_isr |= ISR_TRANSMIT_OK;
+			transmitData(card);
 		}
 
 		if (isr & ISR_RECEIVE_OK)
@@ -222,6 +251,11 @@ static void enableCard(struct rtl8139_card *card)
 	memset(card->rxBuffer, 0, 8192 + 16);
 	card->rxBufferOffset = 0;
 	int_out32(card, REG_RECEIVE_BUFFER, (uint32_t)card->rxBuffer);
+
+	card->txBuffer = (char *)kmalloc(4096 + 16);
+	memset(card->txBuffer, 0, 4096 + 16);
+	card->curBuffer = 0;
+	card->txBufferUsed = false;
 
 	// Enable receiver and transmitter
 	int_out8(card, REG_COMMAND, CR_RECEIVER_ENABLE | CR_TRANSMITTER_ENABLE);
