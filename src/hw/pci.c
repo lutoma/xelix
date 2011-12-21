@@ -89,7 +89,7 @@ uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func)
 	uint8_t i = 0;
 	uint32_t bar;
 
-	while ( bars < i)
+	while ( bars > i)
 	{
 		bar = pci_getBAR(bus, dev, func, i++);
 		if ((bar & 0x1) == 0)
