@@ -143,6 +143,8 @@ static void receiveData(struct rtl8139_card *card)
 		card->rxBufferOffset += length;
 		card->rxBufferOffset = (card->rxBufferOffset + 3) & ~0x3;
 		card->rxBufferOffset %= RX_BUFFER_SIZE;
+
+		int_out16(card, REG_CUR_READ_ADDR, card->rxBufferOffset - 0x10);
 	}
 }
 
