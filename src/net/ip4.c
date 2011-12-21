@@ -59,7 +59,7 @@ void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
 
 static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_packet, ether_frame_hdr_t *etherhdr)
 {
-	ip4_icmp_header_t* packet = (ip4_icmp_header_t*)(ip_packet + sizeof(ip4_header_t));
+	ip4_icmp_header_t* packet = (ip4_icmp_header_t*)(ip_packet + 1);
 	//size_t packet_size = size - sizeof(ip4_header_t);
 
 	//if(packet->type != 8)
