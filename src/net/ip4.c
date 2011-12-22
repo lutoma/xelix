@@ -23,8 +23,6 @@
 #include <net/ether.h>
 #include <memory/kmalloc.h>
 
-int ip_id = 1;
-
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
 
 void ip4_send_ether(net_device_t *target, size_t size, ip4_header_t *packet, ether_frame_hdr_t *hdr)
