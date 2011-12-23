@@ -23,6 +23,8 @@
 
 #define IP4_TOS_ICMP 0
 
+typedef uint32_t ip4_addr_t;
+
 typedef struct {
 	unsigned int hl:4; /* both fields are 4 bits */
 	unsigned int version:4;
@@ -33,8 +35,8 @@ typedef struct {
 	uint8_t ttl;
 	uint8_t p;
 	uint16_t checksum;
-	uint32_t src;
-	uint32_t dst;
+	ip4_addr_t src;
+	ip4_addr_t dst;
 } ip4_header_t;
 
 typedef struct {
