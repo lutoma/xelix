@@ -23,6 +23,12 @@
 #define SPINLOCK_LOCKED 1
 #define SPINLOCK_UNLOCKED 0
 
+#define spinlock_cmd(command, tries, retval) \
+	static spinlock_t lock = SPINLOCK_UNLOCKED; \
+	if(!spinlock_get(&lock, tries)) return retval; \
+	do {command;} while(0); \
+	spinlock_release(&lock);
+
 typedef uint8_t spinlock_t;
 uint32_t spinlock_get(spinlock_t* lock, uint32_t numretries);
 void spinlock_release(spinlock_t* lock);
