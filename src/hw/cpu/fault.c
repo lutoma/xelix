@@ -22,7 +22,7 @@
 #include <lib/log.h>
 #include <lib/panic.h>
 #include <interrupts/interface.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <memory/paging.h>
 
 static char* errorDescriptions[] = 
@@ -52,18 +52,18 @@ static void handlePageFault(cpu_state_t *regs)
 	int cr2;
 	asm volatile("mov %0, cr2":"=r"(cr2));
 	
-	vm_handle_fault(regs->errCode, (void *)cr2, regs->eip);
+	vmem_handle_fault(regs->errCode, (void *)cr2, regs->eip);
 }
 
 // Handles the IRQs we catch
 static void faultHandler(cpu_state_t* regs)
 {
 	if(regs->interrupt > 18)
-		panic("Unkown CPU error %d", regs->interrupt);
+		panic("Unkown CPU error\n");
 	else if(regs->interrupt == 14)
 		handlePageFault(regs);
 	else
-		panic("CPU error %d (%s) at %x", regs->interrupt, errorDescriptions[regs->interrupt], regs->eip);
+		panic(errorDescriptions[regs->interrupt]);
 }
 
 void cpu_initFaultHandler()

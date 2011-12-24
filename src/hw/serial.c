@@ -27,7 +27,7 @@
 #define CAN_RECV (inb(PORT+5) & 1)
 #define CAN_SEND (inb(PORT+5) & 32)
 
-static void send(char c)
+void serial_send(char c)
 {
 	while (!CAN_SEND) {};
 	outb(PORT, c);
@@ -44,14 +44,19 @@ char serial_recv()
 void serial_print(char* s)
 {
 	while(*s != '\0')
-		send(*(s++));
+		serial_send(*(s++));
 }
 
 void serial_init()
 {
 	// from http://wiki.osdev.org/Serial_Ports
 	// set up with divisor = 3 and 8 data bits, no parity, one stop bit
-
-	outb(PORT+1, 0x00); outb(PORT+3, 0x80); outb(PORT+1, 0x00); outb(PORT+0, 0x03);
-	outb(PORT+3, 0x03); outb(PORT+2, 0xC7); outb(PORT+4, 0x0B);
+	// IRQs enabled
+	outb(PORT+1, 0x1);
+	outb(PORT+3, 0x80);
+	outb(PORT+1, 0x00);
+	outb(PORT+0, 0x03);
+	outb(PORT+3, 0x03);
+	outb(PORT+2, 0xC7);
+	outb(PORT+4, 0x0B);
 }

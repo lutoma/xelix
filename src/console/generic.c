@@ -17,6 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <lib/print.h>
 #include <console/interface.h>
 #define GET_CONSOLE(console, else) if (console == NULL)\
 	console = default_console; \
@@ -26,7 +27,7 @@
 console_t *default_console = NULL;
 
 #include <console/driver/display.h>
-#include <console/driver/keyboard.h>
+#include <hw/keyboard.h>
 #ifdef CONSOLE_USE_SERIAL
 # include <console/driver/serial.h>
 #	define CONSOLE_NO_ECMA48
@@ -54,6 +55,8 @@ void console_init()
 	default_console->info.cursor_x = 0;
 	default_console->info.cursor_y = 0;
 	default_console->info.newline_mode = 1;
+	default_console->info.auto_echo = 1;
+	default_console->info.handle_backspace = 0;
 
 	default_console->input_filter = NULL;
 	default_console->output_filter = NULL;
@@ -166,7 +169,7 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 		}
 		
 		// Backspace
-		if(unlikely(buffer[i] == 0x8 || buffer[i] == 0x7f))
+		if(unlikely(buffer[i] == 0x8 || buffer[i] == 0x7f) && console->info.handle_backspace)
 		{
 			if(read <= 0)
 				continue;
@@ -177,7 +180,8 @@ size_t console_read(console_t *console, char *buffer, size_t length)
 			continue;
 		}
 
-		console_write(console, (char*)&buffer[i], 1);
+		if (console->info.auto_echo && likely(buffer[i] != 0x8 && buffer[i] != 0x7f))
+			console_write(console, (char*)&buffer[i], 1);
 
 		if(unlikely(buffer[i] == '\n' || buffer[i] == '\r'))
 			return ++read;

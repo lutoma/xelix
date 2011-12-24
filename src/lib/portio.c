@@ -18,6 +18,7 @@
  */
 
 #include "portio.h"
+#include <lib/stdint.h>
 
 #define outMacro(name, type) \
 	void name (uint16_t port, type value) \

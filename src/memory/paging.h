@@ -19,12 +19,12 @@
  */
 
 #include <lib/generic.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 
 #define paging_AlignAddr(x) ((x & 0xFFFFF000) + 0x1000)
 
 struct paging_context;
 
-void paging_applyPage(struct vm_context *ctx, struct vm_page *pg);
-int paging_apply(struct vm_context *ctx);
+void paging_applyPage(struct vmem_context *ctx, struct vmem_page *pg);
+int paging_apply(struct vmem_context *ctx);
 void paging_init();

@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Fritz Grimpen
+/* Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,8 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <console/driver.h>
+#include <tasks/syscall.h>
 
-console_driver_t *console_driver_keyboard_init(console_driver_t *driver);
-
+int sys_test(struct syscall syscall);

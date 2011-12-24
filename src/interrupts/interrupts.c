@@ -23,7 +23,7 @@
 #include <lib/generic.h>
 #include <arch/interrupts.h>
 #include <tasks/scheduler.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
 #include <memory/paging.h>
 
 interruptHandler_t interruptHandlers[256];
@@ -33,14 +33,14 @@ interruptHandler_t interruptHandlers[256];
  */
 cpu_state_t* interrupts_callback(cpu_state_t* regs)
 {
-	vm_processContext = vm_currentContext;
-	paging_apply(vm_kernelContext);
+	vmem_processContext = vmem_currentContext;
+	paging_apply(vmem_kernelContext);
 	interruptHandler_t handler = interruptHandlers[regs->interrupt];
 
 	if(handler != NULL)
 		handler(regs);
 	
-	if(regs->interrupt == IRQ0 && scheduler_state) // PIT
+	if((regs->interrupt == IRQ0 || regs->interrupt == 0x31) && scheduler_state) // PIT
 	{
 		
 		task_t* nowTask = scheduler_select(regs);
@@ -51,7 +51,7 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 		}
 	}
 
-	paging_apply(vm_processContext);
+	paging_apply(vmem_processContext);
 	return regs;
 }
 

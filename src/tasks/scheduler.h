@@ -20,17 +20,20 @@
 
 #include <lib/generic.h>
 #include <hw/cpu.h>
-#include <memory/vm.h>
+#include <memory/vmem.h>
+
+#define SCHEDULER_MAXNAME 256
 
 // Single linked list
 typedef struct task {
 	uint32_t pid;
+	char name[SCHEDULER_MAXNAME];
 	struct task *parent;
 	cpu_state_t* state;
 	struct task* next;
 	struct task* last;
 
-	struct vm_context *memory_context;
+	struct vmem_context *memory_context;
 
 	// Current task state
 	enum {
@@ -50,9 +53,10 @@ typedef struct task {
 
 int scheduler_state;
 
-task_t *scheduler_newTask(void *entry, task_t *parent);
+task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME]);
 void scheduler_add(task_t *task);
 void scheduler_terminateCurrentTask();
 task_t* scheduler_getCurrentTask();
 task_t* scheduler_select(cpu_state_t* lastRegs);
 void scheduler_init();
+void scheduler_yield();

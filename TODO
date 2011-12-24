@@ -1,5 +1,0 @@
-* HDA driver!
-* Fix charmap so we can also display umlauts
-* VGA / VESA
-* Fix VFS
-* Fix rtl8139 driver

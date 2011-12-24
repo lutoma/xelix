@@ -30,106 +30,23 @@
 #include "syscalls/brk.h"
 #include "syscalls/mmap.h"
 #include "syscalls/munmap.h"
+#include "syscalls/test.h"
+#include "syscalls/hostname.h"
+#include "syscalls/uname.h"
 
 syscall_t syscall_table[] = {
-	sys_chg_sys_conv, // 0
-	sys_exit, // 1
-	NULL, // 2
-	sys_read,
-	sys_write, // 4
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 8
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 16
-	NULL,
-	NULL,
-	NULL,
-	sys_getpid,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 24
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 32
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 40
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	sys_brk, // 45
-	NULL,
-	NULL,
-	NULL, // 48
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 56
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	sys_getppid, // 64
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 72
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 80
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 88
-	NULL,
-	sys_mmap, // 90
-	sys_munmap,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL, // 96
-	NULL,
-	NULL,
+	sys_chg_sys_conv,	// 0
+	sys_exit,			// 1
+	sys_read,			// 2
+	sys_write,			// 3
+	sys_getpid,			// 4
+	sys_brk,			// 5
+	sys_getppid,		// 6
+	sys_mmap,			// 7
+	sys_munmap,			// 8
+	sys_test,			// 9
+	sys_get_hostname,	// 10
+	sys_set_hostname,	// 11
+	sys_uname,			// 12
 };
 

@@ -19,6 +19,7 @@
  */
 
 #include <lib/generic.h>
+#include <console/driver.h>
 
 // Wait until the command buffer is empty, then send.
 #define keyboard_sendKeyboard(C) while ((inb(0x64) & 0x2)) {}; outb(0x60, C);
@@ -27,4 +28,5 @@
 void keyboard_init(); // irqs have to be set up first!
 void keyboard_takeFocus(void (*func)(uint16_t));
 void keyboard_leaveFocus();
-char keyboard_codeToChar(uint16_t code);
+	console_driver_t *console_driver_keyboard_init(console_driver_t *driver);
+int keyboard_setlayout(char *layoutname);

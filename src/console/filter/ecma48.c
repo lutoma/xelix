@@ -178,7 +178,7 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, co
 	bool complete = 0;
 
 	if (buffer_dictionary == NULL)
-		buffer_dictionary = dict_new();
+		buffer_dictionary = dict_new(false);
 
 	strbuffer_t *buffer = dict_get(buffer_dictionary, info);
 	if (buffer == (void *)-1)
@@ -246,7 +246,7 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, co
 console_filter_t *console_filter_ecma48_init(console_filter_t *filter)
 {
 	if (buffer_dictionary == NULL)
-		buffer_dictionary = dict_new();
+		buffer_dictionary = dict_new(false);
 
 	if (filter == NULL)
 		filter = (console_filter_t *)kmalloc(sizeof(console_filter_t));

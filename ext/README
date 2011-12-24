@@ -1,4 +1,0 @@
-Those are external libraries which are being embedded into the kernel.
-Don't worry, you don't have to do anything to include them (Except for
-running git submodule udpdate, for sure). They are symbollically linked
-to somewhere in the source tree (mostly src/lib).

@@ -19,6 +19,7 @@
  */
 
 #include <lib/generic.h>
+#include <tasks/scheduler.h>
 
 #define ELF_TYPE_NONE 0
 #define ELF_TYPE_REL 1
@@ -65,4 +66,4 @@ typedef struct {
 	uint16_t	shstrndx;	/* Section header string table index */
 } __attribute__((packed)) elf_t;
 
-int elf_load(elf_t* entry);
+int elf_load(elf_t* bin, char name[SCHEDULER_MAXNAME]);

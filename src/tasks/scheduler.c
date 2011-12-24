@@ -24,7 +24,8 @@
 #include <hw/cpu.h>
 #include <interrupts/interface.h>
 #include <lib/panic.h>
-#include <memory/vm.h>
+#include <lib/string.h>
+#include <memory/vmem.h>
 
 #define STACKSIZE PAGE_SIZE
 #define STATE_OFF 0
@@ -32,7 +33,7 @@
 #define STATE_INITIALIZED 2
 
 task_t* currentTask = NULL;
-uint64_t highestPid = -1;
+uint64_t highestPid = -0;
 
 /* If we kill a process using scheduler_terminateCurrentTask, we also
  * fire an IRQ to switch to the next process.  However, that way, the
@@ -46,9 +47,15 @@ uint64_t highestPid = -1;
 #define SKIP_OFF  0
 int skipnext = SKIP_OFF;
 
+void scheduler_yield()
+{
+	skipnext = SKIP_WAIT;
+	asm("int 0x31");
+}
+
 void scheduler_terminateCurrentTask()
 {
-	log(LOG_DEBUG, "scheduler: Deleting current task\n");
+	log(LOG_DEBUG, "scheduler: Deleting current task <%s>\n", currentTask->name);
 
 	if(currentTask->next == currentTask)
 		currentTask = NULL;
@@ -58,76 +65,75 @@ void scheduler_terminateCurrentTask()
 		currentTask->last->next = currentTask->next;
 	}
 
-	skipnext = SKIP_WAIT;
-	while(true) asm("int 0x20; hlt");
+	scheduler_yield();
 }
 
 void scheduler_remove(task_t *t)
 {
-	log(LOG_DEBUG, "scheduler: Deleting task %d\n", t->pid);
+	log(LOG_DEBUG, "scheduler: Deleting task %d <%s>\n", t->pid, t->name);
 
 	t->next->last = t->last;
 	t->last->next = t->next;
 }
 
-static struct vm_context *setupMemoryContext(void *stack)
+static struct vmem_context *setupMemoryContext(void *stack)
 {
 	log(LOG_DEBUG, "scheduler: Setup new Memory Context [%d]\n", stack);
-	struct vm_context *ctx = vm_new();
+	struct vmem_context *ctx = vmem_new();
 	
 	/* Protect unused kernel space (0x7fff0000 - 0x7fffc000) */
 	for(int addr = 0x7fff0000; addr <= 0x7fffc000; addr += PAGE_SIZE)
 	{
-		struct vm_page *currPage = vm_new_page();
+		struct vmem_page *currPage = vmem_new_page();
 		currPage->allocated = 0;
-		currPage->section = VM_SECTION_KERNEL;
+		currPage->section = VMEM_SECTION_KERNEL;
 		currPage->readonly = 1;
 		currPage->virt_addr = (void *)addr;
 
-		vm_add_page(ctx, currPage);
+		vmem_add_page(ctx, currPage);
 	}
 
-	struct vm_page *stackPage = vm_new_page();
+	struct vmem_page *stackPage = vmem_new_page();
 	stackPage->allocated = 1;
-	stackPage->section = VM_SECTION_STACK;
+	stackPage->section = VMEM_SECTION_STACK;
 	stackPage->virt_addr = (void *)0x7fffe000;
 	stackPage->phys_addr = stack;
 
 	/* Additional stack space if already allocated stack is full */
 
-	struct vm_page *stackPage2 = vm_new_page();
-	stackPage2->section = VM_SECTION_STACK;
+	struct vmem_page *stackPage2 = vmem_new_page();
+	stackPage2->section = VMEM_SECTION_STACK;
 	stackPage2->virt_addr = (void *)0x7fffd000;
 
-	vm_add_page(ctx, stackPage);
-	vm_add_page(ctx, stackPage2);
+	vmem_add_page(ctx, stackPage);
+	vmem_add_page(ctx, stackPage2);
 
 	/* Map memory from 0x100000 to 0x17f000 (Kernel-related data) */
 	int pos = 0x100000;
 	while (pos <= 0x17f000)
 	{
-		struct vm_page *currPage = vm_new_page();
+		struct vmem_page *currPage = vmem_new_page();
 		currPage->allocated = 1;
-		currPage->section = VM_SECTION_KERNEL;
+		currPage->section = VMEM_SECTION_KERNEL;
 		currPage->readonly = 1;
 		currPage->virt_addr = (void *)pos;
 		currPage->phys_addr = (void *)pos;
 
-		vm_add_page(ctx, currPage);
+		vmem_add_page(ctx, currPage);
 
 		pos += PAGE_SIZE;
 	}
 
 	/* Map unused interrupt handler */
 
-	struct vm_page *intHandler = vm_new_page();
-	intHandler->section = VM_SECTION_KERNEL;
+	struct vmem_page *intHandler = vmem_new_page();
+	intHandler->section = VMEM_SECTION_KERNEL;
 	intHandler->readonly = 1;
 	intHandler->allocated = 1;
 	intHandler->virt_addr = (void *)0x7ffff000;
 	intHandler->phys_addr = (void *)0;
 
-	vm_add_page(ctx, intHandler);
+	vmem_add_page(ctx, intHandler);
 
 	return ctx;
 }
@@ -138,7 +144,7 @@ static struct vm_context *setupMemoryContext(void *stack)
  * UP TO YOU as the scheduler has no clue about how long
  * your program is.
  */
-task_t *scheduler_newTask(void *entry, task_t *parent)
+task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME])
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
@@ -147,13 +153,13 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
 	thisTask->memory_context = setupMemoryContext(stack);
-	thisTask->memory_context = vm_kernelContext;
+	thisTask->memory_context = vmem_kernelContext;
 
 	// Stack
 	thisTask->state->esp = stack + STACKSIZE - 3;
 	thisTask->state->ebp = thisTask->state->esp;
 
-	*(thisTask->state->ebp + 1) = scheduler_terminateCurrentTask;
+	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminateCurrentTask;
 	*(thisTask->state->ebp + 2) = NULL; // base pointer
 	
 	// Instruction pointer (= start of the program)
@@ -164,6 +170,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent)
 	thisTask->state->ss = 0x10;
 
 	thisTask->pid = ++highestPid;
+	strcpy(thisTask->name, name);
 	thisTask->parent = parent;
 	thisTask->task_state = TASK_STATE_RUNNING;
 	thisTask->sys_call_conv = (parent == NULL) ? TASK_SYSCONV_LINUX : parent->sys_call_conv;
@@ -190,7 +197,7 @@ void scheduler_add(task_t *task)
 
 	interrupts_enable();
 	
-	log(LOG_INFO, "scheduler: Registered new task with PID %d\n", task->pid);
+	log(LOG_INFO, "scheduler: Registered new task with PID %d <%s>\n", task->pid, task->name);
 }
 
 task_t* scheduler_getCurrentTask()
@@ -231,9 +238,6 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 		if (unlikely(currentTask == NULL || currentTask->task_state == TASK_STATE_RUNNING))
 			break;
 	}
-
-	if (unlikely(currentTask == NULL))
-		panic("scheduler: No tasks left - init killed?");
 
 	return currentTask;
 }
