@@ -39,7 +39,6 @@
 #include <fs/xsfs.h>
 #include <lib/argparser.h>
 #include <tasks/scheduler.h>
-#include <init/debugconsole.h>
 #include <console/interface.h>
 #include <hw/pci.h>
 #include <hw/rtl8139.h>
