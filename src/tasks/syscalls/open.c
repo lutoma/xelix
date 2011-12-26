@@ -19,6 +19,7 @@
 
 #include "write.h"
 #include <fs/vfs.h>
+#include <lib/log.h>
 
 int sys_open(struct syscall syscall)
 {
