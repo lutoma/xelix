@@ -37,3 +37,4 @@ void* malloc(size_t size);
  * proper in-application memory management.
  */
 #define free(ptr) ()
+int execv(char const *path, char const * const * argv);

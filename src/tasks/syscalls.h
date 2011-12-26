@@ -34,6 +34,7 @@
 #include "syscalls/hostname.h"
 #include "syscalls/uname.h"
 #include "syscalls/open.h"
+#include "syscalls/execve.h"
 
 syscall_t syscall_table[] = {
 	sys_chg_sys_conv,	// 0
@@ -50,5 +51,6 @@ syscall_t syscall_table[] = {
 	sys_set_hostname,	// 11
 	sys_uname,			// 12
 	sys_open,			// 13
+	sys_execve,			// 14
 };
 
