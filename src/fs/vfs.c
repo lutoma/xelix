@@ -43,6 +43,10 @@ vfs_file_t files[MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
 uint32_t last_file = -1;
 
+vfs_file_t* vfs_get_from_id(uint32_t id)
+{
+	return &files[id];
+}
 
 void* vfs_read(vfs_file_t* fp)
 {
