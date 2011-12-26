@@ -77,6 +77,10 @@ void* xsfs_read(char* path, uint32_t offset)
 		return NULL;
 	}
 
+	// Strip of leading / of path
+	if(*path == '/')
+		path++;
+
 	struct file* current_file;
 	for(int i = 0; i < header->num_files; i++)
 	{
