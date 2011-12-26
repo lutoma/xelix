@@ -66,5 +66,5 @@ typedef struct {
 	uint16_t	shstrndx;	/* Section header string table index */
 } __attribute__((packed)) elf_t;
 
-int elf_load(elf_t* bin, char name[SCHEDULER_MAXNAME]);
-int elf_load_file(char* path);
+void* elf_load(elf_t* bin);
+void* elf_load_file(char* path);

@@ -109,7 +109,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	#endif
 
 	if(multiboot_info->modsCount)
-		elf_load((void*)multiboot_info->modsAddr[0].start, "initrd");
+			scheduler_add(scheduler_newTask(elf_load((void*)multiboot_info->modsAddr[0].start), NULL, "initrd"));
 
 	elf_load_file("/init");
 
