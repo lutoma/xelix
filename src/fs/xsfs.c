@@ -46,7 +46,7 @@ struct file {
 } __attribute__((packed));
 
 // This is so unbelievably ineffective and dumb, i'm really sorry. --Lukas
-void* xsfs_read(char* path)
+void* xsfs_read(char* path, uint32_t offset)
 {
 	uint16_t* buffer = (uint16_t*)kmalloc(sizeof(uint16_t) * BUFSIZE);
 	ata_read(ATA0, 0, BUFSIZE - 1, buffer);

@@ -25,32 +25,54 @@
 #include <memory/kmalloc.h>
 #include <lib/string.h>
 #include <lib/list.h>
+#include <lib/spinlock.h>
+#include <fs/xsfs.h>
 
 #define MAX_MOUNTPOINTS 50
+#define MAX_OPENFILES 500
 
-vfs_node_t mountpoints[MAX_MOUNTPOINTS];
-uint32_t mountpoints_last_used = -1;
-
-/*
-vfs_storage_t* vfs_get_from_path(const char* path)
+struct mountpoint
 {
-	// Scalability & speed? Nope, chuck testa.
-	// TODO
-}*/
+	char path[265];
+	bool active;
+	vfs_read_callback_t read_callback;
+};
 
-vfs_storage_t* vfs_get_from_id(uint32_t id)
+struct mountpoint mountpoints[MAX_MOUNTPOINTS];
+vfs_file_t files[MAX_OPENFILES];
+uint32_t last_mountpoint = -1;
+uint32_t last_file = -1;
+
+
+void* vfs_read(vfs_file_t* fp)
 {
-	// Scalability & speed? Nope, chuck testa.
-	return mountpoints[id].storage;
+	struct mountpoint mp = mountpoints[fp->mountpoint];
+	return mp.read_callback (fp->mount_path, fp->offset);
+	return NULL;
 }
 
-void vfs_mount(const char* path, vfs_storage_t* store)
+vfs_file_t* vfs_open(char* path)
 {
-	uint32_t num = ++mountpoints_last_used;
-	mountpoints[num].path = path;
-	mountpoints[num].storage = store;
+	uint32_t num;
+	spinlock_cmd(num = ++last_file, 20, (vfs_file_t*)-1);
+
+	files[num].num = num;
+	strcpy(files[num].path, path);
+	strcpy(files[num].mount_path, path); // Fixme
+	files[num].offset = 0;
+	files[num].mountpoint = 0; // Fixme
+	return &files[num];
+}
+
+int vfs_mount(char* path, vfs_read_callback_t read_callback)
+{
+	uint32_t num;
+	spinlock_cmd(num = ++last_mountpoint, 20, -1);
+
+	strcpy(mountpoints[num].path, path);
 	mountpoints[num].active = true;
-}
+	mountpoints[num].read_callback = read_callback;
 
-// For future use
-void vfs_init(){}
+	log(LOG_DEBUG, "Mounted [%x] to %s\n", read_callback, path);
+	return 0;
+}

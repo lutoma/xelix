@@ -21,14 +21,15 @@
 #include <lib/generic.h>
 
 typedef struct {
+   uint64_t num;
+   char path[512];
+   char mount_path[512];
+   uint32_t offset;
+   uint32_t mountpoint;
+} vfs_file_t;
 
-} vfs_storage_t;
+typedef void* (*vfs_read_callback_t)(char* path, uint32_t offset);
 
-typedef struct
-{
-	const char* path;
-	bool active;
-	vfs_storage_t* storage;
-} vfs_node_t;
-
-void vfs_init();
+void* vfs_read(vfs_file_t* fp);
+vfs_file_t* vfs_open(char* path);
+int vfs_mount(char* path, vfs_read_callback_t read_callback);
