@@ -86,7 +86,10 @@ void* xsfs_read(char* path, uint32_t offset)
 	{
 		current_file = (struct file*)((uint32_t)buffer + (uint32_t)header->fileoffset + (i * sizeof(struct file)));
 		if(!strcmp(current_file->name, path))
+		{
+			*(char*)((uint32_t)buffer + current_file->offset + current_file->size) = EOF;
 			return (void*)((uint32_t)buffer + current_file->offset);
+		}
 	}
 
 	return NULL;
