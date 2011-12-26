@@ -111,7 +111,9 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	if(multiboot_info->modsCount)
 			scheduler_add(scheduler_newTask(elf_load((void*)multiboot_info->modsAddr[0].start), NULL, "initrd"));
 
-	scheduler_add(scheduler_newTask(elf_load_file("/init"), NULL, "/init"));
+	void* data = elf_load_file("/init");
+	if(data)
+		scheduler_add(scheduler_newTask(data, NULL, "/init"));
 
 	/* Is intentionally last. It's also intentional that the init()
 	 * macro isn't used here. Seriously, don't mess around here.
