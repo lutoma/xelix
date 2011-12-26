@@ -20,8 +20,12 @@
 
 #include <stddef.h>
 
-void memcpy(void* dest, void* src, uint32_t size);
-void memset(void* ptr, uint8_t fill, uint32_t size);
+// GCC has builtins for the prototypes (not the functions themselves)
+#ifndef __GNUC__
+	void memcpy(void* dest, void* src, uint32_t size);
+	void memset(void* ptr, uint8_t fill, uint32_t size);
+#endif
+
 size_t strlen(const char* str);
 char* strtok(char* str, const char* delim);
 char* strtok_r(char* s, const char* delim, char** last);
