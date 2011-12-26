@@ -1,4 +1,4 @@
-/* read.c: Write Syscall
+/* read.c: Read Syscall
  * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
@@ -20,11 +20,18 @@
 #include "write.h"
 #include <console/interface.h>
 #include <lib/datetime.h>
+#include <fs/vfs.h>
 
 int sys_read(struct syscall syscall)
 {
 	if (syscall.params[0] == 0)
 		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
 
-	return -1;
+	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
+	if(fd == NULL)
+		return -1;
+	
+	void* data = vfs_read(fd);
+	memcpy((void*)syscall.params[1], data, syscall.params[2]);
+	return 0;
 }
