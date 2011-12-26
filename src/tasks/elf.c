@@ -23,6 +23,7 @@
 #include <lib/log.h>
 #include <lib/print.h>
 #include <tasks/scheduler.h>
+#include <fs/vfs.h>
 
 #define fail(args...) do { log(LOG_INFO, args); return 1; } while(false);
 
@@ -65,4 +66,14 @@ int elf_load(elf_t* bin, char name[SCHEDULER_MAXNAME])
 
 	scheduler_add(scheduler_newTask(bin->entry, NULL, name));
 	return 0;
+}
+
+int elf_load_file(char* path)
+{
+	vfs_file_t* fd = vfs_open(path);
+	void* data = vfs_read(fd);
+	if(data == NULL)
+		return 1;
+	
+	return elf_load(data, path);
 }

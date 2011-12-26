@@ -67,3 +67,4 @@ typedef struct {
 } __attribute__((packed)) elf_t;
 
 int elf_load(elf_t* bin, char name[SCHEDULER_MAXNAME]);
+int elf_load_file(char* path);

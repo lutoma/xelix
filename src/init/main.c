@@ -111,9 +111,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	if(multiboot_info->modsCount)
 		elf_load((void*)multiboot_info->modsAddr[0].start, "initrd");
 
-	vfs_file_t* fd = vfs_open("init");
-	void* data = vfs_read(fd);
-	elf_load(data, "/init");
+	elf_load_file("/init");
 
 	/* Is intentionally last. It's also intentional that the init()
 	 * macro isn't used here. Seriously, don't mess around here.
