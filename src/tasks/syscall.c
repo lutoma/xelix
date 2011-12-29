@@ -29,28 +29,13 @@
 static void intHandler(cpu_state_t* regs)
 {
 	struct syscall syscall;
-	if (scheduler_getCurrentTask()->sys_call_conv == TASK_SYSCONV_LINUX)
-	{
-		// Linux syscall calling convention
-		syscall.num = regs->eax;
-		syscall.params[0] = regs->ebx;
-		syscall.params[1] = regs->ecx;
-		syscall.params[2] = regs->edx;
-		syscall.params[3] = regs->esi;
-		syscall.params[4] = regs->edi;
-		syscall.params[5] = (int)regs->ebp;
-	}
-	else
-	{
-		// Unix syscall calling convention
-		syscall.num = regs->eax;
-		syscall.params[0] = *((int *)regs->esp + sizeof(int));
-		syscall.params[1] = *((int *)regs->esp + sizeof(int) * 2);
-		syscall.params[2] = *((int *)regs->esp + sizeof(int) * 3);
-		syscall.params[3] = *((int *)regs->esp + sizeof(int) * 4);
-		syscall.params[4] = *((int *)regs->esp + sizeof(int) * 5);
-		syscall.params[5] = *((int *)regs->esp + sizeof(int) * 6);
-	}
+	syscall.num = regs->eax;
+	syscall.params[0] = regs->ebx;
+	syscall.params[1] = regs->ecx;
+	syscall.params[2] = regs->edx;
+	syscall.params[3] = regs->esi;
+	syscall.params[4] = regs->edi;
+	syscall.params[5] = (int)regs->ebp;
 
 	syscall_t call = syscall_table[syscall.num];
 	if (syscall.num >= sizeof(syscall_table) / sizeof(syscall_t) || call == NULL)

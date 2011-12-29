@@ -173,7 +173,6 @@ task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNA
 	strcpy(thisTask->name, name);
 	thisTask->parent = parent;
 	thisTask->task_state = TASK_STATE_RUNNING;
-	thisTask->sys_call_conv = (parent == NULL) ? TASK_SYSCONV_LINUX : parent->sys_call_conv;
 
 	return thisTask;
 }

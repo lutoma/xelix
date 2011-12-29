@@ -21,7 +21,6 @@
 #include <lib/generic.h>
 #include <tasks/syscall.h>
 
-#include "syscalls/chg_sys_conv.h"
 #include "syscalls/write.h"
 #include "syscalls/exit.h"
 #include "syscalls/getpid.h"
@@ -37,7 +36,7 @@
 #include "syscalls/execve.h"
 
 syscall_t syscall_table[] = {
-	sys_chg_sys_conv,	// 0
+	NULL,				// 0
 	sys_exit,			// 1
 	sys_read,			// 2
 	sys_write,			// 3
