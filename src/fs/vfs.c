@@ -77,6 +77,6 @@ int vfs_mount(char* path, vfs_read_callback_t read_callback)
 	mountpoints[num].active = true;
 	mountpoints[num].read_callback = read_callback;
 
-	log(LOG_DEBUG, "Mounted [%x] to %s\n", read_callback, path);
+	log(LOG_DEBUG, "Mounted [%x] to %s\n", read_callback, mountpoints[num].path);
 	return 0;
 }
