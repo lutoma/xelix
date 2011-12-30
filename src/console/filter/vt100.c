@@ -23,7 +23,7 @@
 #	include <hw/speaker.h>
 #endif
 
-static char console_filter_vt100_writeCallback(char c, console_info_t *info, console_driver_t *driver)
+static char console_filter_vt100_writeCallback(char c, console_info_t* info, console_driver_t* driver)
 {
 	switch (c)
 	{
@@ -41,7 +41,7 @@ static char console_filter_vt100_writeCallback(char c, console_info_t *info, con
 	return 0;
 }
 
-console_filter_t *console_filter_vt100_init(console_filter_t *filter)
+console_filter_t* console_filter_vt100_init(console_filter_t* filter)
 {
 	if (filter == NULL)
 		filter = (console_filter_t *)kmalloc(sizeof(console_filter_t));

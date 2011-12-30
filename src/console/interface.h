@@ -26,22 +26,22 @@
 typedef struct {
 	console_info_t info;
 
-	console_filter_t *input_filter;
-	console_filter_t *output_filter;
+	console_filter_t* input_filter;
+	console_filter_t* output_filter;
 
-	console_driver_t *input_driver;
-	console_driver_t *output_driver;
+	console_driver_t* input_driver;
+	console_driver_t* output_driver;
 } console_t;
 
-console_t *default_console;
+console_t* default_console;
 
 // Generate raw console, connected to the Display, Keyboard and the
 // ECMA-48-Filter
 void console_init();
 
-size_t console_write(console_t *console, const char *buffer, size_t length);
+size_t console_write(console_t* console, const char* buffer, size_t length);
 #define console_write2(console, buffer) console_write(console, buffer, strlen(buffer))
-size_t console_read(console_t *console, char *buffer, size_t length);
-size_t console_scroll(console_t *console, int32_t pages);
+size_t console_read(console_t* console, char* buffer, size_t length);
+size_t console_scroll(console_t* console, int32_t pages);
 
-void console_clear(console_t *console);
+void console_clear(console_t* console);

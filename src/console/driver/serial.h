@@ -21,5 +21,5 @@
 #include <lib/generic.h>
 #include <console/driver.h>
 
-console_driver_t *console_driver_serial_init(console_driver_t *driver);
+console_driver_t* console_driver_serial_init(console_driver_t* driver);
 

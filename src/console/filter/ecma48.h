@@ -21,4 +21,4 @@
 #include <lib/generic.h>
 #include <console/filter.h>
 
-console_filter_t *console_filter_ecma48_init(console_filter_t *filter);
+console_filter_t* console_filter_ecma48_init(console_filter_t* filter);

@@ -31,7 +31,7 @@ typedef struct {
 
 	int capabilities;
 
-	int (*_clear)(console_info_t *);
-	int (*scroll)(console_info_t *, int32_t);
-	void (*setCursor)(console_info_t *, uint32_t, uint32_t);
+	int (*_clear)(console_info_t*);
+	int (*scroll)(console_info_t*, int32_t);
+	void (*setCursor)(console_info_t*, uint32_t, uint32_t);
 } console_driver_t;

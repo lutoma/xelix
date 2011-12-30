@@ -21,11 +21,11 @@
 #include <hw/serial.h>
 #include <memory/kmalloc.h>
 
-static void console_driver_serial_setCursor(console_info_t *info, uint32_t x, uint32_t y)
+static void console_driver_serial_setCursor(console_info_t* info, uint32_t x, uint32_t y)
 {
 }
 
-static int console_driver_serial_write(console_info_t *info, char c)
+static int console_driver_serial_write(console_info_t* info, char c)
 {
 	if (c == 0x8 || c == 0x7f)
 	{
@@ -42,7 +42,7 @@ static int console_driver_serial_write(console_info_t *info, char c)
 	return 1;
 }
 
-static char console_driver_serial_read(console_info_t *info)
+static char console_driver_serial_read(console_info_t* info)
 {
 	char c = serial_recv();
 	if (c < 0x20 && c != '\n' && c != '\r')
@@ -51,13 +51,13 @@ static char console_driver_serial_read(console_info_t *info)
 	return c;
 }
 
-static int console_driver_serial_clear(console_info_t *info)
+static int console_driver_serial_clear(console_info_t* info)
 {
 	serial_print("\e[H\e[2J");
 	return 0;
 }
 
-console_driver_t *console_driver_serial_init(console_driver_t *driver)
+console_driver_t* console_driver_serial_init(console_driver_t* driver)
 {
 	if (driver == NULL)
 		driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));

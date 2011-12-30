@@ -24,7 +24,7 @@
 	if (console == NULL) \
 		else
 
-console_t *default_console = NULL;
+console_t* default_console = NULL;
 
 #include <console/driver/display.h>
 #include <hw/keyboard.h>
@@ -47,7 +47,7 @@ console_t *default_console = NULL;
 void console_init()
 {
 	if (default_console == NULL)
-		default_console = (console_t *)kmalloc(sizeof(console_t));
+		default_console = (console_t*)kmalloc(sizeof(console_t));
 
 	default_console->info.rows = 25;
 	default_console->info.columns = 80;
@@ -61,8 +61,8 @@ void console_init()
 	default_console->input_filter = NULL;
 	default_console->output_filter = NULL;
 
-	default_console->input_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
-	default_console->output_driver = (console_driver_t *)kmalloc(sizeof(console_driver_t));
+	default_console->input_driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));
+	default_console->output_driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));
 
 #	ifdef CONSOLE_USE_SERIAL
 	console_driver_serial_init(default_console->output_driver);
@@ -92,7 +92,7 @@ void console_init()
 	console_clear(NULL);
 }
 
-void console_clear(console_t *console)
+void console_clear(console_t* console)
 {
 	GET_CONSOLE(console, return);
 
@@ -149,11 +149,11 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 	return written;
 }
 
-size_t console_read(console_t *console, char *buffer, size_t length)
+size_t console_read(console_t* console, char* buffer, size_t length)
 {
 	GET_CONSOLE(console, return 0);
 
-	console_filter_t *filter;
+	console_filter_t* filter;
 	int i = 0;
 	size_t read = 0;
 

@@ -26,19 +26,19 @@ struct console_filter {
 	// General callback for all actions etc.
 	// Preferred prototype:
 	// char <name>(char c, console_info_t *info, console_driver_t *input, console_driver_t *output);
-	char (*callback)(char, console_info_t *, console_driver_t *, console_driver_t *);
+	char (*callback)(char, console_info_t*, console_driver_t*, console_driver_t*);
 
 	// Specific callbacks for read and write
 	// Preferred prototype:
 	// char <name>(char c, console_info_t *info, console_driver_t *input);
-	char (*read_callback)(char, console_info_t *, console_driver_t *);
+	char (*read_callback)(char, console_info_t*, console_driver_t*);
 
 	// Preferred prototype:
 	// char <name>(char c, console_info_t *info, console_driver_t *output);
-	char (*write_callback)(char, console_info_t *, console_driver_t *);
+	char (*write_callback)(char, console_info_t*, console_driver_t*);
 
 	// The next filter in the filter chain
-	struct console_filter *next;
+	struct console_filter* next;
 };
 
 typedef struct console_filter console_filter_t;

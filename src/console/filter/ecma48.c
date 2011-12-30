@@ -23,9 +23,9 @@
 #include <lib/dict.h>
 #include <lib/strbuffer/strbuffer.h>
 
-static dict_t *buffer_dictionary = NULL;
+static dict_t* buffer_dictionary = NULL;
 
-static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
+static void processColorSequence(console_info_t* info, strbuffer_t* buffer)
 {
 	int i = 2;
 	char c = 0;
@@ -110,7 +110,7 @@ static void processColorSequence(console_info_t *info, strbuffer_t *buffer)
 	}
 }
 
-static void processControlSequence(console_info_t *info, strbuffer_t *buffer, console_driver_t *output)
+static void processControlSequence(console_info_t* info, strbuffer_t* buffer, console_driver_t* output)
 {
 	int prefix = atoi(buffer->data + 2);
 	
@@ -172,7 +172,7 @@ static void processControlSequence(console_info_t *info, strbuffer_t *buffer, co
 	}
 }
 
-static char console_filter_ecma48_writeCallback(char c, console_info_t *info, console_driver_t *output)
+static char console_filter_ecma48_writeCallback(char c, console_info_t* info, console_driver_t* output)
 {
 	bool discard = 0;
 	bool complete = 0;
@@ -180,8 +180,8 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, co
 	if (buffer_dictionary == NULL)
 		buffer_dictionary = dict_new(false);
 
-	strbuffer_t *buffer = dict_get(buffer_dictionary, info);
-	if (buffer == (void *)-1)
+	strbuffer_t* buffer = dict_get(buffer_dictionary, info);
+	if (buffer == (void*)-1)
 	{
 		buffer = strbuffer_new(0);
 		dict_set(buffer_dictionary, info, buffer);
@@ -243,13 +243,13 @@ static char console_filter_ecma48_writeCallback(char c, console_info_t *info, co
 	return c;
 }
 
-console_filter_t *console_filter_ecma48_init(console_filter_t *filter)
+console_filter_t* console_filter_ecma48_init(console_filter_t* filter)
 {
 	if (buffer_dictionary == NULL)
 		buffer_dictionary = dict_new(false);
 
 	if (filter == NULL)
-		filter = (console_filter_t *)kmalloc(sizeof(console_filter_t));
+		filter = (console_filter_t*)kmalloc(sizeof(console_filter_t));
 
 	filter->callback = NULL;
 	filter->read_callback = NULL;

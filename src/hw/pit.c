@@ -23,7 +23,6 @@
 #include <interrupts/interface.h>
 
 uint64_t tick = 0;
-extern void switchcontext(); // in ASM
 
 // The timer callback. Gets called every time the PIT fires.
 static void timerCallback(cpu_state_t* regs)

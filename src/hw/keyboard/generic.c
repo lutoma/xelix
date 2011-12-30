@@ -36,7 +36,7 @@
 #include <lib/dict.h>
 
 struct keyboard_buffer {
-	char *data;
+	char* data;
 	uint32_t size;
 	uint32_t offset;
 };
@@ -60,15 +60,15 @@ struct {
 static dict_t* dictionary;
 static char* currentKeymap;
 
-int keyboard_setlayout(char *layoutname)
+int keyboard_setlayout(char* layoutname)
 {
-    void *retval = dict_get(dictionary, layoutname);
-    if ((int) retval != -1)
-        currentKeymap = (char *) retval;
-    else
-        return -1;
+	void* retval = dict_get(dictionary, layoutname);
+	if ((int)retval != -1)
+		currentKeymap = (char*)retval;
+	else
+		return -1;
 
-    return 1;
+	return 1;
 }
 
 static void flush()
@@ -172,7 +172,7 @@ static void handleScancode(uint8_t code, uint8_t code2)
 			return;
 
         // XXX: is it really necessary to actually shrink the buffer?
-		char *new_buffer = (char *)kmalloc(sizeof(char) * (keyboard_buffer.size - 1));
+		char* new_buffer = (char*)kmalloc(sizeof(char) * (keyboard_buffer.size - 1));
 		memcpy(new_buffer, keyboard_buffer.data, keyboard_buffer.size - 1);
 		kfree(keyboard_buffer.data);
 		keyboard_buffer.data = new_buffer;
@@ -183,7 +183,7 @@ static void handleScancode(uint8_t code, uint8_t code2)
 
 	if (keyboard_buffer.size <= keyboard_buffer.offset)
 	{
-		char *new_buffer = (char *)kmalloc(sizeof(char) * (keyboard_buffer.size + 1));
+		char* new_buffer = (char*)kmalloc(sizeof(char) * (keyboard_buffer.size + 1));
 		if (keyboard_buffer.data != NULL)
 		{
 			memcpy(new_buffer, keyboard_buffer.data, keyboard_buffer.size);
@@ -232,7 +232,7 @@ static char console_driver_keyboard_read(console_info_t *info)
 	}
 	else
 	{
-		char *new_buffer = (char *)kmalloc(sizeof(char) * (keyboard_buffer.size - 1));
+		char* new_buffer = (char*)kmalloc(sizeof(char) * (keyboard_buffer.size - 1));
 		memcpy(new_buffer, keyboard_buffer.data + 1, keyboard_buffer.size - 1);
 		kfree(keyboard_buffer.data);
 		keyboard_buffer.size--;
