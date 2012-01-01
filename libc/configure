@@ -39,9 +39,8 @@ do
 	echo -n ".o" >> Makefile
 done
 
-echo >> Makefile
+echo " crt0.o" >> Makefile
 echo "	ar rcs libstdc.a $^" >> Makefile
-echo "	nasm -f elf -g crt0.asm -o crt0.o" >> Makefile
 
 for i in $files
 do

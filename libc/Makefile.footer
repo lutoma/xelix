@@ -1,3 +1,6 @@
+crt0.o: crt0.asm
+	nasm -f elf -g crt0.asm -o crt0.o
+
 %.o: %.c
 	$(CC) $(MAKE_CFLAGS) -D "__INLIBC" -o $@ -c $<
 
