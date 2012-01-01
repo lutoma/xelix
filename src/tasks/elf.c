@@ -31,6 +31,9 @@ char header[4] = {0x7f, 'E', 'L', 'F'};
 
 void* elf_load(elf_t* bin)
 {
+	if(bin <= NULL)
+		return NULL;
+
 	if(bin->ident.magic[0] != header[0]
 	|| bin->ident.magic[1] != header[1]
 	|| bin->ident.magic[2] != header[2]
