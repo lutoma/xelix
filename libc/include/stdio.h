@@ -29,6 +29,7 @@
 typedef struct {
 	uint64_t num;
 	char filename[512];
+	uint32_t offset;
 	uint32_t error;
 	bool eof;
 } FILE;
@@ -42,9 +43,21 @@ extern FILE _stderr;
 
 char* fgets(char* str, int num, FILE* fp);
 int fputs(const char* string, FILE* fp);
+
 static inline void print(const char* string)
 {
         fputs(string, stdout);
 }
+
 FILE* fopen(const char* path, const char* mode);
 void clearerr(FILE* fp);
+
+static inline int ferror(FILE* fp)
+{
+	return fp->error;
+}
+
+static inline int feof(FILE* fp)
+{
+	return fp->eof;
+}
