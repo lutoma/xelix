@@ -1,6 +1,4 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2012 Lukas Martini
  *
  * This file is part of Xlibc.
  *
@@ -13,38 +11,16 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
-*
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <unistd.h>
-// For NULL, which should also be defined in here
-#include <stddef.h>
-#include <sys/types.h>
+#include <stdio.h>
 #include <stdbool.h>
 
-#define EOF -1
-
-typedef struct {
-	uint64_t num;
-	char filename[512];
-	uint32_t error;
-	bool eof;
-} FILE;
-
-extern FILE _stdin;
-extern FILE _stdout;
-extern FILE _stderr;
-#define stdin &_stdin
-#define stdout &_stdout
-#define stderr &_stderr
-
-char* fgets(char* str, int num, FILE* fp);
-int fputs(const char* string, FILE* fp);
-static inline void print(const char* string)
+void clearerr(FILE* fp)
 {
-        fputs(string, stdout);
+	fp->error = 0;
+	fp->eof = false;
 }
-FILE* fopen(const char* path, const char* mode);
-void clearerr(FILE* fp);
