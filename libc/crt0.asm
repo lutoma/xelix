@@ -1,4 +1,4 @@
-SECTIOn .data
+SECTION .bss
 GLOBAL errno
 GLOBAL __environ
 
