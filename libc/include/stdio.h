@@ -23,6 +23,10 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#ifdef _NO_PRINT_YET
+	#include <stubs.h>
+#endif
+
 #define EOF -1
 
 #define SEEK_SET 0
@@ -49,6 +53,8 @@ extern FILE _stderr;
 #define stdout &_stdout
 #define stderr &_stderr
 
+#define tmpfile(name) (FILE*)_libc_stub("tmpfile", 0);
+
 FILE* fopen(const char* path, const char* mode);
 char* fgets(char* str, int num, FILE* fp);
 int fputs(const char* string, FILE* fp);
@@ -59,6 +65,7 @@ static inline void print(const char* string)
 {
         fputs(string, stdout);
 }
+#undef _NO_PRINT_YET
 
 static inline int ferror(FILE* fp)
 {
