@@ -55,15 +55,15 @@ char* fgets(char* str, int num, FILE* fp);
 int fputs(const char* string, FILE* fp);
 int fseek(FILE* fp, long int offset, int origin);
 void clearerr(FILE* fp);
+void vprintf(const char *fmt, void** arg);
 
 static inline FILE* tmpfile()
 {
 	return NULL;
 }
 
-static inline void print(const char* string)
-{
-        fputs(string, stdout);
+static inline void printf(const char *fmt, ...) {
+	vprintf(fmt, (void**)(&fmt) + 1);
 }
 
 static inline int putc(int c, FILE* fd)
