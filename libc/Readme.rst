@@ -34,6 +34,7 @@ The following header files are partially implemented:
 <stdarg.h>
 <sys/types.h>
 <inttypes.h>
+<limits.h>
 
 The following header files are completely missing:
 
@@ -56,7 +57,6 @@ The following header files are completely missing:
 <iconv.h>
 <langinfo.h>
 <libgen.h>
-<limits.h>
 <locale.h>
 <math.h>
 <monetary.h>
