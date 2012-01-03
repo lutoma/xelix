@@ -71,6 +71,10 @@ static inline void printf(const char *fmt, ...) {
 	vprintf(fmt, (void**)(&fmt) + 1);
 }
 
+static inline void fprintf(const char *fmt, ...) {
+	vfprintf(fp, fmt, (void**)(&fmt) + 1);
+}
+
 static inline int putc(int c, FILE* fd)
 {
 	char* s = (char*)malloc(2 * sizeof(int));
