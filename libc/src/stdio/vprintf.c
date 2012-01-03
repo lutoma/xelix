@@ -29,11 +29,11 @@ void vprintf(const char *fmt, void** arg)
 			switch (*fmt) {
 				case 'c': putchar(*(char *)arg); break;
 				// Print (null) if pointer == NULL.
-				case 's': print(*(char**)arg ? *(char**)arg : "(null)"); break;
-				case 'b': print(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 2)); break;
-				case 'd': print(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 10)); break;
-				case 'x': print(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 16)); break;
-				case 't': print(*(unsigned*)arg ? "true" : "false"); break;
+				case 's': fputs(*(char**)arg ? *(char**)arg : "(null)", stdout); break;
+				case 'b': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 2), stdout); break;
+				case 'd': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 10), stdout); break;
+				case 'x': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 16), stdout); break;
+				case 't': fputs(*(unsigned*)arg ? "true" : "false", stdout); break;
 			}
 
 			++arg;
