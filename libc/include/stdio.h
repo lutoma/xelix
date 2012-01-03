@@ -24,9 +24,15 @@
 #include <sys/types.h>
 
 #define EOF -1
+
 #define SEEK_SET 0
 #define SEEK_CUR 1
 #define SEEK_END 2
+
+// Buffering settings
+#define _IOFBF 0 // Full
+#define _IOLBF 1 // Line
+#define _IONBF 1 // Disabled
 
 typedef struct {
 	uint64_t num;
