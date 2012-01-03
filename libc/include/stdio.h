@@ -55,6 +55,11 @@ int fputs(const char* string, FILE* fp);
 int fseek(FILE* fp, long int offset, int origin);
 void clearerr(FILE* fp);
 
+static inline FILE* tmpfile()
+{
+	return NULL;
+}
+
 static inline void print(const char* string)
 {
         fputs(string, stdout);
