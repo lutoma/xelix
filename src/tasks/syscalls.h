@@ -34,9 +34,10 @@
 #include "syscalls/uname.h"
 #include "syscalls/open.h"
 #include "syscalls/execve.h"
+#include "syscalls/seek.h"
 
 syscall_t syscall_table[] = {
-	NULL,				// 0
+	NULL,
 	sys_exit,			// 1
 	sys_read,			// 2
 	sys_write,			// 3
@@ -51,5 +52,5 @@ syscall_t syscall_table[] = {
 	sys_uname,			// 12
 	sys_open,			// 13
 	sys_execve,			// 14
+	sys_seek,			// 15
 };
-
