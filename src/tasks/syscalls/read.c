@@ -31,7 +31,7 @@ int sys_read(struct syscall syscall)
 	if(fd == NULL)
 		return -1;
 	
-	void* data = vfs_read(fd);
+	void* data = vfs_read(fd, syscall.params[2]);
 	memcpy((void*)syscall.params[1], data, syscall.params[2]);
 	return 0;
 }

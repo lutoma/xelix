@@ -20,4 +20,4 @@
 
 #include <lib/generic.h>
 
-void* xsfs_read(char* path, uint32_t offset);
+void* xsfs_read(char* path, uint32_t offset, uint32_t size);

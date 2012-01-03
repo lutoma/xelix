@@ -48,11 +48,15 @@ vfs_file_t* vfs_get_from_id(uint32_t id)
 	return &files[id];
 }
 
-void* vfs_read(vfs_file_t* fp)
+void* vfs_read(vfs_file_t* fp, uint32_t size)
 {
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	return mp.read_callback (fp->mount_path, fp->offset);
-	return NULL;
+	if(!mp.read_callback)
+		return NULL;
+	
+	void* data = mp.read_callback (fp->mount_path, fp->offset, size);
+	if(data) fp->offset += size;
+	return data;
 }
 
 void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)

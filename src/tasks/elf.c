@@ -73,7 +73,8 @@ void* elf_load(elf_t* bin)
 void* elf_load_file(char* path)
 {
 	vfs_file_t* fd = vfs_open(path);
-	void* data = vfs_read(fd);
+	// Dat dirty hack
+	void* data = vfs_read(fd, 9999999);
 	if(data == NULL)
 		return NULL;
 	
