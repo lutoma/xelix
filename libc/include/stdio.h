@@ -22,6 +22,7 @@
 // For NULL, which should also be defined in here
 #include <stddef.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #define EOF -1
 
@@ -67,15 +68,17 @@ static inline void print(const char* string)
 
 static inline int putc(int c, FILE* fd)
 {
-	char[2] s;
+	char* s = (char*)malloc(2 * sizeof(int));
 	s[0] = c;
 	s[1] = 0;
 	fputs(s, fd);
+	free(s);
+	return 0;
 }
 
 static inline int putchar(int c)
 {
-	putc(stdout, c);
+	return putc(c, stdout);
 }
 
 static inline int ferror(FILE* fp)
