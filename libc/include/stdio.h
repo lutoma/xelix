@@ -22,7 +22,6 @@
 // For NULL, which should also be defined in here
 #include <stddef.h>
 #include <sys/types.h>
-#include <stdbool.h>
 
 #define EOF -1
 #define SEEK_SET 0
@@ -34,7 +33,7 @@ typedef struct {
 	char filename[512];
 	uint32_t offset;
 	uint32_t error;
-	bool eof;
+	int eof;
 } FILE;
 
 extern FILE _stdin;
