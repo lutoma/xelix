@@ -20,6 +20,10 @@
 
 #include <lib/generic.h>
 
+#define VFS_SEEK_SET 0
+#define VFS_SEEK_CUR 1
+#define VFS_SEEK_END 2
+
 typedef struct {
    uint64_t num;
    char path[512];
@@ -32,5 +36,6 @@ typedef void* (*vfs_read_callback_t)(char* path, uint32_t offset);
 
 vfs_file_t* vfs_get_from_id(uint32_t id);
 void* vfs_read(vfs_file_t* fp);
+void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin);
 vfs_file_t* vfs_open(char* path);
 int vfs_mount(char* path, vfs_read_callback_t read_callback);

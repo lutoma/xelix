@@ -55,6 +55,21 @@ void* vfs_read(vfs_file_t* fp)
 	return NULL;
 }
 
+void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
+{
+	switch(origin)
+	{	
+		case VFS_SEEK_SET:
+			fp->offset = offset;
+			break;
+		case VFS_SEEK_CUR:
+			fp->offset += offset;
+			break;
+		case VFS_SEEK_END:
+			log(LOG_WARN, "vfs_seek with an origin of VFS_SEEK_END is not supported so far!\n");
+	}
+}
+
 vfs_file_t* vfs_open(char* path)
 {
 	uint32_t num;
