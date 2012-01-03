@@ -25,6 +25,9 @@
 #include <stdbool.h>
 
 #define EOF -1
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
 
 typedef struct {
 	uint64_t num;
@@ -41,16 +44,16 @@ extern FILE _stderr;
 #define stdout &_stdout
 #define stderr &_stderr
 
+FILE* fopen(const char* path, const char* mode);
 char* fgets(char* str, int num, FILE* fp);
 int fputs(const char* string, FILE* fp);
+int fseek(FILE* fp, long int offset, int origin);
+void clearerr(FILE* fp);
 
 static inline void print(const char* string)
 {
         fputs(string, stdout);
 }
-
-FILE* fopen(const char* path, const char* mode);
-void clearerr(FILE* fp);
 
 static inline int ferror(FILE* fp)
 {
