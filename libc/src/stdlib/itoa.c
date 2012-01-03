@@ -1,6 +1,4 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2012 Lukás Chmela
  *
  * This file is part of Xlibc.
  *
@@ -18,25 +16,30 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// stdlib.h is supposed to include all the stddef.h stuff
-#include <stddef.h>
+// Taken from http://www.strudel.org.uk/itoa/, GPLv3+
 
-// Return values
-#define EXIT_FAILURE -1
-#define EXIT_SUCCESS  0
+char* itoa(int value, char* result, int base)
+{
+	// check that the base is valid
+	if (base < 2 || base > 36) { *result = '\0'; return result; }
 
-// Should be an own function as of POSIX
-#define _Exit _exit
+	char* ptr = result, *ptr1 = result, tmp_char;
+	int tmp_value;
 
-// Disregards atexit()
-void _exit(int status);
-// Cares about atexit()
-void exit(int status);
-void* malloc(size_t size);
-int execv(char const *path, char const * const * argv);
-char* itoa(int value, char* result, int base);
+	do {
+		tmp_value = value;
+		value /= base;
+		*ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
+	} while (value);
 
-/* Memory leaks ahoy! No, seriously, before we can add free(), we need
- * proper in-application memory management.
- */
-static inline void free(void* ptr){}
+	// Apply negative sign
+	if (tmp_value < 0) *ptr++ = '-';
+	*ptr-- = '\0';
+	while(ptr1 < ptr)
+	{
+		tmp_char = *ptr;
+		*ptr--= *ptr1;
+		*ptr1++ = tmp_char;
+	}
+	return result;
+}
