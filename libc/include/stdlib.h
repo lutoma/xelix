@@ -33,8 +33,9 @@ void _exit(int status);
 // Cares about atexit()
 void exit(int status);
 void* malloc(size_t size);
+int execv(char const *path, char const * const * argv);
+
 /* Memory leaks ahoy! No, seriously, before we can add free(), we need
  * proper in-application memory management.
  */
-#define free(ptr) ()
-int execv(char const *path, char const * const * argv);
+static inline void free(void* ptr){}
