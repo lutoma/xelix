@@ -23,6 +23,10 @@
 
 int sys_seek(struct syscall syscall)
 {
-	vfs_seek((vfs_file_t*)syscall.params[0], syscall.params[1], syscall.params[2]);
+	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
+	if(fd == NULL)
+		return -1;
+
+	vfs_seek(fd, syscall.params[1], syscall.params[2]);
 	return 0;
 }
