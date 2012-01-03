@@ -65,6 +65,19 @@ static inline void print(const char* string)
         fputs(string, stdout);
 }
 
+static inline int putc(int c, FILE* fd)
+{
+	char[2] s;
+	s[0] = c;
+	s[1] = 0;
+	fputs(s, fd);
+}
+
+static inline int putchar(int c)
+{
+	putc(stdout, c);
+}
+
 static inline int ferror(FILE* fp)
 {
 	return fp->error;
