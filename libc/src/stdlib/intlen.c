@@ -19,5 +19,5 @@
 unsigned int intlen(const unsigned int n)
 {
     if (n < 10) return 1;
-    return 1 + numDigits(n / 10);
+    return 1 + intlen(n / 10);
 }
