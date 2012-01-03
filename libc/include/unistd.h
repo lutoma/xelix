@@ -27,6 +27,16 @@
 
 #define HOST_NAME_MAX 64
 
+#define _PC_LINK_MAX 0
+#define _PC_MAX_CANON 1
+#define _PC_MAX_INPUT 2
+#define _PC_NAME_MAX 3
+#define _PC_PATH_MAX 4
+#define _PC_PIPE_BUF 5
+#define _PC_CHOWN_RESTRICTED 6
+#define _PC_NO_TRUNC 7
+#define _PC_VDISABLE 8
+
 extern char** __environ;
 
 int gethostname(char* name, size_t len);
