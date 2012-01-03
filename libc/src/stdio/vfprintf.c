@@ -21,23 +21,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void vprintf(const char *fmt, void** arg)
+void vfprintf(FILE* fp, const char *fmt, void** arg)
 {
 	while (*fmt) {
 		if (*fmt == '%') {
 			++fmt;
 			switch (*fmt) {
-				case 'c': putchar(*(char *)arg); break;
+				case 'c': putc(*(char *)arg, fp); break;
 				// Print (null) if pointer == NULL.
-				case 's': fputs(*(char**)arg ? *(char**)arg : "(null)", stdout); break;
-				case 'b': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 2), stdout); break;
-				case 'd': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 10), stdout); break;
-				case 'x': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 16), stdout); break;
-				case 't': fputs(*(unsigned*)arg ? "true" : "false", stdout); break;
+				case 's': fputs(*(char**)arg ? *(char**)arg : "(null)", fp); break;
+				case 'b': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 2), fp); break;
+				case 'd': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 10), fp); break;
+				case 'x': fputs(itoa(*(unsigned*)arg, malloc(intlen(*(unsigned*)arg) * sizeof(char)), 16), fp); break;
+				case 't': fputs(*(unsigned*)arg ? "true" : "false", fp); break;
 			}
 
 			++arg;
-		} else putchar(*fmt);
+		} else putc(*fmt, fp);
 		++fmt;
 	}
 }

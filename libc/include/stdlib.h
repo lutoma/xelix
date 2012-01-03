@@ -33,7 +33,7 @@ void _exit(int status);
 // Cares about atexit()
 void exit(int status);
 void* malloc(size_t size);
-int execv(char const *path, char const * const * argv);
+int execv(const char* path, const char ** argv);
 char* itoa(int value, char* result, int base);
 unsigned int intlen(const unsigned int n);
 
