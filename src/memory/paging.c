@@ -68,9 +68,6 @@ static int paging_assign(struct paging_context *ctx, uint32_t virtual, uint32_t 
 		page_dir->frame = (int)page_table >> 12;
 	}
 
-	if (page_table->present)
-		return 1;
-
 	page_table->present = mapped;
 	page_table->rw = rw;
 	page_table->user = user;
