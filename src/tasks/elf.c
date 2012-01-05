@@ -29,7 +29,7 @@
 
 char header[4] = {0x7f, 'E', 'L', 'F'};
 
-void* elf_load(elf_t* bin)
+task_t* elf_load(elf_t* bin, char* name)
 {
 	if(bin <= NULL)
 		return NULL;
@@ -62,15 +62,16 @@ void* elf_load(elf_t* bin)
 	
 	for(int i = 0; i < bin->phnum; i++, phead++)
 	{
-		// TODO Apply paging stuff!
+		// Add pages that map the code to the position they want to reside at.
 		memset(phead->virtaddr, 0, phead->filesize);
 		memcpy(phead->virtaddr, (void*)bin + phead->offset, phead->filesize);	
 	}
 
-	return bin->entry;
+	task_t* task = scheduler_newTask(bin->entry, NULL, name);
+	return task;
 }
 
-void* elf_load_file(char* path)
+task_t* elf_load_file(char* path)
 {
 	vfs_file_t* fd = vfs_open(path);
 	// Dat dirty hack
@@ -78,5 +79,5 @@ void* elf_load_file(char* path)
 	if(data == NULL)
 		return NULL;
 	
-	return elf_load(data);
+	return elf_load(data, path);
 }
