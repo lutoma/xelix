@@ -145,8 +145,6 @@ static void receiveData(struct rtl8139_card *card)
 
 static void rtl8139_intHandler(cpu_state_t *state)
 {
-	log(LOG_DEBUG, "rtl8139: Got interrupt \\o/\n");
-
 	for (int i = 0; i < cards; ++i)
 	{
 		struct rtl8139_card *card = rtl8139_cards + i;
@@ -248,12 +246,12 @@ void rtl8139_init()
 		rtl8139_cards[i].device = devices[i];
 		enableCard(&rtl8139_cards[i]);
 
-		log(LOG_INFO, "rtl8139: %d:%d.%d, iobase 0x%x, interrupt %d, MAC Address %x:%x:%x:%x:%x:%x\n",
+		log(LOG_INFO, "rtl8139: %d:%d.%d, iobase 0x%x, irq %d, MAC Address %x:%x:%x:%x:%x:%x\n",
 				devices[i]->bus,
 				devices[i]->dev,
 				devices[i]->func,
 				devices[i]->iobase,
-				devices[i]->interruptPin,
+				devices[i]->interruptLine,
 				rtl8139_cards[i].macAddr[0],
 				rtl8139_cards[i].macAddr[1],
 				rtl8139_cards[i].macAddr[2],
