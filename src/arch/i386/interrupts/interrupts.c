@@ -21,43 +21,6 @@
 #include <interrupts/interface.h>
 #include "idt.h"
 
-#define EOI_MASTER 0x20
-#define EOI_SLAVE  0xA0
-
-#define sendEOI(w) outb(w, 0x20)
-
-/* Gets called from interrupts.asm and calls the generic interrupt
- * handler in src/interrupts/interrupts.c.
- * 
- * Only here for EOIs.
- */
-cpu_state_t* __attribute__((__cdecl__)) interrupts_firstCallBack(cpu_state_t* regs)
-{
-	// Spurious interrupts
-	if(regs->interrupt == IRQ7)
-		return regs;
-	if(regs->interrupt == IRQ15)
-	{
-		/* We have to EOI the master PIC because it can't know it's
-		 * only a spurious interrupt
-		 */
-		sendEOI(EOI_MASTER);
-		return regs;
-	}
-	
-	// Is this an IRQ?
-	if(regs->interrupt > 31)
-	{
-		// If this IRQ involved the slave, send a EOI to the slave.
-		if (regs->interrupt >= 40)
-			sendEOI(EOI_SLAVE);
-
-		sendEOI(EOI_MASTER); // Master
-	}
-	
-	return interrupts_callback(regs);
-}
-
 void arch_interrupts_init()
 {
 	idt_init();

@@ -1,6 +1,6 @@
 ; interrupts.asm: Hardware part of interrupt handling
 ; Copyright © 2010 Christoph Sünderhauf
-; Copyright © 2011 Lukas Martini
+; Copyright © 2011, 2012 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -16,6 +16,10 @@
 ;
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+
+%define EOI_MASTER	0x20
+%define EOI_SLAVE	0xA0
+%define EOI_PORT	0x20
 
 %macro INTERRUPT 1
 	[GLOBAL interrupts_handler%1]
@@ -57,14 +61,14 @@ INTERRUPT_ERRCODE 14
 %endrep
 
 ; In interrupts.c
-[EXTERN interrupts_firstCallBack]
+[EXTERN interrupts_callback]
 
 ; This is our common Interrupt stub. It saves the processor state, sets
 ; up for kernel mode segments, calls the C-level handler,
 ; and finally restores the stack frame.
 
 ; As this is kinda complicated, i'll document every step here. (Mostly
-; for forgetful me ;)) -- Lukas
+; for forgetful me ;)) --Lukas
 commonStub:
 	; We have to push all the stuff in the cpu_state_t which
 	; interrupts_callback takes in reversed order
@@ -92,13 +96,47 @@ commonStub:
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
-	
+
+	; Calculate offset to the position of the interrupt number on the
+	; stack and mov it to eax. (8 = Eight 32 bit registers pushed since
+	; the beginning of this function).
+	mov eax, [esp + (4 * 8)]
+
+	; Is this a spurious interrupt on the master PIC? If yes, return
+	cmp eax, 39 ; IRQ7
+	je return
+
+	; Do we have to send an EOI (End of interrupt)?
+	cmp eax, 31
+	jle no_eoi
+
+	; Send EOI to master PIC
+	mov dx, EOI_PORT
+	mov ax, EOI_MASTER
+	out dx, ax
+
+	; Is this a spurious interrupt on the secondary PIC? If yes, return
+	; (We do this here so the master PIC still get's an EOI as it can't
+	; know about the spuriousness of this interrupt).
+	cmp eax, 47 ; IRQ15
+	je return
+
+	; Check if we have to send an EOI to the secondary PIC
+	cmp eax, 39
+	jle no_eoi
+
+	; Send EOI to secondary PIC
+	mov ax, EOI_SLAVE
+	out dx, ax
+
+no_eoi:
 	; Push argument to ..
  	push esp
 
  	; Call C level interrupt handler
- 	call interrupts_firstCallBack
+ 	call interrupts_callback
 
+return:
 	; Take esp from stack. This is uncommented as we directly apply a new stack
 	;add esp, 4
 	
