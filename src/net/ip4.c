@@ -98,6 +98,7 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 	{
 		packet = net_ether_getPayload(raw);
 		etherhdr = raw;
+		size -= sizeof(ether_frame_hdr_t);
 	}
 	else if (proto == NET_PROTO_RAW)
 		packet = raw;
@@ -108,7 +109,7 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 
 	if(packet->tos == IP4_TOS_ICMP)
 	{
-		handle_icmp(origin, size - sizeof(ether_frame_hdr_t), packet, etherhdr);
+		handle_icmp(origin, size, packet, etherhdr);
 		return;
 	}
 }
