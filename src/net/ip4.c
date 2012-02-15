@@ -67,8 +67,9 @@ static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 
 	//if(packet->type != 8)
 	//	return;
-		
-	log(LOG_DEBUG, "ip4: Incoming ping packet ip_src=0x%x icmp_req=%d\n", ip_packet->src, endian_swap16(packet->sequence));
+	
+	if(endian_swap16(packet->sequence) == 1)
+		log(LOG_INFO, "net: ip4: 0x%x started ICMP pinging this host.\n", ip_packet->src, endian_swap16(packet->sequence));
 
 	// We can reuse the existing packet as the most stuff stays unmodified
 	uint32_t orig_src = ip_packet->src;
