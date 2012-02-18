@@ -20,6 +20,8 @@
 %define EOI_MASTER	0x20
 %define EOI_SLAVE	0xA0
 %define EOI_PORT	0x20
+%define IRQ7		39
+%define IRQ15		47
 
 %macro INTERRUPT 1
 	[GLOBAL interrupts_handler%1]
@@ -103,7 +105,7 @@ commonStub:
 	mov eax, [esp + (4 * 8)]
 
 	; Is this a spurious interrupt on the master PIC? If yes, return
-	cmp eax, 39 ; IRQ7
+	cmp eax, IRQ7
 	je return
 
 	; Do we have to send an EOI (End of interrupt)?
@@ -118,7 +120,7 @@ commonStub:
 	; Is this a spurious interrupt on the secondary PIC? If yes, return
 	; (We do this here so the master PIC still get's an EOI as it can't
 	; know about the spuriousness of this interrupt).
-	cmp eax, 47 ; IRQ15
+	cmp eax, IRQ15
 	je return
 
 	; Check if we have to send an EOI to the secondary PIC
