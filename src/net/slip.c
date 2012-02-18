@@ -35,9 +35,9 @@
 
 net_device_t* mydev;
 uint8_t* buf;
-bool in_progress;
+bool in_progress = false;
 bool escape;
-int bufpos;
+int bufpos = 0;
 
 void slip_receive(cpu_state_t* state)
 {
@@ -105,7 +105,6 @@ void slip_init()
 	mydev->mtu = 65535;
 	mydev->send = slip_send;
 	net_register_device(mydev);
-	bufpos = -1;
 
 	// Hook up to the serial port #1 interrupt
 	interrupts_registerHandler(IRQ4, slip_receive);
