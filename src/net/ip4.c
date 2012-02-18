@@ -1,5 +1,5 @@
 /* ip4.c: Internet Protocol version 4
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011, 2012 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,10 +20,31 @@
 #include "ip4.h"
 #include <lib/log.h>
 #include <lib/endian.h>
+#include <lib/string.h>
 #include <net/ether.h>
+#include <net/tcp.h>
 #include <memory/kmalloc.h>
 
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
+
+char* ip4_split_ip(char* out, int ip)
+{
+	unsigned char bytes[4];
+	bytes[0] = ip & 0xFF;
+	bytes[1] = (ip >> 8) & 0xFF;
+	bytes[2] = (ip >> 16) & 0xFF;
+	bytes[3] = (ip >> 24) & 0xFF;
+
+	// FIXME We neeeeeeed snprintf!
+	strcat(out, itoa(bytes[3], 10));
+	strcat(out, ".");
+	strcat(out, itoa(bytes[2], 10));
+	strcat(out, ".");
+	strcat(out, itoa(bytes[1], 10));
+	strcat(out, ".");
+	strcat(out, itoa(bytes[0], 10));
+	return out;
+}
 
 void ip4_send_ether(net_device_t *target, size_t size, ip4_header_t *packet, ether_frame_hdr_t *hdr)
 {
@@ -69,7 +90,11 @@ static void handle_icmp(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 	//	return;
 	
 	if(endian_swap16(packet->sequence) == 1)
-		log(LOG_INFO, "net: ip4: 0x%x started ICMP pinging this host.\n", ip_packet->src, endian_swap16(packet->sequence));
+	{
+		char* ip = ip4_split_ip((char*)kmalloc(sizeof(char) * 15), endian_swap32(ip_packet->src));
+		log(LOG_INFO, "net: ip4: %s started ICMP pinging this host.\n", ip, endian_swap16(packet->sequence));
+		kfree(ip);
+	}
 
 	// We can reuse the existing packet as the most stuff stays unmodified
 	uint32_t orig_src = ip_packet->src;
@@ -95,6 +120,7 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 	ip4_header_t *packet = NULL;
 	ether_frame_hdr_t *etherhdr = NULL;
 
+	// This should not be done here. Move to net.c!
 	if (proto == NET_PROTO_ETH)
 	{
 		packet = net_ether_getPayload(raw);
@@ -102,7 +128,10 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 		size -= sizeof(ether_frame_hdr_t);
 	}
 	else if (proto == NET_PROTO_RAW)
+	{
 		packet = raw;
+	}
+
 	// TODO Send an ICMP TTL exceeded packet here
 	if(unlikely(packet->ttl <= 0))
 		return;
