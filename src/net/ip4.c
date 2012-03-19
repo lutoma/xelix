@@ -22,7 +22,6 @@
 #include <lib/endian.h>
 #include <lib/string.h>
 #include <net/ether.h>
-#include <net/tcp.h>
 #include <memory/kmalloc.h>
 
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
