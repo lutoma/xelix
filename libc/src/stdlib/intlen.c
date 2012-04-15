@@ -16,8 +16,9 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-unsigned int intlen(const unsigned int n)
+unsigned int intlen(unsigned int i)
 {
-    if (n < 10) return 1;
-    return 1 + intlen(n / 10);
+	int j;
+	for(j = 1; i > 9; j++) i /= 10;
+	return j;
 }
