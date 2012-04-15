@@ -35,7 +35,7 @@ void exit(int status);
 void* malloc(size_t size);
 int execv(const char* path, const char ** argv);
 char* itoa(int value, char* result, int base);
-unsigned int intlen(const unsigned int n);
+unsigned int intlen(int n);
 
 /* Memory leaks ahoy! No, seriously, before we can add free(), we need
  * proper in-application memory management.

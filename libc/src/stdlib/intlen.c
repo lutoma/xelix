@@ -16,9 +16,18 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-unsigned int intlen(unsigned int i)
+unsigned int intlen(int i)
 {
-	int j;
-	for(j = 1; i > 9; j++) i /= 10;
+	int j = 1;
+
+	if(i < 0)
+	{
+		j++;
+		i *= -1;
+	}
+
+	for(; i > 9; j++)
+		i /= 10;
+	
 	return j;
 }
