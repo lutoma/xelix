@@ -33,7 +33,7 @@
 // Buffering settings
 #define _IOFBF 0 // Full
 #define _IOLBF 1 // Line
-#define _IONBF 1 // Disabled
+#define _IONBF 2 // Disabled
 
 typedef struct {
 	uint64_t num;
