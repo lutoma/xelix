@@ -21,6 +21,8 @@
 #include <stdint.h>
 // For size_t, ssize_t 
 #include <stddef.h>
+// For clock_t
+#include <time.h>
 
 typedef uint64_t id_t;
 typedef id_t uid_t;
