@@ -27,3 +27,6 @@ typedef id_t uid_t;
 typedef id_t gid_t;
 typedef id_t pid_t;
 typedef uint32_t off_t;
+typedef uint32_t dev_t;
+typedef uint16_t mode_t;
+typedef uint16_t nlink_t;
