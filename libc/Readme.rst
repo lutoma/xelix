@@ -36,6 +36,7 @@ The following header files are partially implemented:
 <inttypes.h>
 <limits.h>
 <sys/stat.h>
+<time.h>
 
 The following header files are completely missing:
 
