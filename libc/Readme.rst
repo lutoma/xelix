@@ -37,6 +37,7 @@ The following header files are partially implemented:
 <limits.h>
 <sys/stat.h>
 <time.h>
+<setjmp.h>
 
 The following header files are completely missing:
 
