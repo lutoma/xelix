@@ -35,6 +35,7 @@ The following header files are partially implemented:
 <sys/types.h>
 <inttypes.h>
 <limits.h>
+<sys/stat.h>
 
 The following header files are completely missing:
 
