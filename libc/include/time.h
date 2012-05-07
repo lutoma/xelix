@@ -19,3 +19,4 @@
  */
  
 typedef uint32_t clock_t;
+typedef uint64_t time_t;
