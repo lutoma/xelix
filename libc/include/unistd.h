@@ -37,6 +37,12 @@
 #define _PC_NO_TRUNC 7
 #define _PC_VDISABLE 8
 
+// access() attributes (modes)
+#define F_OK 1 // Test for existence of file
+#define R_OK 2 // Test for read permission
+#define W_OK 3 // Test for write permission
+#define X_OK 4 // Test for execute (search) permission
+
 extern char** __environ;
 
 int gethostname(char* name, size_t len);
