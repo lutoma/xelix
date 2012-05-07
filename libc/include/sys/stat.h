@@ -20,6 +20,15 @@
  
 #include <stdint.h>
 
+#define S_IFMT 0
+#define S_IFBLK 1
+#define S_IFCHR 2
+#define S_IFIFO 3
+#define S_IFREG 4
+#define S_IFDIR 5
+#define S_IFLNK 6
+#define S_IFSOCK 7
+
 struct stat {
 	uint32_t st_dev;
 	unsigned long st_ino;
