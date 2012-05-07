@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-#define EOF -1
+#define EOF (-1)
 
 #define SEEK_SET 0
 #define SEEK_CUR 1
