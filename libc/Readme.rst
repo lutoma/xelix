@@ -38,6 +38,7 @@ The following header files are partially implemented:
 <sys/stat.h>
 <time.h>
 <setjmp.h>
+<sys/times.h>
 
 The following header files are completely missing:
 
@@ -94,7 +95,6 @@ The following header files are completely missing:
 <sys/statvfs.h>
 <sys/time.h>
 <sys/timeb.h>
-<sys/times.h>
 <sys/uio.h>
 <sys/un.h>
 <sys/wait.h>
