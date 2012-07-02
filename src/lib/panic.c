@@ -35,12 +35,6 @@ void dumpCpuState(cpu_state_t* regs) {
 		regs->ds, regs->ss, regs->cs, regs->eflags);
 
 	printf("\n");
-	printf("Return Addresses:\n");
-	uint8_t* bp = regs->ebp;
-	do {
-		printf("* 0x%x\n", *(bp + 2));
-		bp = (uint8_t*)*((uint32_t *)bp + 1);
-	} while (bp);
 }
 
 static void panicHandler(cpu_state_t* regs)
@@ -58,6 +52,16 @@ static void panicHandler(cpu_state_t* regs)
 		printf("Running task: [No task running]\n\n");
 
 	dumpCpuState(regs);
+
+	printf("Stacktrace:\n");
+	for(int i = 0; i < 15; i++)	
+	{
+		void** address = *((void**)PANIC_STACKTRACEMEM(i));
+		if((int)address < 1)
+			break;
+
+		printf("#%d R<0x%x> K<0x%x>\n", i, address, address);
+	}
 
 	freeze();
 }

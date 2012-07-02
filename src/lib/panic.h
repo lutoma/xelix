@@ -24,11 +24,24 @@
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
 
+/* Maybe we should use preallocated memory somewhere else to circumvent the
+ * possibility of overwriting possibly valuable data or the kernel itself
+ * when a kernel panic occurs. Then again, when you've got a kernel panic,
+ * you're fucked anyways, so it shouldn't matter.
+ */
 #define PANIC_INFOMEM 0x100
-#define panic(error) do { \
-	interrupts_disable();  \
-	*((char**)PANIC_INFOMEM) = (char*)(error); \
-	asm("int 0x30"); \
+#define PANIC_STACKTRACEMEM(i) (0x200 + sizeof(void*) * i)
+
+// No one said it's going to be beautiful.
+#define panic(error) do {																	\
+	interrupts_disable(); 																	\
+	*((char**)PANIC_INFOMEM) = (char*)(error);												\
+																							\
+	for(int i = 0; i < 15; i++)																\
+		*((void**)PANIC_STACKTRACEMEM(i)) = 												\
+			__builtin_extract_return_address(__builtin_return_address(i));					\
+																							\
+	asm("int 0x30");																		\
 } while(0)
 
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
