@@ -25,12 +25,27 @@ typedef enum {
 	NET_PROTO_ETH
 } net_l2proto_t;
 
+struct net_device_stats
+{
+	uint64_t rx_packets;
+	uint64_t rx_bytes;
+	uint64_t rx_errors;
+	uint64_t rx_dropped;
+
+	uint64_t tx_packets;
+	uint64_t tx_bytes;
+	uint64_t tx_errors;
+	uint64_t tx_dropped;
+};
+
 typedef struct net_device {
 	char name[15];
 	/* MAC address for ethernet devices */
 	char hwaddr[6];
 	uint16_t mtu;
 	net_l2proto_t proto;
+
+	struct net_device_stats stats;
 
 	void (*send)(struct net_device*, uint8_t *, size_t);
 
