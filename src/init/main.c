@@ -99,7 +99,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(ata);
 
 	// TODO remove hardcoded stuff
-	vfs_mount("/", &xsfs_read);
+	vfs_mount("/", &xsfs_read, &xsfs_dir_read);
 
 	// Networking
 	init(rtl8139);

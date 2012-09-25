@@ -1,5 +1,5 @@
 /* xsfs.c: Xelix simple file system
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011, 2012 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -112,7 +112,7 @@ char* xsfs_dir_read(char* path, uint32_t offset)
 	if(!check_basics(header))
 		return NULL;
 
-	if(header->num_files < offset)
+	if(header->num_files - 1 < offset)
 		return NULL;
 
 	struct file* file = (struct file*)((uint32_t)buffer + (uint32_t)header->fileoffset + (offset * sizeof(struct file)));
