@@ -32,3 +32,4 @@ typedef uint32_t off_t;
 typedef uint32_t dev_t;
 typedef uint16_t mode_t;
 typedef uint16_t nlink_t;
+typedef uint64_t ino_t;
