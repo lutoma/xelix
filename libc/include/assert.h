@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2012 Lukas Martini
  *
  * This file is part of Xlibc.
  *
@@ -18,29 +18,16 @@
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// stdlib.h is supposed to include all the stddef.h stuff
 #include <stddef.h>
 
-// Return values
-#define EXIT_FAILURE -1
-#define EXIT_SUCCESS  0
-
-// Should be an own function as of POSIX
-#define _Exit _exit
-
-// Disregards atexit()
-void _exit(int status);
-// Cares about atexit()
-void exit(int status);
-void* malloc(size_t size);
-int execv(const char* path, const char ** argv);
-char* itoa(int value, char* result, int base);
-unsigned int intlen(int n);
-
-/* Memory leaks ahoy! No, seriously, before we can add free(), we need
- * proper in-application memory management.
- */
-static inline void free(void* ptr){}
-
-// FIXME
-static inline void abort(void){};
+#if defined(NDEBUG)
+	#undef assert
+	#define assert(ignore)((void)0)
+#else
+	#define assert(args...)((void)(		\
+		if(!(args))						\
+		{								\
+			fprintf(stderr, "Assertion " ## args ## " in " __FILE__ ":" __LINE__ "(" __func__ ") failed"); \
+			abort();					\
+		}))
+#endif
