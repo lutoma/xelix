@@ -1,5 +1,6 @@
-/* read.c: Read Syscall
- * Copyright © 2011 Lukas Martini
+#pragma once
+
+/* Copyright © 2012 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,21 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "read.h"
-#include <console/interface.h>
-#include <lib/datetime.h>
-#include <fs/vfs.h>
+#include <tasks/syscall.h>
 
-int sys_read(struct syscall syscall)
-{
-	if (syscall.params[0] == 0)
-		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
-
-	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
-	if(fd == NULL)
-		return -1;
-	
-	void* data = vfs_read(fd, syscall.params[2]);
-	memcpy((void*)syscall.params[1], data, syscall.params[2]);
-	return 0;
-}
+int sys_readdir(struct syscall syscall);

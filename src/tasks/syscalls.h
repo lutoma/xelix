@@ -35,6 +35,8 @@
 #include "syscalls/open.h"
 #include "syscalls/execve.h"
 #include "syscalls/seek.h"
+#include "syscalls/opendir.h"
+#include "syscalls/readdir.h"
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -53,4 +55,6 @@ syscall_t syscall_table[] = {
 	sys_open,			// 13
 	sys_execve,			// 14
 	sys_seek,			// 15
+	sys_opendir,		// 16
+	sys_readdir,		// 17
 };

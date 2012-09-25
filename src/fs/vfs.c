@@ -51,6 +51,12 @@ vfs_file_t* vfs_get_from_id(uint32_t id)
 	return &files[id];
 }
 
+vfs_dir_t* vfs_get_dir_from_id(uint32_t id)
+{
+	return &dirs[id];
+}
+
+
 void* vfs_read(vfs_file_t* fp, uint32_t size)
 {
 	struct mountpoint mp = mountpoints[fp->mountpoint];

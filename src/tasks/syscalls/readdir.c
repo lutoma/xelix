@@ -1,4 +1,4 @@
-/* read.c: Read Syscall
+/* read.c: Readdir Syscall
  * Copyright © 2011 Lukas Martini
  *
  * This file is part of Xelix.
@@ -17,21 +17,16 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "read.h"
-#include <console/interface.h>
-#include <lib/datetime.h>
+#include "readdir.h"
 #include <fs/vfs.h>
 
-int sys_read(struct syscall syscall)
+int sys_readdir(struct syscall syscall)
 {
-	if (syscall.params[0] == 0)
-		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
-
-	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
-	if(fd == NULL)
+	vfs_dir_t* dd = vfs_get_dir_from_id(syscall.params[0]);
+	if(dd == NULL)
 		return -1;
 	
-	void* data = vfs_read(fd, syscall.params[2]);
-	memcpy((void*)syscall.params[1], data, syscall.params[2]);
+	char* name = vfs_dir_read(dd, syscall.params[1]);
+	memcpy((void*)syscall.params[2], name, syscall.params[3]);
 	return 0;
 }
