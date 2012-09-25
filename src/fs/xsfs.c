@@ -45,13 +45,8 @@ struct file {
 	uint32_t size;
 } __attribute__((packed));
 
-// This is so unbelievably ineffective and dumb, i'm really sorry. --Lukas
-void* xsfs_read(char* path, uint32_t offset, uint32_t size)
+bool check_basics(struct header* header)
 {
-	uint16_t* buffer = (uint16_t*)kmalloc(sizeof(uint16_t) * BUFSIZE);
-	ata_read(ATA0, offset / 512, BUFSIZE - 1, buffer);
-	struct header* header = (struct header*)buffer;	
-
 	// Check magic
 	if(memcmp(header->magic, MAGIC, 5) != 0)
 	{
@@ -62,8 +57,27 @@ void* xsfs_read(char* path, uint32_t offset, uint32_t size)
 		  header->magic[3],
 		  header->magic[4]
 		);
-		return NULL;
+		return false;
 	}
+
+	if(header->version != XSFS_VERSION)
+	{
+		log(LOG_ERR, "xsfs: Incompatible version\n");
+		return false;
+	}
+
+	return true;
+}
+
+// This is so unbelievably ineffective and dumb, i'm really sorry. --Lukas
+void* xsfs_read(char* path, uint32_t offset, uint32_t size)
+{
+	uint16_t* buffer = (uint16_t*)kmalloc(sizeof(uint16_t) * BUFSIZE);
+	ata_read(ATA0, offset / 512, BUFSIZE - 1, buffer);
+	struct header* header = (struct header*)buffer;	
+
+	if(!check_basics(header))
+		return NULL;
 
 	if(header->num_files < 1)
 	{
@@ -71,13 +85,7 @@ void* xsfs_read(char* path, uint32_t offset, uint32_t size)
 		return NULL;
 	}
 
-	if(header->version != XSFS_VERSION)
-	{
-		log(LOG_ERR, "xsfs: Incompatible version\n");
-		return NULL;
-	}
-
-	// Strip of leading / of path
+	// Strip leading / from path
 	if(*path == '/')
 		path++;
 
@@ -92,5 +100,25 @@ void* xsfs_read(char* path, uint32_t offset, uint32_t size)
 		}
 	}
 
+	return NULL;
+}
+
+char* xsfs_dir_read(char* path, uint32_t offset)
+{
+	uint16_t* buffer = (uint16_t*)kmalloc(sizeof(uint16_t) * BUFSIZE);
+	ata_read(ATA0, offset / 512, BUFSIZE - 1, buffer);
+	struct header* header = (struct header*)buffer;	
+
+	if(!check_basics(header))
+		return NULL;
+
+	if(header->num_files < offset)
+		return NULL;
+
+	struct file* file = (struct file*)((uint32_t)buffer + (uint32_t)header->fileoffset + (offset * sizeof(struct file)));
+
+	// If this is false, something is seriously wrong.
+	if(file)
+		return file->name;
 	return NULL;
 }

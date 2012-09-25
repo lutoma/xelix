@@ -21,3 +21,4 @@
 #include <lib/generic.h>
 
 void* xsfs_read(char* path, uint32_t offset, uint32_t size);
+char* xsfs_dir_read(char* path, uint32_t offset);
