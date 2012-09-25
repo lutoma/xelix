@@ -25,9 +25,15 @@
 int sys_execve(struct syscall syscall)
 {
 	task_t* task = scheduler_getCurrentTask();
-	log(LOG_DEBUG, "execve: Replacing [%s] with [%s]\n", task->name, syscall.params[0]);
-	//void* entry = elf_load_file((void*)syscall.params[0]);
-	//task->state->eip = entry;
+	task_t* new_task = elf_load_file((void*)syscall.params[0]);
+	
+	//FIXME This is not entirely POSIX compatible as the new process has a different PID.
+	if(new_task)
+	{
+		scheduler_add(new_task);
+		scheduler_remove(task);
+		return 0;
+	}
 
-	return 0;
+	return -1;
 }
