@@ -1,6 +1,4 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2012 Lukas Martini
  *
  * This file is part of Xlibc.
  *
@@ -11,21 +9,25 @@
  *
  * Xlibc is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with Xlibc. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stddef.h>
+#include <string.h>
 
-void memcpy(void* dest, const void* src, uint32_t size);
-void memset(void* ptr, uint8_t fill, uint32_t size);
-size_t strlen(const char* str);
-char* strtok(char* str, const char* delim);
-char* strtok_r(char* s, const char* delim, char** last);
-char* strcpy(char* dest, const char* src);
-int strcmp(const char* str1, const char* str2);
-char* strchr(const char *s, int c);
-void* memchr(const void *s, int c, size_t n);
+void* memchr(const void *s, int c, size_t n)
+{
+	const unsigned char *src = s;
+	unsigned char uc = c;
+
+	while (n-- != 0) {
+		if (*src == uc)
+			return (void *) src;
+		src++;
+	}
+
+	return NULL;
+}
