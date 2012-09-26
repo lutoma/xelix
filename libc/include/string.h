@@ -20,7 +20,7 @@
 
 #include <stddef.h>
 
-void memcpy(void* dest, void* src, uint32_t size);
+void memcpy(void* dest, const void* src, uint32_t size);
 void memset(void* ptr, uint8_t fill, uint32_t size);
 size_t strlen(const char* str);
 char* strtok(char* str, const char* delim);
