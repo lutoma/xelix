@@ -20,14 +20,12 @@
 
 void* memchr(const void *s, int c, size_t n)
 {
-	const unsigned char *src = s;
+	const unsigned char* src = s;
 	unsigned char uc = c;
 
-	while (n-- != 0) {
-		if (*src == uc)
-			return (void *) src;
-		src++;
-	}
+	for(; n-- != 0; src++)
+		if(*src == uc)
+			return (void*)src;
 
 	return NULL;
 }
