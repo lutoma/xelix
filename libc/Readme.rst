@@ -23,6 +23,7 @@ Group Base Specifications Issue 6 [Better known as POSIX]):
 <stdbool.h>
 <iso646.h>
 <tar.h>
+<assert.h>
 
 The following header files are partially implemented:
 
@@ -44,7 +45,6 @@ The following header files are completely missing:
 
 <aio.h>
 <arpa/inet.h>
-<assert.h>
 <complex.h>
 <cpio.h>
 <ctype.h>

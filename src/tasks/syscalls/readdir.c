@@ -19,6 +19,7 @@
 
 #include "readdir.h"
 #include <fs/vfs.h>
+#include <lib/log.h>
 
 int sys_readdir(struct syscall syscall)
 {
@@ -28,5 +29,12 @@ int sys_readdir(struct syscall syscall)
 	
 	char* name = vfs_dir_read(dd, syscall.params[1]);
 	memcpy((void*)syscall.params[2], name, syscall.params[3]);
+	
+	log(LOG_DEBUG, "Dirnum: %d\n", syscall.params[0]);
+	log(LOG_DEBUG, "Offset: %d\n", syscall.params[1]);
+	log(LOG_DEBUG, "Name: %s\n", syscall.params[2]);
+	log(LOG_DEBUG, "Pointer: 0x%x\n", syscall.params[2]);
+	log(LOG_DEBUG, "Maxlen: %d\n", syscall.params[3]);
+	
 	return 0;
 }

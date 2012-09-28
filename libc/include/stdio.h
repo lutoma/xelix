@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <stdlib.h>
+ #include <stdarg.h>
 
 #define EOF (-1)
 
@@ -55,11 +56,27 @@ char* fgets(char* str, int num, FILE* fp);
 int fputs(const char* string, FILE* fp);
 int fseek(FILE* fp, long int offset, int origin);
 void clearerr(FILE* fp);
-void vfprintf(FILE* fp, const char *fmt, void** arg);
 
 static inline FILE* tmpfile()
 {
 	return NULL;
+}
+
+
+// printf-family
+extern int snprintf(char *, size_t, const char *, /*args*/ ...);
+extern int vsnprintf(char *, size_t, const char *, va_list);
+extern int asprintf  (char **ptr, const char *fmt, /*args*/ ...);
+extern int vasprintf (char **ptr, const char *fmt, va_list ap);
+extern int asnprintf (char **ptr, size_t str_m, const char *fmt, /*args*/ ...);
+extern int vasnprintf(char **ptr, size_t str_m, const char *fmt, va_list ap);
+#undef printf
+int printf(const char *format, ...);
+int sprintf(char *out, const char *format, ...);
+
+static inline void vfprintf(FILE* fp, const char *fmt, void** arg)
+{
+	return;
 }
 
 static inline void vprintf(const char *fmt, void** arg)
@@ -67,13 +84,12 @@ static inline void vprintf(const char *fmt, void** arg)
 	vfprintf(stdout, fmt, arg);
 }
 
-static inline void printf(const char *fmt, ...) {
-	vprintf(fmt, (void**)(&fmt) + 1);
-}
 
 static inline void fprintf(FILE* fp, const char *fmt, ...) {
 	vfprintf(fp, fmt, (void**)(&fmt) + 1);
 }
+
+// printf end
 
 static inline int putc(int c, FILE* fd)
 {
