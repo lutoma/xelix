@@ -43,3 +43,6 @@
 
 #define _POSIX_PATH_MAX 256
 #define PATH_MAX 512
+
+#define _POSIX_NAME_MAX 256
+#define NAME_MAX 512
