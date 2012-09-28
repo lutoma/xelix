@@ -105,7 +105,7 @@ vfs_file_t* vfs_open(char* path)
 	strcpy(files[num].path, path);
 	strcpy(files[num].mount_path, path); // Fixme
 	files[num].offset = 0;
-	files[num].mountpoint = NULL; // Fixme
+	files[num].mountpoint = 0; // Fixme
 	return &files[num];
 }
 
@@ -117,7 +117,7 @@ vfs_dir_t* vfs_dir_open(char* path)
 	dirs[num].num = num;
 	strcpy(dirs[num].path, path);
 	strcpy(dirs[num].mount_path, path); // Fixme
-	dirs[num].mountpoint = NULL; // Fixme
+	dirs[num].mountpoint = 0; // Fixme
 	return &dirs[num];
 }
 
