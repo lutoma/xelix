@@ -22,8 +22,31 @@
 #include <string.h>
 #include <stdio.h>
 
+static struct dirent* _create_dirent(char* name, ino_t ino)
+{
+	struct dirent* de = malloc(sizeof(struct dirent));
+	if(!de)
+		return NULL;
+
+	de->d_ino = ino;
+	strcpy(de->d_name, name);
+	return de;
+}
+
 struct dirent* readdir(DIR* dd)
 {
+	// Add . and .. (The Xelix syscall doesn't return those, but POSIX fnord).
+	if(dd->offset < 2)
+	{
+		dd->offset++;
+
+		// 1 since we just did a offset++
+		if(dd->offset == 1)
+			return _create_dirent(".", 0);
+
+		return _create_dirent("..", 0);
+	}
+
 	char* name = NULL;
 	asm __volatile__(
 		"mov eax, 17;"
@@ -31,19 +54,13 @@ struct dirent* readdir(DIR* dd)
 		"mov ecx, %2;"
 		"int 0x80;"
 		"mov %0, eax;"
-	: "=r" (name) : "r" (dd->num), "r" (dd->offset) : "eax", "ebx", "ecx");
+	: "=r" (name) : "r" (dd->num), "r" (dd->offset - 2) : "eax", "ebx", "ecx");
 
 	if(!name)
 		return NULL;
 
-	struct dirent* de = malloc(sizeof(struct dirent));
-	if(!de)
-		return NULL;
-
-	de->d_ino = 0; // FIXME
-	strcpy(de->d_name, name);
-
-	// Increase offset of directory handle
 	dd->offset++;
-	return de;
+
+	// FIXME set correct inode
+	return _create_dirent(name, 0);
 }
