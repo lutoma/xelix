@@ -1,4 +1,4 @@
-/* main.c: Initialization code of the kernel
+/* init.c: Initialization code of the kernel
  * Copyright © 2010, 2011 Lukas Martini
  *
  * This file is part of Xelix.
