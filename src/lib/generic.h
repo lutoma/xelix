@@ -53,6 +53,16 @@ typedef enum { false = 0 , true = 1 } bool;
 	#define unlikely(x) (x)
 #endif
 
+#define init(C, args...) \
+	do \
+	{ \
+		log(LOG_INFO, "init: Starting to initialize " #C "\n"); \
+		C ## _init(args); \
+		log(LOG_INFO, "init: Initialized " #C "\n"); \
+	} while(0);
+
+bool init_haveGrub;
+
 uint8_t readCMOS (uint16_t port);
 void writeCMOS (uint16_t port, uint8_t value);
 void memset(void* ptr, uint8_t fill, uint32_t size);
