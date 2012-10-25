@@ -1,9 +1,9 @@
 /* generic.c: A generic keyboard driver. Should work for every PS2
- * keyboard and for most USB keyboards (Depends on BIOS / Legacy
- * support)
+ * keyboard and most USB keyboards (Depends on BIOS legacy support)
  *
  * Copyright © 2010 Christoph Sünderhauf, Lukas Martini
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
+ * Copyright © 2012 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -49,22 +49,22 @@ static struct keyboard_buffer keyboard_buffer = {
 
 // Current modifier keys
 struct {
-	bool shiftl:1;
-	bool shiftr:1;
-	bool controll:1;
-	bool controlr:1;
+	bool shift_left:1;
+	bool shift_right:1;
+	bool control_left:1;
+	bool control_right:1;
 	bool alt:1;
 	bool super:1;
 } modifiers;
 
 static dict_t* dictionary;
-static char* currentKeymap;
+static char* current_keymap;
 
 int keyboard_setlayout(char* layoutname)
 {
 	void* retval = dict_get(dictionary, layoutname);
-	if ((int)retval != -1)
-		currentKeymap = (char*)retval;
+	if((int)retval != -1)
+		current_keymap = (char*)retval;
 	else
 		return -1;
 
@@ -126,14 +126,14 @@ static void handleScancode(uint8_t code, uint8_t code2)
 {
 	switch(code)
 	{
-		case 0x2a: modifiers.shiftl = true; break;
-		case 0xaa: modifiers.shiftl = false; break;
+		case 0x2a: modifiers.shift_left = true; break;
+		case 0xaa: modifiers.shift_left = false; break;
 
-		case 0x36: modifiers.shiftr = true; break;
-		case 0xb6: modifiers.shiftr = false; break;
+		case 0x36: modifiers.shift_right = true; break;
+		case 0xb6: modifiers.shift_right = false; break;
 
-		case 0x1d: modifiers.controll = true; break;
-		case 0x9d: modifiers.controll = false; break;
+		case 0x1d: modifiers.control_left = true; break;
+		case 0x9d: modifiers.control_left = false; break;
 
 		case 0x38: modifiers.alt = true; break;
 		case 0xb8: modifiers.alt = false; break;
@@ -150,18 +150,18 @@ static void handleScancode(uint8_t code, uint8_t code2)
 		console_scroll(NULL, -1);
 
 	if( code2 == 0x1d) // ctrl press
-		modifiers.controlr = true;
+		modifiers.control_right = true;
 	if( code2 == 0x9d) // ctrl release
-		modifiers.controlr = false;
+		modifiers.control_right = false;
 
 	uint16_t dcode = code;
-	if( modifiers.shiftl | modifiers.shiftr )
+	if( modifiers.shift_left | modifiers.shift_right )
 		dcode += 256;
 
 	if(code > 512)
 		return;
 
-	char c = currentKeymap[dcode];
+	char c = current_keymap[dcode];
 	if(code > 512 || c == NULL)
 		return;
 
@@ -197,26 +197,31 @@ static void handleScancode(uint8_t code, uint8_t code2)
 }
 
 // Handles the IRQs we catch
-static void handler(cpu_state_t* regs)
+static void irq_handler(cpu_state_t* regs)
 {
-	static bool waitingForEscapeSequence;
+	// Escape sequences consist of two scancodes: One first that tells us
+	// we're now in an escape sequence, and the second one with the actual
+	// sequence.
+	static bool escape_seq_wait;
 
-	// read scancodes
+	// Read scancode
 	uint8_t code = inb(0x60);
 
-	if (code == 0xe0)
-		waitingForEscapeSequence = true; // escape sequence
-	else
+	// Escape sequence scancode
+	if(unlikely(code == 0xe0))
 	{
-		if(waitingForEscapeSequence)
-		{
-			// this is the second scancode to the escape sequence
-			handleScancode(0xe0, code);
-			waitingForEscapeSequence = false;
-		}
-		else
-			handleScancode(code, 0); // normal scancode
+		escape_seq_wait = true;
+		return;
 	}
+
+	if(unlikely(escape_seq_wait))
+	{
+		// This is the second scancode to the escape sequence
+		escape_seq_wait = false;
+		handleScancode(0xe0, code);
+	}
+	else
+		handleScancode(code, 0); // normal scancode
 }
 
 static char console_driver_keyboard_read(console_info_t *info)
@@ -249,8 +254,10 @@ console_driver_t* console_driver_keyboard_init(console_driver_t* driver)
 	 * irqs or set up the idt)
 	 */
 	flush();
-	char* ident = identify();
-	log(LOG_INFO, "keyboard: Identified type: %s\n", ident);
+
+	// This is currently unused, might as well comment it out…
+	// char* ident = identify();
+	// log(LOG_INFO, "keyboard: Identified type: %s\n", ident);
 
 	// Reset to default values
 	keyboard_sendKeyboard(0xF6);
@@ -268,14 +275,13 @@ console_driver_t* console_driver_keyboard_init(console_driver_t* driver)
     dictionary = dict_new(1);
     dict_set(dictionary, "en", keymap_en);
     dict_set(dictionary, "de", keymap_de);
-	currentKeymap = keymap_en;
+	current_keymap = keymap_en;
 
-	interrupts_registerHandler(IRQ1, &handler);
+	interrupts_registerHandler(IRQ1, &irq_handler);
 
-	if (driver == NULL)
+	if(driver == NULL)
 		driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));
 
 	driver->read = console_driver_keyboard_read;
-
 	return driver;
 }
