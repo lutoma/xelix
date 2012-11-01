@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2011 Nick Johnson <nickbjohnson4224 at gmail.com>
+ * Copyright © 2011 Nick Johnson <nickbjohnson4224 at gmail.com>
+ * Copyright © 2012 Lukas Martini
  * 
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,16 +25,13 @@
 
 struct ata_drive ata_drives[4];
 
-void ata_sleep400(uint8_t drive)
+static void ata_sleep(int time, uint8_t drive)
 {
-
-	inb(ata_drives[drive].base + REG_ASTAT);
-	inb(ata_drives[drive].base + REG_ASTAT);
-	inb(ata_drives[drive].base + REG_ASTAT);
-	inb(ata_drives[drive].base + REG_ASTAT);
+	for(int i = 0; i < time / 100; i++)
+		inb(ata_drives[drive].base + REG_ASTAT);
 }
 
-int ata_wait(uint8_t drive)
+static int ata_wait(uint8_t drive)
 {
 	uint8_t status;
 	
@@ -54,7 +52,7 @@ void ata_select(uint8_t drive)
 {
 
 	outb(ata_drives[drive].base + REG_SELECT, SEL(drive) ? 0xB0 : 0xA0);
-	ata_sleep400(drive);
+	ata_sleep(400, drive);
 }
 
 int ata_send_lba(uint8_t drive, uint64_t sector, uint16_t count)
@@ -83,7 +81,7 @@ int ata_send_lba(uint8_t drive, uint64_t sector, uint16_t count)
 
 	/* send LBA */
 	outb(ata_drives[drive].base + REG_SELECT, (SEL(drive) ? 0xF0 : 0xE0) | head);
-	ata_sleep400(drive);
+	ata_sleep(400, drive);
 	outb(ata_drives[drive].base + REG_COUNT0, count);
 	outb(ata_drives[drive].base + REG_LBA0, lba[0]);
 	outb(ata_drives[drive].base + REG_LBA1, lba[1]);
@@ -118,7 +116,7 @@ void ata_read(uint8_t drive, uint64_t sector, uint16_t count, uint16_t *buffer)
 			word = inw(ata_drives[drive].base + REG_DATA);
 			buffer[i + j * (1 << (ata_drives[drive].sectsize - 1))] = word;
 		}
-		ata_sleep400(drive);
+		ata_sleep(400, drive);
 	}
 }
 
@@ -176,9 +174,9 @@ void ata_init(void)
 		outb(ata_drives[dr].base + REG_LBA0,   0);
 		outb(ata_drives[dr].base + REG_LBA1,   0);
 		outb(ata_drives[dr].base + REG_LBA2,   0);
-		ata_sleep400(dr);
+		ata_sleep(400, dr);
 		outb(ata_drives[dr].base + REG_CMD, CMD_ID);
-		ata_sleep400(dr);
+		ata_sleep(400, dr);
 
 		/* read status */
 		status = inb(ata_drives[dr].base + REG_STAT);
@@ -197,7 +195,7 @@ void ata_init(void)
 			ch = inb(ata_drives[dr].base + REG_LBA2);
 			c = cl | (ch << 8);
 			
-			ata_sleep400(dr);
+			ata_sleep(400, dr);
 
 			if (c == 0xEB14 || c == 0x9669) {
 				/* is ATAPI */
@@ -206,7 +204,7 @@ void ata_init(void)
 
 				/* use ATAPI IDENTIFY */
 				outb(ata_drives[dr].base + REG_CMD, CMD_ATAPI_ID);
-				ata_sleep400(dr);
+				ata_sleep(400, dr);
 			}
 			else if (c == 0xC33C) {
 				/* is SATA */
@@ -262,10 +260,10 @@ void ata_init(void)
 		log(LOG_INFO, "ata: Found drive: ");
 
 		switch (dr) {
-		case ATA00: print("ATA 0 Master\n"); break;
-		case ATA01: print("ATA 0 Slave\n");  break;
-		case ATA10: print("ATA 1 Master\n"); break;
-		case ATA11: print("ATA 1 Slave\n");  break;
+			case ATA00: print("ATA 0 Master\n"); break;
+			case ATA01: print("ATA 0 Slave\n");  break;
+			case ATA10: print("ATA 1 Master\n"); break;
+			case ATA11: print("ATA 1 Slave\n");  break;
 		}
 
 		print("\t");
@@ -278,7 +276,5 @@ void ata_init(void)
 			(uint32_t) ata_drives[dr].size * (1 << ata_drives[dr].sectsize) >> 10,
 			(uint32_t) ata_drives[dr].size);
 		printf("\tmodel: %s\n", ata_drives[dr].model);
-
-
 	}
 }

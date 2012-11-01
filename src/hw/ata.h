@@ -122,10 +122,6 @@ extern struct ata_drive ata_drives[4];
 
 /* driver internal functions *************************************************/
 
-int ata_wait(uint8_t drive);
-
-void ata_sleep400(uint8_t drive);
-
 #define SEL(d) ((d) & 1)
 #define MASTER 0
 #define SLAVE  1
