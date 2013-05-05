@@ -37,7 +37,6 @@
 #include <hw/speaker.h>
 #include <fs/vfs.h>
 #include <fs/xsfs.h>
-#include <lib/argparser.h>
 #include <tasks/scheduler.h>
 #include <console/interface.h>
 #include <hw/pci.h>
@@ -89,7 +88,6 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 		arch_multiboot_printInfo();
 	#endif
 
-	init(argparser, multiboot_info->cmdLine);
 	init(cpu);
 	init(acpi);	
 	init(pci);
