@@ -73,6 +73,7 @@ void freeze(void);
 int32_t memcmp(const void* s1, const void* s2, size_t n);
 void reboot();
 void halt();
+void sleep(time_t timeout);
 
 extern void display_clear();
 #define clear() display_clear()

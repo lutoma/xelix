@@ -155,3 +155,15 @@ void halt()
 	printf("\n\nYou may turn off your PC now.\n");
 	freeze();
 }
+
+// Sleep x seconds
+void sleep(time_t timeout)
+{
+	timeout *= PIT_RATE;
+	timeout++; // Make sure we always wait at least 'timeout'. One tick too long doesn't matter.
+	int startTick = pit_getTickNum();
+	while(1)
+	{
+		if(pit_getTickNum() > startTick + timeout) break;
+	}
+}

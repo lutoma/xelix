@@ -23,7 +23,6 @@
 	#include <arch/i386/lib/acpi.h>
 #endif
 #include <lib/log.h>
-#include <lib/datetime.h>
 #include <lib/string.h>
 #include <lib/panic.h>
 #include <hw/display.h>

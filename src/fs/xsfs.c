@@ -23,7 +23,6 @@
 #include <hw/ata.h>
 #include <memory/kmalloc.h>
 #include <lib/print.h>
-#include <lib/datetime.h>
 #include <lib/string.h>
 
 // Increase by one as soon as you change anything without legacy support

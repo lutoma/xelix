@@ -22,7 +22,6 @@
 #include <memory/kmalloc.h>
 #include <lib/log.h>
 #include <lib/print.h>
-#include <lib/datetime.h>
 #include <memory/vmem.h>
 #include <interrupts/interface.h>
 

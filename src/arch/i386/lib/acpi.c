@@ -23,7 +23,6 @@
 #include "acpi.h"
 #include <lib/generic.h>
 #include <lib/log.h>
-#include <lib/datetime.h>
 
 // Just a small macro to make things shorter
 #define acpiError(args...) do { log(LOG_ERR, "acpi:" args); return -1; } while(false); 

@@ -29,7 +29,6 @@
 #include <lib/log.h>
 #include <lib/string.h>
 #include <interrupts/interface.h>
-#include <lib/datetime.h>
 #include <hw/display.h>
 #include <hw/pit.h>
 

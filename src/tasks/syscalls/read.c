@@ -19,7 +19,6 @@
 
 #include "read.h"
 #include <console/interface.h>
-#include <lib/datetime.h>
 #include <fs/vfs.h>
 
 int sys_read(struct syscall syscall)
