@@ -37,6 +37,7 @@
 #include "syscalls/seek.h"
 #include "syscalls/opendir.h"
 #include "syscalls/readdir.h"
+#include "syscalls/kill.h"
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -57,4 +58,5 @@ syscall_t syscall_table[] = {
 	sys_seek,			// 15
 	sys_opendir,		// 16
 	sys_readdir,		// 17
+	sys_kill,			// 18
 };

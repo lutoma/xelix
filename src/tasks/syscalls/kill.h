@@ -1,5 +1,6 @@
-/* seek.c: Seek syscall
- * Copyright © 2012 Lukas Martini
+#pragma once
+
+/* Copyright © 2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,16 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "seek.h"
 #include <tasks/syscall.h>
-#include <fs/vfs.h>
 
-int sys_seek(struct syscall syscall)
-{
-	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
-	if(fd == NULL)
-		return -2;
-
-	vfs_seek(fd, syscall.params[1], syscall.params[2]);
-	return 0;
-}
+int sys_kill(struct syscall syscall);
