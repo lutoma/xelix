@@ -25,19 +25,20 @@
 // Only supports killing the current task so far
 
 char* signal_names[] = {
-	"SIGHUP	",	/* hangup */
-	"SIGINT	",	/* interrupt */
+	NULL,
+	"SIGHUP",	/* hangup */
+	"SIGINT",	/* interrupt */
 	"SIGQUIT",	/* quit */
 	"SIGKILL",	/* illegal instruction (not reset when caught) */
 	"SIGTRAP",	/* trace trap (not reset when caught) */
-	"SIGIOT	",	/* IOT instruction */
+	"SIGIOT",	/* IOT instruction */
 	"SIGABRT",	/* used by abort, replace SIGIOT in the future */
-	"SIGEMT	",	/* EMT instruction */
-	"SIGFPE	",	/* floating point exception */
+	"SIGEMT",	/* EMT instruction */
+	"SIGFPE",	/* floating point exception */
 	"SIGKILL",	/* kill (cannot be caught or ignored) */
-	"SIGBUS	",	/* bus error */
+	"SIGBUS",	/* bus error */
 	"SIGSEGV",	/* segmentation violation */
-	"SIGSYS	",	/* bad argument to system call */
+	"SIGSYS",	/* bad argument to system call */
 	"SIGPIPE",	/* write on a pipe with no one to read it */
 	"SIGALRM",	/* alarm clock */
 	"SIGTERM",	/* software termination signal from kill */
