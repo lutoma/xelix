@@ -26,7 +26,6 @@
 #include <lib/string.h>
 #include <lib/list.h>
 #include <lib/spinlock.h>
-#include <fs/xsfs.h>
 
 #define MAX_MOUNTPOINTS 50
 #define MAX_OPENFILES 500

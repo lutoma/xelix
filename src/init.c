@@ -35,7 +35,6 @@
 #include <memory/kmalloc.h>
 #include <hw/speaker.h>
 #include <fs/vfs.h>
-#include <fs/xsfs.h>
 #include <tasks/scheduler.h>
 #include <console/interface.h>
 #include <hw/pci.h>
@@ -45,7 +44,7 @@
 #include <memory/paging.h>
 #include <memory/vmem.h>
 #include <net/slip.h>
-#include <hw/ata.h>
+#include <hw/ide.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -93,10 +92,10 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(syscall);
 	init(vmem);
 	init(paging);
-	init(ata);
+	init(ide, 0x1F0);
 
 	// TODO remove hardcoded stuff
-	vfs_mount("/", &xsfs_read, &xsfs_dir_read);
+	//vfs_mount("/", &xsfs_read, &xsfs_dir_read);
 
 	// Networking
 	init(rtl8139);
