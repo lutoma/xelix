@@ -45,6 +45,15 @@ static void intHandler(cpu_state_t* regs)
 		return;
 	}
 
+	/*log(LOG_INFO, "Syscall %s called with %d %d %d %d %d.\n",
+		syscall_name_table[syscall.num],
+		regs->ebx,
+		regs->ecx,
+		regs->edx,
+		regs->esi,
+		regs->edi,
+		regs->ebp);
+*/
 	regs->eax = call(syscall);
 }
 

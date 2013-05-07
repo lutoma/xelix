@@ -60,3 +60,25 @@ syscall_t syscall_table[] = {
 	sys_readdir,		// 17
 	sys_kill,			// 18
 };
+
+char* syscall_name_table[] = {
+	NULL,
+	"exit",			// 1
+	"read",			// 2
+	"write",		// 3
+	"getpid",		// 4
+	"brk",			// 5
+	"getppid",		// 6
+	"mmap",			// 7
+	"munmap",		// 8
+	"test",			// 9
+	"get_hostname",	// 10
+	"set_hostname",	// 11
+	"uname",		// 12
+	"open",			// 13
+	"execve",		// 14
+	"seek",			// 15
+	"opendir",		// 16
+	"readdir",		// 17
+	"kill",			// 18
+};
