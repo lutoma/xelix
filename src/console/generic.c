@@ -56,7 +56,7 @@ void console_init()
 	default_console->info.cursor_y = 0;
 	default_console->info.newline_mode = 1;
 	default_console->info.auto_echo = 1;
-	default_console->info.handle_backspace = 0;
+	default_console->info.handle_backspace = 1;
 
 	default_console->input_filter = NULL;
 	default_console->output_filter = NULL;
