@@ -1,5 +1,6 @@
 /* generic.c: Generic terminal access
  * Copyright © 2011 Fritz Grimpen, Lukas Martini
+ * Copyright © 2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -54,9 +55,9 @@ void console_init()
 	default_console->info.tabstop = 8;
 	default_console->info.cursor_x = 0;
 	default_console->info.cursor_y = 0;
-	default_console->info.newline_mode = 1;
-	default_console->info.auto_echo = 1;
-	default_console->info.handle_backspace = 1;
+	default_console->info.newline_mode = true;
+	default_console->info.auto_echo = true;
+	default_console->info.handle_backspace = true;
 
 	default_console->input_filter = NULL;
 	default_console->output_filter = NULL;
@@ -83,11 +84,11 @@ void console_init()
 
 	default_console->info.current_color = default_console->info.default_color;
 
-	default_console->info.nonblocking = 0;
-	default_console->info.reverse_video = 0;
-	default_console->info.bold = 0;
-	default_console->info.blink = 0;
-	default_console->info.underline = 0;
+	default_console->info.nonblocking = false;
+	default_console->info.reverse_video = false;
+	default_console->info.bold = false;
+	default_console->info.blink = false;
+	default_console->info.underline = false;
 
 	console_clear(NULL);
 }
