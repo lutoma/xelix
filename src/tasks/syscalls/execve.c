@@ -24,9 +24,13 @@
 
 int sys_execve(struct syscall syscall)
 {
+	// Hardcoded for dash, but doesn't hurt for other processes either
+	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
+	char* __argv[] = { "dash", "-liV", NULL };
+
 	task_t* task = scheduler_getCurrentTask();
-	task_t* new_task = elf_load_file((void*)syscall.params[0]);
-	
+	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, 2);
+
 	//FIXME This is not entirely POSIX compatible as the new process has a different PID.
 	if(new_task)
 	{

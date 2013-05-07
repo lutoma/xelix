@@ -43,11 +43,15 @@ typedef struct task {
 		TASK_STATE_STOPPED,
 		TASK_STATE_RUNNING
 	} task_state;
+
+	char** environ;
+	char** argv;
+	int argc;
 } task_t;
 
 int scheduler_state;
 
-task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME]);
+task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME], char** environ, char** argv, int argc);
 void scheduler_add(task_t *task);
 void scheduler_terminateCurrentTask();
 task_t* scheduler_getCurrentTask();

@@ -104,12 +104,16 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 		init(slip);
 	#endif
 
+	// Hardcoded for dash, but doesn't hurt for other processes either
+	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
+	char* __argv[] = { "dash", "-liV", NULL };
+
 	if(multiboot_info->modsCount)
 	{
-			scheduler_add(elf_load((void*)multiboot_info->modsAddr[0].start, "initrd"));
+		scheduler_add(elf_load((void*)multiboot_info->modsAddr[0].start, "dash", __env, __argv, 2));
 	} else
 	{
-		task_t* init = elf_load_file("/init");
+		task_t* init = elf_load_file("/init", __env, __argv, 2);
 		if(init)
 			scheduler_add(init);
 	}

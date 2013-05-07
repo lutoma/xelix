@@ -144,7 +144,7 @@ static struct vmem_context *setupMemoryContext(void *stack)
  * UP TO YOU as the scheduler has no clue about how long
  * your program is.
  */
-task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME])
+task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME], char** environ, char** argv, int argc)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
@@ -173,6 +173,9 @@ task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNA
 	strcpy(thisTask->name, name);
 	thisTask->parent = parent;
 	thisTask->task_state = TASK_STATE_RUNNING;
+	thisTask->environ = environ;
+	thisTask->argv = argv;
+	thisTask->argc = argc;
 
 	return thisTask;
 }

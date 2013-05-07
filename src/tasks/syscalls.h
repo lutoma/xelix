@@ -38,6 +38,7 @@
 #include "syscalls/opendir.h"
 #include "syscalls/readdir.h"
 #include "syscalls/kill.h"
+#include "syscalls/getexecdata.h"
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -59,6 +60,7 @@ syscall_t syscall_table[] = {
 	sys_opendir,		// 16
 	sys_readdir,		// 17
 	sys_kill,			// 18
+	sys_getexecdata	// 19
 };
 
 char* syscall_name_table[] = {
@@ -81,4 +83,5 @@ char* syscall_name_table[] = {
 	"opendir",		// 16
 	"readdir",		// 17
 	"kill",			// 18
+	"getexecdata"	// 19
 };

@@ -29,7 +29,7 @@
 
 char header[4] = {0x7f, 'E', 'L', 'F'};
 
-task_t* elf_load(elf_t* bin, char* name)
+task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 {
 	if(bin <= NULL)
 		return NULL;
@@ -67,11 +67,11 @@ task_t* elf_load(elf_t* bin, char* name)
 		memcpy(phead->virtaddr, (void*)bin + phead->offset, phead->filesize);	
 	}
 
-	task_t* task = scheduler_newTask(bin->entry, NULL, name);
+	task_t* task = scheduler_newTask(bin->entry, NULL, name, environ, argv, argc);
 	return task;
 }
 
-task_t* elf_load_file(char* path)
+task_t* elf_load_file(char* path, char** environ, char** argv, int argc)
 {
 	vfs_file_t* fd = vfs_open(path);
 	// Dat dirty hack
@@ -79,5 +79,5 @@ task_t* elf_load_file(char* path)
 	if(data == NULL)
 		return NULL;
 	
-	return elf_load(data, path);
+	return elf_load(data, path, environ, argv, argc);
 }
