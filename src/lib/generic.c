@@ -1,6 +1,6 @@
 /* generic.c: Common utilities often used.
  * Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -58,32 +58,34 @@ void memcpy(void* dest, void* src, uint32_t size)
 	}
 }
 
-// Small helper function
-static inline char toDigit(uint8_t d)
-{
-	return (d < 10 ? '0' : 'a' - 10) + d;
-}
+char* itoa(int value, int base) {
+	// FIXME The result buffer should be an argument passed in and not allocated
+	char* result = (char*)kmalloc(8 * sizeof(value) + 2);
 
-// A small itoa
-// Please note it's not standard c syntax.
-char* itoa(int num, int base)
-{
-	if (num == 0)
-		return "0"; 
-	
-	static char buf[8 * sizeof(num) + 1];
-	char *res = buf + 8 * sizeof(num);
+	if (base < 2 || base > 36) { *result = '\0'; return result; }
 
-	*--res = '\0';
+	char* ptr = result, *ptr1 = result, tmp_char;
+	int tmp_value;
 
-	while ((num > 0) && (res >= buf))
-	{
-		*(--res) = toDigit(num % base);
-		num /= base;
+	do {
+		tmp_value = value;
+		value /= base;
+		*ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"[35 + (tmp_value - value * base)];
+	} while ( value );
+
+	// Apply negative sign
+	if(tmp_value < 0) *ptr++ = '-';
+	*ptr-- = '\0';
+
+	while(ptr1 < ptr) {
+		tmp_char = *ptr;
+		*ptr--= *ptr1;
+		*ptr1++ = tmp_char;
 	}
 
-	return res;
+	return result;
 }
+
 
 uint64_t atoi(const char* s) {
   uint64_t n = 0;
