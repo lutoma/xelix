@@ -159,3 +159,11 @@ int find_substr(char* listPointer, char* itemPointer)
   }
    return -1; /* 2nd return */
 }
+
+char* strndup(const char* old, size_t num)
+{
+	char* new = kmalloc(sizeof(char) * (num + 1));
+	memset(new, 0, num + 1);
+	strncpy(new, old, num);
+	return new;
+}

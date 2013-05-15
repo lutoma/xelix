@@ -32,3 +32,4 @@ char* substr(char* src, size_t start, size_t len);
 char* strtok(char *s, const char *delim);
 char* strtok_r(char *s, const char *delim, char **last);
 int find_substr(char *listPointer, char *itemPointer);
+char* strndup(const char* old, size_t num);
