@@ -98,7 +98,8 @@ void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
 vfs_file_t* vfs_open(char* path)
 {
 	uint32_t num;
-	spinlock_cmd(num = last_file == -1 ? 3 : ++last_file, 20, (vfs_file_t*)-1);
+	spinlock_cmd(num = last_file == -1 ? last_file = 3 : ++last_file,
+		20, (vfs_file_t*)-1);
 
 	files[num].num = num;
 	strcpy(files[num].path, path);

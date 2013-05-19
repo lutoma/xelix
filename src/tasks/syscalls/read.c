@@ -20,15 +20,20 @@
 #include "read.h"
 #include <console/interface.h>
 #include <fs/vfs.h>
+#include <lib/log.h>
 
 int sys_read(struct syscall syscall)
 {
+	//log(LOG_INFO, "Call to sys_read (params = %d)!\n", syscall.params[0]);
+
 	if (syscall.params[0] == 0)
 		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
 
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
 	if(fd == NULL)
 		return -1;
+
+	log(LOG_INFO, "found file, is %s\n", fd->path);
 	
 	void* data = vfs_read(fd, syscall.params[2]);
 	memcpy((void*)syscall.params[1], data, syscall.params[2]);

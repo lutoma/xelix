@@ -20,9 +20,15 @@
 #include "write.h"
 #include <fs/vfs.h>
 #include <lib/log.h>
+#include <lib/string.h>
 
 int sys_open(struct syscall syscall)
 {
-	return vfs_open((char*)syscall.params[0])->num;
+	if(strcmp((char*)syscall.params[0], "/home/lutoma/test.asm"))
+		return -1;
+
+	vfs_file_t* fd = vfs_open((char*)syscall.params[0]);
+	log(LOG_INFO, "sys_open: Returning fd %d\n", fd->num);
+	return fd->num;
 }
 	
