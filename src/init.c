@@ -45,6 +45,7 @@
 #include <memory/vmem.h>
 #include <net/slip.h>
 #include <hw/ide.h>
+#include <fs/ext2.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -93,9 +94,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(vmem);
 	init(paging);
 	init(ide, 0x1F0);
-
-	// TODO remove hardcoded stuff
-	//vfs_mount("/", &xsfs_read, &xsfs_dir_read);
+	init(ext2);
 
 	// Networking
 	init(rtl8139);

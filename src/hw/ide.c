@@ -105,7 +105,7 @@ void ide_init(uint16_t bus) {
 		ptr[i] = tmp;
 	}
 
-	log(LOG_INFO, "ata device %s\n", device.model);
+	//log(LOG_INFO, "ata device %s\n", device.model);
 	log(LOG_INFO, "sectors_48 = %d\n", (uint32_t)device.sectors_48);
 	log(LOG_INFO, "sectors_28 = %d\n", device.sectors_28);
 
