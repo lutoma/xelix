@@ -111,7 +111,7 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 		scheduler_add(elf_load((void*)multiboot_info->modsAddr[0].start, "dash", __env, __argv, 2));
 	} else
 	{
-		task_t* init = elf_load_file("/init", __env, __argv, 2);
+		task_t* init = elf_load_file("/bin/init", __env, __argv, 2);
 		if(init)
 			scheduler_add(init);
 	}
