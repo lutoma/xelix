@@ -19,11 +19,17 @@
 
 #include "write.h"
 #include <console/interface.h>
+#include <memory/vmem.h>
+#include <tasks/syscall.h>
 
 int sys_write(struct syscall syscall)
 {
+	syscall.params[1] = (int)task_resolve_address(syscall.params[1]);
+	if(!syscall.params[1])
+		return -1;
+
 	if (syscall.params[0] == 1 || syscall.params[0] == 2)
-		return console_write(NULL, (char *)syscall.params[1], syscall.params[2]);
+		return console_write(NULL, (char*)syscall.params[1], syscall.params[2]);
 
 	return -1;
 }

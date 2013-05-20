@@ -22,9 +22,11 @@
 #include <lib/generic.h>
 #include <lib/log.h>
 #include <lib/print.h>
+#include <lib/string.h>
 #include <tasks/scheduler.h>
 #include <fs/vfs.h>
 #include <memory/vmem.h>
+#include <memory/kmalloc.h>
 
 #define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
 
@@ -59,13 +61,33 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	if(bin->entry == NULL)
 		fail("elf: elf_load: This elf file doesn't have an entry point\n");
 
+	struct vmem_context *ctx = vmem_new();
 	elf_program_t* phead = ((void*)bin + bin->phoff);
-	
+
 	for(int i = 0; i < bin->phnum; i++, phead++)
 	{
-		// Add pages that map the code to the position they want to reside at.
-		memset(phead->virtaddr, 0, phead->filesize);
-		memcpy(phead->virtaddr, (void*)bin + phead->offset, phead->filesize);	
+		// Allocate new _physical_ location for this in RAM and copy data there
+		void* phys_location = (void*)kmalloc_a(phead->filesize + 4096);
+
+		memset(phys_location, 0, 4096);
+		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize);	
+
+		/* Now, remap the _virtual_ location where the ELF binary wants this
+		 * section to be at to the physical location.
+		 */
+		for(int i = 0; i < phead->filesize; i += 4096)
+		{
+			vmem_rm_page_virt(vmem_kernelContext, phead->virtaddr + i);
+
+			struct vmem_page *page = vmem_new_page();
+			page->section = VMEM_SECTION_KERNEL; // FIXME
+			page->cow = 0;
+			page->allocated = 1;
+			page->virt_addr = phead->virtaddr + i;
+			page->phys_addr = phys_location + i;
+			vmem_add_page(vmem_kernelContext, page);
+			vmem_add_page(ctx, page);
+		}
 	}
 
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,

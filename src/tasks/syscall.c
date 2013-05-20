@@ -23,10 +23,29 @@
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <lib/print.h>
+#include <memory/vmem.h>
 
 #include "syscalls.h"
 
-static void intHandler(cpu_state_t* regs)
+/* Resolves a virtual address from within the virtual address space of the
+ * current task to the corresponding physical address we can use.
+ */
+intptr_t task_resolve_address(intptr_t virt_address)
+{
+	task_t* task = scheduler_get_current();
+
+	int diff = virt_address % PAGE_SIZE;
+	virt_address -= diff;
+
+	struct vmem_page* page = vmem_get_page_virt(task->memory_context, (void*)virt_address);
+
+	if(!page)
+		return NULL;
+
+	return (intptr_t)page->phys_addr + diff;
+}
+
+static void int_handler(cpu_state_t* regs)
 {
 	struct syscall syscall;
 	syscall.num = regs->eax;
@@ -52,12 +71,12 @@ static void intHandler(cpu_state_t* regs)
 		regs->edx,
 		regs->esi,
 		regs->edi,
-		regs->ebp);
-*/
+		regs->ebp);*/
+
 	regs->eax = call(syscall);
 }
 
 void syscall_init()
 {
-	interrupts_registerHandler(SYSCALL_INTERRUPT, intHandler);
+	interrupts_registerHandler(SYSCALL_INTERRUPT, int_handler);
 }

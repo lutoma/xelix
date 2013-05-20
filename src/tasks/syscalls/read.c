@@ -21,10 +21,13 @@
 #include <console/interface.h>
 #include <fs/vfs.h>
 #include <lib/log.h>
+#include <tasks/syscall.h>
 
 int sys_read(struct syscall syscall)
 {
-	//log(LOG_INFO, "Call to sys_read (params = %d)!\n", syscall.params[0]);
+	syscall.params[2] = (int)task_resolve_address(syscall.params[2]);
+	if(!syscall.params[2])
+		return -1;
 
 	if (syscall.params[0] == 0)
 		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);

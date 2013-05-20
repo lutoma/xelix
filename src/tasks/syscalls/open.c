@@ -21,9 +21,14 @@
 #include <fs/vfs.h>
 #include <lib/log.h>
 #include <lib/string.h>
+#include <tasks/syscall.h>
 
 int sys_open(struct syscall syscall)
 {
+	syscall.params[0] = (int)task_resolve_address(syscall.params[0]);
+	if(!syscall.params[0])
+		return -1;
+
 	if(strcmp((char*)syscall.params[0], "/home/lutoma/test.asm"))
 		return -1;
 

@@ -1,5 +1,5 @@
-/* mmap.c: Implementation of the POSIX-compilant mmap syscall
- * Copyright © 2011 Fritz Grimpen
+/* mmap.c: Implementation of the POSIX mmap syscall
+ * Copyright © 2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,13 +18,13 @@
  */
 
 #include <memory/vmem.h>
-#include <memory/paging.h>
 #include <memory/kmalloc.h>
+#include <tasks/scheduler.h>
 #include "mmap.h"
 
 int sys_mmap(struct syscall syscall)
 {
-	void *addr = (void *)syscall.params[0];
+	//void *addr = (void *)syscall.params[0];
 	size_t length = syscall.params[1];
 	int readonly = syscall.params[2];
 	/* Ignored:
@@ -34,41 +34,17 @@ int sys_mmap(struct syscall syscall)
 	*/
 
 	// Hack until the paging stuff works.
-	return (int)kmalloc(length);
+	void* addr = kmalloc_a(length);
 
-	if (addr == NULL)
-	{
-		uint32_t counter = 4096;
-		uint32_t tmpLength = length;
-		while (1)
-		{
-			struct vmem_page *currPage = vmem_get_page_virt(vmem_currentContext, (void *)counter);
+	task_t* task = scheduler_get_current();
 
-			if (currPage == NULL && length == 0)
-			{
-				addr = (void *)currPage;
-				break;
-			}
-			else if (currPage == NULL)
-				tmpLength -= 4096;
-			else
-				tmpLength = length;
-
-			counter += 4096;
-		}
-	}
-
-	int newPages = length / 4096;
-	for (int i = 0; i < newPages; ++i)
-	{
-		struct vmem_page *newPage = vmem_new_page();
-		newPage->section = VMEM_SECTION_MMAP;
-		newPage->readonly = readonly;
-		newPage->allocated = 0;
-		newPage->virt_addr = addr + i * 4096;
-
-		vmem_add_page(vmem_currentContext, newPage);
-	}
+	struct vmem_page* page = vmem_new_page();
+	page->section = VMEM_SECTION_KERNEL;
+	page->cow = 0;
+	page->allocated = 1;
+	page->virt_addr = addr;
+	page->phys_addr = addr;
+	vmem_add_page(task->memory_context, page);
 
 	return (int) addr;
 }

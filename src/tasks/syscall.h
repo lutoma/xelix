@@ -31,4 +31,5 @@ struct syscall
 
 typedef int (*syscall_t)(struct syscall);
 
+intptr_t task_resolve_address(intptr_t virt_address);
 void syscall_init();
