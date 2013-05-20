@@ -51,10 +51,10 @@ typedef struct task {
 
 int scheduler_state;
 
-task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME], char** environ, char** argv, int argc);
+task_t *scheduler_new(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME], char** environ, char** argv, int argc);
 void scheduler_add(task_t *task);
-void scheduler_terminateCurrentTask();
-task_t* scheduler_getCurrentTask();
+void scheduler_terminate_current();
+task_t* scheduler_get_current();
 task_t* scheduler_select(cpu_state_t* lastRegs);
 void scheduler_init();
 void scheduler_yield();

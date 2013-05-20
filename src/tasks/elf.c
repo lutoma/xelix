@@ -67,7 +67,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 		memcpy(phead->virtaddr, (void*)bin + phead->offset, phead->filesize);	
 	}
 
-	task_t* task = scheduler_newTask(bin->entry, NULL, name, environ, argv, argc);
+	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc);
 	return task;
 }
 

@@ -24,7 +24,7 @@
 // Return execution data.
 int sys_getexecdata(struct syscall syscall)
 {
-	task_t* proc = scheduler_getCurrentTask();
+	task_t* proc = scheduler_get_current();
 
 	switch(syscall.params[0])
 	{

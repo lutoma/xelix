@@ -54,7 +54,7 @@ int sys_kill(struct syscall syscall)
 {
 	int pid = syscall.params[0];
 	int sig = syscall.params[1];
-	task_t* current = scheduler_getCurrentTask();
+	task_t* current = scheduler_get_current();
 
 	if(pid != current->pid)
 		return -1;
@@ -65,6 +65,6 @@ int sys_kill(struct syscall syscall)
 
 	log(LOG_INFO, "tasks: PID %d was killed by %s from PID %d\n", pid, sig_name, current->pid);
 
-	scheduler_terminateCurrentTask();
+	scheduler_terminate_current();
 	return 0;
 }

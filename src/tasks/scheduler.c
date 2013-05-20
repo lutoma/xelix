@@ -1,5 +1,6 @@
 /* scheduler.c: Selecting which task is being executed next
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
+ * Copyright © 2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -53,7 +54,7 @@ void scheduler_yield()
 	asm("int 0x31");
 }
 
-void scheduler_terminateCurrentTask()
+void scheduler_terminate_current()
 {
 	log(LOG_DEBUG, "scheduler: Deleting current task <%s>\n", currentTask->name);
 
@@ -144,7 +145,7 @@ static struct vmem_context *setupMemoryContext(void *stack)
  * UP TO YOU as the scheduler has no clue about how long
  * your program is.
  */
-task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME], char** environ, char** argv, int argc)
+task_t* scheduler_new(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME], char** environ, char** argv, int argc)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
@@ -159,7 +160,7 @@ task_t *scheduler_newTask(void *entry, task_t *parent, char name[SCHEDULER_MAXNA
 	thisTask->state->esp = stack + STACKSIZE - 3;
 	thisTask->state->ebp = thisTask->state->esp;
 
-	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminateCurrentTask;
+	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
 	*(thisTask->state->ebp + 2) = NULL; // base pointer
 	
 	// Instruction pointer (= start of the program)
@@ -202,7 +203,7 @@ void scheduler_add(task_t *task)
 	log(LOG_INFO, "scheduler: Registered new task with PID %d <%s>\n", task->pid, task->name);
 }
 
-task_t* scheduler_getCurrentTask()
+task_t* scheduler_get_current()
 {
 	return currentTask;
 }

@@ -50,7 +50,7 @@ static void panicHandler(cpu_state_t* regs)
 	printf("Technical information:\n\n");
 	printf("Last PIT ticknum: %d\n", pit_getTickNum());
 	
-	task_t* task = scheduler_getCurrentTask();
+	task_t* task = scheduler_get_current();
 	
 	if(task != NULL)
 		printf("Running task: %d\n\n", task->pid);

@@ -22,5 +22,5 @@
 
 int sys_getpid(struct syscall syscall)
 {
-	return scheduler_getCurrentTask()->pid;
+	return scheduler_get_current()->pid;
 }

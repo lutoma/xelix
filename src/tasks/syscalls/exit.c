@@ -22,7 +22,7 @@
 
 int sys_exit(struct syscall syscall)
 {
-	scheduler_getCurrentTask()->task_state = TASK_STATE_TERMINATED;
+	scheduler_get_current()->task_state = TASK_STATE_TERMINATED;
 	scheduler_yield();
 	return 0;
 }
