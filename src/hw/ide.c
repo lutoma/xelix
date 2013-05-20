@@ -75,7 +75,7 @@ void ata_wait_ready(uint16_t bus) {
 
 void ide_init(uint16_t bus) {
 
-	log(LOG_INFO, "Initializing IDE device on bus %d\n", bus);
+	log(LOG_INFO, "ide: Initializing IDE device on bus %d\n", bus);
 
 	outb(bus + 1, 1);
 	outb(bus + 0x306, 0);
@@ -87,7 +87,6 @@ void ide_init(uint16_t bus) {
 	ata_io_wait(bus);
 
 	int status = inb(bus + ATA_REG_COMMAND);
-	log(LOG_INFO, "status = %x\n", status);
 
 	ata_wait_ready(bus);
 
@@ -104,10 +103,6 @@ void ide_init(uint16_t bus) {
 		ptr[i+1] = ptr[i];
 		ptr[i] = tmp;
 	}
-
-	//log(LOG_INFO, "ata device %s\n", device.model);
-	log(LOG_INFO, "sectors_48 = %d\n", (uint32_t)device.sectors_48);
-	log(LOG_INFO, "sectors_28 = %d\n", device.sectors_28);
 
 	outb(bus + ATA_REG_CONTROL, 0x02);
 }
