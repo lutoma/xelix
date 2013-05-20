@@ -3,6 +3,6 @@
 *~
 .*.swp
 floppy.img
-Makefile
+./Makefile
 xelix.bin
 tags
