@@ -77,75 +77,13 @@ void scheduler_remove(task_t *t)
 	t->last->next = t->next;
 }
 
-static struct vmem_context *setupMemoryContext(void *stack)
-{
-	log(LOG_DEBUG, "scheduler: Setup new Memory Context [%d]\n", stack);
-	struct vmem_context *ctx = vmem_new();
-	
-	/* Protect unused kernel space (0x7fff0000 - 0x7fffc000) */
-	for(int addr = 0x7fff0000; addr <= 0x7fffc000; addr += PAGE_SIZE)
-	{
-		struct vmem_page *currPage = vmem_new_page();
-		currPage->allocated = 0;
-		currPage->section = VMEM_SECTION_KERNEL;
-		currPage->readonly = 1;
-		currPage->virt_addr = (void *)addr;
-
-		vmem_add_page(ctx, currPage);
-	}
-
-	struct vmem_page *stackPage = vmem_new_page();
-	stackPage->allocated = 1;
-	stackPage->section = VMEM_SECTION_STACK;
-	stackPage->virt_addr = (void *)0x7fffe000;
-	stackPage->phys_addr = stack;
-
-	/* Additional stack space if already allocated stack is full */
-
-	struct vmem_page *stackPage2 = vmem_new_page();
-	stackPage2->section = VMEM_SECTION_STACK;
-	stackPage2->virt_addr = (void *)0x7fffd000;
-
-	vmem_add_page(ctx, stackPage);
-	vmem_add_page(ctx, stackPage2);
-
-	/* Map memory from 0x100000 to 0x17f000 (Kernel-related data) */
-	int pos = 0x100000;
-	while (pos <= 0x17f000)
-	{
-		struct vmem_page *currPage = vmem_new_page();
-		currPage->allocated = 1;
-		currPage->section = VMEM_SECTION_KERNEL;
-		currPage->readonly = 1;
-		currPage->virt_addr = (void *)pos;
-		currPage->phys_addr = (void *)pos;
-
-		vmem_add_page(ctx, currPage);
-
-		pos += PAGE_SIZE;
-	}
-
-	/* Map unused interrupt handler */
-
-	struct vmem_page *intHandler = vmem_new_page();
-	intHandler->section = VMEM_SECTION_KERNEL;
-	intHandler->readonly = 1;
-	intHandler->allocated = 1;
-	intHandler->virt_addr = (void *)0x7ffff000;
-	intHandler->phys_addr = (void *)0;
-
-	vmem_add_page(ctx, intHandler);
-
-	return ctx;
-}
-
-
 /* Setup a new task, including the necessary paging context.
  * However, mapping the program itself into the context is
  * UP TO YOU as the scheduler has no clue about how long
  * your program is.
  */
-task_t* scheduler_new(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME], char** environ, char** argv, int argc)
+task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
+	char** environ, char** argv, int argc, struct vmem_context* memory_context)
 {
 	task_t* thisTask = (task_t*)kmalloc(sizeof(task_t));
 	
@@ -153,8 +91,7 @@ task_t* scheduler_new(void *entry, task_t *parent, char name[SCHEDULER_MAXNAME],
 	memset(stack, 0, STACKSIZE);
 	
 	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
-	thisTask->memory_context = setupMemoryContext(stack);
-	thisTask->memory_context = vmem_kernelContext;
+	thisTask->memory_context = memory_context;
 
 	// Stack
 	thisTask->state->esp = stack + STACKSIZE - 3;

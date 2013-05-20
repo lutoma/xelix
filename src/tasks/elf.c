@@ -24,6 +24,7 @@
 #include <lib/print.h>
 #include <tasks/scheduler.h>
 #include <fs/vfs.h>
+#include <memory/vmem.h>
 
 #define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
 
@@ -67,7 +68,9 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 		memcpy(phead->virtaddr, (void*)bin + phead->offset, phead->filesize);	
 	}
 
-	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc);
+	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,
+		vmem_kernelContext);
+	
 	return task;
 }
 
