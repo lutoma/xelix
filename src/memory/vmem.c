@@ -241,7 +241,18 @@ void vmem_handle_fault(uint32_t code, void *addr, void *instr)
 {
 	uint32_t addrInt = (uint32_t)addr;
 	struct vmem_page *pg = vmem_get_page_virt(vmem_currentContext, (void *)GET_PAGE(addrInt));
-	
+
+	task_t* running_task = scheduler_get_current();
+	if(running_task)
+	{
+		log(LOG_WARN, "Segmentation fault in task %s "
+			"at address 0x%x. Terminating it.\n",
+			running_task->name, addrInt);
+
+		scheduler_terminate_current();
+		return;
+	}
+
 	if (pg->virt_addr == vmem_faultAddress)
 	{
 		log(LOG_DEBUG, "Received debugging page fault\n");
