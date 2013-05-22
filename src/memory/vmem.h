@@ -1,6 +1,7 @@
 #pragma once
 
 /* Copyright © 2011 Fritz Grimpen
+ * Copyright © 2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -84,7 +85,9 @@ void *vmem_get_cache(struct vmem_context *ctx);
 
 #ifdef __i386__
 	#define PAGE_SIZE 4096
-	#define VMEM_ALIGN(x) (typeof(x))(((uint32_t)(x) & 0xFFFFF000) + 0x1000)
+	#define VMEM_ALIGN(x) (typeof(x))(((intptr_t)(x) & 0xFFFFF000) + 0x1000)
+	#define VMEM_ALIGN_DOWN(x) (typeof(x))(((intptr_t)(x) % PAGE_SIZE) ? \
+		((intptr_t)(x) - ((intptr_t)(x) % PAGE_SIZE)) : (intptr_t)x)
 #else
 	#define PAGE_SIZE 0
 	#define VMEM_ALIGN(x) (x)
