@@ -140,6 +140,11 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	thisTask->argv = argv;
 	thisTask->argc = argc;
 
+	if(parent)
+		strncpy(thisTask->cwd, parent->cwd, SCHEDULER_TASK_PATH_MAX);
+	else
+		strcpy(thisTask->cwd, "/");
+
 	return thisTask;
 }
 

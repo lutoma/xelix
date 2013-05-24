@@ -247,9 +247,7 @@ int mkdir(const char *dir_path, mode_t mode) {
 
 char* getcwd(char *buf, size_t size)
 {
-	buf[0] = '/';
-	buf[1] = 0;
-	return buf;
+	return call_getcwd(buf, size);
 }
 
 char* getwd(char *buf)
@@ -259,8 +257,7 @@ char* getwd(char *buf)
 
 int chdir(const char *path)
 {
-	errno = ENOSYS;
-	return -1;
+	return call_chdir(path);
 }
 
 int gettimeofday(struct timeval *__p, void *__tz)

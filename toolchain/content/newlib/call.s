@@ -86,3 +86,18 @@ call_kill:
     mov ecx, [esp + 8]
     int 0x80
     ret
+
+.global call_chdir
+call_chdir:
+    mov eax, 20
+    mov ebx, [esp + 4]
+    int 0x80
+    ret
+
+.global call_getcwd
+call_getcwd:
+    mov eax, 21
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    int 0x80
+    ret

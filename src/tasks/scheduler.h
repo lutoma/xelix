@@ -23,6 +23,7 @@
 #include <memory/vmem.h>
 
 #define SCHEDULER_MAXNAME 256
+#define SCHEDULER_TASK_PATH_MAX 256
 
 // Single linked list
 typedef struct task {
@@ -47,6 +48,9 @@ typedef struct task {
 	char** environ;
 	char** argv;
 	int argc;
+
+	// TODO Is this actually the same as PATH_MAX in our toolchain?
+	char cwd[SCHEDULER_TASK_PATH_MAX + 1];
 } task_t;
 
 int scheduler_state;

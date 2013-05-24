@@ -1,3 +1,5 @@
+#pragma once
+
 /* Copyright © 2013 Lukas Martini
  *
  * This file is part of Xelix.
@@ -16,20 +18,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_CALL_H
-#define LIB_CALL_H
+#include <lib/generic.h>
+#include <tasks/syscall.h>
 
-extern unsigned int call_open(char *path);
-extern unsigned int call_read(unsigned int fd, void *buffer, unsigned int count);
-extern unsigned int call_write(unsigned int fd, void *buffer, unsigned int count);
-extern unsigned int call_exit(int return_code);
-extern void* call_brk(int incr);
-extern int call_getpid();
-extern int call_seek(int file, int ptr, int dir);
-extern int call_kill(int pid, int sig);
-extern void* call_mmap(int incr);
-extern int call_chdir(const char* path);
-extern char* call_getcwd(char *buf, size_t size);
-
-#endif
-
+int sys_chdir(struct syscall syscall);
+int sys_getcwd(struct syscall syscall);
