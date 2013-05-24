@@ -21,6 +21,16 @@
 #include <hw/serial.h>
 #include <memory/kmalloc.h>
 
+// Current modifier keys
+static console_modifiers_t modifiers = {
+	.shift_left = false,
+	.shift_right = false,
+	.control_left = false,
+	.control_right = false,
+	.alt = false,
+	.super = false
+};
+
 static void console_driver_serial_setCursor(console_info_t* info, uint32_t x, uint32_t y)
 {
 }
@@ -42,13 +52,17 @@ static int console_driver_serial_write(console_info_t* info, char c)
 	return 1;
 }
 
-static char console_driver_serial_read(console_info_t* info)
+static console_read_t* console_driver_serial_read(console_info_t* info)
 {
 	char c = serial_recv();
 	if (c < 0x20 && c != '\n' && c != '\r')
 		return 0;
 
-	return c;
+	console_read_t* read = kmalloc(sizeof(console_read_t));
+	read->character = c;
+	read->modifiers = &modifiers;
+
+	return read;
 }
 
 static int console_driver_serial_clear(console_info_t* info)

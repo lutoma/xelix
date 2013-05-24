@@ -47,14 +47,14 @@ static struct keyboard_buffer keyboard_buffer = {
 };
 
 // Current modifier keys
-struct {
-	bool shift_left:1;
-	bool shift_right:1;
-	bool control_left:1;
-	bool control_right:1;
-	bool alt:1;
-	bool super:1;
-} modifiers;
+static console_modifiers_t modifiers = {
+	.shift_left = false,
+	.shift_right = false,
+	.control_left = false,
+	.control_right = false,
+	.alt = false,
+	.super = false
+};
 
 static dict_t* dictionary;
 static char* current_keymap;
@@ -223,12 +223,10 @@ static void irq_handler(cpu_state_t* regs)
 		handleScancode(code, 0); // normal scancode
 }
 
-static char console_driver_keyboard_read(console_info_t *info)
+static console_read_t* console_driver_keyboard_read(console_info_t *info)
 {
 	if (keyboard_buffer.size == 0 || keyboard_buffer.offset == 0)
-		return 0;
-
-	char retval = keyboard_buffer.data[0];
+		return NULL;
 
 	if (keyboard_buffer.size == 1)
 	{
@@ -244,7 +242,11 @@ static char console_driver_keyboard_read(console_info_t *info)
 		keyboard_buffer.data = new_buffer;
 	}
 
-	return retval;
+	console_read_t* read = kmalloc(sizeof(console_read_t));
+	read->character = keyboard_buffer.data[0];
+	read->modifiers = &modifiers;
+
+	return read;
 }
 
 console_driver_t* console_driver_keyboard_init(console_driver_t* driver)

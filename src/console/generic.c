@@ -160,15 +160,20 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 
 	while (i < length)
 	{
-		buffer[i] = console->input_driver->read(&console->info);
+		console_read_t* input = console->input_driver->read(&console->info);
 
-		if(unlikely(buffer[i] == 0))
+		if(unlikely(!input))
 		{
 			if (console->info.nonblocking)
 				i++;
 			continue;
 		}
 		
+		// Save pointers elsewhere so we can free the return struct
+		buffer[i] = input->character;
+		console_modifiers_t* current_modifiers = input->modifiers;
+		kfree(input);
+
 		// Backspace
 		if(unlikely(buffer[i] == 0x8 || buffer[i] == 0x7f) && console->info.handle_backspace)
 		{
@@ -180,6 +185,11 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 			i--;
 			continue;
 		}
+
+		// Check for ^D and return immediately if found
+		if((current_modifiers->control_left || current_modifiers->control_right)
+			&& (buffer[i] == 'd' || buffer[i] == 'D'))
+			return read;
 
 		if (console->info.auto_echo && likely(buffer[i] != 0x8 && buffer[i] != 0x7f))
 			console_write(console, (char*)&buffer[i], 1);

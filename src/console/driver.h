@@ -25,9 +25,24 @@
 #define CONSOLE_DRV_CAP_SCROLL  0x02
 #define CONSOLE_DRV_CAP_SET_CURSOR 0x04
 
+// Input modifier keys
+typedef struct {
+	bool shift_left:1;
+	bool shift_right:1;
+	bool control_left:1;
+	bool control_right:1;
+	bool alt:1;
+	bool super:1;
+} console_modifiers_t;
+
+typedef struct {
+	char character;
+	console_modifiers_t* modifiers;
+} console_read_t;
+
 typedef struct {
 	int (*write)(console_info_t*, char);
-	char (*read)(console_info_t*);
+	console_read_t* (*read)(console_info_t*);
 
 	int capabilities;
 
