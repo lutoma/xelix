@@ -53,8 +53,9 @@ int execve(char *name, char **argv, char **env)
 
 int fork()
 {
+	// Todo: Set proper errno in case something goes wonky
 	errno = ENOSYS;
-	return -1;
+	return call_fork();
 }
 
 int fstat(int file, struct stat *st)

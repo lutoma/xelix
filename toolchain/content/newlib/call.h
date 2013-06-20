@@ -30,6 +30,7 @@ extern int call_kill(int pid, int sig);
 extern void* call_mmap(int incr);
 extern int call_chdir(const char* path);
 extern char* call_getcwd(char *buf, size_t size);
+extern int call_fork(void);
 
 #endif
 

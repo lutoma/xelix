@@ -40,6 +40,7 @@
 #include "syscalls/kill.h"
 #include "syscalls/getexecdata.h"
 #include "syscalls/cwd.h"
+#include "syscalls/fork.h"
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -64,6 +65,7 @@ syscall_t syscall_table[] = {
 	sys_getexecdata,	// 19
 	sys_chdir,			// 20
 	sys_getcwd			// 21
+	sys_fork			// 22
 };
 
 char* syscall_name_table[] = {
@@ -89,4 +91,5 @@ char* syscall_name_table[] = {
 	"getexecdata",	// 19
 	"chdir",		// 20
 	"getcwd"		// 21
+	"fork"			// 22
 };

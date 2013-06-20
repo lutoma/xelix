@@ -101,3 +101,9 @@ call_getcwd:
     mov ecx, [esp + 8]
     int 0x80
     ret
+
+.global call_fork
+call_fork:
+    mov eax, 22
+    int 0x80
+    ret
