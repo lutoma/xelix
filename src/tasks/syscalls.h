@@ -64,7 +64,7 @@ syscall_t syscall_table[] = {
 	sys_kill,			// 18
 	sys_getexecdata,	// 19
 	sys_chdir,			// 20
-	sys_getcwd			// 21
+	sys_getcwd,			// 21
 	sys_fork			// 22
 };
 
@@ -90,6 +90,6 @@ char* syscall_name_table[] = {
 	"kill",			// 18
 	"getexecdata",	// 19
 	"chdir",		// 20
-	"getcwd"		// 21
+	"getcwd",		// 21
 	"fork"			// 22
 };
