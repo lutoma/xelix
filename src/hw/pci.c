@@ -173,16 +173,21 @@ void pci_init()
 			for(func = 0; func < PCI_MAX_FUNC; func++)
 			{
 				vendor = _pci_get_vendor_id(bus, dev, func);
-				if (vendor == 0xffff)
+
+				/* Devices which don't exist should have a vendor of 0xffff,
+				 * however, some weird chipsets also wrongly set it to zero.
+				 */
+				if (vendor == 0xffff || vendor == 0)
 					continue;
 					
 				pci_load_device(devices + i, bus, dev, func);
-				log(LOG_INFO, "pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d pin %d)\n",
+				log(LOG_INFO, "pci: %d:%d.%d: [%x:%x] 0x%x (rev %x class %x iobase %x type %x int %d pin %d)\n",
 						devices[i].bus,
 						devices[i].dev,
 						devices[i].func,
 						devices[i].vendorID,
 						devices[i].deviceID,
+						devices[i].class,
 						devices[i].revision,
 						devices[i].class,
 						devices[i].iobase,
