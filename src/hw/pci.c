@@ -1,7 +1,7 @@
-/* pci.c: Simple PCI functions
+/* pci.c: PCI stack
  * Copyright © 2011 Barbers
  * Copyright © 2011 Fritz Grimpen
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011, 2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,6 +19,14 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* This file follows the following convention:
+ * 
+ * All functions prefixed by an underscore expect a bus, device & function
+ * number as argument and should generally only be used internally. All
+ * other functions take a pci_device_t* as argument (from which they will
+ * extract bus, device & function themselves).
+ */
+
 #include "pci.h"
 #include <lib/log.h>
 
@@ -31,50 +39,50 @@
 
 pci_device_t devices[65536];
 
-static inline int getAddress(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
+static inline int get_address(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
 	return 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
 }
 
-uint32_t pci_configRead(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
+uint32_t _pci_config_read(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {
-  outl(PCI_CONFIG_ADDRESS, getAddress(bus, dev, func, offset));
+  outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
 	if (offset % 4 == 0)
 		return inl(PCI_CONFIG_DATA);
 
 	return (inl(PCI_CONFIG_DATA) >> ((offset % 4) * 8)) & 0xffff;
 }
 
-void pci_configWrite(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
+void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
 {
-	outl(PCI_CONFIG_ADDRESS, getAddress(bus, dev, func, offset));
+	outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
 	outl(PCI_CONFIG_DATA, val);
 }
 
 // *trollface*
 // bar ∈ { x | x ∈ ℕ ∧ x ∈ [0, 5] }
-uint32_t pci_getBAR(uint8_t bus, uint8_t dev, uint8_t func, uint8_t bar)
+uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar)
 {
 	if (bar >= 6)
 		return 0;
 
-	uint8_t headerType = pci_getHeaderType(bus, dev, func);
+	uint8_t headerType = pci_get_header_type(device);
 	if (headerType == 0x2 || (headerType == 0x1 && bar < 2))
 		return 0;
 
 	uint8_t _register = 0x10 + 0x4 * bar;
-	return pci_configRead(bus, dev, func, _register);
+	return pci_config_read(device, _register);
 }
 
-uint32_t pci_getIOBase(uint8_t bus, uint8_t dev, uint8_t func)
+uint32_t pci_get_IO_base(pci_device_t* device)
 {
-	uint8_t bars = 6 - pci_getHeaderType(bus, dev, func) * 4;
+	uint8_t bars = 6 - pci_get_header_type(device) * 4;
 	uint8_t i = 0;
 	uint32_t bar;
 
 	while (i < bars)
 	{
-		bar = pci_getBAR(bus, dev, func, i++);
+		bar = pci_get_BAR(device, i++);
 		if (bar & 0x1)
 			return bar & 0xfffffffc;
 	}
@@ -83,15 +91,15 @@ uint32_t pci_getIOBase(uint8_t bus, uint8_t dev, uint8_t func)
 }
 
 // TODO Write correct code (This is not correct ;))
-uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func)
+uint32_t pci_get_mem_base(pci_device_t* device)
 {
-	uint8_t bars = 6 - pci_getHeaderType(bus, dev, func) * 4;
+	uint8_t bars = 6 - pci_get_header_type(device) * 4;
 	uint8_t i = 0;
 	uint32_t bar;
 
 	while ( bars > i)
 	{
-		bar = pci_getBAR(bus, dev, func, i++);
+		bar = pci_get_BAR(device, i++);
 		if ((bar & 0x1) == 0)
 			return bar & 0xfffffff0;
 	}
@@ -99,33 +107,24 @@ uint32_t pci_getMemBase(uint8_t bus, uint8_t dev, uint8_t func)
 	return 0;
 }
 
-uint8_t pci_getInterruptPin(uint8_t bus, uint8_t dev, uint8_t func)
+void pci_load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func)
 {
-	return pci_configRead(bus, dev, func, 0x3d);
-}
-
-uint8_t pci_getInterruptLine(uint8_t bus, uint8_t dev, uint8_t func)
-{
-	return pci_configRead(bus, dev, func, 0x3c);
-}
-
-void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func)
-{
-	device->vendorID = pci_getVendorId(bus, dev, func);
-	device->deviceID = pci_getDeviceId(bus, dev, func);
 	device->bus = bus;
 	device->dev = dev;
 	device->func = func;
-	device->revision = pci_getRevision(bus, dev, func);
-	device->class = pci_getClass(bus, dev, func);
-	device->iobase = pci_getIOBase(bus, dev, func);
-	device->membase = pci_getMemBase(bus, dev, func);
-	device->headerType = pci_getHeaderType(bus, dev, func);
-	device->interruptPin = pci_getInterruptPin(bus, dev, func);
-	device->interruptLine = pci_getInterruptLine(bus, dev, func);
+
+	device->vendorID = pci_get_vendor_id(device);
+	device->deviceID = pci_get_device_id(device);
+	device->revision = pci_get_revision(device);
+	device->class = pci_get_class(device);
+	device->iobase = pci_get_IO_base(device);
+	device->membase = pci_get_mem_base(device);
+	device->headerType = pci_get_header_type(device);
+	device->interruptPin = pci_get_interrupt_pin(device);
+	device->interruptLine = pci_get_interrupt_line(device);
 }
 
-uint32_t pci_searchDevice(pci_device_t** returnDevices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum)
+uint32_t pci_search_by_id(pci_device_t** returnDevices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum)
 {
 	int i = 0;
 	int j = 0;
@@ -142,7 +141,7 @@ uint32_t pci_searchDevice(pci_device_t** returnDevices, uint16_t vendorId, uint1
 	return j;
 }
 
-uint32_t pci_searchByClass(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum)
+uint32_t pci_search_by_class(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum)
 {
 	int i = 0;
 	int j = 0;
@@ -173,11 +172,11 @@ void pci_init()
 		{
 			for(func = 0; func < PCI_MAX_FUNC; func++)
 			{
-				vendor = pci_getVendorId(bus, dev, func);
+				vendor = _pci_get_vendor_id(bus, dev, func);
 				if (vendor == 0xffff)
 					continue;
 					
-				pci_loadDevice(devices + i, bus, dev, func);
+				pci_load_device(devices + i, bus, dev, func);
 				log(LOG_INFO, "pci: %d:%d.%d: Unknown Device [%x:%x] (rev %x class %x iobase %x type %x int %d pin %d)\n",
 						devices[i].bus,
 						devices[i].dev,
