@@ -36,6 +36,11 @@
 
 #define POW2(x) (2 << (x - 1))
 
+#define bit_set(num, bit) ((num) | 1 << (bit))
+#define bit_clear(num, bit) ((num) & ~(1 << (bit)))
+#define bit_toggle(num, bit) ((num) ^ 1 << (bit))
+#define bit_get(num, bit) ((num) & (1 << (bit)))
+
 typedef int64_t time_t;
 typedef int64_t size_t;
 typedef uint8_t byte;
