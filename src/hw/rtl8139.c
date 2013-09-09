@@ -29,8 +29,10 @@
 #include <net/net.h>
 #include <lib/string.h>
 
-#define VENDOR_ID 0x10ec
-#define DEVICE_ID 0x8139
+static uint32_t vendor_device_combos[][2] = {
+	{0x10ec, 0x8139},
+	{NULL}
+};
 
 // This driver will only support that many cards
 #define MAX_CARDS 50 
@@ -290,7 +292,7 @@ void rtl8139_init()
 	memset(rtl8139_cards, 0, MAX_CARDS * sizeof(struct rtl8139_card));
 
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * MAX_CARDS);
-	uint32_t numDevices = pci_search_by_id(devices, VENDOR_ID, DEVICE_ID, MAX_CARDS);
+	uint32_t numDevices = pci_search_by_id(devices, vendor_device_combos, MAX_CARDS);
 	
 	log(LOG_INFO, "rtl8139: Discovered %d device%p.\n", numDevices);
 	

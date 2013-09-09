@@ -97,9 +97,10 @@ void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, u
 #define pci_get_header_type(device) ((uint16_t)pci_config_read(device, 0xe) & 127)
 
 uint32_t pci_get_IO_base(pci_device_t* device);
+uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar);
 
 void pci_loadDevice(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func);
-uint32_t pci_search_by_id(pci_device_t** devices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum);
+uint32_t pci_search_by_id(pci_device_t** returnDevices, uint32_t vendor_device_combos[][2], uint32_t maxNum);
 uint32_t pci_search_by_class(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum);
 
 void pci_init();

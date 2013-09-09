@@ -124,21 +124,47 @@ void pci_load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t fun
 	device->interruptLine = pci_get_interrupt_line(device);
 }
 
-uint32_t pci_search_by_id(pci_device_t** returnDevices, uint16_t vendorId, uint16_t deviceId, uint32_t maxNum)
+/* Searches a PCI device by vendor and device IDs.
+ * returnDevices should be an allocated empty array, the size of which should be specified in maxNum. 
+ * vendor_device_combos should be an array of the format
+ *
+ * static uint32_t vendor_device_combos[][2] = {
+ * 	{vendor_id, device_id},
+ * 	{vendor_id, device_id},
+ * 	{NULL}
+ * };
+ *
+ * Please don't forget the NULL in the end. Pretty please.
+ */
+uint32_t pci_search_by_id(pci_device_t** returnDevices, uint32_t vendor_device_combos[][2], uint32_t maxNum)
 {
-	int i = 0;
-	int j = 0;
 
-	for(; i < 65536 && j < maxNum; i++)
+	if(!vendor_device_combos[0] || !vendor_device_combos[0][0])
 	{
-		if (devices[i].vendorID != vendorId || devices[i].deviceID != deviceId)
-			continue;
-
-		returnDevices[j] = &devices[i];
-		j++;
+		log(LOG_ERR, "pci: Some dumbass is passing pci_search_by_id empty combo arrays\n");
+		return 0;
 	}
 
-	return j;
+	/* FIXME Should be a binary search or something else more reasonable
+	 * We could probably also sort the devices by ID in the first place
+	 */
+
+	int devices_found = 0;
+
+	for(int i = 0; vendor_device_combos[i][0]; i++)
+	{
+		for(int device = 0; device < 65536 && devices_found < maxNum; device++)
+		{
+			if (devices[device].vendorID != vendor_device_combos[i][0] ||
+				devices[device].deviceID != vendor_device_combos[i][1])
+				continue;
+
+			returnDevices[devices_found] = &devices[device];
+			devices_found++;
+		}
+	}
+
+	return devices_found;
 }
 
 uint32_t pci_search_by_class(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum)
