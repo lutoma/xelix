@@ -45,8 +45,6 @@
 #include <net/slip.h>
 #include <hw/ide.h>
 #include <fs/ext2.h>
-#include <hw/ens1370.h>
-#include <hw/ac97.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -102,11 +100,6 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	#ifndef XELIX_WITHOUT_SLIP
 		init(slip);
 	#endif
-
-	init(ens1370);
-	init(ac97);
-
-	while(true);
 
 	// Hardcoded for dash, but doesn't hurt for other processes either
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
