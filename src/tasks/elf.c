@@ -30,7 +30,7 @@
 
 #define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
 
-char header[4] = {0x7f, 'E', 'L', 'F'};
+static char header[4] = {0x7f, 'E', 'L', 'F'};
 
 task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 {
