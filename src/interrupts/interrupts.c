@@ -1,6 +1,6 @@
 /* interrupts.c: Initialization of and interface to interrupts.
  * Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011, 2013 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -26,38 +26,46 @@
 #include <memory/vmem.h>
 #include <memory/paging.h>
 
-interruptHandler_t interruptHandlers[256];
+static interrupt_handler_t handlers[256];
 
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
 cpu_state_t* interrupts_callback(cpu_state_t* regs)
 {
-	vmem_processContext = vmem_currentContext;
-	paging_apply(vmem_kernelContext);
-	interruptHandler_t handler = interruptHandlers[regs->interrupt];
+	struct vmem_context* original_context = vmem_currentContext;
+
+	if(original_context != vmem_kernelContext)
+		paging_apply(vmem_kernelContext);		
+
+	interrupt_handler_t handler = handlers[regs->interrupt];
 
 	if(handler != NULL)
 		handler(regs);
 	
-	if((regs->interrupt == IRQ0 || regs->interrupt == 0x31) && scheduler_state) // PIT
+	/* Timer interrupt
+	 * FIXME Should get a normal interrupt handler like everything else
+	 */
+	if((regs->interrupt == IRQ0 || regs->interrupt == 0x31) && scheduler_state)
 	{
-		
-		task_t* nowTask = scheduler_select(regs);
-		if((int)nowTask != NULL && (int)nowTask->state != NULL)
+		task_t* new_task = scheduler_select(regs);
+
+		if((int)new_task != NULL && (int)new_task->state != NULL)
 		{
-			paging_apply(nowTask->memory_context);
-			return nowTask->state;
+			paging_apply(new_task->memory_context);
+			return new_task->state;
 		}
 	}
 
-	paging_apply(vmem_processContext);
+	if(original_context != vmem_currentContext)
+		paging_apply(original_context);
+
 	return regs;
 }
 
-void interrupts_registerHandler(uint8_t n, interruptHandler_t handler)
+void interrupts_registerHandler(uint8_t n, interrupt_handler_t handler)
 {
-	interruptHandlers[n] = handler;
+	handlers[n] = handler;
 	
 	if(n > 31)
 		log(LOG_INFO, "interrupts: Registered interrupt handler for IRQ %d.\n", n - 32);
@@ -65,17 +73,10 @@ void interrupts_registerHandler(uint8_t n, interruptHandler_t handler)
 		log(LOG_INFO, "interrupts: Registered interrupt handler for %d.\n", n);
 }
 
-void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interruptHandler_t handler)
+void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interrupt_handler_t handler)
 {
-		if(start >= end)
-		{
-			log(LOG_WARN, "interrupts: Warning: Attempt to bulk register interrupt handlers with start >= end.\n");
-			return;
-		}
-		
-		int32_t i;
-		for(i = start; i <= end; i++)
-			interruptHandlers[i] = handler;
+		for(; start <= end; start++)
+			handlers[start] = handler;
 
 		if(start > 31)
 			log(LOG_INFO, "interrupts: Registered interrupt handler for IRQs %d -  %d.\n", start - 32, end - 32);
@@ -88,7 +89,7 @@ void interrupts_init()
 	arch_interrupts_init();
 
 	// set all interruptHandlers to NULL.
-	memset(interruptHandlers, NULL, 256 * sizeof(interruptHandler_t));
+	memset(handlers, NULL, 256 * sizeof(interrupt_handler_t));
 	interrupts_enable();
 	
 	log(LOG_INFO, "interrupts: Initialized\n");
