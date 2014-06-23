@@ -19,7 +19,6 @@
 
 #if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 	#include <arch/i386/lib/multiboot.h>
-	#include <arch/i386/lib/acpi.h>
 #endif
 #include <lib/log.h>
 #include <lib/string.h>
@@ -87,7 +86,6 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	#endif
 
 	init(cpu);
-	init(acpi);	
 	init(pci);
 	init(syscall);
 	init(vmem);

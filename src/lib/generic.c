@@ -31,10 +31,6 @@
 #include <tasks/scheduler.h>
 #include <interrupts/interface.h>
 
-#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-	#include <arch/i386/lib/acpi.h>
-#endif
-
 // Memset function. Fills memory with something.
 void memset(void* ptr, uint8_t fill, uint32_t size)
 {
@@ -146,14 +142,6 @@ void reboot()
 void halt()
 {
 	log(LOG_WARN, "generic: Going to halt NOW!");
-	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-		acpi_powerOff();
-	#endif
-	
-	/* In case we don't have an x86(_64) architecture or the ACPI
-	 * poweroff didn't work for whatever reason, display a message
-	 * to tell the user he can manually turn of the PC now.
-	 */
 	printf("\n\nYou may turn off your PC now.\n");
 	freeze();
 }
