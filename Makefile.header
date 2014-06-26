@@ -28,7 +28,7 @@ ifeq ($(shell uname -s), Darwin)
 else
 	BUILDSYS := \"$(shell uname -srop)\"
 	MAKE_LDFLAGS += -melf_i386
-	MAKE_CCFLAGS += -frecord-gcc-switches -masm=intel
+	MAKE_CFLAGS += -frecord-gcc-switches -masm=intel
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
