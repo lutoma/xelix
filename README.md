@@ -11,7 +11,10 @@ You'll need
  * GNU CC (>= 4.4.3)
  * NASM
  * GNU Binutils
- 
+
+On OS X, you'll need to install the following packages using Homebrew:
+`gcc findutils binutils nasm`
+
 Compiling
 ---------
 

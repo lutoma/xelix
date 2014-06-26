@@ -7,7 +7,6 @@ LD := ld
 AS := nasm
 
 BUILDCOMP := \"$(shell whoami)@$(shell hostname)\"
-BUILDSYS := \"$(shell uname -srop)\"
 VERSION := 0
 VERSION_MINOR := 1
 VERSION_PATCHLEVEL := 0
@@ -17,9 +16,22 @@ ifeq ($(BUILD),)
 	BUILD := 0
 endif
 
-MAKE_CFLAGS = -O2 -frecord-gcc-switches -g -std=gnu99 -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" -pipe -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
+MAKE_CFLAGS = -O2 -g -std=gnu99 -Wall -Werror -m32 -I . -I src -ffreestanding -fno-stack-protector -nostdinc -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" -pipe -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
+MAKE_LDFLAGS = -T linker.ld -nostdlib
+MAKE_ASFLAGS = -g -f elf
+
+ifeq ($(shell uname -s), Darwin)
+	BUILDSYS := \"$(shell uname -srp)\"
+	MAKE_LDFLAGS += -arch i386
+	CC := gcc-4.8
+	AS := $(shell find /usr/local/Cellar/nasm/*/bin/nasm)
+else
+	BUILDSYS := \"$(shell uname -srop)\"
+	MAKE_LDFLAGS += -melf_i386
+	MAKE_CCFLAGS += -frecord-gcc-switches -masm=intel
+endif
 
 MAKE_CFLAGS += $(CFLAGS)
 MAKE_QEMU_FLAGS = -ctrl-grab -net nic -net user -m 250 -no-kvm
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
-
+MAKE_LDFLAGS += $(LDFLAGS)

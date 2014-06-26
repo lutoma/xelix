@@ -2,7 +2,7 @@
 	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
-	$(AS) -f elf -g -o $@ $(ASFLAGS) $<
+	$(AS) $(MAKE_ASFLAGS) -o $@ $<
 
 .PHONY: INSTALL
 install: xelix.bin
