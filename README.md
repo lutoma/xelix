@@ -7,11 +7,14 @@ how things work inside of a computer. It currently only supports x86.
 You'll need
 ------------
 
- * GNU Make
+ * GNU/BSD Make
  * GNU CC (>= 4.4.3)
  * NASM
  * GNU Binutils
- 
+
+On OS X, you'll need to install the following packages using Homebrew:
+`gcc findutils binutils nasm`
+
 Compiling
 ---------
 
