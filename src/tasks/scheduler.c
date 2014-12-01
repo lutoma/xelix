@@ -27,6 +27,8 @@
 #include <lib/panic.h>
 #include <lib/string.h>
 #include <memory/vmem.h>
+#include <arch/i386/lib/multiboot.h>
+#include <tasks/elf.h>
 
 #define STACKSIZE PAGE_SIZE
 #define STATE_OFF 0
@@ -156,10 +158,23 @@ task_t* scheduler_get_current()
 	return currentTask;
 }
 
+void fork_task() {
+	log(LOG_INFO, "Hello. I'm a forked task.\n");
+	scheduler_terminate_current();
+}
+
 // Forks a task. Returns fork on success, NULL on error.
 task_t* scheduler_fork(task_t* to_fork) {
 	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
-	log(LOG_INFO, "scheduler: Discarding fork request: Not implemented.\n");
+
+	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
+	char* __argv[] = { "dash", "-liV", NULL };
+
+	task_t* new_task = scheduler_new(&fork_task, to_fork, "forktest", __env, __argv, 2, vmem_kernelContext);
+	scheduler_add(new_task);
+
+	//scheduler_terminate_current();
+
 	return NULL;
 }
 
