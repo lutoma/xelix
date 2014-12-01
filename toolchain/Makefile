@@ -52,7 +52,7 @@ binutils-install:
 binutils-make:
 	@echo "Building binutils"
 	@mkdir -p build/binutils
-	@cd build/binutils && ../../download/binutils-${BINUTILS_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls
+	@cd build/binutils && ../../download/binutils-${BINUTILS_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-werror
 	@make -C build/binutils all
 
 binutils-patch:
