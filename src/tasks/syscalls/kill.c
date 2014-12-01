@@ -25,7 +25,6 @@
 // Only supports killing the current task so far
 
 char* signal_names[] = {
-	NULL,
 	"SIGHUP",	/* hangup */
 	"SIGINT",	/* interrupt */
 	"SIGQUIT",	/* quit */
