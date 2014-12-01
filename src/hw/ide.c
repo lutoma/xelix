@@ -73,7 +73,7 @@ void ata_wait_ready(uint16_t bus) {
 	while (inb(bus + ATA_REG_STATUS) & ATA_SR_BSY);
 }
 
-void ide_init(uint16_t bus) {
+void ide_init_device(uint16_t bus) {
 
 	log(LOG_INFO, "ide: Initializing IDE device on bus %d\n", bus);
 
@@ -105,6 +105,10 @@ void ide_init(uint16_t bus) {
 	}
 
 	outb(bus + ATA_REG_CONTROL, 0x02);
+}
+
+void ide_init() {
+	ide_init_device(0x1F0);
 }
 
 void ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) {

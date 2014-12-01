@@ -90,7 +90,8 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(syscall);
 	init(vmem);
 	init(paging);
-	init(ide, 0x1F0);
+	init(ide);
+
 	init(ext2);
 
 	// Networking
