@@ -1,5 +1,5 @@
 # call.s: Syscall
-# Copyright © 2013 Lukas Martini
+# Copyright © 2013-2014 Lukas Martini
 
 # This file is part of Xelix.
 #
@@ -107,3 +107,13 @@ call_fork:
     mov eax, 22
     int 0x80
     ret
+
+.global call_execve
+call_execve:
+    mov eax, 23
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    mov edx, [esp + 12]
+    int 0x80
+    ret
+
