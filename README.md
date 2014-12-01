@@ -4,6 +4,10 @@ Xelix README
 Xelix is an open source (GPL v3+ licensed) kernel, mainly for learning
 how things work inside of a computer. It currently only supports x86.
 
+Here, have a screenshot for good measure:
+
+![A screenshot of Xelix running dash](https://i.imgur.com/v7S6U1t.png)
+
 You'll need
 ------------
 
