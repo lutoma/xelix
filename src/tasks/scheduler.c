@@ -173,7 +173,7 @@ task_t* scheduler_fork(task_t* to_fork) {
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
 	char* __argv[] = { "dash", "-liV", NULL };
 
-	task_t* new_task = scheduler_new(&fork_task, to_fork, "forktest", __env, __argv, 2, vmem_kernelContext);
+	task_t* new_task = scheduler_new(&fork_task, to_fork, "forktest", __env, __argv, 2, vmem_kernelContext, false);
 	scheduler_add(new_task);
 
 	//scheduler_terminate_current();
