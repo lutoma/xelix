@@ -175,6 +175,13 @@ task_t* scheduler_get_current()
 	return currentTask;
 }
 
+// Forks a task. Returns fork on success, NULL on error.
+task_t* scheduler_fork(task_t* to_fork) {
+	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
+	log(LOG_INFO, "scheduler: Discarding fork request: Not implemented.\n");
+	return NULL;
+}
+
 // Called by the PIT a few hundred times per second.
 task_t* scheduler_select(cpu_state_t* lastRegs)
 {

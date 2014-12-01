@@ -19,10 +19,18 @@
 
 #include <lib/log.h>
 #include <tasks/syscall.h>
+#include <tasks/scheduler.h>
 
 int sys_fork(struct syscall syscall)
 {
-	log(LOG_INFO, "sys_fork: Received fork syscall. Discarding and returning -1.\n");
-	return -1;
+	task_t* current_task = scheduler_get_current();
+	task_t* fork_task = scheduler_fork(current_task);
+
+	if(fork_task == NULL) {
+		return -1;
+	}
+
+	scheduler_add(fork_task);
+	return fork_task->pid;
 }
 	
