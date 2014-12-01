@@ -1,5 +1,6 @@
-/* panic.c: Description of what this file does
+/* panic.c: Handle kernel panics
  * Copyright © 2011 Lukas Martini, Benjamin Richter
+ * Copyright © 2014 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,18 +25,13 @@
 #include <console/interface.h>
 #include <interrupts/interface.h>
 #include <hw/cpu.h>
+#include <hw/pit.h>
+#include <fs/vfs.h>
+#include <lib/string.h>
 
-void dumpCpuState(cpu_state_t* regs) {
-	printf("CPU State:\n");
-	printf("EAX=0x%x\tEBX=0x%x\tECX=0x%x\tEDX=0x%x\n",
-		regs->eax, regs->ebx, regs->ecx, regs->edx);
-	printf("ESI=0x%x\tEDI=0x%x\tESP=0x%x\tEBP=0x%x\n",
-		regs->esi, regs->edi, regs->esp, regs->ebp);
-	printf("DS=0x%x\tSS=0x%x\tCS=0x%x\tEFLAGS=0x%x\n",
-		regs->ds, regs->ss, regs->cs, regs->eflags);
+void stacktrace(cpu_state_t* regs) {
+	printf("\nCDECL stack trace:\n");
 
-	printf("\n");
-	printf("Return Addresses:\n");
 	uint8_t* bp = regs->ebp;
 	do {
 		printf("* 0x%x\n", *(bp + 2));
@@ -43,26 +39,45 @@ void dumpCpuState(cpu_state_t* regs) {
 	} while (bp);
 }
 
-static void panicHandler(cpu_state_t* regs)
-{
-	printf("%%Kernel Panic: %s%%\n\n", 0x04, *((char**)PANIC_INFOMEM));
+void dump_registers(cpu_state_t* regs) {
+	printf("CPU State:\n");
+	printf("EAX=0x%x\tEBX=0x%x\tECX=0x%x\tEDX=0x%x\n",
+		regs->eax, regs->ebx, regs->ecx, regs->edx);
+	printf("ESI=0x%x\tEDI=0x%x\tESP=0x%x\tEBP=0x%x\n",
+		regs->esi, regs->edi, regs->esp, regs->ebp);
+	printf("DS=0x%x\tSS=0x%x\tCS=0x%x\tEFLAGS=0x%x\tEIP=0x%x\n",
+		regs->ds, regs->ss, regs->cs, regs->eflags, regs->eip);
+}
 
-	printf("Technical information:\n\n");
-	printf("Last PIT ticknum: %d\n", pit_getTickNum());
+static void panic_handler(cpu_state_t* regs)
+{
+	printf("\n%%Kernel Panic: %s%%\n", 0x04, *((char**)PANIC_INFOMEM));
+
+	uint64_t ticknum = pit_getTickNum();
+	printf("Last PIT ticknum: %d (tickrate %d, approx. uptime: %d seconds)\n",
+		ticknum,
+		PIT_RATE,
+		ticknum / PIT_RATE);
 	
 	task_t* task = scheduler_get_current();
 	
-	if(task != NULL)
-		printf("Running task: %d\n\n", task->pid);
-	else
-		printf("Running task: [No task running]\n\n");
+	if(task != NULL) {
+		printf("Running task: %d <%s>\n", task->pid, task->name);
+	} else
+		printf("Running task: [No task running]\n");
 
-	dumpCpuState(regs);
+	if(vfs_last_read_attempt[0] == NULL) {
+		strncpy(vfs_last_read_attempt, "No file system read attempts.", 512);
+	}
 
+	printf("Last VFS read attempt: %s\n\n", vfs_last_read_attempt);
+
+	dump_registers(regs);
+	stacktrace(regs);
 	freeze();
 }
 
 void panic_init()
 {
-	interrupts_registerHandler(0x30, panicHandler);
+	interrupts_registerHandler(0x30, panic_handler);
 }
