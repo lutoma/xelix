@@ -1,6 +1,6 @@
 /* scheduler.c: Selecting which task is being executed next
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2012-2014 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -36,42 +36,23 @@
 task_t* currentTask = NULL;
 uint64_t highestPid = -0;
 
-/* If we kill a process using scheduler_terminateCurrentTask, we also
- * fire an IRQ to switch to the next process.  However, that way, the
- * next process running would get less cpu time, as the next timer
- * interrupt happens to be faster. Therefore, if this var is set, the
- * scheduler 'skips' one tick, effectively giving the running process
- * more time.
- */
-#define SKIP_WAIT 2
-#define SKIP_NEXT 1
-#define SKIP_OFF  0
-int skipnext = SKIP_OFF;
-
 void scheduler_yield()
 {
-	skipnext = SKIP_WAIT;
 	asm("int 0x31");
 }
 
 void scheduler_terminate_current()
 {
-	log(LOG_DEBUG, "scheduler: Deleting current task <%s>\n", currentTask->name);
-
-	if(currentTask->next == currentTask)
-		currentTask = NULL;
-	else
-	{
-		currentTask->next->last = currentTask->last;
-		currentTask->last->next = currentTask->next;
-	}
-
+	log(LOG_DEBUG, "scheduler: Terminating current task %d <%s>\n", currentTask->pid, currentTask->name);
+	currentTask->task_state = TASK_STATE_TERMINATED;
 	scheduler_yield();
 }
 
 void scheduler_remove(task_t *t)
 {
-	log(LOG_DEBUG, "scheduler: Deleting task %d <%s>\n", t->pid, t->name);
+	if(t->next == t || t->last == t) {
+		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
+	}
 
 	t->next->last = t->last;
 	t->last->next = t->next;
@@ -191,30 +172,23 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 		return currentTask;
 	}
 
+	// Save CPU register state of previous task
 	currentTask->state = lastRegs;
 
-	if(skipnext == SKIP_WAIT) skipnext = SKIP_NEXT;
-	else if(skipnext == SKIP_NEXT)
-	{
-		skipnext = SKIP_OFF;
-		return currentTask;
-	}
+	/* Cycle through tasks until we find one that isn't killed or terminated,
+	 * while along the way unlinking the killed/terminated ones.
+	*/
+	currentTask = currentTask->next;
 
-	while (1)
+	while (currentTask->task_state == TASK_STATE_KILLED ||
+	       currentTask->task_state == TASK_STATE_TERMINATED)
 	{
+		scheduler_remove(currentTask);
 		currentTask = currentTask->next;
-		
-		if (currentTask->task_state == TASK_STATE_KILLED ||
-				currentTask->task_state == TASK_STATE_TERMINATED)
-		{
-			if (currentTask->next == currentTask)
-				currentTask->next = NULL;
-			scheduler_remove(currentTask);
-		}
-
-		if (unlikely(currentTask == NULL || currentTask->task_state == TASK_STATE_RUNNING))
-			break;
 	}
+
+	if (unlikely(currentTask == NULL))
+		panic("scheduler: No more tasks.\n");
 
 	return currentTask;
 }
