@@ -35,6 +35,8 @@
 #define STATE_INITIALIZING 1
 #define STATE_INITIALIZED 2
 
+#define state_from_stack(stack) (stack + STACKSIZE - sizeof(cpu_state_t) - 3)
+
 task_t* currentTask = NULL;
 uint64_t highestPid = -0;
 
@@ -100,7 +102,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 		vmem_add_page(memory_context, page);
 	}
 	
-	thisTask->state = stack + STACKSIZE - sizeof(cpu_state_t) - 3;
+	thisTask->state = state_from_stack(stack);
 	thisTask->memory_context = memory_context;
 
 	// Stack
@@ -161,11 +163,6 @@ task_t* scheduler_get_current()
 	return currentTask;
 }
 
-void fork_task() {
-	log(LOG_INFO, "Hello. I'm a forked task.\n");
-	scheduler_terminate_current();
-}
-
 // Forks a task. Returns fork on success, NULL on error.
 task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 {
@@ -176,12 +173,23 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 
 	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, __argv, 2, vmem_kernelContext, false);
 
-	// strncpy name
-	new_task->state->eax = 0;
-	new_task->state->ebx = 1337;
-	scheduler_add(new_task);
+	// Copy registers
+	new_task->state->ebx = state->ebx;
+	new_task->state->ecx = state->ecx;
+	new_task->state->edx = state->edx;
+	new_task->state->ds = state->ds;
+	new_task->state->edi = state->edi;
+	new_task->state->esi = state->esi;
+	new_task->state->cs = state->cs;
+	new_task->state->eflags = state->eflags;
+	new_task->state->ss = state->ss;
 
-	//scheduler_terminate_current();
+	// Copy stack
+	// TODO
+
+	strncpy(new_task->name, to_fork->name, SCHEDULER_MAXNAME);
+
+	scheduler_add(new_task);
 	return new_task;
 }
 
