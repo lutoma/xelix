@@ -1,5 +1,5 @@
 /* init.c: Initialization code of the kernel
- * Copyright © 2010, 2011 Lukas Martini
+ * Copyright © 2010-2014 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -82,6 +82,15 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	// Check if we were actually booted by a multiboot bootloader
 	if(multiboot_checksum != MULTIBOOT_KERNELMAGIC) {
 		panic("Was not booted by a multiboot compliant bootloader.\n");
+	}
+
+	// Find out if we have enough memory to sanely operate
+	if(!bit_get(multiboot_info->flags, 1)) {
+		panic("No memory information passed by bootloader.\n");
+	}
+
+	if((multiboot_info->memLower + multiboot_info->memUpper) < (60 * 1024)) {
+		panic("Not enough RAM to safely proceed - should be at least 60 MB.\n");
 	}
 
 	compilerInfo();
