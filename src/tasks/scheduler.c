@@ -174,12 +174,15 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
 	char* __argv[] = { "dash", "-liV", NULL };
 
-	task_t* new_task = scheduler_new(&fork_task, to_fork, "forktest", __env, __argv, 2, vmem_kernelContext, false);
+	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, __argv, 2, vmem_kernelContext, false);
+
+	// strncpy name
+	new_task->state->eax = 0;
+	new_task->state->ebx = 1337;
 	scheduler_add(new_task);
 
 	//scheduler_terminate_current();
-
-	return NULL;
+	return new_task;
 }
 
 // Called by the PIT a few hundred times per second.
