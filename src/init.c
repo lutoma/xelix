@@ -84,7 +84,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		panic("Was not booted by a multiboot compliant bootloader.\n");
 	}
 
-	// Find out if we have enough memory to sanely operate
+	// Find out if we have enough memory to safely operate
 	if(!bit_get(multiboot_info->flags, 1)) {
 		panic("No memory information passed by bootloader.\n");
 	}
@@ -94,6 +94,33 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	}
 
 	compilerInfo();
+
+	// Dump memory map.
+	if(!bit_get(multiboot_info->flags, 6)) {
+		panic("No mmap data from bootloader.\n");
+	}
+
+	uint32_t mmap_addr = multiboot_info->mmapAddr;
+	uint32_t mmap_length = multiboot_info->mmapLength;
+
+	log(LOG_DEBUG, "mmap_addr = 0x%x, mmap_length = 0x%x\n", mmap_addr, mmap_length);
+
+	uint32_t i = mmap_addr;
+	while (i < (mmap_addr + mmap_length))
+	{
+		// FIXME This should use the multiboot_memoryMap_t struct.
+		uint32_t *size = (uint32_t *) i;
+		uint32_t *base_addr_low = (uint32_t *) (i + 4);
+		uint32_t *base_addr_high = (uint32_t *) (i + 8);
+		uint32_t *length_low = (uint32_t *) (i + 12);
+		uint32_t *length_high = (uint32_t *) (i + 16);
+		uint32_t *type = (uint32_t *) (i + 20);
+
+		log(LOG_DEBUG, "\tsize = 0x%x, start = 0x%x, end = 0x%x, type = 0x%x\n",
+			*size, *base_addr_low, *base_addr_low + *length_low, *type);
+
+		i += *size + 4;
+	}
 	
 	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 		arch_multiboot_printInfo();
