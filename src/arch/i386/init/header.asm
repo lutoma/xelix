@@ -36,4 +36,5 @@ _start:
 	mov ebp, 0
 	mov esp, 0x1000
 	push ebx
+	push eax
 	call main

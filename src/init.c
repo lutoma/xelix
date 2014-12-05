@@ -66,7 +66,7 @@ static void compilerInfo()
 /* This is the very first function of our kernel and gets called
  * directly from the bootloader (GRUB etc.).
  */
-void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
+void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info_t* mBoot)
 {
 	multiboot_info = mBoot;
 
@@ -78,7 +78,12 @@ void __attribute__((__cdecl__)) main(multiboot_info_t* mBoot)
 	init(serial);
 	init(console);
 	init(log);
-	
+
+	// Check if we were actually booted by a multiboot bootloader
+	if(multiboot_checksum != MULTIBOOT_KERNELMAGIC) {
+		panic("Was not booted by a multiboot compliant bootloader.\n");
+	}
+
 	compilerInfo();
 	
 	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
