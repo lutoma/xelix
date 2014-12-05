@@ -27,6 +27,7 @@ struct syscall
 {
 	int num;
 	int params[6];
+	cpu_state_t* state;
 };
 
 typedef int (*syscall_t)(struct syscall);

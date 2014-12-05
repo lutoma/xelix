@@ -167,7 +167,8 @@ void fork_task() {
 }
 
 // Forks a task. Returns fork on success, NULL on error.
-task_t* scheduler_fork(task_t* to_fork) {
+task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
+{
 	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
 
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 

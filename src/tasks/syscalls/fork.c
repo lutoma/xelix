@@ -24,7 +24,7 @@
 int sys_fork(struct syscall syscall)
 {
 	task_t* current_task = scheduler_get_current();
-	task_t* fork_task = scheduler_fork(current_task);
+	task_t* fork_task = scheduler_fork(current_task, syscall.state);
 
 	if(fork_task == NULL) {
 		return -1;

@@ -65,4 +65,4 @@ task_t* scheduler_select(cpu_state_t* lastRegs);
 void scheduler_init();
 void scheduler_yield();
 void scheduler_remove(task_t *t);
-task_t* scheduler_fork(task_t* to_fork);
+task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state);
