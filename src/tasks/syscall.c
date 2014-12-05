@@ -1,5 +1,6 @@
 /* syscall.c: Syscalls
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
+ * Copyright © 2012-2014 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,6 +24,7 @@
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <lib/print.h>
+#include <lib/panic.h>
 #include <memory/vmem.h>
 
 #include "syscalls.h"
@@ -47,6 +49,15 @@ intptr_t task_resolve_address(intptr_t virt_address)
 
 static void int_handler(cpu_state_t* regs)
 {
+	task_t* current_task = scheduler_get_current();
+	if(!current_task) {
+		panic("Don't have a current task while in a syscall - This is very wrong.\n");
+	}
+
+	// Save state of the current task so we can conveniently use it in the handler.
+	// (The other place where the state of a task is saved is the scheduling routine).
+	current_task->state = regs;
+
 	struct syscall syscall;
 	syscall.num = regs->eax;
 	syscall.params[0] = regs->ebx;
