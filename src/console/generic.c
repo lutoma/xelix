@@ -1,6 +1,6 @@
 /* generic.c: Generic terminal access
  * Copyright © 2011 Fritz Grimpen, Lukas Martini
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2014 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,13 +19,16 @@
  */
 
 #include <lib/print.h>
+#include <lib/spinlock.h>
 #include <console/interface.h>
+
 #define GET_CONSOLE(console, else) if (console == NULL)\
 	console = default_console; \
 	if (console == NULL) \
 		else
 
 console_t* default_console = NULL;
+static spinlock_t console_write_lock = SPINLOCK_UNLOCKED;
 
 #include <console/driver/display.h>
 #include <hw/keyboard.h>
@@ -115,6 +118,11 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 {
 	GET_CONSOLE(console, return 0);
 
+	// We don't want writes from multiple tasks all muddled together
+	if(!spinlock_get(&console_write_lock, 50)) {
+		return 0;
+	}
+
 	console_filter_t *filter;
 	int i = 0;
 	size_t written = 0;
@@ -147,6 +155,7 @@ size_t console_write(console_t *console, const char *buffer, size_t length)
 		written += retval;
 	}
 
+	spinlock_release(&console_write_lock);
 	return written;
 }
 
