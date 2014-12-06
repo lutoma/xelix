@@ -35,8 +35,6 @@
 #define STATE_INITIALIZING 1
 #define STATE_INITIALIZED 2
 
-#define state_from_stack(stack) (stack + STACKSIZE - sizeof(cpu_state_t) - 3)
-
 task_t* currentTask = NULL;
 uint64_t highestPid = -0;
 
@@ -102,7 +100,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 		vmem_add_page(memory_context, page);
 	}
 	
-	thisTask->state = state_from_stack(stack);
+	thisTask->state = kmalloc_a(sizeof(cpu_state_t));
 	thisTask->memory_context = memory_context;
 
 	// Stack
