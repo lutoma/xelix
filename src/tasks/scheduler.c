@@ -70,19 +70,19 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 {
 	task_t* thisTask = (task_t*)kmalloc_a(sizeof(task_t));
 	
-	void* stack = kmalloc_a(STACKSIZE);
-	memset(stack, 0, STACKSIZE);
+	thisTask->stack = kmalloc_a(STACKSIZE);
+	memset(thisTask->stack, 0, STACKSIZE);
 
 	if (map_structs) {
 		// 1:1 map the stack
-		vmem_rm_page_virt(memory_context, stack);
+		vmem_rm_page_virt(memory_context, thisTask->stack);
 
 		struct vmem_page* page = vmem_new_page();
 		page->section = VMEM_SECTION_KERNEL;
 		page->cow = 0;
 		page->allocated = 1;
-		page->virt_addr = stack;
-		page->phys_addr = stack;
+		page->virt_addr = thisTask->stack;
+		page->phys_addr = thisTask->stack;
 		vmem_add_page(memory_context, page);
 
 		/* Also 1:1 map the own task_t* struct. This is kind of a braindead idea
@@ -104,7 +104,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	thisTask->memory_context = memory_context;
 
 	// Stack
-	thisTask->state->esp = stack + STACKSIZE - 3;
+	thisTask->state->esp = thisTask->stack + STACKSIZE - 3;
 	thisTask->state->ebp = thisTask->state->esp;
 
 	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
@@ -161,7 +161,7 @@ task_t* scheduler_get_current()
 	return currentTask;
 }
 
-// Forks a task. Returns fork on success, NULL on error.
+// Forks a task. Returns forked task on success, NULL on error.
 task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 {
 	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
@@ -182,8 +182,9 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 	new_task->state->eflags = state->eflags;
 	new_task->state->ss = state->ss;
 
-	// Copy stack
-	// TODO
+	// Copy stack & calculate correct stack offset for fork's ESP
+	memcpy(new_task->stack, to_fork->stack, STACKSIZE);
+	new_task->state->esp = new_task->stack + (state->esp - to_fork->stack);
 
 	strncpy(new_task->name, to_fork->name, SCHEDULER_MAXNAME);
 

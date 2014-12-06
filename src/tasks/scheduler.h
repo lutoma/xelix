@@ -34,6 +34,7 @@ typedef struct task {
 	struct task* next;
 	struct task* previous;
 
+	void* stack;
 	void* entry;
 	struct vmem_context *memory_context;
 
