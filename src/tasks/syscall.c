@@ -56,7 +56,6 @@ static void int_handler(cpu_state_t* regs)
 	syscall.params[2] = regs->edx;
 	syscall.params[3] = regs->esi;
 	syscall.params[4] = regs->edi;
-	syscall.params[5] = (int)regs->ebp;
 	syscall.state = regs;
 
 	syscall_t call = syscall_table[syscall.num];

@@ -26,16 +26,15 @@
 int sys_test(struct syscall syscall)
 {
 	log(LOG_DEBUG, "syscall: test: Test syscall successfull\n");
-	log(LOG_DEBUG, "Parameters: [0x%x][0x%x][0x%x][0x%x][0x%x][0x%x]\n",\
+	log(LOG_DEBUG, "Parameters: [0x%x][0x%x][0x%x][0x%x][0x%x]\n",\
 	  syscall.params[0],
 	  syscall.params[1],
 	  syscall.params[2],
 	  syscall.params[3],
-	  syscall.params[4],
-	  syscall.params[5]
+	  syscall.params[4]
 	);
 
 	return syscall.params[0] + syscall.params[1] + syscall.params[1] +\
-	  syscall.params[3] + syscall.params[4] + syscall.params[5];
+	  syscall.params[3] + syscall.params[4];
 }
 

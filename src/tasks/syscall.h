@@ -26,7 +26,7 @@
 struct syscall
 {
 	int num;
-	int params[6];
+	int params[5];
 	cpu_state_t* state;
 };
 
