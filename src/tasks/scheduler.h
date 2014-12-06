@@ -32,7 +32,7 @@ typedef struct task {
 	struct task *parent;
 	cpu_state_t* state;
 	struct task* next;
-	struct task* last;
+	struct task* previous;
 
 	void* entry;
 	struct vmem_context *memory_context;

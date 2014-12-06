@@ -52,12 +52,12 @@ void scheduler_terminate_current()
 
 void scheduler_remove(task_t *t)
 {
-	if(t->next == t || t->last == t) {
+	if(t->next == t || t->previous == t) {
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
 
-	t->next->last = t->last;
-	t->last->next = t->next;
+	t->next->previous = t->previous;
+	t->previous->next = t->next;
 }
 
 /* Setup a new task, including the necessary paging context.
@@ -144,10 +144,10 @@ void scheduler_add(task_t *task)
 	{
 		currentTask = task;
 		task->next = task;
-		task->last = task;
+		task->previous = task;
 	} else {
 		task->next = currentTask->next;
-		task->last = currentTask;
+		task->previous = currentTask;
 		currentTask->next = task;
 	}
 
