@@ -44,6 +44,7 @@ vfs_dir_t dirs[MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
 uint32_t last_file = -1;
 uint32_t last_dir = -1;
+static spinlock_t file_open_lock;
 
 vfs_file_t* vfs_get_from_id(uint32_t id)
 {
@@ -101,15 +102,19 @@ void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
 
 vfs_file_t* vfs_open(char* path)
 {
-	uint32_t num;
-	spinlock_cmd(num = last_file == -1 ? last_file = 3 : ++last_file,
-		20, (vfs_file_t*)-1);
+	if(spinlock_get(&file_open_lock, 30) == -1) {
+		return NULL;
+	}
+
+	uint32_t num = (last_file == -1 ? last_file = 3 : ++last_file);
 
 	files[num].num = num;
 	strcpy(files[num].path, path);
 	strcpy(files[num].mount_path, path); // Fixme
 	files[num].offset = 0;
 	files[num].mountpoint = 0; // Fixme
+
+	spinlock_release(&file_open_lock);
 	return &files[num];
 }
 
