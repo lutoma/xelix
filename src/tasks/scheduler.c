@@ -187,8 +187,6 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 	new_task->state->esp = new_task->stack + (state->esp - to_fork->stack);
 
 	strncpy(new_task->name, to_fork->name, SCHEDULER_MAXNAME);
-
-	scheduler_add(new_task);
 	return new_task;
 }
 
