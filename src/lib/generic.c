@@ -25,7 +25,6 @@
 #include "print.h"
 #include <memory/kmalloc.h>
 #include <hw/serial.h>
-#include <hw/display.h>
 #include <hw/pit.h>
 #include <hw/keyboard.h>
 #include <tasks/scheduler.h>
