@@ -28,7 +28,7 @@
 #define panic(error) do { \
 	interrupts_disable();  \
 	*((char**)PANIC_INFOMEM) = (char*)(error); \
-	asm("int 0x30"); \
+	asm("int 0x30; cli;"); \
 } while(0)
 
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
