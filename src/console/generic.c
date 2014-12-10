@@ -114,7 +114,12 @@ size_t console_scroll(console_t *console, int32_t pages)
 	return 0;
 }
 
-size_t console_write(console_t *console, const char *buffer, size_t length)
+
+/* The length parameter should be a size_t instead of int32_t, however when you
+ * change it to an unsigned type, the console framework breaks badly. Obviously
+ * something is very wrong here resp. in the calls to console_write.
+ */
+size_t console_write(console_t *console, const char *buffer, int32_t length)
 {
 	GET_CONSOLE(console, return 0);
 

@@ -39,7 +39,7 @@ console_t* default_console;
 // ECMA-48-Filter
 void console_init();
 
-size_t console_write(console_t* console, const char* buffer, size_t length);
+size_t console_write(console_t* console, const char* buffer, int32_t length);
 #define console_write2(console, buffer) console_write(console, buffer, strlen(buffer))
 size_t console_read(console_t* console, char* buffer, size_t length);
 size_t console_scroll(console_t* console, int32_t pages);
