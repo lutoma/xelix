@@ -20,7 +20,7 @@
 #include "print.h"
 #include "generic.h"
 #include "string.h"
-#include "stdarg.h"
+#include <stdarg.h>
 
 #include <console/interface.h>
 

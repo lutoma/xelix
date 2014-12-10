@@ -19,7 +19,7 @@
  */
 
 #include "generic.h"
-#include "stdarg.h"
+#include <stdarg.h>
 
 int print(const char* s);
 void printChar(const char c);
