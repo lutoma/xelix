@@ -17,7 +17,7 @@ ifeq ($(BUILD),)
 endif
 
 MAKE_CFLAGS = -O2 -g -std=gnu99 -Wall -I . -I src -ffreestanding -nostdlib -lgcc -masm=intel -D "__BUILDCOMP__=$(BUILDCOMP)" -D "__BUILDSYS__=$(BUILDSYS)" -D "ARCH=0" -D "ARCHNAME=\"i386\"" -D "VERSION=$(VERSION)" -D "VERSION_MINOR=$(VERSION_MINOR)" -D "VERSION_PATCHLEVEL=$(VERSION_PATCHLEVEL)" -D "VERSION_APPENDIX=$(VERSION_APPENDIX)" -D "BUILD=$(BUILD)" -D "XELIX" -pipe
-MAKE_LDFLAGS = -T linker.ld -nostdlib
+MAKE_LDFLAGS = -T linker.ld -nostdlib -lgcc
 MAKE_ASFLAGS = -g -f elf
 
 ifeq ($(shell uname -s), Darwin)
