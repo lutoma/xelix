@@ -21,6 +21,8 @@
  
 #include "stdint.h"
 #include "portio.h"
+#include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __GNUC__
 	#define GCC_VERSION (__GNUC__ * 10000 \
@@ -41,13 +43,9 @@
 #define bit_toggle(num, bit) ((num) ^ 1 << (bit))
 #define bit_get(num, bit) ((num) & (1 << (bit)))
 
-typedef int64_t time_t;
-typedef int64_t size_t;
+typedef int32_t time_t;
 typedef uint8_t byte;
 
-typedef enum { false = 0 , true = 1 } bool;
-
-#define NULL  0
 #define EOF  -1
 
 #ifdef __GNUC__
