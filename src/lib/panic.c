@@ -45,8 +45,10 @@ void dump_registers(cpu_state_t* regs) {
 		regs->eax, regs->ebx, regs->ecx, regs->edx);
 	printf("ESI=0x%x\tEDI=0x%x\tESP=0x%x\tEBP=0x%x\n",
 		regs->esi, regs->edi, regs->esp, regs->ebp);
-	printf("DS=0x%x\tSS=0x%x\tCS=0x%x\tEFLAGS=0x%x\tEIP=0x%x\n",
-		regs->ds, regs->ss, regs->cs, regs->eflags, regs->eip);
+	printf("DS=0x%x\tSS=0x%x\tCS=0x%x\tEFLAGS=0x%x\n",
+		regs->ds, regs->ss, regs->cs, regs->eflags);
+	printf("ESP=0x%x\tEBP=0x%x\tEIP=0x%x\n",
+		regs->esp, regs->ebp, regs->eip);
 }
 
 static void panic_handler(cpu_state_t* regs)
