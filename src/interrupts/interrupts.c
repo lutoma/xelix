@@ -50,7 +50,7 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 	{
 		task_t* new_task = scheduler_select(regs);
 
-		if((int)new_task != NULL && (int)new_task->state != NULL)
+		if(new_task != NULL && new_task->state != NULL)
 		{
 			paging_apply(new_task->memory_context);
 			return new_task->state;
@@ -89,7 +89,7 @@ void interrupts_init()
 	arch_interrupts_init();
 
 	// set all interruptHandlers to NULL.
-	memset(handlers, NULL, 256 * sizeof(interrupt_handler_t));
+	memset(handlers, 0, 256 * sizeof(interrupt_handler_t));
 	interrupts_enable();
 	
 	log(LOG_INFO, "interrupts: Initialized\n");

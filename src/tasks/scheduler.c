@@ -108,7 +108,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	thisTask->state->ebp = thisTask->state->esp;
 
 	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
-	*(thisTask->state->ebp + 2) = NULL; // base pointer
+	*(thisTask->state->ebp + 2) = (intptr_t)NULL; // base pointer
 	
 	// Instruction pointer (= start of the program)
 	thisTask->entry = entry;

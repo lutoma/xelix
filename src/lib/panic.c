@@ -66,7 +66,7 @@ static void panic_handler(cpu_state_t* regs)
 	} else
 		printf("Running task: [No task running]\n");
 
-	if(vfs_last_read_attempt[0] == NULL) {
+	if(vfs_last_read_attempt[0] == '\0') {
 		strncpy(vfs_last_read_attempt, "No file system read attempts.", 512);
 	}
 

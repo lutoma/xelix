@@ -26,8 +26,8 @@ int sys_mmap(struct syscall syscall)
 {
 	//void *addr = (void *)syscall.params[0];
 	size_t length = syscall.params[1];
-	int readonly = syscall.params[2];
 	/* Ignored:
+	int readonly = syscall.params[2];
 	int flags =	syscall.params[3];
 	int fd = syscall->params[4];
 	int offset = syscall->params[5];

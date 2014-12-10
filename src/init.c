@@ -111,9 +111,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		// FIXME This should use the multiboot_memoryMap_t struct.
 		uint32_t *size = (uint32_t *) i;
 		uint32_t *base_addr_low = (uint32_t *) (i + 4);
-		uint32_t *base_addr_high = (uint32_t *) (i + 8);
 		uint32_t *length_low = (uint32_t *) (i + 12);
-		uint32_t *length_high = (uint32_t *) (i + 16);
 		uint32_t *type = (uint32_t *) (i + 20);
 
 		log(LOG_DEBUG, "\tsize = 0x%x, start = 0x%x, end = 0x%x, type = 0x%x\n",

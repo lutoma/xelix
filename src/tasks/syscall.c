@@ -42,7 +42,7 @@ intptr_t task_resolve_address(intptr_t virt_address)
 	struct vmem_page* page = vmem_get_page_virt(task->memory_context, (void*)virt_address);
 
 	if(!page)
-		return NULL;
+		return (intptr_t)NULL;
 
 	return (intptr_t)page->phys_addr + diff;
 }

@@ -161,7 +161,7 @@ static void handleScancode(uint8_t code, uint8_t code2)
 		return;
 
 	char c = current_keymap[dcode];
-	if(code > 512 || c == NULL)
+	if(code > 512 || c == 0)
 		return;
 
     // 0x8 is backspace, in which case we delete a byte from the buffer

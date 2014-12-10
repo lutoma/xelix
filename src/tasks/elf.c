@@ -34,7 +34,7 @@ static char header[4] = {0x7f, 'E', 'L', 'F'};
 
 task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 {
-	if(bin <= NULL)
+	if(bin <= (elf_t*)NULL)
 		return NULL;
 
 	if(bin->ident.magic[0] != header[0]

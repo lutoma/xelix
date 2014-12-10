@@ -33,6 +33,6 @@ int sys_getexecdata(struct syscall syscall)
 		case 2: return (int)proc->environ;;
 	}
 
-	return NULL;
+	return 0;
 }
 

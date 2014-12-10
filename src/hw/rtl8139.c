@@ -31,7 +31,7 @@
 
 static uint32_t vendor_device_combos[][2] = {
 	{0x10ec, 0x8139},
-	{NULL}
+	{(uint32_t)NULL}
 };
 
 // This driver will only support that many cards

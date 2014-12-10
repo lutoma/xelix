@@ -161,10 +161,6 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 		(sizeof(ext2_blockgroup_t) * blockgroup_num));
 
 	// Now that we have the blockgroup data, look for the inode
-	uint32_t inode_index = (inode_num - 1) % superblock->inodes_per_group;
-	uint32_t inode_block = (inode_index * superblock->inode_size) / 
-		superblock_to_blocksize(superblock);
-
 	uint32_t inode_table_location = blockgroup->inode_table *
 		superblock_to_blocksize(superblock);
 
@@ -243,7 +239,7 @@ static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
 		dirent = ((ext2_dirent_t*)((intptr_t)dirent + dirent->record_len));
 
 	// This surely can't be right
-	if(*((int*)dirent) == NULL || dirent->name == NULL || dirent->name_len == 0)
+	if(*((int*)dirent) == 0 || dirent->name == NULL || dirent->name_len == 0)
 		return NULL;
 
 	return dirent;
@@ -277,7 +273,7 @@ uint32_t inode_from_path(char* path)
 
 			// If this dirent is NULL, this means there're no more files
 			if(!dirent)
-				return NULL;
+				return 0;
 
 			char* dirent_name = strndup(dirent->name, dirent->name_len);
 

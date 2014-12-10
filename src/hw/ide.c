@@ -85,9 +85,6 @@ void ide_init_device(uint16_t bus) {
 
 	outb(bus + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
 	ata_io_wait(bus);
-
-	int status = inb(bus + ATA_REG_COMMAND);
-
 	ata_wait_ready(bus);
 
 	ata_identify_t device;
