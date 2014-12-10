@@ -1,5 +1,5 @@
 ; header.asm: Sets multiboot header
-; Copyright © 2010, 2011 Lukas Martini
+; Copyright © 2010-2014 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -22,19 +22,25 @@ MBOOT_HEADER_MAGIC	equ 0x1BADB002
 MBOOT_HEADER_FLAGS	equ MBOOT_PAGE_ALIGN | MBOOT_MEM_INFO
 MBOOT_CHECKSUM		equ -(MBOOT_HEADER_MAGIC + MBOOT_HEADER_FLAGS)
 
-SECTION multiboot
+[section multiboot]
 ALIGN 4
 dd  MBOOT_HEADER_MAGIC
 dd  MBOOT_HEADER_FLAGS
 dd  MBOOT_CHECKSUM
 
-SECTION text
+; Reserve 4 KiB stack space
+[SECTION .bss]
+stack_begin:
+resb 4096
+stack_end:
+
+[section .text]
 EXTERN main
 GLOBAL _start
 
 _start:
-	mov ebp, 0
-	mov esp, 0x1000
+	mov ebp, stack_begin
+	mov esp, stack_begin
 	push ebx
 	push eax
 	call main
