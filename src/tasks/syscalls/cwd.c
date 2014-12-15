@@ -17,7 +17,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cwd.h"
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
 #include <lib/string.h>

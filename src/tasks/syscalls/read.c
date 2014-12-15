@@ -17,7 +17,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "read.h"
 #include <console/interface.h>
 #include <fs/vfs.h>
 #include <lib/log.h>

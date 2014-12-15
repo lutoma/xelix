@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "getppid.h"
+#include <tasks/syscall.h>
 #include <tasks/scheduler.h>
 
 int sys_getppid(struct syscall syscall)

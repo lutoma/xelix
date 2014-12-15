@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Fritz Grimpen
+/* Copyright © 2014 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,26 +21,31 @@
 #include <lib/generic.h>
 #include <tasks/syscall.h>
 
-#include "syscalls/write.h"
-#include "syscalls/exit.h"
-#include "syscalls/getpid.h"
-#include "syscalls/getppid.h"
-#include "syscalls/read.h"
-#include "syscalls/brk.h"
-#include "syscalls/mmap.h"
-#include "syscalls/munmap.h"
-#include "syscalls/test.h"
-#include "syscalls/hostname.h"
-#include "syscalls/uname.h"
-#include "syscalls/open.h"
-#include "syscalls/execve.h"
-#include "syscalls/seek.h"
-#include "syscalls/opendir.h"
-#include "syscalls/readdir.h"
-#include "syscalls/kill.h"
-#include "syscalls/getexecdata.h"
-#include "syscalls/cwd.h"
-#include "syscalls/fork.h"
+#define DEFINE_SYSCALL(name) extern int sys_ ## name (struct syscall syscall);
+
+DEFINE_SYSCALL(exit);
+DEFINE_SYSCALL(write);
+DEFINE_SYSCALL(getpid);
+DEFINE_SYSCALL(getppid);
+DEFINE_SYSCALL(read);
+DEFINE_SYSCALL(brk);
+DEFINE_SYSCALL(mmap);
+DEFINE_SYSCALL(munmap);
+DEFINE_SYSCALL(test);
+DEFINE_SYSCALL(set_hostname);
+DEFINE_SYSCALL(get_hostname);
+DEFINE_SYSCALL(uname);
+DEFINE_SYSCALL(open);
+DEFINE_SYSCALL(execve);
+DEFINE_SYSCALL(seek);
+DEFINE_SYSCALL(opendir);
+DEFINE_SYSCALL(readdir);
+DEFINE_SYSCALL(kill);
+DEFINE_SYSCALL(getexecdata);
+DEFINE_SYSCALL(chdir);
+DEFINE_SYSCALL(getcwd);
+DEFINE_SYSCALL(fork);
+DEFINE_SYSCALL(execven);
 
 syscall_t syscall_table[] = {
 	NULL,

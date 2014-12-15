@@ -17,7 +17,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "write.h"
 #include <fs/vfs.h>
 #include <lib/log.h>
 #include <tasks/syscall.h>

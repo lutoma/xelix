@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "execve.h"
+#include <tasks/syscall.h>
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <tasks/elf.h>

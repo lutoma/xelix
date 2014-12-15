@@ -17,10 +17,10 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <tasks/syscall.h>
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <tasks/scheduler.h>
-#include "mmap.h"
 
 int sys_mmap(struct syscall syscall)
 {

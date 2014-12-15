@@ -17,9 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "test.h"
-
-#include "write.h"
+#include <tasks/syscall.h>
 #include <console/interface.h>
 #include <lib/log.h>
 
