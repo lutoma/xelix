@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2011 Lukas Martini
+/* spinlock.c: Simple spinlocks using GCC's atomic builtins
+ * Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -15,21 +14,26 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <lib/generic.h>
+#include <lib/spinlock.h>
+#include <tasks/scheduler.h>
 
-#define SPINLOCK_LOCKED 1
-#define SPINLOCK_UNLOCKED 0
+/* See https://gcc.gnu.org/onlinedocs/gcc-4.4.3/gcc/Atomic-Builtins.html for
+ * documentation on the GCC atomic builtin function used here.
+ */
 
-#define spinlock_cmd(command, tries, retval) \
-	static spinlock_t lock = SPINLOCK_UNLOCKED; \
-	if(!spinlock_get(&lock, tries)) return retval; \
-	do {command;} while(0); \
-	spinlock_release(&lock);
+bool spinlock_get(spinlock_t* lock, uint32_t numretries) {
+	for(int i = 0; i < numretries; i++) {
+		if(__sync_bool_compare_and_swap(lock, 0, 1)) {
+			return true;
+		}
 
-#define spinlock_release(x) __sync_lock_release(x)
+		scheduler_yield();
+	}
 
-typedef uint8_t spinlock_t;
-bool spinlock_get(spinlock_t* lock, uint32_t numretries);
+	return false;
+}
+
