@@ -157,5 +157,5 @@ typedef struct {
 mbr_t mbr;
 
 void ide_init();
-void ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);
+bool ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);
 void ide_write_sector_retry(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);

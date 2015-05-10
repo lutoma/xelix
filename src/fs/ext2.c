@@ -131,6 +131,13 @@ char* verbose_filetypes[] = {NULL, "IFIFO", "IFCHR", NULL, "IFDIR", NULL, \
 // TODO Should use right shift for negative values
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
 
+#define read_sector_or_fail(rc, args...) do {													\
+		if(ide_read_sector(args) != true) {														\
+			log(LOG_ERR, "ext2: IDE read failed in %s line %d, bailing.", __func__, __LINE__);	\
+			return rc;																			\
+		}																						\
+	} while(0)
+
 ext2_superblock_t* superblock = NULL;
 
 
@@ -153,7 +160,8 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 		blockgroup_table_disk_sector *= 2;
 
 	uint8_t* blockgroup_table = (uint8_t*)kmalloc(512);
-	ide_read_sector(0x1F0, 0, blockgroup_table_disk_sector, blockgroup_table);
+
+	read_sector_or_fail(0, 0x1F0, 0, blockgroup_table_disk_sector, blockgroup_table);
 
 	// Locate the entry for the relevant blockgroup
 	ext2_blockgroup_t* blockgroup = 
@@ -172,7 +180,7 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 		superblock->inodes_per_group * superblock->inode_size);
 
 	for(int i = 0; i < (superblock->inodes_per_group * superblock->inode_size) / 512; i++)
-		ide_read_sector(0x1F0, 0, (inode_table_location / 512) + i, inode_table_sector + i * 512);
+		read_sector_or_fail(0, 0x1F0, 0, (inode_table_location / 512) + i, inode_table_sector + i * 512);
 
 
 	ext2_inode_t* inode = (ext2_inode_t*)((intptr_t)inode_table_sector +
@@ -203,7 +211,7 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
 	// byte chunks from the disk.
 	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
 	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512)
-		ide_read_sector(0x1F0, 0, block_location / 512 + i, block + i);
+		read_sector_or_fail(0, 0x1F0, 0, block_location / 512 + i, block + i);
 
 	return block;
 }
@@ -369,8 +377,8 @@ void ext2_init()
 {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
 	superblock = (ext2_superblock_t*)kmalloc(sizeof(ext2_superblock_t));
-	ide_read_sector(0x1F0, 0, 2, (uint8_t*)superblock);
-	ide_read_sector(0x1F0, 0, 3, (uint8_t*)((void*)superblock + 512));
+	read_sector_or_fail(false, 0x1F0, 0, 2, (uint8_t*)superblock);
+	read_sector_or_fail(false, 0x1F0, 0, 3, (uint8_t*)((void*)superblock + 512));
 
 	if(superblock->magic != SUPERBLOCK_MAGIC)
 	{

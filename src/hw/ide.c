@@ -108,7 +108,7 @@ void ide_init() {
 	ide_init_device(0x1F0);
 }
 
-void ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) {
+bool ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) {
 	int errors = 0;
 try_again:
 	outb(bus + ATA_REG_CONTROL, 0x02);
@@ -125,11 +125,10 @@ try_again:
 	outb(bus + ATA_REG_COMMAND, ATA_CMD_READ_PIO);
 
 	if (ata_wait(bus, 1)) {
-		log(LOG_WARN, "Error during ATA read of lba block %d\n", lba);
 		errors++;
 		if (errors > 4) {
-			log(LOG_WARN, "-- Too many errors trying to read this block. Bailing.\n");
-			return;
+			log(LOG_WARN, "ide: Too many errors during read of lba block %d. Bailing.\n");
+			return false;
 		}
 		goto try_again;
 	}
@@ -137,6 +136,7 @@ try_again:
 	int size = 256;
 	inportsm(bus,buf,size);
 	ata_wait(bus, 0);
+	return true;
 }
 
 void ide_write_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) {
