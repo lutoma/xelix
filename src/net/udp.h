@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,33 +19,23 @@
  */
 
 #include <lib/generic.h>
+#include <net/udp.h>
+#include <net/ip4.h>
 #include <net/net.h>
 
-#define IP4_TOS_ICMP 0x1
-#define IP4_TOS_UDP 0x11
-
-typedef uint32_t ip4_addr_t;
-
-typedef struct {
-	unsigned int hl:4; /* both fields are 4 bits */
-	unsigned int version:4;
-	uint8_t	tos;
-	uint16_t len;
-	uint16_t id;
-	uint16_t off;
-	uint8_t ttl;
-	uint8_t proto;
+struct {
+	uint16_t source_port;
+	uint16_t destination_port;
+	uint16_t length;
 	uint16_t checksum;
-	ip4_addr_t src;
-	ip4_addr_t dst;
-} ip4_header_t;
+} typedef udp_header_t;
 
-typedef struct {
-	uint8_t type;
-	uint8_t code;
-	uint16_t checksum;
-	uint16_t id;
-	uint16_t sequence;
-} ip4_icmp_header_t;
+struct {
+	uint32_t source_address;
+	uint32_t destination_address;
+	uint8_t zero;
+	uint8_t ip_proto;
+	uint16_t udp_length;
+} typedef udp_checksum_header_t;
 
-void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw);
+void handle_udp(net_device_t* origin, size_t size, ip4_header_t* ip_packet);

@@ -22,6 +22,7 @@
 #include <lib/endian.h>
 #include <lib/string.h>
 #include <net/ether.h>
+#include <net/udp.h>
 #include <memory/kmalloc.h>
 
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
@@ -136,9 +137,12 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 		return;
 	packet->ttl--;
 
-	if(packet->tos == IP4_TOS_ICMP)
-	{
-		handle_icmp(origin, size, packet, etherhdr);
-		return;
+	switch(packet->proto) {
+		case IP4_TOS_ICMP:
+			handle_icmp(origin, size, packet, etherhdr);
+			break;
+		case IP4_TOS_UDP:
+			handle_udp(origin, size, packet);
+			break;
 	}
 }
