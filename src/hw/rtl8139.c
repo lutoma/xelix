@@ -192,26 +192,36 @@ static void rtl8139_intHandler(cpu_state_t *state)
 {
 	log(LOG_DEBUG, "rtl8139: Got interrupt \\o/\n");
 
-	for (int i = 0; i < cards; ++i)
-	{
-		struct rtl8139_card *card = rtl8139_cards + i;
-		uint16_t isr = int_in16(card, REG_INTERRUPT_STATUS);
-		uint16_t new_isr = 0;
+	struct rtl8139_card* card = NULL;
 
-		if (isr & ISR_TRANSMIT_OK)
-		{
-			new_isr |= ISR_TRANSMIT_OK;
-			transmitData(card);
+	// Find the card this IRQ is coming from
+	for(int i = 0; i < cards; i++) {
+		if(likely(state->interrupt == rtl8139_cards[i].device->interruptLine + IRQ0)) {
+			card = &rtl8139_cards[i];
 		}
-
-		if (isr & ISR_RECEIVE_OK)
-		{
-			receiveData(card);
-			new_isr |= ISR_RECEIVE_OK;
-		}
-
-		int_out16(card, REG_INTERRUPT_STATUS, new_isr);
 	}
+
+	if(unlikely(card == NULL)) {
+		log(LOG_ERR, "rtl8139: Could not locate card for interrupt. This shouldn't happen.\n");
+		return;
+	}
+
+	uint16_t isr = int_in16(card, REG_INTERRUPT_STATUS);
+	uint16_t new_isr = 0;
+
+	if (isr & ISR_TRANSMIT_OK)
+	{
+		new_isr |= ISR_TRANSMIT_OK;
+		transmitData(card);
+	}
+
+	if (isr & ISR_RECEIVE_OK)
+	{
+		receiveData(card);
+		new_isr |= ISR_RECEIVE_OK;
+	}
+
+	int_out16(card, REG_INTERRUPT_STATUS, new_isr);
 }
 
 static void enableCard(struct rtl8139_card *card)
