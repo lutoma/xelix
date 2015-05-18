@@ -24,6 +24,9 @@
 #define IP4_TOS_ICMP 0x1
 #define IP4_TOS_UDP 0x11
 
+#define ip4_header_length(hdr) (hdr ->hl * 4)
+#define ip4_set_header_length(hdr, sz) (hdr ->hl = (sz / 4))
+
 typedef uint32_t ip4_addr_t;
 
 typedef struct {
@@ -49,3 +52,4 @@ typedef struct {
 } ip4_icmp_header_t;
 
 void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw);
+void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);

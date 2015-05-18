@@ -18,20 +18,5 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <net/udp.h>
-#include <net/ip4.h>
-#include <net/net.h>
 
-struct {
-	uint16_t source_port;
-	uint16_t destination_port;
-	uint16_t length;
-	uint16_t checksum;
-} typedef udp_header_t;
-
-typedef void (*udp_handler_t)(net_device_t*, size_t, udp_header_t*, ip4_header_t*);
-
-void udp_receive(net_device_t* origin, size_t size, ip4_header_t* ip_packet);
-bool udp_register_handler(udp_handler_t handler, uint16_t port);
-void udp_send(net_device_t* destination, size_t size, ip4_header_t* ip_packet);
+void echo_init();

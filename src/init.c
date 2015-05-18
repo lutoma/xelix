@@ -43,6 +43,8 @@
 #include <net/slip.h>
 #include <hw/ide.h>
 #include <fs/ext2.h>
+#include <net/udp.h>
+#include <net/echo.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compilerInfo()
@@ -133,6 +135,8 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(ext2);
 
 	// Networking
+	init(udp);
+	init(echo);
 	init(rtl8139);
 	#ifndef XELIX_WITHOUT_SLIP
 		init(slip);

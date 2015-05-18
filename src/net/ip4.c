@@ -25,8 +25,6 @@
 #include <net/udp.h>
 #include <memory/kmalloc.h>
 
-void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
-
 char* ip4_split_ip(char* out, int ip)
 {
 	unsigned char bytes[4];
@@ -46,16 +44,21 @@ char* ip4_split_ip(char* out, int ip)
 	return out;
 }
 
-void ip4_send_ether(net_device_t *target, size_t size, ip4_header_t *packet, ether_frame_hdr_t *hdr)
-{
+void prepare_packet_to_send(ip4_header_t* packet) {
+	packet->version = 4;
 	packet->checksum = 0;
 	packet->checksum = endian_swap16(net_calculate_checksum((uint8_t*)packet, sizeof(ip4_header_t), 0));
+}
 
+void ip4_send_ether(net_device_t *target, size_t size, ip4_header_t *packet, ether_frame_hdr_t *hdr)
+{
 	if (target->proto != NET_PROTO_ETH)
 	{
 		ip4_send(target, size, packet);
 		return;
 	}
+
+	prepare_packet_to_send(packet);
 
 	ether_frame_hdr_t *etherhdr = kmalloc(sizeof(ether_frame_hdr_t) + size);
 	memset(etherhdr, 0, sizeof(ether_frame_hdr_t));
@@ -68,9 +71,8 @@ void ip4_send_ether(net_device_t *target, size_t size, ip4_header_t *packet, eth
 
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet)
 {
-	//memset((void*)&packet->checksum, 0, sizeof(packet->checksum));
-	//packet->checksum = net_calculate_checksum((uint8_t*)packet, 16, 0);
-	
+	prepare_packet_to_send(packet);
+
 	if (target->proto == NET_PROTO_ETH)
 	{
 		/* TODO Implement some ARP things */
@@ -142,7 +144,7 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 			handle_icmp(origin, size, packet, etherhdr);
 			break;
 		case IP4_TOS_UDP:
-			handle_udp(origin, size, packet);
+			udp_receive(origin, size, packet);
 			break;
 	}
 }
