@@ -122,6 +122,7 @@ void pci_load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t fun
 	device->headerType = pci_get_header_type(device);
 	device->interruptPin = pci_get_interrupt_pin(device);
 	device->interruptLine = pci_get_interrupt_line(device);
+	device->subsystemID = pci_get_subsystem_id(device);
 }
 
 /* Searches a PCI device by vendor and device IDs.

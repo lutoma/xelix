@@ -36,6 +36,7 @@
 #include <console/interface.h>
 #include <hw/pci.h>
 #include <hw/rtl8139.h>
+#include <hw/virtio-net.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
 #include <memory/paging.h>
@@ -134,6 +135,8 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 
 	// Networking
 	init(rtl8139);
+	init(virtio_net);
+	
 	#ifndef XELIX_WITHOUT_SLIP
 		init(slip);
 	#endif

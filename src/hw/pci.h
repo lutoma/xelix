@@ -73,6 +73,8 @@ typedef struct {
 
 	uint8_t interruptPin;
 	uint8_t interruptLine;
+
+	uint16_t subsystemID;
 } pci_device_t;
 
 pci_device_t pci_devices[65536];
@@ -95,6 +97,7 @@ void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, u
 #define pci_get_revision(device) (uint16_t)pci_config_read(device, 0x8)
 #define pci_get_class(device) ((uint16_t)pci_config_read(device, 0x8) >> 8)
 #define pci_get_header_type(device) ((uint16_t)pci_config_read(device, 0xe) & 127)
+#define pci_get_subsystem_id(device) (uint16_t)pci_config_read(device, 0x2e);
 
 uint32_t pci_get_IO_base(pci_device_t* device);
 uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar);
