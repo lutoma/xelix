@@ -46,6 +46,7 @@ char* ip4_split_ip(char* out, int ip)
 
 void prepare_packet_to_send(ip4_header_t* packet) {
 	packet->version = 4;
+	packet->id = (uint16_t)(pit_getTickNum() % 65535);
 	packet->checksum = 0;
 	packet->checksum = endian_swap16(net_calculate_checksum((uint8_t*)packet, sizeof(ip4_header_t), 0));
 }
