@@ -1,8 +1,10 @@
 %.o: %.c
-	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
+	@echo -e "CC\t$<"
+	@$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
-	$(AS) $(MAKE_ASFLAGS) -o $@ $<
+	@echo -e "AS\t$<"
+	@$(AS) $(MAKE_ASFLAGS) -o $@ $<
 
 .PHONY: INSTALL
 install: xelix.bin
