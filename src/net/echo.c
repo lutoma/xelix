@@ -42,9 +42,8 @@ static void echo_server(net_device_t* origin, size_t size, udp_header_t* header,
 	ip4_header_t* ip_reply = (ip4_header_t*)kmalloc(sizeof(ip4_header_t) + reply_length);
 	ip_reply->tos = 0;
 	ip_reply->len = endian_swap16((reply_length + sizeof(ip4_header_t)));
-	ip_reply->id = endian_swap16(1337);
-	ip_reply->off = ip_packet->off;
-	ip_reply->ttl = 20;
+	ip_reply->off = 0;
+	ip_reply->ttl = 64;
 	ip4_set_header_length(ip_reply, sizeof(ip4_header_t));
 
 	ip_reply->src = ip_packet->dst;

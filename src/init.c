@@ -1,5 +1,5 @@
 /* init.c: Initialization code of the kernel
- * Copyright © 2010-2014 Lukas Martini
+ * Copyright © 2010-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *

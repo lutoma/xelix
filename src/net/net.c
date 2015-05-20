@@ -53,15 +53,6 @@ void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t
 
 void net_send(net_device_t* target, size_t size, uint8_t* data)
 {
-	if (target->mtu < size)
-	{
-		// FIXME Fixme :P
-		for (int off = 0; off < size; off += target->mtu)
-			net_send(target, target->mtu, data + off);
-
-		return;
-	}
-
 	if (target->send != NULL)
 		target->send(target, data, size);
 }
