@@ -45,6 +45,7 @@ struct fragment_entry {
 	uint16_t id;
 	uint32_t stored_packets;
 	ip4_header_t** packets;
+	struct fragment_entry* prev;
 	struct fragment_entry* next;
 };
 
@@ -167,10 +168,12 @@ static struct fragment_entry* create_fragment_store(ip4_addr_t src, uint16_t id)
 	fragment->id = id;
 	fragment->stored_packets = 0;
 	fragment->next = NULL;
+	fragment->prev = NULL;
 
 	if(last_fragment) {
 		assert(last_fragment->next != last_fragment);
 		last_fragment->next = fragment;
+		fragment->prev = last_fragment;
 	}
 
 	last_fragment = fragment;
@@ -181,6 +184,24 @@ static struct fragment_entry* create_fragment_store(ip4_addr_t src, uint16_t id)
 
 	stored_fragments++;
 	return fragment;
+}
+
+static void destroy_fragment_store(struct fragment_entry* fragment) {
+	if(fragment->prev) {
+		fragment->prev->next = fragment->next;
+	}
+
+	if(fragment->next) {
+		fragment->next->prev = fragment->prev;
+	}
+
+	if(first_fragment == fragment && last_fragment  == fragment) {
+		first_fragment = last_fragment = NULL;
+	}
+
+	stored_fragments--;
+	kfree(fragment->packets);
+	kfree(fragment);
 }
 
 static struct fragment_entry* store_fragment(ip4_header_t* packet, struct fragment_entry* fragment) {
@@ -226,8 +247,6 @@ static void reassemble_packet(struct fragment_entry* fragment, net_device_t* ori
 	ip4_header_t* full_packet = (ip4_header_t*)kmalloc(full_length);
 
 	for(int i = 0; i < fragment->stored_packets; i++) {
-		char* ip = ip4_split_ip((char*)kmalloc(sizeof(char) * 15), endian_swap32(fragment->packets[i]->src));
-
 		ip4_header_t* packet = fragment->packets[i];
 		uint8_t* packet_data = (void*)packet;
 
@@ -241,6 +260,7 @@ static void reassemble_packet(struct fragment_entry* fragment, net_device_t* ori
 			offset += packet->hl * 4;
 		}
 
+		// FIXME This still produces false positives from time to time on large pkt volumes
 		if(size > full_length || offset + size > full_length) {
 			log(LOG_WARN, "ip4: Received invalidly fragmented packet.\n");
 			kfree(full_packet);
@@ -251,7 +271,7 @@ static void reassemble_packet(struct fragment_entry* fragment, net_device_t* ori
 		memcpy((void*)((intptr_t)full_packet + offset), packet_data, size);
 	}
 
-	// Reinject the assembled package
+	destroy_fragment_store(fragment);
 	ip4_sort_packet(origin, full_length, full_packet);
 }
 
@@ -272,14 +292,10 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 		packet = raw;
 	}
 
-	log(LOG_INFO, "pkg in  \n");
-
 	// TODO Send an ICMP TTL exceeded packet here
 	if(unlikely(packet->ttl <= 0))
 		return;
 	packet->ttl--;
-
-	log(LOG_INFO, "pkg in after ttl\n");
 
 	// Check if this is part of a fragmented packet
 	struct fragment_entry* fragment_entry = locate_fragment(packet);
