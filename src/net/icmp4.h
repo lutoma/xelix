@@ -21,6 +21,13 @@
 #include <lib/generic.h>
 #include <net/ip4.h>
 
+#define ICMP4_TYPE_ECHO_REPLY 0
+#define ICMP4_TYPE_DEST_UNREACHABLE 3
+#define ICMP4_TYPE_SOURCE_QUENCH 4
+#define ICMP4_TYPE_ECHO_REQUEST 8
+#define ICMP4_TYPE_TIME_EXCEEDED 11
+#define ICMP4_TYPE_TRACEROUTE 30
+
 typedef struct {
 	uint8_t type;
 	uint8_t code;
@@ -28,5 +35,9 @@ typedef struct {
 } icmp4_header_t;
 
 void icmp4_receive(net_device_t* origin, size_t size, ip4_header_t* ip_packet);
+
 void icmp4_send(net_device_t* target, ip4_addr_t src, ip4_addr_t dst,
 	uint8_t type, uint8_t code, size_t data_length, void* data);
+
+void icmp4_send_error(net_device_t* target, uint8_t type, uint8_t code,
+	size_t size, ip4_header_t* packet);

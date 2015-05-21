@@ -53,12 +53,24 @@ void icmp4_send(net_device_t* target, ip4_addr_t src, ip4_addr_t dst,
 	ip4_send(target, packet_length, ip_packet);
 }
 
+void icmp4_send_error(net_device_t* target, uint8_t type, uint8_t code,
+	size_t size, ip4_header_t* packet)
+{
+	uint32_t to_send = packet->hl * 4 + 12;
+	void* data = kmalloc(to_send);
+
+	// The first 4 byte are unused in the ICMP message body for some reason
+	memcpy((void*)((intptr_t)data + 4), (void*)packet, to_send - 4);
+	icmp4_send(target, packet->dst, packet->src, type, code, to_send, data);
+	kfree(data);
+}
+
 static void handle_ping(net_device_t* origin, size_t size, ip4_header_t* ip_packet) {
 	void* ping_data = (struct echo_data_section*)((intptr_t)ip_packet +
 		(ip_packet->hl * 4) + sizeof(icmp4_header_t));
 
 	size_t data_length = size - ip_packet->hl * 4 - sizeof(icmp4_header_t);
-	icmp4_send(origin, ip_packet->dst, ip_packet->src, 0, 0, data_length, ping_data);
+	icmp4_send(origin, ip_packet->dst, ip_packet->src, ICMP4_TYPE_ECHO_REPLY, 0, data_length, ping_data);
 }
 
 void icmp4_receive(net_device_t* origin, size_t size, ip4_header_t* ip_packet) {

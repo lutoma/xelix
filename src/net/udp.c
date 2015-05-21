@@ -20,6 +20,7 @@
 #include <lib/generic.h>
 #include <net/udp.h>
 #include <net/ip4.h>
+#include <net/icmp4.h>
 #include <net/net.h>
 #include <lib/log.h>
 #include <lib/endian.h>
@@ -48,9 +49,12 @@ void udp_receive(net_device_t* origin, size_t size, ip4_header_t* ip_packet) {
 		return;
 	}
 
-	if(ports[port] != NULL) {
-		ports[port](origin, size, header, ip_packet);
+	if(!ports[port]) {
+		icmp4_send_error(origin, ICMP4_TYPE_DEST_UNREACHABLE, 3, size, ip_packet);
+		return;
 	}
+	
+	ports[port](origin, size, header, ip_packet);
 }
 
 void udp_send(net_device_t* destination, size_t size, ip4_header_t* ip_packet) {

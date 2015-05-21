@@ -259,9 +259,11 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 		packet = raw;
 	}
 
-	// TODO Send an ICMP TTL exceeded packet here
 	if(unlikely(packet->ttl <= 0))
+	{
+		icmp4_send_error(origin, ICMP4_TYPE_TIME_EXCEEDED, 0, size, packet);
 		return;
+	}
 	packet->ttl--;
 
 	// Check if this is part of a fragmented packet
