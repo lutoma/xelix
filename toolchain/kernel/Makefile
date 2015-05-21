@@ -68,6 +68,8 @@ gcc-install:
 gcc-make:
 	@echo "Building gcc"
 	@mkdir -p build/gcc
+	-@find build/gcc -name config.cache -delete
+	-@make -C build/gcc distclean
 	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-shared --enable-languages=c --without-headers --without-docdir --disable-libssp
 	@make -C build/gcc all-gcc
 	@make -C build/gcc all-target-libgcc
