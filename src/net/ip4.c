@@ -240,6 +240,7 @@ void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* r
 
 	if(unlikely(packet->ttl <= 0))
 	{
+		// TODO Only send this for the first part of a fragmented package
 		icmp4_send_error(origin, ICMP4_TYPE_TIME_EXCEEDED, 0, size, packet);
 		return;
 	}
