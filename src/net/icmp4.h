@@ -32,7 +32,7 @@ typedef struct {
 	uint8_t type;
 	uint8_t code;
 	uint16_t checksum;
-} icmp4_header_t;
+} __attribute__((packed)) icmp4_header_t;
 
 void icmp4_receive(net_device_t* origin, size_t size, ip4_header_t* ip_packet);
 

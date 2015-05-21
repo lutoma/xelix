@@ -31,7 +31,7 @@ struct traceroute {
 	uint16_t return_hops;
 	uint32_t link_speed;
 	uint32_t link_mtu;
-};
+} __attribute__((packed));
 
 void icmp4_send(net_device_t* target, ip4_addr_t src, ip4_addr_t dst,
 	uint8_t type, uint8_t code, size_t data_length, void* data)

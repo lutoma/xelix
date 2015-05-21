@@ -23,12 +23,12 @@
 #include <net/ip4.h>
 #include <net/net.h>
 
-struct {
+typedef struct {
 	uint16_t source_port;
 	uint16_t destination_port;
 	uint16_t length;
 	uint16_t checksum;
-} typedef udp_header_t;
+} __attribute__((packed)) udp_header_t;
 
 typedef void (*udp_handler_t)(net_device_t*, size_t, udp_header_t*, ip4_header_t*);
 

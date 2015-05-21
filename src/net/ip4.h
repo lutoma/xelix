@@ -41,7 +41,7 @@ typedef struct {
 	uint16_t checksum;
 	ip4_addr_t src;
 	ip4_addr_t dst;
-} ip4_header_t;
+}  __attribute__((packed)) ip4_header_t;
 
 typedef struct {
 	uint8_t type;
@@ -49,7 +49,7 @@ typedef struct {
 	uint16_t checksum;
 	uint16_t id;
 	uint16_t sequence;
-} ip4_icmp_header_t;
+} __attribute__((packed)) ip4_icmp_header_t;
 
 void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw);
 void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);
