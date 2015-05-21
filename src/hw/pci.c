@@ -37,7 +37,7 @@
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8
 
-pci_device_t devices[65536];
+static pci_device_t devices[65536];
 
 static inline int get_address(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
 {

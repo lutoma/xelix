@@ -30,10 +30,10 @@
 #define MAX_DEVICES 51
 #define MAX_HOSTNAME_LEN 64
 
-net_device_t *registered_devices[MAX_DEVICES];
-uint32_t registered_device_count;
-char hostname[MAX_HOSTNAME_LEN];
-size_t hostname_setlen = 0;
+static net_device_t *registered_devices[MAX_DEVICES];
+static uint32_t registered_device_count;
+static char hostname[MAX_HOSTNAME_LEN];
+static size_t hostname_setlen = 0;
 
 void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t* data)
 {

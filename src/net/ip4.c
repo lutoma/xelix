@@ -54,7 +54,7 @@ struct fragment_entry* first_fragment = NULL;
 struct fragment_entry* last_fragment = NULL;
 uint32_t stored_fragments = 0;
 
-void prepare_packet_to_send(ip4_header_t* packet) {
+static void prepare_packet_to_send(ip4_header_t* packet) {
 	packet->version = 4;
 	packet->id = (uint16_t)(pit_getTickNum() % 65535);
 	packet->checksum = 0;

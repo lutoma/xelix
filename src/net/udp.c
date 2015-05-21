@@ -30,12 +30,6 @@
 // Todo use bitmap?
 static udp_handler_t ports[65536];
 
-uint32_t wrapsum(uint32_t sum)
-{
-	sum = ~sum & 0xFFFF;
-	return (endian_swap32(sum));
-}
-
 // Todo allow for IP/device-based handler registration
 void udp_register_handler(udp_handler_t handler, uint16_t port) {
 	ports[port] = handler;
@@ -59,6 +53,7 @@ void udp_receive(net_device_t* origin, size_t size, ip4_header_t* ip_packet) {
 
 void udp_send(net_device_t* destination, size_t size, ip4_header_t* ip_packet) {
 	udp_header_t* header = (udp_header_t*)(ip_packet + 1);
+	// FIXME calculate checksum
 	header->checksum = 0;
 	ip_packet->proto = IP4_TOS_UDP;
 	ip4_send(destination, size, ip_packet);
