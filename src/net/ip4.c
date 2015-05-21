@@ -54,25 +54,6 @@ struct fragment_entry* first_fragment = NULL;
 struct fragment_entry* last_fragment = NULL;
 uint32_t stored_fragments = 0;
 
-char* ip4_split_ip(char* out, int ip)
-{
-	unsigned char bytes[4];
-	bytes[0] = ip & 0xFF;
-	bytes[1] = (ip >> 8) & 0xFF;
-	bytes[2] = (ip >> 16) & 0xFF;
-	bytes[3] = (ip >> 24) & 0xFF;
-
-	// FIXME We neeeeeeed snprintf!
-	strcat(out, itoa(bytes[3], 10));
-	strcat(out, ".");
-	strcat(out, itoa(bytes[2], 10));
-	strcat(out, ".");
-	strcat(out, itoa(bytes[1], 10));
-	strcat(out, ".");
-	strcat(out, itoa(bytes[0], 10));
-	return out;
-}
-
 void prepare_packet_to_send(ip4_header_t* packet) {
 	packet->version = 4;
 	packet->id = (uint16_t)(pit_getTickNum() % 65535);
