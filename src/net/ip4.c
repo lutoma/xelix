@@ -222,7 +222,7 @@ static void reassemble_packet(struct fragment_entry* fragment, net_device_t* ori
 
 		// Unless this is the first packet, chop off the header.
 		if(PKG_FRAGMENT_OFFSET(packet) != 0) {
-			packet_data = (char*)packet_data + packet->hl * 4;
+			packet_data = (uint8_t*)packet_data + packet->hl * 4;
 			size -= packet->hl * 4;
 			offset += packet->hl * 4;
 		}
@@ -245,13 +245,11 @@ static void reassemble_packet(struct fragment_entry* fragment, net_device_t* ori
 void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw)
 {
 	ip4_header_t* packet = NULL;
-	ether_frame_hdr_t* etherhdr = NULL;
 
 	// This should not be done here. Move to net.c!
 	if (proto == NET_PROTO_ETH)
 	{
 		packet = net_ether_getPayload(raw);
-		etherhdr = raw;
 		size -= sizeof(ether_frame_hdr_t);
 	}
 	else if (proto == NET_PROTO_RAW)

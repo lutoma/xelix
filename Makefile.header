@@ -28,6 +28,6 @@ else
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
-MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -serial file:xelix.log
+MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -serial pty
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)

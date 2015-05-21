@@ -37,7 +37,7 @@ uint32_t wrapsum(uint32_t sum)
 }
 
 // Todo allow for IP/device-based handler registration
-bool udp_register_handler(udp_handler_t handler, uint16_t port) {
+void udp_register_handler(udp_handler_t handler, uint16_t port) {
 	ports[port] = handler;
 }
 

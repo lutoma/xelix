@@ -45,7 +45,7 @@ void icmp4_send(net_device_t* target, ip4_addr_t src, ip4_addr_t dst,
 
 	icmp_header->type = type;
 	icmp_header->code = code;
-	memcpy((intptr_t)icmp_header + sizeof(icmp4_header_t), data, data_length);
+	memcpy((void*)((intptr_t)icmp_header + sizeof(icmp4_header_t)), data, data_length);
 
 	icmp_header->checksum = 0;
 	icmp_header->checksum = endian_swap16(net_calculate_checksum((uint8_t*)icmp_header, icmp_length, 0));

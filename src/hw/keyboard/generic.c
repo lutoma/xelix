@@ -78,6 +78,7 @@ static void flush()
 		log(LOG_INFO, "keyboard: flush: Dropping scancode 0x%x.\n", inb(0x60));
 }
 
+#if 0
 // Identify keyboard. You should _not_ call this after initialization.
 static char* identify()
 {
@@ -119,6 +120,7 @@ static char* identify()
 
 	return "Unknown";
 }
+#endif
 
 // Handle a scancode. Calls the active function
 static void handleScancode(uint8_t code, uint8_t code2)

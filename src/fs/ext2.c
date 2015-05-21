@@ -377,8 +377,8 @@ void ext2_init()
 {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
 	superblock = (ext2_superblock_t*)kmalloc(sizeof(ext2_superblock_t));
-	read_sector_or_fail(false, 0x1F0, 0, 2, (uint8_t*)superblock);
-	read_sector_or_fail(false, 0x1F0, 0, 3, (uint8_t*)((void*)superblock + 512));
+	read_sector_or_fail(, 0x1F0, 0, 2, (uint8_t*)superblock);
+	read_sector_or_fail(, 0x1F0, 0, 3, (uint8_t*)((void*)superblock + 512));
 
 	if(superblock->magic != SUPERBLOCK_MAGIC)
 	{
