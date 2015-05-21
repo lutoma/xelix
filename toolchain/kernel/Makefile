@@ -13,7 +13,7 @@ PATH:=$(PATH):$(CURDIR)/local/bin
 
 .PHONY: all install clean binutils gcc
 
-all: binutils-all gcc-all newlib-all
+all: binutils-all gcc-all
 
 clean: binutils-clean gcc-clean
 	@echo "Cleaning all"
