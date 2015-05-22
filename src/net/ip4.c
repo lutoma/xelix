@@ -178,7 +178,6 @@ void ip4_sort_packet(net_device_t* origin, size_t size, ip4_header_t* packet) {
 	}
 }
 
-// FIXME This does not remove the packet from the storage atm. Obviously this is bad.
 static void reassemble_packet(struct fragment_entry* fragment, net_device_t* origin) {
 	uint32_t full_length = 0;
 
