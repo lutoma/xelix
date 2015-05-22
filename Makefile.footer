@@ -64,7 +64,7 @@ strip: xelix.bin
 
 .PHONY: count
 count:
-	find -L {src,libc} -type f -iregex "^.*\.\(c\|h\|asm\)" | xargs wc | tail -n 1 2> /dev/null 
+	( find -L {src,toolchain}/ -not -iregex "toolchain/\(userspace\|kernel\)/\(download\|local\|build\)/.*" -type f -iregex "^.*\.\(c\|h\|asm\)" -print0 -regextype "posix-extended" | xargs -0 cat ) | wc -l
 
 .PHONY: clean
 clean:
@@ -78,3 +78,6 @@ tags:
 runqemudebug: xelix.bin
 	qemu -kernel xelix.bin $(MAKE_QEMU_FLAGS)
 
+.PHONY: todo
+todo:
+	grep -rie FIXME -e TODO src toolchain/userspace/content toolchain/userspace/patch toolchain/*/Makefile configure 
