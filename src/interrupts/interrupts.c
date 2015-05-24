@@ -1,6 +1,5 @@
 /* interrupts.c: Initialization of and interface to interrupts.
- * Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011, 2013 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -66,31 +65,20 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 void interrupts_registerHandler(uint8_t n, interrupt_handler_t handler)
 {
 	handlers[n] = handler;
-	
-	if(n > 31)
-		log(LOG_INFO, "interrupts: Registered interrupt handler for IRQ %d.\n", n - 32);
-	else
-		log(LOG_INFO, "interrupts: Registered interrupt handler for %d.\n", n);
+	log(LOG_INFO, "interrupts: Registered handler for %d.\n", n);
 }
 
 void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interrupt_handler_t handler)
 {
-		for(; start <= end; start++)
-			handlers[start] = handler;
+		for(uint8_t i = start; i <= end; i++)
+			handlers[i] = handler;
 
-		if(start > 31)
-			log(LOG_INFO, "interrupts: Registered interrupt handler for IRQs %d -  %d.\n", start - 32, end - 32);
-		else
-			log(LOG_INFO, "interrupts: Registered interrupt handlers for %d - %d.\n", start, end);
+		log(LOG_INFO, "interrupts: Registered handlers for %d - %d.\n", start, end);
 }
 
 void interrupts_init()
 {
 	arch_interrupts_init();
-
-	// set all interruptHandlers to NULL.
 	memset(handlers, 0, 256 * sizeof(interrupt_handler_t));
 	interrupts_enable();
-	
-	log(LOG_INFO, "interrupts: Initialized\n");
 }
