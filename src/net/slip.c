@@ -23,7 +23,7 @@
 
 #include <lib/log.h>
 #include <memory/kmalloc.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/serial.h>
 #include <net/net.h>
 

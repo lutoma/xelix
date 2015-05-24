@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "interface.h"
+#include <hw/interrupts.h>
 #include <lib/log.h>
 #include <lib/generic.h>
 #include <arch/interrupts.h>

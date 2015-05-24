@@ -24,7 +24,7 @@
 #include <lib/generic.h>
 #include <lib/log.h>
 #include <memory/kmalloc.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include "ide.h"
 
 ide_channel_regs_t ide_channels[2];

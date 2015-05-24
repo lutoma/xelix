@@ -20,7 +20,7 @@
 
 #include "generic.h"
 #include "print.h"
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
 

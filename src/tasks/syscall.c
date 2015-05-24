@@ -20,7 +20,7 @@
 
 #include "syscall.h"
 #include <lib/generic.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <lib/print.h>

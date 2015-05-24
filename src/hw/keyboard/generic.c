@@ -28,7 +28,7 @@
 #include <console/interface.h>
 #include <lib/log.h>
 #include <lib/string.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/display.h>
 #include <hw/pit.h>
 

@@ -23,7 +23,7 @@
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <hw/cpu.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <lib/panic.h>
 #include <lib/string.h>
 #include <memory/vmem.h>

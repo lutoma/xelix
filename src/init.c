@@ -27,7 +27,7 @@
 #include <hw/cpu.h>
 #include <memory/interface.h>
 #include <memory/gdt.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <memory/kmalloc.h>
 #include <hw/speaker.h>

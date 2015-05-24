@@ -20,7 +20,7 @@
 #include "pit.h"
 
 #include <lib/log.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 
 static uint64_t tick = 0;
 

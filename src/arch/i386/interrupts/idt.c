@@ -20,7 +20,7 @@
 
 #include "idt.h"
 
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <lib/log.h>
 
 // A struct describing an interrupt gate.

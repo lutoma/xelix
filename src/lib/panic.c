@@ -23,7 +23,7 @@
 #include "generic.h"
 #include "print.h"
 #include <console/interface.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/cpu.h>
 #include <hw/pit.h>
 #include <fs/vfs.h>

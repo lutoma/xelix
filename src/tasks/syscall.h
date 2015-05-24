@@ -19,7 +19,7 @@
  */
 
 #include <lib/generic.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 
 #define SYSCALL_INTERRUPT 0x80
 

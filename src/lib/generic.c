@@ -28,7 +28,7 @@
 #include <hw/pit.h>
 #include <hw/keyboard.h>
 #include <tasks/scheduler.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 
 // Memset function. Fills memory with something.
 void memset(void* ptr, uint8_t fill, uint32_t size)
