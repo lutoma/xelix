@@ -1,6 +1,6 @@
 /* panic.c: Handle kernel panics
- * Copyright © 2011 Lukas Martini, Benjamin Richter
- * Copyright © 2014 Lukas Martini
+ * Copyright © 2011 Benjamin Richter
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -30,7 +30,23 @@
 #include <fs/vfs.h>
 #include <lib/string.h>
 
-void stacktrace(cpu_state_t* regs) {
+/* Write to display/serial, completely circumventing the console framework and
+ * device drivers. Writes directly to video memory / serial ioports.
+ *
+ * Ideally, the output of this will later then be overwritten by the full
+ * output routed via the console framework.
+ */
+static void bruteforce_print(char* chars) {
+	serial_print(chars);
+
+	static uint8_t* video_memory = (uint8_t*)0xB8000;
+	for(; *chars != 0; chars++) {
+		*video_memory++ = *chars;
+		*video_memory++ = 0x1F;
+	}
+}
+
+static void stacktrace(cpu_state_t* regs) {
 	printf("\nCDECL stack trace:\n");
 
 	uint8_t* bp = regs->ebp;
@@ -40,7 +56,7 @@ void stacktrace(cpu_state_t* regs) {
 	} while (bp);
 }
 
-void dump_registers(cpu_state_t* regs) {
+static void dump_registers(cpu_state_t* regs) {
 	printf("CPU State:\n");
 	printf("EAX=0x%x\tEBX=0x%x\tECX=0x%x\tEDX=0x%x\n",
 		regs->eax, regs->ebx, regs->ecx, regs->edx);
@@ -54,8 +70,12 @@ void dump_registers(cpu_state_t* regs) {
 
 static void panic_handler(cpu_state_t* regs)
 {
-	serial_print("Kernel Panic: ");
-	serial_print(*((char**)PANIC_INFOMEM));
+	bruteforce_print("Early Kernel Panic: ");
+	bruteforce_print(*((char**)PANIC_INFOMEM));
+	bruteforce_print(" -- If you can see only this message, but not the full kernel "
+		"panic debug information, either the console framework / display driver "
+		"failed or the kernel panic occured in early startup before the "
+		"initialization of the needed drivers.");
 
 	printf("\n%%Kernel Panic: %s%%\n", 0x04, *((char**)PANIC_INFOMEM));
 
