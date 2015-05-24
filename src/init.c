@@ -74,11 +74,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(gdt);
 	init(interrupts);
 	init(panic);
-	init(kmalloc);
-	init(pit, PIT_RATE);
-	init(serial);
-	init(console);
-	init(log);
 
 	// Check if we were actually booted by a multiboot bootloader
 	if(multiboot_checksum != MULTIBOOT_KERNELMAGIC) {
@@ -94,6 +89,12 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		panic("Not enough RAM to safely proceed - should be at least 60 MB.\n");
 	}
 
+	init(kmalloc);
+	init(pit, PIT_RATE);
+	init(serial);
+	init(console);
+	init(log);
+
 	compilerInfo();
 
 	// Dump memory map.
@@ -103,7 +104,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 
 	uint32_t mmap_addr = multiboot_info->mmapAddr;
 	uint32_t mmap_length = multiboot_info->mmapLength;
-
 	log(LOG_DEBUG, "mmap_addr = 0x%x, mmap_length = 0x%x\n", mmap_addr, mmap_length);
 
 	uint32_t i = mmap_addr;
