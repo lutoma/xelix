@@ -102,7 +102,7 @@ void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
 
 vfs_file_t* vfs_open(char* path)
 {
-	if(spinlock_get(&file_open_lock, 30) == -1) {
+	if(!spinlock_get(&file_open_lock, 30)) {
 		return NULL;
 	}
 
