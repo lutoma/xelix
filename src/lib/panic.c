@@ -26,6 +26,7 @@
 #include <hw/interrupts.h>
 #include <hw/cpu.h>
 #include <hw/pit.h>
+#include <hw/serial.h>
 #include <fs/vfs.h>
 #include <lib/string.h>
 
@@ -53,6 +54,9 @@ void dump_registers(cpu_state_t* regs) {
 
 static void panic_handler(cpu_state_t* regs)
 {
+	serial_print("Kernel Panic: ");
+	serial_print(*((char**)PANIC_INFOMEM));
+
 	printf("\n%%Kernel Panic: %s%%\n", 0x04, *((char**)PANIC_INFOMEM));
 
 	uint32_t ticknum = pit_getTickNum();
