@@ -53,7 +53,7 @@ __attribute__((optimize(0))) void log(uint32_t level, const char *fmt, ...)
 
 	if(printlog)
 	{
-		printf("[%d:%d] ", pit_getTickNum() / PIT_RATE, pit_getTickNum());
+		printf("[%d:%d] ", (uint32_t)pit_getTickNum() / PIT_RATE, pit_getTickNum());
 		vprintf(fmt, (void**)(&fmt) + 1);
 	}
 }
