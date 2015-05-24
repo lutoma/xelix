@@ -55,7 +55,7 @@ static void panic_handler(cpu_state_t* regs)
 {
 	printf("\n%%Kernel Panic: %s%%\n", 0x04, *((char**)PANIC_INFOMEM));
 
-	uint64_t ticknum = pit_getTickNum();
+	uint32_t ticknum = pit_getTickNum();
 	printf("Last PIT ticknum: %d (tickrate %d, approx. uptime: %d seconds)\n",
 		ticknum,
 		PIT_RATE,
