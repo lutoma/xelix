@@ -74,6 +74,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(gdt);
 	init(interrupts);
 	init(panic);
+	init(cpu);
 
 	// Check if we were actually booted by a multiboot bootloader
 	if(multiboot_checksum != MULTIBOOT_KERNELMAGIC) {
@@ -125,7 +126,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		arch_multiboot_printInfo();
 	#endif
 
-	init(cpu);
 	init(pci);
 	init(syscall);
 	init(vmem);
