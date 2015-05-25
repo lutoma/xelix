@@ -27,6 +27,7 @@
 #include <fs/vfs.h>
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
+#include <memory/track.h>
 
 #define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
 
@@ -86,6 +87,28 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 			page->virt_addr = phead->virtaddr + i;
 			page->phys_addr = phys_location + i;
 			vmem_add_page(vmem_kernelContext, page);
+			vmem_add_page(ctx, page);
+		}
+	}
+
+	// Map all the other required stuff.
+	for(int i = 0; i < memory_track_num_areas; i++) {
+		memory_track_area_t* area = &memory_track_areas[i];
+
+		if(area->type == MEMORY_TYPE_FREE) {
+			continue;
+		}
+
+		for(int i = area->addr; i < phead->filesize; i += 4096)
+		{
+			//vmem_rm_page_virt(vmem_kernelContext, phead->virtaddr + i);
+
+			struct vmem_page *page = vmem_new_page();
+			page->section = VMEM_SECTION_KERNEL; // FIXME
+			page->cow = 0;
+			page->allocated = 1;
+			page->virt_addr = i;
+			page->phys_addr = i;
 			vmem_add_page(ctx, page);
 		}
 	}
