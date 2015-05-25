@@ -176,6 +176,9 @@ void ip4_sort_packet(net_device_t* origin, size_t size, ip4_header_t* packet) {
 			udp_receive(origin, size, packet);
 			break;
 	}
+
+	// Unsupported protocol, send error.
+	icmp4_send_error(origin, ICMP4_TYPE_DEST_UNREACHABLE, 2, size, packet);
 }
 
 static void reassemble_packet(struct fragment_entry* fragment, net_device_t* origin) {
