@@ -45,7 +45,7 @@ DEFINE_SYSCALL(getexecdata);
 DEFINE_SYSCALL(chdir);
 DEFINE_SYSCALL(getcwd);
 DEFINE_SYSCALL(fork);
-DEFINE_SYSCALL(execven);
+DEFINE_SYSCALL(execve);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -71,6 +71,7 @@ syscall_t syscall_table[] = {
 	sys_chdir,			// 20
 	sys_getcwd,			// 21
 	sys_fork,			// 22
+	sys_execve,			// 23
 };
 
 char* syscall_name_table[] = {
@@ -97,4 +98,5 @@ char* syscall_name_table[] = {
 	"chdir",		// 20
 	"getcwd",		// 21
 	"fork",			// 22
+	"execve",			// 23
 };
