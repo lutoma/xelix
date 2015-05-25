@@ -62,7 +62,24 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	if(bin->entry == NULL)
 		fail("elf: elf_load: This elf file doesn't have an entry point\n");
 
+	/* 1:1 map "lower" memory (kernel etc.)
+	 * FIXME This is really generic and hacky. Should instead do some smart
+	 * stuff with memory/track.c – That is, as soon as we have a complete
+	 * collection of all the memory areas we need.
+	 */
 	struct vmem_context *ctx = vmem_new();
+	for (char *i = (char*)0; i <= (char*)0xfffffff; i += 4096)
+	{
+		struct vmem_page *page = vmem_new_page();
+		page->section = VMEM_SECTION_KERNEL;
+		page->cow = 0;
+		page->allocated = 1;
+		page->virt_addr = (void *)i;
+		page->phys_addr = (void *)i;
+
+		vmem_add_page(ctx, page);
+	}
+
 	elf_program_t* phead = ((void*)bin + bin->phoff);
 
 	for(int i = 0; i < bin->phnum; i++, phead++)
@@ -73,12 +90,13 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 		memset(phys_location, 0, 4096);
 		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize);	
 
+
 		/* Now, remap the _virtual_ location where the ELF binary wants this
 		 * section to be at to the physical location.
 		 */
 		for(int i = 0; i < phead->filesize; i += 4096)
 		{
-			vmem_rm_page_virt(vmem_kernelContext, phead->virtaddr + i);
+			vmem_rm_page_virt(ctx, phead->virtaddr + i);
 
 			struct vmem_page *page = vmem_new_page();
 			page->section = VMEM_SECTION_KERNEL; // FIXME
@@ -86,36 +104,13 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 			page->allocated = 1;
 			page->virt_addr = phead->virtaddr + i;
 			page->phys_addr = phys_location + i;
-			vmem_add_page(vmem_kernelContext, page);
-			vmem_add_page(ctx, page);
-		}
-	}
-
-	// Map all the other required stuff.
-	for(int i = 0; i < memory_track_num_areas; i++) {
-		memory_track_area_t* area = &memory_track_areas[i];
-
-		if(area->type == MEMORY_TYPE_FREE) {
-			continue;
-		}
-
-		for(int i = area->addr; i < phead->filesize; i += 4096)
-		{
-			//vmem_rm_page_virt(vmem_kernelContext, phead->virtaddr + i);
-
-			struct vmem_page *page = vmem_new_page();
-			page->section = VMEM_SECTION_KERNEL; // FIXME
-			page->cow = 0;
-			page->allocated = 1;
-			page->virt_addr = i;
-			page->phys_addr = i;
 			vmem_add_page(ctx, page);
 		}
 	}
 
 	// The last argument should be false only as long as we use the kernel context
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,
-		vmem_kernelContext, false);
+		ctx, false);
 	
 	return task;
 }

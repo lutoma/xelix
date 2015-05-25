@@ -169,7 +169,8 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
 	char* __argv[] = { "dash", "-liV", NULL };
 
-	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, __argv, 2, vmem_kernelContext, false);
+	// FIXME Make copy of memory context instead of just using the same
+	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, __argv, 2, to_fork->memory_context, false);
 
 	// Copy registers
 	new_task->state->ebx = state->ebx;
