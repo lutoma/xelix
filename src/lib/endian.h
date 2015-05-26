@@ -20,6 +20,6 @@
 
 #include <lib/generic.h>
 
-#define endian_swap16(x) ((((x) & 0xff00) >> 8) | (((x) & 0xff) << 8))
+#define endian_swap16 __builtin_bswap16
 #define endian_swap32 __builtin_bswap32
 #define endian_swap64 __builtin_bswap64
