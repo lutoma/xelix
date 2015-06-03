@@ -1,4 +1,4 @@
-/* Copyright © 2013 Lukas Martini
+/* Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,6 +23,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #include <termios.h>
 #include <signal.h>
@@ -406,4 +407,58 @@ int tcsetpgrp(int fildes, pid_t pgid_id)
 {
 	errno = ENOSYS;
 	return -1;
+}
+
+int socket(int domain, int type, int protocol) 
+{
+	if(domain != AF_INET) {
+		errno = EAFNOSUPPORT;
+		return -1;
+	}
+
+	if(type != SOCK_DGRAM) {
+		errno = EPROTOTYPE;
+		return -1;
+	}
+
+	printf("libc/Xelix: socket() dummy call, returning 0\n");
+	return 0;
+}
+
+int bind(int socket, const struct sockaddr *address, socklen_t address_len)
+{
+	// Socket should always be 0 for now as that's all socket() will return
+	if(socket != 0) {
+		errno = ENOTSOCK;
+		return -1;
+	}
+
+	printf("libc/Xelix: bind() dummy call, returning 0\n");
+	return 0;
+}
+
+ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
+	struct sockaddr *address, socklen_t *address_len)
+{
+	// Socket should always be 0 for now as that's all socket() will return
+	if(socket != 0) {
+		errno = ENOTSOCK;
+		return -1;
+	}
+
+	printf("libc/Xelix: recvfrom() dummy call, returning 0\n");
+	return 0;
+}
+
+ssize_t sendto(int socket, const void *message, size_t length, int flags,
+	const struct sockaddr *dest_addr, socklen_t dest_len)
+{
+	// Socket should always be 0 for now as that's all socket() will return
+	if(socket != 0) {
+		errno = ENOTSOCK;
+		return -1;
+	}
+	
+	printf("libc/Xelix: recvfrom() dummy call, returning %d\n", length);
+	return length;
 }
