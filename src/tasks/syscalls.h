@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2014 Lukas Martini
+/* Copyright © 2014-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -46,6 +46,10 @@ DEFINE_SYSCALL(chdir);
 DEFINE_SYSCALL(getcwd);
 DEFINE_SYSCALL(fork);
 DEFINE_SYSCALL(execve);
+DEFINE_SYSCALL(socket);
+DEFINE_SYSCALL(bind);
+DEFINE_SYSCALL(socket_send);
+DEFINE_SYSCALL(socket_recv);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -72,6 +76,10 @@ syscall_t syscall_table[] = {
 	sys_getcwd,			// 21
 	sys_fork,			// 22
 	sys_execve,			// 23
+	sys_socket,			// 24
+	sys_bind,			// 25
+	sys_socket_send,	// 26
+	sys_socket_recv		// 27
 };
 
 char* syscall_name_table[] = {
@@ -98,5 +106,9 @@ char* syscall_name_table[] = {
 	"chdir",		// 20
 	"getcwd",		// 21
 	"fork",			// 22
-	"execve",			// 23
+	"execve",		// 23
+	"sys_socket",	// 24
+	"sys_bind",		// 25
+	"socket_send",	// 26
+	"socket_recv"	// 27
 };

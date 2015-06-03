@@ -421,44 +421,22 @@ int socket(int domain, int type, int protocol)
 		return -1;
 	}
 
-	printf("libc/Xelix: socket() dummy call, returning 0\n");
-	return 0;
+	return call_socket(domain, type, protocol);
 }
 
 int bind(int socket, const struct sockaddr *address, socklen_t address_len)
 {
-	// Socket should always be 0 for now as that's all socket() will return
-	if(socket != 0) {
-		errno = ENOTSOCK;
-		return -1;
-	}
-
-	printf("libc/Xelix: bind() dummy call, returning 0\n");
-	return 0;
+	return call_bind(socket, address, address_len);
 }
 
 ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
 	struct sockaddr *address, socklen_t *address_len)
 {
-	// Socket should always be 0 for now as that's all socket() will return
-	if(socket != 0) {
-		errno = ENOTSOCK;
-		return -1;
-	}
-
-	printf("libc/Xelix: recvfrom() dummy call, returning 0\n");
-	return 0;
+	return call_socket_recv(socket, buffer, length);
 }
 
 ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len)
 {
-	// Socket should always be 0 for now as that's all socket() will return
-	if(socket != 0) {
-		errno = ENOTSOCK;
-		return -1;
-	}
-	
-	printf("libc/Xelix: recvfrom() dummy call, returning %d\n", length);
-	return length;
+	return call_socket_send(socket, message, length);
 }

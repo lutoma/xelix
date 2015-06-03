@@ -1,5 +1,5 @@
 # call.s: Syscall
-# Copyright © 2013-2014 Lukas Martini
+# Copyright © 2013-2015 Lukas Martini
 
 # This file is part of Xelix.
 #
@@ -117,3 +117,38 @@ call_execve:
     int 0x80
     ret
 
+.global call_socket
+call_socket:
+    mov eax, 24
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    mov edx, [esp + 12]
+    int 0x80
+    ret
+
+.global call_bind
+call_bind:
+    mov eax, 25
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    mov edx, [esp + 12]
+    int 0x80
+    ret
+
+.global call_socket_send
+call_socket_send:
+    mov eax, 26
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    mov edx, [esp + 12]
+    int 0x80
+    ret
+
+.global call_socket_recv
+call_socket_recv:
+    mov eax, 27
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    mov edx, [esp + 12]
+    int 0x80
+    ret
