@@ -77,7 +77,7 @@ int vmem_iterate(struct vmem_context *ctx, vmem_iterator_t callback);
 uint32_t vmem_count_pages(struct vmem_context *ctx);
 void vmem_dump_page(struct vmem_page *pg);
 void vmem_dump(struct vmem_context *ctx);
-void vmem_handle_fault(uint32_t code, void *addr, void *instruction);
+void vmem_handle_fault(uint32_t code, void *addr);
 
 /* Get/Set cached paging context */
 void vmem_set_cache(struct vmem_context *ctx, void *cache);

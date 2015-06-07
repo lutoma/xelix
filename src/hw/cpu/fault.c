@@ -52,7 +52,7 @@ static void handlePageFault(cpu_state_t *regs)
 	int cr2;
 	asm volatile("mov %0, cr2":"=r"(cr2));
 	
-	vmem_handle_fault(regs->errCode, regs->eip, (void*)cr2);
+	vmem_handle_fault(regs->errCode, regs->eip);
 }
 
 // Handles the IRQs we catch

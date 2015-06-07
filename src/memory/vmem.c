@@ -242,7 +242,7 @@ uint32_t vmem_count_pages(struct vmem_context *ctx)
 	return ctx->pages;
 }
 
-void vmem_handle_fault(uint32_t code, void *addr, void *instr)
+void vmem_handle_fault(uint32_t code, void *addr)
 {
 	uint32_t addrInt = (uint32_t)addr;
 	struct vmem_page *pg = vmem_get_page_virt(vmem_currentContext, (void *)GET_PAGE(addrInt));
