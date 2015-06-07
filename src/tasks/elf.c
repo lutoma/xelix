@@ -111,7 +111,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	// The last argument should be false only as long as we use the kernel context
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,
 		ctx, false);
-	
+
+	vmem_set_task(ctx, task);
 	return task;
 }
 

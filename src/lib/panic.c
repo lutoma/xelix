@@ -29,6 +29,7 @@
 #include <hw/serial.h>
 #include <fs/vfs.h>
 #include <lib/string.h>
+#include <memory/vmem.h>
 
 /* Write to display/serial, completely circumventing the console framework and
  * device drivers. Writes directly to video memory / serial ioports.
@@ -96,7 +97,8 @@ static void panic_handler(cpu_state_t* regs)
 		strncpy(vfs_last_read_attempt, "No file system read attempts.", 512);
 	}
 
-	printf("Last VFS read attempt: %s\n\n", vfs_last_read_attempt);
+	printf("Last VFS read attempt: %s\n", vfs_last_read_attempt);
+	printf("Active paging context: %s\n\n", vmem_get_name(vmem_currentContext));
 
 	dump_registers(regs);
 	stacktrace(regs);

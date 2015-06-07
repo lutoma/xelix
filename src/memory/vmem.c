@@ -1,6 +1,6 @@
 /* vm.c: Virtual memory management
  * Copyright © 2011 Fritz Grimpen
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,6 +23,7 @@
 #include <memory/kmalloc.h>
 #include <lib/print.h>
 #include <lib/panic.h>
+#include <tasks/scheduler.h>
 
 #define FIND_NODE(node, cond) { \
 	while (!(cond) && node != NULL) \
@@ -50,6 +51,13 @@ struct vmem_context
 	};
 
 	void *cache;
+
+	/* The task this context is used for. NULL = Kernel context. This is
+	 * intentionally not set through an argument to vmem_new, as task_new
+	 * requires a memory context, which would create a circular dependency.
+	 * Instead, this is manually set by the ELF loader.
+	 */
+	task_t* task;
 };
 
 /* Initialize kernel context */
@@ -91,8 +99,19 @@ struct vmem_context *vmem_new()
 	ctx->node = NULL;
 	ctx->pages = 0;
 	ctx->cache = NULL;
+	ctx->task = NULL;
 
 	return ctx;
+}
+
+/* The second argument to this is actually a task_t*, but we can't make it
+ * that trivially as we'd have to include tasks/scheduler.h in the header which
+ * creates a circular header dependency.
+ *
+ * FIXME The task_t struct should be moved to its own header file.
+ */
+void vmem_set_task(struct vmem_context* ctx, void* task) {
+	ctx->task = (task_t*)task;
 }
 
 struct vmem_page *vmem_new_page()
@@ -242,6 +261,13 @@ uint32_t vmem_count_pages(struct vmem_context *ctx)
 	return ctx->pages;
 }
 
+char* vmem_get_name(struct vmem_context* ctx) {
+	if(ctx->task == NULL) {
+		return "Kernel context";
+	}
+	return ctx->task->name;
+}
+
 void vmem_handle_fault(uint32_t code, void *addr)
 {
 	uint32_t addrInt = (uint32_t)addr;
@@ -251,8 +277,8 @@ void vmem_handle_fault(uint32_t code, void *addr)
 	if(running_task)
 	{
 		log(LOG_WARN, "Segmentation fault in task %s "
-			"at address 0x%x. Terminating it.\n",
-			running_task->name, addrInt);
+			"at address 0x%x of context %s. Terminating it.\n",
+			running_task->name, addrInt, vmem_get_name(vmem_currentContext));
 
 		scheduler_terminate_current();
 		return;
