@@ -85,16 +85,15 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	for(int i = 0; i < bin->phnum; i++, phead++)
 	{
 		// Allocate new _physical_ location for this in RAM and copy data there
-		void* phys_location = (void*)kmalloc_a(phead->filesize + 4096);
+		void* phys_location = (void*)kmalloc_a(phead->memsize + 4096);
 
-		memset(phys_location, 0, 4096);
+		memset(phys_location, 0, phead->memsize);
 		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize);	
-
 
 		/* Now, remap the _virtual_ location where the ELF binary wants this
 		 * section to be at to the physical location.
 		 */
-		for(int i = 0; i < phead->filesize; i += 4096)
+		for(int i = 0; i < phead->memsize; i += 4096)
 		{
 			vmem_rm_page_virt(ctx, phead->virtaddr + i);
 
