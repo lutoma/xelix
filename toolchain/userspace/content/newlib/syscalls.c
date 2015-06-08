@@ -48,10 +48,8 @@ int close(int file)
 
 int execve(char *name, char **argv, char **env)
 {
-	fprintf(stderr, "libc: Warning: Call to unimplemented execve()\n");
 	errno = ENOSYS;
-	call_execve(name, argv, env);
-	return -1;
+	return call_execve(name, argv, env);
 }
 
 int fork()
