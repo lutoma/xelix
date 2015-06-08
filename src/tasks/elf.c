@@ -1,5 +1,5 @@
 /* elf.c: Loader for ELF binaries
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -84,6 +84,11 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 
 	for(int i = 0; i < bin->phnum; i++, phead++)
 	{
+		if(phead->alignment != PAGE_SIZE && phead->alignment != 0 && phead->alignment != 1) {
+			log(LOG_WARN, "elf: Incompatible alignment request (%d). Proceeding, but this may fail.\n",
+				phead->alignment);
+		}
+
 		// Allocate new _physical_ location for this in RAM and copy data there
 		void* phys_location = (void*)kmalloc_a(phead->memsize + PAGE_SIZE);
 
