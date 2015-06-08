@@ -1,5 +1,6 @@
 /* munmap.c: Implementation of the munmap syscall
  * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,7 +22,7 @@
 #include <memory/vmem.h>
 #include <memory/paging.h>
 
-int sys_munmap(struct syscall syscall)
+SYSCALL_HANDLER(munmap)
 {
 	void *addr = (void*)syscall.params[0];
 	size_t length = syscall.params[1];
@@ -30,5 +31,5 @@ int sys_munmap(struct syscall syscall)
 	for (int i = 0; i < pages; ++i)
 		vmem_rm_page_virt(vmem_currentContext, (void*)addr + i * 4096);
 
-	return 0;
+	SYSCALL_RETURN(0);
 }

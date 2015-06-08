@@ -1,5 +1,6 @@
 /* exit.c: Exit syscall
  * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,9 +21,9 @@
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
 
-int sys_exit(struct syscall syscall)
+SYSCALL_HANDLER(exit)
 {
 	scheduler_get_current()->task_state = TASK_STATE_TERMINATED;
 	scheduler_yield();
-	return 0;
+	SYSCALL_RETURN(0);
 }

@@ -22,8 +22,8 @@
 #include <tasks/syscall.h>
 #include <lib/log.h>
 
-int sys_bind(struct syscall syscall)
+SYSCALL_HANDLER(bind)
 {
 	log(LOG_DEBUG, "syscall: bind(%d, 0x%x, %d) -> 0\n", syscall.params[0], syscall.params[1], syscall.params[2]);
-	return 0;
+	SYSCALL_RETURN(0);
 }

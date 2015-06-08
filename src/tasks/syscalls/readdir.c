@@ -1,5 +1,5 @@
 /* read.c: Readdir Syscall
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,11 +22,12 @@
 #include <lib/log.h>
 #include <lib/print.h>
 
-int sys_readdir(struct syscall syscall)
+SYSCALL_HANDLER(readdir)
 {
 	vfs_dir_t* dd = vfs_get_dir_from_id(syscall.params[0]);
-	if(dd == NULL)
-		return -1;
+	if(dd == NULL) {
+		SYSCALL_FAIL();
+	}
 	
-	return (int)vfs_dir_read(dd, syscall.params[1]);
+	SYSCALL_RETURN((int)vfs_dir_read(dd, syscall.params[1]));
 }

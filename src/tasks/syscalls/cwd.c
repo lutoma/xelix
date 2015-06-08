@@ -1,5 +1,5 @@
 /* cwd.c: Get/set current working directory
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,24 +21,19 @@
 #include <tasks/scheduler.h>
 #include <lib/string.h>
 
-int sys_chdir(struct syscall syscall)
+SYSCALL_HANDLER(chdir)
 {
-	syscall.params[0] = (int)task_resolve_address(syscall.params[0]);
-	if(!syscall.params[0])
-		return -1;
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
 	// FIXME This should seriously check if this directory even exists…
-
 	task_t* current = scheduler_get_current();
 	strncpy(current->cwd, (char*)syscall.params[0], SCHEDULER_TASK_PATH_MAX);
-	return 0;
+	SYSCALL_RETURN(0);
 }
 
-int sys_getcwd(struct syscall syscall)
+SYSCALL_HANDLER(getcwd)
 {
-	syscall.params[0] = (int)task_resolve_address(syscall.params[0]);
-	if(!syscall.params[0])
-		return -1;
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
 	// Maximum return string size
 	if(syscall.params[1] > SCHEDULER_TASK_PATH_MAX)
@@ -46,5 +41,5 @@ int sys_getcwd(struct syscall syscall)
 
 	task_t* current = scheduler_get_current();
 	strncpy((char*)syscall.params[0], current->cwd, syscall.params[1]);
-	return syscall.params[0];
+	SYSCALL_RETURN(syscall.params[0]);
 }

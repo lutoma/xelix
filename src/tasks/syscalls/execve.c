@@ -1,5 +1,5 @@
 /* execve.c: Execve syscall
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,11 +22,9 @@
 #include <tasks/scheduler.h>
 #include <tasks/elf.h>
 
-int sys_execve(struct syscall syscall)
+SYSCALL_HANDLER(execve)
 {
-	syscall.params[0] = (int)task_resolve_address(syscall.params[0]);
-	if(!syscall.params[0])
-		return -1;
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
 	// Hardcoded for dash, but doesn't hurt for other processes either
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
@@ -40,8 +38,8 @@ int sys_execve(struct syscall syscall)
 	{
 		scheduler_add(new_task);
 		scheduler_remove(task);
-		return 0;
+		SYSCALL_RETURN(0);
 	}
 
-	return -1;
+	SYSCALL_FAIL();
 }

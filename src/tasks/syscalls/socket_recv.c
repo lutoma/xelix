@@ -22,8 +22,8 @@
 #include <tasks/syscall.h>
 #include <lib/log.h>
 
-int sys_socket_recv(struct syscall syscall)
+SYSCALL_HANDLER(socket_recv)
 {
 	log(LOG_DEBUG, "syscall: socket_recv(%d, %d, %d) -> 0\n", syscall.params[0], syscall.params[1], syscall.params[2]);
-	return 0;
+	SYSCALL_RETURN(0);
 }

@@ -1,5 +1,5 @@
 /* test.c: A syscall for testing purposes
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,7 +21,7 @@
 #include <console/interface.h>
 #include <lib/log.h>
 
-int sys_test(struct syscall syscall)
+SYSCALL_HANDLER(test)
 {
 	log(LOG_DEBUG, "syscall: test: Test syscall successfull\n");
 	log(LOG_DEBUG, "Parameters: [0x%x][0x%x][0x%x][0x%x][0x%x]\n",\
@@ -32,7 +32,7 @@ int sys_test(struct syscall syscall)
 	  syscall.params[4]
 	);
 
-	return syscall.params[0] + syscall.params[1] + syscall.params[1] +\
-	  syscall.params[3] + syscall.params[4];
+	SYSCALL_RETURN(syscall.params[0] + syscall.params[1] + syscall.params[1] +\
+	  syscall.params[3] + syscall.params[4]);
 }
 

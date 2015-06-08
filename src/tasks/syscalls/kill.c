@@ -1,5 +1,5 @@
 /* open.c: Kill Syscall
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -49,14 +49,14 @@ char* signal_names[] = {
  * -3 == EPERM (Permission denied)
  * -4 == ESRCH (No such proc)
  */
-int sys_kill(struct syscall syscall)
+SYSCALL_HANDLER(kill)
 {
 	int pid = syscall.params[0];
 	int sig = syscall.params[1];
 	task_t* current = scheduler_get_current();
 
 	if(pid != current->pid)
-		return -1;
+		SYSCALL_FAIL();
 
 	char* sig_name = signal_names[sig];
 	if(!sig_name)
@@ -65,5 +65,5 @@ int sys_kill(struct syscall syscall)
 	log(LOG_INFO, "tasks: PID %d was killed by %s from PID %d\n", pid, sig_name, current->pid);
 
 	scheduler_terminate_current();
-	return 0;
+	SYSCALL_RETURN(0);
 }

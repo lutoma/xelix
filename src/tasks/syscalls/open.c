@@ -1,5 +1,5 @@
 /* open.c: Open Syscall
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,17 +22,15 @@
 #include <lib/string.h>
 #include <tasks/syscall.h>
 
-int sys_open(struct syscall syscall)
+SYSCALL_HANDLER(open)
 {
-	syscall.params[0] = (int)task_resolve_address(syscall.params[0]);
-	if(!syscall.params[0])
-		return -1;
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
 	if(strcmp((char*)syscall.params[0], "/home/lutoma/test.asm"))
-		return -1;
+		SYSCALL_FAIL();
 
 	vfs_file_t* fd = vfs_open((char*)syscall.params[0]);
 	log(LOG_INFO, "sys_open: Returning fd %d\n", fd->num);
-	return fd->num;
+	SYSCALL_RETURN(fd->num);
 }
 	

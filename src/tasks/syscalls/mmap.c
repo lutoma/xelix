@@ -1,5 +1,5 @@
 /* mmap.c: Implementation of the POSIX mmap syscall
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,7 +22,7 @@
 #include <memory/kmalloc.h>
 #include <tasks/scheduler.h>
 
-int sys_mmap(struct syscall syscall)
+SYSCALL_HANDLER(mmap)
 {
 	//void *addr = (void *)syscall.params[0];
 	size_t length = syscall.params[1];
@@ -46,5 +46,5 @@ int sys_mmap(struct syscall syscall)
 	page->phys_addr = addr;
 	vmem_add_page(task->memory_context, page);
 
-	return (int) addr;
+	SYSCALL_RETURN((int)addr);
 }

@@ -75,7 +75,7 @@ static void int_handler(cpu_state_t* regs)
 		regs->edi,
 		regs->ebp);*/
 
-	regs->eax = call(syscall);
+	call(syscall);
 }
 
 void syscall_init()

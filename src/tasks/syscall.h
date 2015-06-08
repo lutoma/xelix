@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,6 +23,17 @@
 
 #define SYSCALL_INTERRUPT 0x80
 
+#define SYSCALL_HANDLER(name) void sys_ ## name (struct syscall syscall)
+#define SYSCALL_RETURN(val) {syscall.state->eax = (val); return;}
+#define SYSCALL_FAIL() SYSCALL_RETURN(-1)
+
+#define SYSCALL_SAFE_RESOLVE_PARAM(par) {									\
+	syscall.params[par] = (int)task_resolve_address(syscall.params[par]);	\
+	if(!syscall.params[par]) {												\
+		SYSCALL_FAIL();														\
+	}																		\
+}
+
 struct syscall
 {
 	int num;
@@ -30,7 +41,7 @@ struct syscall
 	cpu_state_t* state;
 };
 
-typedef int (*syscall_t)(struct syscall);
+typedef void (*syscall_t)(struct syscall);
 
 intptr_t task_resolve_address(intptr_t virt_address);
 void syscall_init();

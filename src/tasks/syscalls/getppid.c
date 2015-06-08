@@ -1,5 +1,6 @@
 /* getppid.c: getppid syscall
  * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,8 +21,8 @@
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
 
-int sys_getppid(struct syscall syscall)
+SYSCALL_HANDLER(getppid)
 {
-	return scheduler_get_current()->parent->pid;
+	SYSCALL_RETURN(scheduler_get_current()->parent->pid);
 }
 
