@@ -364,6 +364,9 @@ void* ext2_read_file(char* path, uint32_t offset, uint32_t size)
 		return NULL;
 	}
 
+	if(size > inode->size)
+		size = inode->size;
+
 	void* block = read_inode_blocks(inode,
 		(size + offset) / superblock_to_blocksize(superblock));
 
