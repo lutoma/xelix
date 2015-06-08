@@ -32,6 +32,10 @@
 
 #define ELF_VERSION_CURRENT 1
 
+#define ELF_PROGRAM_FLAG_EXEC 0x1
+#define ELF_PROGRAM_FLAG_WRITE 0x2
+#define ELF_PROGRAM_FLAG_READ 0x3
+
 typedef struct {
 	unsigned char magic[4];
 	/* Note: There _is_ other stuff in here, but we don't need it */

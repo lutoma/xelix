@@ -90,6 +90,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 		memset(phys_location, 0, phead->memsize);
 		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize);	
 
+		bool readonly = !(phead->flags & ELF_PROGRAM_FLAG_WRITE);
+
 		/* Now, remap the _virtual_ location where the ELF binary wants this
 		 * section to be at to the physical location.
 		 */
@@ -98,7 +100,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 			vmem_rm_page_virt(ctx, phead->virtaddr + i);
 
 			struct vmem_page *page = vmem_new_page();
-			page->section = VMEM_SECTION_KERNEL; // FIXME
+			page->section = readonly ? VMEM_SECTION_CODE : VMEM_SECTION_HEAP;
+			page->readonly = readonly;
 			page->cow = 0;
 			page->allocated = 1;
 			page->virt_addr = phead->virtaddr + i;
