@@ -68,7 +68,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	 * collection of all the memory areas we need.
 	 */
 	struct vmem_context *ctx = vmem_new();
-	for (char *i = (char*)0; i <= (char*)0xfffffff; i += 4096)
+	for (char *i = (char*)0; i <= (char*)0xfffffff; i += PAGE_SIZE)
 	{
 		struct vmem_page *page = vmem_new_page();
 		page->section = VMEM_SECTION_KERNEL;
@@ -85,7 +85,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	for(int i = 0; i < bin->phnum; i++, phead++)
 	{
 		// Allocate new _physical_ location for this in RAM and copy data there
-		void* phys_location = (void*)kmalloc_a(phead->memsize + 4096);
+		void* phys_location = (void*)kmalloc_a(phead->memsize + PAGE_SIZE);
 
 		memset(phys_location, 0, phead->memsize);
 		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize);	
@@ -95,7 +95,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 		/* Now, remap the _virtual_ location where the ELF binary wants this
 		 * section to be at to the physical location.
 		 */
-		for(int j = 0; j < phead->memsize; j += 4096)
+		for(int j = 0; j < phead->memsize; j += PAGE_SIZE)
 		{
 			vmem_rm_page_virt(ctx, phead->virtaddr + j);
 
