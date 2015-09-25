@@ -1,7 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Lukas Martini
- * Copyright © 2011 Lukas Martini
+/* Copyright © 2010-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -49,5 +48,10 @@ typedef struct {
 	uint32_t ss;
 } __attribute__((__packed__)) cpu_state_t;
 
-void cpu_init();
-bool cpu_is32Bit();
+
+void cpu_init_fault_handlers();
+
+static inline void cpu_init() {
+	cpu_init_fault_handlers();
+}
+

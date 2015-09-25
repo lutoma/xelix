@@ -1,5 +1,5 @@
-/* fault.c: Catch CPU faults and handle them
- * Copyright © 2010 Lukas Martini
+/* fault.c: Catch and process CPU fault interrupts
+ * Copyright © 2010-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fault.h"
+#include "cpu.h"
 
 #include <lib/log.h>
 #include <lib/panic.h>
@@ -25,48 +25,47 @@
 #include <memory/vmem.h>
 #include <memory/paging.h>
 
-static char* errorDescriptions[] = 
+static char* exception_names[] =
 {
-	"Division by zero exception",
+	"Division by zero",
 	"Debug exception",
 	"Non maskable interrupt",
-	"Breakpoint exception",
-	"Into detected overflow",
-	"Out of bounds exception",
-	"Invalid opcode exception",
-	"No coprocessor exception",
-	"Double fault (pushes an error code)",
-	"Bad TSS (pushes an error code)",
-	"Segment not present (pushes an error code)",
-	"Stack fault (pushes an error code)",
-	"General protection fault (pushes an error code)",
+	"Breakpoint",
+	"Into detected",
+	"Out of bounds",
+	"Invalid opcode",
+	"No coprocessor",
+	"Double fault",
+	"Bad TSS",
+	"Segment not present",
+	"Stack fault",
+	"General protection fault",
 	"Unknown interrupt exception",
-	"Page fault (pushes an error code)",
+	"Page fault",
 	"Coprocessor fault",
 	"Alignment check exception",
 	"Machine check exception"
 };
 
-static void handlePageFault(cpu_state_t *regs)
+static void handle_page_fault(cpu_state_t *regs)
 {
 	int cr2;
 	asm volatile("mov %0, cr2":"=r"(cr2));
-	
 	vmem_handle_fault(regs->errCode, regs->eip);
 }
 
-// Handles the IRQs we catch
-static void faultHandler(cpu_state_t* regs)
+static void handler(cpu_state_t* regs)
 {
-	if(regs->interrupt > 18)
+	if(regs->interrupt > 18) {
 		panic("Unkown CPU error\n");
-	else if(regs->interrupt == 14)
-		handlePageFault(regs);
-	else
-		panic(errorDescriptions[regs->interrupt]);
+	} else if(regs->interrupt == 14) {
+		handle_page_fault(regs);
+	} else {
+		panic(exception_names[regs->interrupt]);
+	}
 }
 
-void cpu_initFaultHandler()
+void cpu_init_fault_handlers()
 {
-	interrupts_bulkRegisterHandler(0, 0x1F, &faultHandler);
+	interrupts_bulkRegisterHandler(0, 0x1F, &handler);
 }
