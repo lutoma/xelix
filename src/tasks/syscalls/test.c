@@ -24,12 +24,14 @@
 SYSCALL_HANDLER(test)
 {
 	log(LOG_DEBUG, "syscall: test: Test syscall successfull\n");
-	log(LOG_DEBUG, "Parameters: [0x%x][0x%x][0x%x][0x%x][0x%x]\n",\
-	  syscall.params[0],
-	  syscall.params[1],
-	  syscall.params[2],
-	  syscall.params[3],
-	  syscall.params[4]
+	log(LOG_DEBUG, "Parameters: EAX=0x%x EBX=0x%x ECX=0x%x EDX=0x%x ESI=0x%x EDI=0x%x ESP=0x%x\n",\
+	  syscall.state->eax,
+	  syscall.state->ebx,
+	  syscall.state->ecx,
+	  syscall.state->edx,
+	  syscall.state->esi,
+	  syscall.state->edi,
+	  syscall.state->esp
 	);
 
 	SYSCALL_RETURN(syscall.params[0] + syscall.params[1] + syscall.params[1] +\
