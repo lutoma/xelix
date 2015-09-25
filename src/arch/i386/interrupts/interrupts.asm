@@ -80,9 +80,9 @@ commonStub:
 	; number. The rest is up to us. We intentionally don't use pusha
 	; (no need for esp).
 	push eax
+	push ebx
 	push ecx
 	push edx
-	push ebx
 	push ebp
 	push esi
 	push edi
@@ -156,9 +156,9 @@ return:
 	pop edi
 	pop esi
 	pop ebp
-	pop ebx
 	pop edx
 	pop ecx
+	pop ebx
 	pop eax
 
 	; Cleans up the pushed error code and pushed ISR number
