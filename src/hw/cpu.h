@@ -24,19 +24,20 @@
 typedef struct {
 	// Data segment selector
 	uint32_t ds;
-	
+
 	uint32_t edi;
 	uint32_t esi;
 	uint8_t* ebp;
+	uint32_t user_esp;
+	uint32_t ebx;
 	uint32_t edx;
 	uint32_t ecx;
-	uint32_t ebx;
 	uint32_t eax;
 
 	// Interrupt number and error code (if applicable)
 	uint32_t interrupt;
 	uint32_t errCode;
-	
+
 	/* Pushed by the processor automatically. This is what the processor
 	 * expects to be in the stack when doing an iret. useresp and ss are
 	 * only used when returning to another privilege level

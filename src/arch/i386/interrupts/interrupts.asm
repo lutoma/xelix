@@ -1,6 +1,5 @@
 ; interrupts.asm: Hardware part of interrupt handling
-; Copyright © 2010 Christoph Sünderhauf
-; Copyright © 2011, 2012 Lukas Martini
+; Copyright © 2010-2015 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -28,14 +27,14 @@
 	interrupts_handler%1:
 		push 0
 		push %1
-		jmp commonStub
+		jmp common_handler
 %endmacro
 
 %macro INTERRUPT_ERRCODE 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
 		push %1
-		jmp commonStub
+		jmp common_handler
 %endmacro
 
 
@@ -65,13 +64,11 @@ INTERRUPT_ERRCODE 14
 ; In interrupts.c
 [EXTERN interrupts_callback]
 
-; This is our common Interrupt stub. It saves the processor state, sets
-; up for kernel mode segments, calls the C-level handler,
-; and finally restores the stack frame.
+; This is our common Interrupt handler. It saves the processor state, sets up
+; for kernel mode segments, handles spurious interrupts, calls the C-level
+; handler, and finally restores the stack frame.
 
-; As this is kinda complicated, i'll document every step here. (Mostly
-; for forgetful me ;)) --Lukas
-commonStub:
+common_handler:
 	; We have to push all the stuff in the cpu_state_t which
 	; interrupts_callback takes in reversed order
 	; (It's defined in hw/cpu.h). The cpu automatically pushes cs, eip,
@@ -79,18 +76,14 @@ commonStub:
 	; error code (if any) and another one containing the interrupt's
 	; number. The rest is up to us. We intentionally don't use pusha
 	; (no need for esp).
-	push eax
-	push ebx
-	push ecx
-	push edx
-	push ebp
-	push esi
-	push edi
-	
+
+	pusha
+
 	; push ds
 	xor eax, eax ; Move 0 to eax by xor-ing it with itself
 	mov ax, ds
 	push eax
+
 
 	; load the kernel data segment descriptor
 	mov ax, 0x10
@@ -102,7 +95,7 @@ commonStub:
 	; Calculate offset to the position of the interrupt number on the
 	; stack and mov it to eax. (8 = Eight 32 bit registers pushed since
 	; the beginning of this function).
-	mov eax, [esp + (4 * 8)]
+	mov eax, [esp + (4 * 9)]
 
 	; Is this a spurious interrupt on the master PIC? If yes, return
 	cmp eax, IRQ7
@@ -141,10 +134,10 @@ no_eoi:
 return:
 	; Take esp from stack. This is uncommented as we directly apply a new stack
 	;add esp, 4
-	
+
 	; Apply new stack
 	mov esp, eax
-	
+
 	; reload the original data segment descriptor
 	pop ebx
 	mov ds, bx
@@ -152,14 +145,8 @@ return:
 	mov fs, bx
 	mov gs, bx
 
-	; Reload all the registers.
-	pop edi
-	pop esi
-	pop ebp
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
+	; Reload the original values of the GP registers
+	popa
 
 	; Cleans up the pushed error code and pushed ISR number
 	add esp, 8
