@@ -29,6 +29,13 @@
 #include <memory/kmalloc.h>
 #include <memory/track.h>
 
+//#define ELF_DEBUG
+#ifdef ELF_DEBUG
+ #define debug(args...) log(LOG_DEBUG, args);
+#else
+ #define debug()
+#endif
+
 #define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
 
 static char header[4] = {0x7f, 'E', 'L', 'F'};
@@ -97,11 +104,15 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 
 		bool readonly = !(phead->flags & ELF_PROGRAM_FLAG_WRITE);
 
+		debug("elf: Remapping 0x%x to phys 0x%x, size %d\n", (void*)bin + phead->offset, phys_location, phead->filesize);
+
 		/* Now, remap the _virtual_ location where the ELF binary wants this
 		 * section to be at to the physical location.
 		 */
 		for(int j = 0; j < phead->memsize; j += PAGE_SIZE)
 		{
+			debug("elf: - mapping page 0x%x to phys 0x%x\n", phead->virtaddr + j, phys_location + j);
+
 			vmem_rm_page_virt(ctx, phead->virtaddr + j);
 
 			struct vmem_page *page = vmem_new_page();
