@@ -33,7 +33,7 @@
 #ifdef ELF_DEBUG
  #define debug(args...) log(LOG_DEBUG, args);
 #else
- #define debug()
+ #define debug(...)
 #endif
 
 #define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
