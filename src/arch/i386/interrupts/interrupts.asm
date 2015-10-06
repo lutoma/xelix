@@ -146,14 +146,7 @@ return:
 	mov gs, bx
 
 	; Reload the original values of the GP registers
-	pop edi
-	pop esi
-	pop ebp
-	add esp, 4 ; Skip ESP
-	pop ebx
-	pop edx
-	pop ecx
-	pop eax
+	popa
 
 	; Cleans up the pushed error code and pushed ISR number
 	add esp, 8
