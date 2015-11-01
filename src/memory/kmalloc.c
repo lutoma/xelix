@@ -22,7 +22,7 @@
 #include "kmalloc.h"
 #include "vmem.h"
 #include <lib/log.h>
-#include <arch/i386/lib/multiboot.h>
+#include <lib/multiboot.h>
 
 static uint32_t memoryPosition;
 

@@ -21,7 +21,7 @@
 #include <memory/track.h>
 #include <lib/log.h>
 #include <lib/print.h>
-#include <arch/i386/lib/multiboot.h>
+#include <lib/multiboot.h>
 
 // Set up the memory areas marked as free in the multiboot headers
 static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {

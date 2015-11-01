@@ -27,7 +27,7 @@
 #include <lib/panic.h>
 #include <lib/string.h>
 #include <memory/vmem.h>
-#include <arch/i386/lib/multiboot.h>
+#include <lib/multiboot.h>
 #include <tasks/elf.h>
 
 #define STACKSIZE PAGE_SIZE

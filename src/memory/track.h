@@ -19,7 +19,7 @@
  */
 
 #include <lib/generic.h>
-#include <arch/i386/lib/multiboot.h>
+#include <lib/multiboot.h>
 
 #define MEMORY_TRACK_MAX_AREAS 256
 

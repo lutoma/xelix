@@ -17,9 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-	#include <arch/i386/lib/multiboot.h>
-#endif
+#include <lib/multiboot.h>
 #include <lib/log.h>
 #include <lib/string.h>
 #include <lib/panic.h>
