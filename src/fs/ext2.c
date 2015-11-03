@@ -25,6 +25,13 @@
 #include <fs/vfs.h>
 #include "ext2.h"
 
+//#define EXT2_DEBUG
+#ifdef EXT2_DEBUG
+  #define debug(args...) log(LOG_DEBUG, "ext2: " args)
+#else
+  #define debug(...)
+#endif
+
 typedef struct ext2_superblock {
 	uint32_t inode_count;
 	uint32_t block_count;
@@ -121,11 +128,6 @@ typedef struct ext2_dirent {
 #define FT_IFIFO	0x1000
 
 // Some helper macros for commonly needed conversions
-char* verbose_filetypes[] = {NULL, "IFIFO", "IFCHR", NULL, "IFDIR", NULL, \
-	NULL, "IFBLK", NULL, "IFREG", NULL, "IFLNK", NULL, "IFSOCK"};
-
-#define filetype_to_verbose(t) \
-	(verbose_filetypes[((t) > 0xc000 || (t) % 0x1000) ? 0 : (t) / 0x1000])
 #define inode_to_blockgroup(inode) ((inode - 1) / superblock->inodes_per_group)
 #define mode_to_filetype(mode) (mode & 0xf000)
 // TODO Should use right shift for negative values
@@ -141,12 +143,27 @@ char* verbose_filetypes[] = {NULL, "IFIFO", "IFCHR", NULL, "IFDIR", NULL, \
 ext2_superblock_t* superblock = NULL;
 
 
+static char* filetype_to_verbose(int filetype) {
+	switch(filetype) {
+		case FT_IFSOCK: return "FT_IFSOCK";
+		case FT_IFLNK: return "FT_IFLNK";
+		case FT_IFREG: return "FT_IFREG";
+		case FT_IFBLK: return "FT_IFBLK";
+		case FT_IFDIR: return "FT_IFDIR";
+		case FT_IFCHR: return "FT_IFCHR";
+		case FT_IFIFO: return "FT_IFIFO";
+		default: return NULL;
+	}
+}
+
 /* Reads an inode. Takes the number of the inode as argument and locates and
  * returns the corresponding ext2_inode_t*.
  */
 static ext2_inode_t* read_inode(uint32_t inode_num)
 {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
+
+	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 
 	// Sanity check the blockgroup num
 	if(blockgroup_num > (superblock->block_count / superblock->blocks_per_group))
@@ -190,28 +207,40 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 	return inode;
 }
 
-static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
+static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num, bool direct_indirect)
 {
-	// Todo double & triple linked block support for large files & dirs
-	if(block_num > 15)
+	// FIXME This value actually depends on block size. This expects a 1024 block size
+	if(block_num > 268)
 	{
-		// Yay recursion
-		//uint8_t* double_block = read_inode_block(inode, 13);
-
-		log(LOG_INFO, "ext2: sorry, no support for doubly & triply linked "
+		log(LOG_INFO, "ext2: sorry, no support for doubly & triply indirect "
 			"blocks. Poke lutoma.\n");
 		return NULL;
 	}
 
-	// Read block
-	intptr_t block_location = inode->blocks[block_num] *
-		superblock_to_blocksize(superblock);
+	uint32_t real_block_num = 0;
+	if(block_num >= 12 && !direct_indirect) {
+		// Indirect block
+		uint32_t* blocks_table = (uint32_t*)read_inode_block(inode, 12, true);
+		real_block_num = blocks_table[block_num - 12];
+		kfree(blocks_table);
+	} else {
+		real_block_num = inode->blocks[block_num];
+	}
+
+	if(!real_block_num) {
+		return NULL;
+	}
+
+	debug("read_inode_block: Actual block for inode block %d is %d\n", block_num, real_block_num);
+
+	intptr_t block_location = real_block_num * superblock_to_blocksize(superblock);
 
 	// Allocate correct size + one HDD sector (Since we can only read in 512
 	// byte chunks from the disk.
 	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
-	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512)
+	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512) {
 		read_sector_or_fail(0, 0x1F0, 0, block_location / 512 + i, block + i);
+	}
 
 	return block;
 }
@@ -233,7 +262,7 @@ static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
 	}
 
 	// TODO
-	uint8_t* block = read_inode_block(inode, 0);
+	uint8_t* block = read_inode_block(inode, 0, false);
 
 	block += 0x18; // WHY?
 
@@ -256,6 +285,8 @@ static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
 // Traverses directory tree to get inode from path
 uint32_t inode_from_path(char* path)
 {
+	debug("Resolving inode for path %s\n", path);
+
 	// The root directory always has inode 2
 	if(unlikely(!strcmp("/", path)))
 		return ROOT_INODE;
@@ -301,25 +332,32 @@ uint32_t inode_from_path(char* path)
 
 	kfree(path_tmp);
 
+	debug("Inode for path %s is %d\n", path, current_inode_num);
 	return current_inode_num;
 }
 
 // Reads multiple inode data blocks at once and create a continuous data stream
 uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num)
 {
+	debug("Reading %d inode blocks for ext2_inode_t* 0x%x\n", num, inode);
+	debug("kmalloc = %d\n", superblock_to_blocksize(superblock) * num);
+
 	// TODO Check for valid block numbers
 	uint8_t* data = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) * num);
 
 	if(!data)
 		return NULL;
 
-	for(int i = 0; i <= num; i++)
+	for(int i = 0; i < num; i++)
 	{
 		// TODO Pass buffer to read_inode_block instead of copying the data
-		uint8_t* current_block = read_inode_block(inode, i);
+		uint8_t* current_block = read_inode_block(inode, i, false);
 
 		if(!current_block)
+		{
+			debug("read_inode_blocks: read_inode_block for block %d failed\n", i);
 			return NULL;
+		}
 
 		memcpy(data + superblock_to_blocksize(superblock) * i, 
 			current_block, superblock_to_blocksize(superblock));
@@ -327,6 +365,22 @@ uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num)
 	}
 
 	return data;
+}
+
+char* ext2_get_verbose_permissions(ext2_inode_t* inode) {
+	char* permstring = kmalloc(sizeof(char) * 10);
+
+	permstring[0] = (inode->mode & 0x0100) ? 'r' : '-';
+	permstring[1] = (inode->mode & 0x0080) ? 'w' : '-';
+	permstring[2] = (inode->mode & 0x0040) ? 'x' : '-';
+	permstring[3] = (inode->mode & 0x0020) ? 'r' : '-';
+	permstring[4] = (inode->mode & 0x0010) ? 'w' : '-';
+	permstring[5] = (inode->mode & 0x0008) ? 'x' : '-';
+	permstring[6] = (inode->mode & 0x0004) ? 'r' : '-';
+	permstring[7] = (inode->mode & 0x0002) ? 'w' : '-';
+	permstring[8] = (inode->mode & 0x0001) ? 'x' : '-';
+	permstring[9] = 0;
+	return permstring;
 }
 
 // The public readdir interface to the virtual file system
@@ -346,6 +400,8 @@ char* ext2_read_directory(char* path, uint32_t offset)
 // The public read interface to the virtual file system
 void* ext2_read_file(char* path, uint32_t offset, uint32_t size)
 {
+	debug("ext2_read_file for %s, off %d, size %d\n", path, offset, size);
+
 	uint32_t inode_num = inode_from_path(path);
 	if(inode_num < 1)
 		return NULL;
@@ -353,6 +409,11 @@ void* ext2_read_file(char* path, uint32_t offset, uint32_t size)
 	ext2_inode_t* inode = read_inode(inode_num);
 	if(!inode)
 		return NULL;
+
+	debug("%s found at ext2_inode_t* 0x%x\n", path, inode);
+	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", path, inode->uid,
+		inode->gid, inode->size, filetype_to_verbose(mode_to_filetype(inode->mode)),
+		ext2_get_verbose_permissions(inode));
 
 	// Check if this inode is a file
 	if(mode_to_filetype(inode->mode) != FT_IFREG)
@@ -364,11 +425,21 @@ void* ext2_read_file(char* path, uint32_t offset, uint32_t size)
 		return NULL;
 	}
 
-	if(size > inode->size)
-		size = inode->size;
+	if(inode->size < 1) {
+		return NULL;
+	}
 
-	void* block = read_inode_blocks(inode,
-		(size + offset) / superblock_to_blocksize(superblock));
+	if(size > inode->size) {
+		debug("ext2_read_file: Attempt to read %d bytes, but file is only %d bytes. Capping.\n", size, inode->size);
+		size = inode->size;
+	}
+
+	uint32_t num_blocks = (size + offset) / superblock_to_blocksize(superblock);
+	if((size + offset) % superblock_to_blocksize(superblock) != 0) {
+		num_blocks++;
+	}
+
+	void* block = read_inode_blocks(inode, num_blocks);
 
 	if(!block)
 		return NULL;
@@ -418,6 +489,9 @@ void ext2_init()
 		log(LOG_INFO, "ext2: This file system supports additional special "
 			"features. I'll ignore them (0x%x).\n", superblock->features_compat);
 	}
+
+	debug("Loaded ext2 file superblock. inode_count=%d, block_count=%d, block_size=%d\n",
+		superblock->inode_count, superblock->block_count, superblock_to_blocksize(superblock));
 
 	vfs_mount("/", ext2_read_file, ext2_read_directory);
 }

@@ -149,6 +149,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	 */
 	while(true)
 		asm("hlt"); // Wait until interrupt fires
-		
+
 	panic("Kernel returned.");
 }

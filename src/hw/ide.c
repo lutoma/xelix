@@ -127,7 +127,7 @@ try_again:
 	if (ata_wait(bus, 1)) {
 		errors++;
 		if (errors > 4) {
-			log(LOG_WARN, "ide: Too many errors during read of lba block %d. Bailing.\n", lba);
+			log(LOG_WARN, "ide: Too many errors during read of lba block %u. Bailing.\n", lba);
 			return false;
 		}
 		goto try_again;
