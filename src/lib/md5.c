@@ -35,7 +35,9 @@
  * compile-time configuration.
  */
 
+#include <lib/generic.h>
 #include <lib/string.h>
+#include <memory/kmalloc.h>
 
 #include "md5.h"
 
@@ -289,4 +291,19 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 	result[15] = ctx->d >> 24;
 
 	memset(ctx, 0, sizeof(*ctx));
+}
+
+void MD5_dump(unsigned char* data, size_t length) {
+	MD5_CTX* md5 = kmalloc(sizeof(MD5_CTX));
+	unsigned char* result = kmalloc(16);
+
+	MD5_Init(md5);
+	MD5_Update(md5, data, length);
+	MD5_Final(result, md5);
+
+	for(int i = 0; i < 16; i++) printf("%x", result[i]);
+	printf("\n");
+
+	kfree(md5);
+	kfree(result);
 }
