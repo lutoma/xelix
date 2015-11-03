@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended filesystem, version 2
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -263,6 +263,9 @@ static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
 
 	// TODO
 	uint8_t* block = read_inode_block(inode, 0, false);
+	if(!block) {
+		return NULL;
+	}
 
 	block += 0x18; // WHY?
 
