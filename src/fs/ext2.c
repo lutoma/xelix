@@ -20,6 +20,7 @@
 #include <lib/generic.h>
 #include <lib/log.h>
 #include <lib/string.h>
+#include <lib/md5.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
 #include <fs/vfs.h>
@@ -240,6 +241,7 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num, bool d
 	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
 	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512) {
 		read_sector_or_fail(0, 0x1F0, 0, block_location / 512 + i, block + i);
+		debug("READING offset %d AT %d, write to %d\n", i, block_location / 512 + i, block + i);
 	}
 
 	return block;
@@ -446,6 +448,11 @@ void* ext2_read_file(char* path, uint32_t offset, uint32_t size)
 
 	if(!block)
 		return NULL;
+
+	#ifdef EXT2_DEBUG
+		debug("Read file %s offset %d size %d with resulting md5sum of:\n\t", path, offset, size);
+		MD5_dump(block + offset, size);
+	#endif
 
 	return block + offset;
 }
