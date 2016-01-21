@@ -1,5 +1,5 @@
 /* vfs.c: Virtual file system
- * Copyright © 2011, 2012 Lukas Martini
+ * Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -48,12 +48,26 @@ static spinlock_t file_open_lock;
 
 vfs_file_t* vfs_get_from_id(uint32_t id)
 {
-	return &files[id];
+	if(id < 1 || id > last_file || !spinlock_get(&file_open_lock, 30)) {
+		return NULL;
+	}
+
+	vfs_file_t* fd = &files[id];
+	spinlock_release(&file_open_lock);
+
+	return fd;
 }
 
 vfs_dir_t* vfs_get_dir_from_id(uint32_t id)
 {
-	return &dirs[id];
+	if(id < 1 || id > last_dir || !spinlock_get(&file_open_lock, 30)) {
+		return NULL;
+	}
+
+	vfs_dir_t* dd = &dirs[id];
+	spinlock_release(&file_open_lock);
+
+	return dd;
 }
 
 
