@@ -276,9 +276,10 @@ void vmem_handle_fault(uint32_t code, void *addr)
 	task_t* running_task = scheduler_get_current();
 	if(running_task)
 	{
-		log(LOG_WARN, "Segmentation fault in task %s "
-			"at address 0x%x of context %s. Terminating it.\n",
-			running_task->name, addrInt, vmem_get_name(vmem_currentContext));
+		log(LOG_WARN, "Segmentation fault in <%s>+%y "
+			"for address 0x%x of context %s. Terminating it.\n",
+			running_task->name, (running_task->state->esp - running_task->entry), addrInt,
+			vmem_get_name(vmem_currentContext));
 
 		scheduler_terminate_current();
 		return;
