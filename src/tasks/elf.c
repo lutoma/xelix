@@ -1,5 +1,5 @@
 /* elf.c: Loader for ELF binaries
- * Copyright © 2011-2015 Lukas Martini
+ * Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -40,35 +40,7 @@
 
 static char header[4] = {0x7f, 'E', 'L', 'F'};
 
-task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
-{
-	if(bin <= (elf_t*)NULL)
-		return NULL;
-
-	if(bin->ident.magic[0] != header[0]
-	|| bin->ident.magic[1] != header[1]
-	|| bin->ident.magic[2] != header[2]
-	|| bin->ident.magic[3] != header[3])
-		fail("elf: elf_load: Invalid elf header: 0x%x %c%c%c\n",
-			bin->ident.magic[0],
-			bin->ident.magic[1],
-			bin->ident.magic[2],
-			bin->ident.magic[3]);
-
-	if(bin->type != ELF_TYPE_EXEC)
-		fail("elf: elf_load: Attempt to load an inexecutable elf file\n");
-
-	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-		if(bin->machine != ELF_ARCH_386)
-			fail("elf: elf_load: Attempt to load an elf file for an other architecture\n");
-	#endif
-
-	if(bin->version != ELF_VERSION_CURRENT)
-		fail("elf: elf_load: Attempt to load an elf of an unsupported version\n");
-
-	if(bin->entry == NULL)
-		fail("elf: elf_load: This elf file doesn't have an entry point\n");
-
+struct vmem_context* map_task(elf_t* bin) {
 	/* 1:1 map "lower" memory (kernel etc.)
 	 * FIXME This is really generic and hacky. Should instead do some smart
 	 * stuff with memory/track.c – That is, as soon as we have a complete
@@ -125,6 +97,41 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 			vmem_add_page(ctx, page);
 		}
 	}
+
+	return ctx;
+}
+
+task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
+{
+	if(bin <= (elf_t*)NULL)
+		return NULL;
+
+	if(bin->ident.magic[0] != header[0]
+	|| bin->ident.magic[1] != header[1]
+	|| bin->ident.magic[2] != header[2]
+	|| bin->ident.magic[3] != header[3])
+		fail("elf: elf_load: Invalid elf header: 0x%x %c%c%c\n",
+			bin->ident.magic[0],
+			bin->ident.magic[1],
+			bin->ident.magic[2],
+			bin->ident.magic[3]);
+
+	if(bin->type != ELF_TYPE_EXEC)
+		fail("elf: elf_load: Attempt to load an inexecutable elf file\n");
+
+	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
+		if(bin->machine != ELF_ARCH_386)
+			fail("elf: elf_load: Attempt to load an elf file for an other architecture\n");
+	#endif
+
+	if(bin->version != ELF_VERSION_CURRENT)
+		fail("elf: elf_load: Attempt to load an elf of an unsupported version\n");
+
+	if(bin->entry == NULL)
+		fail("elf: elf_load: This elf file doesn't have an entry point\n");
+
+	struct vmem_context *ctx = vmem_kernelContext;
+	ctx = map_task(bin);
 
 	// The last argument should be false only as long as we use the kernel context
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,
