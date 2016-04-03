@@ -89,7 +89,14 @@ static void panic_handler(cpu_state_t* regs)
 	task_t* task = scheduler_get_current();
 	
 	if(task != NULL) {
-		printf("Running task: %d <%s>\n", task->pid, task->name);
+		printf("Running task: %d <%s>", task->pid, task->name);
+
+		uint32_t task_offset = task->state->eip - task->entry;
+		if(task_offset >= 0) {
+			printf("+%y", task_offset);
+		}
+
+		printf("\n");
 	} else
 		printf("Running task: [No task running]\n");
 
