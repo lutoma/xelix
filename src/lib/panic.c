@@ -42,6 +42,10 @@ static void bruteforce_print(char* chars) {
 
 	static uint8_t* video_memory = (uint8_t*)0xB8000;
 	for(; *chars != 0; chars++) {
+		if(*chars == '\n') {
+			continue;
+		}
+
 		*video_memory++ = *chars;
 		*video_memory++ = 0x1F;
 	}
