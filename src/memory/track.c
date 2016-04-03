@@ -60,7 +60,7 @@ void memory_track_init(multiboot_info_t* multiboot_info)
 	// Add area for initrd(s)
 	for(int i = 0; i < multiboot_info->modsCount; i++) {
 		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];
-		area->addr = multiboot_info->modsAddr[i].start;
+		area->addr = (void*)multiboot_info->modsAddr[i].start;
 		area->size = multiboot_info->modsAddr[i].end - multiboot_info->modsAddr[i].start;
 		area->type = MEMORY_TYPE_INITRD;
 	}

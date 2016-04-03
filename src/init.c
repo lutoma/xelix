@@ -131,7 +131,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	if(multiboot_info->modsCount)
 	{
 		log(LOG_DEBUG, "Loading initrd with md5sum ");
-		MD5_dump(multiboot_info->modsAddr[0].start, multiboot_info->modsAddr[0].end - multiboot_info->modsAddr[0].start);
+		MD5_dump((void*)multiboot_info->modsAddr[0].start, multiboot_info->modsAddr[0].end - multiboot_info->modsAddr[0].start);
 		scheduler_add(elf_load((void*)multiboot_info->modsAddr[0].start, "dash", __env, __argv, 2));
 	} else
 	{

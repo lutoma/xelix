@@ -36,7 +36,7 @@
  */
 
 #include <lib/generic.h>
-#include <lib/string.h>
+#include <lib/print.h>
 #include <memory/kmalloc.h>
 
 #include "md5.h"
@@ -90,13 +90,13 @@
  * This processes one or more 64-byte data blocks, but does NOT update
  * the bit counters.  There are no alignment requirements.
  */
-static const void *body(MD5_CTX *ctx, const void *data, unsigned long size)
+static void *body(MD5_CTX *ctx, const void *data, unsigned long size)
 {
-	const unsigned char *ptr;
+	unsigned char *ptr;
 	MD5_u32plus a, b, c, d;
 	MD5_u32plus saved_a, saved_b, saved_c, saved_d;
 
-	ptr = (const unsigned char *)data;
+	ptr = (unsigned char *)data;
 
 	a = ctx->a;
 	b = ctx->b;
@@ -208,7 +208,7 @@ void MD5_Init(MD5_CTX *ctx)
 	ctx->hi = 0;
 }
 
-void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
+void MD5_Update(MD5_CTX *ctx, void *data, unsigned long size)
 {
 	MD5_u32plus saved_lo;
 	unsigned long used, available;
@@ -229,7 +229,7 @@ void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
 		}
 
 		memcpy(&ctx->buffer[used], data, available);
-		data = (const unsigned char *)data + available;
+		data = (unsigned char *)data + available;
 		size -= available;
 		body(ctx, ctx->buffer, 64);
 	}
