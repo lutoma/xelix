@@ -26,15 +26,17 @@
 #include <memory/paging.h>
 
 static interrupt_handler_t handlers[256];
+static struct vmem_context* previous_context = NULL;
+
 
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
 cpu_state_t* interrupts_callback(cpu_state_t* regs)
 {
-	struct vmem_context* original_context = vmem_currentContext;
+	previous_context = vmem_currentContext;
 
-	if(original_context != vmem_kernelContext)
+	if(previous_context != vmem_kernelContext)
 		paging_apply(vmem_kernelContext);		
 
 	interrupt_handler_t handler = handlers[regs->interrupt];
@@ -56,10 +58,14 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 		}
 	}
 
-	if(original_context != vmem_currentContext)
-		paging_apply(original_context);
+	if(previous_context != vmem_currentContext)
+		paging_apply(previous_context);
 
 	return regs;
+}
+
+struct vmem_context* interrupts_get_previous_context() {
+	return previous_context;
 }
 
 void interrupts_registerHandler(uint8_t n, interrupt_handler_t handler)
