@@ -81,3 +81,7 @@ runqemudebug: xelix.bin
 .PHONY: todo
 todo:
 	grep -rie FIXME -e TODO src toolchain/userspace/content toolchain/userspace/patch toolchain/*/Makefile configure 
+
+.PHONY: land
+land:
+	make -C land
