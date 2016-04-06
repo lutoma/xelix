@@ -15,10 +15,7 @@ done
 
 echo -ne "\t" >> $out
 
-for file in $infiles
-do
-	cat $file >> $out
-done
+cat $infiles >> $out
 
 # Padding
 pwgen 512 >> $out

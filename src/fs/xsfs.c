@@ -93,17 +93,17 @@ void* xsfs_read_file(char* path, uint32_t offset, uint32_t size)
 
 	char* data = kmalloc(header_end + fileoffset + filesize + 512);
 
-	for(int i = 0; i*512 < filesize + 510; i++) {
+	// FIXME Only read the relevant sectors
+	for(int i = 0; i*512 < header_end + fileoffset + filesize + 510; i++) {
 		read_sector_or_fail(, 0x1F0, 0, i, (uint8_t*)(data + (i * 512)));
 	}
 
 	data += header_end + fileoffset + 1;
 	data[filesize] = 0;
 
-	log(LOG_DEBUG, "Read file %s size %d with resulting md5sum of:\n\t", path, filesize);
-	MD5_dump(data, filesize);
+	//log(LOG_DEBUG, "Read file %s size %d with resulting md5sum of:\n\t", path, filesize);
+	//MD5_dump(data, filesize);
 
-	//log(LOG_DEBUG, "contents: \"%s\"\n", data);
 	return data;
 }
 
