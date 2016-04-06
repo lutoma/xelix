@@ -53,6 +53,7 @@ struct vmem_context* map_task(elf_t* bin) {
 		page->section = VMEM_SECTION_KERNEL;
 		page->cow = 0;
 		page->allocated = 1;
+		page->readonly = 1;
 		page->virt_addr = (void *)i;
 		page->phys_addr = (void *)i;
 
