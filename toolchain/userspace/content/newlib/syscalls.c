@@ -254,7 +254,7 @@ char* getcwd(char *buf, size_t size)
 
 char* getwd(char *buf)
 {
-	return "/";
+	return getcwd(buf, PATH_MAX);
 }
 
 int chdir(const char *path)
