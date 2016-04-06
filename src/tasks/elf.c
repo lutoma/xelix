@@ -68,15 +68,19 @@ struct vmem_context* map_task(elf_t* bin) {
 				phead->alignment);
 		}
 
-		// Allocate new _physical_ location for this in RAM and copy data there
-		void* phys_location = (void*)kmalloc_a(phead->memsize + PAGE_SIZE);
+		debug("Reading program header %d, offset 0x%x, size 0x%x, virt addr 0x%x\n", i, phead->offset, phead->memsize, phead->virtaddr);
 
-		memset(phys_location, 0, phead->memsize);
-		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize);	
+		void* phys_location = (void*)bin + phead->offset;
+
+		// Allocate new _physical_ location for this in RAM and copy data there
+		/*void* phys_location = (void*)kmalloc_a(phead->memsize + PAGE_SIZE);
+
+		memset(phys_location, 0, phead->memsize + PAGE_SIZE);
+		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize + PAGE_SIZE);*/
 
 		bool readonly = !(phead->flags & ELF_PROGRAM_FLAG_WRITE);
 
-		debug("elf: Remapping 0x%x to phys 0x%x, size %d\n", (void*)bin + phead->offset, phys_location, phead->filesize);
+		debug("elf: Remapping virt 0x%x to phys 0x%x, size %d (src 0x%x)\n", phead->virtaddr, phys_location, phead->filesize, (void*)bin + phead->offset);
 
 		/* Now, remap the _virtual_ location where the ELF binary wants this
 		 * section to be at to the physical location.
