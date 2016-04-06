@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2014-2015 Lukas Martini
+/* Copyright © 2014-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -50,6 +50,7 @@ DEFINE_SYSCALL(socket);
 DEFINE_SYSCALL(bind);
 DEFINE_SYSCALL(socket_send);
 DEFINE_SYSCALL(socket_recv);
+DEFINE_SYSCALL(execnew);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -79,7 +80,8 @@ syscall_t syscall_table[] = {
 	sys_socket,			// 24
 	sys_bind,			// 25
 	sys_socket_send,	// 26
-	sys_socket_recv		// 27
+	sys_socket_recv,	// 27
+	sys_execnew		// 28
 };
 
 char* syscall_name_table[] = {
@@ -110,5 +112,6 @@ char* syscall_name_table[] = {
 	"sys_socket",	// 24
 	"sys_bind",		// 25
 	"socket_send",	// 26
-	"socket_recv"	// 27
+	"socket_recv",	// 27
+	"sys_execnew"	// 28
 };
