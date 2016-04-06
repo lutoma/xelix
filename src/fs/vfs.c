@@ -46,6 +46,18 @@ uint32_t last_file = -1;
 uint32_t last_dir = -1;
 static spinlock_t file_open_lock;
 
+// Debugging function – Dump a directory and all subdirectories
+void vfs_dump_dir(char* path) {
+	log(LOG_DEBUG, "Files in %s\n", path);
+	vfs_dir_t* dir = vfs_dir_open(path);
+
+	char* name = vfs_dir_read(dir, 0);
+	for(int i = 1; name; i++) {
+		log(LOG_DEBUG, "%s\n", name);
+		name = vfs_dir_read(dir, i);
+	}
+}
+
 vfs_file_t* vfs_get_from_id(uint32_t id)
 {
 	if(id < 1 || id > last_file || !spinlock_get(&file_open_lock, 30)) {
