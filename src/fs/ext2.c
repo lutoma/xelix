@@ -141,7 +141,7 @@ typedef struct ext2_dirent {
 		}																						\
 	} while(0)
 
-ext2_superblock_t* superblock = NULL;
+static ext2_superblock_t* superblock = NULL;
 
 
 static char* filetype_to_verbose(int filetype) {
@@ -348,7 +348,7 @@ uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num)
 	debug("kmalloc = %d\n", superblock_to_blocksize(superblock) * num);
 
 	// TODO Check for valid block numbers
-	uint8_t* data = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) * num);
+	uint8_t* data = (uint8_t*)kmalloc_a(superblock_to_blocksize(superblock) * num);
 
 	if(!data)
 		return NULL;

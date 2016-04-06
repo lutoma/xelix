@@ -42,6 +42,7 @@
 #include <net/slip.h>
 #include <hw/ide.h>
 #include <fs/ext2.h>
+#include <fs/xsfs.h>
 #include <net/udp.h>
 #include <net/echo.h>
 #include <lib/md5.h>
@@ -115,6 +116,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(ide);
 
 	init(ext2);
+	init(xsfs);
 
 	// Networking
 	init(udp);
