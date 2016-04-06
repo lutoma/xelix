@@ -137,7 +137,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		scheduler_add(elf_load((void*)multiboot_info->modsAddr[0].start, "dash", __env, __argv, 2));
 	} else
 	{
-		task_t* init = elf_load_file("/bin/init", __env, __argv, 2);
+		task_t* init = elf_load_file("/xinit", __env, __argv, 2);
 		if(init)
 			scheduler_add(init);
 	}
