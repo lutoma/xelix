@@ -50,6 +50,10 @@ static spinlock_t file_open_lock;
 void vfs_dump_dir(char* path) {
 	log(LOG_DEBUG, "Files in %s\n", path);
 	vfs_dir_t* dir = vfs_dir_open(path);
+	if(!dir) {
+		log(LOG_ERR, "vfs_dump_dir: Could not open directory %s\n", path);
+		return;
+	}
 
 	char* name = vfs_dir_read(dir, 0);
 	for(int i = 1; name; i++) {

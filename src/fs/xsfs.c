@@ -42,7 +42,7 @@ static char* superblock = NULL;
 char* xsfs_read_directory(char* path, uint32_t offset)
 {
 	// We don't support subdirectories.
-	if(path != "/" || offset >= num_files) {
+	if(strcmp("/", path) || offset >= num_files) {
 		return NULL;
 	}
 
