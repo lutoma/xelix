@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
+out=$1
+shift
+a=($*)
+infiles=$*
+numfiles="${#a[@]}"
 
-in=$1
-out=$2
+echo -n "xsfs:$numfiles:" > $out
 
+for file in $infiles
+do
+	size=$(stat -c '%s' "$file")
+	echo -n "$file-$size:" >> $out
+done
 
-size=$(stat -c '%s' "$1")
+echo -ne "\t" >> $out
 
-echo -n "xsfs:1:$size:" > $2
-cat $1 >> $2
+for file in $infiles
+do
+	cat $file >> $out
+done
 
 # Padding
-pwgen 512 >> $2
+pwgen 512 >> $out
