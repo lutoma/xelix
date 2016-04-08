@@ -55,6 +55,8 @@ void scheduler_remove(task_t *t)
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
 
+	log(LOG_DEBUG, "Removing task %s, previous %s, next %s\n", t->name, t->previous->name, t->next->name);
+
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
 
@@ -209,22 +211,24 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 	*/
 	currentTask = currentTask->next;
 
-	while (likely(currentTask) &&
-			(currentTask->task_state == TASK_STATE_KILLED ||
-			currentTask->task_state == TASK_STATE_TERMINATED ||
-			currentTask->task_state == TASK_STATE_STOPPED ||
-			currentTask->task_state == TASK_STATE_WAITING))
-	{
-		if(likely(currentTask->task_state == TASK_STATE_KILLED ||
-			currentTask->task_state == TASK_STATE_TERMINATED)) {
-			scheduler_remove(currentTask);
+	for(;; currentTask = currentTask->next) {
+		if (unlikely(currentTask == NULL)) {
+			panic("scheduler: Task list corrupted (currentTask->next was NULL).\n");
 		}
 
-		currentTask = currentTask->next;
-	}
+		if(currentTask->task_state == TASK_STATE_KILLED ||
+			currentTask->task_state == TASK_STATE_TERMINATED) {
+			scheduler_remove(currentTask);
+			continue;
+		}
 
-	if (unlikely(currentTask == NULL))
-		panic("scheduler: No more tasks.\n");
+		if(currentTask->task_state == TASK_STATE_STOPPED ||
+			currentTask->task_state == TASK_STATE_WAITING) {
+			continue;
+		}
+
+		break;
+	}
 
 	return currentTask;
 }
