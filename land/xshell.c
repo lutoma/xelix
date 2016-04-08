@@ -4,6 +4,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 int main(int argc, char* argv[]) {
 	if(argc > 1 && !strcmp(argv[1], "--hello")) {
@@ -49,5 +50,8 @@ int main(int argc, char* argv[]) {
 			: "g" (cmd), "g" (__argv), "g" (__env)
 			: "memory", "eax", "ebx", "ecx", "edx"
 		);
+
+		// Wait for child to exit
+		pid_t pr = wait(NULL);
 	}
 }
