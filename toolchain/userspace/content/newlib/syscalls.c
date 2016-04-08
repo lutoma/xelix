@@ -179,8 +179,7 @@ int unlink(char *name)
 
 int wait(int *status)
 {
-	errno = ENOSYS;
-	return -1;
+	return call_wait(status);
 }
 
 int wait3(int *status)

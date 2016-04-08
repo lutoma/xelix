@@ -1,4 +1,4 @@
-/* execve.c: Execnew syscall
+/* wait.c: Wait & waitpid syscalls
  * Copyright © 2016 Lukas Martini
  *
  * This file is part of Xelix.
@@ -18,39 +18,17 @@
  */
 
 #include <tasks/syscall.h>
-#include <lib/log.h>
 #include <tasks/scheduler.h>
-#include <tasks/elf.h>
-#include <lib/multiboot.h>
+#include <lib/log.h>
 
-// Check an array to make sure it's NULL-terminated.
-static bool check_array(char** array) {
-	for(int i = 0; i < 200; i++) {
-		if(array[i] == NULL)
-			return true;
-	}
-	return false;
-}
-
-SYSCALL_HANDLER(execnew)
+SYSCALL_HANDLER(wait)
 {
-	SYSCALL_SAFE_RESOLVE_PARAM(0);
-
-	char** __argv = (char**)syscall.params[1];
-	char** __env = (char**)syscall.params[2];
-
-	if(!check_array(__argv) || !check_array(__env)) {
-		log(LOG_WARN, "execnew: array check fail\n");
+	task_t* cur = scheduler_get_current();
+	if(!cur) {
 		SYSCALL_FAIL();
 	}
 
-	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, 2);
-	new_task->parent = scheduler_get_current();
-
-	if(!new_task) {
-		SYSCALL_FAIL();
-	}
-
-	scheduler_add(new_task);
+	cur->task_state = TASK_STATE_WAITING;
+	scheduler_yield();
 	SYSCALL_RETURN(0);
 }

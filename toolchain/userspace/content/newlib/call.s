@@ -152,3 +152,10 @@ call_socket_recv:
     mov edx, [esp + 12]
     int 0x80
     ret
+
+.global call_wait
+call_wait:
+    mov eax, 29
+    mov ebx, [esp + 4]
+    int 0x80
+    ret

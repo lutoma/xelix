@@ -45,7 +45,6 @@ void scheduler_yield()
 
 void scheduler_terminate_current()
 {
-	log(LOG_DEBUG, "scheduler: Terminating current task %d <%s>\n", currentTask->pid, currentTask->name);
 	currentTask->task_state = TASK_STATE_TERMINATED;
 	scheduler_yield();
 }
@@ -58,6 +57,10 @@ void scheduler_remove(task_t *t)
 
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
+
+	if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
+		t->parent->task_state = TASK_STATE_RUNNING;
+	}
 }
 
 /* Setup a new task, including the necessary paging context.
@@ -152,8 +155,6 @@ void scheduler_add(task_t *task)
 	}
 
 	interrupts_enable();
-	
-	log(LOG_INFO, "scheduler: Registered new task with PID %d <%s>\n", task->pid, task->name);
 }
 
 task_t* scheduler_get_current()
@@ -208,10 +209,17 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 	*/
 	currentTask = currentTask->next;
 
-	while (currentTask->task_state == TASK_STATE_KILLED ||
-	       currentTask->task_state == TASK_STATE_TERMINATED)
+	while (likely(currentTask) &&
+			(currentTask->task_state == TASK_STATE_KILLED ||
+			currentTask->task_state == TASK_STATE_TERMINATED ||
+			currentTask->task_state == TASK_STATE_STOPPED ||
+			currentTask->task_state == TASK_STATE_WAITING))
 	{
-		scheduler_remove(currentTask);
+		if(likely(currentTask->task_state == TASK_STATE_KILLED ||
+			currentTask->task_state == TASK_STATE_TERMINATED)) {
+			scheduler_remove(currentTask);
+		}
+
 		currentTask = currentTask->next;
 	}
 

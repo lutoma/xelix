@@ -51,6 +51,7 @@ DEFINE_SYSCALL(bind);
 DEFINE_SYSCALL(socket_send);
 DEFINE_SYSCALL(socket_recv);
 DEFINE_SYSCALL(execnew);
+DEFINE_SYSCALL(wait);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -81,7 +82,8 @@ syscall_t syscall_table[] = {
 	sys_bind,			// 25
 	sys_socket_send,	// 26
 	sys_socket_recv,	// 27
-	sys_execnew		// 28
+	sys_execnew,		// 28
+	sys_wait			// 29
 };
 
 char* syscall_name_table[] = {
@@ -109,9 +111,10 @@ char* syscall_name_table[] = {
 	"getcwd",		// 21
 	"fork",			// 22
 	"execve",		// 23
-	"sys_socket",	// 24
-	"sys_bind",		// 25
+	"socket",		// 24
+	"bind",			// 25
 	"socket_send",	// 26
 	"socket_recv",	// 27
-	"sys_execnew"	// 28
+	"execnew",		// 28
+	"wait"			// 29
 };
