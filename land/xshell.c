@@ -39,6 +39,26 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 
+		if(cmd[0] == '#') {
+			continue;
+		}
+
+		if(!strcmp(cmd, "exit")) {
+			exit(EXIT_SUCCESS);
+		}
+
+		int echo_len = strlen("echo");
+		if(!strncmp(cmd, "echo", echo_len)) {
+			int offset = echo_len;
+
+			if(strlen(cmd) > echo_len + 1) {
+				offset++;
+			}
+
+			printf("%s\n", cmd + offset);
+			continue;
+		}
+
 		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
 		char* __argv[] = { cmd, NULL };
 
