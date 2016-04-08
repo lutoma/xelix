@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+// Xelix special interface™
+#include <sys/execnew.h>
+
 int main(int argc, char* argv[]) {
 	if(argc > 1 && !strcmp(argv[1], "--hello")) {
 		printf("Hello world.\n");
@@ -39,19 +42,11 @@ int main(int argc, char* argv[]) {
 		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
 		char* __argv[] = { cmd, NULL };
 
-		// Make the syscall
-		asm volatile (
-			"movl $0x1c, %%eax;\n"
-			"movl %0, %%ebx;\n"
-			"movl %1, %%ecx;\n"
-			"movl %2, %%edx;\n"
-			"int $0x80;\n"
-			: /* No outputs */
-			: "g" (cmd), "g" (__argv), "g" (__env)
-			: "memory", "eax", "ebx", "ecx", "edx"
-		);
+		pid_t pid = execnew(cmd, __argv, __env);
 
-		// Wait for child to exit
-		pid_t pr = wait(NULL);
+		if(pid > 0) {
+			// Wait for child to exit
+			pid_t pr = wait(NULL);
+		}
 	}
 }

@@ -31,7 +31,7 @@ extern void* call_mmap(int incr);
 extern int call_chdir(const char* path);
 extern char* call_getcwd(char *buf, size_t size);
 extern int call_fork(void);
-extern int wait(int *status);
-
+extern int call_wait(int *status);
+extern pid_t call_execnew(const char* path, char* __argv[], char* __env[]);
 #endif
 

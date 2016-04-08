@@ -159,3 +159,12 @@ call_wait:
     mov ebx, [esp + 4]
     int 0x80
     ret
+
+.global call_execnew
+call_execnew:
+    mov eax, 28
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    mov edx, [esp + 12]
+    int 0x80
+    ret

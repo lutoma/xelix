@@ -1,4 +1,4 @@
-/* Copyright © 2013-2015 Lukas Martini
+/* Copyright © 2013-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -436,4 +436,8 @@ ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len)
 {
 	return call_socket_send(socket, message, length);
+}
+
+pid_t execnew(const char* path, char* __argv[], char* __env[]) {
+	return call_execnew(path, __argv, __env);
 }
