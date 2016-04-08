@@ -55,7 +55,6 @@ void scheduler_remove(task_t *t)
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
 
-	log(LOG_DEBUG, "Removing task %s, previous %s, next %s\n", t->name, t->previous->name, t->next->name);
 
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
