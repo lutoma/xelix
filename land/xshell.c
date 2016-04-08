@@ -47,6 +47,8 @@ int main(int argc, char* argv[]) {
 		if(pid > 0) {
 			// Wait for child to exit
 			pid_t pr = wait(NULL);
+		} else {
+			printf("xshell: command not found: %s\n", cmd);
 		}
 	}
 }
