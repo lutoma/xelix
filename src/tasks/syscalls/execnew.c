@@ -41,16 +41,17 @@ SYSCALL_HANDLER(execnew)
 
 	if(!check_array(__argv) || !check_array(__env)) {
 		log(LOG_WARN, "execnew: array check fail\n");
-		SYSCALL_FAIL();
+		SYSCALL_RETURN(0);
 	}
 
 	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, 2);
-	new_task->parent = scheduler_get_current();
 
 	if(!new_task) {
-		SYSCALL_FAIL();
+		SYSCALL_RETURN(0);
 	}
 
+	new_task->parent = scheduler_get_current();
 	scheduler_add(new_task);
-	SYSCALL_RETURN(0);
+
+	SYSCALL_RETURN(new_task->pid);
 }
