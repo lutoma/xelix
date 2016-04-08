@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <sys/execnew.h>
 
 int main() {
 	printf("\nxelix tty1\n\n");
@@ -30,22 +31,12 @@ int main() {
 
 	printf("\n");
 
-	char* cmd = "/xshell";
 	char* __argv[] = { "xshell", "-l", NULL };
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
 
-	// Make the syscall
-	asm volatile (
-		"movl $0x1c, %%eax;\n"
-		"movl %0, %%ebx;\n"
-		"movl %1, %%ecx;\n"
-		"movl %2, %%edx;\n"
-		"int $0x80;\n"
-		: /* No outputs */
-		: "r" (cmd), "r" (__argv), "r" (__env)
-		: "memory", "eax", "ebx"
-	);
-
-	// PID 1 must not die
-	while(true);
+	while(true) {
+		pid_t shell = execnew("/xshell", __argv, __env);
+		wait(NULL);
+		printf("xinit: Shell seems to have died, respawning it.\n");
+	}
 }
