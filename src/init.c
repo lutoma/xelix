@@ -45,10 +45,9 @@
 #include <fs/xsfs.h>
 #include <net/udp.h>
 #include <net/echo.h>
-#include <lib/md5.h>
 
 // Prints out compiler information, especially for GNU GCC
-static void compilerInfo()
+static void compiler_info()
 {
 	log(LOG_INFO, "Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
 	log(LOG_INFO, "\tCompiled at: %s %s\n", __DATE__, __TIME__);
@@ -102,7 +101,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(console);
 	init(log);
 
-	compilerInfo();
+	compiler_info();
 	memory_track_print_areas();
 
 	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
@@ -126,21 +125,15 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		init(slip);
 	#endif
 
-	// Hardcoded for dash, but doesn't hurt for other processes either
-	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
-	char* __argv[] = { "dash", "-liV", NULL };
+	char* __env[] = { NULL };
+	char* __argv[] = { "init", NULL };
 
-	if(multiboot_info->modsCount)
-	{
-		log(LOG_DEBUG, "Loading initrd with md5sum ");
-		MD5_dump((void*)multiboot_info->modsAddr[0].start, multiboot_info->modsAddr[0].end - multiboot_info->modsAddr[0].start);
-		scheduler_add(elf_load((void*)multiboot_info->modsAddr[0].start, "dash", __env, __argv, 2));
-	} else
-	{
-		task_t* init = elf_load_file("/xinit", __env, __argv, 2);
-		if(init)
-			scheduler_add(init);
+	task_t* init = elf_load_file("/xinit", __env, __argv, 2);
+	if(!init) {
+		panic("Could not start init (Tried /xinit).\n");
 	}
+
+	scheduler_add(init);
 
 	/* Is intentionally last. It's also intentional that the init()
 	 * macro isn't used here. Seriously, don't mess around here.
