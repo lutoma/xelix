@@ -1,6 +1,6 @@
 /* scheduler.c: Selecting which task is being executed next
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
- * Copyright © 2012-2014 Lukas Martini
+ * Copyright © 2012-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -168,7 +168,7 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 {
 	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
 
-	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
+	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
 	char* __argv[] = { "dash", "-liV", NULL };
 
 	// FIXME Make copy of memory context instead of just using the same
@@ -194,7 +194,7 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 }
 
 // Called by the PIT a few hundred times per second.
-task_t* scheduler_select(cpu_state_t* lastRegs)
+task_t* scheduler_select(cpu_state_t* last_regs)
 {
 	if(unlikely(scheduler_state == STATE_INITIALIZING))
 	{
@@ -203,11 +203,12 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 	}
 
 	// Save CPU register state of previous task
-	currentTask->state = lastRegs;
+	currentTask->state = last_regs;
 
 	/* Cycle through tasks until we find one that isn't killed or terminated,
 	 * while along the way unlinking the killed/terminated ones.
 	*/
+	task_t* orig_task = currentTask;
 	currentTask = currentTask->next;
 
 	for(;; currentTask = currentTask->next) {
@@ -221,8 +222,18 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 			continue;
 		}
 
+
 		if(currentTask->task_state == TASK_STATE_STOPPED ||
 			currentTask->task_state == TASK_STATE_WAITING) {
+
+			/* We're back at the original task, which is stopped or waiting.
+			 * This means that every task currently in the task list is waiting,
+			 * which is an unresolvable deadlock.
+			 */
+			if(currentTask == orig_task) {
+				panic("scheduler: All tasks are waiting or stopped.\n");
+			}
+
 			continue;
 		}
 
