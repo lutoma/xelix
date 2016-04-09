@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	char* cwd = malloc(PATH_MAX);
+	char* cmd = malloc(500);
 
 	while(true) {
 		getcwd(cwd, PATH_MAX);
@@ -25,7 +26,6 @@ int main(int argc, char* argv[]) {
 		// Will only print after \n otherwise
 		fflush(stdout);
 
-		char* cmd = malloc(500);
 		char* read = fgets(cmd, 500, stdin);
 
 		if(!read) {
