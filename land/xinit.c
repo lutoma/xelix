@@ -36,6 +36,11 @@ int main() {
 
 	while(true) {
 		pid_t shell = execnew("/xshell", __argv, __env);
+		if(shell < 1) {
+			printf("xinit: Could not launch shell. Exiting.\n");
+			exit(EXIT_FAILURE);
+		}
+
 		wait(NULL);
 		printf("xinit: Shell seems to have died, respawning it.\n");
 	}
