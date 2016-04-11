@@ -51,7 +51,7 @@ static void handle_page_fault(cpu_state_t *regs)
 {
 	int cr2;
 	asm volatile("mov %0, cr2":"=r"(cr2));
-	vmem_handle_fault(regs->errCode, regs->eip);
+	vmem_handle_fault(regs);
 }
 
 static void handler(cpu_state_t* regs)

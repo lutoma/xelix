@@ -35,7 +35,7 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 	struct vmem_context* original_context = vmem_currentContext;
 
 	if(original_context != vmem_kernelContext)
-		paging_apply(vmem_kernelContext);		
+		paging_apply(vmem_kernelContext);
 
 	interrupt_handler_t handler = handlers[regs->interrupt];
 
