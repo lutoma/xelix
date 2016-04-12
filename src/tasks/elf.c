@@ -47,6 +47,9 @@ struct vmem_context* map_task(elf_t* bin) {
 	 * collection of all the memory areas we need.
 	 */
 	struct vmem_context *ctx = vmem_new();
+
+	debug("Using memory context 0x%x\n", ctx);
+
 	for (char *i = (char*)0; i <= (char*)0xfffffff; i += PAGE_SIZE)
 	{
 		struct vmem_page *page = vmem_new_page();
@@ -71,26 +74,33 @@ struct vmem_context* map_task(elf_t* bin) {
 
 		debug("Reading program header %d, offset 0x%x, size 0x%x, virt addr 0x%x\n", i, phead->offset, phead->memsize, phead->virtaddr);
 
-		void* phys_location = (void*)bin + phead->offset;
+		//void* phys_location = (void*)bin + phead->offset;
 
 		// Allocate new _physical_ location for this in RAM and copy data there
-		/*void* phys_location = (void*)kmalloc_a(phead->memsize + PAGE_SIZE);
+		// FIXME Find out what the proper solution for this is
+		uint32_t copy_size = max(phead->filesize, phead->memsize) + PAGE_SIZE;
 
-		memset(phys_location, 0, phead->memsize + PAGE_SIZE);
-		memcpy(phys_location, (void*)bin + phead->offset, phead->filesize + PAGE_SIZE);*/
+		debug("copy size is 0x%y\n", copy_size);
+
+		void* phys_location = (void*)kmalloc_a(copy_size);
+		memset(phys_location, 0, copy_size);
+		memcpy(phys_location, (void*)bin + phead->offset, copy_size);
 
 		bool readonly = !(phead->flags & ELF_PROGRAM_FLAG_WRITE);
 
-		debug("elf: Remapping virt 0x%x to phys 0x%x, size %d (src 0x%x)\n", phead->virtaddr, phys_location, phead->filesize, (void*)bin + phead->offset);
+		debug("elf: Remapping virt 0x%x to phys 0x%x, size 0x%y (src 0x%x)\n", phead->virtaddr, phys_location, phead->filesize, (void*)bin + phead->offset);
 
 		/* Now, remap the _virtual_ location where the ELF binary wants this
 		 * section to be at to the physical location.
 		 */
-		for(int j = 0; j < phead->memsize; j += PAGE_SIZE)
+		for(int j = 0; j < copy_size; j += PAGE_SIZE)
 		{
 			debug("elf: - mapping page 0x%x to phys 0x%x\n", phead->virtaddr + j, phys_location + j);
 
-			vmem_rm_page_virt(ctx, phead->virtaddr + j);
+			struct vmem_page* opage = vmem_get_page_virt(ctx, phead->virtaddr + j);
+			if(opage) {
+				vmem_rm_page_virt(ctx, phead->virtaddr + j);
+			}
 
 			struct vmem_page *page = vmem_new_page();
 			page->section = readonly ? VMEM_SECTION_CODE : VMEM_SECTION_HEAP;
@@ -137,6 +147,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 
 	struct vmem_context *ctx = vmem_kernelContext;
 	ctx = map_task(bin);
+
+	debug("Entry point is 0x%x\n", bin->entry);
 
 	// The last argument should be false only as long as we use the kernel context
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,
