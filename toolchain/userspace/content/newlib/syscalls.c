@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <termios.h>
 #include <signal.h>
+#include <sgtty.h>
 #include "call.h"
 
 #undef errno
@@ -440,4 +441,15 @@ ssize_t sendto(int socket, const void *message, size_t length, int flags,
 
 pid_t execnew(const char* path, char* __argv[], char* __env[]) {
 	return call_execnew(path, __argv, __env);
+}
+
+extern int gtty (int __fd, struct sgttyb *__params) {
+	errno = ENOSYS;
+	return 0;
+}
+
+/* Set the terminal parameters associated with FD to *PARAMS.  */
+extern int stty (int __fd, __const struct sgttyb *__params) {
+	errno = ENOSYS;
+	return 0;
 }
