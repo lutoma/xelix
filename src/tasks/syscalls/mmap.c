@@ -39,7 +39,7 @@ SYSCALL_HANDLER(mmap)
 	task_t* task = scheduler_get_current();
 
 	struct vmem_page* page = vmem_new_page();
-	page->section = VMEM_SECTION_KERNEL;
+	page->section = VMEM_SECTION_MMAP;
 	page->cow = 0;
 	page->allocated = 1;
 	page->virt_addr = addr;
