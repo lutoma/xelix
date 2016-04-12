@@ -25,12 +25,6 @@
 SYSCALL_HANDLER(open)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
-
-	if(strcmp((char*)syscall.params[0], "/home/lutoma/test.asm"))
-		SYSCALL_FAIL();
-
 	vfs_file_t* fd = vfs_open((char*)syscall.params[0]);
-	log(LOG_INFO, "sys_open: Returning fd %d\n", fd->num);
 	SYSCALL_RETURN(fd->num);
 }
-	
