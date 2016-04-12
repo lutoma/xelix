@@ -1,5 +1,5 @@
 ; interrupts.asm: Hardware part of interrupt handling
-; Copyright © 2010-2015 Lukas Martini
+; Copyright © 2010-2016 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -16,9 +16,9 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
-%define EOI_MASTER	0x20
-%define EOI_SLAVE	0xA0
-%define EOI_PORT	0x20
+%define PIT_MASTER	0x20
+%define PIT_SLAVE	0xA0
+%define PIT_CONFIRM	0x20
 %define IRQ7		39
 %define IRQ15		47
 
@@ -95,33 +95,34 @@ common_handler:
 	; Calculate offset to the position of the interrupt number on the
 	; stack and mov it to eax. (8 = Eight 32 bit registers pushed since
 	; the beginning of this function).
-	mov eax, [esp + (4 * 9)]
+	mov ebx, [esp + (4 * 9)]
 
 	; Is this a spurious interrupt on the master PIC? If yes, return
-	cmp eax, IRQ7
+	cmp ebx, IRQ7
 	je return
 
 	; Do we have to send an EOI (End of interrupt)?
-	cmp eax, 31
+	cmp ebx, 31
 	jle no_eoi
 
 	; Send EOI to master PIC
-	mov dx, EOI_PORT
-	mov ax, EOI_MASTER
+	mov dx, PIT_MASTER
+	mov ax, PIT_CONFIRM
 	out dx, ax
 
 	; Is this a spurious interrupt on the secondary PIC? If yes, return
 	; (We do this here so the master PIC still get's an EOI as it can't
 	; know about the spuriousness of this interrupt).
-	cmp eax, IRQ15
+	cmp ebx, IRQ15
 	je return
 
 	; Check if we have to send an EOI to the secondary PIC
-	cmp eax, 39
+	cmp ebx, 39
 	jle no_eoi
 
 	; Send EOI to secondary PIC
-	mov ax, EOI_SLAVE
+	mov dx, PIT_SLAVE
+	mov ax, PIT_CONFIRM
 	out dx, ax
 
 no_eoi:
@@ -131,13 +132,13 @@ no_eoi:
  	; Call C level interrupt handler
  	call interrupts_callback
 
-return:
 	; Take esp from stack. This is uncommented as we directly apply a new stack
 	;add esp, 4
 
 	; Apply new stack
 	mov esp, eax
 
+return:
 	; reload the original data segment descriptor
 	pop ebx
 	mov ds, bx
