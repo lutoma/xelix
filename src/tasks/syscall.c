@@ -66,16 +66,19 @@ static void int_handler(cpu_state_t* regs)
 		return;
 	}
 
-	/*log(LOG_INFO, "Syscall %s called with %d %d %d %d %d.\n",
+	call(syscall);
+
+	/*task_t* cur = scheduler_get_current();
+	log(LOG_INFO, "PID %d <%s>: %s(0x%x 0x%x 0x%x 0x%x 0x%x 0x%x) -> 0x%x\n",
+		cur->pid, cur->name,
 		syscall_name_table[syscall.num],
 		regs->ebx,
 		regs->ecx,
 		regs->edx,
 		regs->esi,
 		regs->edi,
-		regs->ebp);*/
-
-	call(syscall);
+		regs->ebp,
+		regs->eax);*/
 }
 
 void syscall_init()
