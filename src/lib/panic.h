@@ -20,7 +20,7 @@
 
 #include "generic.h"
 #include "print.h"
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
 
@@ -32,6 +32,10 @@
 } while(0)
 
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
+#define assert_nc(qry) { if(!(qry)) {														\
+	log(LOG_ERR, "Assertion \"" #qry "\" in " __FILE__ ":%d failed.", __LINE__);		\
+	return;																					\
+}}
 
 void dumpCpuState(cpu_state_t* regs);
 void panic_init();

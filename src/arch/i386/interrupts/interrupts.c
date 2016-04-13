@@ -18,7 +18,7 @@
  */
 
 #include <lib/generic.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include "idt.h"
 
 void arch_interrupts_init()

@@ -23,7 +23,7 @@
 
 #include <lib/log.h>
 #include <memory/kmalloc.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/serial.h>
 #include <net/net.h>
 
@@ -33,11 +33,10 @@
 #define ESC_END	0xdc // ESC ESC_END means END data byte
 #define ESC_ESC	0xdd // ESC ESC_ESC means ESC data byte
 
-net_device_t* mydev;
-uint8_t* buf;
-bool in_progress = false;
-bool escape;
-int bufpos = 0;
+static net_device_t* mydev;
+static uint8_t* buf;
+static bool in_progress = false;
+static int bufpos = 0;
 
 void slip_receive(cpu_state_t* state)
 {

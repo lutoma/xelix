@@ -1,4 +1,4 @@
-/* Copyright © 2013 Lukas Martini
+/* Copyright © 2013-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -31,6 +31,7 @@ extern void* call_mmap(int incr);
 extern int call_chdir(const char* path);
 extern char* call_getcwd(char *buf, size_t size);
 extern int call_fork(void);
-
+extern int call_wait(int *status);
+extern pid_t call_execnew(const char* path, char* __argv[], char* __env[]);
 #endif
 

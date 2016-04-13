@@ -1,5 +1,5 @@
 /* init.c: Initialization code of the kernel
- * Copyright © 2010-2014 Lukas Martini
+ * Copyright © 2010-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,17 +17,16 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-	#include <arch/i386/lib/multiboot.h>
-#endif
+#include <lib/multiboot.h>
 #include <lib/log.h>
 #include <lib/string.h>
 #include <lib/panic.h>
 #include <hw/serial.h>
 #include <hw/cpu.h>
 #include <memory/interface.h>
+#include <memory/track.h>
 #include <memory/gdt.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <memory/kmalloc.h>
 #include <hw/speaker.h>
@@ -44,9 +43,12 @@
 #include <net/slip.h>
 #include <hw/ide.h>
 #include <fs/ext2.h>
+#include <fs/xsfs.h>
+#include <net/udp.h>
+#include <net/echo.h>
 
 // Prints out compiler information, especially for GNU GCC
-static void compilerInfo()
+static void compiler_info()
 {
 	log(LOG_INFO, "Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
 	log(LOG_INFO, "\tCompiled at: %s %s\n", __DATE__, __TIME__);
@@ -73,11 +75,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(gdt);
 	init(interrupts);
 	init(panic);
-	init(kmalloc);
-	init(pit, PIT_RATE);
-	init(serial);
-	init(console);
-	init(log);
+	init(cpu);
 
 	// Check if we were actually booted by a multiboot bootloader
 	if(multiboot_checksum != MULTIBOOT_KERNELMAGIC) {
@@ -93,38 +91,24 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		panic("Not enough RAM to safely proceed - should be at least 60 MB.\n");
 	}
 
-	compilerInfo();
-
-	// Dump memory map.
 	if(!bit_get(multiboot_info->flags, 6)) {
 		panic("No mmap data from bootloader.\n");
 	}
 
-	uint32_t mmap_addr = multiboot_info->mmapAddr;
-	uint32_t mmap_length = multiboot_info->mmapLength;
+	init(memory_track, multiboot_info);
+	init(kmalloc);
+	init(pit, PIT_RATE);
+	init(serial);
+	init(console);
+	init(log);
 
-	log(LOG_DEBUG, "mmap_addr = 0x%x, mmap_length = 0x%x\n", mmap_addr, mmap_length);
+	compiler_info();
+	memory_track_print_areas();
 
-	uint32_t i = mmap_addr;
-	while (i < (mmap_addr + mmap_length))
-	{
-		// FIXME This should use the multiboot_memoryMap_t struct.
-		uint32_t *size = (uint32_t *) i;
-		uint32_t *base_addr_low = (uint32_t *) (i + 4);
-		uint32_t *length_low = (uint32_t *) (i + 12);
-		uint32_t *type = (uint32_t *) (i + 20);
-
-		log(LOG_DEBUG, "\tsize = 0x%x, start = 0x%x, end = 0x%x, type = 0x%x\n",
-			*size, *base_addr_low, *base_addr_low + *length_low, *type);
-
-		i += *size + 4;
-	}
-	
 	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
 		arch_multiboot_printInfo();
 	#endif
 
-	init(cpu);
 	init(pci);
 	init(syscall);
 	init(vmem);
@@ -132,8 +116,11 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(ide);
 
 	init(ext2);
+	init(xsfs);
 
 	// Networking
+	init(udp);
+	init(echo);
 	init(rtl8139);
 	init(virtio_net);
 	
@@ -141,19 +128,15 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		init(slip);
 	#endif
 
-	// Hardcoded for dash, but doesn't hurt for other processes either
-	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
-	char* __argv[] = { "dash", "-liV", NULL };
+	char* __env[] = { NULL };
+	char* __argv[] = { "init", NULL };
 
-	if(multiboot_info->modsCount)
-	{
-		scheduler_add(elf_load((void*)multiboot_info->modsAddr[0].start, "dash", __env, __argv, 2));
-	} else
-	{
-		task_t* init = elf_load_file("/bin/init", __env, __argv, 2);
-		if(init)
-			scheduler_add(init);
+	task_t* init = elf_load_file("/xinit", __env, __argv, 2);
+	if(!init) {
+		panic("Could not start init (Tried /xinit).\n");
 	}
+
+	scheduler_add(init);
 
 	/* Is intentionally last. It's also intentional that the init()
 	 * macro isn't used here. Seriously, don't mess around here.
@@ -167,6 +150,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	 */
 	while(true)
 		asm("hlt"); // Wait until interrupt fires
-		
+
 	panic("Kernel returned.");
 }

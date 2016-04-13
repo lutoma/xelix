@@ -1,5 +1,5 @@
 /* execve.c: Execve syscall
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,11 +22,27 @@
 #include <tasks/scheduler.h>
 #include <tasks/elf.h>
 
-int sys_execve(struct syscall syscall)
+// Check an array to make sure it's NULL-terminated.
+static bool check_array(char** array) {
+	for(int i = 0; i < 200; i++) {
+		if(array[i] == NULL)
+			return true;
+	}
+	return false;
+}
+
+SYSCALL_HANDLER(execve)
 {
-	// Hardcoded for dash, but doesn't hurt for other processes either
-	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
-	char* __argv[] = { "dash", "-liV", NULL };
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
+
+	log(LOG_DEBUG, "execve for %s\n", syscall.params[0]);
+
+	char** __argv = (char**)syscall.params[1];
+	char** __env = (char**)syscall.params[2];
+
+	if(!check_array(__argv) || !check_array(__env)) {
+		SYSCALL_FAIL();
+	}
 
 	task_t* task = scheduler_get_current();
 	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, 2);
@@ -36,8 +52,8 @@ int sys_execve(struct syscall syscall)
 	{
 		scheduler_add(new_task);
 		scheduler_remove(task);
-		return 0;
+		SYSCALL_RETURN(0);
 	}
 
-	return -1;
+	SYSCALL_FAIL();
 }

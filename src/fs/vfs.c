@@ -1,5 +1,5 @@
 /* vfs.c: Virtual file system
- * Copyright © 2011, 2012 Lukas Martini
+ * Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -46,14 +46,44 @@ uint32_t last_file = -1;
 uint32_t last_dir = -1;
 static spinlock_t file_open_lock;
 
+// Debugging function – Dump a directory and all subdirectories
+void vfs_dump_dir(char* path) {
+	log(LOG_DEBUG, "Files in %s\n", path);
+	vfs_dir_t* dir = vfs_dir_open(path);
+	if(!dir) {
+		log(LOG_ERR, "vfs_dump_dir: Could not open directory %s\n", path);
+		return;
+	}
+
+	char* name = vfs_dir_read(dir, 0);
+	for(int i = 1; name; i++) {
+		log(LOG_DEBUG, "%s\n", name);
+		name = vfs_dir_read(dir, i);
+	}
+}
+
 vfs_file_t* vfs_get_from_id(uint32_t id)
 {
-	return &files[id];
+	if(id < 1 || id > last_file || !spinlock_get(&file_open_lock, 30)) {
+		return NULL;
+	}
+
+	vfs_file_t* fd = &files[id];
+	spinlock_release(&file_open_lock);
+
+	return fd;
 }
 
 vfs_dir_t* vfs_get_dir_from_id(uint32_t id)
 {
-	return &dirs[id];
+	if(id < 1 || id > last_dir || !spinlock_get(&file_open_lock, 30)) {
+		return NULL;
+	}
+
+	vfs_dir_t* dd = &dirs[id];
+	spinlock_release(&file_open_lock);
+
+	return dd;
 }
 
 
@@ -102,7 +132,7 @@ void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
 
 vfs_file_t* vfs_open(char* path)
 {
-	if(spinlock_get(&file_open_lock, 30) == -1) {
+	if(!spinlock_get(&file_open_lock, 30)) {
 		return NULL;
 	}
 

@@ -1,5 +1,6 @@
 /* write.c: Write Syscall
  * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,15 +22,13 @@
 #include <memory/vmem.h>
 #include <tasks/syscall.h>
 
-int sys_write(struct syscall syscall)
+SYSCALL_HANDLER(write)
 {
-	syscall.params[1] = (int)task_resolve_address(syscall.params[1]);
-	if(!syscall.params[1])
-		return -1;
+	SYSCALL_SAFE_RESOLVE_PARAM(1);
 
 	if (syscall.params[0] == 1 || syscall.params[0] == 2)
-		return console_write(NULL, (char*)syscall.params[1], syscall.params[2]);
+		SYSCALL_RETURN(console_write(NULL, (char*)syscall.params[1], syscall.params[2]));
 
-	return -1;
+	SYSCALL_FAIL();
 }
 

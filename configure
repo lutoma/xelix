@@ -49,8 +49,9 @@ do
 done
 
 echo >> Makefile
-echo "	\$(LD) \$(MAKE_LDFLAGS) -o xelix.bin \$(LDFLAGS) $^" >> Makefile
-echo "	chmod -x xelix.bin" >> Makefile
+echo "	@echo -e \"LD\\txelix.bin\"" >> Makefile
+echo "	@\$(LD) \$(MAKE_LDFLAGS) -o xelix.bin \$(LDFLAGS) $^" >> Makefile
+echo "	@chmod -x xelix.bin" >> Makefile
 
 
 for i in $files

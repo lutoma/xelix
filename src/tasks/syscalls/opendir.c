@@ -1,5 +1,5 @@
 /* open.c: Opendir Syscall
- * Copyright © 2012 Lukas Martini
+ * Copyright © 2012-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,12 +21,9 @@
 #include <lib/log.h>
 #include <tasks/syscall.h>
 
-int sys_opendir(struct syscall syscall)
+SYSCALL_HANDLER(opendir)
 {
-	syscall.params[0] = (int)task_resolve_address(syscall.params[0]);
-	if(!syscall.params[0])
-		return -1;
-
-	return vfs_dir_open((char*)syscall.params[0])->num;
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
+	SYSCALL_RETURN(vfs_dir_open((char*)syscall.params[0])->num);
 }
 	

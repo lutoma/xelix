@@ -23,7 +23,7 @@
 #include <lib/log.h>
 #include <lib/print.h>
 #include <memory/vmem.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 
 typedef struct {
 	bool present    : 1;

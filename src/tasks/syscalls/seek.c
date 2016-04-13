@@ -1,5 +1,5 @@
 /* seek.c: Seek syscall
- * Copyright © 2012 Lukas Martini
+ * Copyright © 2012-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,12 +20,12 @@
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
 
-int sys_seek(struct syscall syscall)
+SYSCALL_HANDLER(seek)
 {
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
 	if(fd == NULL)
-		return -2;
+		SYSCALL_RETURN(-2);
 
 	vfs_seek(fd, syscall.params[1], syscall.params[2]);
-	return 0;
+	SYSCALL_RETURN(0);
 }

@@ -1,5 +1,5 @@
-/* <filename>.c: Description of what this file does
- * Copyright © <year> <your name>
+/* socket_send.c: Socket send syscall
+ * Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,8 +17,13 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <own_header.h>
+#include <console/interface.h>
+#include <memory/vmem.h>
+#include <tasks/syscall.h>
+#include <lib/log.h>
 
-// Other header includes
-
-// Your code
+SYSCALL_HANDLER(socket_send)
+{
+	log(LOG_DEBUG, "syscall: socket_send(%d, %d, %d) -> 0\n", syscall.params[0], syscall.params[1], syscall.params[2]);
+	SYSCALL_RETURN(0);
+}

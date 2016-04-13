@@ -1,5 +1,5 @@
 /* sys_hostname.c: Set/get hostname
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,15 +21,15 @@
 #include <net/net.h>
 #include <lib/log.h>
 
-int sys_get_hostname(struct syscall syscall)
+SYSCALL_HANDLER(get_hostname)
 {
 	char* name = net_get_hostname(syscall.params[1]);
 	memcpy((char*)syscall.params[0], name, syscall.params[1]);
-	return 0;
+	SYSCALL_RETURN(0);
 }
 
-int sys_set_hostname(struct syscall syscall)
+SYSCALL_HANDLER(set_hostname)
 {
 	net_set_hostname((char*)syscall.params[0], syscall.params[1]);
-	return 0;
+	SYSCALL_RETURN(0);
 }

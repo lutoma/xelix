@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2010 Lukas Martini
+/* bind.c: Bind syscall
+ * Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -15,10 +14,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <console/interface.h>
+#include <memory/vmem.h>
+#include <tasks/syscall.h>
+#include <lib/log.h>
 
-void cpu_initFaultHandler();
-
+SYSCALL_HANDLER(bind)
+{
+	log(LOG_DEBUG, "syscall: bind(%d, 0x%x, %d) -> 0\n", syscall.params[0], syscall.params[1], syscall.params[2]);
+	SYSCALL_RETURN(0);
+}

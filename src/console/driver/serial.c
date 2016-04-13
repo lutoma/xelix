@@ -1,5 +1,6 @@
 /* serial.c: Console driver for the serial port
  * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -40,6 +41,11 @@ static int console_driver_serial_write(console_info_t* info, char c)
 	if (c == 0x8 || c == 0x7f)
 	{
 		serial_print("\b \b");
+		return 1;
+	}
+
+	if(c == '\n') {
+		serial_print("\r\n");
 		return 1;
 	}
 

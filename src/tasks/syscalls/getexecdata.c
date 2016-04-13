@@ -1,5 +1,5 @@
 /* sys_getexecdata.c: Get argv, argc, environ
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,17 +21,16 @@
 #include <tasks/scheduler.h>
 
 // Return execution data.
-int sys_getexecdata(struct syscall syscall)
+SYSCALL_HANDLER(getexecdata)
 {
 	task_t* proc = scheduler_get_current();
 
 	switch(syscall.params[0])
 	{
-		case 0: return proc->argc;;
-		case 1: return (int)proc->argv;;
-		case 2: return (int)proc->environ;;
+		case 0: SYSCALL_RETURN(proc->argc);;
+		case 1: SYSCALL_RETURN((int)proc->argv);;
+		case 2: SYSCALL_RETURN((int)proc->environ);;
 	}
 
-	return 0;
+	SYSCALL_RETURN(0);
 }
-

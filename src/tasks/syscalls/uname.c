@@ -1,5 +1,5 @@
 /* sys_hostname.c: Set/get hostname
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -29,7 +29,7 @@ struct utsname {
 	char machine[20];
 };
 
-int sys_uname(struct syscall syscall)
+SYSCALL_HANDLER(uname)
 {
 	struct utsname* info = (struct utsname*)syscall.params[0];
 	strcpy(info->sysname, "Xelix");
@@ -38,6 +38,6 @@ int sys_uname(struct syscall syscall)
 	strcpy(info->release, "derp");
 	strcpy(info->version, "derp");
 	strcpy(info->machine, "i386");
-	return 0;
+	SYSCALL_RETURN(0);
 }
 

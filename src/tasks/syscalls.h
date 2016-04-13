@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2014 Lukas Martini
+/* Copyright © 2014-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,7 +21,7 @@
 #include <lib/generic.h>
 #include <tasks/syscall.h>
 
-#define DEFINE_SYSCALL(name) extern int sys_ ## name (struct syscall syscall);
+#define DEFINE_SYSCALL(name) extern void sys_ ## name (struct syscall syscall);
 
 DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);
@@ -45,7 +45,13 @@ DEFINE_SYSCALL(getexecdata);
 DEFINE_SYSCALL(chdir);
 DEFINE_SYSCALL(getcwd);
 DEFINE_SYSCALL(fork);
-DEFINE_SYSCALL(execven);
+DEFINE_SYSCALL(execve);
+DEFINE_SYSCALL(socket);
+DEFINE_SYSCALL(bind);
+DEFINE_SYSCALL(socket_send);
+DEFINE_SYSCALL(socket_recv);
+DEFINE_SYSCALL(execnew);
+DEFINE_SYSCALL(wait);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -71,6 +77,13 @@ syscall_t syscall_table[] = {
 	sys_chdir,			// 20
 	sys_getcwd,			// 21
 	sys_fork,			// 22
+	sys_execve,			// 23
+	sys_socket,			// 24
+	sys_bind,			// 25
+	sys_socket_send,	// 26
+	sys_socket_recv,	// 27
+	sys_execnew,		// 28
+	sys_wait			// 29
 };
 
 char* syscall_name_table[] = {
@@ -97,4 +110,11 @@ char* syscall_name_table[] = {
 	"chdir",		// 20
 	"getcwd",		// 21
 	"fork",			// 22
+	"execve",		// 23
+	"socket",		// 24
+	"bind",			// 25
+	"socket_send",	// 26
+	"socket_recv",	// 27
+	"execnew",		// 28
+	"wait"			// 29
 };

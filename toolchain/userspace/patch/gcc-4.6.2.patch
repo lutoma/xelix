@@ -32,7 +32,7 @@ diff -rupN download/gcc-4.6.2/gcc/config.gcc download/gcc-4.6.2-xelix/gcc/config
  # Support site-specific machine types.
 +i[3-7]86-*-xelix*)
 +	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h xelix.h"
-+	tmake_file="i386/t-i386elf t-svr4"
++	tmake_file="i386/t-i386elf i386/t-crtstuff t-svr4"
 +	use_fixproto=yes
 +	;;
  *local*)

@@ -1,5 +1,5 @@
 /* fork.c: Fork Syscall
- * Copyright © 2014 Lukas Martini
+ * Copyright © 2014-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,16 +21,16 @@
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
 
-int sys_fork(struct syscall syscall)
+SYSCALL_HANDLER(fork)
 {
 	task_t* current_task = scheduler_get_current();
 	task_t* fork_task = scheduler_fork(current_task, syscall.state);
 
 	if(fork_task == NULL) {
-		return -1;
+		SYSCALL_FAIL();
 	}
 
 	scheduler_add(fork_task);
-	return fork_task->pid;
+	SYSCALL_RETURN(fork_task->pid);
 }
 	

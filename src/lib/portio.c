@@ -18,7 +18,7 @@
  */
 
 #include "portio.h"
-#include <lib/stdint.h>
+#include <lib/generic.h>
 
 #define outMacro(name, type) \
 	void name (uint16_t port, type value) \
@@ -38,9 +38,9 @@
 outMacro(portio_out8, uint8_t)
 outMacro(portio_out16, uint16_t)
 outMacro(portio_out32, uint32_t)
-outMacro(portio_out64, uint64_t)
+//outMacro(portio_out64, uint64_t)
 
 inMacro(portio_in8, uint8_t)
 inMacro(portio_in16, uint16_t)
 inMacro(portio_in32, uint32_t)
-inMacro(portio_in64, uint64_t)
+//inMacro(portio_in64, uint64_t)

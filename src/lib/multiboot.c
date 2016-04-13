@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arch/i386/lib/multiboot.h>
+#include "multiboot.h"
 
 #include <lib/log.h>
 #include <lib/string.h>

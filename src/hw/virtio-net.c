@@ -29,7 +29,7 @@
 #include <lib/log.h>
 #include <lib/print.h>
 #include <lib/portio.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <memory/kmalloc.h>
 #include <net/ether.h>
 #include <net/net.h>

@@ -22,9 +22,9 @@
 #include "kmalloc.h"
 #include "vmem.h"
 #include <lib/log.h>
-#include <arch/i386/lib/multiboot.h>
+#include <lib/multiboot.h>
 
-uint32_t memoryPosition;
+static uint32_t memoryPosition;
 
 /* Use the macros instead of directly calling this functions.
  * For details on the __attribute__((alloc_size(1))), see the GCC

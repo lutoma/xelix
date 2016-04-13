@@ -1,4 +1,4 @@
-/* Copyright © 2013 Lukas Martini
+/* Copyright © 2013-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,9 +23,11 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #include <termios.h>
 #include <signal.h>
+#include <sgtty.h>
 #include "call.h"
 
 #undef errno
@@ -47,10 +49,8 @@ int close(int file)
 
 int execve(char *name, char **argv, char **env)
 {
-	fprintf(stderr, "libc: Warning: Call to unimplemented execve()\n");
 	errno = ENOSYS;
-	call_execve(name, argv, env);
-	return -1;
+	return call_execve(name, argv, env);
 }
 
 int fork()
@@ -180,8 +180,7 @@ int unlink(char *name)
 
 int wait(int *status)
 {
-	errno = ENOSYS;
-	return -1;
+	return call_wait(status);
 }
 
 int wait3(int *status)
@@ -255,7 +254,7 @@ char* getcwd(char *buf, size_t size)
 
 char* getwd(char *buf)
 {
-	return "/";
+	return getcwd(buf, PATH_MAX);
 }
 
 int chdir(const char *path)
@@ -406,4 +405,51 @@ int tcsetpgrp(int fildes, pid_t pgid_id)
 {
 	errno = ENOSYS;
 	return -1;
+}
+
+int socket(int domain, int type, int protocol) 
+{
+	if(domain != AF_INET) {
+		errno = EAFNOSUPPORT;
+		return -1;
+	}
+
+	if(type != SOCK_DGRAM) {
+		errno = EPROTOTYPE;
+		return -1;
+	}
+
+	return call_socket(domain, type, protocol);
+}
+
+int bind(int socket, const struct sockaddr *address, socklen_t address_len)
+{
+	return call_bind(socket, address, address_len);
+}
+
+ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
+	struct sockaddr *address, socklen_t *address_len)
+{
+	return call_socket_recv(socket, buffer, length);
+}
+
+ssize_t sendto(int socket, const void *message, size_t length, int flags,
+	const struct sockaddr *dest_addr, socklen_t dest_len)
+{
+	return call_socket_send(socket, message, length);
+}
+
+pid_t execnew(const char* path, char* __argv[], char* __env[]) {
+	return call_execnew(path, __argv, __env);
+}
+
+extern int gtty (int __fd, struct sgttyb *__params) {
+	errno = ENOSYS;
+	return 0;
+}
+
+/* Set the terminal parameters associated with FD to *PARAMS.  */
+extern int stty (int __fd, __const struct sgttyb *__params) {
+	errno = ENOSYS;
+	return 0;
 }

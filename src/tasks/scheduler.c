@@ -1,6 +1,6 @@
 /* scheduler.c: Selecting which task is being executed next
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
- * Copyright © 2012-2014 Lukas Martini
+ * Copyright © 2012-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,11 +23,11 @@
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <hw/cpu.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include <lib/panic.h>
 #include <lib/string.h>
 #include <memory/vmem.h>
-#include <arch/i386/lib/multiboot.h>
+#include <lib/multiboot.h>
 #include <tasks/elf.h>
 
 #define STACKSIZE PAGE_SIZE
@@ -45,7 +45,6 @@ void scheduler_yield()
 
 void scheduler_terminate_current()
 {
-	log(LOG_DEBUG, "scheduler: Terminating current task %d <%s>\n", currentTask->pid, currentTask->name);
 	currentTask->task_state = TASK_STATE_TERMINATED;
 	scheduler_yield();
 }
@@ -56,8 +55,13 @@ void scheduler_remove(task_t *t)
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
 
+
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
+
+	if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
+		t->parent->task_state = TASK_STATE_RUNNING;
+	}
 }
 
 /* Setup a new task, including the necessary paging context.
@@ -152,8 +156,6 @@ void scheduler_add(task_t *task)
 	}
 
 	interrupts_enable();
-	
-	log(LOG_INFO, "scheduler: Registered new task with PID %d <%s>\n", task->pid, task->name);
 }
 
 task_t* scheduler_get_current()
@@ -166,10 +168,11 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 {
 	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
 
-	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
+	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
 	char* __argv[] = { "dash", "-liV", NULL };
 
-	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, __argv, 2, vmem_kernelContext, false);
+	// FIXME Make copy of memory context instead of just using the same
+	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, __argv, 2, to_fork->memory_context, false);
 
 	// Copy registers
 	new_task->state->ebx = state->ebx;
@@ -191,7 +194,7 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 }
 
 // Called by the PIT a few hundred times per second.
-task_t* scheduler_select(cpu_state_t* lastRegs)
+task_t* scheduler_select(cpu_state_t* last_regs)
 {
 	if(unlikely(scheduler_state == STATE_INITIALIZING))
 	{
@@ -200,22 +203,42 @@ task_t* scheduler_select(cpu_state_t* lastRegs)
 	}
 
 	// Save CPU register state of previous task
-	currentTask->state = lastRegs;
+	currentTask->state = last_regs;
 
 	/* Cycle through tasks until we find one that isn't killed or terminated,
 	 * while along the way unlinking the killed/terminated ones.
 	*/
+	task_t* orig_task = currentTask;
 	currentTask = currentTask->next;
 
-	while (currentTask->task_state == TASK_STATE_KILLED ||
-	       currentTask->task_state == TASK_STATE_TERMINATED)
-	{
-		scheduler_remove(currentTask);
-		currentTask = currentTask->next;
-	}
+	for(;; currentTask = currentTask->next) {
+		if (unlikely(currentTask == NULL)) {
+			panic("scheduler: Task list corrupted (currentTask->next was NULL).\n");
+		}
 
-	if (unlikely(currentTask == NULL))
-		panic("scheduler: No more tasks.\n");
+		if(currentTask->task_state == TASK_STATE_KILLED ||
+			currentTask->task_state == TASK_STATE_TERMINATED) {
+			scheduler_remove(currentTask);
+			continue;
+		}
+
+
+		if(currentTask->task_state == TASK_STATE_STOPPED ||
+			currentTask->task_state == TASK_STATE_WAITING) {
+
+			/* We're back at the original task, which is stopped or waiting.
+			 * This means that every task currently in the task list is waiting,
+			 * which is an unresolvable deadlock.
+			 */
+			if(currentTask == orig_task) {
+				panic("scheduler: All tasks are waiting or stopped.\n");
+			}
+
+			continue;
+		}
+
+		break;
+	}
 
 	return currentTask;
 }

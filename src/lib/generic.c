@@ -28,7 +28,7 @@
 #include <hw/pit.h>
 #include <hw/keyboard.h>
 #include <tasks/scheduler.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 
 // Memset function. Fills memory with something.
 void memset(void* ptr, uint8_t fill, uint32_t size)
@@ -53,7 +53,8 @@ void memcpy(void* dest, void* src, uint32_t size)
 	}
 }
 
-char* itoa(int value, int base) {
+char* itoa(int value, int base)
+{
 	// FIXME The result buffer should be an argument passed in and not allocated
 	char* result = (char*)kmalloc(8 * sizeof(value) + 2);
 
@@ -81,11 +82,27 @@ char* itoa(int value, int base) {
 	return result;
 }
 
+char* utoa(unsigned int value, int base)
+{
+	// FIXME The result buffer should be an argument passed in and not allocated
+	char* result = (char*)kmalloc(8 * sizeof(value) + 2);
 
-uint64_t atoi(const char* s) {
-  uint64_t n = 0;
-  while (isCharDigit(*s)) n = 10 * n + *s++ - '0';
-  return n;
+	if (base < 2 || base > 36) { *result = '\0'; return result; }
+
+	char* ptr = result;
+
+	for(; value; value /= base) {
+		*ptr++ = "0123456789abcdefghijklmnopqrstuvwxyz"[value % base];
+	}
+
+	return result;
+}
+
+uint64_t atoi(const char* s)
+{
+	uint64_t n = 0;
+	while (isCharDigit(*s)) n = 10 * n + *s++ - '0';
+	return n;
 }
 
 //Read a byte from the CMOS

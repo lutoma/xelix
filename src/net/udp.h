@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,27 +19,20 @@
  */
 
 #include <lib/generic.h>
+#include <net/udp.h>
+#include <net/ip4.h>
+#include <net/net.h>
 
-/* This is by far not complete, but contains everything we've needed so
- * far. Feel free to add things if desired.
- */
+typedef struct {
+	uint16_t source_port;
+	uint16_t destination_port;
+	uint16_t length;
+	uint16_t checksum;
+} __attribute__((packed)) udp_header_t;
 
-typedef unsigned long uint64_t;
-typedef signed long int64_t;
-typedef unsigned int uint32_t;
-typedef signed int int32_t;
-typedef unsigned short uint16_t;
-typedef signed short int16_t;
-typedef unsigned char uint8_t;
-typedef signed char int8_t;
+typedef void (*udp_handler_t)(net_device_t*, size_t, udp_header_t*, ip4_header_t*);
 
-typedef int8_t 	int_fast8_t;
-typedef uint8_t uint_fast8_t;
-typedef int16_t int_fast16_t;
-typedef uint16_t uint_fast16_t;
-typedef int32_t int_fast32_t;
-typedef uint32_t uint_fast32_t;
-typedef int64_t int_fast64_t;
-typedef uint64_t uint_fast64_t;
-
-typedef int intptr_t;
+void udp_receive(net_device_t* origin, size_t size, ip4_header_t* ip_packet);
+void udp_register_handler(udp_handler_t handler, uint16_t port);
+void udp_send(net_device_t* destination, size_t size, ip4_header_t* ip_packet);
+void udp_init();

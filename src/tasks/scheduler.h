@@ -44,7 +44,8 @@ typedef struct task {
 		TASK_STATE_TERMINATED,
 		TASK_STATE_BLOCKING,
 		TASK_STATE_STOPPED,
-		TASK_STATE_RUNNING
+		TASK_STATE_RUNNING,
+		TASK_STATE_WAITING
 	} task_state;
 
 	char** environ;

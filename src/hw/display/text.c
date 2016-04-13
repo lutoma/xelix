@@ -33,18 +33,18 @@
 // Pointer to video memory
 // 80x25 Zeichen
 // 1st Byte char, 2nd nyte color
-uint16_t* const videoMemory = (uint16_t*) 0xB8000; 
+static uint16_t* const videoMemory = (uint16_t*) 0xB8000; 
 
 // Buffer concept:
 // Everything is written to the buffer (which is x number of lines).
 // The screen displays part of the buffer.
 // The buffer is wrap-around, i.e. when the end is reached it just continues at the beginning. (see also wrapAroundBuffer())
 
-uint16_t* buffer; // start of the buffer
-uint16_t* bufferEnd; // end of the buffer (points one beyond last character)
-uint16_t* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen.
-uint16_t* cursorPos; // points to current cursor position in buffer. This is directly after the last printed character. This is where new text is printed etc. (use wrapAroundBuffer() to ensure it does not point outside the buffer)
-uint8_t color; // the current color
+static uint16_t* buffer; // start of the buffer
+static uint16_t* bufferEnd; // end of the buffer (points one beyond last character)
+static uint16_t* screenPos; // points to the first character (which is a first character in a line) that is currently displayed on the screen.
+static uint16_t* cursorPos; // points to current cursor position in buffer. This is directly after the last printed character. This is where new text is printed etc. (use wrapAroundBuffer() to ensure it does not point outside the buffer)
+static uint8_t color; // the current color
 
 // wraps the given position in the buffer
 static uint16_t* wrapAroundBuffer(uint16_t* pos);

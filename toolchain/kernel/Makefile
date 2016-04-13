@@ -5,15 +5,15 @@ BINUTILS_VERSION=2.24
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
 BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.gz
 
-GCC_VERSION=4.6.4
+GCC_VERSION=5.1.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
-GCC_PACKAGE=gcc-core-${GCC_VERSION}.tar.gz
+GCC_PACKAGE=gcc-${GCC_VERSION}.tar.gz
 
 PATH:=$(PATH):$(CURDIR)/local/bin 
 
 .PHONY: all install clean binutils gcc
 
-all: binutils-all gcc-all newlib-all
+all: binutils-all gcc-all
 
 clean: binutils-clean gcc-clean
 	@echo "Cleaning all"
@@ -68,6 +68,8 @@ gcc-install:
 gcc-make:
 	@echo "Building gcc"
 	@mkdir -p build/gcc
+	-@find build/gcc -name config.cache -delete
+	-@make -C build/gcc distclean
 	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-shared --enable-languages=c --without-headers --without-docdir --disable-libssp
 	@make -C build/gcc all-gcc
 	@make -C build/gcc all-target-libgcc

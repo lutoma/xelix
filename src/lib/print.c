@@ -53,6 +53,8 @@ void vprintf(const char *fmt, void** arg) {
 				case 's': print(*(char **)arg ? *(char **)arg : "(null)"); break;
 				case 'b': print(itoa(*(unsigned *)arg,  2)); break;
 				case 'd': print(itoa(*(unsigned *)arg, 10)); break;
+				case 'u': print(utoa(*(unsigned *)arg, 10)); break;
+				case 'y': print(utoa(*(unsigned *)arg, 16)); break;
 				case 'x': print(itoa(*(unsigned *)arg, 16)); break;
 				case 't': print(*(unsigned *)arg ? "true" : "false"); break;
 			}

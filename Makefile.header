@@ -29,6 +29,6 @@ else
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
-MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -netdev user,id=mnet1 -device virtio-net,netdev=mnet1 -m 250 -no-kvm -serial file:xelix.log
+MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -netdev user,id=mnet1 -device virtio-net,netdev=mnet1 -m 250 -no-kvm -serial file:xelix.log -no-reboot -d cpu_reset
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)

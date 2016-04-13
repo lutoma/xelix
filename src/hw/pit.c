@@ -20,9 +20,9 @@
 #include "pit.h"
 
 #include <lib/log.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 
-uint64_t tick = 0;
+static uint64_t tick = 0;
 
 // The timer callback. Gets called every time the PIT fires.
 static void timerCallback(cpu_state_t* regs)

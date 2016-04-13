@@ -21,7 +21,11 @@
 #include <lib/generic.h>
 #include <net/net.h>
 
-#define IP4_TOS_ICMP 0
+#define IP4_TOS_ICMP 0x1
+#define IP4_TOS_UDP 0x11
+
+#define ip4_header_length(hdr) (hdr ->hl * 4)
+#define ip4_set_header_length(hdr, sz) (hdr ->hl = (sz / 4))
 
 typedef uint32_t ip4_addr_t;
 
@@ -33,11 +37,11 @@ typedef struct {
 	uint16_t id;
 	uint16_t off;
 	uint8_t ttl;
-	uint8_t p;
+	uint8_t proto;
 	uint16_t checksum;
 	ip4_addr_t src;
 	ip4_addr_t dst;
-} ip4_header_t;
+}  __attribute__((packed)) ip4_header_t;
 
 typedef struct {
 	uint8_t type;
@@ -45,6 +49,7 @@ typedef struct {
 	uint16_t checksum;
 	uint16_t id;
 	uint16_t sequence;
-} ip4_icmp_header_t;
+} __attribute__((packed)) ip4_icmp_header_t;
 
 void ip4_receive(net_device_t* origin, net_l2proto_t proto, size_t size, void* raw);
+void ip4_send(net_device_t* target, size_t size, ip4_header_t* packet);

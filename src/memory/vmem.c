@@ -1,6 +1,6 @@
 /* vm.c: Virtual memory management
  * Copyright © 2011 Fritz Grimpen
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,6 +23,7 @@
 #include <memory/kmalloc.h>
 #include <lib/print.h>
 #include <lib/panic.h>
+#include <tasks/scheduler.h>
 
 #define FIND_NODE(node, cond) { \
 	while (!(cond) && node != NULL) \
@@ -50,6 +51,13 @@ struct vmem_context
 	};
 
 	void *cache;
+
+	/* The task this context is used for. NULL = Kernel context. This is
+	 * intentionally not set through an argument to vmem_new, as task_new
+	 * requires a memory context, which would create a circular dependency.
+	 * Instead, this is manually set by the ELF loader.
+	 */
+	task_t* task;
 };
 
 /* Initialize kernel context */
@@ -91,8 +99,19 @@ struct vmem_context *vmem_new()
 	ctx->node = NULL;
 	ctx->pages = 0;
 	ctx->cache = NULL;
+	ctx->task = NULL;
 
 	return ctx;
+}
+
+/* The second argument to this is actually a task_t*, but we can't make it
+ * that trivially as we'd have to include tasks/scheduler.h in the header which
+ * creates a circular header dependency.
+ *
+ * FIXME The task_t struct should be moved to its own header file.
+ */
+void vmem_set_task(struct vmem_context* ctx, void* task) {
+	ctx->task = (task_t*)task;
 }
 
 struct vmem_page *vmem_new_page()
@@ -242,29 +261,41 @@ uint32_t vmem_count_pages(struct vmem_context *ctx)
 	return ctx->pages;
 }
 
-void vmem_handle_fault(uint32_t code, void *addr, void *instr)
-{
-	uint32_t addrInt = (uint32_t)addr;
-	struct vmem_page *pg = vmem_get_page_virt(vmem_currentContext, (void *)GET_PAGE(addrInt));
+char* vmem_get_name(struct vmem_context* ctx) {
+	if(ctx->task == NULL) {
+		return "Kernel context";
+	}
+	return ctx->task->name;
+}
 
+void vmem_handle_fault(cpu_state_t* regs)
+{
+	uint32_t phys_addr = (uint32_t)regs->eip;
 	task_t* running_task = scheduler_get_current();
+
 	if(running_task)
 	{
-		log(LOG_WARN, "Segmentation fault in task %s "
-			"at address 0x%x. Terminating it.\n",
-			running_task->name, addrInt);
+		struct vmem_page *pg = vmem_get_page_virt(running_task->memory_context, (void*)GET_PAGE(phys_addr));
+		uint32_t virt_addr = (uint32_t)pg->virt_addr + (phys_addr % PAGE_SIZE);
+
+		log(LOG_WARN, "Page fault in process <%s>+%y "
+			"at EIP 0x%x (phys 0x%x) of context %s. Terminating it.\n",
+			running_task->name, (virt_addr - (uint32_t)running_task->entry), virt_addr,
+			phys_addr, vmem_get_name(running_task->memory_context));
 
 		scheduler_terminate_current();
 		return;
 	}
 
-	if (pg->virt_addr == vmem_faultAddress)
+	struct vmem_page *kernel_pg = vmem_get_page_virt(vmem_kernelContext, (void *)GET_PAGE(phys_addr));
+
+	if (kernel_pg->virt_addr == vmem_faultAddress)
 	{
 		log(LOG_DEBUG, "Received debugging page fault\n");
 		return;
 	}
 
-	if (pg == NULL || pg->section == VMEM_SECTION_UNMAPPED)
+	if (kernel_pg == NULL || kernel_pg->section == VMEM_SECTION_UNMAPPED)
 		panic("Unexpected page fault\n");
 }
 

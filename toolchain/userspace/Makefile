@@ -9,7 +9,7 @@ GCC_VERSION=4.6.4
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-core-${GCC_VERSION}.tar.gz
 
-NEWLIB_VERSION=1.20.0
+NEWLIB_VERSION=2.4.0
 NEWLIB_URL=ftp://sources.redhat.com/pub/newlib
 NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
@@ -87,6 +87,8 @@ gcc-install:
 gcc-make:
 	@echo "Building gcc"
 	@mkdir -p build/gcc
+	-@find build/gcc -name config.cache -delete
+	-@make -C build/gcc distclean
 	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-shared --enable-languages=c --without-headers --with-newlib --without-docdir 
 	@make -C build/gcc all-gcc
 	@make -C build/gcc all-target-libgcc
@@ -126,6 +128,7 @@ newlib-make:
 
 newlib-patch:
 	@echo "Patching newlib"
+	-@rm -r build/newlib/
 	@patch -p0 < patch/newlib-${NEWLIB_VERSION}.patch
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf
 	@mkdir -p download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix

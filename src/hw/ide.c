@@ -24,7 +24,7 @@
 #include <lib/generic.h>
 #include <lib/log.h>
 #include <memory/kmalloc.h>
-#include <interrupts/interface.h>
+#include <hw/interrupts.h>
 #include "ide.h"
 
 ide_channel_regs_t ide_channels[2];
@@ -127,7 +127,7 @@ try_again:
 	if (ata_wait(bus, 1)) {
 		errors++;
 		if (errors > 4) {
-			log(LOG_WARN, "ide: Too many errors during read of lba block %d. Bailing.\n");
+			log(LOG_WARN, "ide: Too many errors during read of lba block %u. Bailing.\n", lba);
 			return false;
 		}
 		goto try_again;

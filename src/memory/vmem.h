@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2011 Fritz Grimpen
- * Copyright © 2013 Lukas Martini
+ * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,6 +20,7 @@
  */
 
 #include <lib/generic.h>
+#include <hw/cpu.h>
 
 struct vmem_context;
 
@@ -59,6 +60,7 @@ void (*vmem_applyPage)(struct vmem_context *, struct vmem_page *);
 
 /* Generate new page context */
 struct vmem_context *vmem_new();
+void vmem_set_task(struct vmem_context* ctx, void* task);
 struct vmem_page *vmem_new_page();
 
 int vmem_add_page(struct vmem_context *ctx, struct vmem_page *pg);
@@ -77,7 +79,8 @@ int vmem_iterate(struct vmem_context *ctx, vmem_iterator_t callback);
 uint32_t vmem_count_pages(struct vmem_context *ctx);
 void vmem_dump_page(struct vmem_page *pg);
 void vmem_dump(struct vmem_context *ctx);
-void vmem_handle_fault(uint32_t code, void *addr, void *instruction);
+char* vmem_get_name(struct vmem_context* ctx);
+void vmem_handle_fault(cpu_state_t* regs);
 
 /* Get/Set cached paging context */
 void vmem_set_cache(struct vmem_context *ctx, void *cache);

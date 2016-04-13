@@ -1,5 +1,5 @@
 /* read.c: Read Syscall
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,22 +22,18 @@
 #include <lib/log.h>
 #include <tasks/syscall.h>
 
-int sys_read(struct syscall syscall)
+SYSCALL_HANDLER(read)
 {
-	syscall.params[2] = (int)task_resolve_address(syscall.params[2]);
-	if(!syscall.params[2])
-		return -1;
+	SYSCALL_SAFE_RESOLVE_PARAM(1);
 
 	if (syscall.params[0] == 0)
-		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
+		SYSCALL_RETURN(console_read(NULL, (char*)syscall.params[1], syscall.params[2]));
 
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
 	if(fd == NULL)
-		return -1;
+		SYSCALL_FAIL();
 
-	log(LOG_INFO, "found file, is %s\n", fd->path);
-	
 	void* data = vfs_read(fd, syscall.params[2]);
 	memcpy((void*)syscall.params[1], data, syscall.params[2]);
-	return 0;
+	SYSCALL_RETURN(0);
 }
