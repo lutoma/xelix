@@ -1,4 +1,4 @@
-/* Copyright © 2015, 2016 Lukas Martini
+/* Copyright © 2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -16,37 +16,27 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _NETINET_IN_H
-#define _NETINET_IN_H
+#ifndef _SYS_LIMITS_H
+#define _SYS_LIMITS_H
 
-#include <stdint.h>
+#define CHAR_BIT 8
+#define SCHAR_MIN -127
+#define SCHAR_MAX 127
+#define UCHAR_MAX 255
+#define CHAR_MIN SCHAR_MIN
+#define CHAR_MAX SCHAR_MAX
+#define MB_LEN_MAX 1
+#define SHRT_MIN -32767
+#define SHRT_MAX 32767
+#define USHRT_MAX 65535
+#define INT_MIN -32767
+#define INT_MAX 32767
+#define UINT_MAX 65535
+#define LONG_MIN -2147483647
+#define LONG_MAX 2147483647
+#define ULONG_MAX 4294967295
+#define LLONG_MIN -9223372036854775807
+#define LLONG_MAX 9223372036854775807
+#define ULLONG_MAX 18446744073709551615
 
-#define IPPROTO_IP 0x0
-#define IPPROTO_ICMP 0x1
-#define IPPROTO_TCP 0x06
-#define IPPROTO_UDP 0x11
-
-#define INADDR_ANY 1
-#define INADDR_BROADCAST 2
-#define INADDR_NONE 3
-
-#define PF_INET AF_INET
-
-typedef uint16_t in_port_t;
-typedef uint32_t in_addr_t;
-
-struct in_addr {
-	in_addr_t s_addr;
-};
-
-struct sockaddr_in {
-	short sin_family;
-	in_port_t sin_port;
-	struct in_addr sin_addr;
-	char sin_zero[8];
-};
-
-// Include at the end as it needs some of our typedefs
-#include <arpa/inet.h>
-
-#endif /* _NETINET_IN_H */
+#endif SYS_LIMITS_H

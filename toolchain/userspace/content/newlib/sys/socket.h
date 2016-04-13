@@ -29,6 +29,22 @@
 #define SOCK_STREAM 2
 #define SOCK_SEQPACKET 3
 
+#define SOL_SOCKET 0
+
+#define SO_DEBUG 1
+#define SO_BROADCAST 2
+#define SO_KEEPALIVE 3
+#define SO_LINGER 4
+#define SO_OOBINLINE 5
+#define SO_SNDBUF 6
+#define SO_RCVBUF 7
+#define SO_DONTROUTE 8
+#define SO_RCVLOWAT 9
+#define SO_RCVTIMEO 10
+#define SO_SNDLOWAT 11
+#define SO_SNDTIMEO 12
+#define SO_REUSEADDR 13
+
 typedef uint32_t socklen_t;
 typedef uint32_t sa_family_t;
 

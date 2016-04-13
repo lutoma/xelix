@@ -38,6 +38,9 @@
 #define WNOHANG 12
 #define WNOWAIT 13
 
+// FIXME
+#define WEXITSTATUS(args...) (args)
+
 typedef uint32_t idtype_t;
 
 /* These should actually be defined in sys/types.h & sys/signal.h according to

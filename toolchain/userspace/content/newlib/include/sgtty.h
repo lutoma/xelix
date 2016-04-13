@@ -19,7 +19,7 @@
 #ifndef	_SGTTY_H
 #define	_SGTTY_H	1
 
-#include <features.h>
+//#include <features.h>
 
 #include <sys/ioctl.h>
 

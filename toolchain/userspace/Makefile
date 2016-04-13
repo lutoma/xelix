@@ -9,7 +9,7 @@ GCC_VERSION=4.6.4
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-core-${GCC_VERSION}.tar.gz
 
-NEWLIB_VERSION=2.4.0
+NEWLIB_VERSION=2.2.0.20150423
 NEWLIB_URL=ftp://sources.redhat.com/pub/newlib
 NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
