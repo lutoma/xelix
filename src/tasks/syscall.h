@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2015 Lukas Martini
+/* Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -27,12 +27,16 @@
 #define SYSCALL_RETURN(val) {syscall.state->eax = (val); return;}
 #define SYSCALL_FAIL() SYSCALL_RETURN(-1)
 
-#define SYSCALL_SAFE_RESOLVE_PARAM(par) {									\
-	syscall.params[par] = (int)task_resolve_address(syscall.params[par]);	\
-	if(!syscall.params[par]) {												\
-		SYSCALL_FAIL();														\
-	}																		\
+#define _SYSC_RESOLVE(par, reverse) {				\
+	par = (int)task_resolve_address(par, reverse);	\
+	if(!par) {										\
+		SYSCALL_FAIL();								\
+	}												\
 }
+
+#define SYSCALL_SAFE_RESOLVE_PARAM(par) _SYSC_RESOLVE(syscall.params[par], false)
+#define SYSCALL_SAFE_RESOLVE(par) _SYSC_RESOLVE(par, false)
+#define SYSCALL_SAFE_REVERSE_RESOLVE(par) _SYSC_RESOLVE(par, true)
 
 struct syscall
 {
@@ -42,6 +46,5 @@ struct syscall
 };
 
 typedef void (*syscall_t)(struct syscall);
-
-intptr_t task_resolve_address(intptr_t virt_address);
+intptr_t task_resolve_address(intptr_t raddress, bool reverse);
 void syscall_init();

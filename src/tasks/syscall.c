@@ -1,6 +1,6 @@
 /* syscall.c: Syscalls
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
- * Copyright © 2012-2014 Lukas Martini
+ * Copyright © 2012-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -31,20 +31,23 @@
 
 /* Resolves a virtual address from within the virtual address space of the
  * current task to the corresponding physical address we can use.
+ * If reverse is true, do the exact opposite (phys address -> task address).
  */
-intptr_t task_resolve_address(intptr_t virt_address)
+intptr_t task_resolve_address(intptr_t raddress, bool reverse)
 {
+	struct vmem_page* (*_get_pg)(struct vmem_context*, void*) = reverse ? vmem_get_page_phys : vmem_get_page_virt;
 	task_t* task = scheduler_get_current();
 
-	int diff = virt_address % PAGE_SIZE;
-	virt_address -= diff;
+	int diff = raddress % PAGE_SIZE;
+	raddress -= diff;
 
-	struct vmem_page* page = vmem_get_page_virt(task->memory_context, (void*)virt_address);
+	struct vmem_page* page = _get_pg(task->memory_context, (void*)raddress);
 
 	if(!page)
 		return (intptr_t)NULL;
 
-	return (intptr_t)page->phys_addr + diff;
+	intptr_t v = reverse ? (intptr_t)page->virt_addr : (intptr_t)page->phys_addr;
+	return v + diff;
 }
 
 static void int_handler(cpu_state_t* regs)
