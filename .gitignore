@@ -2,7 +2,12 @@
 *.log
 *~
 .*.swp
-floppy.img
+*.img
+*.raw
 ./Makefile
 xelix.bin
 tags
+toolchain/*/download
+toolchain/*/local
+toolchain/*/build
+*.sublime-*
