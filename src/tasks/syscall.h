@@ -27,11 +27,11 @@
 #define SYSCALL_RETURN(val) {syscall.state->eax = (val); return;}
 #define SYSCALL_FAIL() SYSCALL_RETURN(-1)
 
-#define _SYSC_RESOLVE(par, reverse) {				\
-	par = (int)task_resolve_address(par, reverse);	\
-	if(!par) {										\
-		SYSCALL_FAIL();								\
-	}												\
+#define _SYSC_RESOLVE(par, reverse) {									\
+	par = (typeof(par))task_resolve_address((intptr_t)par, reverse);	\
+	if(!par) {															\
+		SYSCALL_FAIL();													\
+	}																	\
 }
 
 #define SYSCALL_SAFE_RESOLVE_PARAM(par) _SYSC_RESOLVE(syscall.params[par], false)
