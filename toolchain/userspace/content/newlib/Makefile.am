@@ -5,14 +5,14 @@ AM_CCASFLAGS = $(INCLUDES)
 noinst_LIBRARIES = lib.a
 
 if MAY_SUPPLY_SYSCALLS
-extra_objs = $(lpfx)call.o syscalls.o
+extra_objs = $(lpfx)call.o syscalls.o inet_addr.o inet_ntoa.o
 else
 extra_objs =
 endif
 
 lib_a_SOURCES =
 lib_a_LIBADD = $(extra_objs)
-EXTRA_lib_a_SOURCES = crt0.s call.s syscalls.c
+EXTRA_lib_a_SOURCES = crt0.s call.s syscalls.c inet_addr.c inet_ntoa.c
 lib_a_DEPENDENCIES = $(extra_objs)
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)
 lib_a_CFLAGS = $(AM_CFLAGS)

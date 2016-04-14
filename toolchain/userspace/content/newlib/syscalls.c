@@ -24,6 +24,9 @@
 #include <sys/time.h>
 #include <sys/dirent.h>
 #include <sys/socket.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <termios.h>
 #include <signal.h>
@@ -178,20 +181,29 @@ int unlink(char *name)
 	return -1;
 }
 
-int wait(int *status)
+int wait(int* status)
 {
 	return call_wait(status);
 }
 
-int wait3(int *status)
+int wait3(int* status)
 {
 	errno = ENOSYS;
 	return -1;
 }
 
+pid_t waitpid(pid_t pid, int* stat_loc, int options) {
+	return call_wait(stat_loc); // FIXME
+}
+
 int write(int file, char *buf, int len)
 {
 	return call_write(file, (void *)buf, (unsigned int)len);
+}
+
+ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
+	errno = ENOSYS;
+	return -1;
 }
 
 int closedir(DIR* dd)
@@ -321,6 +333,11 @@ int getgroups(int gidsetsize, gid_t grouplist[])
 	return -1;
 }
 
+int setgroups(size_t size, const gid_t *list) {
+	errno = ENOSYS;
+	return -1;
+}
+
 pid_t getpgrp(void)
 {
 	// Simply return 1 as per POSIX getpgrp has no return code to indicate an
@@ -433,23 +450,117 @@ ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
 	return call_socket_recv(socket, buffer, length);
 }
 
+ssize_t recv(int socket, void *buffer, size_t length, int flags) {
+	return call_socket_recv(socket, buffer, length);
+}
+
 ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len)
 {
 	return call_socket_send(socket, message, length);
 }
 
+ssize_t send(int socket, const void *buffer, size_t length, int flags) {
+	return call_socket_send(socket, buffer, length);
+}
+
 pid_t execnew(const char* path, char* __argv[], char* __env[]) {
 	return call_execnew(path, __argv, __env);
 }
 
-extern int gtty (int __fd, struct sgttyb *__params) {
+int gtty (int __fd, struct sgttyb *__params) {
 	errno = ENOSYS;
 	return 0;
 }
 
 /* Set the terminal parameters associated with FD to *PARAMS.  */
-extern int stty (int __fd, __const struct sgttyb *__params) {
+int stty (int __fd, __const struct sgttyb *__params) {
 	errno = ENOSYS;
+	return 0;
+}
+
+int chroot(const char *path) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int setgid(gid_t gid) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int setuid(gid_t gid) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int getrusage(int who, struct rusage *r_usage) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int pselect(int nfds, fd_set *__restrict__ readfds,
+		fd_set *__restrict__ writefds, fd_set *__restrict__ errorfds,
+		const struct timespec *__restrict__ timeout,
+		const sigset_t *__restrict__ sigmask) {
+	errno = ENOSYS;
+	-1;
+}
+
+int select(int nfds, fd_set *__restrict__ readfds,
+		fd_set *__restrict__ writefds, fd_set *__restrict__ errorfds,
+		struct timeval *__restrict__ timeout) {
+	errno = ENOSYS;
+	-1;
+}
+
+struct passwd *getpwnam(const char *name) {
+	errno = ENOSYS;
+	return NULL;
+}
+
+
+struct passwd *getpwuid(uid_t uid) {
+	errno = ENOSYS;
+	return NULL;
+}
+
+struct group *getgrnam(const char *name) {
+	errno = ENOSYS;
+	return NULL;
+}
+
+struct group *getgrgid(gid_t gid) {
+	errno = ENOSYS;
+	return NULL;
+}
+pid_t setsid(void) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int ftruncate(int fildes, off_t length) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int accept(int socket, struct sockaddr* __restrict__ address, socklen_t* __restrict__ address_len) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int getsockname(int socket, struct sockaddr* __restrict__ address,
+       socklen_t* __restrict__ address_len) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int setsockopt(int socket, int level, int option_name,
+       const void *option_value, socklen_t option_len) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int listen(int socket, int backlog) {
 	return 0;
 }

@@ -29,10 +29,10 @@
 	#define htons(x) (x)
 	#define ntohs(x) (x)
 #elif BYTE_ORDER == LITTLE_ENDIAN
-	#define htonl(x) __bswap_32(x)
-	#define ntohl(x) __bswap_32(x)
-	#define htons(x) __bswap_16(x)
-	#define ntohs(x) __bswap_16(x)
+	#define htonl(x) bswap_32(x)
+	#define ntohl(x) bswap_32(x)
+	#define htons(x) bswap_16(x)
+	#define ntohs(x) bswap_16(x)
 #endif
 
 in_addr_t  inet_addr(const char *cp);
