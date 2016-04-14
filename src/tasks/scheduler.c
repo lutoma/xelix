@@ -73,7 +73,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	char** environ, char** argv, int argc, struct vmem_context* memory_context, bool map_structs)
 {
 	task_t* thisTask = (task_t*)kmalloc_a(sizeof(task_t));
-	
+
 	thisTask->stack = kmalloc_a(STACKSIZE);
 	memset(thisTask->stack, 0, STACKSIZE);
 
@@ -88,22 +88,8 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 		page->virt_addr = thisTask->stack;
 		page->phys_addr = thisTask->stack;
 		vmem_add_page(memory_context, page);
-
-		/* Also 1:1 map the own task_t* struct. This is kind of a braindead idea
-		 * security-wise, but it works as a quick hack to let tasks get their argv,
-		 * argc & environ … Should be fixed in the getexecdata syscall. FIXME
-		 */
-		vmem_rm_page_virt(memory_context, thisTask);
-
-		page = vmem_new_page();
-		page->section = VMEM_SECTION_KERNEL;
-		page->cow = 0;
-		page->allocated = 1;
-		page->virt_addr = thisTask;
-		page->phys_addr = thisTask;
-		vmem_add_page(memory_context, page);
 	}
-	
+
 	thisTask->state = kmalloc_a(sizeof(cpu_state_t));
 	thisTask->memory_context = memory_context;
 
@@ -113,7 +99,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 
 	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
 	*(thisTask->state->ebp + 2) = (intptr_t)NULL; // base pointer
-	
+
 	// Instruction pointer (= start of the program)
 	thisTask->entry = entry;
 	thisTask->state->eip = entry;

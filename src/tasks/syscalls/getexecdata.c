@@ -1,5 +1,5 @@
 /* sys_getexecdata.c: Get argv, argc, environ
- * Copyright © 2011-2015 Lukas Martini
+ * Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,12 +24,17 @@
 SYSCALL_HANDLER(getexecdata)
 {
 	task_t* proc = scheduler_get_current();
+	char** argv = proc->argv;
+	char** environ = proc->environ;
+
+	SYSCALL_SAFE_REVERSE_RESOLVE(argv);
+	SYSCALL_SAFE_REVERSE_RESOLVE(environ);
 
 	switch(syscall.params[0])
 	{
 		case 0: SYSCALL_RETURN(proc->argc);;
-		case 1: SYSCALL_RETURN((int)proc->argv);;
-		case 2: SYSCALL_RETURN((int)proc->environ);;
+		case 1: SYSCALL_RETURN((int)argv);;
+		case 2: SYSCALL_RETURN((int)environ);;
 	}
 
 	SYSCALL_RETURN(0);
