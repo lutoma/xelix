@@ -87,7 +87,16 @@ char* utoa(unsigned int value, int base)
 	// FIXME The result buffer should be an argument passed in and not allocated
 	char* result = (char*)kmalloc(8 * sizeof(value) + 2);
 
-	if (base < 2 || base > 36) { *result = '\0'; return result; }
+	if(base < 2 || base > 36) {
+		*result = '\0';
+		return result;
+	}
+
+	if(value == 0) {
+		result[0] = '0';
+		result[1] = '\0';
+		return result;
+	}
 
 	char* ptr = result;
 
