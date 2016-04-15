@@ -1,6 +1,6 @@
 /* vm.c: Virtual memory management
  * Copyright © 2011 Fritz Grimpen
- * Copyright © 2013-2015 Lukas Martini
+ * Copyright © 2013-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -273,15 +273,22 @@ void vmem_handle_fault(cpu_state_t* regs)
 	uint32_t phys_addr = (uint32_t)regs->eip;
 	task_t* running_task = scheduler_get_current();
 
+	// The address for which the page fault occured is in the cr2 register
+	uint32_t error_address = NULL;
+	asm volatile("mov %0, cr2;\n" : "=r" (error_address) ::);
+
 	if(running_task)
 	{
 		struct vmem_page *pg = vmem_get_page_virt(running_task->memory_context, (void*)GET_PAGE(phys_addr));
 		uint32_t virt_addr = (uint32_t)pg->virt_addr + (phys_addr % PAGE_SIZE);
 
-		log(LOG_WARN, "Page fault in process <%s>+%y "
-			"at EIP 0x%x (phys 0x%x) of context %s. Terminating it.\n",
-			running_task->name, (virt_addr - (uint32_t)running_task->entry), virt_addr,
-			phys_addr, vmem_get_name(running_task->memory_context));
+		char* op = bit_get(regs->errCode, 1) ? "write" : "read";
+		char* mode = bit_get(regs->errCode, 1) ? "user" : "kernel";
+
+		log(LOG_WARN, "Page fault for %s to 0x%y in process <%s>+%y "
+			"at EIP 0x%x (phys 0x%x) of context %s, %s mode. Terminating it.\n",
+			op, error_address, running_task->name, (virt_addr - (uint32_t)running_task->entry),
+			virt_addr, phys_addr, vmem_get_name(running_task->memory_context), mode);
 
 		scheduler_terminate_current();
 		return;
@@ -296,7 +303,7 @@ void vmem_handle_fault(cpu_state_t* regs)
 	}
 
 	if (kernel_pg == NULL || kernel_pg->section == VMEM_SECTION_UNMAPPED)
-		panic("Unexpected page fault\n");
+		panic("Unexpected page fault in kernel-mode\n");
 }
 
 void vmem_set_cache(struct vmem_context *ctx, void *cache)
