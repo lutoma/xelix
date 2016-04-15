@@ -1,6 +1,6 @@
 /* panic.c: Handle kernel panics
  * Copyright © 2011 Benjamin Richter
- * Copyright © 2011-2015 Lukas Martini
+ * Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -49,16 +49,6 @@ static void bruteforce_print(char* chars) {
 		*video_memory++ = *chars;
 		*video_memory++ = 0x1F;
 	}
-}
-
-static void stacktrace(cpu_state_t* regs) {
-	printf("\nCDECL stack trace:\n");
-
-	uint8_t* bp = regs->ebp;
-	do {
-		printf("* 0x%x\n", *(bp + 2));
-		bp = (uint8_t*)*((uint32_t *)bp + 1);
-	} while (bp);
 }
 
 static void dump_registers(cpu_state_t* regs) {
@@ -112,7 +102,6 @@ static void panic_handler(cpu_state_t* regs)
 	printf("Active paging context: %s\n\n", vmem_get_name(vmem_currentContext));
 
 	dump_registers(regs);
-	stacktrace(regs);
 	freeze();
 }
 
