@@ -1,5 +1,5 @@
 /* fault.c: Catch and process CPU fault interrupts
- * Copyright © 2010-2015 Lukas Martini
+ * Copyright © 2010-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,6 +24,7 @@
 #include <hw/interrupts.h>
 #include <memory/vmem.h>
 #include <memory/paging.h>
+#include <tasks/scheduler.h>
 
 static char* exception_names[] =
 {
@@ -49,11 +50,22 @@ static char* exception_names[] =
 
 static void handler(cpu_state_t* regs)
 {
-	if(regs->interrupt > 18) {
-		panic("Unkown CPU error\n");
-	} else {
-		panic(exception_names[regs->interrupt]);
+	task_t* proc = scheduler_get_current();
+	char* error_name = "Unknown CPU error";
+
+	if(regs->interrupt < 19) {
+		error_name = exception_names[regs->interrupt];
 	}
+
+	if(proc) {
+		log(LOG_WARN, "%s in task %d <%s>, terminating it.\n",
+			error_name, proc->pid, proc->name);
+
+		scheduler_terminate_current();
+		return;
+	}
+
+	panic(error_name);
 }
 
 void cpu_init_fault_handlers()
