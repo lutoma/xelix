@@ -63,8 +63,10 @@ struct vmem_context
 /* Initialize kernel context */
 void vmem_init()
 {
+	interrupts_registerHandler(14, &vmem_handle_fault);
+
 	struct vmem_context *ctx = vmem_new();
-	
+
 	vmem_faultAddress = kmalloc_a(PAGE_SIZE);
 
 	struct vmem_page *debugPage = vmem_new_page();
@@ -72,7 +74,7 @@ void vmem_init()
 	debugPage->virt_addr = vmem_faultAddress;
 
 	vmem_add_page(ctx, debugPage);
-	
+
 	for (char *i = (char*)0; i <= (char*)0xffffe000U; i += 4096)
 	{
 		if (i == vmem_faultAddress)

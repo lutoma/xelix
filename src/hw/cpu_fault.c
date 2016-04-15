@@ -47,17 +47,10 @@ static char* exception_names[] =
 	"Machine check exception"
 };
 
-static void handle_page_fault(cpu_state_t *regs)
-{
-	vmem_handle_fault(regs);
-}
-
 static void handler(cpu_state_t* regs)
 {
 	if(regs->interrupt > 18) {
 		panic("Unkown CPU error\n");
-	} else if(regs->interrupt == 14) {
-		handle_page_fault(regs);
 	} else {
 		panic(exception_names[regs->interrupt]);
 	}
@@ -65,5 +58,7 @@ static void handler(cpu_state_t* regs)
 
 void cpu_init_fault_handlers()
 {
-	interrupts_bulkRegisterHandler(0, 0x1F, &handler);
+	// Interrupt 14 (page fault) is handled by memory/vmem.c
+	interrupts_bulkRegisterHandler(0, 13, &handler);
+	interrupts_bulkRegisterHandler(15, 0x1F, &handler);
 }
