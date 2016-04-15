@@ -81,13 +81,17 @@ pci_device_t pci_devices[65536];
 #define PCI_EXPAND_PTR(device) device->bus, device->dev, device->func
 
 uint32_t _pci_config_read(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
+uint16_t _pci_config_read16(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
 void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
+void _pci_config_write16(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint16_t val);
 
 #define _pci_get_vendor_id(args...) (uint16_t)_pci_config_read(args, 0)
 #define _pci_get_header_type(args...) ((uint16_t)_pci_config_read(args, 0xe) & 127)
 
 #define pci_config_read(device, offset) _pci_config_read(PCI_EXPAND_PTR(device), offset)
+#define pci_config_read16(device, offset) _pci_config_read16(PCI_EXPAND_PTR(device), offset)
 #define pci_config_write(device, offset, val) _pci_config_write(PCI_EXPAND_PTR(device), offset, val)
+#define pci_config_write16(device, offset, val) _pci_config_write16(PCI_EXPAND_PTR(device), offset, val)
 #define pci_get_device_id(device) (uint16_t)pci_config_read(device, 2)
 #define pci_get_vendor_id(device) (uint16_t)pci_config_read(device, 0)
 #define pci_get_interrupt_pin(device) (uint16_t)pci_config_read(device, 0x3d)

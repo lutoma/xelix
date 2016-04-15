@@ -53,10 +53,22 @@ uint32_t _pci_config_read(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset
 	return (inl(PCI_CONFIG_DATA) >> ((offset % 4) * 8)) & 0xffff;
 }
 
+uint16_t _pci_config_read16(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
+{
+	outw(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
+	return inw(PCI_CONFIG_DATA);
+}
+
 void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
 {
 	outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
 	outl(PCI_CONFIG_DATA, val);
+}
+
+void _pci_config_write16(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint16_t val)
+{
+	outw(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
+	outw(PCI_CONFIG_DATA, val);
 }
 
 // *trollface*
