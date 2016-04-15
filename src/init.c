@@ -45,6 +45,7 @@
 #include <fs/xsfs.h>
 #include <net/udp.h>
 #include <net/echo.h>
+#include <hw/ac97.h>
 
 // Prints out compiler information, especially for GNU GCC
 static void compiler_info()
@@ -124,6 +125,8 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	#ifndef XELIX_WITHOUT_SLIP
 		init(slip);
 	#endif
+
+	init(ac97);
 
 	char* __env[] = { NULL };
 	char* __argv[] = { "init", NULL };
