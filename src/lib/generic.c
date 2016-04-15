@@ -182,3 +182,11 @@ void sleep(time_t timeout)
 		if(pit_getTickNum() > startTick + timeout) break;
 	}
 }
+
+// Sleep x ticks
+void sleep_ticks(time_t timeout)
+{
+       int startTick = pit_getTickNum();
+       while(1)
+               if(pit_getTickNum() > startTick + timeout) break;
+}
