@@ -282,13 +282,17 @@ void vmem_handle_fault(cpu_state_t* regs)
 		struct vmem_page *pg = vmem_get_page_virt(running_task->memory_context, (void*)GET_PAGE(phys_addr));
 		uint32_t virt_addr = (uint32_t)pg->virt_addr + (phys_addr % PAGE_SIZE);
 
+		char* pgpres = bit_get(regs->errCode, 0) ? " (page present)" : "";
 		char* op = bit_get(regs->errCode, 1) ? "write" : "read";
-		char* mode = bit_get(regs->errCode, 1) ? "user" : "kernel";
+		char* mode = bit_get(regs->errCode, 2) ? "user" : "kernel";
+		char* bitoverwrite = bit_get(regs->errCode, 3) ? " (due to reserved bits being overwritten)" : "";
+		char* instrfetch = bit_get(regs->errCode, 4) ? " (during instruction fetch)" : "";
 
 		log(LOG_WARN, "Page fault for %s to 0x%y in process <%s>+%y "
-			"at EIP 0x%x (phys 0x%x) of context %s, %s mode. Terminating it.\n",
+			"at EIP 0x%x (phys 0x%x) of context %s, %s mode%s%s%s. Terminating the task.\n",
 			op, error_address, running_task->name, (virt_addr - (uint32_t)running_task->entry),
-			virt_addr, phys_addr, vmem_get_name(running_task->memory_context), mode);
+			virt_addr, phys_addr, vmem_get_name(running_task->memory_context), mode, pgpres,
+			instrfetch, bitoverwrite);
 
 		scheduler_terminate_current();
 		return;
