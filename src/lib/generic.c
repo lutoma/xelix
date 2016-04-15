@@ -177,16 +177,20 @@ void sleep(time_t timeout)
 	timeout *= PIT_RATE;
 	timeout++; // Make sure we always wait at least 'timeout'. One tick too long doesn't matter.
 	int startTick = pit_getTickNum();
-	while(1)
-	{
-		if(pit_getTickNum() > startTick + timeout) break;
+	while(true) {
+		if(pit_getTickNum() > startTick + timeout) {
+			break;
+		}
 	}
 }
 
 // Sleep x ticks
 void sleep_ticks(time_t timeout)
 {
-       int startTick = pit_getTickNum();
-       while(1)
-               if(pit_getTickNum() > startTick + timeout) break;
+	int startTick = pit_getTickNum();
+	while(true) {
+		if(pit_getTickNum() > startTick + timeout) {
+			break;
+		}
+	}
 }
