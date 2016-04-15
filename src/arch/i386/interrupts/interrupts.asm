@@ -25,8 +25,11 @@
 %macro INTERRUPT 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
+		; Dummy value for error code
 		push 0
 		push %1
+		; Dummy value for cr2
+		push 0
 		jmp common_handler
 %endmacro
 
@@ -34,6 +37,8 @@
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
 		push %1
+		; Dummy value for cr2
+		push 0
 		jmp common_handler
 %endmacro
 
@@ -52,7 +57,6 @@ INTERRUPT_ERRCODE 10
 INTERRUPT_ERRCODE 11
 INTERRUPT_ERRCODE 12
 INTERRUPT_ERRCODE 13
-INTERRUPT_ERRCODE 14
 
 ; Assign the rest using a preprocessor loop
 %assign i 15
@@ -60,6 +64,17 @@ INTERRUPT_ERRCODE 14
 	INTERRUPT i
 	%assign i i+1
 %endrep
+
+; Special handler for page faults that pushes cr2
+[GLOBAL interrupts_handler14]
+interrupts_handler14:
+	push 14
+
+	; The cr2 register contains the accessed address in case of page faults.
+	mov eax, cr2
+	push eax
+	jmp common_handler
+
 
 ; In interrupts.c
 [EXTERN interrupts_callback]
@@ -73,17 +88,15 @@ common_handler:
 	; interrupts_callback takes in reversed order
 	; (It's defined in hw/cpu.h). The cpu automatically pushes cs, eip,
 	; eflags, ss and esp. Our macros above push one byte containing the
-	; error code (if any) and another one containing the interrupt's
-	; number. The rest is up to us. We intentionally don't use pusha
-	; (no need for esp).
+	; error code (if any, otherwise 0) and another one containing the
+	; interrupt's number. The rest is up to us.
 
 	pusha
 
 	; push ds
-	xor eax, eax ; Move 0 to eax by xor-ing it with itself
+	xor eax, eax
 	mov ax, ds
 	push eax
-
 
 	; load the kernel data segment descriptor
 	mov ax, 0x10
@@ -93,9 +106,9 @@ common_handler:
 	mov gs, ax
 
 	; Calculate offset to the position of the interrupt number on the
-	; stack and mov it to eax. (8 = Eight 32 bit registers pushed since
+	; stack and mov it to eax. (10 = Ten 32 bit registers pushed since
 	; the beginning of this function).
-	mov ebx, [esp + (4 * 9)]
+	mov ebx, [esp + (4 * 10)]
 
 	; Is this a spurious interrupt on the master PIC? If yes, return
 	cmp ebx, IRQ7
@@ -132,7 +145,7 @@ no_eoi:
  	; Call C level interrupt handler
  	call interrupts_callback
 
-	; Take esp from stack. This is uncommented as we directly apply a new stack
+	; Take esp from stack. This is commented out as we immediately apply a new stack
 	;add esp, 4
 
 	; Apply new stack
@@ -149,8 +162,8 @@ return:
 	; Reload the original values of the GP registers
 	popa
 
-	; Cleans up the pushed error code and pushed ISR number
-	add esp, 8
+	; Cleans up the pushed error code, ISR number and cr2
+	add esp, 12
 
 	; Now, quit interrupthandler. This automatically pops cs, eip,
 	; eflags, css and esp.

@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010-2015 Lukas Martini
+/* Copyright © 2010-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -32,6 +32,9 @@ typedef struct {
 	uint32_t edx;
 	uint32_t ecx;
 	uint32_t eax;
+
+	// Page fault address. Will always be 0 except while in a page fault interrupt
+	uint32_t cr2;
 
 	// Interrupt number and error code (if applicable)
 	uint32_t interrupt;

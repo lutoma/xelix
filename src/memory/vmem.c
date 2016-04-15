@@ -273,10 +273,6 @@ void vmem_handle_fault(cpu_state_t* regs)
 	uint32_t phys_addr = (uint32_t)regs->eip;
 	task_t* running_task = scheduler_get_current();
 
-	// The address for which the page fault occured is in the cr2 register
-	uint32_t error_address = NULL;
-	asm volatile("mov %0, cr2;\n" : "=r" (error_address) ::);
-
 	if(running_task)
 	{
 		struct vmem_page *pg = vmem_get_page_virt(running_task->memory_context, (void*)GET_PAGE(phys_addr));
@@ -290,7 +286,7 @@ void vmem_handle_fault(cpu_state_t* regs)
 
 		log(LOG_WARN, "Page fault for %s to 0x%y in process <%s>+%y "
 			"at EIP 0x%x (phys 0x%x) of context %s, %s mode%s%s%s. Terminating the task.\n",
-			op, error_address, running_task->name, (virt_addr - (uint32_t)running_task->entry),
+			op, regs->cr2, running_task->name, (virt_addr - (uint32_t)running_task->entry),
 			virt_addr, phys_addr, vmem_get_name(running_task->memory_context), mode, pgpres,
 			instrfetch, bitoverwrite);
 

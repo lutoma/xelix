@@ -49,8 +49,6 @@ static char* exception_names[] =
 
 static void handle_page_fault(cpu_state_t *regs)
 {
-	int cr2;
-	asm volatile("mov %0, cr2":"=r"(cr2));
 	vmem_handle_fault(regs);
 }
 
