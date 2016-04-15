@@ -24,12 +24,6 @@
 
 #include <console/interface.h>
 
-// Print function
-int print(const char* s)
-{
-	return console_write(NULL, s, strlen(s));
-}
-
 // Print a single char
 void printChar(const char c)
 {

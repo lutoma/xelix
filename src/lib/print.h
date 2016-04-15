@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,9 +20,11 @@
 
 #include "generic.h"
 #include <stdarg.h>
+#include <lib/string.h>
+#include <console/interface.h>
 
-int print(const char* s);
+#define print(s) console_write(NULL, s, strlen(s))
+
 void printChar(const char c);
-
 void vprintf(const char *fmt, void** arg);
 void printf(const char *fmt, ...);
