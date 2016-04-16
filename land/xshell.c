@@ -1,3 +1,8 @@
+#ifdef __linux__
+  // Needed for execvpe header
+  #define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -6,15 +11,29 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-// Xelix special interface™
-#include <sys/execnew.h>
+#ifdef __xelix__
+  // Xelix special interface™
+  #include <sys/execnew.h>
+#endif
+
+static inline bool run_command(char* cmd, char* _argv[], char* _env[]) {
+	#ifdef __xelix__
+		return execnew(cmd, _argv, _env);
+	#else
+		pid_t pid = fork();
+
+		if(pid) {
+			return true;
+		}
+
+		execvpe(cmd, _argv, _env);
+		perror("Error");
+		exit(EXIT_FAILURE);
+		return false;
+	#endif
+}
 
 int main(int argc, char* argv[]) {
-	if(argc > 1 && !strcmp(argv[1], "--hello")) {
-		printf("Hello world.\n");
-		return 0;
-	}
-
 	char* cwd = malloc(PATH_MAX);
 	char* cmd = malloc(500);
 
@@ -59,12 +78,13 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 
-		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
-		char* __argv[] = { cmd, NULL };
+		char* _env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
+		char* _argv[] = { cmd, NULL };
+		//char** _argv = parse_arguments(cmd);
 
-		pid_t pid = execnew(cmd, __argv, __env);
+		bool r = run_command(cmd, _argv, _env);
 
-		if(pid > 0) {
+		if(r > 0) {
 			// Wait for child to exit
 			pid_t pr = wait(NULL);
 		} else {
