@@ -297,7 +297,7 @@ uint32_t inode_from_path(char* path)
 		return ROOT_INODE;
 
 	// Split path and iterate trough the single parts, going from / upwards.
-	static char* pch;
+	char* pch;
 	char* sp;
 
 	// Throwaway pointer for strtok_r
