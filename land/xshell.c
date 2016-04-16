@@ -16,6 +16,25 @@
   #include <sys/execnew.h>
 #endif
 
+static char** parse_arguments(char* args) {
+	char* sp;
+	int argc = 0;
+	char* args_cpy = strdup(args);
+
+	for(char* pch = strtok_r(args_cpy, " ", &sp); pch != NULL; pch = strtok_r(NULL, " ", &sp), argc++);
+	free(args_cpy);
+
+	char** _argv = malloc(sizeof(char*) * argc);
+	sp = NULL;
+
+	char* pch = strtok_r(args, " ", &sp);
+	for(int i = 0; pch != NULL; pch = strtok_r(NULL, " ", &sp), i++) {
+		_argv[i] = pch;
+	}
+
+	return _argv;
+}
+
 static inline bool run_command(char* cmd, char* _argv[], char* _env[]) {
 	#ifdef __xelix__
 		return execnew(cmd, _argv, _env);
@@ -78,11 +97,11 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 
-		char* _env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
-		char* _argv[] = { cmd, NULL };
-		//char** _argv = parse_arguments(cmd);
+		char* _env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=xterm-256color", "PWD=/", "USER=root", "HOST=default", NULL };
+		char** _argv = parse_arguments(cmd);
 
 		bool r = run_command(cmd, _argv, _env);
+		free(_argv);
 
 		if(r > 0) {
 			// Wait for child to exit
