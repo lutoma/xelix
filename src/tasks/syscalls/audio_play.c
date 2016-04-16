@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2015, 2016 Lukas Martini
+/* audio_play.c: Hacky temporary syscall to play audio
+ * Copyright © 2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,22 +17,13 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <hw/pci.h>
+#include <tasks/syscall.h>
+#include <hw/ac97.h>
+#include <lib/log.h>
 
-#define AC97_MAX_CARDS 10
-
-struct ac97_card {
-	pci_device_t *device;
-	int nambar;
-	int nabmbar;
-	struct buf_desc* descs;
-	uint16_t sample_rate;
-	uint32_t last_buffer;
-	uint32_t last_written_buffer;
-};
-
-struct ac97_card ac97_cards[AC97_MAX_CARDS];
-
-void ac97_play(struct ac97_card* card, char* file);
-void ac97_init();
+SYSCALL_HANDLER(audio_play)
+{
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
+	ac97_play(&ac97_cards[0], (char*)syscall.params[0]);
+	SYSCALL_RETURN(0);
+}

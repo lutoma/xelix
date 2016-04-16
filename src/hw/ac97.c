@@ -26,11 +26,10 @@
 #include <memory/kmalloc.h>
 #include <lib/string.h>
 #include <lib/multiboot.h>
-
-#define MAX_CARDS 10
+#include <fs/vfs.h>
 
 // Number of buffers to cache. More buffers = more latency. Maximum is 31.
-#define NUM_BUFFERS 23
+#define NUM_BUFFERS 32
 
 // Maximum hardware supported length is 0xFFFE (*2 for stereo)
 #define BUFFER_LENGTH 0xFFFE
@@ -91,7 +90,7 @@ struct buf_desc
 } __attribute__((packed));
 
 static int cards = 0;
-static struct ac97_card ac97_cards[MAX_CARDS];
+static void* data;
 
 // Debugging function
 static void dump_regs(struct ac97_card* card) {
@@ -119,7 +118,7 @@ static void dump_regs(struct ac97_card* card) {
 }
 
 static void fill_buffer(struct ac97_card* card, uint32_t offset, uint32_t bufno) {
-	card->descs[bufno].buf = (void*)((intptr_t)multiboot_info->modsAddr[0].start + (BUFFER_LENGTH * 2 * offset)); // FIXME This should do mapping to the phys addr, but kernel space is 1:1 mapped atm anyway.
+	card->descs[bufno].buf = (void*)((intptr_t)data + (BUFFER_LENGTH * 2 * offset)); // FIXME This should do mapping to the phys addr, but kernel space is 1:1 mapped atm anyway.
 	card->descs[bufno].len = BUFFER_LENGTH;
 	card->descs[bufno].ioc = 1;
 	card->descs[bufno].bup = 0;
@@ -144,23 +143,24 @@ static void interrupt_handler(cpu_state_t *state) {
 
 	if(sr & AC97_X_SR_LVBCI) {
 		// Last valid buffer completion. Shouldn't actually happen
-		log(LOG_ERR, "ac97: Got LVBCI interrupt.\n");
+		log(LOG_ERR, "ac97: Warning: Got LVBCI interrupt.\n");
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_LVBCI);
 	} else if(sr & AC97_X_SR_BCIS) {
 		uint32_t current_buffer = (card->last_buffer + 1) % NUM_BUFFERS;
 		uint16_t samples = portio_in16(card->nabmbar + PORT_NABM_POPICB);
 
-		log(LOG_DEBUG, "ac97: Playing buffer %d, refilling buffer %d, %d samples left\n", current_buffer, card->last_buffer, samples);
+		//log(LOG_DEBUG, "ac97: Playing buffer %d, refilling buffer %d, %d samples left\n", current_buffer, card->last_buffer, samples);
 
 		if(current_buffer == 0 || samples < 1) {
 			portio_out8(card->nabmbar + PORT_NABM_POLVI, NUM_BUFFERS);
 		}
 
+		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_BCIS);
+
 		// Refill the previous buffer
 		fill_buffer(card, ++card->last_written_buffer, card->last_buffer);
 
 		card->last_buffer = current_buffer;
-		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_BCIS);
 	} else if(sr & AC97_X_SR_FIFOE) {
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_FIFOE);
 	}
@@ -243,7 +243,14 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs); // FIXME This should do mapping to the phys addr, but kernel space is 1:1 mapped atm anyway.
 }
 
-void ac97_play(struct ac97_card* card) {
+void ac97_play(struct ac97_card* card, char* file) {
+	vfs_file_t* fd = vfs_open(file);
+
+	data = vfs_read(fd, 9999999);
+	if(data == NULL)
+		return NULL;
+
+	log(LOG_DEBUG, "ac97: playing.\n");
 	for(int i = 0; i < NUM_BUFFERS; i++) {
 		fill_buffer(card, i, i);
 	}
@@ -257,10 +264,10 @@ void ac97_play(struct ac97_card* card) {
 
 void ac97_init()
 {
-	memset(ac97_cards, 0, MAX_CARDS * sizeof(struct ac97_card));
+	memset(ac97_cards, 0, AC97_MAX_CARDS * sizeof(struct ac97_card));
 
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(pci_device_t*) * MAX_CARDS);
-	uint32_t volatile num_devices = pci_search_by_id(devices, vendor_device_combos, MAX_CARDS);
+	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(pci_device_t*) * AC97_MAX_CARDS);
+	uint32_t volatile num_devices = pci_search_by_id(devices, vendor_device_combos, AC97_MAX_CARDS);
 
 	log(LOG_INFO, "ac97: Discovered %d device%p.\n", num_devices);
 
