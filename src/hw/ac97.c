@@ -143,7 +143,6 @@ static void interrupt_handler(cpu_state_t *state) {
 
 	if(sr & AC97_X_SR_LVBCI) {
 		// Last valid buffer completion. Shouldn't actually happen
-		log(LOG_ERR, "ac97: Warning: Got LVBCI interrupt.\n");
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_LVBCI);
 	} else if(sr & AC97_X_SR_BCIS) {
 		uint32_t current_buffer = (card->last_buffer + 1) % NUM_BUFFERS;
@@ -250,7 +249,6 @@ void ac97_play(struct ac97_card* card, char* file) {
 	if(data == NULL)
 		return NULL;
 
-	log(LOG_DEBUG, "ac97: playing.\n");
 	for(int i = 0; i < NUM_BUFFERS; i++) {
 		fill_buffer(card, i, i);
 	}
