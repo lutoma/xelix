@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define IDALLOC_DEBUG
+//#define IDALLOC_DEBUG
 
 #include "idalloc.h"
 #include <memory/kmalloc.h>
