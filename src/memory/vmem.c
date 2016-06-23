@@ -21,6 +21,7 @@
 #include "vmem.h"
 #include <lib/log.h>
 #include <memory/kmalloc.h>
+#include <memory/idalloc.h>
 #include <lib/print.h>
 #include <lib/panic.h>
 #include <tasks/scheduler.h>
@@ -58,6 +59,14 @@ struct vmem_context
 	 * Instead, this is manually set by the ELF loader.
 	 */
 	task_t* task;
+};
+
+// Use idalloc to avoid strain on kmalloc
+static idalloc_ctx_t idalloc_ctx = {
+	.size = 0xffffe000U / 4096 * (sizeof(struct vmem_page) + sizeof(struct vmem_context_node)) * 3,
+	.start = 0,
+	.pos = 0,
+	.initialized = false
 };
 
 /* Initialize kernel context */
@@ -118,7 +127,7 @@ void vmem_set_task(struct vmem_context* ctx, void* task) {
 
 struct vmem_page *vmem_new_page()
 {
-	struct vmem_page *page = kmalloc(sizeof(struct vmem_page));
+	struct vmem_page *page = idalloc(sizeof(struct vmem_page), &idalloc_ctx);
 	memset(page, 0, sizeof(struct vmem_page));
 	return page;
 }
@@ -138,7 +147,7 @@ int vmem_iterate(struct vmem_context *ctx, vmem_iterator_t iterator)
 
 int vmem_add_page(struct vmem_context *ctx, struct vmem_page *pg)
 {
-	struct vmem_context_node *node = kmalloc(sizeof(struct vmem_context_node));
+	struct vmem_context_node *node = idalloc(sizeof(struct vmem_context_node), &idalloc_ctx);
 	node->page = pg;
 	node->next = NULL;
 	if (ctx->node == NULL)
