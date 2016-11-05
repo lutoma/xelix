@@ -59,7 +59,7 @@ char* xsfs_read_directory(char* path, uint32_t offset)
 }
 
 // The public read interface to the virtual file system
-void* xsfs_read_file(char* path, uint32_t offset, uint32_t size)
+size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 {
 	if(path[0] == '/') {
 		path++;
@@ -75,8 +75,8 @@ void* xsfs_read_file(char* path, uint32_t offset, uint32_t size)
 		int sizeidx = find_substr(rd, "-");
 		int endidx = find_substr(rd + sizeidx, ":") + 1;
 
-		char* size = strndup(rd +sizeidx + 1, endidx - 2);
-		filesize = atoi(size);
+		char* filesize_str = strndup(rd +sizeidx + 1, endidx - 2);
+		filesize = atoi(filesize_str);
 
 		if(!strncmp(rd, path, sizeidx - 1)) {
 			found = true;
@@ -91,6 +91,12 @@ void* xsfs_read_file(char* path, uint32_t offset, uint32_t size)
 		return NULL;
 	}
 
+
+	if(size > filesize) {
+		size = filesize;
+	}
+
+	// This is all embarassingly stupid and inefficient. But it works for now.
 	char* data = kmalloc(header_end + fileoffset + filesize + 512);
 
 	// FIXME Only read the relevant sectors
@@ -101,10 +107,12 @@ void* xsfs_read_file(char* path, uint32_t offset, uint32_t size)
 	data += header_end + fileoffset + 1;
 	data[filesize] = 0;
 
+	memcpy(dest, data, size);
+
 	//log(LOG_DEBUG, "Read file %s size %d with resulting md5sum of:\n\t", path, filesize);
 	//MD5_dump(data, filesize);
 
-	return data;
+	return size;
 }
 
 void xsfs_init()

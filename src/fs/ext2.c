@@ -403,7 +403,7 @@ char* ext2_read_directory(char* path, uint32_t offset)
 }
 
 // The public read interface to the virtual file system
-void* ext2_read_file(char* path, uint32_t offset, uint32_t size)
+size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 {
 	debug("ext2_read_file for %s, off %d, size %d\n", path, offset, size);
 
@@ -454,7 +454,11 @@ void* ext2_read_file(char* path, uint32_t offset, uint32_t size)
 		MD5_dump(block + offset, size);
 	#endif
 
-	return block + offset;
+	// FIXME This is just a quick hack to make this compatible with the new VFS
+	// calls, should be properly rewritten.
+
+	memcpy(dest, block+offset, size);
+	return size;
 }
 
 void ext2_init()

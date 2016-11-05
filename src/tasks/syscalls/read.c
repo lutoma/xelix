@@ -33,7 +33,6 @@ SYSCALL_HANDLER(read)
 	if(fd == NULL)
 		SYSCALL_FAIL();
 
-	void* data = vfs_read(fd, syscall.params[2]);
-	memcpy((void*)syscall.params[1], data, syscall.params[2]);
-	SYSCALL_RETURN(0);
+	size_t read = vfs_read((void*)syscall.params[1], syscall.params[2], fd);
+	SYSCALL_RETURN(read);
 }

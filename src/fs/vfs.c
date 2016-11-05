@@ -87,17 +87,18 @@ vfs_dir_t* vfs_get_dir_from_id(uint32_t id)
 }
 
 
-void* vfs_read(vfs_file_t* fp, uint32_t size)
+size_t vfs_read(void* dest, size_t size, vfs_file_t* fp)
 {
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	if(!mp.read_callback)
 		return NULL;
-	
-	void* data = mp.read_callback (fp->mount_path, fp->offset, size);
-	if(data) fp->offset += size;
-	return data;
+
+	size_t read = mp.read_callback(dest, size, fp->mount_path, fp->offset);
+	fp->offset += size;
+
+	return read;
 }
 
 char* vfs_dir_read(vfs_dir_t* dir, uint32_t offset)

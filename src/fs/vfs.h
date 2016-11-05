@@ -39,7 +39,7 @@ typedef struct {
    uint32_t mountpoint;
 } vfs_dir_t;
 
-typedef void* (*vfs_read_callback_t)(char* path, uint32_t offset, uint32_t size);
+typedef size_t (*vfs_read_callback_t)(void* dest, size_t size, char* path, uint32_t offset);
 typedef char* (*vfs_read_dir_callback_t)(char* path, uint32_t offset);
 
 
@@ -49,7 +49,7 @@ char vfs_last_read_attempt[512];
 void vfs_dump_dir();
 vfs_file_t* vfs_get_from_id(uint32_t id);
 vfs_dir_t* vfs_get_dir_from_id(uint32_t id);
-void* vfs_read(vfs_file_t* fp, uint32_t size);
+size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 char* vfs_dir_read(vfs_dir_t* dir, uint32_t offset);
 void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin);
 vfs_file_t* vfs_open(char* path);

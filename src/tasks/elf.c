@@ -161,10 +161,13 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 task_t* elf_load_file(char* path, char** environ, char** argv, int argc)
 {
 	vfs_file_t* fd = vfs_open(path);
-	// Dat dirty hack
-	void* data = vfs_read(fd, 9999999);
-	if(data == NULL)
+
+	// FIXME Use this properly
+	void* data = kmalloc(9999999);
+	size_t read = vfs_read(data, 9999999, fd);
+
+	if(read < 1)
 		return NULL;
-	
+
 	return elf_load(data, path, environ, argv, argc);
 }
