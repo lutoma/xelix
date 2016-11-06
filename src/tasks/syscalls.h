@@ -28,7 +28,6 @@ DEFINE_SYSCALL(write);
 DEFINE_SYSCALL(getpid);
 DEFINE_SYSCALL(getppid);
 DEFINE_SYSCALL(read);
-DEFINE_SYSCALL(brk);
 DEFINE_SYSCALL(mmap);
 DEFINE_SYSCALL(munmap);
 DEFINE_SYSCALL(test);
@@ -60,7 +59,7 @@ syscall_t syscall_table[] = {
 	sys_read,			// 2
 	sys_write,			// 3
 	sys_getpid,			// 4
-	sys_brk,			// 5
+	NULL,			// 5
 	sys_getppid,		// 6
 	sys_mmap,			// 7
 	sys_munmap,			// 8
@@ -94,7 +93,7 @@ char* syscall_name_table[] = {
 	"read",			// 2
 	"write",		// 3
 	"getpid",		// 4
-	"brk",			// 5
+	NULL,			// 5
 	"getppid",		// 6
 	"mmap",			// 7
 	"munmap",		// 8
