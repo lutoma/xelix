@@ -11,3 +11,4 @@ toolchain/*/download
 toolchain/*/local
 toolchain/*/build
 *.sublime-*
+.gdb_history
