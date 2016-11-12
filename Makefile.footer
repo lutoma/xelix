@@ -6,39 +6,6 @@
 	@echo -e "AS\t$<"
 	@$(AS) $(MAKE_ASFLAGS) -o $@ $<
 
-.PHONY: INSTALL
-install: xelix.bin
-	sudo cp xelix.bin /boot/xelix || su -c 'cp xelix.bin /boot/xelix'
-
-.PHONY: mount
-mount:
-	- mkdir mount
-	cp grub_floppy.img floppy.img
-	sudo losetup /dev/loop0 floppy.img || su -c 'losetup /dev/loop0 floppy.img'
-	sudo mount /dev/loop0 mount || su -c 'mount /dev/loop0 mount'
-
-.PHONY: unmount
-unmount:
-	sudo umount mount || su -c 'umount mount'
-	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
-	- rm -rf mount
-
-floppy.img: xelix.bin mount
-	sudo cp xelix.bin mount/kernel || su -c 'cp xelix.bin mount/kernel'
-	sleep 0.5
-	sudo umount mount || su -c 'umount mount'
-	sudo losetup -d /dev/loop0 || su -c 'losetup -d /dev/loop0'
-	- rm -rf mount
-
-.PHONY: runqemufloppy
-runqemufloppy: floppy.img
-	- rm /var/qemu.log
-	qemu -monitor stdio -fda floppy.img -serial pty $(MAKE_QEMU_FLAGS)
-
-.PHONY: runbochsfloppy
-runbochsfloppy: floppy.img
-	bochs -f bochsrc.txt -q
-
 .PHONY: runqemu
 runqemu: xelix.bin
 	qemu -monitor stdio -kernel xelix.bin $(MAKE_QEMU_FLAGS)
@@ -48,20 +15,6 @@ runqemunox: xelix.bin
 	@echo "Exit with ^A-x"
 	qemu -kernel xelix.bin -nographic $(MAKE_QEMU_FLAGS)
 
-xelix.iso: floppy.img
-	mkisofs -o xelix.iso -A Xelix -b floppy.img floppy.img
-
-.PHONY: iso
-iso: xelix.iso
-
-.PHONY: runvboxfloppy	
-runvboxfloppy: floppy.img
-	VBoxSDL -fda floppy.img --startvm Xelix
-
-.PHONY: strip
-strip: xelix.bin
-	strip xelix.bin
-
 .PHONY: count
 count:
 	( find -L {src,toolchain}/ -not -iregex "toolchain/\(userspace\|kernel\)/\(download\|local\|build\)/.*" -type f -iregex "^.*\.\(c\|h\|asm\)" -print0 -regextype "posix-extended" | xargs -0 cat ) | wc -l
@@ -69,14 +22,6 @@ count:
 .PHONY: clean
 clean:
 	find -L src -type f -iregex "^.*\.o" | xargs rm -f
-
-.PHONY: tags
-tags:
-	ctags -R
-
-.PHONY: runqemudebug
-runqemudebug: xelix.bin
-	qemu -kernel xelix.bin $(MAKE_QEMU_FLAGS)
 
 .PHONY: todo
 todo:
