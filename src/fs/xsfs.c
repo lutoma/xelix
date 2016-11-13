@@ -109,8 +109,10 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 
 	memcpy(dest, data, size);
 
-	//log(LOG_DEBUG, "Read file %s size %d with resulting md5sum of:\n\t", path, filesize);
-	//MD5_dump(data, filesize);
+	#ifdef XSFS_MD5SUM_ALL
+	log(LOG_DEBUG, "Read file %s size %d with resulting md5sum of:\n\t", path, filesize);
+	MD5_dump(data, filesize);
+	#endif
 
 	return size;
 }

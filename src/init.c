@@ -115,25 +115,35 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(paging);
 	init(ide);
 
+	#ifdef ENABLE_EXT2
 	init(ext2);
+	#endif
+	#ifdef ENABLE_XSFS
 	init(xsfs);
+	#endif
 
 	// Networking
 	init(udp);
 	init(echo);
+
+	#ifdef ENABLE_RTL8139
 	init(rtl8139);
-	#ifndef XELIX_WITHOUT_SLIP
-		init(slip);
 	#endif
 
+	#ifdef XELIX_WITH_SLIP
+	init(slip);
+	#endif
+
+	#ifdef ENABLE_AC97
 	init(ac97);
+	#endif
 
 	char* __env[] = { NULL };
 	char* __argv[] = { "init", NULL };
 
-	task_t* init = elf_load_file("/xinit", __env, __argv, 2);
+	task_t* init = elf_load_file(INIT_PATH, __env, __argv, 2);
 	if(!init) {
-		panic("Could not start init (Tried /xinit).\n");
+		panic("Could not start init (Tried " INIT_PATH ").\n");
 	}
 
 	scheduler_add(init);

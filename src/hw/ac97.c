@@ -17,6 +17,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef ENABLE_AC97
+
 #include <hw/ac97.h>
 #include <hw/pci.h>
 
@@ -293,3 +295,5 @@ void ac97_init()
 			 );
 	}
 }
+
+#endif /* ENABLE_AC97 */

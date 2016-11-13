@@ -20,7 +20,5 @@
 
 #include <lib/generic.h>
 
-#define PIT_RATE 500
-
 void pit_init(uint16_t frequency);
 uint64_t pit_getTickNum();

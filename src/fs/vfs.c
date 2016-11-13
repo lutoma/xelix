@@ -27,8 +27,6 @@
 #include <lib/list.h>
 #include <lib/spinlock.h>
 
-#define MAX_MOUNTPOINTS 50
-#define MAX_OPENFILES 500
 
 struct mountpoint
 {
@@ -38,9 +36,9 @@ struct mountpoint
 	vfs_read_dir_callback_t read_dir_callback;
 };
 
-struct mountpoint mountpoints[MAX_MOUNTPOINTS];
-vfs_file_t files[MAX_OPENFILES];
-vfs_dir_t dirs[MAX_OPENFILES];
+struct mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
+vfs_file_t files[VFS_MAX_OPENFILES];
+vfs_dir_t dirs[VFS_MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
 uint32_t last_file = -1;
 uint32_t last_dir = -1;

@@ -17,6 +17,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef ENABLE_EXT2
+
 #include <lib/generic.h>
 #include <lib/log.h>
 #include <lib/string.h>
@@ -508,3 +510,5 @@ void ext2_init()
 
 	vfs_mount("/", ext2_read_file, ext2_read_directory);
 }
+
+#endif /* ENABLE_EXT2 */

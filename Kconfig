@@ -1,14 +1,83 @@
 mainmenu "Xelix configuration"
 
-config EXT2_DEBUG
+config INIT_PATH
+	string "Init process path"
+	default "/xinit"
+
+config PIT_RATE
+	int "PIT tick rate / scheduling frequency (In Hz)"
+	default 500
+
+menu "Debugging"
+	config IDALLOC_DEBUG
+		bool "idalloc debugging"
+
+	config ELF_DEBUG
+		bool "ELF loader debugging"
+endmenu
+
+menu "Audio"
+	config ENABLE_AC97
+	bool "AC97 sound chip driver"
+	default y
+endmenu
+
+menu "Networking"
+	config NET_MAX_DEVICES
+	int "Maximum number of networking devices"
+	default 10
+
+	config NET_MAX_HOSTNAME_LEN
+	int "Maximum hostname length"
+	default 64
+
+	config ENABLE_RTL8139
+	bool "RTL8139 NIC driver"
+	default y
+
+	config RTL8139_MAX_CARDS
+	int "Maximum number of cards supported by RTL8139 driver"
+	default 4
+endmenu
+
+
+menu "File systems"
+	config VFS_MAX_MOUNTPOINTS
+	int "Maximum active mount points"
+	default 50
+
+	config VFS_MAX_OPENFILES
+	int "Maximum open files"
+	default 500
+
+	config ENABLE_EXT2
+	bool "Enable ext2 support"
+	default y
+
+	config EXT2_DEBUG
 	bool "ext2 file system debugging"
+	depends on ENABLE_EXT2
 
-config IDALLOC_DEBUG
-	bool "idalloc debugging"
+	config ENABLE_XSFS
+	bool "Enable xsfs support"
+	default y
 
-config ELF_DEBUG
-	bool "ELF loader debugging"
+	config XSFS_MD5SUM_ALL
+	bool "xsfs: Dump md5sum for all files read"
+	depends on ENABLE_XSFS
+endmenu
 
+
+choice
+	prompt "Serial interface use"
+	default XELIX_WITH_SLIP
+
+	config CONSOLE_USE_SERIAL
+		bool "Output console to serial [disables screen output]"
+
+	config XELIX_WITH_SLIP
+		bool "Serial Line IP (SLIP)"
+endchoice
 
 menu "Console / TTY"
 	config CONSOLE_SCROLL_PAGES
@@ -17,10 +86,6 @@ menu "Console / TTY"
 
 	config CONSOLE_NO_ECMA48
 		bool "Disable ECMA48 filter"
-
-	config CONSOLE_USE_SERIAL
-		bool "Output to serial"
-		#conflict!
 
 	config CONSOLE_DEFAULT_FG
 		hex "Default text color"

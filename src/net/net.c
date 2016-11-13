@@ -27,12 +27,9 @@
 #include <lib/string.h>
 #include <net/slip.h>
 
-#define MAX_DEVICES 51
-#define MAX_HOSTNAME_LEN 64
-
-static net_device_t *registered_devices[MAX_DEVICES];
+static net_device_t *registered_devices[NET_MAX_DEVICES];
 static uint32_t registered_device_count;
-static char hostname[MAX_HOSTNAME_LEN];
+static char hostname[NET_MAX_HOSTNAME_LEN];
 static size_t hostname_setlen = 0;
 
 void net_receive(net_device_t* origin, net_l2proto_t proto, size_t size, uint8_t* data)
@@ -97,7 +94,7 @@ char* net_get_hostname(size_t maxlen)
 
 void net_set_hostname(char* buffer, size_t len)
 {
-	if(len + 1 > MAX_HOSTNAME_LEN)
+	if(len + 1 > NET_MAX_HOSTNAME_LEN)
 		return;
 	
 	strcpy(hostname, buffer);

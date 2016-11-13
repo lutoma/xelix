@@ -18,6 +18,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef ENABLE_RTL8139
+
 #include <hw/rtl8139.h>
 #include <hw/pci.h>
 
@@ -33,9 +35,6 @@ static uint32_t vendor_device_combos[][2] = {
 	{0x10ec, 0x8139},
 	{(uint32_t)NULL}
 };
-
-// This driver will only support that many cards
-#define MAX_CARDS 50 
 
 // Register port numbers
 #define REG_ID0 0x00
@@ -101,7 +100,7 @@ struct rtl8139_card {
 };
 
 static int cards = 0;
-static struct rtl8139_card rtl8139_cards[MAX_CARDS];
+static struct rtl8139_card rtl8139_cards[RTL8139_MAX_CARDS];
 
 static void sendCallback(net_device_t *dev, uint8_t *data, size_t len)
 {
@@ -299,10 +298,10 @@ static void enableCard(struct rtl8139_card *card)
 
 void rtl8139_init()
 {
-	memset(rtl8139_cards, 0, MAX_CARDS * sizeof(struct rtl8139_card));
+	memset(rtl8139_cards, 0, RTL8139_MAX_CARDS * sizeof(struct rtl8139_card));
 
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * MAX_CARDS);
-	uint32_t numDevices = pci_search_by_id(devices, vendor_device_combos, MAX_CARDS);
+	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * RTL8139_MAX_CARDS);
+	uint32_t numDevices = pci_search_by_id(devices, vendor_device_combos, RTL8139_MAX_CARDS);
 	
 	log(LOG_INFO, "rtl8139: Discovered %d device%p.\n", numDevices);
 	
@@ -329,3 +328,5 @@ void rtl8139_init()
 		++cards;
 	}
 }
+
+#endif /* ENABLE_RTL8139 */
