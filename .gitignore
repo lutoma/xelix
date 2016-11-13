@@ -12,3 +12,4 @@ toolchain/*/local
 toolchain/*/build
 *.sublime-*
 .gdb_history
+src/lib/config.h

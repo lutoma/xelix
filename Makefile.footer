@@ -30,3 +30,20 @@ todo:
 .PHONY: land
 land:
 	make -C land
+
+config: clean
+	make -C util/kconfig config
+	util/genconfigh.sh
+
+menuconfig: clean
+	make -C util/kconfig menuconfig
+	util/genconfigh.sh
+
+xconfig: clean
+	make -C util/kconfig xconfig
+	util/genconfigh.sh
+
+gconfig: clean
+	make -C util/kconfig gconfig
+	util/genconfigh.sh
+

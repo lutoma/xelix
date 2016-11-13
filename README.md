@@ -22,8 +22,8 @@ On OS X, you'll need to install the following packages using Homebrew:
 Compiling
 ---------
 
-    (./configure)
-    (make clean)
+    make menuconfig (or xconfig, gconfig, config)
+    ./configure
     make
 
 Steps in braces don't neccessarily have to be executed every time you

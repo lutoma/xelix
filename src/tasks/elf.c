@@ -29,7 +29,6 @@
 #include <memory/kmalloc.h>
 #include <memory/track.h>
 
-//#define ELF_DEBUG
 #ifdef ELF_DEBUG
  #define debug(args...) log(LOG_DEBUG, args);
 #else

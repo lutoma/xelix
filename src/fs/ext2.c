@@ -26,7 +26,6 @@
 #include <fs/vfs.h>
 #include "ext2.h"
 
-//#define EXT2_DEBUG
 #ifdef EXT2_DEBUG
   #define debug(args...) log(LOG_DEBUG, "ext2: " args)
 #else

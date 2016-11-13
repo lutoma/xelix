@@ -4,3 +4,6 @@
 [submodule "ext/kdict"]
 	path = ext/kdict
 	url = git://github.com/lutoma/libkdict.git
+[submodule "util/kconfig"]
+	path = util/kconfig
+	url = https://github.com/guillon/kconfig.git

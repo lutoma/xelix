@@ -1,0 +1,32 @@
+mainmenu "Xelix configuration"
+
+config EXT2_DEBUG
+	bool "ext2 file system debugging"
+
+config IDALLOC_DEBUG
+	bool "idalloc debugging"
+
+config ELF_DEBUG
+	bool "ELF loader debugging"
+
+
+menu "Console / TTY"
+	config CONSOLE_SCROLL_PAGES
+		int "Scroll pages (ring buffer size)"
+		default 8
+
+	config CONSOLE_NO_ECMA48
+		bool "Disable ECMA48 filter"
+
+	config CONSOLE_USE_SERIAL
+		bool "Output to serial"
+		#conflict!
+
+	config CONSOLE_DEFAULT_FG
+		hex "Default text color"
+		default 0x7
+
+	config CONSOLE_DEFAULT_BG
+		hex "Default background color"
+		default 0x0
+endmenu
