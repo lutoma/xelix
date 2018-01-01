@@ -276,7 +276,7 @@ char* vmem_get_name(struct vmem_context* ctx) {
 	if(ctx->task == NULL) {
 		return "Unknown context";
 	}
-	if(ctx->task == vmem_kernelContext) {
+	if(ctx == vmem_kernelContext) {
 		return "Kernel context";
 	}
 	return ctx->task->name;
