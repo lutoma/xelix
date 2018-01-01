@@ -273,11 +273,11 @@ uint32_t vmem_count_pages(struct vmem_context *ctx)
 }
 
 char* vmem_get_name(struct vmem_context* ctx) {
-	if(ctx->task == NULL) {
-		return "Unknown context";
-	}
 	if(ctx == vmem_kernelContext) {
 		return "Kernel context";
+	}
+	if(ctx->task == NULL) {
+		return "Unknown context";
 	}
 	return ctx->task->name;
 }
