@@ -8,7 +8,7 @@
 
 .PHONY: runqemu
 runqemu: xelix.bin
-	qemu -monitor stdio -kernel xelix.bin $(MAKE_QEMU_FLAGS)
+	qemu -kernel xelix.bin $(MAKE_QEMU_FLAGS)
 
 .PHONY: runqemunox
 runqemunox: xelix.bin
