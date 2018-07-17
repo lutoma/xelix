@@ -9,3 +9,10 @@
 
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf(stderr, " (i386 xelix)");
+
+#undef  OBJECT_FORMAT_ELF
+#define OBJECT_FORMAT_ELF
+
+/* This macro applies on top of OBJECT_FORMAT_ELF and indicates that
+   we want to support both flat and ELF output.  */
+#define OBJECT_FORMAT_FLAT
