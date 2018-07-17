@@ -1,5 +1,5 @@
 /* track.c: Keep track of physical memory sections and their use
- * Copyright © 2015 Lukas Martini
+ * Copyright © 2015-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,6 +22,11 @@
 #include <lib/log.h>
 #include <lib/print.h>
 #include <lib/multiboot.h>
+#include <hw/serial.h>
+
+// Symbols defined by LD in linker.ld
+extern void* __kernel_start;
+extern void* __kernel_end;
 
 // Set up the memory areas marked as free in the multiboot headers
 static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
@@ -34,10 +39,50 @@ static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
 		uint32_t *length_low = (uint32_t *) (i + 12);
 		uint32_t *type = (uint32_t *) (i + 20);
 
+		memory_track_type_t area_type;
+		switch(*type) {
+			case 1: area_type = MEMORY_TYPE_FREE; break;
+			case 3: area_type = MEMORY_TYPE_ACPI; break;
+			case 4: area_type = MEMORY_TYPE_HIBERNATE; break;
+			case 5: area_type = MEMORY_TYPE_DEFECTIVE; break;
+			default: area_type = MEMORY_TYPE_UNKNOWN;
+		}
+
 		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];
 		area->addr = (void*)*base_addr_low;
 		area->size = *length_low;
-		area->type = (*type == 1) ? MEMORY_TYPE_FREE : MEMORY_TYPE_UNKNOWN;
+		area->type = area_type;
+
+		// Check if this block contains the kernel, and if so create a separate area for that
+		if((intptr_t)*base_addr_low >= &__kernel_start && (intptr_t)*base_addr_low <= &__kernel_end) {
+			uint32_t offset = &__kernel_start - (intptr_t)*base_addr_low;
+			uint32_t kernel_size = (intptr_t)&__kernel_end - (intptr_t)&__kernel_start;
+
+			memory_track_area_t* kernel_area;
+
+			// Check if the kernel starts at the same block as this area. If so, just recycle it,
+			// otherwise create a new kernel area and set the end of this one accordingly.
+			if(area->addr == &__kernel_start) {
+				kernel_area = area;
+			} else {
+				kernel_area = &memory_track_areas[memory_track_num_areas++];
+				area->size = (intptr_t)&__kernel_start - (intptr_t)area->addr;
+			}
+
+			// Add kernel area
+			kernel_area->addr = (void*)&__kernel_start;
+			kernel_area->size = kernel_size;
+			kernel_area->type = MEMORY_TYPE_KERNEL_BINARY;
+
+			// Add remainder of the original block (if any)
+			if((void*)*base_addr_low + *length_low > &__kernel_end) {
+				memory_track_area_t* remainder_area = &memory_track_areas[memory_track_num_areas++];
+				remainder_area->addr = (void*)&__kernel_end;
+				remainder_area->size = *length_low - kernel_size;
+				remainder_area->type = area_type;
+			}
+
+		}
 
 		i += *size + 4;
 	}
@@ -46,9 +91,19 @@ static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
 void memory_track_print_areas() {
 	log(LOG_DEBUG, "memory_track: Areas:\n");
 
+	char* type_names[] = {
+		"Free",
+		"Kernel binary",
+		"Initrd",
+		"ACPI",
+		"Hibernate",
+		"Defective",
+		"Unknown"
+	};
+
 	for(int i = 0; i < memory_track_num_areas; i++) {
 		memory_track_area_t* area = &memory_track_areas[i];
-		printf("\tArea #%d at 0x%x, size %d, type %d\n", i, area->addr, area->size, area->type);
+		printf("\t#%d at 0x%x\tend 0x%x\tsize 0x%x\t%s\n", i, area->addr, area->addr + area->size, area->size, type_names[area->type]);
 	}
 }
 

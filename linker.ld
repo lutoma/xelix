@@ -4,8 +4,7 @@ SECTIONS
 {
 	/* The first section should be at 0x100000 */
 	. = 0x100000;
-
-	kernel_start = .;
+	PROVIDE(__kernel_start = .);
 
 	/* The multiboot header has to be in the first 8kb */
 	.text : {
@@ -24,4 +23,6 @@ SECTIONS
 	.bss ALIGN(4096) : {
 		*(.bss)
 	}
+
+	PROVIDE(__kernel_end = .);
 }
