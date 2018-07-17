@@ -1,15 +1,15 @@
 TARGET=i686-elf
 PREFIX=$(CURDIR)/local
 
-BINUTILS_VERSION=2.24
+BINUTILS_VERSION=2.31
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
-BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.gz
+BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 
-GCC_VERSION=5.1.0
+GCC_VERSION=8.1.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
-GCC_PACKAGE=gcc-${GCC_VERSION}.tar.gz
+GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 
-PATH:=$(PATH):$(CURDIR)/local/bin 
+PATH:=$(PATH):$(CURDIR)/local/bin
 
 .PHONY: all install clean binutils gcc
 

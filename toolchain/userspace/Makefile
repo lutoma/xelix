@@ -137,4 +137,3 @@ newlib-patch:
 	@cp -R content/newlib/include/* download/newlib-${NEWLIB_VERSION}/newlib/libc/include/
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoreconf
-
