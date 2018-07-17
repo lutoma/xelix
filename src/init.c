@@ -100,7 +100,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(pit, PIT_RATE);
 	init(serial);
 	init(console);
-	init(log);
 
 	compiler_info();
 	memory_track_print_areas();
