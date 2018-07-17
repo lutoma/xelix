@@ -119,4 +119,13 @@ void memory_track_init(multiboot_info_t* multiboot_info)
 		area->size = multiboot_info->modsAddr[i].end - multiboot_info->modsAddr[i].start;
 		area->type = MEMORY_TYPE_INITRD;
 	}
+
+	// Zero free areas
+	for(int i = 0; i < memory_track_num_areas; i++) {
+		memory_track_area_t* area = &memory_track_areas[i];
+
+		if(area->type == MEMORY_TYPE_FREE) {
+			memset(area->addr, 0, area->size);
+		}
+	}
 }
