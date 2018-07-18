@@ -47,6 +47,8 @@
 #define bit_toggle(num, bit) ((num) ^ 1 << (bit))
 #define bit_get(num, bit) ((num) & (1 << (bit)))
 
+#define bzero(s, n) memset(s, 0, n)
+
 typedef int32_t time_t;
 typedef uint8_t byte;
 
