@@ -96,6 +96,10 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 		for(int i = 0; i <= last_free_block_pos; i++) {
 			struct mem_block* fblock = free_blocks[i];
 
+			if(unlikely(fblock->magic != KMALLOC_MAGIC)) {
+				panic("kmalloc: Metadata corruption (Previous block with invalid magic)");
+			}
+
 			if(fblock && fblock->magic == KMALLOC_MAGIC && fblock->size >= sz) {
 				SERIAL_DEBUG("HIT size 0x%x ", fblock->size);
 				header = fblock;
@@ -107,7 +111,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 
 	// As last resort, just add a new block
 	// FIXME Does the second cond make sense?
-	if(!header || header->magic != KMALLOC_MAGIC) {
+	if(unlikely(!header || header->magic != KMALLOC_MAGIC)) {
 		SERIAL_DEBUG("NEW 0x%x -> ", (intptr_t)alloc_end);
 
 		header = (struct mem_block*)alloc_end;
@@ -117,10 +121,10 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 
 		SERIAL_DEBUG("0x%x ", (intptr_t)alloc_end);
 
-		if(header != alloc_start) {
+		if(likely(header != alloc_start)) {
 			struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - (intptr_t)(*(uint32_t*)PREV_FOOTER(header)) - sizeof(struct mem_block);
 
-			if(prev->magic != KMALLOC_MAGIC) {
+			if(unlikely(prev->magic != KMALLOC_MAGIC)) {
 				panic("kmalloc: Metadata corruption (Previous block with invalid magic)");
 			}
 		}
