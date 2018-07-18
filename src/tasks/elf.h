@@ -39,7 +39,7 @@
 typedef struct {
 	unsigned char magic[4];
 	/* Note: There _is_ other stuff in here, but we don't need it */
-	unsigned char pad[12]; 
+	unsigned char pad[12];
 } __attribute__((packed)) elf_ident_t;
 
 typedef struct {
@@ -71,4 +71,3 @@ typedef struct {
 } __attribute__((packed)) elf_t;
 
 task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc);
-task_t* elf_load_file(char* path, char** environ, char** argv, int argc);

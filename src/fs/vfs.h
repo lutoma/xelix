@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010, 2011 Lukas Martini
+/* Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -55,3 +55,4 @@ void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin);
 vfs_file_t* vfs_open(char* path);
 vfs_dir_t* vfs_dir_open(char* path);
 int vfs_mount(char* path, vfs_read_callback_t read_callback, vfs_read_dir_callback_t read_dir_callback);
+void* vfs_load_file(char* path, uint32_t chunk_size);

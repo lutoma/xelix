@@ -1,5 +1,5 @@
 /* execve.c: Execve syscall
- * Copyright © 2011-2015 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,6 +21,7 @@
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <tasks/elf.h>
+#include <fs/vfs.h>
 
 // Check an array to make sure it's NULL-terminated.
 static bool check_array(char** array) {
@@ -45,15 +46,17 @@ SYSCALL_HANDLER(execve)
 	}
 
 	task_t* task = scheduler_get_current();
-	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, 2);
-
-	//FIXME This is not entirely POSIX compatible as the new process has a different PID.
-	if(new_task)
-	{
-		scheduler_add(new_task);
-		scheduler_remove(task);
-		SYSCALL_RETURN(0);
+	void* data = vfs_load_file((void*)syscall.params[0], 500 * 1024);
+	if(!data) {
+		SYSCALL_FAIL();
 	}
 
-	SYSCALL_FAIL();
+	task_t* new_task = elf_load(data, (void*)syscall.params[0], __env, __argv, 2);
+	if(!new_task) {
+		SYSCALL_FAIL();
+	}
+
+	scheduler_add(new_task);
+	scheduler_remove(task);
+	SYSCALL_RETURN(0);
 }
