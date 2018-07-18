@@ -88,7 +88,7 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 	}
 
 	if(!found) {
-		return NULL;
+		return 0;
 	}
 
 
@@ -101,7 +101,7 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 
 	// FIXME Only read the relevant sectors
 	for(int i = 0; i*512 < header_end + fileoffset + filesize + 510; i++) {
-		read_sector_or_fail(NULL, 0x1F0, 0, i, (uint8_t*)(data + (i * 512)));
+		read_sector_or_fail(0, 0x1F0, 0, i, (uint8_t*)(data + (i * 512)));
 	}
 
 	data += header_end + fileoffset + 1;
@@ -111,7 +111,7 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 
 	#ifdef XSFS_MD5SUM_ALL
 	log(LOG_DEBUG, "Read file %s size %d with resulting md5sum of:\n\t", path, filesize);
-	MD5_dump(data, filesize);
+	MD5_dump((unsigned char*)data, filesize);
 	#endif
 
 	return size;

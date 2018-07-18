@@ -91,7 +91,7 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp)
 
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	if(!mp.read_callback)
-		return NULL;
+		return 0;
 
 	size_t read = mp.read_callback(dest, size, fp->mount_path, fp->offset);
 	fp->offset += size;
@@ -106,7 +106,7 @@ char* vfs_dir_read(vfs_dir_t* dir, uint32_t offset)
 	struct mountpoint mp = mountpoints[dir->mountpoint];
 	if(!mp.read_dir_callback)
 		return NULL;
-	
+
 	char* name = mp.read_dir_callback (dir->mount_path, offset);
 	if(name)
 		return name;
@@ -117,7 +117,7 @@ char* vfs_dir_read(vfs_dir_t* dir, uint32_t offset)
 void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
 {
 	switch(origin)
-	{	
+	{
 		case VFS_SEEK_SET:
 			fp->offset = offset;
 			break;

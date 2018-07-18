@@ -22,5 +22,5 @@
 
 void serial_init();
 char serial_recv();
-void serial_send(char c);
-void serial_print(char* s);
+void serial_send(const char c);
+void serial_print(const char* s);

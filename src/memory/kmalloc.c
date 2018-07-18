@@ -47,7 +47,7 @@ static uint32_t total_blocks_size = 0;
 
 static spinlock_t kmalloc_lock;
 
-static struct mem_block {
+struct mem_block {
 	uint16_t magic;
 	bool status:1;
 	uint32_t size;
@@ -154,28 +154,29 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 	header->pid = 0;
 
 	void* result;
+
 	// If the address is not already page-aligned
 	if(unlikely(align && (alloc_end & 0xFFFFF000))) {
 		SERIAL_DEBUG("ALIGN ");
 		uint32_t old_pos = (uint32_t)header + sizeof(struct mem_block);
-		result = VMEM_ALIGN((uint32_t)header + sizeof(struct mem_block));
-		header->size += result - old_pos;
+		result = (void*)VMEM_ALIGN((uint32_t)header + sizeof(struct mem_block));
+		header->size += (uint32_t)result - old_pos;
 
 		// FIXME
-		alloc_end += result - old_pos;
+		alloc_end += (uint32_t)result - old_pos;
 	} else {
 		result = (void*)((uint32_t)header + sizeof(struct mem_block));
 	}
 
 	// Add footer with allocation size for reverse lookups
-	uint32_t* footer = GET_FOOTER(header);
+	uint32_t* footer = (uint32_t*)GET_FOOTER(header);
 	*footer = sz;
 
 	spinlock_release(&kmalloc_lock);
 
 	// FIXME Remove this
-	if(unlikely(phys))
-		*phys = (void*)((uint32_t)header + sizeof(struct mem_block));
+	if(unlikely((bool)phys))
+		*phys = (uint32_t)((uint32_t)header + sizeof(struct mem_block));
 
 	#ifdef KMALLOC_DEBUG
 		itoa(((uint32_t)header + sizeof(struct mem_block)), itoa_result, 16);
@@ -197,14 +198,14 @@ void __kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const cha
 
 	#ifdef KMALLOC_DEBUG
 		char itoa_result[100];
-		itoa(ptr, itoa_result, 16);
+		itoa((intptr_t)ptr, itoa_result, 16);
 		serial_print("0x");
 		serial_print(itoa_result);
 	#endif
 
-	struct mem_block* header = (struct mem_block*)((uint32_t)ptr - sizeof(struct mem_block));
+	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
 
-	if((uint32_t)header < alloc_start || (uint32_t)ptr >= alloc_end) {
+	if((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end) {
 		SERIAL_DEBUG("INVALID_BOUNDS\n");
 		return;
 	}
@@ -216,7 +217,7 @@ void __kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const cha
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
 		SERIAL_DEBUG("Could not get spinlock\n");
-		return NULL;
+		return;
 	}
 
 	// Check previous block

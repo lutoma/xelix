@@ -54,8 +54,7 @@ static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
 		area->type = area_type;
 
 		// Check if this block contains the kernel, and if so create a separate area for that
-		if((intptr_t)*base_addr_low >= &__kernel_start && (intptr_t)*base_addr_low <= &__kernel_end) {
-			uint32_t offset = &__kernel_start - (intptr_t)*base_addr_low;
+		if(*base_addr_low >= (intptr_t)&__kernel_start && *base_addr_low <= (intptr_t)&__kernel_end) {
 			uint32_t kernel_size = (intptr_t)&__kernel_end - (intptr_t)&__kernel_start;
 
 			memory_track_area_t* kernel_area;
@@ -75,7 +74,7 @@ static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
 			kernel_area->type = MEMORY_TYPE_KERNEL_BINARY;
 
 			// Add remainder of the original block (if any)
-			if((void*)*base_addr_low + *length_low > &__kernel_end) {
+			if(*base_addr_low + *length_low > (intptr_t)&__kernel_end) {
 				memory_track_area_t* remainder_area = &memory_track_areas[memory_track_num_areas++];
 				remainder_area->addr = (void*)&__kernel_end;
 				remainder_area->size = *length_low - kernel_size;
