@@ -232,8 +232,6 @@ struct vmem_page *vmem_rm_page_phys(struct vmem_context *ctx, void *phys_addr)
 
 	--ctx->pages;
 	struct vmem_page *retval = node->page;
-	kfree(node);
-	
 	return retval;
 }
 
@@ -260,10 +258,8 @@ struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr)
 		prev_node->next = node->next;
 
 	--ctx->pages;
-	
+
 	struct vmem_page *retval = node->page;
-	kfree(node);
-	
 	return retval;
 }
 

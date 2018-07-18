@@ -33,16 +33,16 @@
  */
 
 void* __attribute__((alloc_size(1), malloc)) idalloc(size_t sz, idalloc_ctx_t* ctx) {
-	if(!ctx->initialized) {
+	if(unlikely(!ctx->initialized)) {
 		#ifdef IDALLOC_DEBUG
 			serial_send('I');
 		#endif
 
-		ctx->start = (uint32_t)kmalloc(ctx->size);
+		ctx->start = (uint32_t)kmalloc_a(ctx->size);
 		ctx->initialized = true;
 	}
 
-	if((ctx->pos + sz) > ctx->size) {
+	if(unlikely((ctx->pos + sz) > ctx->size)) {
 		#ifdef IDALLOC_DEBUG
 			serial_send('E');
 		#endif

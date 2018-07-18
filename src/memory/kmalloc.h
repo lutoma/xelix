@@ -22,6 +22,7 @@
 
 // Use macros.
 void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+void __kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
 /* A few shortcuts so one doesn't always have to pass all the
  * parameters all the time.
@@ -31,7 +32,7 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 #define kmalloc_p(sz, phys) __kmalloc(sz, false, phys, __FILE__, __LINE__, __FUNCTION__)
 #define kmalloc_ap(sz, phys) __kmalloc(sz, true, phys, __FILE__, __LINE__, __FUNCTION__)
 #define kmalloc_pa kmalloc_ap
+#define kfree(ptr) __kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
 
-void kfree(void *ptr);
 uint32_t kmalloc_getMemoryPosition();
 void kmalloc_init();

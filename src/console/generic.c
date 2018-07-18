@@ -182,7 +182,7 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 				i++;
 			continue;
 		}
-		
+
 		// Save pointers elsewhere so we can free the return struct
 		buffer[i] = input->character;
 		console_modifiers_t* current_modifiers = input->modifiers;
@@ -195,7 +195,7 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 				continue;
 			console_write(console, (char*)&buffer[i], 1);
 
-			read--; 
+			read--;
 			i--;
 			continue;
 		}
