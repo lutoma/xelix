@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,19 +20,11 @@
 
 #include <lib/generic.h>
 
-// Use macros.
-void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
-void __kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
-/* A few shortcuts so one doesn't always have to pass all the
- * parameters all the time.
- */
-#define kmalloc(sz) __kmalloc(sz, false, NULL, __FILE__, __LINE__, __FUNCTION__)
-#define kmalloc_a(sz) __kmalloc(sz, true, NULL, __FILE__, __LINE__, __FUNCTION__)
-#define kmalloc_p(sz, phys) __kmalloc(sz, false, phys, __FILE__, __LINE__, __FUNCTION__)
-#define kmalloc_ap(sz, phys) __kmalloc(sz, true, phys, __FILE__, __LINE__, __FUNCTION__)
-#define kmalloc_pa kmalloc_ap
-#define kfree(ptr) __kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc(sz) _kmalloc(sz, false, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc_a(sz) _kmalloc(sz, true, __FILE__, __LINE__, __FUNCTION__)
+#define kfree(ptr) _kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
 
-uint32_t kmalloc_getMemoryPosition();
 void kmalloc_init();

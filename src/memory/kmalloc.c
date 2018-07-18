@@ -27,14 +27,13 @@
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
-	#include <hw/serial.h>
-	#define SERIAL_DEBUG serial_print
+	#define SERIAL_DEBUG(args...) serial_printf(args)
 #else
-	#define SERIAL_DEBUG
+	#define SERIAL_DEBUG(args...)
 #endif
 
 #define KMALLOC_MAGIC 0xCAFE
-#define PREV_FOOTER(x) (*(uint32_t*)((uint32_t)x - sizeof(uint32_t)))
+#define PREV_FOOTER(x) ((uint32_t*)((intptr_t)x - sizeof(uint32_t)))
 #define PREV_BLOCK(x) ((struct mem_block*)(x - sizeof(uint32_t) - sizeof(struct mem_block) - PREV_FOOTER(x)))
 #define NEXT_BLOCK(x) ((struct mem_block*)((uint32_t)x + sizeof(struct mem_block) + x->size + sizeof(uint32_t)))
 #define GET_FOOTER(x) ((uint32_t)((uint32_t)x + x->size + sizeof(struct mem_block)))
@@ -67,50 +66,38 @@ static uint32_t last_free_block_pos = 0;
  * FIXME Aligned allocations cannot currently reuse existing free blocks and
  * unnecessarily waste memory.
  */
-void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
-{
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
 	if(unlikely(!initialized)) {
 		panic("Attempt to kmalloc() before allocator is initialized.\n");
 		return NULL;
 	}
 
-	SERIAL_DEBUG(_debug_file);
-	SERIAL_DEBUG(": ");
-	SERIAL_DEBUG(_debug_func);
-	SERIAL_DEBUG("\nALLC ");
+	SERIAL_DEBUG("%s:%d %s\nALLC 0x%x ", _debug_file, _debug_line, _debug_func, sz);
 
 	#ifdef KMALLOC_DEBUG
-		char itoa_result[100];
-		itoa(sz, itoa_result, 16);
-		serial_print("0x");
-		serial_print(itoa_result);
-		serial_print(" ");
-
-		if(sz >= 1024) {
-			serial_print("(");
-			itoa(sz/1024, itoa_result, 10);
-			serial_print(itoa_result);
-			serial_print(" kB) ");
+		if(sz >= (1024 * 1024)) {
+			SERIAL_DEBUG("(%d MB) ", sz / (1024 * 1024));
+		} else if(sz >= 1024) {
+			SERIAL_DEBUG("(%d KB) ", sz / 1024);
 		}
 	#endif
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		SERIAL_DEBUG("Could not get spinlock\n");
+		SERIAL_DEBUG("Could not get spinlock\n\n");
 		return NULL;
 	}
 
 	struct mem_block* header = NULL;
 
 	// If there are any blocks: Find suitable free block
-	if(likely(alloc_end > alloc_start && !align)) {
+	if(false && likely(alloc_end > alloc_start && !align)) {
 		SERIAL_DEBUG("SFB ");
 
 		for(int i = 0; i <= last_free_block_pos; i++) {
 			struct mem_block* fblock = free_blocks[i];
 
 			if(fblock && fblock->magic == KMALLOC_MAGIC && fblock->size >= sz) {
-				SERIAL_DEBUG("HIT ");
-
+				SERIAL_DEBUG("HIT size 0x%x ", fblock->size);
 				header = fblock;
 				fblock = NULL;
 				break;
@@ -121,26 +108,22 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 	// As last resort, just add a new block
 	// FIXME Does the second cond make sense?
 	if(!header || header->magic != KMALLOC_MAGIC) {
-		SERIAL_DEBUG("NEW ");
-
-		#ifdef KMALLOC_DEBUG
-			itoa((intptr_t)alloc_end, itoa_result, 16);
-			serial_print("0x");
-			serial_print(itoa_result);
-			serial_print(" ->");
-		#endif
+		SERIAL_DEBUG("NEW 0x%x -> ", (intptr_t)alloc_end);
 
 		header = (struct mem_block*)alloc_end;
 		header->size = sz;
 		header->magic = KMALLOC_MAGIC;
 		alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
 
-		#ifdef KMALLOC_DEBUG
-			itoa((intptr_t)alloc_end, itoa_result, 16);
-			serial_print(" 0x");
-			serial_print(itoa_result);
-			serial_print(" ");
-		#endif
+		SERIAL_DEBUG("0x%x ", (intptr_t)alloc_end);
+
+		if(header != alloc_start) {
+			struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - (intptr_t)(*(uint32_t*)PREV_FOOTER(header)) - sizeof(struct mem_block);
+
+			if(prev->magic != KMALLOC_MAGIC) {
+				panic("kmalloc: Metadata corruption (Previous block with invalid magic)");
+			}
+		}
 
 		total_blocks_size += sz + sizeof(uint32_t) + sizeof(struct mem_block);
 		num_blocks++;
@@ -153,87 +136,62 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 	header->type = 42;
 	header->pid = 0;
 
-	void* result;
+	SERIAL_DEBUG("HEADER 0x%x ", (intptr_t)header);
+
+	void* result = (void*)((uint32_t)header + sizeof(struct mem_block));
 
 	// If the address is not already page-aligned
-	if(unlikely(align && (alloc_end & 0xFFFFF000))) {
+	if(unlikely(align && ((intptr_t)result & (PAGE_SIZE - 1)))) {
 		SERIAL_DEBUG("ALIGN ");
-		uint32_t old_pos = (uint32_t)header + sizeof(struct mem_block);
-		result = (void*)VMEM_ALIGN((uint32_t)header + sizeof(struct mem_block));
-		header->size += (uint32_t)result - old_pos;
-
-		// FIXME
-		alloc_end += (uint32_t)result - old_pos;
-	} else {
-		result = (void*)((uint32_t)header + sizeof(struct mem_block));
+		void* new_pos = (void*)VMEM_ALIGN((uint32_t)header + sizeof(struct mem_block));
+		intptr_t offset = (intptr_t)new_pos - (intptr_t)result;
+		header->size += offset;
+		alloc_end += offset;
+		result = new_pos;
 	}
 
 	// Add footer with allocation size for reverse lookups
 	uint32_t* footer = (uint32_t*)GET_FOOTER(header);
-	*footer = sz;
+	*footer = header->size;
+	SERIAL_DEBUG("FOOTER 0x%x, sz 0x%x ", footer, *footer);
 
 	spinlock_release(&kmalloc_lock);
-
-	// FIXME Remove this
-	if(unlikely((bool)phys))
-		*phys = (uint32_t)((uint32_t)header + sizeof(struct mem_block));
-
-	#ifdef KMALLOC_DEBUG
-		itoa((intptr_t)result, itoa_result, 16);
-		serial_print("RESULT 0x");
-		serial_print(itoa_result);
-		serial_print("\n");
-	#endif
-
+	SERIAL_DEBUG("RESULT 0x%x\n\n", (intptr_t)result);
 	return result;
 }
 
-void __kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
+void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
-
-	SERIAL_DEBUG(_debug_file);
-	SERIAL_DEBUG(": ");
-	SERIAL_DEBUG(_debug_func);
-	SERIAL_DEBUG("\nFREE ");
-
-	#ifdef KMALLOC_DEBUG
-		char itoa_result[100];
-		itoa((intptr_t)ptr, itoa_result, 16);
-		serial_print("0x");
-		serial_print(itoa_result);
-	#endif
-
+	SERIAL_DEBUG("%s:%d %s\nFREE 0x%x ", _debug_file, _debug_line, _debug_func, ptr);
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
 
 	if((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end) {
-		SERIAL_DEBUG("INVALID_BOUNDS\n");
+		SERIAL_DEBUG("INVALID_BOUNDS\n\n");
 		return;
 	}
 
 	if(header->magic != KMALLOC_MAGIC) {
-		SERIAL_DEBUG("INVALID_MAGIC\n");
+		SERIAL_DEBUG("INVALID_MAGIC\n\n");
 		return;
 	}
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		SERIAL_DEBUG("Could not get spinlock\n");
+		SERIAL_DEBUG("Could not get spinlock\n\n");
 		return;
 	}
 
 	// Check previous block
-	#if 0
 	if((ptr - sizeof(struct mem_block)) > alloc_start) {
-		SERIAL_DEBUG("(PBF)");
+		//struct mem_block* prev = (struct mem_block*)((intptr_t)header - sizeof(uint32_t) - sizeof(struct mem_block) - PREV_FOOTER(x));
+		uint32_t prev_size = *PREV_FOOTER(header);
+		struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - prev_size - sizeof(struct mem_block);
 
-		uint32_t* prev_size = (struct mem_block*)((uint32_t)header - sizeof(struct mem_block));
-		struct mem_block* prev = prev_size - *prev_size;
+		SERIAL_DEBUG("PBH 0x%x sz 0x%x ", prev, prev_size);
 
 		if(prev->magic != KMALLOC_MAGIC) {
-			SERIAL_DEBUG("kfree() for block preceeded by an invalid block\n");
-			return;
+			panic("kfree: Metadata corruption (Previous block with invalid magic)\n");
 		}
 	}
-	#endif
 
 	// TODO Merge adjacent free blocks
 	header->status = false;
@@ -241,7 +199,8 @@ void __kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const cha
 	header->pid = 0;
 
 	if(next_free_block_pos > MAX_FREE_BLOCKS) {
-		SERIAL_DEBUG("Exceeded MAX_FREE_BLOCKS, losing track of this free block.\n");
+		SERIAL_DEBUG("Exceeded MAX_FREE_BLOCKS, losing track of this free block.\n\n");
+		spinlock_release(&kmalloc_lock);
 		return;
 	}
 
@@ -252,13 +211,8 @@ void __kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const cha
 		last_free_block_pos = next_free_block_pos;
 	}
 
-	SERIAL_DEBUG("\n");
+	SERIAL_DEBUG("\n\n");
 	spinlock_release(&kmalloc_lock);
-}
-
-uint32_t kmalloc_getMemoryPosition()
-{
-	return alloc_end;
 }
 
 void kmalloc_init()

@@ -144,9 +144,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	if(bin->entry == NULL)
 		fail("elf: elf_load: This elf file doesn't have an entry point\n");
 
-	struct vmem_context *ctx = vmem_kernelContext;
-	ctx = map_task(bin);
-
+	struct vmem_context *ctx = map_task(bin);
 	debug("Entry point is 0x%x\n", bin->entry);
 
 	// The last argument should be false only as long as we use the kernel context
@@ -162,8 +160,8 @@ task_t* elf_load_file(char* path, char** environ, char** argv, int argc)
 	vfs_file_t* fd = vfs_open(path);
 
 	// FIXME Use this properly
-	void* data = kmalloc(9999999);
-	size_t read = vfs_read(data, 9999999, fd);
+	void* data = kmalloc(1024 * 1024);
+	size_t read = vfs_read(data, 1024 * 1024, fd);
 
 	if(read < 1)
 		return NULL;

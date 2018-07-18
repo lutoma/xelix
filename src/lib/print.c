@@ -35,7 +35,7 @@ void print(const char* s) {
 	console_write(NULL, s, strlen(s));
 }
 
-void __vprintf(const char *fmt, void** arg, void (print_cb)(const char*), void (putchar_cb)(const char)) {
+void _vprintf(const char *fmt, void** arg, void (print_cb)(const char*), void (putchar_cb)(const char)) {
 	bool state = false;
 	char toa_result[300];
 
