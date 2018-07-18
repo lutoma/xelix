@@ -39,7 +39,7 @@ static uint32_t vendor_device_combos[][2] = {
 // Register port numbers
 #define REG_ID0 0x00
 #define REG_ID4 0x04
- 
+
 #define REG_TRANSMIT_STATUS0 0x10
 #define REG_TRANSMIT_ADDR0 0x20
 #define REG_RECEIVE_BUFFER 0x30
@@ -50,19 +50,19 @@ static uint32_t vendor_device_combos[][2] = {
 #define REG_TRANSMIT_CONFIGURATION 0x40
 #define REG_RECEIVE_CONFIGURATION 0x44
 #define REG_CONFIG1 0x52
- 
+
 // Control register values
 #define CR_RESET				(1 << 4)
 #define CR_RECEIVER_ENABLE			(1 << 3)
 #define CR_TRANSMITTER_ENABLE			(1 << 2)
 #define CR_BUFFER_IS_EMPTY			(1 << 0)
- 
+
 // Transmitter configuration
 #define TCR_IFG_STANDARD			(3 << 24)
 #define TCR_MXDMA_512				(5 << 8)
 #define TCR_MXDMA_1024				(6 << 8)
 #define TCR_MXDMA_2048				(7 << 8)
- 
+
 // Receiver configuration
 #define RCR_MXDMA_512				(5 << 8)
 #define RCR_MXDMA_1024				(6 << 8)
@@ -70,7 +70,7 @@ static uint32_t vendor_device_combos[][2] = {
 #define RCR_ACCEPT_BROADCAST			(1 << 3)
 #define RCR_ACCEPT_MULTICAST			(1 << 2)
 #define RCR_ACCEPT_PHYS_MATCH			(1 << 1)
- 
+
 // Interrupt status register
 #define ISR_RECEIVE_BUFFER_OVERFLOW		(1 << 4)
 #define ISR_TRANSMIT_OK				(1 << 2)
@@ -155,7 +155,7 @@ static void receiveData(struct rtl8139_card *card)
 
 		if ((pHeader & 1) == 0)
 				break;
-		
+
 		uint16_t length = *((uint16_t *)rxBuffer);
 		rxBuffer += 2;
 
@@ -178,7 +178,7 @@ static void receiveData(struct rtl8139_card *card)
 			card->netDevice->stats.rx_bytes += length - 4;
 			net_receive(card->netDevice, NET_PROTO_ETH, length - 4, data);
 		}
-		
+
 		card->rxBufferOffset += length;
 		card->rxBufferOffset = (card->rxBufferOffset + 3) & ~0x3;
 		card->rxBufferOffset %= RX_BUFFER_SIZE;
@@ -251,7 +251,7 @@ static void enableCard(struct rtl8139_card *card)
 		log(LOG_DEBUG, "rtl8139: Error: Card isn't connected to the PIC.");
 		return;
 	}
-	
+
 	interrupts_registerHandler(card->device->interruptLine + IRQ0, rtl8139_intHandler);
 
 	int_out16(card, REG_INTERRUPT_MASK,  0x0005);
@@ -264,7 +264,7 @@ static void enableCard(struct rtl8139_card *card)
 			RCR_ACCEPT_BROADCAST |
 			RCR_ACCEPT_PHYS_MATCH
 		);
-	
+
 	int_out32(card, REG_TRANSMIT_CONFIGURATION,
 			TCR_IFG_STANDARD |
 			TCR_MXDMA_2048
@@ -284,9 +284,10 @@ static void enableCard(struct rtl8139_card *card)
 	int_out8(card, REG_COMMAND, CR_RECEIVER_ENABLE | CR_TRANSMITTER_ENABLE);
 	log(LOG_DEBUG, "rtl8139: Enabled receiver / transmitter.\n");
 
+	char itoa_buf[5];
 	card->netDevice = kmalloc(sizeof(net_device_t));
 	strcpy(card->netDevice->name, "eth");
-	strcpy(card->netDevice->name + 3, itoa(net_ether_offset++, 10));
+	strcpy(card->netDevice->name + 3, itoa(net_ether_offset++, itoa_buf, 10));
 	memcpy(card->netDevice->hwaddr, card->macAddr, 6);
 	card->netDevice->mtu = 1500;
 	card->netDevice->proto = NET_PROTO_ETH;
@@ -302,9 +303,9 @@ void rtl8139_init()
 
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * RTL8139_MAX_CARDS);
 	uint32_t numDevices = pci_search_by_id(devices, vendor_device_combos, RTL8139_MAX_CARDS);
-	
+
 	log(LOG_INFO, "rtl8139: Discovered %d device%p.\n", numDevices);
-	
+
 	int i;
 	for(i = 0; i < numDevices; ++i)
 	{

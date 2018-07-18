@@ -30,14 +30,14 @@ void printChar(const char c)
 	char s[2];
 	s[0] = c;
 	s[1] = 0;
-	
 	console_write(NULL, s, 1);
 }
 
 // Printing a string, formatted with the stuff in the arg array
 void vprintf(const char *fmt, void** arg) {
 	bool state = false;
-	
+	char toa_result[300];
+
 	while (*fmt) {
 		if (*fmt == '%') {
 			++fmt;
@@ -45,11 +45,11 @@ void vprintf(const char *fmt, void** arg) {
 				case 'c': printChar(*(char *)arg); break;
 				// Print (null) if pointer == NULL.
 				case 's': print(*(char **)arg ? *(char **)arg : "(null)"); break;
-				case 'b': print(itoa(*(unsigned *)arg,  2)); break;
-				case 'd': print(itoa(*(unsigned *)arg, 10)); break;
-				case 'u': print(utoa(*(unsigned *)arg, 10)); break;
-				case 'y': print(utoa(*(unsigned *)arg, 16)); break;
-				case 'x': print(itoa(*(unsigned *)arg, 16)); break;
+				case 'b': print(itoa(*(unsigned *)arg, &toa_result, 2)); break;
+				case 'd': print(itoa(*(unsigned *)arg, &toa_result, 10)); break;
+				case 'u': print(utoa(*(unsigned *)arg, &toa_result, 10)); break;
+				case 'y': print(utoa(*(unsigned *)arg, &toa_result, 16)); break;
+				case 'x': print(itoa(*(unsigned *)arg, &toa_result, 16)); break;
 				case 't': print(*(unsigned *)arg ? "true" : "false"); break;
 			}
 
@@ -71,7 +71,7 @@ void vprintf(const char *fmt, void** arg) {
 			if(*fmt == 'p')
 				if(*(unsigned*)(arg-1) != 1)
 					printChar('s');
-					
+
 			++arg;
 		} else printChar(*fmt);
 		++fmt;

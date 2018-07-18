@@ -46,18 +46,15 @@ void memcpy(void* dest, void* src, uint32_t size)
 	while(size > 0)
 	{
 		*to = *from;
-		
+
 		size--;
 		from++;
 		to++;
 	}
 }
 
-char* itoa(int value, int base)
+char* itoa(int value, char* result, int base)
 {
-	// FIXME The result buffer should be an argument passed in and not allocated
-	char* result = (char*)kmalloc(8 * sizeof(value) + 2);
-
 	if (base < 2 || base > 36) { *result = '\0'; return result; }
 
 	char* ptr = result, *ptr1 = result, tmp_char;
@@ -82,11 +79,8 @@ char* itoa(int value, int base)
 	return result;
 }
 
-char* utoa(unsigned int value, int base)
+char* utoa(unsigned int value, char* result, int base)
 {
-	// FIXME The result buffer should be an argument passed in and not allocated
-	char* result = (char*)kmalloc(8 * sizeof(value) + 2);
-
 	if(base < 2 || base > 36) {
 		*result = '\0';
 		return result;
