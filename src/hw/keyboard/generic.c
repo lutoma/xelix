@@ -78,50 +78,6 @@ static void flush()
 		log(LOG_INFO, "keyboard: flush: Dropping scancode 0x%x.\n", inb(0x60));
 }
 
-#if 0
-// Identify keyboard. You should _not_ call this after initialization.
-static char* identify()
-{
-	/* XT    : Timeout (NOT Port[0x64].Bit[6] = true)
-	 * AT    : 0xFA
-	 * MF-II : 0xFA 0xAB 0x41
-	 */
-
-	keyboard_sendKeyboard(0xF2);
-
-	// Wait for scancodes
-	uint64_t startTick = pit_getTickNum();
-	while(true)
-	{
-		if(inb(0x64) & 1)
-			break;
-
-		uint64_t nowTick = pit_getTickNum();
-
-		// Still no result after 0.5 seconds
-		if((startTick - nowTick) / PIT_RATE >= 0.5)
-			return "XT";
-	}
-
-	uint8_t one = inb(0x60);
-	uint8_t two = inb(0x60);
-	uint8_t three = inb(0x60);
-
-	log(LOG_INFO, "keyboard: identify: one = 0x%x, two = 0x%x, three = 0x%x.\n", one, two, three);
-
-	switch(one)
-	{
-		case 0xFA:
-			if(two == 0xAB && three == 0x41)
-				return "MF-II";
-			else
-				return "AT";
-	}
-
-	return "Unknown";
-}
-#endif
-
 // Handle a scancode. Calls the active function
 static void handleScancode(uint8_t code, uint8_t code2)
 {
