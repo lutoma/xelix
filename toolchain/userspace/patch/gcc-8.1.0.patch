@@ -1,0 +1,68 @@
+diff --git download/gcc-8.1.0/config.sub b/config.sub
+index f2632cd8a..318d25853 100755
+--- download/gcc-8.1.0/config.sub
++++ b/config.sub
+@@ -1416,7 +1416,8 @@ case $os in
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme*)
++	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme* \
++	      | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff --git download/gcc-8.1.0/fixincludes/mkfixinc.sh b/fixincludes/mkfixinc.sh
+index 0f9648608..728c9e490 100755
+--- download/gcc-8.1.0/fixincludes/mkfixinc.sh
++++ b/fixincludes/mkfixinc.sh
+@@ -11,6 +11,7 @@ target=fixinc.sh
+
+ # Check for special fix rules for particular targets
+ case $machine in
++    *-xelix-* | \
+     i?86-*-cygwin* | \
+     i?86-*-mingw32* | \
+     x86_64-*-mingw32* | \
+diff --git download/gcc-8.1.0/gcc/config.gcc b/gcc/config.gcc
+index a5defb0f0..1fb14b312 100644
+--- download/gcc-8.1.0/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -935,6 +935,12 @@ case ${target} in
+   default_use_cxa_atexit=yes
+   use_gcc_stdint=wrap
+   ;;
++*-*-xelix*)
++  extra_parts="crtbegin.o crtend.o"
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  ;;
+ esac
+
+ case ${target} in
+@@ -1542,6 +1548,9 @@ x86_64-*-openbsd*)
+ 	gas=yes
+ 	gnu_ld=yes
+ 	;;
++i[34567]86-*-*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h xelix.h"
++    ;;
+ i[34567]86-*-linux* | i[34567]86-*-kfreebsd*-gnu | i[34567]86-*-gnu* | i[34567]86-*-kopensolaris*-gnu)
+ 			# Intel 80386's running GNU/*
+ 			# with ELF format using glibc 2
+diff --git download/gcc-8.1.0/libgcc/config.host b/libgcc/config.host
+index 11b4acaff..6a12c2f8b 100644
+--- download/gcc-8.1.0/libgcc/config.host
++++ b/libgcc/config.host
+@@ -753,6 +753,10 @@ i[34567]86-*-mingw*)
+ 	fi
+ 	tmake_file="${tmake_file} ${tmake_eh_file} ${tmake_dlldir_file} i386/t-slibgcc-cygming i386/t-cygming i386/t-mingw32 t-crtfm i386/t-chkstk t-dfprules"
+ 	;;
++i[34567]86-*-xelix*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
+ x86_64-*-mingw*)
+ 	case ${target_thread_file} in
+ 	  win32)
