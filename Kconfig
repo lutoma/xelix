@@ -9,6 +9,9 @@ config PIT_RATE
 	default 500
 
 menu "Debugging"
+	config KMALLOC_DEBUG
+		bool "kmalloc debugging"
+
 	config IDALLOC_DEBUG
 		bool "idalloc debugging"
 

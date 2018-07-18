@@ -26,8 +26,6 @@
 
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
-#define KMALLOC_DEBUG
-
 #ifdef KMALLOC_DEBUG
 	#include <hw/serial.h>
 	#define SERIAL_DEBUG serial_print
