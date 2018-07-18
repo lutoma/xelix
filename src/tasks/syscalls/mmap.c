@@ -21,30 +21,24 @@
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <tasks/scheduler.h>
+#include <lib/log.h>
 
 SYSCALL_HANDLER(mmap)
 {
-	//void *addr = (void *)syscall.params[0];
-	size_t length = syscall.params[1];
-	/* Ignored:
-	int readonly = syscall.params[2];
-	int flags =	syscall.params[3];
-	int fd = syscall->params[4];
-	int offset = syscall->params[5];
-	*/
+	size_t length = VMEM_ALIGN(syscall.params[1]);
 
-	// Hack until the paging stuff works.
 	void* addr = kmalloc_a(length);
-
 	task_t* task = scheduler_get_current();
 
-	struct vmem_page* page = vmem_new_page();
-	page->section = VMEM_SECTION_MMAP;
-	page->cow = 0;
-	page->allocated = 1;
-	page->virt_addr = addr;
-	page->phys_addr = addr;
-	vmem_add_page(task->memory_context, page);
+	for(intptr_t i = 0; i < length; i += PAGE_SIZE) {
+		struct vmem_page* page = vmem_new_page();
+		page->section = VMEM_SECTION_MMAP;
+		page->cow = 0;
+		page->allocated = 1;
+		page->virt_addr = (intptr_t)addr + i;
+		page->phys_addr = (intptr_t)addr + i;
+		vmem_add_page(task->memory_context, page);
+	}
 
-	SYSCALL_RETURN((int)addr);
+	SYSCALL_RETURN((intptr_t)addr);
 }

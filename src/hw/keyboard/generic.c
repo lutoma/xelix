@@ -183,7 +183,7 @@ static void irq_handler(cpu_state_t* regs)
 
 static console_read_t* console_driver_keyboard_read(console_info_t *info)
 {
-	if (keyboard_buffer.size == 0 || keyboard_buffer.offset == 0)
+	if (likely(keyboard_buffer.size == 0 || keyboard_buffer.offset == 0))
 		return NULL;
 
 	if (keyboard_buffer.size == 1)

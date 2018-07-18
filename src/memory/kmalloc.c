@@ -179,7 +179,7 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 		*phys = (uint32_t)((uint32_t)header + sizeof(struct mem_block));
 
 	#ifdef KMALLOC_DEBUG
-		itoa(((uint32_t)header + sizeof(struct mem_block)), itoa_result, 16);
+		itoa((intptr_t)result, itoa_result, 16);
 		serial_print("RESULT 0x");
 		serial_print(itoa_result);
 		serial_print("\n");
