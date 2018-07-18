@@ -21,17 +21,29 @@
 
 #include "kmalloc.h"
 #include "vmem.h"
+#include "track.h"
 #include <lib/log.h>
+#include <lib/panic.h>
+#include <hw/serial.h>
 #include <lib/multiboot.h>
 
 static uint32_t memoryPosition;
+static bool initialized = false;
 
 /* Use the macros instead of directly calling this functions.
  * For details on the __attribute__((alloc_size(1))), see the GCC
  * documentation at http://is.gd/6gmEqk.
  */
-void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys)
+void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
+	if(unlikely(!initialized)) {
+		serial_print("Call to kmalloc before it's initialized.\n");
+		serial_print(_debug_file);
+		serial_print("\n");
+		serial_print(_debug_func);
+		panic("Call to kmalloc before it's initialized.");
+	}
+
 	// If the address is not already page-aligned
 	if (align == 1 && (memoryPosition & 0xFFFFF000))
 		memoryPosition = VMEM_ALIGN(memoryPosition);

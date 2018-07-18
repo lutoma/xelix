@@ -21,15 +21,15 @@
 #include <lib/generic.h>
 
 // Use macros.
-void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys);
+void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *phys, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
 /* A few shortcuts so one doesn't always have to pass all the
  * parameters all the time.
- */ 
-#define kmalloc(sz) __kmalloc(sz, false, NULL)
-#define kmalloc_a(sz) __kmalloc(sz, true, NULL)
-#define kmalloc_p(sz, phys) __kmalloc(sz, false, phys)
-#define kmalloc_ap(sz, phys) __kmalloc(sz, true, phys)
+ */
+#define kmalloc(sz) __kmalloc(sz, false, NULL, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc_a(sz) __kmalloc(sz, true, NULL, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc_p(sz, phys) __kmalloc(sz, false, phys, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc_ap(sz, phys) __kmalloc(sz, true, phys, __FILE__, __LINE__, __FUNCTION__)
 #define kmalloc_pa kmalloc_ap
 
 void kfree(void *ptr);
