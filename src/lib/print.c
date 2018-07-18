@@ -1,5 +1,5 @@
 /* printf.c: Print and related functions
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,36 +24,36 @@
 
 #include <console/interface.h>
 
-// Print a single char
-void printChar(const char c)
-{
+void putchar(const char c) {
 	char s[2];
 	s[0] = c;
 	s[1] = 0;
 	console_write(NULL, s, 1);
 }
 
-// Printing a string, formatted with the stuff in the arg array
-void vprintf(const char *fmt, void** arg) {
+void print(const char* s) {
+	console_write(NULL, s, strlen(s));
+}
+
+void __vprintf(const char *fmt, void** arg, void (print_cb)(const char*), void (putchar_cb)(const char)) {
 	bool state = false;
 	char toa_result[300];
 
-	while (*fmt) {
-		if (*fmt == '%') {
+	while(*fmt) {
+		if(unlikely(*fmt == '%')) {
 			++fmt;
 			switch (*fmt) {
-				case 'c': printChar(*(char *)arg); break;
-				// Print (null) if pointer == NULL.
-				case 's': print(*(char **)arg ? *(char **)arg : "(null)"); break;
-				case 'b': print(itoa(*(unsigned *)arg, (char*)&toa_result, 2)); break;
-				case 'd': print(itoa(*(unsigned *)arg, (char*)&toa_result, 10)); break;
-				case 'u': print(utoa(*(unsigned *)arg, (char*)&toa_result, 10)); break;
-				case 'y': print(utoa(*(unsigned *)arg, (char*)&toa_result, 16)); break;
-				case 'x': print(itoa(*(unsigned *)arg, (char*)&toa_result, 16)); break;
-				case 't': print(*(unsigned *)arg ? "true" : "false"); break;
+				case 'c': putchar_cb(*(char *)arg); break;
+				case 's': print_cb(*(char **)arg ? *(char **)arg : "(null)"); break;
+				case 'b': print_cb(itoa(*(unsigned *)arg, (char*)&toa_result, 2)); break;
+				case 'd': print_cb(itoa(*(unsigned *)arg, (char*)&toa_result, 10)); break;
+				case 'u': print_cb(utoa(*(unsigned *)arg, (char*)&toa_result, 10)); break;
+				case 'y': print_cb(utoa(*(unsigned *)arg, (char*)&toa_result, 16)); break;
+				case 'x': print_cb(itoa(*(unsigned *)arg, (char*)&toa_result, 16)); break;
+				case 't': print_cb(*(unsigned *)arg ? "true" : "false"); break;
 			}
 
-			if(*fmt == '%')
+			if(unlikely(*fmt == '%'))
 			{
 				if(!state)
 				{
@@ -70,14 +70,18 @@ void vprintf(const char *fmt, void** arg) {
 			 */
 			if(*fmt == 'p')
 				if(*(unsigned*)(arg-1) != 1)
-					printChar('s');
+					putchar_cb('s');
 
 			++arg;
-		} else printChar(*fmt);
+		} else putchar_cb(*fmt);
 		++fmt;
 	}
 }
 
 void printf(const char *fmt, ...) {
 	vprintf(fmt, (void**)(&fmt) + 1);
+}
+
+void serial_printf(const char *fmt, ...) {
+	serial_vprintf(fmt, (void**)(&fmt) + 1);
 }

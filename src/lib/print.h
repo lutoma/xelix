@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2016 Lukas Martini
+/* Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,10 +21,14 @@
 #include "generic.h"
 #include <stdarg.h>
 #include <lib/string.h>
+#include <hw/serial.h>
 #include <console/interface.h>
 
-#define print(s) console_write(NULL, s, strlen(s))
+#define vprintf(fmt, arg...) __vprintf(fmt, arg, print, putchar)
+#define serial_vprintf(fmt, arg...) __vprintf(fmt, arg, serial_print, serial_send)
 
-void printChar(const char c);
-void vprintf(const char *fmt, void** arg);
+void putchar(const char c);
+void print(const char* s);
+void __vprintf(const char *fmt, void** arg, void (print_cb)(const char*), void (putchar_cb)(const char));
 void printf(const char *fmt, ...);
+void serial_printf(const char *fmt, ...);
