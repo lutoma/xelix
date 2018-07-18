@@ -1,9 +1,9 @@
 TARGET=i586-pc-xelix
 PREFIX=$(CURDIR)/local
 
-BINUTILS_VERSION=2.22
+BINUTILS_VERSION=2.31
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
-BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.gz
+BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 
 GCC_VERSION=4.6.4
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}

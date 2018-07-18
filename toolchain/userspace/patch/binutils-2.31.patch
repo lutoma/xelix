@@ -1,0 +1,74 @@
+diff --git download/binutils-2.31/bfd/config.bfd b/bfd/config.bfd
+index 6391f356..66909ec0 100644
+--- download/binutils-2.31/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -646,6 +646,10 @@ case "${targ}" in
+     targ_selvecs=
+     targ64_selvecs=x86_64_elf64_vec
+     ;;
++  i[3-7]86-*-xelix*)
++    targ_defvec=i386_elf32_vec
++    targ_selfvecs=i386coff_vec
++    ;;
+ #ifdef BFD64
+   x86_64-*-cloudabi*)
+     targ_defvec=x86_64_elf64_cloudabi_vec
+diff --git download/binutils-2.31/config.sub b/config.sub
+index c95acc68..f4ddc6a5 100755
+--- download/binutils-2.31/config.sub
++++ b/config.sub
+@@ -1376,7 +1376,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd*)
++	     | midnightbsd* | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+diff --git download/binutils-2.31/gas/configure.tgt b/gas/configure.tgt
+index 3d0415c1..ee37d874 100644
+--- download/binutils-2.31/gas/configure.tgt
++++ b/gas/configure.tgt
+@@ -255,6 +255,7 @@ case ${generic_target} in
+   i386-*-chaos)				fmt=elf ;;
+   i386-*-rdos*)				fmt=elf ;;
+   i386-*-darwin*)			fmt=macho ;;
++  i386-*-xelix*)			fmt=elf ;;
+
+   ia16-*-elf*)				fmt=elf ;;
+
+diff --git download/binutils-2.31/ld/Makefile.in b/ld/Makefile.in
+index 4792b2b0..d3fbcd65 100644
+--- download/binutils-2.31/ld/Makefile.in
++++ b/ld/Makefile.in
+@@ -773,6 +773,7 @@ ALL_EMULATION_SOURCES = \
+ 	eelf_i386_ldso.c \
+ 	eelf_i386_nacl.c \
+ 	eelf_i386_sol2.c \
++	exelix_i386.c \
+ 	eelf_i386_vxworks.c \
+ 	eelf_iamcu.c \
+ 	eelf_s390.c \
+@@ -2905,6 +2906,9 @@ eelf_i386_vxworks.c: $(srcdir)/emulparams/elf_i386_vxworks.sh \
+   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emultempl/vxworks.em \
+   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
++exelix_i386.c: $(srcdir)/emulparams/xelix_i386.sh \
++  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++
+ eelf_iamcu.c: $(srcdir)/emulparams/elf_iamcu.sh \
+   $(ELF_X86_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
+diff --git download/binutils-2.31/ld/configure.tgt b/ld/configure.tgt
+index fad8b2e5..811fd5eb 100644
+--- download/binutils-2.31/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -365,6 +365,7 @@ i[3-7]86-*-nacl*)	targ_emul=elf_i386_nacl
+ 			targ64_extra_emuls="elf32_x86_64_nacl elf_x86_64_nacl"
+ 			targ64_extra_libpath=$targ64_extra_emuls
+ 			;;
++i[3-7]86-*-xelix*)	targ_emul=xelix_i386 ;;
+ x86_64-*-nacl*)		targ_emul=elf32_x86_64_nacl
+ 			targ_extra_emuls="elf_i386_nacl elf_x86_64_nacl armelf_nacl armelfb_nacl"
+ 			targ_extra_libpath=$targ_extra_emuls
