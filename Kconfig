@@ -71,6 +71,10 @@ menu "File systems"
 	config XSFS_MD5SUM_ALL
 	bool "xsfs: Dump md5sum for all files read"
 	depends on ENABLE_XSFS
+
+	config XSFS_DEBUG
+	bool "xsfs debugging"
+	depends on ENABLE_XSFS
 endmenu
 
 

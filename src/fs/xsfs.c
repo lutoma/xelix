@@ -1,5 +1,5 @@
 /* xsfs.c: The most laughably simple 'file system' you will ever have seen. For debugging.
- * Copyright © 2016 Lukas Martini
+ * Copyright © 2016-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -75,8 +75,9 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 		int sizeidx = find_substr(rd, "-");
 		int endidx = find_substr(rd + sizeidx, ":") + 1;
 
-		char* filesize_str = strndup(rd +sizeidx + 1, endidx - 2);
+		char* filesize_str = strndup(rd + sizeidx + 1, endidx - 2);
 		filesize = atoi(filesize_str);
+		kfree(filesize_str);
 
 		if(!strncmp(rd, path, sizeidx - 1)) {
 			found = true;
@@ -91,13 +92,16 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 		return 0;
 	}
 
+	if(offset >= filesize) {
+		#ifdef XSFS_DEBUG
+		serial_printf("offset => filesize, returning\n");
+		#endif
 
-	if(size > filesize) {
-		size = filesize;
+		return 0;
 	}
 
 	// This is all embarassingly stupid and inefficient. But it works for now.
-	char* data = kmalloc(header_end + fileoffset + filesize + 512);
+	char* data = kmalloc(header_end + fileoffset + filesize + 1024);
 
 	// FIXME Only read the relevant sectors
 	for(int i = 0; i*512 < header_end + fileoffset + filesize + 510; i++) {
@@ -105,9 +109,32 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 	}
 
 	data += header_end + fileoffset + 1;
-	data[filesize] = 0;
 
-	memcpy(dest, data, size);
+	if(offset + size > filesize) {
+		#ifdef XSFS_DEBUG
+		serial_printf("Size too large, capping: 0x%x > 0x%x. New size: 0x%x\n", offset + size, filesize, filesize - offset);
+		#endif
+
+		size = filesize - offset;
+	}
+
+	if(!size) {
+		#ifdef XSFS_DEBUG
+		serial_printf("New file size is 0, returning\n");
+		#endif
+
+		kfree(data);
+		return 0;
+	}
+
+	data[offset + size] = 0;
+
+	#ifdef XSFS_DEBUG
+	serial_printf("File offset: 0x%x, file size: 0x%x, size 0x%x\n", offset, filesize, size);
+	#endif
+
+	memcpy(dest, data + offset, size);
+	kfree(data);
 
 	#ifdef XSFS_MD5SUM_ALL
 	log(LOG_DEBUG, "Read file %s size %d with resulting md5sum of:\n\t", path, filesize);
@@ -132,6 +159,7 @@ void xsfs_init()
 
 	hdr_offset = 6 + idx;
 	num_files = atoi(numstr);
+	kfree(numstr);
 	header_end = find_substr(superblock, "\t");
 
 	vfs_mount("/", xsfs_read_file, xsfs_read_directory);
