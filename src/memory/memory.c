@@ -22,15 +22,7 @@
 #include <lib/log.h>
 #include "kmalloc.h"
 
-extern bool __attribute__((__cdecl__)) a20_check(); // ASM.
-
 void memory_init()
 {
 	init(kmalloc);
-	
-	bool a20 = a20_check();
-	if(a20)
-		log(LOG_INFO, "memory: A20 line already enabled.\n");
-	else // Todo: Enable it.
-		log(LOG_WARN, "memory: A20 line is not enabled.\n");
 }
