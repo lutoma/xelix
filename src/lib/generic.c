@@ -108,20 +108,6 @@ uint64_t atoi(const char* s)
 	return n;
 }
 
-//Read a byte from the CMOS
-uint8_t readCMOS (uint16_t port)
-{
-	outb(0x70, port);
-	return inb(0x71);
-}
-
-//Write a byte into the CMOS
-void writeCMOS(uint16_t port,uint8_t value) {
-  uint8_t tmp = inb(0x70);
-  outb(0x70, (tmp & 0x80) | (port & 0x7F));
-  outb(0x71,value);
-}
-
 /* Freezes the kernel (without possibility to unfreeze).
  * Mainly used for debugging when developing and in panic(_raw).
  */
@@ -144,25 +130,6 @@ int32_t (memcmp)(const void *s1, const void *s2, size_t n)
 		us2++;
 	}
 	return 0;
-}
-
-/* Reboot the computer. Uses the CPU reset function of the keyboard
- * controller. That's right, no tripple faults here. Sorry.
- */
-void reboot()
-{
-	interrupts_disable();
-	log(LOG_WARN, "generic: Going to reboot NOW!");
-	keyboard_sendKBC(0xFE);
-	freeze();
-}
-
-
-void halt()
-{
-	log(LOG_WARN, "generic: Going to halt NOW!");
-	printf("\n\nYou may turn off your PC now.\n");
-	freeze();
 }
 
 // Sleep x seconds

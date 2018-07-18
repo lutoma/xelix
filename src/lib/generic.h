@@ -70,8 +70,6 @@ typedef uint8_t byte;
 
 bool init_haveGrub;
 
-uint8_t readCMOS (uint16_t port);
-void writeCMOS (uint16_t port, uint8_t value);
 void memset(void* ptr, uint8_t fill, uint32_t size);
 void memcpy(void* dest, void* src, uint32_t size);
 char* itoa (int num, char* result, int base);
@@ -79,8 +77,6 @@ char* utoa(unsigned int value, char* result, int base);
 uint64_t atoi(const char *s);
 void freeze(void);
 int32_t memcmp(const void* s1, const void* s2, size_t n);
-void reboot();
-void halt();
 void sleep(time_t timeout);
 void sleep_ticks(time_t timeout);
 
