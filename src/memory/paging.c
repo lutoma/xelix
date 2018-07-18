@@ -19,7 +19,7 @@
 
 #include "paging.h"
 #include <lib/generic.h>
-#include <memory/idalloc.h>
+#include <memory/kmalloc.h>
 #include <lib/log.h>
 #include <lib/print.h>
 #include <memory/vmem.h>
@@ -46,14 +46,6 @@ typedef struct {
 struct paging_context {
 	page_directory_t directory;
 	page_table_t tables[1024];
-};
-
-// Use idalloc to avoid strain on kmalloc
-static idalloc_ctx_t idalloc_ctx = {
-	.size = 0xffffe000U / 4096 * sizeof(struct paging_context) * 3,
-	.start = 0,
-	.pos = 0,
-	.initialized = false
 };
 
 static int paging_assign(struct paging_context *ctx, uint32_t virtual, uint32_t physical, bool rw, bool user, bool mapped)
@@ -109,7 +101,7 @@ int paging_apply(struct vmem_context *ctx)
 	if (pgCtx == NULL)
 	{
 		/* Build paging context for vmem_context */
-		pgCtx = paging_AlignAddr((intptr_t)idalloc(sizeof(struct paging_context), &idalloc_ctx));
+		pgCtx = kmalloc_a(sizeof(struct paging_context));
 		if (pgCtx == NULL)
 			return false;
 		memset(pgCtx, 0, sizeof(struct paging_context));

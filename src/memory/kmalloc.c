@@ -85,6 +85,13 @@ void* __attribute__((alloc_size(1))) __kmalloc(size_t sz, bool align, uint32_t *
 		serial_print("0x");
 		serial_print(itoa_result);
 		serial_print(" ");
+
+		if(sz >= 1024) {
+			serial_print("(");
+			itoa(sz/1024, itoa_result, 10);
+			serial_print(itoa_result);
+			serial_print(" kB) ");
+		}
 	#endif
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
