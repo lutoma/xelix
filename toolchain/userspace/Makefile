@@ -133,7 +133,7 @@ newlib-copy:
 newlib-reconfig:
 	@echo "Patching newlib autoconf files"
 	@-rm -r build/newlib/
-	@patch -p0 < patch/newlib-${NEWLIB_VERSION}.patch
+	@-patch -p0 < patch/newlib-${NEWLIB_VERSION}.patch
 
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && aclocal-1.11 -I ../../../ -I ../../../../
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoconf-2.64

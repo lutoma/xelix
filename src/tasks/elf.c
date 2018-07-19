@@ -1,5 +1,5 @@
 /* elf.c: Loader for ELF binaries
- * Copyright © 2011-2016 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -30,25 +30,57 @@
 #include <memory/track.h>
 
 #ifdef ELF_DEBUG
- #define debug(args...) log(LOG_DEBUG, args);
+ #define debug(args...) serial_printf(args);
 #else
  #define debug(...)
 #endif
 
 #define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
 
+#define SHF_WRITE 0x1
+#define SHF_ALLOC 0x2
+#define SHF_EXECINSTR 0x4
+#define SHF_MASKPROC 0xf0000000
+
+#define SHT_NULL 0
+#define SHT_PROGBITS 1
+#define SHT_SYMTAB 2
+#define SHT_STRTAB 3
+#define SHT_RELA 4
+#define SHT_HASH 5
+#define SHT_DYNAMIC 6
+#define SHT_NOTE 7
+#define SHT_NOBITS 8
+#define SHT_REL 9
+#define SHT_SHLIB 10
+#define SHT_DYNSYM 11
+#define SHT_LOPROC 0x70000000
+#define SHT_HIPROC 0x7fffffff
+#define SHT_LOUSER 0x80000000
+#define SHT_HIUSER 0xffffffff
+
+#define ELF_TYPE_NONE 0
+#define ELF_TYPE_REL 1
+#define ELF_TYPE_EXEC 2
+#define ELF_TYPE_DYN 3
+#define ELF_TYPE_CORE 4
+
+#define ELF_ARCH_NONE 0
+#define ELF_ARCH_386 3
+
+#define ELF_VERSION_CURRENT 1
+
 static char header[4] = {0x7f, 'E', 'L', 'F'};
 
-struct vmem_context* map_task(elf_t* bin) {
+
+// Breaks with -O3. That should probably be debugged by someone at some point.
+struct vmem_context* __attribute__((optimize("O0"))) map_task(elf_t* bin) {
 	/* 1:1 map "lower" memory (kernel etc.)
 	 * FIXME This is really generic and hacky. Should instead do some smart
 	 * stuff with memory/track.c – That is, as soon as we have a complete
 	 * collection of all the memory areas we need.
 	 */
 	struct vmem_context *ctx = vmem_new();
-
-	debug("Using memory context 0x%x\n", ctx);
-
 	for (char *i = (char*)0; i <= (char*)0xfffffff; i += PAGE_SIZE)
 	{
 		struct vmem_page *page = vmem_new_page();
@@ -62,54 +94,55 @@ struct vmem_context* map_task(elf_t* bin) {
 		vmem_add_page(ctx, page);
 	}
 
-	elf_program_t* phead = ((void*)bin + bin->phoff);
+	elf_section_t* shead = (elf_section_t*)((uint32_t)bin + bin->shoff);
+	for(int i = 0; i < bin->shnum; i++) {
+		#ifdef ELF_DEBUG
+			elf_section_t* strings = (elf_section_t*)((uint32_t)bin + bin->shoff + (bin->shentsize * bin->shstrndx));
+			char* name = (char*)(uint32_t)bin + strings->offset + shead->name;
+			debug("elf: Section name %s, type 0x%x, addr 0x%x, size 0x%x\n", name, shead->type, shead->addr, shead->size);
+		#endif
 
-	for(int i = 0; i < bin->phnum; i++, phead++)
-	{
-		if(phead->alignment != PAGE_SIZE && phead->alignment != 0 && phead->alignment != 1) {
-			log(LOG_WARN, "elf: Incompatible alignment request (%d). Proceeding, but this may fail.\n",
-				phead->alignment);
+		// Unused block / block doesn't need to be allocated
+		if(!shead->type || !(shead->flags & SHF_ALLOC)) {
+			goto loop_cont;
 		}
 
-		debug("Reading program header %d, offset 0x%x, size 0x%x, virt addr 0x%x\n", i, phead->offset, phead->memsize, phead->virtaddr);
+		void* data = (intptr_t)bin + shead->offset;
+		debug("Allocating block %d from phys 0x%x -> 0x%x to virt 0x%x -> 0x%x\n",
+			i, data, data + shead->size, shead->addr, shead->addr + shead->size);
 
-		//void* phys_location = (void*)bin + phead->offset;
+		uint32_t pages_start = VMEM_ALIGN_DOWN(shead->addr);
+		uint32_t phys_start = VMEM_ALIGN_DOWN(data);
+		bool readonly = !(shead->flags & SHF_WRITE);
 
-		// Allocate new _physical_ location for this in RAM and copy data there
-		// FIXME Find out what the proper solution for this is
-		uint32_t copy_size = max(phead->filesize, phead->memsize) + PAGE_SIZE;
+		// A bit hacky, should probably detect this based on SHF_EXECINSTR
+		int page_section = VMEM_SECTION_HEAP;
+		if(shead->type == SHT_PROGBITS && readonly) {
+			page_section = VMEM_SECTION_CODE;
+		}
 
-		debug("copy size is 0x%y\n", copy_size);
-
-		void* phys_location = (void*)kmalloc_a(copy_size);
-		memset(phys_location, 0, copy_size);
-		memcpy(phys_location, (void*)bin + phead->offset, copy_size);
-
-		bool readonly = !(phead->flags & ELF_PROGRAM_FLAG_WRITE);
-
-		debug("elf: Remapping virt 0x%x to phys 0x%x, size 0x%y (src 0x%x)\n", phead->virtaddr, phys_location, phead->filesize, (void*)bin + phead->offset);
-
-		/* Now, remap the _virtual_ location where the ELF binary wants this
-		 * section to be at to the physical location.
-		 */
-		for(int j = 0; j < copy_size; j += PAGE_SIZE)
+		debug("Pages start: 0x%x, phys start: 0x%x\n", pages_start, phys_start);
+		for(int j = 0; j < VMEM_ALIGN(shead->size); j += PAGE_SIZE)
 		{
-			debug("elf: - mapping page 0x%x to phys 0x%x\n", phead->virtaddr + j, phys_location + j);
+			debug("elf: - mapping page 0x%x to phys 0x%x\n", pages_start + j, phys_start + j);
 
-			struct vmem_page* opage = vmem_get_page_virt(ctx, phead->virtaddr + j);
+			struct vmem_page* opage = vmem_get_page_virt(ctx, pages_start + j);
 			if(opage) {
-				vmem_rm_page_virt(ctx, phead->virtaddr + j);
+				vmem_rm_page_virt(ctx, pages_start + j);
 			}
 
 			struct vmem_page *page = vmem_new_page();
-			page->section = readonly ? VMEM_SECTION_CODE : VMEM_SECTION_HEAP;
+			page->section = page_section;
 			page->readonly = readonly;
 			page->cow = 0;
 			page->allocated = 1;
-			page->virt_addr = phead->virtaddr + j;
-			page->phys_addr = phys_location + j;
+			page->virt_addr = pages_start + j;
+			page->phys_addr = phys_start + j;
 			vmem_add_page(ctx, page);
 		}
+
+		loop_cont:
+		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)bin->shentsize);
 	}
 
 	return ctx;
@@ -144,6 +177,9 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	if(bin->entry == NULL)
 		fail("elf: elf_load: This elf file doesn't have an entry point\n");
 
+	if(!bin->phnum)
+		fail("elf: No program headers\n");
+
 	struct vmem_context *ctx = map_task(bin);
 	debug("Entry point is 0x%x\n", bin->entry);
 
@@ -160,8 +196,8 @@ task_t* elf_load_file(char* path, char** environ, char** argv, int argc)
 	vfs_file_t* fd = vfs_open(path);
 
 	// FIXME Use this properly
-	void* data = kmalloc(1024 * 1024);
-	size_t read = vfs_read(data, 1024 * 1024, fd);
+	void* data = kmalloc_a(1024 * 1024 * 5);
+	size_t read = vfs_read(data, 1024 * 1024 * 5, fd);
 
 	if(read < 1)
 		return NULL;

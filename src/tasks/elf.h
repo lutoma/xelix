@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,37 +21,24 @@
 #include <lib/generic.h>
 #include <tasks/scheduler.h>
 
-#define ELF_TYPE_NONE 0
-#define ELF_TYPE_REL 1
-#define ELF_TYPE_EXEC 2
-#define ELF_TYPE_DYN 3
-#define ELF_TYPE_CORE 4
-
-#define ELF_ARCH_NONE 0
-#define ELF_ARCH_386 3
-
-#define ELF_VERSION_CURRENT 1
-
-#define ELF_PROGRAM_FLAG_EXEC 0x1
-#define ELF_PROGRAM_FLAG_WRITE 0x2
-#define ELF_PROGRAM_FLAG_READ 0x3
-
 typedef struct {
 	unsigned char magic[4];
 	/* Note: There _is_ other stuff in here, but we don't need it */
-	unsigned char pad[12]; 
+	unsigned char pad[12];
 } __attribute__((packed)) elf_ident_t;
 
 typedef struct {
-	uint32_t    type;
-	uint32_t    offset;
-	void*		virtaddr;
-	void*		physaddr;
-	uint32_t    filesize;
-	uint32_t    memsize;
-	uint32_t    flags;
-	uint32_t    alignment;
-} __attribute__((packed)) elf_program_t;
+	uint32_t name;
+	uint32_t type;
+	uint32_t flags;
+	void* addr;
+	uint32_t offset;
+	uint32_t size;
+	uint32_t link;
+	uint32_t info;
+	uint32_t addralign;
+	uint32_t entsize;
+} __attribute__((packed)) elf_section_t;
 
 typedef struct {
 	elf_ident_t ident;
