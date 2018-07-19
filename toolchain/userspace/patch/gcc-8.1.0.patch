@@ -28,7 +28,7 @@ diff --git download/gcc-8.1.0/gcc/config.gcc b/gcc/config.gcc
 index a5defb0f0..1fb14b312 100644
 --- download/gcc-8.1.0/gcc/config.gcc
 +++ b/gcc/config.gcc
-@@ -935,6 +935,12 @@ case ${target} in
+@@ -935,6 +935,13 @@ case ${target} in
    default_use_cxa_atexit=yes
    use_gcc_stdint=wrap
    ;;
@@ -37,6 +37,7 @@ index a5defb0f0..1fb14b312 100644
 +  gas=yes
 +  gnu_ld=yes
 +  default_use_cxa_atexit=yes
++  use_gcc_stdint=provide
 +  ;;
  esac
 
