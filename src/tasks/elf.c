@@ -183,9 +183,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	struct vmem_context *ctx = map_task(bin);
 	debug("Entry point is 0x%x\n", bin->entry);
 
-	// The last argument should be false only as long as we use the kernel context
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,
-		ctx, false);
+		ctx, true);
 
 	vmem_set_task(ctx, task);
 	return task;
