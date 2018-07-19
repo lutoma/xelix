@@ -24,6 +24,10 @@
 SYSCALL_HANDLER(opendir)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
-	SYSCALL_RETURN(vfs_dir_open((char*)syscall.params[0])->num);
+	vfs_dir_t* dir = vfs_dir_open((char*)syscall.params[0]);
+	if(!dir) {
+		SYSCALL_FAIL();
+	}
+
+	SYSCALL_RETURN(dir->num);
 }
-	

@@ -204,22 +204,40 @@ ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
 	return -1;
 }
 
-int closedir(DIR* dd)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
 DIR* opendir(const char* path)
 {
-	errno = ENOSYS;
-	return NULL;
+	int r = call_opendir(path);
+	if(!r) {
+		errno = ENOENT;
+		return NULL;
+	}
+
+	DIR* dir = malloc(sizeof(DIR));
+	dir->num = r;
+	dir->path = strndup(path);
+	dir->offset = 0;
+	return dir;
+
 }
 
-struct dirent* readdir(DIR* dd)
+int closedir(DIR* dir)
 {
-	errno = ENOSYS;
-	return NULL;
+	free(dir->path);
+	free(dir);
+	return 0;
+}
+
+struct dirent* readdir(DIR* dir)
+{
+	char* r = call_readdir(dir->num, dir->offset++);
+	if(!r) {
+		return NULL;
+	}
+
+	struct dirent* ent = malloc(sizeof(struct dirent));
+	strncpy(ent->d_name, r, PATH_MAX);
+	ent->d_ino = 0; // FIXME
+	return ent;
 }
 
 int readdir_r(DIR* dd, struct dirent* de, struct dirent** de2)

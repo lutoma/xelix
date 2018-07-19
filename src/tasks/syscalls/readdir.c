@@ -28,6 +28,6 @@ SYSCALL_HANDLER(readdir)
 	if(dd == NULL) {
 		SYSCALL_FAIL();
 	}
-	
+
 	SYSCALL_RETURN((int)vfs_dir_read(dd, syscall.params[1]));
 }

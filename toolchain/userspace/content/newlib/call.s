@@ -168,3 +168,18 @@ call_execnew:
     mov edx, [esp + 12]
     int 0x80
     ret
+
+.global call_opendir
+call_opendir:
+    mov eax, 16
+    mov ebx, [esp + 4]
+    int 0x80
+    ret
+
+.global call_readdir
+call_readdir:
+    mov eax, 17
+    mov ebx, [esp + 4]
+    mov ecx, [esp + 8]
+    int 0x80
+    ret

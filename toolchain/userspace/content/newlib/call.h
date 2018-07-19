@@ -49,5 +49,7 @@ extern char* call_getcwd(char *buf, size_t size);
 extern int call_fork(void);
 extern int call_wait(int *status);
 extern pid_t call_execnew(const char* path, char* __argv[], char* __env[]);
+extern int call_opendir(const char* path);
+extern char* call_readdir(int id, int offset);
 #endif
 

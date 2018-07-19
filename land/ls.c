@@ -22,8 +22,10 @@ int main() {
 
 	struct dirent *ep;
 	while (ep = readdir (dd)) {
-		puts(ep->d_name);
+		printf("%s ", ep->d_name);
 	}
+
+	printf("\n");
 
 	closedir(dd);
 	return EXIT_SUCCESS;

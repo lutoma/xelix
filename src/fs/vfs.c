@@ -41,7 +41,7 @@ vfs_file_t files[VFS_MAX_OPENFILES];
 vfs_dir_t dirs[VFS_MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
 uint32_t last_file = -1;
-uint32_t last_dir = -1;
+uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
 // Debugging function – Dump a directory and all subdirectories
