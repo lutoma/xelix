@@ -55,9 +55,15 @@ void scheduler_remove(task_t *t)
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
 
-
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
+
+	// Stop child tasks
+	for(task_t* i = t->next; i->next != t->next; i = i->next) {
+		if(i->parent == t) {
+			scheduler_remove(i);
+		}
+	}
 
 	if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
 		t->parent->task_state = TASK_STATE_RUNNING;
