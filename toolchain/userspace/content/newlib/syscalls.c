@@ -25,6 +25,7 @@
 #include <sys/dirent.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -32,9 +33,6 @@
 #include <signal.h>
 #include <sgtty.h>
 #include "call.h"
-
-#undef errno
-extern int errno;
 
 //char *__env[1] = { 0 };
 //char **environ = __env;
