@@ -1,5 +1,9 @@
+## Process this file with automake to generate Makefile.in
+
 AUTOMAKE_OPTIONS = cygnus
+
 INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
+
 AM_CCASFLAGS = $(INCLUDES)
 
 noinst_LIBRARIES = lib.a
@@ -21,5 +25,5 @@ if MAY_SUPPLY_SYSCALLS
 all: crt0.o
 endif
 
-ACLOCAL_AMFLAGS = -I ../../..
+ACLOCAL_AMFLAGS = -I ../../.. -I ../../../..
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host

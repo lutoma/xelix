@@ -9,7 +9,7 @@ GCC_VERSION=8.1.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 
-NEWLIB_VERSION=2.2.0.20150423
+NEWLIB_VERSION=3.0.0.20180226
 NEWLIB_URL=ftp://sources.redhat.com/pub/newlib
 NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
@@ -98,7 +98,7 @@ gcc-patch:
 	@patch -p0 < patch/gcc-${GCC_VERSION}.patch
 	@cp content/gcc/xelix.h download/gcc-${GCC_VERSION}/gcc/config/
 
-newlib-all: newlib-download newlib-patch newlib-make newlib-install
+newlib-all: newlib-download newlib-patch newlib-reconfig newlib-make newlib-install
 
 newlib-clean:
 	@echo "Cleaning newlib"
@@ -130,10 +130,16 @@ newlib-patch:
 	@echo "Patching newlib"
 	-@rm -r build/newlib/
 	@patch -p0 < patch/newlib-${NEWLIB_VERSION}.patch
-	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf
 	@mkdir -p download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix
 	@cp -R content/newlib/* download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/
-	@# Hacky. Probably shouldn't do this.
-	@cp -R content/newlib/include/* download/newlib-${NEWLIB_VERSION}/newlib/libc/include/
-	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf
-	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoreconf
+	#@# Hacky. Probably shouldn't do this.
+	#@cp -R content/newlib/include/* download/newlib-${NEWLIB_VERSION}/newlib/libc/include/
+
+newlib-reconfig:
+	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && aclocal-1.11 -I ../../../ -I ../../../../
+	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoconf-2.64
+	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && automake-1.11 --cygnus Makefile
+
+	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && aclocal-1.11 -I ../.. -I ../../..
+	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf-2.64
+	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && automake-1.11 --cygnus Makefile

@@ -36,8 +36,8 @@
 #undef errno
 extern int errno;
 
-char *__env[1] = { 0 }; 
-//char **environ = __env; 
+//char *__env[1] = { 0 };
+//char **environ = __env;
 
 void _exit(int return_code)
 {
@@ -424,7 +424,7 @@ int tcsetpgrp(int fildes, pid_t pgid_id)
 	return -1;
 }
 
-int socket(int domain, int type, int protocol) 
+int socket(int domain, int type, int protocol)
 {
 	if(domain != AF_INET) {
 		errno = EAFNOSUPPORT;
@@ -498,7 +498,7 @@ int getrusage(int who, struct rusage *r_usage) {
 	errno = ENOSYS;
 	return -1;
 }
-
+/*
 int pselect(int nfds, fd_set *__restrict__ readfds,
 		fd_set *__restrict__ writefds, fd_set *__restrict__ errorfds,
 		const struct timespec *__restrict__ timeout,
@@ -513,7 +513,7 @@ int select(int nfds, fd_set *__restrict__ readfds,
 	errno = ENOSYS;
 	-1;
 }
-
+*/
 struct passwd *getpwnam(const char *name) {
 	errno = ENOSYS;
 	return NULL;

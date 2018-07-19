@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
-
+/*
 #ifndef _SYS_SELECT_H
 #define _SYS_SELECT_H
 

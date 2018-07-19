@@ -47,16 +47,6 @@ typedef uint32_t idtype_t;
  * POSIX and just redefined here. newlib doesn't define them there though. */
 typedef uint32_t id_t;
 
-union sigval {
-  int    sival_int;    /* Integer signal value */
-  void  *sival_ptr;    /* Pointer signal value */
-};
-
-typedef struct {
-  int          si_signo;    /* Signal number */
-  int          si_code;     /* Cause of the signal */
-  union sigval si_value;    /* Signal value */
-} siginfo_t;
 
 pid_t wait(int*);
 int waitid(idtype_t, id_t, siginfo_t*, int);
