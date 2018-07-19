@@ -154,3 +154,17 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	vmem_set_task(ctx, task);
 	return task;
 }
+
+task_t* elf_load_file(char* path, char** environ, char** argv, int argc)
+{
+	vfs_file_t* fd = vfs_open(path);
+
+	// FIXME Use this properly
+	void* data = kmalloc(1024 * 1024);
+	size_t read = vfs_read(data, 1024 * 1024, fd);
+
+	if(read < 1)
+		return NULL;
+
+	return elf_load(data, path, environ, argv, argc);
+}

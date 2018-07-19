@@ -1,5 +1,5 @@
 /* init.c: Initialization code of the kernel
- * Copyright © 2010-2018 Lukas Martini
+ * Copyright © 2010-2015 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -140,12 +140,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	char* __env[] = { NULL };
 	char* __argv[] = { "init", NULL };
 
-	void* init_data = vfs_load_file(INIT_PATH, 500 * 1024);
-	if(!init_data) {
-		panic("Could not load init (Tried " INIT_PATH ").\n");
-	}
-
-	task_t* init = elf_load(init_data, "init", __env, __argv, 2);
+	task_t* init = elf_load_file(INIT_PATH, __env, __argv, 2);
 	if(!init) {
 		panic("Could not start init (Tried " INIT_PATH ").\n");
 	}

@@ -1,5 +1,5 @@
 /* execve.c: Execnew syscall
- * Copyright © 2016-2018 Lukas Martini
+ * Copyright © 2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,7 +21,6 @@
 #include <lib/log.h>
 #include <tasks/scheduler.h>
 #include <tasks/elf.h>
-#include <fs/vfs.h>
 #include <lib/multiboot.h>
 
 // Check an array to make sure it's NULL-terminated.
@@ -45,12 +44,8 @@ SYSCALL_HANDLER(execnew)
 		SYSCALL_RETURN(0);
 	}
 
-	void* data = vfs_load_file((void*)syscall.params[0], 500 * 1024);
-	if(!data) {
-		SYSCALL_RETURN(0);
-	}
+	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, 2);
 
-	task_t* new_task = elf_load(data, (void*)syscall.params[0], __env, __argv, 2);
 	if(!new_task) {
 		SYSCALL_RETURN(0);
 	}

@@ -1,5 +1,5 @@
 /* vfs.c: Virtual file system
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2016 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -171,34 +171,4 @@ int vfs_mount(char* path, vfs_read_callback_t read_callback, vfs_read_dir_callba
 
 	log(LOG_DEBUG, "Mounted [%x] to %s\n", read_callback, mountpoints[num].path);
 	return 0;
-}
-
-// Convenience function. Remember to kfree the returned data after use.
-void* vfs_load_file(char* path, uint32_t chunk_size) {
-	vfs_file_t* fd = vfs_open(path);
-	if(!fd) {
-		return NULL;
-	}
-
-	void* data = kmalloc(chunk_size);
-	size_t read_total = 0;
-	size_t read = 0;
-
-	do {
-		if(read_total && !(read_total % chunk_size)) {
-			void* new_buffer = kmalloc(chunk_size * ((read_total / chunk_size) + 1));
-			memcpy(new_buffer, data, read_total);
-			kfree(data);
-			data = new_buffer;
-		}
-
-		read = vfs_read(data + read_total, chunk_size, fd);
-		read_total += read;
-	} while(read);
-
-	if(read_total < 1) {
-		return NULL;
-	}
-
-	return data;
 }
