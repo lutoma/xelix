@@ -35,8 +35,8 @@
 #define STATE_INITIALIZING 1
 #define STATE_INITIALIZED 2
 
-task_t* currentTask = NULL;
-uint64_t highestPid = -0;
+task_t* current_task = NULL;
+uint64_t highest_pid = -0;
 
 void scheduler_yield()
 {
@@ -45,7 +45,7 @@ void scheduler_yield()
 
 void scheduler_terminate_current()
 {
-	currentTask->task_state = TASK_STATE_TERMINATED;
+	current_task->task_state = TASK_STATE_TERMINATED;
 	scheduler_yield();
 }
 
@@ -72,56 +72,56 @@ void scheduler_remove(task_t *t)
 task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	char** environ, char** argv, int argc, struct vmem_context* memory_context, bool map_structs)
 {
-	task_t* thisTask = (task_t*)kmalloc_a(sizeof(task_t));
+	task_t* task = (task_t*)kmalloc_a(sizeof(task_t));
 
-	thisTask->stack = kmalloc_a(STACKSIZE);
-	memset(thisTask->stack, 0, STACKSIZE);
+	task->stack = kmalloc_a(STACKSIZE);
+	memset(task->stack, 0, STACKSIZE);
 
 	if (map_structs) {
 		// 1:1 map the stack
-		vmem_rm_page_virt(memory_context, thisTask->stack);
+		vmem_rm_page_virt(memory_context, task->stack);
 
 		struct vmem_page* page = vmem_new_page();
 		page->section = VMEM_SECTION_KERNEL;
 		page->cow = 0;
 		page->allocated = 1;
-		page->virt_addr = thisTask->stack;
-		page->phys_addr = thisTask->stack;
+		page->virt_addr = task->stack;
+		page->phys_addr = task->stack;
 		vmem_add_page(memory_context, page);
 	}
 
-	thisTask->state = kmalloc_a(sizeof(cpu_state_t));
-	thisTask->memory_context = memory_context;
+	task->state = kmalloc_a(sizeof(cpu_state_t));
+	task->memory_context = memory_context;
 
 	// Stack
-	thisTask->state->esp = thisTask->stack + STACKSIZE - 3;
-	thisTask->state->ebp = thisTask->state->esp;
+	task->state->esp = task->stack + STACKSIZE - 3;
+	task->state->ebp = task->state->esp;
 
-	*(thisTask->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
-	*(thisTask->state->ebp + 2) = (intptr_t)NULL; // base pointer
+	*(task->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
+	*(task->state->ebp + 2) = (intptr_t)NULL; // base pointer
 
 	// Instruction pointer (= start of the program)
-	thisTask->entry = entry;
-	thisTask->state->eip = entry;
-	thisTask->state->eflags = 0x200;
-	thisTask->state->cs = 0x08;
-	thisTask->state->ds = 0x10;
-	thisTask->state->ss = 0x10;
+	task->entry = entry;
+	task->state->eip = entry;
+	task->state->eflags = 0x200;
+	task->state->cs = 0x08;
+	task->state->ds = 0x10;
+	task->state->ss = 0x10;
 
-	thisTask->pid = ++highestPid;
-	strcpy(thisTask->name, name);
-	thisTask->parent = parent;
-	thisTask->task_state = TASK_STATE_RUNNING;
-	thisTask->environ = environ;
-	thisTask->argv = argv;
-	thisTask->argc = argc;
+	task->pid = ++highest_pid;
+	strcpy(task->name, name);
+	task->parent = parent;
+	task->task_state = TASK_STATE_RUNNING;
+	task->environ = environ;
+	task->argv = argv;
+	task->argc = argc;
 
 	if(parent)
-		strncpy(thisTask->cwd, parent->cwd, SCHEDULER_TASK_PATH_MAX);
+		strncpy(task->cwd, parent->cwd, SCHEDULER_TASK_PATH_MAX);
 	else
-		strcpy(thisTask->cwd, "/");
+		strcpy(task->cwd, "/");
 
-	return thisTask;
+	return task;
 }
 
 // Add new task to schedule.
@@ -130,15 +130,15 @@ void scheduler_add(task_t *task)
 	interrupts_disable();
 
 	// No task yet?
-	if(currentTask == NULL)
+	if(current_task == NULL)
 	{
-		currentTask = task;
+		current_task = task;
 		task->next = task;
 		task->previous = task;
 	} else {
-		task->next = currentTask->next;
-		task->previous = currentTask;
-		currentTask->next = task;
+		task->next = current_task->next;
+		task->previous = current_task;
+		current_task->next = task;
 	}
 
 	interrupts_enable();
@@ -146,7 +146,7 @@ void scheduler_add(task_t *task)
 
 task_t* scheduler_get_current()
 {
-	return currentTask;
+	return current_task;
 }
 
 // Forks a task. Returns forked task on success, NULL on error.
@@ -185,38 +185,38 @@ task_t* scheduler_select(cpu_state_t* last_regs)
 	if(unlikely(scheduler_state == STATE_INITIALIZING))
 	{
 		scheduler_state = STATE_INITIALIZED;
-		return currentTask;
+		return current_task;
 	}
 
 	// Save CPU register state of previous task
-	currentTask->state = last_regs;
+	current_task->state = last_regs;
 
 	/* Cycle through tasks until we find one that isn't killed or terminated,
 	 * while along the way unlinking the killed/terminated ones.
 	*/
-	task_t* orig_task = currentTask;
-	currentTask = currentTask->next;
+	task_t* orig_task = current_task;
+	current_task = current_task->next;
 
-	for(;; currentTask = currentTask->next) {
-		if (unlikely(currentTask == NULL)) {
-			panic("scheduler: Task list corrupted (currentTask->next was NULL).\n");
+	for(;; current_task = current_task->next) {
+		if (unlikely(current_task == NULL)) {
+			panic("scheduler: Task list corrupted (current_task->next was NULL).\n");
 		}
 
-		if(currentTask->task_state == TASK_STATE_KILLED ||
-			currentTask->task_state == TASK_STATE_TERMINATED) {
-			scheduler_remove(currentTask);
+		if(current_task->task_state == TASK_STATE_KILLED ||
+			current_task->task_state == TASK_STATE_TERMINATED) {
+			scheduler_remove(current_task);
 			continue;
 		}
 
 
-		if(currentTask->task_state == TASK_STATE_STOPPED ||
-			currentTask->task_state == TASK_STATE_WAITING) {
+		if(current_task->task_state == TASK_STATE_STOPPED ||
+			current_task->task_state == TASK_STATE_WAITING) {
 
 			/* We're back at the original task, which is stopped or waiting.
 			 * This means that every task currently in the task list is waiting,
 			 * which is an unresolvable deadlock.
 			 */
-			if(currentTask == orig_task) {
+			if(current_task == orig_task) {
 				panic("scheduler: All tasks are waiting or stopped.\n");
 			}
 
@@ -226,7 +226,7 @@ task_t* scheduler_select(cpu_state_t* last_regs)
 		break;
 	}
 
-	return currentTask;
+	return current_task;
 }
 
 void scheduler_init()
