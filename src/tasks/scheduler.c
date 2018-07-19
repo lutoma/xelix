@@ -68,6 +68,8 @@ void scheduler_remove(task_t *t)
 	if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
 		t->parent->task_state = TASK_STATE_RUNNING;
 	}
+
+	kfree(t);
 }
 
 /* Setup a new task, including the necessary paging context.
