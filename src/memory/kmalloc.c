@@ -61,6 +61,57 @@ static struct mem_block* free_blocks[MAX_FREE_BLOCKS];
 static uint32_t next_free_block_pos = 0;
 static uint32_t last_free_block_pos = 0;
 
+static struct mem_block* find_free_block(size_t sz) {
+	SERIAL_DEBUG("SFB ");
+
+	for(int i = 0; i < last_free_block_pos; i++) {
+		struct mem_block* fblock = free_blocks[i];
+
+		if(!fblock) {
+			continue;
+		}
+
+		if(unlikely(fblock->magic != KMALLOC_MAGIC)) {
+			//SERIAL_DEBUG("find_free_block: Metadata corruption (Block in free_blocks with invalid magic)\n");
+			return NULL;
+		}
+
+		if(fblock->size >= sz) {
+			SERIAL_DEBUG("HIT size 0x%x ", fblock->size);
+			free_blocks[i] = NULL;
+			fblock->status = true;
+			return fblock;
+		}
+	}
+
+	return NULL;
+}
+
+static struct mem_block* add_block(size_t sz) {
+	SERIAL_DEBUG("NEW 0x%x -> ", (intptr_t)alloc_end);
+
+	struct mem_block* header = (struct mem_block*)alloc_end;
+	header->size = sz;
+	header->magic = KMALLOC_MAGIC;
+	header->status = true;
+	alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
+
+	SERIAL_DEBUG("0x%x ", (intptr_t)alloc_end);
+
+	if(likely(header != alloc_start)) {
+		struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - (intptr_t)(*(uint32_t*)PREV_FOOTER(header)) - sizeof(struct mem_block);
+
+		if(unlikely(prev->magic != KMALLOC_MAGIC)) {
+			panic("add_block: Metadata corruption (alloc_end block with invalid magic)");
+		}
+	}
+
+	total_blocks_size += sz + sizeof(uint32_t) + sizeof(struct mem_block);
+	num_blocks++;
+	return header;
+}
+
+
 /* Use the macros instead of directly calling this function.
  * For details on the attributes, see the GCC documentation at http://is.gd/6gmEqk.
  * FIXME Aligned allocations cannot currently reuse existing free blocks and
@@ -89,52 +140,15 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 
 	struct mem_block* header = NULL;
 
-	// If there are any blocks: Find suitable free block
-	if(false && likely(alloc_end > alloc_start && !align)) {
-		SERIAL_DEBUG("SFB ");
-
-		for(int i = 0; i <= last_free_block_pos; i++) {
-			struct mem_block* fblock = free_blocks[i];
-
-			if(unlikely(fblock->magic != KMALLOC_MAGIC)) {
-				panic("kmalloc: Metadata corruption (Previous block with invalid magic)");
-			}
-
-			if(fblock && fblock->magic == KMALLOC_MAGIC && fblock->size >= sz) {
-				SERIAL_DEBUG("HIT size 0x%x ", fblock->size);
-				header = fblock;
-				fblock = NULL;
-				break;
-			}
-		}
+	if(!align) {
+	// Not 100% functional yet
+	//	header = find_free_block(sz);
 	}
 
-	// As last resort, just add a new block
-	// FIXME Does the second cond make sense?
-	if(unlikely(!header || header->magic != KMALLOC_MAGIC)) {
-		SERIAL_DEBUG("NEW 0x%x -> ", (intptr_t)alloc_end);
-
-		header = (struct mem_block*)alloc_end;
-		header->size = sz;
-		header->magic = KMALLOC_MAGIC;
-		alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
-
-		SERIAL_DEBUG("0x%x ", (intptr_t)alloc_end);
-
-		if(likely(header != alloc_start)) {
-			struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - (intptr_t)(*(uint32_t*)PREV_FOOTER(header)) - sizeof(struct mem_block);
-
-			if(unlikely(prev->magic != KMALLOC_MAGIC)) {
-				panic("kmalloc: Metadata corruption (Previous block with invalid magic)");
-			}
-		}
-
-		total_blocks_size += sz + sizeof(uint32_t) + sizeof(struct mem_block);
-		num_blocks++;
+	if(unlikely(!header)) {
+		header = add_block(sz);
 	}
 
-	// Mark block as our own
-	header->status = true;
 
 	// FIXME
 	header->type = 42;
@@ -164,17 +178,18 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 	return result;
 }
 
+// FIXME Cannot free aligned blocks right now due to the inconsistent header offset
 void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
 	SERIAL_DEBUG("%s:%d %s\nFREE 0x%x ", _debug_file, _debug_line, _debug_func, ptr);
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
 
-	if((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end) {
+	if(unlikely((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end)) {
 		SERIAL_DEBUG("INVALID_BOUNDS\n\n");
 		return;
 	}
 
-	if(header->magic != KMALLOC_MAGIC) {
+	if(unlikely(header->magic != KMALLOC_MAGIC)) {
 		SERIAL_DEBUG("INVALID_MAGIC\n\n");
 		return;
 	}
@@ -185,14 +200,13 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 	}
 
 	// Check previous block
-	if((ptr - sizeof(struct mem_block)) > alloc_start) {
-		//struct mem_block* prev = (struct mem_block*)((intptr_t)header - sizeof(uint32_t) - sizeof(struct mem_block) - PREV_FOOTER(x));
+	if(likely(header > alloc_start)) {
 		uint32_t prev_size = *PREV_FOOTER(header);
 		struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - prev_size - sizeof(struct mem_block);
 
 		SERIAL_DEBUG("PBH 0x%x sz 0x%x ", prev, prev_size);
 
-		if(prev->magic != KMALLOC_MAGIC) {
+		if(unlikely(prev->magic != KMALLOC_MAGIC)) {
 			panic("kfree: Metadata corruption (Previous block with invalid magic)\n");
 		}
 	}
@@ -202,7 +216,7 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 	header->type = 0;
 	header->pid = 0;
 
-	if(next_free_block_pos > MAX_FREE_BLOCKS) {
+	if(unlikely(next_free_block_pos > MAX_FREE_BLOCKS)) {
 		SERIAL_DEBUG("Exceeded MAX_FREE_BLOCKS, losing track of this free block.\n\n");
 		spinlock_release(&kmalloc_lock);
 		return;
