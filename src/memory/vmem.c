@@ -294,7 +294,7 @@ void vmem_handle_fault(cpu_state_t* regs)
 		char* bitoverwrite = bit_get(regs->errCode, 3) ? " (due to reserved bits being overwritten)" : "";
 		char* instrfetch = bit_get(regs->errCode, 4) ? " (during instruction fetch)" : "";
 
-		log(LOG_WARN, "Page fault for %s to 0x%y in process <%s>+%y "
+		log(LOG_WARN, "Page fault for %s to 0x%x in process <%s>+%x "
 			"at EIP 0x%x (phys 0x%x) of context %s, %s mode%s%s%s. Terminating the task.\n",
 			op, regs->cr2, running_task->name, (virt_addr - (uint32_t)running_task->entry),
 			virt_addr, phys_addr, vmem_get_name(running_task->memory_context), mode, pgpres,
