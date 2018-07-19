@@ -26,12 +26,6 @@
 #define WNOHANG 0
 #define WUNTRACED 1
 #define WEXITSTATUS 2
-#define WIFCONTINUED 3
-#define WIFEXITED 4
-#define WIFSIGNALED 5
-#define WIFSTOPPED 6
-#define WSTOPSIG 7
-#define WTERMSIG 8
 #define WEXITED 9
 #define WSTOPPED 10
 #define WCONTINUED 11
@@ -40,6 +34,12 @@
 
 // FIXME
 #define WEXITSTATUS(args...) (args)
+#define WIFEXITED(args...) (args)
+#define WIFCONTINUED(args...) (args)
+#define WIFSIGNALED(args...) (args)
+#define WIFSTOPPED(args...) (args)
+#define WTERMSIG(args...) (args)
+#define WSTOPSIG(args...) (args)
 
 typedef uint32_t idtype_t;
 
