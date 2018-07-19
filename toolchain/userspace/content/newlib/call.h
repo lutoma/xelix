@@ -19,6 +19,22 @@
 #ifndef LIB_CALL_H
 #define LIB_CALL_H
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/fcntl.h>
+#include <sys/times.h>
+#include <sys/errno.h>
+#include <sys/time.h>
+#include <sys/dirent.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <termios.h>
+#include <signal.h>
+#include <sgtty.h>
+
 extern unsigned int call_open(char *path);
 extern unsigned int call_read(unsigned int fd, void *buffer, unsigned int count);
 extern unsigned int call_write(unsigned int fd, void *buffer, unsigned int count);

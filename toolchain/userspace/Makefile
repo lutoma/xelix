@@ -98,7 +98,7 @@ gcc-patch:
 	@patch -p0 < patch/gcc-${GCC_VERSION}.patch
 	@cp content/gcc/xelix.h download/gcc-${GCC_VERSION}/gcc/config/
 
-newlib-all: newlib-download newlib-patch newlib-reconfig newlib-make newlib-install
+newlib-all: newlib-download newlib-copy newlib-reconfig newlib-make newlib-install
 
 newlib-clean:
 	@echo "Cleaning newlib"
@@ -122,20 +122,19 @@ newlib-install:
 
 newlib-make:
 	@echo "Building newlib"
-	@mkdir -p build/newlib
-	@cd build/newlib && PATH="${PATH}:`pwd`/local/bin/" ../../download/newlib-${NEWLIB_VERSION}/configure --target=${TARGET} --prefix=${PREFIX}
 	@PATH="${PATH}:`pwd`/local/bin/" make -C build/newlib all
 
-newlib-patch:
-	@echo "Patching newlib"
-	-@rm -r build/newlib/
-	@patch -p0 < patch/newlib-${NEWLIB_VERSION}.patch
+newlib-copy:
 	@mkdir -p download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix
 	@cp -R content/newlib/* download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/
 	#@# Hacky. Probably shouldn't do this.
 	#@cp -R content/newlib/include/* download/newlib-${NEWLIB_VERSION}/newlib/libc/include/
 
 newlib-reconfig:
+	@echo "Patching newlib autoconf files"
+	@-rm -r build/newlib/
+	@patch -p0 < patch/newlib-${NEWLIB_VERSION}.patch
+
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && aclocal-1.11 -I ../../../ -I ../../../../
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoconf-2.64
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && automake-1.11 --cygnus Makefile
@@ -143,3 +142,6 @@ newlib-reconfig:
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && aclocal-1.11 -I ../.. -I ../../..
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf-2.64
 	@cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && automake-1.11 --cygnus Makefile
+
+	@mkdir -p build/newlib
+	@cd build/newlib && PATH="${PATH}:`pwd`/local/bin/" ../../download/newlib-${NEWLIB_VERSION}/configure --target=${TARGET} --prefix=${PREFIX}
