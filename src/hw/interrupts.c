@@ -41,7 +41,7 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 
 	if(handler != NULL)
 		handler(regs);
-	
+
 	/* Timer interrupt
 	 * FIXME Should get a normal interrupt handler like everything else
 	 */
@@ -49,7 +49,7 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 	{
 		task_t* new_task = scheduler_select(regs);
 
-		if(new_task != NULL && new_task->state != NULL)
+		if(new_task && new_task->state && new_task->memory_context)
 		{
 			paging_apply(new_task->memory_context);
 			return new_task->state;
