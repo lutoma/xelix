@@ -5,12 +5,12 @@ CFLAGS="-std=gnu99"
 TARGETS=xinit xshell cat ls pwd cd
 
 .PHONY: all
-all: $(TARGETS)
+all: ../xsfs.img
 
 .PHONY: clean
 clean:
 	rm -f $(TARGETS)
 
-.PHONY: image
-image: $(TARGETS)
+../xsfs.img: $(TARGETS)
 	../util/build-xsfs.sh  ../xsfs.img $(TARGETS)
+
