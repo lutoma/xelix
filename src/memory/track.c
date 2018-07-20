@@ -97,6 +97,7 @@ void memory_track_print_areas() {
 		"ACPI",
 		"Hibernate",
 		"Defective",
+		"kmalloc",
 		"Unknown"
 	};
 

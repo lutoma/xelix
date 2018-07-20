@@ -18,6 +18,7 @@
  */
 
 #include "kmalloc.h"
+#include "track.h"
 #include "vmem.h"
 #include <lib/log.h>
 #include <lib/multiboot.h>
@@ -64,6 +65,7 @@ struct mem_block {
 static bool initialized = false;
 static intptr_t alloc_start;
 static intptr_t alloc_end;
+static intptr_t alloc_max;
 static uint32_t num_blocks = 0;
 static uint32_t total_blocks_size = 0;
 
@@ -155,6 +157,10 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 		return NULL;
 	}
 
+	if(alloc_end + sz >= alloc_max) {
+		panic("Out of memory");
+	}
+
 	struct mem_block* header = NULL;
 
 	if(!align) {
@@ -169,8 +175,6 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 
 	header->type = TYPE_KERNEL;
 	header->pid = 0;
-
-	SERIAL_DEBUG("HEADER 0x%x ", (intptr_t)header);
 
 	void* result = (void*)((uint32_t)header + sizeof(struct mem_block));
 
@@ -248,16 +252,22 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 
 void kmalloc_init()
 {
-	/* The modules are the last things the bootloader loads after the
-	 * kernel. Therefore, we can securely assume that everything after
-	 * the last module's end should be free.
-	 */
-	if(multiboot_info->modsCount > 0) // Do we have at least one module?
-		alloc_end = multiboot_info->modsAddr[multiboot_info->modsCount - 1].end;
-	else // Guess.
-		alloc_end = 15 * 1024 * 1024;
+	memory_track_area_t* largest_area = NULL;
+	for(int i = 0; i < memory_track_num_areas; i++) {
+		memory_track_area_t* area = &memory_track_areas[i];
 
-	alloc_start = alloc_end;
+		if(area->type == MEMORY_TYPE_FREE && (!largest_area || largest_area->size < area->size)) {
+			largest_area = area;
+		}
+	}
+
+	if(!largest_area) {
+		panic("kmalloc: Could not find suitable memory area");
+	}
+
+	largest_area->type = MEMORY_TYPE_KMALLOC;
+	alloc_start = alloc_end = largest_area->addr;
+	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	initialized = true;
 }
 
