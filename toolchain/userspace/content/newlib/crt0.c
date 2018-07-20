@@ -1,4 +1,3 @@
-#include "call.h"
 #include <stdio.h>
 
 extern int main(int argc, char* argv);
@@ -13,5 +12,5 @@ void _start() {
 	int ret = main(1, __argv);
 
 	free(__env);
-	call_exit(ret);
+	_exit(ret);
 }

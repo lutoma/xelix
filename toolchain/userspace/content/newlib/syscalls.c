@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/times.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
@@ -28,18 +30,30 @@
 #include <sys/errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <termios.h>
 #include <signal.h>
+#include <string.h>
 #include <sgtty.h>
-#include "call.h"
 
-//char *__env[1] = { 0 };
-//char **environ = __env;
+#define syscall(call, a1, a2, a3) __syscall(call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
+
+static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
+	register uint32_t _call asm("eax") = call;
+	register uint32_t _arg1 asm("ebx") = arg1;
+	register uint32_t _arg2 asm("ecx") = arg2;
+	register uint32_t _arg3 asm("edx") = arg3;
+	register uint32_t result asm("eax");
+
+	asm volatile("int $0x80;" : "=r" (result) : "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3));
+	return result;
+}
+
 
 void _exit(int return_code)
 {
-	call_exit(return_code);
+	syscall(1, return_code, 0, 0);
 }
 
 int close(int file)
@@ -51,14 +65,14 @@ int close(int file)
 int execve(char *name, char **argv, char **env)
 {
 	errno = ENOSYS;
-	return call_execve(name, argv, env);
+	return syscall(23, name, argv, env);
 }
 
 int fork()
 {
 	// Todo: Set proper errno in case something goes wonky
 	errno = ENOSYS;
-	return call_fork();
+	return syscall(22, 0, 0, 0);
 }
 
 int fstat(int file, struct stat *st)
@@ -69,7 +83,7 @@ int fstat(int file, struct stat *st)
 
 int getpid()
 {
-	return call_getpid();
+	return syscall(4, 0, 0, 0);
 }
 
 int isatty(int file)
@@ -80,7 +94,7 @@ int isatty(int file)
 
 int kill(int pid, int sig)
 {
-	int ret = call_kill(pid, sig);
+	int ret = syscall(18, pid, sig, 0);
 
 	switch(ret)
 	{
@@ -100,7 +114,7 @@ int link(char *old, char *new){
 
 int lseek(int file, int ptr, int dir)
 {
-	int ret = call_seek(file, ptr, dir);
+	int ret = syscall(14, file, ptr, dir);
 
 	if(ret == -2)
 		errno = ENOENT;
@@ -120,16 +134,16 @@ int open(const char* name, int flags, ...)
 		return -1;
 	}
 
-	int fd = call_open((char*)name);
+	int fd = syscall(13, name, 0, 0);
 	if(fd == -1)
 		errno = ENOENT;
 
 	return fd;
 }
 
-int read(int file, char *buf, int len)
+ssize_t read(int file, char *buf, int len)
 {
-	return call_read(file, (void *)buf, (unsigned int)len);
+	return syscall(2, file, buf, len);
 }
 
 int readlink(const char *path, char *buf, size_t bufsize)
@@ -140,7 +154,7 @@ int readlink(const char *path, char *buf, size_t bufsize)
 
 void* sbrk(int incr)
 {
-	return call_mmap(incr);
+	return (void*)syscall(7, 0, incr, 0);
 }
 
 int stat(const char *name, struct stat *st)
@@ -181,7 +195,7 @@ int unlink(char *name)
 
 int wait(int* status)
 {
-	return call_wait(status);
+	return syscall(29, status, 0, 0);
 }
 
 int wait3(int* status)
@@ -191,12 +205,12 @@ int wait3(int* status)
 }
 
 pid_t waitpid(pid_t pid, int* stat_loc, int options) {
-	return call_wait(stat_loc); // FIXME
+	return syscall(29, stat_loc, 0, 0); // FIXME Just the wait syscall
 }
 
 int write(int file, char *buf, int len)
 {
-	return call_write(file, (void *)buf, (unsigned int)len);
+	return syscall(3, file, buf, len);
 }
 
 ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
@@ -206,15 +220,15 @@ ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
 
 DIR* opendir(const char* path)
 {
-	int r = call_opendir(path);
+	int r = syscall(16, path, 0, 0);
 	if(!r) {
 		errno = ENOENT;
 		return NULL;
 	}
 
-	DIR* dir = malloc(sizeof(DIR));
+	DIR* dir = (DIR*)malloc(sizeof(DIR));
 	dir->num = r;
-	dir->path = strndup(path);
+	dir->path = strndup(path, PATH_MAX);
 	dir->offset = 0;
 	return dir;
 
@@ -229,7 +243,7 @@ int closedir(DIR* dir)
 
 struct dirent* readdir(DIR* dir)
 {
-	char* r = call_readdir(dir->num, dir->offset++);
+	char* r = (char*)syscall(17, dir->num, dir->offset++, 0);
 	if(!r) {
 		return NULL;
 	}
@@ -277,7 +291,7 @@ int mkdir(const char *dir_path, mode_t mode) {
 
 char* getcwd(char *buf, size_t size)
 {
-	return call_getcwd(buf, size);
+	return (char*)syscall(21, buf, size, 0);
 }
 
 char* getwd(char *buf)
@@ -287,7 +301,7 @@ char* getwd(char *buf)
 
 int chdir(const char *path)
 {
-	return call_chdir(path);
+	return syscall(20, path, 0, 0);
 }
 
 int gettimeofday(struct timeval *__p, void *__tz)
@@ -452,36 +466,36 @@ int socket(int domain, int type, int protocol)
 		return -1;
 	}
 
-	return call_socket(domain, type, protocol);
+	return syscall(24, domain, type, protocol);
 }
 
 int bind(int socket, const struct sockaddr *address, socklen_t address_len)
 {
-	return call_bind(socket, address, address_len);
+	return syscall(25, socket, address, address_len);
 }
 
 ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
 	struct sockaddr *address, socklen_t *address_len)
 {
-	return call_socket_recv(socket, buffer, length);
+	return syscall(27, socket, buffer, length);
 }
 
 ssize_t recv(int socket, void *buffer, size_t length, int flags) {
-	return call_socket_recv(socket, buffer, length);
+	return syscall(27, socket, buffer, length);
 }
 
 ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len)
 {
-	return call_socket_send(socket, message, length);
+	return syscall(26, socket, message, length);
 }
 
 ssize_t send(int socket, const void *buffer, size_t length, int flags) {
-	return call_socket_send(socket, buffer, length);
+	return syscall(26, socket, buffer, length);
 }
 
 pid_t execnew(const char* path, char* __argv[], char* __env[]) {
-	return call_execnew(path, __argv, __env);
+	return syscall(28, (uint32_t)path, (uint32_t)__argv, (uint32_t)__env);
 }
 
 int gtty (int __fd, struct sgttyb *__params) {
