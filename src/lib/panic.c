@@ -31,9 +31,9 @@
 #include <lib/string.h>
 #include <memory/vmem.h>
 
-#define panic_printf(args...) { \
-	serial_printf(args); \
-	printf(args); \
+static inline void panic_printf(const char *fmt, ...) {
+	vprintf(fmt, (void**)(&fmt) + 1);
+	serial_vprintf(fmt, (void**)(&fmt) + 1);
 }
 
 /* Write to display/serial, completely circumventing the console framework and
@@ -66,7 +66,7 @@ static void dump_registers(cpu_state_t* regs) {
 		regs->esp, regs->ebp, regs->eip);
 }
 
-static void panic_handler(cpu_state_t* regs)
+static  __attribute__((optimize("O0")))  void panic_handler(cpu_state_t* regs)
 {
 	bruteforce_print("Early Kernel Panic: ");
 	bruteforce_print(*((char**)PANIC_INFOMEM));
