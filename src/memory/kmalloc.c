@@ -24,6 +24,11 @@
 #include <lib/panic.h>
 #include <lib/spinlock.h>
 
+/* TODO Automatically increase the size of this and make the initial smaller
+ * It's only ~400K right now anyway though. */
+#define MAX_FREE_BLOCKS 100000
+#define KMALLOC_MAGIC 0xCAFE
+
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
@@ -32,40 +37,50 @@
 	#define SERIAL_DEBUG(args...)
 #endif
 
-#define KMALLOC_MAGIC 0xCAFE
 #define PREV_FOOTER(x) ((uint32_t*)((intptr_t)x - sizeof(uint32_t)))
-#define PREV_BLOCK(x) ((struct mem_block*)(x - sizeof(uint32_t) - sizeof(struct mem_block) - PREV_FOOTER(x)))
-#define NEXT_BLOCK(x) ((struct mem_block*)((uint32_t)x + sizeof(struct mem_block) + x->size + sizeof(uint32_t)))
-#define GET_FOOTER(x) ((uint32_t)((uint32_t)x + x->size + sizeof(struct mem_block)))
-
-static bool initialized = false;
-static uint32_t alloc_start;
-static uint32_t alloc_end;
-static uint32_t num_blocks = 0;
-static uint32_t total_blocks_size = 0;
-
-static spinlock_t kmalloc_lock;
+#define GET_FOOTER(x) ((uint32_t*)((intptr_t)x + x->size + sizeof(struct mem_block)))
+#define PREV_BLOCK(x) (struct mem_block*)((intptr_t)PREV_FOOTER(x) \
+	- (*PREV_FOOTER(x)) - sizeof(struct mem_block))
 
 struct mem_block {
 	uint16_t magic;
-	bool status:1;
 	uint32_t size;
-	uint8_t type;
-	uint32_t pid;
+
+	enum {
+		TYPE_KERNEL,
+		TYPE_TASK,
+		TYPE_FREE
+	} type;
+
+	// TYPE_TASK: Process ID
+	// TYPE_FREE: Pointer to next free block, if any
+	// TYPE_KERNEL: Unused
+	union {
+		uint32_t pid;
+		struct mem_block* next_free;
+	};
 };
 
-/* TODO Automatically increase the size of this and make the initial smaller
- * It's only ~400K right now anyway though. */
-#define MAX_FREE_BLOCKS 100000
+static bool initialized = false;
+static intptr_t alloc_start;
+static intptr_t alloc_end;
+static uint32_t num_blocks = 0;
+static uint32_t total_blocks_size = 0;
+
 static struct mem_block* free_blocks[MAX_FREE_BLOCKS];
 static uint32_t next_free_block_pos = 0;
 static uint32_t last_free_block_pos = 0;
+static spinlock_t kmalloc_lock;
+
 
 static struct mem_block* find_free_block(size_t sz) {
-	SERIAL_DEBUG("SFB ");
+	SERIAL_DEBUG("FFB (%d) ", free_blocks);
+	SERIAL_DEBUG("last free block pos %d\n", last_free_block_pos);
 
 	for(int i = 0; i < last_free_block_pos; i++) {
 		struct mem_block* fblock = free_blocks[i];
+
+		//SERIAL_DEBUG("...0x%x... \n", fblock->magic);
 
 		if(!fblock) {
 			continue;
@@ -79,7 +94,6 @@ static struct mem_block* find_free_block(size_t sz) {
 		if(fblock->size >= sz) {
 			SERIAL_DEBUG("HIT size 0x%x ", fblock->size);
 			free_blocks[i] = NULL;
-			fblock->status = true;
 			return fblock;
 		}
 	}
@@ -87,30 +101,33 @@ static struct mem_block* find_free_block(size_t sz) {
 	return NULL;
 }
 
-static struct mem_block* add_block(size_t sz) {
-	SERIAL_DEBUG("NEW 0x%x -> ", (intptr_t)alloc_end);
+static struct mem_block* set_block(size_t sz, intptr_t position) {
+	struct mem_block* header = (struct mem_block*)position;
 
-	struct mem_block* header = (struct mem_block*)alloc_end;
-	header->size = sz;
-	header->magic = KMALLOC_MAGIC;
-	header->status = true;
-	alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
-
-	SERIAL_DEBUG("0x%x ", (intptr_t)alloc_end);
-
-	if(likely(header != alloc_start)) {
-		struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - (intptr_t)(*(uint32_t*)PREV_FOOTER(header)) - sizeof(struct mem_block);
+	if(likely((intptr_t)header != alloc_start)) {
+		struct mem_block* prev = PREV_BLOCK(header);
 
 		if(unlikely(prev->magic != KMALLOC_MAGIC)) {
-			panic("add_block: Metadata corruption (alloc_end block with invalid magic)");
+			panic("add_block: Metadata corruption (previous block with invalid magic)");
 		}
 	}
 
-	total_blocks_size += sz + sizeof(uint32_t) + sizeof(struct mem_block);
-	num_blocks++;
+	header->size = sz;
+	header->magic = KMALLOC_MAGIC;
 	return header;
 }
 
+static struct mem_block* add_block(size_t sz) {
+	SERIAL_DEBUG("NEW 0x%x -> ", alloc_end);
+
+	struct mem_block* header = set_block(sz, alloc_end);
+	alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
+	total_blocks_size += sz + sizeof(uint32_t) + sizeof(struct mem_block);
+	num_blocks++;
+
+	SERIAL_DEBUG("0x%x ", alloc_end);
+	return header;
+}
 
 /* Use the macros instead of directly calling this function.
  * For details on the attributes, see the GCC documentation at http://is.gd/6gmEqk.
@@ -150,8 +167,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 	}
 
 
-	// FIXME
-	header->type = 42;
+	header->type = TYPE_KERNEL;
 	header->pid = 0;
 
 	SERIAL_DEBUG("HEADER 0x%x ", (intptr_t)header);
@@ -169,7 +185,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 	}
 
 	// Add footer with allocation size for reverse lookups
-	uint32_t* footer = (uint32_t*)GET_FOOTER(header);
+	uint32_t* footer = GET_FOOTER(header);
 	*footer = header->size;
 	SERIAL_DEBUG("FOOTER 0x%x, sz 0x%x ", footer, *footer);
 
@@ -200,11 +216,9 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 	}
 
 	// Check previous block
-	if(likely(header > alloc_start)) {
-		uint32_t prev_size = *PREV_FOOTER(header);
-		struct mem_block* prev = (intptr_t)PREV_FOOTER(header) - prev_size - sizeof(struct mem_block);
-
-		SERIAL_DEBUG("PBH 0x%x sz 0x%x ", prev, prev_size);
+	if(likely((intptr_t)header > alloc_start)) {
+		struct mem_block* prev = PREV_BLOCK(header);
+		SERIAL_DEBUG("PBH 0x%x sz 0x%x ", prev, *PREV_FOOTER(header));
 
 		if(unlikely(prev->magic != KMALLOC_MAGIC)) {
 			panic("kfree: Metadata corruption (Previous block with invalid magic)\n");
@@ -212,9 +226,8 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 	}
 
 	// TODO Merge adjacent free blocks
-	header->status = false;
-	header->type = 0;
-	header->pid = 0;
+	header->type = TYPE_FREE;
+	header->next_free = (void*)42;
 
 	if(unlikely(next_free_block_pos > MAX_FREE_BLOCKS)) {
 		SERIAL_DEBUG("Exceeded MAX_FREE_BLOCKS, losing track of this free block.\n\n");
