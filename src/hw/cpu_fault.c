@@ -58,8 +58,10 @@ static void handler(cpu_state_t* regs)
 	}
 
 	if(proc) {
-		log(LOG_WARN, "%s in task %d <%s>, terminating it.\n",
-			error_name, proc->pid, proc->name);
+
+		log(LOG_WARN, "%s in process <%s>+%x at EIP 0x%x of context %s. Terminating the task.\n",
+			error_name, proc->name, (regs->eip - (uint32_t)proc->entry),
+			regs->eip, vmem_get_name(proc->memory_context));
 
 		scheduler_terminate_current();
 		return;
