@@ -25,9 +25,6 @@
 #include <lib/panic.h>
 #include <lib/spinlock.h>
 
-/* TODO Automatically increase the size of this and make the initial smaller
- * It's only ~400K right now anyway though. */
-#define MAX_FREE_BLOCKS 100000
 #define KMALLOC_MAGIC 0xCAFE
 
 /* Enable debugging. This will send out cryptic debug codes to the serial line
@@ -63,14 +60,11 @@ struct mem_block {
 };
 
 static bool initialized = false;
+static spinlock_t kmalloc_lock;
+struct mem_block* last_free = (struct mem_block*)NULL;
 static intptr_t alloc_start;
 static intptr_t alloc_end;
 static intptr_t alloc_max;
-static uint32_t num_blocks = 0;
-static uint32_t total_blocks_size = 0;
-
-struct mem_block* last_free = (struct mem_block*)NULL;
-static spinlock_t kmalloc_lock;
 
 
 static struct mem_block* find_free_block(size_t sz) {
@@ -84,7 +78,7 @@ static struct mem_block* find_free_block(size_t sz) {
 		}
 
 		if(fblock->size >= sz) {
-			SERIAL_DEBUG("HIT size 0x%x ", fblock->size);
+			SERIAL_DEBUG("HIT 0x%x size 0x%x ", fblock, fblock->size);
 
 			if(prev) {
 				prev->next_free = fblock->next_free;
@@ -114,18 +108,41 @@ static struct mem_block* set_block(size_t sz, intptr_t position) {
 
 	header->size = sz;
 	header->magic = KMALLOC_MAGIC;
+
+	// Add uint32_t footer with size so we can find the header
+	uint32_t* footer = GET_FOOTER(header);
+	*footer = header->size;
+	alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
+
 	return header;
 }
 
-static struct mem_block* add_block(size_t sz) {
+static struct mem_block* add_block(size_t sz, bool align) {
+	if(align && ((intptr_t)alloc_end & (PAGE_SIZE - 1))) {
+		SERIAL_DEBUG("(ALIGN) ");
+
+		uint32_t offset = VMEM_ALIGN((uint32_t)alloc_end + sizeof(struct mem_block)) - (alloc_end + sizeof(struct mem_block));
+
+		/* We need at least x bytes to store the headers and footers of our
+		 * block and of the new block we'll create in the offset
+		 */
+		if(offset < 0x100) {
+			offset += PAGE_SIZE;
+		}
+
+		// Create header for the new free block in the offset.
+		SERIAL_DEBUG("Alloc end is 0x%x, adding offset block with size 0x%x\n", alloc_end, offset);
+		struct mem_block* offset_header = set_block(offset - sizeof(struct mem_block) - sizeof(uint32_t), alloc_end);
+		offset_header->type = TYPE_FREE;
+
+
+		SERIAL_DEBUG("Alloc end is now 0x%x, pot. result 0x%x\n", alloc_end, alloc_end + sizeof(struct mem_block));
+	}
+
 	SERIAL_DEBUG("NEW 0x%x -> ", alloc_end);
-
 	struct mem_block* header = set_block(sz, alloc_end);
-	alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
-	total_blocks_size += sz + sizeof(uint32_t) + sizeof(struct mem_block);
-	num_blocks++;
-
 	SERIAL_DEBUG("0x%x ", alloc_end);
+
 	return header;
 }
 
@@ -165,32 +182,16 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 
 	if(!align) {
 		header = find_free_block(sz);
-		header = NULL;
 	}
 
 	if(unlikely(!header)) {
-		header = add_block(sz);
+		header = add_block(sz, align);
 	}
 
 	header->type = pid ? TYPE_TASK : TYPE_KERNEL;
 	header->pid = pid;
 
 	void* result = (void*)((uint32_t)header + sizeof(struct mem_block));
-
-	// If the address is not already page-aligned
-	if(unlikely(align && ((intptr_t)result & (PAGE_SIZE - 1)))) {
-		SERIAL_DEBUG("ALIGN ");
-		void* new_pos = (void*)VMEM_ALIGN((uint32_t)header + sizeof(struct mem_block));
-		intptr_t offset = (intptr_t)new_pos - (intptr_t)result;
-		header->size += offset;
-		alloc_end += offset;
-		result = new_pos;
-	}
-
-	// Add footer with allocation size for reverse lookups
-	uint32_t* footer = GET_FOOTER(header);
-	*footer = header->size;
-	SERIAL_DEBUG("FOOTER 0x%x, sz 0x%x ", footer, *footer);
 
 	spinlock_release(&kmalloc_lock);
 	SERIAL_DEBUG("RESULT 0x%x\n\n", (intptr_t)result);
@@ -258,19 +259,4 @@ void kmalloc_init()
 	alloc_start = alloc_end = largest_area->addr;
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	initialized = true;
-}
-
-
-void kmalloc_print_stats() {
-	log(LOG_DEBUG, "kmalloc post init stats:\n");
-	log(LOG_DEBUG, "=========================\n");
-	log(LOG_DEBUG, "Number of blocks: %d\n", num_blocks);
-	log(LOG_DEBUG, "Total size of blocks: %d bytes / ~%d MB\n", total_blocks_size, total_blocks_size / (1024*1024));
-	log(LOG_DEBUG, "Average allocation size: %d bytes / ~%d KB\n", total_blocks_size / num_blocks, total_blocks_size / num_blocks / 1024);
-
-	uint32_t* last_alloc_size = (uint32_t*)(alloc_end - sizeof(uint32_t));
-	struct mem_block* last_header = (struct mem_block*)((uint32_t)last_alloc_size - *last_alloc_size - sizeof(struct mem_block));
-	log(LOG_DEBUG, "Last memory allocation size (footer): %d\n", *last_alloc_size);
-	log(LOG_DEBUG, "Last memory allocation size: 0x%x\n", last_header->magic);
-	log(LOG_DEBUG, "Last memory allocation size (header): %d\n", last_header->size);
 }
