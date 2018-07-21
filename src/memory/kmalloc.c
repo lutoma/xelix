@@ -136,7 +136,9 @@ static struct mem_block* add_block(size_t sz) {
  * FIXME Aligned allocations cannot currently reuse existing free blocks and
  * unnecessarily waste memory.
  */
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
+	const char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+
 	if(unlikely(!initialized)) {
 		panic("Attempt to kmalloc() before allocator is initialized.\n");
 		return NULL;
@@ -172,9 +174,8 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char*
 		header = add_block(sz);
 	}
 
-
-	header->type = TYPE_KERNEL;
-	header->pid = 0;
+	header->type = pid ? TYPE_TASK : TYPE_KERNEL;
+	header->pid = pid;
 
 	void* result = (void*)((uint32_t)header + sizeof(struct mem_block));
 

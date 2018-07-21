@@ -20,11 +20,15 @@
 
 #include <lib/generic.h>
 
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
+	const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+
 void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
-#define kmalloc(sz) _kmalloc(sz, false, __FILE__, __LINE__, __FUNCTION__)
-#define kmalloc_a(sz) _kmalloc(sz, true, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc(sz) _kmalloc(sz, false, 0, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc_a(sz) _kmalloc(sz, true, 0, __FILE__, __LINE__, __FUNCTION__)
+#define tmalloc(sz, task) _kmalloc(sz, false, task ->pid, __FILE__, __LINE__, __FUNCTION__)
+#define tmalloc_a(sz, task) _kmalloc(sz, true, task ->pid, __FILE__, __LINE__, __FUNCTION__)
 #define kfree(ptr) _kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
 
 void kmalloc_init();

@@ -27,8 +27,8 @@ SYSCALL_HANDLER(mmap)
 {
 	size_t length = VMEM_ALIGN(syscall.params[1]);
 
-	void* addr = kmalloc_a(length);
 	task_t* task = scheduler_get_current();
+	void* addr = tmalloc_a(length, task);
 
 	for(intptr_t i = 0; i < length; i += PAGE_SIZE) {
 		struct vmem_page* page = vmem_new_page();
