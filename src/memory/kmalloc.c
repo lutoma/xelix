@@ -33,7 +33,7 @@
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
-	#define SERIAL_DEBUG(args...) serial_printf(args)
+	#define SERIAL_DEBUG(args...) { if(vmem_kernelContext) serial_printf(args); }
 #else
 	#define SERIAL_DEBUG(args...)
 #endif
@@ -69,35 +69,33 @@ static intptr_t alloc_max;
 static uint32_t num_blocks = 0;
 static uint32_t total_blocks_size = 0;
 
-static struct mem_block* free_blocks[MAX_FREE_BLOCKS];
-static uint32_t next_free_block_pos = 0;
-static uint32_t last_free_block_pos = 0;
+struct mem_block* last_free = (struct mem_block*)NULL;
 static spinlock_t kmalloc_lock;
 
 
 static struct mem_block* find_free_block(size_t sz) {
-	SERIAL_DEBUG("FFB (%d) ", free_blocks);
-	SERIAL_DEBUG("last free block pos %d\n", last_free_block_pos);
+	SERIAL_DEBUG("FFB ");
 
-	for(int i = 0; i < last_free_block_pos; i++) {
-		struct mem_block* fblock = free_blocks[i];
-
-		//SERIAL_DEBUG("...0x%x... \n", fblock->magic);
-
-		if(!fblock) {
-			continue;
-		}
-
-		if(unlikely(fblock->magic != KMALLOC_MAGIC)) {
-			//SERIAL_DEBUG("find_free_block: Metadata corruption (Block in free_blocks with invalid magic)\n");
+	struct mem_block* prev = NULL;
+	for(struct mem_block* fblock = last_free; fblock; fblock = fblock->next_free) {
+		if(unlikely(fblock->magic != KMALLOC_MAGIC || fblock->type != TYPE_FREE)) {
+			panic("find_free_block: Metadata corruption in free blocks linked list\n");
 			return NULL;
 		}
 
 		if(fblock->size >= sz) {
 			SERIAL_DEBUG("HIT size 0x%x ", fblock->size);
-			free_blocks[i] = NULL;
+
+			if(prev) {
+				prev->next_free = fblock->next_free;
+			} else {
+				last_free = fblock->next_free;
+			}
+
 			return fblock;
 		}
+
+		prev = fblock;
 	}
 
 	return NULL;
@@ -166,8 +164,8 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	struct mem_block* header = NULL;
 
 	if(!align) {
-	// Not 100% functional yet
-	//	header = find_free_block(sz);
+		header = find_free_block(sz);
+		header = NULL;
 	}
 
 	if(unlikely(!header)) {
@@ -232,20 +230,10 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 
 	// TODO Merge adjacent free blocks
 	header->type = TYPE_FREE;
-	header->next_free = (void*)42;
+	header->next_free = last_free;
+	last_free = header;
 
-	if(unlikely(next_free_block_pos > MAX_FREE_BLOCKS)) {
-		SERIAL_DEBUG("Exceeded MAX_FREE_BLOCKS, losing track of this free block.\n\n");
-		spinlock_release(&kmalloc_lock);
-		return;
-	}
 
-	free_blocks[next_free_block_pos] = header;
-	next_free_block_pos++;
-
-	if(next_free_block_pos > last_free_block_pos) {
-		last_free_block_pos = next_free_block_pos;
-	}
 
 	SERIAL_DEBUG("\n\n");
 	spinlock_release(&kmalloc_lock);
