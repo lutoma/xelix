@@ -31,9 +31,6 @@
 #include <tasks/elf.h>
 
 #define STACKSIZE PAGE_SIZE
-#define STATE_OFF 0
-#define STATE_INITIALIZING 1
-#define STATE_INITIALIZED 2
 
 task_t* current_task = NULL;
 uint64_t highest_pid = -0;
@@ -190,9 +187,9 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 // Called by the PIT a few hundred times per second.
 task_t* scheduler_select(cpu_state_t* last_regs)
 {
-	if(unlikely(scheduler_state == STATE_INITIALIZING))
+	if(unlikely(scheduler_state == SCHEDULER_INITIALIZING))
 	{
-		scheduler_state = STATE_INITIALIZED;
+		scheduler_state = SCHEDULER_INITIALIZED;
 		return current_task;
 	}
 
@@ -239,5 +236,5 @@ task_t* scheduler_select(cpu_state_t* last_regs)
 
 void scheduler_init()
 {
-	scheduler_state = STATE_INITIALIZING;
+	scheduler_state = SCHEDULER_INITIALIZING;
 }

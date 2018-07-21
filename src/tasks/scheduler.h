@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -25,18 +25,17 @@
 #define SCHEDULER_MAXNAME 256
 #define SCHEDULER_TASK_PATH_MAX 256
 
-// Single linked list
 typedef struct task {
 	uint32_t pid;
 	char name[SCHEDULER_MAXNAME];
-	struct task *parent;
+	struct task* parent;
 	cpu_state_t* state;
 	struct task* next;
 	struct task* previous;
 
 	void* stack;
 	void* entry;
-	struct vmem_context *memory_context;
+	struct vmem_context* memory_context;
 
 	// Current task state
 	enum {
@@ -56,7 +55,11 @@ typedef struct task {
 	char cwd[SCHEDULER_TASK_PATH_MAX + 1];
 } task_t;
 
-int scheduler_state;
+enum {
+	SCHEDULER_OFF,
+	SCHEDULER_INITIALIZING,
+	SCHEDULER_INITIALIZED
+} scheduler_state;
 
 task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	char** environ, char** argv, int argc, struct vmem_context* memory_context, bool map_structs);
