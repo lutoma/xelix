@@ -134,6 +134,8 @@ static struct mem_block* add_block(size_t sz, bool align) {
 		SERIAL_DEBUG("Alloc end is 0x%x, adding offset block with size 0x%x\n", alloc_end, offset);
 		struct mem_block* offset_header = set_block(offset - sizeof(struct mem_block) - sizeof(uint32_t), alloc_end);
 		offset_header->type = TYPE_FREE;
+		offset_header->next_free = last_free;
+		last_free = offset_header;
 
 
 		SERIAL_DEBUG("Alloc end is now 0x%x, pot. result 0x%x\n", alloc_end, alloc_end + sizeof(struct mem_block));
