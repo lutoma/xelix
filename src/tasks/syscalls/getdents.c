@@ -38,14 +38,14 @@ SYSCALL_HANDLER(getdents)
 	SYSCALL_SAFE_RESOLVE_PARAM(1)
 
 	vfs_file_t* dd = vfs_get_from_id(syscall.params[0]);
-	if(dd == NULL) {
+	if(!dd) {
 		SYSCALL_RETURN(0);
 	}
 
-	intptr_t result = (intptr_t)syscall.params[1];
+	intptr_t buf = (intptr_t)syscall.params[1];
 	uint32_t size = syscall.params[2];
 
-	char* name = name = vfs_dir_read(dd);
+	char* name = vfs_dir_read(dd);
 	uint32_t offset = 0;
 
 	for(; name; name = vfs_dir_read(dd)) {
@@ -54,7 +54,7 @@ SYSCALL_HANDLER(getdents)
 			break;
 		}
 
-		struct dirent* ent = result + offset;
+		struct dirent* ent = buf + offset;
 		ent->d_ino = 1;
 		ent->d_reclen = (uint16_t)reclen;
 		strcpy(ent->d_name, name);
