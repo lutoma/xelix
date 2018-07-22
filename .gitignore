@@ -10,6 +10,8 @@ tags
 toolchain/*/download
 toolchain/*/local
 toolchain/*/build
+toolchain/userspace/content/newlib/autom4te.cache/
+toolchain/userspace/content/newlib/configure
 *.sublime-*
 .gdb_history
 src/lib/config.h
