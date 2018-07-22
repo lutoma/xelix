@@ -35,6 +35,7 @@ typedef struct task {
 
 	void* stack;
 	void* entry;
+	void* binary_start;
 	struct vmem_context* memory_context;
 
 	// Current task state

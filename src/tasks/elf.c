@@ -187,6 +187,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 		ctx, true);
 
 	vmem_set_task(ctx, task);
+	task->binary_start = bin;
+
 	return task;
 }
 

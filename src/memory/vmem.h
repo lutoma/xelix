@@ -73,6 +73,9 @@ struct vmem_page *vmem_get_page(struct vmem_context *ctx, uint32_t offset);
 struct vmem_page *vmem_rm_page_phys(struct vmem_context *ctx, void *phys_addr);
 struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr);
 
+/* Remove memory context entirely */
+void vmem_rm_context(struct vmem_context* ctx);
+
 /* Iterator */
 int vmem_iterate(struct vmem_context *ctx, vmem_iterator_t callback);
 

@@ -1,6 +1,6 @@
 /* scheduler.c: Selecting which task is being executed next
  * Copyright © 2011 Lukas Martini, Fritz Grimpen
- * Copyright © 2012-2016 Lukas Martini
+ * Copyright © 2012-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -64,6 +64,13 @@ void scheduler_remove(task_t *t)
 
 	if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
 		t->parent->task_state = TASK_STATE_RUNNING;
+	}
+
+	kfree(t->stack);
+	vmem_rm_context(t->memory_context);
+
+	if(t->binary_start) {
+		kfree(t->binary_start);
 	}
 
 	kfree(t);

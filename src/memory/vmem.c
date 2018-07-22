@@ -254,6 +254,22 @@ struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr)
 	return retval;
 }
 
+void vmem_rm_context(struct vmem_context* ctx) {
+	struct vmem_context_node *node = ctx->node;
+
+	// Causes hangs
+	/*for (; node != NULL; node = node->next)
+	{
+		struct vmem_context_node* old_node = (void*)node;
+		node = node->next;
+		kfree(old_node->page);
+		kfree(old_node);
+	}*/
+
+	kfree(ctx->cache);
+	kfree(ctx);
+}
+
 uint32_t vmem_count_pages(struct vmem_context *ctx)
 {
 	return ctx->pages;
