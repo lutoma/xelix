@@ -69,21 +69,21 @@ static intptr_t alloc_max;
 
 
 static struct mem_block* find_free_block(size_t sz, bool align) {
-	if(align) return NULL; // DEBUG
 	SERIAL_DEBUG("FFB ");
-
 	struct mem_block* prev = NULL;
+
 	for(struct mem_block* fblock = last_free; fblock; fblock = fblock->next_free) {
-		if(unlikely(fblock->magic != KMALLOC_MAGIC || fblock->type != TYPE_FREE)) {
+		if(unlikely(prev == fblock || fblock->magic != KMALLOC_MAGIC || fblock->type != TYPE_FREE)) {
 			panic("find_free_block: Metadata corruption in free blocks linked list\n");
-			return NULL;
 		}
 
 		size_t sz_needed = sz;
 		intptr_t potential_result = (intptr_t)fblock + sizeof(struct mem_block);
 
 		if(align && (potential_result & (PAGE_SIZE - 1))) {
-			uint32_t offset = VMEM_ALIGN((uint32_t)potential_result + sizeof(struct mem_block)) - (potential_result + sizeof(struct mem_block));
+			uint32_t offset = VMEM_ALIGN((uint32_t)potential_result
+				+ sizeof(struct mem_block))
+				- (potential_result + sizeof(struct mem_block));
 
 			/* We need at least x bytes to store the headers and footers of our
 			 * block and of the new block we'll create in the offset
@@ -93,10 +93,9 @@ static struct mem_block* find_free_block(size_t sz, bool align) {
 			}
 
 			sz_needed += offset;
-			SERIAL_DEBUG("New size needed: 0x%x\n");
 		}
 
-		if(fblock->size >= sz) {
+		if(fblock->size >= sz_needed) {
 			SERIAL_DEBUG("HIT 0x%x size 0x%x ", fblock, fblock->size);
 
 			if(prev) {
@@ -120,7 +119,6 @@ static struct mem_block* set_block(size_t sz, intptr_t position) {
 	if(likely((intptr_t)header != alloc_start)) {
 		struct mem_block* prev = PREV_BLOCK(header);
 
-		SERIAL_DEBUG("\nChecking header at 0x%x, footer at 0x%x\n", prev, GET_FOOTER(prev));
 		if(unlikely(prev->magic != KMALLOC_MAGIC)) {
 			panic("set_block: Metadata corruption (previous block with invalid magic)");
 		}
@@ -131,15 +129,12 @@ static struct mem_block* set_block(size_t sz, intptr_t position) {
 
 	// Add uint32_t footer with size so we can find the header
 	uint32_t* footer = GET_FOOTER(header);
-	SERIAL_DEBUG("Writing header at 0x%x, footer at 0x%x\n", header, footer);
 	*footer = header->size;
 	return header;
 }
 
 /* Use the macros instead of directly calling this function.
  * For details on the attributes, see the GCC documentation at http://is.gd/6gmEqk.
- * FIXME Aligned allocations cannot currently reuse existing free blocks and
- * unnecessarily waste memory.
  */
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
 	const char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
@@ -189,7 +184,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	 * block in the created space.
 	 */
 	if(align && (result & (PAGE_SIZE - 1))) {
-		SERIAL_DEBUG("ALIGN original result 0x%x\n", result);
+		SERIAL_DEBUG("ALIGN original 0x%x ", result);
 
 		uint32_t header_offset = VMEM_ALIGN(result)
 			- result
@@ -203,9 +198,6 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 			header_offset += PAGE_SIZE;
 		}
 
-		SERIAL_DEBUG("New result is at 0x%x\n", result + header_offset + sizeof(struct mem_block));
-		SERIAL_DEBUG("Offset header size ox%x\n", header_offset - sizeof(uint32_t));
-
 		/* Switch the settings of the original block to be suitable for the
 		 * offset and add to the free blocks list.
 		 */
@@ -214,13 +206,9 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		offset_header->next_free = last_free;
 		last_free = offset_header;
 
-
 		// Add a new block header for the original allocation
-		SERIAL_DEBUG("\n\nSetting result block at 0x%x\n", NEXT_BLOCK(offset_header));
 		header = set_block(sz, NEXT_BLOCK(offset_header));
-
 		result = (intptr_t)header + sizeof(struct mem_block);
-		SERIAL_DEBUG("\nFinal result: 0x%x\n", result);
 	}
 
 	header->type = pid ? TYPE_TASK : TYPE_KERNEL;
@@ -238,8 +226,8 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 // FIXME Cannot free aligned blocks right now due to the inconsistent header offset
 void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
-	SERIAL_DEBUG("%s:%d %s\nFREE 0x%x ", _debug_file, _debug_line, _debug_func, ptr);
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
+	SERIAL_DEBUG("%s:%d %s\nFREE 0x%x size 0x%x\n\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
 
 	if(unlikely((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end)) {
 		SERIAL_DEBUG("INVALID_BOUNDS\n\n");
@@ -259,7 +247,6 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 	// Check previous block
 	if(likely((intptr_t)header > alloc_start)) {
 		struct mem_block* prev = PREV_BLOCK(header);
-		SERIAL_DEBUG("PBH 0x%x sz 0x%x ", prev, *PREV_FOOTER(header));
 
 		if(unlikely(prev->magic != KMALLOC_MAGIC)) {
 			panic("kfree: Metadata corruption (Previous block with invalid magic)\n");
@@ -271,9 +258,6 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 	header->next_free = last_free;
 	last_free = header;
 
-
-
-	SERIAL_DEBUG("\n\n");
 	spinlock_release(&kmalloc_lock);
 }
 
