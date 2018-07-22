@@ -25,19 +25,12 @@
 #define VFS_SEEK_END 2
 
 typedef struct {
-   uint64_t num;
+   uint32_t num;
    char path[512];
    char mount_path[512];
    uint32_t offset;
    uint32_t mountpoint;
 } vfs_file_t;
-
-typedef struct {
-   uint64_t num;
-   char path[512];
-   char mount_path[512];
-   uint32_t mountpoint;
-} vfs_dir_t;
 
 typedef size_t (*vfs_read_callback_t)(void* dest, size_t size, char* path, uint32_t offset);
 typedef char* (*vfs_read_dir_callback_t)(char* path, uint32_t offset);
@@ -46,12 +39,9 @@ typedef char* (*vfs_read_dir_callback_t)(char* path, uint32_t offset);
 // Used to always store the last read/write attempt (used for kernel panic debugging)
 char vfs_last_read_attempt[512];
 
-void vfs_dump_dir();
 vfs_file_t* vfs_get_from_id(uint32_t id);
-vfs_dir_t* vfs_get_dir_from_id(uint32_t id);
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
-char* vfs_dir_read(vfs_dir_t* dir, uint32_t offset);
+char* vfs_dir_read(vfs_file_t* dir);
 void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin);
 vfs_file_t* vfs_open(char* path);
-vfs_dir_t* vfs_dir_open(char* path);
 int vfs_mount(char* path, vfs_read_callback_t read_callback, vfs_read_dir_callback_t read_dir_callback);

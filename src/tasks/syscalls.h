@@ -37,8 +37,7 @@ DEFINE_SYSCALL(uname);
 DEFINE_SYSCALL(open);
 DEFINE_SYSCALL(execve);
 DEFINE_SYSCALL(seek);
-DEFINE_SYSCALL(opendir);
-DEFINE_SYSCALL(readdir);
+DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(kill);
 DEFINE_SYSCALL(getexecdata);
 DEFINE_SYSCALL(chdir);
@@ -59,7 +58,7 @@ syscall_t syscall_table[] = {
 	sys_read,			// 2
 	sys_write,			// 3
 	sys_getpid,			// 4
-	NULL,			// 5
+	NULL,				// 5
 	sys_getppid,		// 6
 	sys_mmap,			// 7
 	sys_munmap,			// 8
@@ -70,8 +69,8 @@ syscall_t syscall_table[] = {
 	sys_open,			// 13
 	sys_execve,			// 14
 	sys_seek,			// 15
-	sys_opendir,		// 16
-	sys_readdir,		// 17
+	sys_getdents,		// 16
+	NULL,				// 17
 	sys_kill,			// 18
 	sys_getexecdata,	// 19
 	sys_chdir,			// 20
@@ -104,8 +103,8 @@ char* syscall_name_table[] = {
 	"open",			// 13
 	"execve",		// 14
 	"seek",			// 15
-	"opendir",		// 16
-	"readdir",		// 17
+	"getdents",		// 16
+	NULL,			// 17
 	"kill",			// 18
 	"getexecdata",	// 19
 	"chdir",		// 20
