@@ -57,8 +57,6 @@ static void int_handler(cpu_state_t* regs)
 	syscall.params[0] = regs->ebx;
 	syscall.params[1] = regs->ecx;
 	syscall.params[2] = regs->edx;
-	syscall.params[3] = regs->esi;
-	syscall.params[4] = regs->edi;
 	syscall.state = regs;
 
 	syscall_t call = syscall_table[syscall.num];
@@ -69,21 +67,18 @@ static void int_handler(cpu_state_t* regs)
 		return;
 	}
 
+	call(syscall);
+
 #ifdef SYSCALL_DEBUG
 	task_t* cur = scheduler_get_current();
-	serial_printf("PID %d <%s>: %s(0x%x 0x%x 0x%x 0x%x 0x%x 0x%x) -> 0x%x\n",
+	serial_printf("PID %d <%s>: %s(0x%x 0x%x 0x%x) -> 0x%x\n",
 		cur->pid, cur->name,
 		syscall_name_table[syscall.num],
 		regs->ebx,
 		regs->ecx,
 		regs->edx,
-		regs->esi,
-		regs->edi,
-		regs->ebp,
 		regs->eax);
 #endif
-
-	call(syscall);
 }
 
 void syscall_init()

@@ -34,7 +34,6 @@ SYSCALL_HANDLER(test)
 	  syscall.state->esp
 	);
 
-	SYSCALL_RETURN(syscall.params[0] + syscall.params[1] + syscall.params[1] +\
-	  syscall.params[3] + syscall.params[4]);
+	SYSCALL_RETURN(syscall.params[0] + syscall.params[1] + syscall.params[2]);
 }
 
