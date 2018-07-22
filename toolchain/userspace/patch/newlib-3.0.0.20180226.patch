@@ -13,12 +13,16 @@ diff -rupN download/newlib-3.0.0.20180226/config.sub download/newlib-3.0.0.20180
 diff -rupN download/newlib-3.0.0.20180226/newlib/configure.host download/newlib-3.0.0.20180226-xelix/newlib/configure.host
 --- download/newlib-3.0.0.20180226/newlib/configure.host	2011-11-29 07:33:48.000000000 +0100
 +++ download/newlib-3.0.0.20180226-xelix/newlib/configure.host	2012-01-06 23:38:03.000000000 +0100
-@@ -343,6 +343,9 @@ esac
+@@ -343,6 +343,13 @@ esac
  # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
 
  case "${host}" in
 +  i[3-7]86-*-xelix*)
 +	sys_dir=xelix
++	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
++	newlib_cflags="${newlib_cflags} -DREENTRANT_SYSCALLS_PROVIDED"
++	posix_dir=posix
++	unix_dir=unix
 +	;;
    *-*-cygwin*)
  	posix_dir=posix

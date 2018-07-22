@@ -36,6 +36,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sgtty.h>
+#include <limits.h>
 
 #define syscall(call, a1, a2, a3) __syscall(call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
 
@@ -218,48 +219,6 @@ ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
 	return -1;
 }
 
-DIR* opendir(const char* path)
-{
-	int r = syscall(16, path, 0, 0);
-	if(!r) {
-		errno = ENOENT;
-		return NULL;
-	}
-
-	DIR* dir = (DIR*)malloc(sizeof(DIR));
-	dir->num = r;
-	dir->path = strndup(path, PATH_MAX);
-	dir->offset = 0;
-	return dir;
-
-}
-
-int closedir(DIR* dir)
-{
-	free(dir->path);
-	free(dir);
-	return 0;
-}
-
-struct dirent* readdir(DIR* dir)
-{
-	char* r = (char*)syscall(17, dir->num, dir->offset++, 0);
-	if(!r) {
-		return NULL;
-	}
-
-	struct dirent* ent = malloc(sizeof(struct dirent));
-	strncpy(ent->d_name, r, PATH_MAX);
-	ent->d_ino = 0; // FIXME
-	return ent;
-}
-
-int readdir_r(DIR* dd, struct dirent* de, struct dirent** de2)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
 void rewinddir(DIR* dd)
 {
 	errno = ENOSYS;
@@ -272,12 +231,6 @@ void seekdir(DIR* dd, long int sd)
 	return;
 }
 
-long int telldir(DIR* dd)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
 speed_t cfgetospeed(const struct termios *termios_p)
 {
 	errno = ENOSYS;
@@ -287,16 +240,6 @@ speed_t cfgetospeed(const struct termios *termios_p)
 int mkdir(const char *dir_path, mode_t mode) {
 	errno = ENOSYS;
 	return -1;
-}
-
-char* getcwd(char *buf, size_t size)
-{
-	return (char*)syscall(21, buf, size, 0);
-}
-
-char* getwd(char *buf)
-{
-	return getcwd(buf, PATH_MAX);
 }
 
 int chdir(const char *path)
@@ -593,4 +536,9 @@ int setsockopt(int socket, int level, int option_name,
 
 int listen(int socket, int backlog) {
 	return 0;
+}
+
+// Gets called by the newlib readdir handler, see libc/posix/readdir.c
+int getdents(unsigned int fd, struct dirent** dirp, unsigned int count) {
+	return syscall(16, fd, dirp, count);
 }

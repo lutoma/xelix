@@ -1,55 +1,60 @@
-/* Copyright © 2013 Lukas Martini
- *
- * This file is part of Xelix.
- *
- * Xelix is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Xelix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
- */
+/* libc/sys/linux/sys/dirent.h - Directory entry as returned by readdir */
 
-#include <limits.h>
-
-#ifndef PATH_MAX
-#define PATH_MAX	4096
-#endif
+/* Written 2000 by Werner Almesberger */
 
 
-#ifndef _SYS_DIRENT_H_
-#define _SYS_DIRENT_H_
+#ifndef _SYS_DIRENT_H
+#define _SYS_DIRENT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <sys/types.h>
+#include <bits/dirent.h>
+#define _LIBC 1
+#define  NOT_IN_libc 1
+#include <sys/lock.h>
+#undef _LIBC
 
-typedef struct DIR {
-	int num;
-	char* path;
-	int offset;
+#define HAVE_NO_D_NAMLEN	/* no struct dirent->d_namlen */
+#define HAVE_DD_LOCK  		/* have locking mechanism */
+
+#define MAXNAMLEN 255		/* sizeof(struct dirent.d_name)-1 */
+
+
+typedef struct {
+    int dd_fd;		/* directory file */
+    int dd_loc;		/* position in buffer */
+    int dd_seek;
+    char *dd_buf;	/* buffer */
+    int dd_len;		/* buffer length */
+    int dd_size;	/* amount of data in buffer */
+    _LOCK_RECURSIVE_T dd_lock;
 } DIR;
 
-typedef struct dirent {
-	ino_t d_ino;
-	char d_name[PATH_MAX];
-} DIRENT;
 
-int closedir(DIR*);
-DIR* opendir(const char*);
-struct dirent* readdir(DIR *);
-int readdir_r(DIR*, struct dirent*, struct dirent**);
-void rewinddir(DIR*);
-void seekdir(DIR*, long int);
-long int telldir(DIR*);
+#define __dirfd(dir) (dir)->dd_fd
 
-#ifdef __cplusplus
-}
+/* --- redundant --- */
+
+DIR *opendir(const char *);
+struct dirent *readdir(DIR *);
+int readdir_r(DIR *__restrict, struct dirent *__restrict,
+              struct dirent **__restrict);
+void rewinddir(DIR *);
+int closedir(DIR *);
+
+/* internal prototype */
+void _seekdir(DIR *dir, long offset);
+DIR *_opendir(const char *);
+
+#ifndef _POSIX_SOURCE
+long telldir (DIR *);
+void seekdir (DIR *, off_t loc);
+
+int scandir (const char *__dir,
+             struct dirent ***__namelist,
+             int (*select) (const struct dirent *),
+             int (*compar) (const struct dirent **, const struct dirent **));
+
+int alphasort (const struct dirent **__a, const struct dirent **__b);
+#endif /* _POSIX_SOURCE */
+
 #endif
-#endif /*_SYS_DIRENT_H_*/

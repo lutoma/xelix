@@ -1,4 +1,4 @@
-/* Copyright © 2016 Lukas Martini
+/* Copyright © 2016-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,6 +19,7 @@
 #ifndef _SYS_LIMITS_H
 #define _SYS_LIMITS_H
 
+#define PATH_MAX 4096
 #define CHAR_BIT 8
 #define SCHAR_MIN -127
 #define SCHAR_MAX 127

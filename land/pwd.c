@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/limits.h>
 
 int main() {
 	char* cwd = malloc(PATH_MAX);

@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/limits.h>
 
 #ifdef __xelix__
   // Xelix special interface™

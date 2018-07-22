@@ -27,6 +27,6 @@ int main() {
 
 	printf("\n");
 
-	closedir(dd);
+	//closedir(dd);
 	return EXIT_SUCCESS;
 }
