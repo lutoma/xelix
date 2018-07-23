@@ -58,11 +58,13 @@ static inline bool run_command(char* cmd, char* _argv[], char* _env[]) {
 int main(int argc, char* argv[]) {
 	char* cwd = malloc(PATH_MAX);
 	char* cmd = malloc(500);
+	char* user = getenv("USER");
+	char* host = getenv("HOST");
 
 	while(true) {
 		getcwd(cwd, PATH_MAX);
 
-		printf("xelix %s# ", cwd);
+		printf("%s@%s %s# ", user, host, cwd);
 
 		// Will only print after \n otherwise
 		fflush(stdout);
