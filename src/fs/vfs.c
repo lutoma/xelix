@@ -32,6 +32,7 @@ struct mountpoint
 {
 	char path[265];
 	bool active;
+	vfs_open_callback_t open_callback;
 	vfs_read_callback_t read_callback;
 	vfs_read_dir_callback_t read_dir_callback;
 };
@@ -109,6 +110,16 @@ vfs_file_t* vfs_open(char* path)
 		return NULL;
 	}
 
+	struct mountpoint mp = mountpoints[0]; // Fixme
+	if(!mp.open_callback) {
+		log(LOG_WARN, "vfs: fs has no open callback, can not check file existence\n");
+	} else {
+		if(mp.open_callback(path)) {
+			spinlock_release(&file_open_lock);
+			return NULL;
+		}
+	}
+
 	uint32_t num = (last_file == -1 ? last_file = 3 : ++last_file);
 
 	files[num].num = num;
@@ -121,13 +132,15 @@ vfs_file_t* vfs_open(char* path)
 	return &files[num];
 }
 
-int vfs_mount(char* path, vfs_read_callback_t read_callback, vfs_read_dir_callback_t read_dir_callback)
-{
+int vfs_mount(char* path,  vfs_open_callback_t open_callback,
+	vfs_read_callback_t read_callback, vfs_read_dir_callback_t read_dir_callback) {
+
 	uint32_t num;
 	spinlock_cmd(num = ++last_mountpoint, 20, -1);
 
 	strcpy(mountpoints[num].path, path);
 	mountpoints[num].active = true;
+	mountpoints[num].open_callback = open_callback;
 	mountpoints[num].read_callback = read_callback;
 	mountpoints[num].read_dir_callback = read_dir_callback;
 

@@ -144,6 +144,39 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 	return size;
 }
 
+int xsfs_open(char* path) {
+	if(!strcmp(path, "/")) {
+		return 0;
+	}
+
+	if(path[0] == '/') {
+		path++;
+	}
+
+	// Find relevant part of superblock
+	char* rd = superblock + hdr_offset;
+	uint32_t fileoffset = 0;
+	uint32_t filesize = 0;
+
+	for(int i = 0; i < num_files; i++) {
+		int sizeidx = find_substr(rd, "-");
+		int endidx = find_substr(rd + sizeidx, ":") + 1;
+
+		char* filesize_str = strndup(rd + sizeidx + 1, endidx - 2);
+		filesize = atoi(filesize_str);
+		kfree(filesize_str);
+
+		if(!strncmp(rd, path, sizeidx - 1)) {
+			return 0;
+		}
+
+		fileoffset += filesize;
+		rd += sizeidx + endidx;
+	}
+
+	return 1;
+}
+
 void xsfs_init()
 {
 	superblock = (char*)kmalloc(512);
@@ -162,5 +195,5 @@ void xsfs_init()
 	kfree(numstr);
 	header_end = find_substr(superblock, "\t");
 
-	vfs_mount("/", xsfs_read_file, xsfs_read_directory);
+	vfs_mount("/", xsfs_open, xsfs_read_file, xsfs_read_directory);
 }

@@ -508,7 +508,7 @@ void ext2_init()
 	debug("Loaded ext2 file superblock. inode_count=%d, block_count=%d, block_size=%d\n",
 		superblock->inode_count, superblock->block_count, superblock_to_blocksize(superblock));
 
-	vfs_mount("/", ext2_read_file, ext2_read_directory);
+	vfs_mount("/", NULL, ext2_read_file, ext2_read_directory);
 }
 
 #endif /* ENABLE_EXT2 */

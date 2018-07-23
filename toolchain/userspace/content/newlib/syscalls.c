@@ -137,6 +137,11 @@ int open(const char* name, int flags, ...)
 		return -1;
 	}
 
+	if(flags & O_WRONLY) {
+		errno = ENOSYS;
+		return -1;
+	}
+
 	int fd = syscall(13, name, 0, 0);
 	if(fd == -1)
 		errno = ENOENT;
