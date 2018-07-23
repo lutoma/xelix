@@ -207,8 +207,8 @@ int getdents(unsigned int fd, struct dirent** dirp, unsigned int count) {
 int uname(struct utsname* name) {
 	strcpy(name->sysname, "Xelix");
 	strcpy(name->nodename, "default");
-	strcpy(name->release, "0");
-	strcpy(name->version, "0");
+	strcpy(name->release, "alpha");
+	strcpy(name->version, "0.0.1");
 	strcpy(name->machine, "i686");
 	return 0;
 }
