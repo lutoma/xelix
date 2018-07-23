@@ -126,6 +126,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	task->parent = parent;
 	task->task_state = TASK_STATE_RUNNING;
 	task->environ = environ;
+	task->envc = envc;
 	task->argv = argv;
 	task->argc = argc;
 
