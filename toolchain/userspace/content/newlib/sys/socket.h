@@ -1,4 +1,4 @@
-/* Copyright © 2015 Lukas Martini
+/* Copyright © 2015-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -27,7 +27,14 @@
 
 #define SOCK_DGRAM 1
 #define SOCK_STREAM 2
-#define SOCK_SEQPACKET 3
+
+/* SOCK_RDM is only really a linux thing from what I can tell (not part of
+ * posix), but busybox needs it.
+ */
+#define SOCK_RDM 3
+#define SOCK_RAW 4
+
+#define SOCK_SEQPACKET 5
 
 #define SOL_SOCKET 0
 
@@ -45,6 +52,11 @@
 #define SO_SNDTIMEO 12
 #define SO_REUSEADDR 13
 
+#define AF_UNSPEC 0
+#define AF_INET 1
+#define AF_INET6 2
+#define AF_UNIX 3
+
 typedef uint32_t socklen_t;
 typedef uint32_t sa_family_t;
 
@@ -53,4 +65,15 @@ struct sockaddr {
 	char sa_data[];
 };
 
+int getsockname(int socket, struct sockaddr *restrict address,
+	socklen_t *restrict address_len);
+
+int getpeername(int socket, struct sockaddr *restrict address,
+	socklen_t *restrict address_len);
+
+int getsockopt(int socket, int level, int option_name,
+       void *restrict option_value, socklen_t *restrict option_len);
+
+int setsockopt(int socket, int level, int option_name,
+	const void *option_value, socklen_t option_len);
 #endif /* _SYS_SOCKET_H */

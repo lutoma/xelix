@@ -1,4 +1,4 @@
-/* Copyright © 2015 Lukas Martini
+/* Copyright © 2015-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -59,10 +59,6 @@
 #ifndef _SYS_ENDIAN_H_
 #define _SYS_ENDIAN_H_
 
-#ifndef _POSIX_SOURCE
-
-#include <sys/cdefs.h>
-
 #define LITTLE_ENDIAN	1234
 
 
@@ -73,6 +69,11 @@
 #ifndef BYTE_ORDER
  #define BYTE_ORDER LITTLE_ENDIAN
 #endif /* BYTE_ORDER */
+
+
+#ifndef _POSIX_SOURCE
+
+#include <sys/cdefs.h>
 
 #ifdef __GNUC__
 

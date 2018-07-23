@@ -38,6 +38,7 @@
 #include <string.h>
 #include <sgtty.h>
 #include <limits.h>
+#include <poll.h>
 
 #define syscall(call, a1, a2, a3) __syscall(call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
 
@@ -69,11 +70,6 @@ int close(int file)
 	return -1;
 }
 
-int execve(char *name, char **argv, char **env)
-{
-	errno = ENOSYS;
-	return syscall(23, name, argv, env);
-}
 
 int fork()
 {
@@ -98,11 +94,6 @@ pid_t getppid(void)
 	return (pid_t)_xelix_execdata->ppid;
 }
 
-int isatty(int file)
-{
-	errno = ENOSYS;
-	return 0;
-}
 
 int kill(int pid, int sig)
 {
@@ -445,6 +436,12 @@ pid_t execnew(const char* path, char* __argv[], char* __env[]) {
 	return syscall(28, (uint32_t)path, (uint32_t)__argv, (uint32_t)__env);
 }
 
+int _execve(char *name, char **argv, char **env)
+{
+	errno = ENOSYS;
+	return syscall(23, name, argv, env);
+}
+
 int gtty (int __fd, struct sgttyb *__params) {
 	errno = ENOSYS;
 	return 0;
@@ -491,26 +488,8 @@ int select(int nfds, fd_set *__restrict__ readfds,
 	-1;
 }
 */
-struct passwd *getpwnam(const char *name) {
-	errno = ENOSYS;
-	return NULL;
-}
 
 
-struct passwd *getpwuid(uid_t uid) {
-	errno = ENOSYS;
-	return NULL;
-}
-
-struct group *getgrnam(const char *name) {
-	errno = ENOSYS;
-	return NULL;
-}
-
-struct group *getgrgid(gid_t gid) {
-	errno = ENOSYS;
-	return NULL;
-}
 pid_t setsid(void) {
 	errno = ENOSYS;
 	return -1;
@@ -545,4 +524,25 @@ int listen(int socket, int backlog) {
 // Gets called by the newlib readdir handler, see libc/posix/readdir.c
 int getdents(unsigned int fd, struct dirent** dirp, unsigned int count) {
 	return syscall(16, fd, dirp, count);
+}
+
+int issetugid(void) {
+	errno=ENOSYS;
+	return 0;
+}
+
+// FIXME Should be a macro
+int WCOREDUMP(int s) {
+	return 0;
+}
+
+
+int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
+	errno = ENOSYS;
+	return 0;
+}
+
+long sysconf(int name) {
+	errno = ENOSYS;
+	return 0;
 }
