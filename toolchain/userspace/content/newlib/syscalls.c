@@ -29,6 +29,7 @@
 #include <sys/select.h>
 #include <sys/errno.h>
 #include <sys/xelix.h>
+#include <sys/utsname.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
@@ -201,4 +202,13 @@ int _execve(char *name, char **argv, char **env) {
 // Gets called by the newlib readdir handler, see libc/posix/readdir.c
 int getdents(unsigned int fd, struct dirent** dirp, unsigned int count) {
 	return syscall(16, fd, dirp, count);
+}
+
+int uname(struct utsname* name) {
+	strcpy(name->sysname, "Xelix");
+	strcpy(name->nodename, "default");
+	strcpy(name->release, "0");
+	strcpy(name->version, "0");
+	strcpy(name->machine, "i686");
+	return 0;
 }

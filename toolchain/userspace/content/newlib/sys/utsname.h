@@ -20,11 +20,11 @@
 #define _SYS_UTSNAME_H
 
 struct utsname {
-	char* sysname;
-	char* nodename;
-	char* release;
-	char* version;
-	char* machine;
+	char sysname[30];
+	char nodename[300];
+	char release[10];
+	char version[10];
+	char machine[10];
 };
 
 int uname(struct utsname *);
