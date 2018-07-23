@@ -14,7 +14,7 @@
 
 #ifdef __xelix__
   // Xelix special interface™
-  #include <sys/execnew.h>
+  #include <sys/xelix.h>
 #endif
 
 static char** parse_arguments(char* args) {
@@ -25,14 +25,16 @@ static char** parse_arguments(char* args) {
 	for(char* pch = strtok_r(args_cpy, " ", &sp); pch != NULL; pch = strtok_r(NULL, " ", &sp), argc++);
 	free(args_cpy);
 
-	char** _argv = malloc(sizeof(char*) * argc);
+	char** _argv = malloc(sizeof(char*) * (argc + 1));
 	sp = NULL;
 
 	char* pch = strtok_r(args, " ", &sp);
-	for(int i = 0; pch != NULL; pch = strtok_r(NULL, " ", &sp), i++) {
+	int i = 0;
+	for(; pch != NULL; pch = strtok_r(NULL, " ", &sp), i++) {
 		_argv[i] = pch;
 	}
 
+	_argv[i] = NULL;
 	return _argv;
 }
 
