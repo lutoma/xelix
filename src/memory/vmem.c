@@ -257,14 +257,22 @@ struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr)
 void vmem_rm_context(struct vmem_context* ctx) {
 	struct vmem_context_node *node = ctx->node;
 
-	// Causes hangs
-	/*for (; node != NULL; node = node->next)
+	/* For some reason, freeing pages after an offset of about ~30000 causes
+	 * kmalloc to become corrupted, so use this giant hack to avoid that –
+	 * freeing a lot of memory is still better than freeing no memory.
+	 * FIXME Should be properly debugged.
+	 */
+	for (int i = 0; node != NULL; node = node->next, i++)
 	{
+		if(i >= 30000) {
+			break;
+		}
+
 		struct vmem_context_node* old_node = (void*)node;
 		node = node->next;
 		kfree(old_node->page);
 		kfree(old_node);
-	}*/
+	}
 
 	kfree(ctx->cache);
 	kfree(ctx);
