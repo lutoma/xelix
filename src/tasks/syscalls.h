@@ -25,8 +25,6 @@
 
 DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);
-DEFINE_SYSCALL(getpid);
-DEFINE_SYSCALL(getppid);
 DEFINE_SYSCALL(read);
 DEFINE_SYSCALL(mmap);
 DEFINE_SYSCALL(munmap);
@@ -55,9 +53,9 @@ syscall_t syscall_table[] = {
 	sys_exit,			// 1
 	sys_read,			// 2
 	sys_write,			// 3
-	sys_getpid,			// 4
+	NULL,				// 4
 	NULL,				// 5
-	sys_getppid,		// 6
+	NULL,				// 6
 	sys_mmap,			// 7
 	sys_munmap,			// 8
 	sys_test,			// 9
@@ -89,9 +87,9 @@ char* syscall_name_table[] = {
 	"exit",			// 1
 	"read",			// 2
 	"write",		// 3
-	"getpid",		// 4
+	NULL,			// 4
 	NULL,			// 5
-	"getppid",		// 6
+	NULL,			// 6
 	"mmap",			// 7
 	"munmap",		// 8
 	"test",			// 9
