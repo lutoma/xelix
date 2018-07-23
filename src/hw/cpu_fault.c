@@ -57,7 +57,8 @@ static void handler(cpu_state_t* regs)
 		error_name = exception_names[regs->interrupt];
 	}
 
-	if(proc) {
+	// Always do a full panic on double faults
+	if(proc && regs->interrupt != 8) {
 
 		log(LOG_WARN, "%s in process <%s>+%x at EIP 0x%x of context %s. Terminating the task.\n",
 			error_name, proc->name, (regs->eip - (uint32_t)proc->entry),
