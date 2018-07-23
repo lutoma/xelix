@@ -57,5 +57,5 @@ typedef struct {
 	uint16_t	shstrndx;	/* Section header string table index */
 } __attribute__((packed)) elf_t;
 
-task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc);
-task_t* elf_load_file(char* path, char** environ, char** argv, int argc);
+task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** argv, uint32_t argc);
+task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, uint32_t argc);

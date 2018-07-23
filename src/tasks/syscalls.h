@@ -35,7 +35,6 @@ DEFINE_SYSCALL(set_hostname);
 DEFINE_SYSCALL(get_hostname);
 DEFINE_SYSCALL(uname);
 DEFINE_SYSCALL(open);
-DEFINE_SYSCALL(execve);
 DEFINE_SYSCALL(seek);
 DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(kill);
@@ -43,7 +42,6 @@ DEFINE_SYSCALL(getexecdata);
 DEFINE_SYSCALL(chdir);
 DEFINE_SYSCALL(getcwd);
 DEFINE_SYSCALL(fork);
-DEFINE_SYSCALL(execve);
 DEFINE_SYSCALL(socket);
 DEFINE_SYSCALL(bind);
 DEFINE_SYSCALL(socket_send);
@@ -67,7 +65,7 @@ syscall_t syscall_table[] = {
 	sys_set_hostname,	// 11
 	sys_uname,			// 12
 	sys_open,			// 13
-	sys_execve,			// 14
+	NULL,				// 14
 	sys_seek,			// 15
 	sys_getdents,		// 16
 	NULL,				// 17
@@ -76,7 +74,7 @@ syscall_t syscall_table[] = {
 	sys_chdir,			// 20
 	sys_getcwd,			// 21
 	sys_fork,			// 22
-	sys_execve,			// 23
+	NULL,				// 23
 	sys_socket,			// 24
 	sys_bind,			// 25
 	sys_socket_send,	// 26
@@ -101,7 +99,7 @@ char* syscall_name_table[] = {
 	"set_hostname",	// 11
 	"uname",		// 12
 	"open",			// 13
-	"execve",		// 14
+	NULL,			// 14
 	"seek",			// 15
 	"getdents",		// 16
 	NULL,			// 17
@@ -110,7 +108,7 @@ char* syscall_name_table[] = {
 	"chdir",		// 20
 	"getcwd",		// 21
 	"fork",			// 22
-	"execve",		// 23
+	NULL,			// 23
 	"socket",		// 24
 	"bind",			// 25
 	"socket_send",	// 26

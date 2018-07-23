@@ -1,5 +1,5 @@
-/* sys_getexecdata.c: Get argv, argc, environ
- * Copyright © 2011-2016 Lukas Martini
+/* sys_getexecdata.c: Get task data. Called in land crt0.c
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,22 +20,38 @@
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
 
+struct execdata {
+	uint32_t pid;
+	uint32_t ppid;
+	uint32_t argc;
+	uint32_t envc;
+
+	// Contains argc arguments, then envc environment strings.
+	char* argv_environ[];
+};
+
 // Return execution data.
 SYSCALL_HANDLER(getexecdata)
 {
-	task_t* proc = scheduler_get_current();
-	char** argv = proc->argv;
-	char** environ = proc->environ;
+	task_t* task = scheduler_get_current();
+	struct execdata* execdata = syscall.params[0];
+	uint32_t length = syscall.params[1];
 
-	SYSCALL_SAFE_REVERSE_RESOLVE(argv);
-	SYSCALL_SAFE_REVERSE_RESOLVE(environ);
+	execdata->pid = task->pid;
+	execdata->ppid = task->parent ? task->parent->pid : 0;
+	execdata->argc = task->argc;
+	execdata->envc = task->envc;
 
-	switch(syscall.params[0])
-	{
-		case 0: SYSCALL_RETURN(proc->argc);;
-		case 1: SYSCALL_RETURN((int)argv);;
-		case 2: SYSCALL_RETURN((int)environ);;
+	uint32_t offset = 0;
+	for(int i = 0; i < task->argc; i++) {
+		strncpy((char*)((intptr_t)execdata->argv_environ + offset), task->argv[i], 200);
+		offset += strlen(task->argv[i]) + 1;
 	}
 
-	SYSCALL_RETURN(0);
+	for(int i = 0; i < task->envc; i++) {
+		strncpy((char*)((intptr_t)execdata->argv_environ + offset), task->environ[i], 200);
+		offset += strlen(task->environ[i]) + 1;
+	}
+
+	SYSCALL_RETURN(1);
 }

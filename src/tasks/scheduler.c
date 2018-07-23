@@ -82,7 +82,8 @@ void scheduler_remove(task_t *t)
  * your program is.
  */
 task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
-	char** environ, char** argv, int argc, struct vmem_context* memory_context, bool map_structs)
+	char** environ, uint32_t envc, char** argv, uint32_t argc,
+	struct vmem_context* memory_context, bool map_structs)
 {
 	task_t* task = (task_t*)kmalloc_a(sizeof(task_t));
 
@@ -170,7 +171,7 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 	char* __argv[] = { "dash", "-liV", NULL };
 
 	// FIXME Make copy of memory context instead of just using the same
-	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, __argv, 2, to_fork->memory_context, false);
+	task_t* new_task = scheduler_new(state->eip, to_fork, "fork", __env, 6, __argv, 2, to_fork->memory_context, false);
 
 	// Copy registers
 	new_task->state->ebx = state->ebx;

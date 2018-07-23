@@ -1,4 +1,4 @@
-/* Copyright © 2013-2016 Lukas Martini
+/* Copyright © 2013-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -28,6 +28,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/errno.h>
+#include <sys/xelix.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
@@ -51,6 +52,11 @@ static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, ui
 	return result;
 }
 
+int _xelix_getexecdata() {
+	_xelix_execdata = (struct xelix_execdata*)malloc(0x400);
+	syscall(19, _xelix_execdata, 0x400, 0);
+	return 0;
+}
 
 void _exit(int return_code)
 {
@@ -82,9 +88,14 @@ int fstat(int file, struct stat *st)
 	return -1;
 }
 
-int getpid()
+pid_t getpid()
 {
-	return syscall(4, 0, 0, 0);
+	return (pid_t)_xelix_execdata->pid;
+}
+
+pid_t getppid(void)
+{
+	return (pid_t)_xelix_execdata->ppid;
 }
 
 int isatty(int file)
@@ -382,13 +393,6 @@ mode_t umask(mode_t cmask)
 {
 	errno = ENOSYS;
 	return -1;
-}
-
-pid_t getppid(void)
-{
-	// Simply return 0 as per POSIX getpgrp has no return code to indicate an
-	// error
-	return 0;
 }
 
 int tcsetpgrp(int fildes, pid_t pgid_id)

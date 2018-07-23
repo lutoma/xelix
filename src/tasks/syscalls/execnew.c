@@ -61,15 +61,16 @@ SYSCALL_HANDLER(execnew)
 	SYSCALL_SAFE_RESOLVE_PARAM(2);
 
 	uint32_t __argc = 0;
+	uint32_t __envc = 0;
 	char** __argv = copy_array((char**)syscall.params[1], &__argc);
-	char** __env = copy_array((char**)syscall.params[2], NULL);
+	char** __env = copy_array((char**)syscall.params[2], &__envc);
 
 	if(!__argv || !__env) {
 		log(LOG_WARN, "execnew: array check fail\n");
 		SYSCALL_RETURN(0);
 	}
 
-	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, __argc);
+	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __envc, __argv, __argc);
 
 	if(!new_task) {
 		SYSCALL_RETURN(0);

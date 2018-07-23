@@ -50,7 +50,8 @@ typedef struct task {
 
 	char** environ;
 	char** argv;
-	int argc;
+	uint32_t argc;
+	uint32_t envc;
 
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[SCHEDULER_TASK_PATH_MAX + 1];
@@ -63,7 +64,8 @@ enum {
 } scheduler_state;
 
 task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
-	char** environ, char** argv, int argc, struct vmem_context* memory_context, bool map_structs);
+	char** environ, uint32_t envc, char** argv, uint32_t argc,
+	struct vmem_context* memory_context, bool map_structs);
 void scheduler_add(task_t *task);
 void scheduler_terminate_current();
 task_t* scheduler_get_current();

@@ -140,7 +140,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	char* __env[] = { NULL };
 	char* __argv[] = { "init", NULL };
 
-	task_t* init = elf_load_file(INIT_PATH, __env, __argv, 1);
+	task_t* init = elf_load_file(INIT_PATH, __env, 0, __argv, 1);
 	if(!init) {
 		panic("Could not start init (Tried " INIT_PATH ").\n");
 	}

@@ -148,7 +148,7 @@ struct vmem_context* __attribute__((optimize("O0"))) map_task(elf_t* bin) {
 	return ctx;
 }
 
-task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
+task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc ,char** argv, uint32_t argc)
 {
 	if(bin <= (elf_t*)NULL)
 		return NULL;
@@ -183,8 +183,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	struct vmem_context *ctx = map_task(bin);
 	debug("Entry point is 0x%x\n", bin->entry);
 
-	task_t* task = scheduler_new(bin->entry, NULL, name, environ, argv, argc,
-		ctx, true);
+	task_t* task = scheduler_new(bin->entry, NULL, name, environ, envc, argv,
+		argc, ctx, true);
 
 	vmem_set_task(ctx, task);
 	task->binary_start = bin;
@@ -192,7 +192,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, char** argv, int argc)
 	return task;
 }
 
-task_t* elf_load_file(char* path, char** environ, char** argv, int argc)
+task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, uint32_t argc)
 {
 	vfs_file_t* fd = vfs_open(path);
 
@@ -203,5 +203,5 @@ task_t* elf_load_file(char* path, char** environ, char** argv, int argc)
 	if(read < 1)
 		return NULL;
 
-	return elf_load(data, path, environ, argv, argc);
+	return elf_load(data, path, environ, envc, argv, argc);
 }
