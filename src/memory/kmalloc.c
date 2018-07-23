@@ -245,18 +245,28 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 	}
 
 	// Check previous block
+	bool prev_merged = false;
 	if(likely((intptr_t)header > alloc_start)) {
 		struct mem_block* prev = PREV_BLOCK(header);
 
 		if(unlikely(prev->magic != KMALLOC_MAGIC)) {
 			panic("kfree: Metadata corruption (Previous block with invalid magic)\n");
 		}
+
+		// If previous block is free, merge
+		if(prev->type == TYPE_FREE) {
+			prev->size += header->size + sizeof(uint32_t) + sizeof(struct mem_block);
+			*GET_FOOTER(prev) = prev->size;
+			prev_merged = true;
+		}
 	}
 
 	// TODO Merge adjacent free blocks
-	header->type = TYPE_FREE;
-	header->next_free = last_free;
-	last_free = header;
+	if(!prev_merged) {
+		header->type = TYPE_FREE;
+		header->next_free = last_free;
+		last_free = header;
+	}
 
 	spinlock_release(&kmalloc_lock);
 }
