@@ -26,8 +26,9 @@
 #include <memory/kmalloc.h>
 
 // Check an array to make sure it's NULL-terminated, then copy to kernel space
-static int copy_array(char** array) {
-	int size = 0;
+static int copy_array(char** array, uint32_t* count) {
+	int size;
+
 	for(; size < 200; size++) {
 		if(!array[size]) {
 			break;
@@ -45,6 +46,11 @@ static int copy_array(char** array) {
 	}
 
 	new_array[i] = NULL;
+
+	if(count) {
+		*count = size;
+	}
+
 	return new_array;
 }
 
@@ -54,15 +60,16 @@ SYSCALL_HANDLER(execnew)
 	SYSCALL_SAFE_RESOLVE_PARAM(1);
 	SYSCALL_SAFE_RESOLVE_PARAM(2);
 
-	char** __argv = copy_array((char**)syscall.params[1]);
-	char** __env = copy_array((char**)syscall.params[2]);
+	uint32_t __argc = 0;
+	char** __argv = copy_array((char**)syscall.params[1], &__argc);
+	char** __env = copy_array((char**)syscall.params[2], NULL);
 
 	if(!__argv || !__env) {
 		log(LOG_WARN, "execnew: array check fail\n");
 		SYSCALL_RETURN(0);
 	}
 
-	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, 2);
+	task_t* new_task = elf_load_file((void*)syscall.params[0], __env, __argv, __argc);
 
 	if(!new_task) {
 		SYSCALL_RETURN(0);
