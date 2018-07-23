@@ -11,8 +11,8 @@ void __attribute__((__fastcall__)) _start() {
 		_exit(EXIT_FAILURE);
 	}
 
-	char** __argv = malloc(_xelix_execdata->argc * sizeof(char*));
-	char** __env = malloc((400 + _xelix_execdata->envc) * sizeof(char*));
+	char** __argv = malloc((_xelix_execdata->argc + 1) * sizeof(char*));
+	char** __env = malloc((_xelix_execdata->envc + 400) * sizeof(char*));
 
 	uint32_t offset = 0;
 	int i = 0;
@@ -27,7 +27,8 @@ void __attribute__((__fastcall__)) _start() {
 
 		offset += strlen(arg) + 1;
 	}
-	__env[i - _xelix_execdata->argc] = NULL;
+	__argv[_xelix_execdata->argc] = NULL;
+	__env[_xelix_execdata->envc] = NULL;
 
 	environ = __env;
 	int ret = main(_xelix_execdata->argc, __argv);
