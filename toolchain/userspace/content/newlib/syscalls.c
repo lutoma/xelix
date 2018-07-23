@@ -59,44 +59,25 @@ int _xelix_getexecdata() {
 	return 0;
 }
 
-void _exit(int return_code)
-{
+void _exit(int return_code) {
 	syscall(1, return_code, 0, 0);
 }
 
-int close(int file)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-
-int fork()
-{
+int fork() {
 	// Todo: Set proper errno in case something goes wonky
 	errno = ENOSYS;
 	return syscall(22, 0, 0, 0);
 }
 
-int fstat(int file, struct stat *st)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-pid_t getpid()
-{
+pid_t getpid() {
 	return (pid_t)_xelix_execdata->pid;
 }
 
-pid_t getppid(void)
-{
+pid_t getppid(void) {
 	return (pid_t)_xelix_execdata->ppid;
 }
 
-
-int kill(int pid, int sig)
-{
+int kill(int pid, int sig) {
 	int ret = syscall(18, pid, sig, 0);
 
 	switch(ret)
@@ -110,13 +91,7 @@ int kill(int pid, int sig)
 	return ret;
 }
 
-int link(char *old, char *new){
-	errno = ENOSYS;
-	return -1;
-}
-
-int lseek(int file, int ptr, int dir)
-{
+int lseek(int file, int ptr, int dir) {
 	int ret = syscall(14, file, ptr, dir);
 
 	if(ret == -2)
@@ -127,8 +102,7 @@ int lseek(int file, int ptr, int dir)
 	return -1;
 }
 
-int open(const char* name, int flags, ...)
-{
+int open(const char* name, int flags, ...) {
 	// Filter out (obviously) empty paths
 	if(name[0] == '\0' || !strcmp(name, " "))
 	{
@@ -149,256 +123,37 @@ int open(const char* name, int flags, ...)
 	return fd;
 }
 
-ssize_t read(int file, char *buf, int len)
-{
-	return syscall(2, file, buf, len);
+ssize_t read(int file, char *buf, int len) {
+	int read = syscall(2, file, buf, len);
+	/*if (!read) {
+		errno = EINTR;
+		return -1;
+	}*/
+
+	return read;
 }
 
-int readlink(const char *path, char *buf, size_t bufsize)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-void* sbrk(int incr)
-{
+void* sbrk(int incr) {
 	return (void*)syscall(7, 0, incr, 0);
 }
 
-int stat(const char *name, struct stat *st)
-{
-	st->st_dev = 1;
-	st->st_ino = 1;
-	st->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IXUSR;
-	st->st_nlink = 0;
-	st->st_uid = 1;
-	st->st_gid = 1;
-	st->st_rdev = 0;
-	st->st_size = 0x1000;
-	st->st_blksize = 512;
-	st->st_blocks = 16;
-	st->st_atime = 0;
-	st->st_mtime = 0;
-	st->st_ctime = 0;
-	return 0;
-}
-
-int symlink(const char *path1, const char *path2)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-clock_t times(struct tms *buf)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int unlink(char *name)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int wait(int* status)
-{
+int wait(int* status) {
 	return syscall(29, status, 0, 0);
-}
-
-int wait3(int* status)
-{
-	errno = ENOSYS;
-	return -1;
 }
 
 pid_t waitpid(pid_t pid, int* stat_loc, int options) {
 	return syscall(29, stat_loc, 0, 0); // FIXME Just the wait syscall
 }
 
-int write(int file, char *buf, int len)
-{
+int write(int file, char *buf, int len) {
 	return syscall(3, file, buf, len);
 }
 
-ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
-	errno = ENOSYS;
-	return -1;
-}
-
-void rewinddir(DIR* dd)
-{
-	errno = ENOSYS;
-	return;
-}
-
-void seekdir(DIR* dd, long int sd)
-{
-	errno = ENOSYS;
-	return;
-}
-
-speed_t cfgetospeed(const struct termios *termios_p)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int mkdir(const char *dir_path, mode_t mode) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int chdir(const char *path)
-{
+int chdir(const char *path) {
 	return syscall(20, path, 0, 0);
 }
 
-int gettimeofday(struct timeval *__p, void *__tz)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int access(const char *pathname, int mode)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int tcgetattr(int fd, struct termios *termios_p)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-char* ttyname(int desc)
-{
-	return "/dev/tty0";
-}
-
-uid_t getuid(void)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-uid_t geteuid(void)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-uid_t getgid(void)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-uid_t getegid(void)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int getgroups(int gidsetsize, gid_t grouplist[])
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int setgroups(size_t size, const gid_t *list) {
-	errno = ENOSYS;
-	return -1;
-}
-
-pid_t getpgrp(void)
-{
-	// Simply return 1 as per POSIX getpgrp has no return code to indicate an
-	// error
-	return 1;
-}
-
-int sigprocmask(int how, const sigset_t *set, sigset_t *oset)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int dup(int fildes)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int dup2(int fildes, int fildes2)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int pipe(int fildes[2])
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int sigaction(int sig, const struct sigaction* act, struct sigaction* oact)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int lstat(const char* path, struct stat* buf)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-pid_t tcgetpgrp(int fildes)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int setpgid(pid_t pid, pid_t pgid)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int fcntl(int fildes, int cmd, ...)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int sigsuspend(const sigset_t *sigmask)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-mode_t umask(mode_t cmask)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int tcsetpgrp(int fildes, pid_t pgid_id)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int socket(int domain, int type, int protocol)
-{
+int socket(int domain, int type, int protocol) {
 	if(domain != AF_INET) {
 		errno = EAFNOSUPPORT;
 		return -1;
@@ -412,14 +167,12 @@ int socket(int domain, int type, int protocol)
 	return syscall(24, domain, type, protocol);
 }
 
-int bind(int socket, const struct sockaddr *address, socklen_t address_len)
-{
+int bind(int socket, const struct sockaddr *address, socklen_t address_len) {
 	return syscall(25, socket, address, address_len);
 }
 
 ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
-	struct sockaddr *address, socklen_t *address_len)
-{
+	struct sockaddr *address, socklen_t *address_len) {
 	return syscall(27, socket, buffer, length);
 }
 
@@ -428,8 +181,7 @@ ssize_t recv(int socket, void *buffer, size_t length, int flags) {
 }
 
 ssize_t sendto(int socket, const void *message, size_t length, int flags,
-	const struct sockaddr *dest_addr, socklen_t dest_len)
-{
+	const struct sockaddr *dest_addr, socklen_t dest_len) {
 	return syscall(26, socket, message, length);
 }
 
@@ -441,113 +193,12 @@ pid_t execnew(const char* path, char* __argv[], char* __env[]) {
 	return syscall(28, (uint32_t)path, (uint32_t)__argv, (uint32_t)__env);
 }
 
-int _execve(char *name, char **argv, char **env)
-{
+int _execve(char *name, char **argv, char **env) {
 	errno = ENOSYS;
 	return syscall(23, name, argv, env);
-}
-
-int gtty (int __fd, struct sgttyb *__params) {
-	errno = ENOSYS;
-	return 0;
-}
-
-/* Set the terminal parameters associated with FD to *PARAMS.  */
-int stty (int __fd, __const struct sgttyb *__params) {
-	errno = ENOSYS;
-	return 0;
-}
-
-int chroot(const char *path) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setgid(gid_t gid) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setuid(gid_t gid) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int getrusage(int who, struct rusage *r_usage) {
-	errno = ENOSYS;
-	return -1;
-}
-/*
-int pselect(int nfds, fd_set *__restrict__ readfds,
-		fd_set *__restrict__ writefds, fd_set *__restrict__ errorfds,
-		const struct timespec *__restrict__ timeout,
-		const sigset_t *__restrict__ sigmask) {
-	errno = ENOSYS;
-	-1;
-}
-
-int select(int nfds, fd_set *__restrict__ readfds,
-		fd_set *__restrict__ writefds, fd_set *__restrict__ errorfds,
-		struct timeval *__restrict__ timeout) {
-	errno = ENOSYS;
-	-1;
-}
-*/
-
-
-pid_t setsid(void) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int ftruncate(int fildes, off_t length) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int accept(int socket, struct sockaddr* __restrict__ address, socklen_t* __restrict__ address_len) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int getsockname(int socket, struct sockaddr* __restrict__ address,
-       socklen_t* __restrict__ address_len) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setsockopt(int socket, int level, int option_name,
-       const void *option_value, socklen_t option_len) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int listen(int socket, int backlog) {
-	return 0;
 }
 
 // Gets called by the newlib readdir handler, see libc/posix/readdir.c
 int getdents(unsigned int fd, struct dirent** dirp, unsigned int count) {
 	return syscall(16, fd, dirp, count);
-}
-
-int issetugid(void) {
-	errno=ENOSYS;
-	return 0;
-}
-
-// FIXME Should be a macro
-int WCOREDUMP(int s) {
-	return 0;
-}
-
-
-int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
-	errno = ENOSYS;
-	return 0;
-}
-
-long sysconf(int name) {
-	errno = ENOSYS;
-	return 0;
 }

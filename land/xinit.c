@@ -14,6 +14,7 @@ int main() {
 		char* user = malloc(50);
 		char* read = fgets(user, 50, stdin);
 		if(!read) {
+			perror("fgets");
 			return 1;
 		}
 
@@ -23,6 +24,7 @@ int main() {
 		char* pass = malloc(500);
 		read = fgets(pass, 500, stdin);
 		if(!read) {
+			perror("fgets");
 			return 1;
 		}
 
