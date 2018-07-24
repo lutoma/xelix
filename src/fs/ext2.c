@@ -1,4 +1,4 @@
-/* ext2.c: Implementation of the extended filesystem, version 2
+/* ext2.c: Implementation of the extended file system, version 2
  * Copyright © 2013-2015 Lukas Martini
  *
  * This file is part of Xelix.
@@ -25,11 +25,12 @@
 #include <lib/md5.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
+#include <hw/serial.h>
 #include <fs/vfs.h>
 #include "ext2.h"
 
 #ifdef EXT2_DEBUG
-  #define debug(args...) log(LOG_DEBUG, "ext2: " args)
+  #define debug(args...) serial_printf("ext2: " args)
 #else
   #define debug(...)
 #endif
@@ -183,8 +184,8 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 	read_sector_or_fail(0, 0x1F0, 0, blockgroup_table_disk_sector, blockgroup_table);
 
 	// Locate the entry for the relevant blockgroup
-	ext2_blockgroup_t* blockgroup = 
-		(ext2_blockgroup_t*)((intptr_t)blockgroup_table + 
+	ext2_blockgroup_t* blockgroup =
+		(ext2_blockgroup_t*)((intptr_t)blockgroup_table +
 		(sizeof(ext2_blockgroup_t) * blockgroup_num));
 
 	// Now that we have the blockgroup data, look for the inode
@@ -199,7 +200,7 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 		superblock->inodes_per_group * superblock->inode_size);
 
 	for(int i = 0; i < (superblock->inodes_per_group * superblock->inode_size) / 512; i++)
-		read_sector_or_fail(0, 0x1F0, 0, (inode_table_location / 512) + i, inode_table_sector + i * 512);
+		read_sector_or_fail(NULL, 0x1F0, 0, (inode_table_location / 512) + i, inode_table_sector + i * 512);
 
 
 	ext2_inode_t* inode = (ext2_inode_t*)((intptr_t)inode_table_sector +
@@ -209,21 +210,56 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 	return inode;
 }
 
-static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num, bool direct_indirect)
+static uint8_t* direct_read_inode_block(uint32_t real_block_num) {
+	intptr_t block_location = real_block_num * superblock_to_blocksize(superblock);
+	debug("direct_read_inode_block, reading real block %d\n", real_block_num);
+
+	// Allocate correct size + one HDD sector (Since we can only read in 512
+	// byte chunks from the disk.
+	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
+	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512) {
+		read_sector_or_fail(0, 0x1F0, 0, (block_location + i) / 512, block + i);
+	}
+
+	return block;
+}
+
+static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
 {
-	// FIXME This value actually depends on block size. This expects a 1024 block size
-	if(block_num > 268)
-	{
-		log(LOG_INFO, "ext2: sorry, no support for doubly & triply indirect "
-			"blocks. Poke lutoma.\n");
+	if(block_num > superblock->block_count) {
+		debug("read_inode_block: Invalid block_num (%d > %d)\n", block_num, superblock->block_count);
 		return NULL;
 	}
 
 	uint32_t real_block_num = 0;
-	if(block_num >= 12 && !direct_indirect) {
+
+	// FIXME This value (268) actually depends on block size. This expects a 1024 block size
+	if(block_num >= 12 && block_num < 268) {
+		debug("reading indirect block at 0x%x\n", inode->blocks[12]);
+
 		// Indirect block
-		uint32_t* blocks_table = (uint32_t*)read_inode_block(inode, 12, true);
+		uint32_t* blocks_table = (uint32_t*)direct_read_inode_block(inode->blocks[12]);
 		real_block_num = blocks_table[block_num - 12];
+		kfree(blocks_table);
+	} else if(block_num >= 268 && block_num < 12 + 256*256) {
+		uint32_t* blocks_table = (uint32_t*)direct_read_inode_block(inode->blocks[13]);
+		debug("Doubly indirect blocks table:\n");
+		for(int i = 0; blocks_table[i]; i++) {
+			debug("\t%d:\t0x%x\n", i, blocks_table[i]);
+		}
+
+		debug("offset: %d\n", (block_num - 268) / 256);
+		uint32_t indir_block_num = blocks_table[(block_num - 268) / 256];
+
+		blocks_table = (uint32_t*)direct_read_inode_block(indir_block_num);
+		debug("Doubly indirect blocks table 2:\n");
+		for(int i = 0; blocks_table[i]; i++) {
+			debug("\t%d:\t0x%x\n", i, blocks_table[i]);
+		}
+		debug("offset: %d\n", (block_num - 268) % 256);
+
+
+		real_block_num = blocks_table[(block_num - 268) % 256];
 		kfree(blocks_table);
 	} else {
 		real_block_num = inode->blocks[block_num];
@@ -233,16 +269,11 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num, bool d
 		return NULL;
 	}
 
-	debug("read_inode_block: Actual block for inode block %d is %d\n", block_num, real_block_num);
+	debug("read_inode_block: Translated inode block %d to real block %d\n", block_num, real_block_num);
 
-	intptr_t block_location = real_block_num * superblock_to_blocksize(superblock);
-
-	// Allocate correct size + one HDD sector (Since we can only read in 512
-	// byte chunks from the disk.
-	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
-	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512) {
-		read_sector_or_fail(0, 0x1F0, 0, block_location / 512 + i, block + i);
-		debug("READING offset %d AT %d, write to %d\n", i, block_location / 512 + i, block + i);
+	uint8_t* block = direct_read_inode_block(real_block_num);
+	if(!block) {
+		return NULL;
 	}
 
 	return block;
@@ -265,7 +296,7 @@ static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
 	}
 
 	// TODO
-	uint8_t* block = read_inode_block(inode, 0, false);
+	uint8_t* block = read_inode_block(inode, 0);
 	if(!block) {
 		return NULL;
 	}
@@ -305,7 +336,7 @@ uint32_t inode_from_path(char* path)
 	char* path_tmp = (char*)kmalloc((strlen(path) + 1) * sizeof(char));
 	strcpy(path_tmp, path);
 
-	pch = strtok_r(path_tmp, "/", &sp);	
+	pch = strtok_r(path_tmp, "/", &sp);
 	uint32_t current_inode_num = ROOT_INODE;
 
 	while(pch != NULL)
@@ -316,7 +347,7 @@ uint32_t inode_from_path(char* path)
 		{
 			ext2_dirent_t* dirent = read_dirent(current_inode_num, i);
 
-			// If this dirent is NULL, this means there're no more files
+			// If this dirent is NULL, this means there are no more files
 			if(!dirent)
 				return 0;
 
@@ -357,7 +388,7 @@ uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num)
 	for(int i = 0; i < num; i++)
 	{
 		// TODO Pass buffer to read_inode_block instead of copying the data
-		uint8_t* current_block = read_inode_block(inode, i, false);
+		uint8_t* current_block = read_inode_block(inode, i);
 
 		if(!current_block)
 		{
@@ -365,7 +396,7 @@ uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num)
 			return NULL;
 		}
 
-		memcpy(data + superblock_to_blocksize(superblock) * i, 
+		memcpy(data + superblock_to_blocksize(superblock) * i,
 			current_block, superblock_to_blocksize(superblock));
 		kfree(current_block);
 	}
@@ -373,9 +404,9 @@ uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num)
 	return data;
 }
 
+#ifdef EXT2_DEBUG
 char* ext2_get_verbose_permissions(ext2_inode_t* inode) {
-	char* permstring = kmalloc(sizeof(char) * 10);
-
+	char* permstring = "         ";
 	permstring[0] = (inode->mode & 0x0100) ? 'r' : '-';
 	permstring[1] = (inode->mode & 0x0080) ? 'w' : '-';
 	permstring[2] = (inode->mode & 0x0040) ? 'x' : '-';
@@ -388,6 +419,7 @@ char* ext2_get_verbose_permissions(ext2_inode_t* inode) {
 	permstring[9] = 0;
 	return permstring;
 }
+#endif
 
 // The public readdir interface to the virtual file system
 char* ext2_read_directory(char* path, uint32_t offset)
@@ -406,6 +438,12 @@ char* ext2_read_directory(char* path, uint32_t offset)
 // The public read interface to the virtual file system
 size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 {
+	if(!path || !strcmp(path, "")) {
+		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
+		return NULL;
+	}
+	serial_printf("path is \"%s\"\n", path);
+
 	debug("ext2_read_file for %s, off %d, size %d\n", path, offset, size);
 
 	uint32_t inode_num = inode_from_path(path);
@@ -424,7 +462,7 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 	// Check if this inode is a file
 	if(mode_to_filetype(inode->mode) != FT_IFREG)
 	{
-		log(LOG_WARN, "ext2_read_file: Try to read something weird "
+		log(LOG_WARN, "ext2_read_file: Attempt to read something weird "
 			"(0x%x: %s)\n", inode->mode,
 			filetype_to_verbose(mode_to_filetype(inode->mode)));
 
@@ -436,7 +474,7 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 	}
 
 	if(size > inode->size) {
-		debug("ext2_read_file: Attempt to read %d bytes, but file is only %d bytes. Capping.\n", size, inode->size);
+		debug("ext2_read_file: Attempt to read 0x%x bytes, but file is only 0x%x bytes. Capping.\n", size, inode->size);
 		size = inode->size;
 	}
 
@@ -445,13 +483,19 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 		num_blocks++;
 	}
 
+	debug("Inode has %d blocks:\n", num_blocks);
+	debug("Blocks table:\n");
+	for(uint32_t i = 0; i < 15; i++) {
+		debug("\t%d: 0x%x\n", i, inode->blocks[i]);
+	}
+
 	void* block = read_inode_blocks(inode, num_blocks);
 
 	if(!block)
 		return NULL;
 
 	#ifdef EXT2_DEBUG
-		debug("Read file %s offset %d size %d with resulting md5sum of:\n\t", path, offset, size);
+		printf("Read file %s offset %d size %d with resulting md5sum of:\n\t", path, offset, size);
 		MD5_dump(block + offset, size);
 	#endif
 
@@ -465,7 +509,7 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 void ext2_init()
 {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
-	superblock = (ext2_superblock_t*)kmalloc(sizeof(ext2_superblock_t));
+	superblock = (ext2_superblock_t*)kmalloc(1024);
 	read_sector_or_fail(, 0x1F0, 0, 2, (uint8_t*)superblock);
 	read_sector_or_fail(, 0x1F0, 0, 3, (uint8_t*)((void*)superblock + 512));
 
@@ -475,6 +519,11 @@ void ext2_init()
 		return;
 	}
 
+	log(LOG_INFO, "ext2: Have ext2 revision %d. %d free / %d blocks.\n",
+			superblock->revision, superblock->free_blocks,
+			superblock->block_count);
+
+
 	// Check if the file system is marked as clean
 	if(superblock->state != SUPERBLOCK_STATE_CLEAN)
 	{
@@ -483,11 +532,12 @@ void ext2_init()
 		return;
 	}
 
-	// TODO Compare superblocks to each other
+	/*if(!superblock_to_blocksize(superblock) != 1024) {
+		log(LOG_ERR, "ext2: Block sizes != 1024 are not supported right now.\n");
+		return;
+	}*/
 
-	log(LOG_INFO, "ext2: Have ext2 revision %d. %d free / %d blocks.\n",
-			superblock->revision, superblock->free_blocks,
-			superblock->block_count);
+	// TODO Compare superblocks to each other?
 
 	// RO is irrelevant for now since we're read-only anyways.
 	//if(superblock->features_incompat || superblock->features_ro)
@@ -505,7 +555,7 @@ void ext2_init()
 			"features. I'll ignore them (0x%x).\n", superblock->features_compat);
 	}
 
-	debug("Loaded ext2 file superblock. inode_count=%d, block_count=%d, block_size=%d\n",
+	debug("Loaded ext2 superblock. inode_count=%d, block_count=%d, block_size=%d\n",
 		superblock->inode_count, superblock->block_count, superblock_to_blocksize(superblock));
 
 	vfs_mount("/", NULL, ext2_read_file, ext2_read_directory);

@@ -106,9 +106,16 @@ void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
 
 vfs_file_t* vfs_open(char* path)
 {
+	if(!path || !strcmp(path, "")) {
+		log(LOG_ERR, "vfs: vfs_open called with empty path.\n");
+		return NULL;
+	}
+
 	if(!spinlock_get(&file_open_lock, 30)) {
 		return NULL;
 	}
+
+	printf("vfs_open for path \"%s\"\n", path);
 
 	struct mountpoint mp = mountpoints[0]; // Fixme
 	if(!mp.open_callback) {
