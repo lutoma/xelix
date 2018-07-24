@@ -143,7 +143,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		panic("Attempt to kmalloc before allocator is initialized.\n");
 	}
 
-	SERIAL_DEBUG("%s:%d %s\nALLC 0x%x ", _debug_file, _debug_line, _debug_func, sz);
+	SERIAL_DEBUG("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
 
 	#ifdef KMALLOC_DEBUG
 		if(sz >= (1024 * 1024)) {
@@ -154,7 +154,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	#endif
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		SERIAL_DEBUG("Could not get spinlock\n\n");
+		SERIAL_DEBUG("Could not get spinlock\n");
 		return NULL;
 	}
 
@@ -219,7 +219,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	}
 
 	spinlock_release(&kmalloc_lock);
-	SERIAL_DEBUG("RESULT 0x%x\n\n", (intptr_t)result);
+	SERIAL_DEBUG("RESULT 0x%x\n", (intptr_t)result);
 	return (void*)result;
 }
 
@@ -227,20 +227,20 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
-	SERIAL_DEBUG("%s:%d %s\nFREE 0x%x size 0x%x\n\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
+	SERIAL_DEBUG("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
 
 	if(unlikely((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end)) {
-		SERIAL_DEBUG("INVALID_BOUNDS\n\n");
+		SERIAL_DEBUG("INVALID_BOUNDS\n");
 		return;
 	}
 
 	if(unlikely(header->magic != KMALLOC_MAGIC)) {
-		SERIAL_DEBUG("INVALID_MAGIC\n\n");
+		SERIAL_DEBUG("INVALID_MAGIC\n");
 		return;
 	}
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		SERIAL_DEBUG("Could not get spinlock\n\n");
+		SERIAL_DEBUG("Could not get spinlock\n");
 		return;
 	}
 
