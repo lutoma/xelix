@@ -444,7 +444,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, uint32_t size)
 
 		vfs_file_t* new = vfs_open(sym_path);
 		new->offset = fp->offset;
-		size_t r = ext2_read_file(dest, size, new);
+		size_t r = ext2_read_file(new, dest, size);
 		kfree(inode);
 		return r;
 	}
