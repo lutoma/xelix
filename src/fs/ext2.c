@@ -457,8 +457,28 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 		inode->gid, inode->size, filetype_to_verbose(mode_to_filetype(inode->mode)),
 		ext2_get_verbose_permissions(inode));
 
-	// Check if this inode is a file
-	if(mode_to_filetype(inode->mode) != FT_IFREG)
+	uint32_t file_type = mode_to_filetype(inode->mode);
+
+	if(file_type == FT_IFLNK) {
+		/* For symlinks with up to 60 chars length, the path is stored in the
+		 * inode in the area where normally the block pointers would be.
+		 * Otherwise in the file itself.
+		 */
+		if(inode->size > 60) {
+			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
+			return NULL;
+		}
+
+		char* sym_path = (char*)inode->blocks;
+		if(sym_path[0] != '/') {
+			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
+			return NULL;
+		}
+
+		return ext2_read_file(dest, size, sym_path, offset);
+	}
+
+	if(file_type != FT_IFREG)
 	{
 		log(LOG_WARN, "ext2_read_file: Attempt to read something weird "
 			"(0x%x: %s)\n", inode->mode,

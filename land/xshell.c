@@ -40,7 +40,10 @@ static char** parse_arguments(char* args) {
 
 static inline bool run_command(char* cmd, char* _argv[], char* _env[]) {
 	#ifdef __xelix__
-		return execnew(cmd, _argv, _env);
+		char* full_path = malloc(500);
+		snprintf(full_path, 500, "/bin/%s", cmd);
+		return execnew(full_path, _argv, _env);
+		free(full_path);
 	#else
 		pid_t pid = fork();
 
