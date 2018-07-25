@@ -59,6 +59,10 @@ char* xsfs_read_directory(vfs_file_t* fp, uint32_t offset)
 	return strndup(rd, length);
 }
 
+size_t xsfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
+	return 0;
+}
+
 // The public read interface to the virtual file system
 size_t xsfs_read_file(vfs_file_t* fp, void* dest, size_t size)
 {
@@ -199,5 +203,5 @@ void xsfs_init()
 	kfree(numstr);
 	header_end = find_substr(superblock, "\t");
 
-	vfs_mount("/", xsfs_open, xsfs_read_file, xsfs_read_directory);
+	vfs_mount("/", xsfs_open, xsfs_read_file, xsfs_getdents);
 }

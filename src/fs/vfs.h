@@ -33,19 +33,31 @@ typedef struct {
    uint32_t inode;
 } vfs_file_t;
 
+
+/* This is currently directly used for ext2 reads. Format should not be changed
+ * unless it is removed from there.
+ */
+typedef struct {
+	uint32_t inode;
+	uint16_t record_len;
+	uint8_t name_len;
+	uint8_t type;
+	char name[];
+} __attribute__((packed)) vfs_dirent_t;
+
 typedef uint32_t (*vfs_open_callback_t)(char* path);
 typedef size_t (*vfs_read_callback_t)(vfs_file_t* fp, void* dest, size_t size);
-typedef char* (*vfs_read_dir_callback_t)(vfs_file_t* fp, uint32_t offset);
+typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t size);
 
 
 // Used to always store the last read/write attempt (used for kernel panic debugging)
 char vfs_last_read_attempt[512];
 
 vfs_file_t* vfs_get_from_id(uint32_t id);
-size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
-char* vfs_dir_read(vfs_file_t* dir);
-void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin);
 vfs_file_t* vfs_open(char* path);
+size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
+size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
+void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
 
 int vfs_mount(char* path, vfs_open_callback_t open_callback,
-	vfs_read_callback_t read_callback, vfs_read_dir_callback_t read_dir_callback);
+	vfs_read_callback_t read_callback, vfs_getdents_callback_t getdents_callback);

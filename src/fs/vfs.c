@@ -1,5 +1,5 @@
 /* vfs.c: Virtual file system
- * Copyright © 2011-2016 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,24 +17,19 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// TODO: See doc/vfs.txt
-
 #include "vfs.h"
-
 #include <lib/log.h>
 #include <memory/kmalloc.h>
 #include <lib/string.h>
 #include <lib/list.h>
 #include <lib/spinlock.h>
 
-
-struct mountpoint
-{
+struct mountpoint {
 	char path[265];
 	bool active;
 	vfs_open_callback_t open_callback;
 	vfs_read_callback_t read_callback;
-	vfs_read_dir_callback_t read_dir_callback;
+	vfs_getdents_callback_t getdents_callback;
 };
 
 struct mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
@@ -45,8 +40,7 @@ uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
 
-vfs_file_t* vfs_get_from_id(uint32_t id)
-{
+vfs_file_t* vfs_get_from_id(uint32_t id) {
 	if(id < 1 || id > last_file || !spinlock_get(&file_open_lock, 30)) {
 		return NULL;
 	}
@@ -55,47 +49,6 @@ vfs_file_t* vfs_get_from_id(uint32_t id)
 	spinlock_release(&file_open_lock);
 
 	return fd;
-}
-
-
-size_t vfs_read(void* dest, size_t size, vfs_file_t* fp)
-{
-	strncpy(vfs_last_read_attempt, fp->path, 512);
-
-	struct mountpoint mp = mountpoints[fp->mountpoint];
-	size_t read = mp.read_callback(fp, dest, size);
-	fp->offset += size;
-
-	return read;
-}
-
-char* vfs_dir_read(vfs_file_t* dir)
-{
-	strncpy(vfs_last_read_attempt, dir->path, 512);
-
-	struct mountpoint mp = mountpoints[dir->mountpoint];
-	char* name = mp.read_dir_callback (dir, dir->offset);
-	if(name) {
-		dir->offset++;
-		return name;
-	}
-
-	return NULL;
-}
-
-void vfs_seek(vfs_file_t* fp, uint32_t offset, int origin)
-{
-	switch(origin)
-	{
-		case VFS_SEEK_SET:
-			fp->offset = offset;
-			break;
-		case VFS_SEEK_CUR:
-			fp->offset += offset;
-			break;
-		case VFS_SEEK_END:
-			log(LOG_WARN, "vfs_seek with an origin of VFS_SEEK_END is not supported so far!\n");
-	}
 }
 
 vfs_file_t* vfs_open(char* path)
@@ -130,15 +83,49 @@ vfs_file_t* vfs_open(char* path)
 	return &files[num];
 }
 
+size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
+	strncpy(vfs_last_read_attempt, fp->path, 512);
+	struct mountpoint mp = mountpoints[fp->mountpoint];
+	size_t read = mp.read_callback(fp, dest, size);
+	fp->offset += size;
+
+	return read;
+}
+
+size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size) {
+	if(dir->offset) {
+		return 0;
+	}
+	strncpy(vfs_last_read_attempt, dir->path, 512);
+	struct mountpoint mp = mountpoints[dir->mountpoint];
+	size_t read = mp.getdents_callback(dir, dest, size);
+	dir->offset += read;
+	return read;
+}
+
+
+void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
+	switch(origin) {
+		case VFS_SEEK_SET:
+			fp->offset = offset;
+			break;
+		case VFS_SEEK_CUR:
+			fp->offset += offset;
+			break;
+		case VFS_SEEK_END:
+			log(LOG_WARN, "vfs_seek with an origin of VFS_SEEK_END is not supported so far!\n");
+	}
+}
+
 int vfs_mount(char* path,  vfs_open_callback_t open_callback,
-	vfs_read_callback_t read_callback, vfs_read_dir_callback_t read_dir_callback) {
+	vfs_read_callback_t read_callback, vfs_getdents_callback_t getdents_callback) {
 
 	if(!path || !strcmp(path, "")) {
 		log(LOG_ERR, "vfs: vfs_mount called with empty path.\n");
 		return NULL;
 	}
 
-	if(!open_callback || !read_callback || !read_dir_callback) {
+	if(!open_callback || !read_callback || !getdents_callback) {
 		log(LOG_ERR, "vfs: vfs_mount missing callback\n");
 		return NULL;
 	}
@@ -150,7 +137,7 @@ int vfs_mount(char* path,  vfs_open_callback_t open_callback,
 	mountpoints[num].active = true;
 	mountpoints[num].open_callback = open_callback;
 	mountpoints[num].read_callback = read_callback;
-	mountpoints[num].read_dir_callback = read_dir_callback;
+	mountpoints[num].getdents_callback = getdents_callback;
 
 	log(LOG_DEBUG, "Mounted [%x] to %s\n", read_callback, mountpoints[num].path);
 	return 0;

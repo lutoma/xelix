@@ -50,7 +50,7 @@ int close(int file) {
 
 
 int fstat(int file, struct stat *st) {
-	//fprintf(stderr, "Warning: xelix newlib fstat(%d) stub called.\n", file);
+	fprintf(stderr, "Warning: xelix newlib fstat(%d) stub called.\n", file);
 
 	errno = ENOSYS;
 	return -1;

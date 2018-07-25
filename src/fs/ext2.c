@@ -108,14 +108,6 @@ struct inode {
 	uint16_t reserved2[5];
 } __attribute__((packed));
 
-struct dirent {
-	uint32_t inode;
-	uint16_t record_len;
-	uint8_t name_len;
-	uint8_t type;
-	char name[];
-} __attribute__((packed));
-
 #define SUPERBLOCK_MAGIC 0xEF53
 #define SUPERBLOCK_STATE_CLEAN 1
 #define SUPERBLOCK_STATE_DIRTY 2
@@ -289,7 +281,7 @@ uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf)
 }
 
 // Returns the dirent for the n-th file in a directory inode
-static struct dirent* read_dirent(struct inode* inode, uint32_t offset)
+static vfs_dirent_t* read_dirent(struct inode* inode, uint32_t offset)
 {
 	uint8_t* block = kmalloc(inode->size);
 	uint8_t* read = read_inode_blocks(inode, inode->size / superblock_to_blocksize(superblock), block);
@@ -298,14 +290,14 @@ static struct dirent* read_dirent(struct inode* inode, uint32_t offset)
 		return NULL;
 	}
 
-	struct dirent* dirent = (struct dirent*)((intptr_t)block);
+	vfs_dirent_t* dirent = (vfs_dirent_t*)((intptr_t)block);
 
 	for(int i = 0; i < offset; i++) {
 		if(!dirent || !dirent->name_len) {
 			return NULL;
 		}
 
-		dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
+		dirent = ((vfs_dirent_t*)((intptr_t)dirent + dirent->record_len));
 	}
 
 	return dirent;
@@ -332,7 +324,7 @@ uint32_t ext2_open(char* path) {
 	char* path_tmp = strndup(path, 500);
 	pch = strtok_r(path_tmp, "/", &sp);
 	struct inode* current_inode = NULL;
-	struct dirent* dirent = NULL;
+	vfs_dirent_t* dirent = NULL;
 
 	while(pch != NULL)
 	{
@@ -371,41 +363,8 @@ uint32_t ext2_open(char* path) {
 	return dirent->inode;
 }
 
-// The public readdir interface to the virtual file system
-char* ext2_read_directory(vfs_file_t* fp, uint32_t offset)
-{
-	if(!fp || !fp->inode) {
-		log(LOG_ERR, "ext2: ext2_read_directory called without fp or fp missing inode.\n");
-		return NULL;
-	}
-
-	struct inode* inode = read_inode(fp->inode);
-	if(!inode) {
-		return NULL;
-	}
-
-	// Check if this inode is a directory
-	if(mode_to_filetype(inode->mode) != FT_IFDIR)
-	{
-		debug("ext2_read_directory: This inode isn't a directory "
-			"(Is %s [%d])\n", filetype_to_verbose(mode_to_filetype(inode->mode)),
-				inode->mode);
-
-		kfree(inode);
-		return NULL;
-	}
-
-	struct dirent* dirent = read_dirent(inode, offset);
-	if(!dirent) {
-		return NULL;
-	}
-
-	kfree(inode);
-	return strndup(dirent->name, dirent->name_len);
-}
-
 // The public read interface to the virtual file system
-size_t ext2_read_file(vfs_file_t* fp, void* dest, uint32_t size)
+size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
@@ -495,6 +454,47 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, uint32_t size)
 	return size;
 }
 
+size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
+	if(!fp || !fp->inode) {
+		log(LOG_ERR, "ext2: ext2_read_directory called without fp or fp missing inode.\n");
+		return 0;
+	}
+
+	struct inode* inode = read_inode(fp->inode);
+	if(!inode) {
+		return 0;
+	}
+
+	// Check if this inode is a directory
+	if(mode_to_filetype(inode->mode) != FT_IFDIR)
+	{
+		debug("ext2_read_directory: This inode isn't a directory "
+			"(Is %s [%d])\n", filetype_to_verbose(mode_to_filetype(inode->mode)),
+				inode->mode);
+
+		kfree(inode);
+		return 0;
+	}
+
+	/* FIXME Should not allocate, but copy directly, but that is tricky because
+	 * can only read in 1kb chunks right now.
+	 */
+	uint8_t* block = kmalloc(inode->size);
+	uint8_t* read = read_inode_blocks(inode, inode->size / superblock_to_blocksize(superblock), block);
+	if(!read) {
+		kfree(block);
+		return 0;
+	}
+
+	if(size > inode->size) {
+		size = inode->size;
+	}
+
+	memcpy(dest, block, size);
+	kfree(block);
+	return size;
+}
+
 void ext2_init()
 {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
@@ -566,7 +566,7 @@ void ext2_init()
 		return;
 	}
 
-	vfs_mount("/", ext2_open, ext2_read_file, ext2_read_directory);
+	vfs_mount("/", ext2_open, ext2_read_file, ext2_getdents);
 }
 
 #endif /* ENABLE_EXT2 */

@@ -1,4 +1,4 @@
-/* getdents.c: Get directory entities
+/* getdents.c: Get directory entries
  * Copyright © 2018 Lukas Martini
  *
  * This file is part of Xelix.
@@ -23,9 +23,10 @@
 #include <fs/vfs.h>
 #include <lib/log.h>
 #include <lib/print.h>
+#include <memory/kmalloc.h>
 
 // Needs to be in this format to stay compatible with newlib
-struct dirent {
+struct newlib_dirent {
 	uint32_t d_ino;
 	uint32_t d_off;
 	uint16_t d_reclen;
@@ -45,21 +46,29 @@ SYSCALL_HANDLER(getdents)
 	intptr_t buf = (intptr_t)syscall.params[1];
 	uint32_t size = syscall.params[2];
 
-	char* name = vfs_dir_read(dd);
-	uint32_t offset = 0;
+	vfs_dirent_t* kernel_ent = kmalloc(size);
+	int read = vfs_getdents(dd, kernel_ent, size);
+	if(!read) {
+		SYSCALL_RETURN(0);
+	}
 
-	for(; name; name = vfs_dir_read(dd)) {
-		uint32_t reclen = sizeof(struct dirent) + strlen(name) + 1;
+	uint32_t offset = 0;
+	while(kernel_ent->name_len) {
+		uint32_t reclen = sizeof(struct newlib_dirent) + kernel_ent->name_len + 1;
+
 		if(offset + reclen > size) {
 			break;
 		}
 
-		struct dirent* ent = buf + offset;
-		ent->d_ino = 1;
+		struct newlib_dirent* ent = buf + offset;
+		ent->d_ino = kernel_ent->inode;
+		ent->d_type = kernel_ent->type;
 		ent->d_reclen = (uint16_t)reclen;
-		strcpy(ent->d_name, name);
+		strncpy(ent->d_name, kernel_ent->name, kernel_ent->name_len);
 		offset += ent->d_reclen;
 		ent->d_off = offset;
+
+		kernel_ent = (vfs_dirent_t*)((intptr_t)kernel_ent + kernel_ent->record_len);
 	}
 
 	SYSCALL_RETURN(offset);
