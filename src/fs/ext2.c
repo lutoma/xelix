@@ -411,13 +411,14 @@ uint32_t ext2_open(char* path) {
 }
 
 // The public readdir interface to the virtual file system
-char* ext2_read_directory(char* path, uint32_t offset)
+char* ext2_read_directory(vfs_file_t* fp, uint32_t offset)
 {
-	uint32_t inode_num = inode_from_path(path);
-	if(inode_num < 1)
+	if(!fp || !fp->inode) {
+		log(LOG_ERR, "ext2: ext2_read_directory called without fp or fp missing inode.\n");
 		return NULL;
+	}
 
-	struct dirent* dirent = read_dirent(inode_num, offset);
+	struct dirent* dirent = read_dirent(fp->inode, offset);
 	if(!dirent)
 		return NULL;
 
@@ -425,7 +426,7 @@ char* ext2_read_directory(char* path, uint32_t offset)
 }
 
 // The public read interface to the virtual file system
-size_t ext2_read_file(void* dest, uint32_t size, vfs_file_t* fp)
+size_t ext2_read_file(vfs_file_t* fp, void* dest, uint32_t size)
 {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");

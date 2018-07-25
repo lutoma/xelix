@@ -34,8 +34,8 @@ typedef struct {
 } vfs_file_t;
 
 typedef uint32_t (*vfs_open_callback_t)(char* path);
-typedef size_t (*vfs_read_callback_t)(void* dest, size_t size, vfs_file_t* fp);
-typedef char* (*vfs_read_dir_callback_t)(char* path, uint32_t offset);
+typedef size_t (*vfs_read_callback_t)(vfs_file_t* fp, void* dest, size_t size);
+typedef char* (*vfs_read_dir_callback_t)(vfs_file_t* fp, uint32_t offset);
 
 
 // Used to always store the last read/write attempt (used for kernel panic debugging)

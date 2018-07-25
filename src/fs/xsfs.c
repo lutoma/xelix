@@ -39,8 +39,9 @@ static char* superblock = NULL;
 	} while(0)
 
 // The public readdir interface to the virtual file system
-char* xsfs_read_directory(char* path, uint32_t offset)
+char* xsfs_read_directory(vfs_file_t* fp, uint32_t offset)
 {
+	char* path = fp->mount_path;
 	// We don't support subdirectories.
 	if(strcmp("/", path) || offset >= num_files) {
 		return NULL;
@@ -59,7 +60,7 @@ char* xsfs_read_directory(char* path, uint32_t offset)
 }
 
 // The public read interface to the virtual file system
-size_t xsfs_read_file(void* dest, size_t size, vfs_file_t* fp)
+size_t xsfs_read_file(vfs_file_t* fp, void* dest, size_t size)
 {
 	char* path = fp->mount_path;
 	uint32_t offset = fp->offset;
