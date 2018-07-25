@@ -159,18 +159,25 @@ static char* filetype_to_verbose(int filetype) {
 	}
 }
 
-static uint8_t* direct_read_block(uint32_t block_num) {
-	debug("direct_read_block, reading block %d\n", block_num);
-	block_num *= superblock_to_blocksize(superblock);
+static uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_t* buf) {
+	debug("direct_read_blocks, reading block %d\n", block_num);
 
 	// Allocate correct size + one HDD sector (Since we can only read in 512
 	// byte chunks from the disk.
-	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
-	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512) {
-		read_sector_or_fail(0, 0x1F0, 0, (block_num + i) / 512, block + i);
+	if(!buf) {
+		buf = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
 	}
 
-	return block;
+	block_num *= superblock_to_blocksize(superblock);
+	block_num /= 512;
+	read_num *= superblock_to_blocksize(superblock);
+	read_num /= 512;
+
+	for(int i = 0; i < read_num; i++) {
+		read_sector_or_fail(NULL, 0x1F0, 0, block_num + i, buf + (i * 512));
+	}
+
+	return buf;
 }
 
 /* Reads an inode. Takes the number of the inode as argument and locates and
@@ -178,9 +185,8 @@ static uint8_t* direct_read_block(uint32_t block_num) {
  */
 static ext2_inode_t* read_inode(uint32_t inode_num)
 {
-	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
-
 	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
+	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 
 	// Sanity check the blockgroup num
 	if(blockgroup_num > (superblock->block_count / superblock->blocks_per_group))
@@ -201,36 +207,28 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 
 	// FIXME Only read relevant offset
 	ext2_blockgroup_t* blockgroup = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
-	for(int i = 0; i < num_table_blocks; i++) {
-		debug("Checking blockgroup block %d\n", i);
-		// FIXME Shouldn't hardcode 2, also should pass buffer
-		uint8_t* read = direct_read_block(2 + i);
-		memcpy((intptr_t)blockgroup + (superblock_to_blocksize(superblock) * i), read, superblock_to_blocksize(superblock));
-
+	if(!direct_read_blocks(2, num_table_blocks, (intptr_t)blockgroup)) {
+		kfree(blockgroup);
+		return NULL;
 	}
 
 	blockgroup += blockgroup_num;
-
 	if(!blockgroup || !blockgroup->inode_table) {
 		debug("Could not locate entry %d in blockgroup table\n", blockgroup_num);
 		kfree(blockgroup);
 		return NULL;
 	}
 
-	// Now that we have the blockgroup data, look for the inode
-	uint32_t inode_table_location = blockgroup->inode_table *
-		superblock_to_blocksize(superblock);
-
-	kfree(blockgroup);
-
 	// Read inode table for this block group
 	// TODO Only read the relevant parts (Or cache)
-	// TODO Use direct_read_block here
-	intptr_t inode = (uint8_t*)kmalloc(
-		superblock->inodes_per_group * superblock->inode_size);
+	intptr_t inode = (uint8_t*)kmalloc(superblock->inodes_per_group * superblock->inode_size);
+	uint32_t num_inode_blocks = superblock->inodes_per_group * superblock->inode_size / 1024;
+	uint8_t* inode = direct_read_blocks((intptr_t)blockgroup->inode_table, num_inode_blocks, (uint8_t*)inode);
+	kfree(blockgroup);
 
-	for(int i = 0; i < (superblock->inodes_per_group * superblock->inode_size) / 512; i++)
-		read_sector_or_fail(NULL, 0x1F0, 0, (inode_table_location / 512) + i, (uint8_t*)(inode + i * 512));
+	if(!inode) {
+		return NULL;
+	}
 
 	inode += (inode_num - 1) % superblock->inodes_per_group * superblock->inode_size;
 	return (ext2_inode_t*)inode;
@@ -250,14 +248,14 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
 		debug("reading indirect block at 0x%x\n", inode->blocks[12]);
 
 		// Indirect block
-		uint32_t* blocks_table = (uint32_t*)direct_read_block(inode->blocks[12]);
+		uint32_t* blocks_table = (uint32_t*)direct_read_blocks(inode->blocks[12], 1, NULL);
 		real_block_num = blocks_table[block_num - 12];
 		kfree(blocks_table);
 	} else if(block_num >= 268 && block_num < 12 + 256*256) {
-		uint32_t* blocks_table = (uint32_t*)direct_read_block(inode->blocks[13]);
+		uint32_t* blocks_table = (uint32_t*)direct_read_blocks(inode->blocks[13], 1, NULL);
 		uint32_t indir_block_num = blocks_table[(block_num - 268) / 256];
 
-		blocks_table = (uint32_t*)direct_read_block(indir_block_num);
+		blocks_table = (uint32_t*)direct_read_blocks(indir_block_num, 1, NULL);
 		real_block_num = blocks_table[(block_num - 268) % 256];
 		kfree(blocks_table);
 	} else {
@@ -270,7 +268,7 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
 
 	debug("read_inode_block: Translated inode block %d to real block %d\n", block_num, real_block_num);
 
-	uint8_t* block = direct_read_block(real_block_num);
+	uint8_t* block = direct_read_blocks(real_block_num, 1, NULL);
 	if(!block) {
 		return NULL;
 	}
