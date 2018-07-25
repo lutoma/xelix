@@ -144,7 +144,7 @@ struct dirent {
 	} while(0)
 
 static struct superblock* superblock = NULL;
-
+struct blockgroup* blockgroup_table = NULL;
 
 static char* filetype_to_verbose(int filetype) {
 	switch(filetype) {
@@ -185,37 +185,16 @@ static uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_
  */
 static struct inode* read_inode(uint32_t inode_num)
 {
-	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
+	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 
 	// Sanity check the blockgroup num
 	if(blockgroup_num > (superblock->block_count / superblock->blocks_per_group))
 		return NULL;
 
-	/* The number of blocks occupied by the blockgroup table
-	 * There doesn't seem to be a way to directly get the number of blockgroups,
-	 * so figure it out by dividing block count with blocks per group. Multiply
-	 * with struct size to get total space required, then divide by block size
-	 * to get ext2 blocks. Add 1 since partially used blocks also need to be
-	 * allocated.
-	 */
-	uint32_t num_table_blocks = superblock->block_count
-		/ superblock->blocks_per_group
-		* sizeof(struct blockgroup)
-		/ superblock_to_blocksize(superblock)
-		+ 1;
-
-	// FIXME Only read relevant offset
-	struct blockgroup* blockgroup = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
-	if(!direct_read_blocks(2, num_table_blocks, (intptr_t)blockgroup)) {
-		kfree(blockgroup);
-		return NULL;
-	}
-
-	blockgroup += blockgroup_num;
+	struct blockgroup* blockgroup = blockgroup_table + blockgroup_num;
 	if(!blockgroup || !blockgroup->inode_table) {
 		debug("Could not locate entry %d in blockgroup table\n", blockgroup_num);
-		kfree(blockgroup);
 		return NULL;
 	}
 
@@ -224,7 +203,6 @@ static struct inode* read_inode(uint32_t inode_num)
 	uint8_t* inode = (uint8_t*)kmalloc(superblock->inodes_per_group * superblock->inode_size);
 	uint32_t num_inode_blocks = superblock->inodes_per_group * superblock->inode_size / 1024;
 	uint8_t* read = direct_read_blocks((intptr_t)blockgroup->inode_table, num_inode_blocks, inode);
-	kfree(blockgroup);
 
 	if(!read) {
 		kfree(inode);
@@ -591,6 +569,25 @@ void ext2_init()
 
 	debug("Loaded ext2 superblock. inode_count=%d, block_count=%d, block_size=%d\n",
 		superblock->inode_count, superblock->block_count, superblock_to_blocksize(superblock));
+
+	/* The number of blocks occupied by the blockgroup table
+	 * There doesn't seem to be a way to directly get the number of blockgroups,
+	 * so figure it out by dividing block count with blocks per group. Multiply
+	 * with struct size to get total space required, then divide by block size
+	 * to get ext2 blocks. Add 1 since partially used blocks also need to be
+	 * allocated.
+	 */
+	uint32_t num_table_blocks = superblock->block_count
+		/ superblock->blocks_per_group
+		* sizeof(struct blockgroup)
+		/ superblock_to_blocksize(superblock)
+		+ 1;
+
+	blockgroup_table = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
+	if(!direct_read_blocks(2, num_table_blocks, (intptr_t)blockgroup_table)) {
+		kfree(blockgroup_table);
+		return;
+	}
 
 	vfs_mount("/", ext2_open, ext2_read_file, ext2_read_directory);
 }
