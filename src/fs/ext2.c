@@ -221,12 +221,13 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 
 	// Read inode table for this block group
 	// TODO Only read the relevant parts (Or cache)
-	intptr_t inode = (uint8_t*)kmalloc(superblock->inodes_per_group * superblock->inode_size);
+	uint8_t* inode = (uint8_t*)kmalloc(superblock->inodes_per_group * superblock->inode_size);
 	uint32_t num_inode_blocks = superblock->inodes_per_group * superblock->inode_size / 1024;
-	uint8_t* inode = direct_read_blocks((intptr_t)blockgroup->inode_table, num_inode_blocks, (uint8_t*)inode);
+	uint8_t* read = direct_read_blocks((intptr_t)blockgroup->inode_table, num_inode_blocks, inode);
 	kfree(blockgroup);
 
-	if(!inode) {
+	if(!read) {
+		kfree(inode);
 		return NULL;
 	}
 
@@ -234,7 +235,7 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 	return (ext2_inode_t*)inode;
 }
 
-static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
+static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num, uint8_t* buf)
 {
 	if(block_num > superblock->block_count) {
 		debug("read_inode_block: Invalid block_num (%d > %d)\n", block_num, superblock->block_count);
@@ -268,7 +269,7 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
 
 	debug("read_inode_block: Translated inode block %d to real block %d\n", block_num, real_block_num);
 
-	uint8_t* block = direct_read_blocks(real_block_num, 1, NULL);
+	uint8_t* block = direct_read_blocks(real_block_num, 1, buf);
 	if(!block) {
 		return NULL;
 	}
@@ -289,11 +290,15 @@ static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
 		log(LOG_WARN, "ext2_read_directory: This inode isn't a directory "
 			"(Is %s [%d])\n", filetype_to_verbose(mode_to_filetype(inode->mode)),
 				inode->mode);
+
+		kfree(inode);
 		return NULL;
 	}
 
 	// TODO
-	uint8_t* block = read_inode_block(inode, 0);
+	uint8_t* block = read_inode_block(inode, 0, NULL);
+	kfree(inode);
+
 	if(!block) {
 		return NULL;
 	}
@@ -371,34 +376,22 @@ uint32_t inode_from_path(char* path)
 }
 
 // Reads multiple inode data blocks at once and create a continuous data stream
-uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num)
+uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num, uint8_t* buf)
 {
 	debug("Reading %d inode blocks for ext2_inode_t* 0x%x\n", num, inode);
 	debug("kmalloc = %d\n", superblock_to_blocksize(superblock) * num);
 
-	// TODO Check for valid block numbers
-	uint8_t* data = (uint8_t*)kmalloc_a(superblock_to_blocksize(superblock) * num);
-
-	if(!data)
-		return NULL;
-
 	for(int i = 0; i < num; i++)
 	{
-		// TODO Pass buffer to read_inode_block instead of copying the data
-		uint8_t* current_block = read_inode_block(inode, i);
-
+		uint8_t* current_block = read_inode_block(inode, i, buf + superblock_to_blocksize(superblock) * i);
 		if(!current_block)
 		{
 			debug("read_inode_blocks: read_inode_block for block %d failed\n", i);
 			return NULL;
 		}
-
-		memcpy(data + superblock_to_blocksize(superblock) * i,
-			current_block, superblock_to_blocksize(superblock));
-		kfree(current_block);
 	}
 
-	return data;
+	return buf;
 }
 
 #ifdef EXT2_DEBUG
@@ -464,16 +457,20 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 		 */
 		if(inode->size > 60) {
 			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
+			kfree(inode);
 			return NULL;
 		}
 
 		char* sym_path = (char*)inode->blocks;
 		if(sym_path[0] != '/') {
 			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
+			kfree(inode);
 			return NULL;
 		}
 
-		return ext2_read_file(dest, size, sym_path, offset);
+		size_t r = ext2_read_file(dest, size, sym_path, offset);
+		kfree(inode);
+		return r;
 	}
 
 	if(file_type != FT_IFREG)
@@ -482,10 +479,12 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 			"(0x%x: %s)\n", inode->mode,
 			filetype_to_verbose(mode_to_filetype(inode->mode)));
 
+		kfree(inode);
 		return NULL;
 	}
 
 	if(inode->size < 1) {
+		kfree(inode);
 		return NULL;
 	}
 
@@ -505,20 +504,18 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 		debug("\t%d: 0x%x\n", i, inode->blocks[i]);
 	}
 
-	void* block = read_inode_blocks(inode, num_blocks);
+	uint8_t* read = read_inode_blocks(inode, num_blocks, dest);
+	kfree(inode);
 
-	if(!block)
+	if(!read) {
 		return NULL;
+	}
 
 	#ifdef EXT2_DEBUG
 		printf("Read file %s offset %d size %d with resulting md5sum of:\n\t", path, offset, size);
-		MD5_dump(block + offset, size);
+		MD5_dump(dest, size);
 	#endif
 
-	// FIXME This is just a quick hack to make this compatible with the new VFS
-	// calls, should be properly rewritten.
-
-	memcpy(dest, block+offset, size);
 	return size;
 }
 
