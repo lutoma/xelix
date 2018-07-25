@@ -256,26 +256,10 @@ static uint8_t* read_inode_block(struct inode* inode, uint32_t block_num, uint8_
 }
 
 // Returns the dirent for the n-th file in a directory inode
-static struct dirent* read_dirent(uint32_t inode_num, uint32_t offset)
+static struct dirent* read_dirent(struct inode* inode, uint32_t offset)
 {
-	struct inode* inode = read_inode(inode_num);
-	if(!inode)
-		return NULL;
-
-	// Check if this inode is a directory
-	if(mode_to_filetype(inode->mode) != FT_IFDIR)
-	{
-		log(LOG_WARN, "ext2_read_directory: This inode isn't a directory "
-			"(Is %s [%d])\n", filetype_to_verbose(mode_to_filetype(inode->mode)),
-				inode->mode);
-
-		kfree(inode);
-		return NULL;
-	}
-
 	// TODO
 	uint8_t* block = read_inode_block(inode, 0, NULL);
-	kfree(inode);
 
 	if(!block) {
 		return NULL;
@@ -297,62 +281,6 @@ static struct dirent* read_dirent(uint32_t inode_num, uint32_t offset)
 		return NULL;
 
 	return dirent;
-}
-
-// Traverses directory tree to get inode from path
-uint32_t inode_from_path(char* path)
-{
-	debug("Resolving inode for path %s\n", path);
-
-	// The root directory always has inode 2
-	if(unlikely(!strcmp("/", path)))
-		return ROOT_INODE;
-
-	// Split path and iterate trough the single parts, going from / upwards.
-	char* pch;
-	char* sp;
-
-	// Throwaway pointer for strtok_r
-	char* path_tmp = (char*)kmalloc((strlen(path) + 1) * sizeof(char));
-	strcpy(path_tmp, path);
-
-	pch = strtok_r(path_tmp, "/", &sp);
-	uint32_t current_inode_num = ROOT_INODE;
-
-	while(pch != NULL)
-	{
-		// Now search the current inode for the searched directory part
-		// TODO Maybe use a binary search or something similar here
-		for(int i = 0;; i++)
-		{
-			struct dirent* dirent = read_dirent(current_inode_num, i);
-
-			// If this dirent is NULL, this means there are no more files
-			if(!dirent) {
-				kfree(path_tmp);
-				return 0;
-			}
-
-			char* dirent_name = strndup(dirent->name, dirent->name_len);
-
-			// Check if this is what we're searching for
-			if(!strcmp(pch, dirent_name))
-			{
-				current_inode_num = dirent->inode;
-				kfree(dirent_name);
-				break;
-			}
-
-			kfree(dirent_name);
-		}
-
-		pch = strtok_r(NULL, "/", &sp);
-	}
-
-	kfree(path_tmp);
-
-	debug("Inode for path %s is %d\n", path, current_inode_num);
-	return current_inode_num;
 }
 
 // Reads multiple inode data blocks at once and create a continuous data stream
@@ -398,16 +326,57 @@ uint32_t ext2_open(char* path) {
 		return NULL;
 	}
 
-	uint32_t inode_num = inode_from_path(path);
-	if(inode_num < 1)
-		return 0;
+	debug("Resolving inode for path %s\n", path);
 
-	struct inode* inode = read_inode(inode_num);
-	if(!inode)
-		return 0;
+	// The root directory always has inode 2
+	if(unlikely(!strcmp("/", path)))
+		return ROOT_INODE;
 
-	kfree(inode);
-	return inode_num;
+	// Split path and iterate trough the single parts, going from / upwards.
+	char* pch;
+	char* sp;
+
+	// Throwaway pointer for strtok_r
+	char* path_tmp = strndup(path, 500);
+	pch = strtok_r(path_tmp, "/", &sp);
+	struct inode* current_inode = NULL;
+	struct dirent* dirent = NULL;
+
+	while(pch != NULL)
+	{
+		current_inode = read_inode(dirent ? dirent->inode : ROOT_INODE);
+
+		// Now search the current inode for the searched directory part
+		// TODO Maybe use a binary search or something similar here
+		for(int i = 0;; i++)
+		{
+			dirent = read_dirent(current_inode, i);
+
+			// If this dirent is NULL, this means there are no more files
+			if(!dirent) {
+				break;
+			}
+
+			char* dirent_name = strndup(dirent->name, dirent->name_len);
+
+			// Check if this is what we're searching for
+			if(!strcmp(pch, dirent_name))
+			{
+				kfree(dirent_name);
+				kfree(dirent);
+				break;
+			}
+
+			kfree(dirent_name);
+			kfree(dirent);
+		}
+
+		kfree(current_inode);
+		pch = strtok_r(NULL, "/", &sp);
+	}
+
+	kfree(path_tmp);
+	return dirent->inode;
 }
 
 // The public readdir interface to the virtual file system
@@ -418,10 +387,27 @@ char* ext2_read_directory(vfs_file_t* fp, uint32_t offset)
 		return NULL;
 	}
 
+	struct inode* inode = read_inode(fp->inode);
+	if(!inode)
+		return NULL;
+
+	// Check if this inode is a directory
+	if(mode_to_filetype(inode->mode) != FT_IFDIR)
+	{
+		log(LOG_WARN, "ext2_read_directory: This inode isn't a directory "
+			"(Is %s [%d])\n", filetype_to_verbose(mode_to_filetype(inode->mode)),
+				inode->mode);
+
+		kfree(inode);
+		return NULL;
+	}
+
+
 	struct dirent* dirent = read_dirent(fp->inode, offset);
 	if(!dirent)
 		return NULL;
 
+	kfree(inode);
 	return strndup(dirent->name, dirent->name_len);
 }
 
