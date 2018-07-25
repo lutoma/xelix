@@ -35,7 +35,7 @@
   #define debug(...)
 #endif
 
-typedef struct ext2_superblock {
+struct superblock {
 	uint32_t inode_count;
 	uint32_t block_count;
 	uint32_t reserved_blocks;
@@ -72,9 +72,9 @@ typedef struct ext2_superblock {
 	char last_mounted[64];
 	uint32_t algo_bitmap;
 	uint32_t reserved[205];
-} __attribute__((packed)) ext2_superblock_t;
+} __attribute__((packed));
 
-typedef struct ext2_blockgroup {
+struct blockgroup {
 	uint32_t block_bitmap;
 	uint32_t inode_bitmap;
 	uint32_t inode_table;
@@ -83,9 +83,9 @@ typedef struct ext2_blockgroup {
 	uint16_t used_directories;
 	uint16_t padding;
 	uint32_t reserved[3];
-} __attribute__((packed)) ext2_blockgroup_t;
+} __attribute__((packed));
 
-typedef struct ext2_inode {
+struct inode {
 	uint16_t mode;
 	uint16_t uid;
 	uint32_t size;
@@ -106,15 +106,15 @@ typedef struct ext2_inode {
 	uint8_t fragment_number;
 	uint8_t fragment_size;
 	uint16_t reserved2[5];
-} __attribute__((packed)) ext2_inode_t;
+} __attribute__((packed));
 
-typedef struct ext2_dirent {
+struct dirent {
 	uint32_t inode;
 	uint16_t record_len;
 	uint8_t name_len;
 	uint8_t type;
 	char name[];
-} __attribute__((packed)) ext2_dirent_t;
+} __attribute__((packed));
 
 #define SUPERBLOCK_MAGIC 0xEF53
 #define SUPERBLOCK_STATE_CLEAN 1
@@ -143,7 +143,7 @@ typedef struct ext2_dirent {
 		}																						\
 	} while(0)
 
-static ext2_superblock_t* superblock = NULL;
+static struct superblock* superblock = NULL;
 
 
 static char* filetype_to_verbose(int filetype) {
@@ -181,9 +181,9 @@ static uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_
 }
 
 /* Reads an inode. Takes the number of the inode as argument and locates and
- * returns the corresponding ext2_inode_t*.
+ * returns the corresponding struct inode*.
  */
-static ext2_inode_t* read_inode(uint32_t inode_num)
+static struct inode* read_inode(uint32_t inode_num)
 {
 	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
@@ -201,12 +201,12 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 	 */
 	uint32_t num_table_blocks = superblock->block_count
 		/ superblock->blocks_per_group
-		* sizeof(ext2_blockgroup_t)
+		* sizeof(struct blockgroup)
 		/ superblock_to_blocksize(superblock)
 		+ 1;
 
 	// FIXME Only read relevant offset
-	ext2_blockgroup_t* blockgroup = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
+	struct blockgroup* blockgroup = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
 	if(!direct_read_blocks(2, num_table_blocks, (intptr_t)blockgroup)) {
 		kfree(blockgroup);
 		return NULL;
@@ -232,10 +232,10 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 	}
 
 	inode += (inode_num - 1) % superblock->inodes_per_group * superblock->inode_size;
-	return (ext2_inode_t*)inode;
+	return (struct inode*)inode;
 }
 
-static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num, uint8_t* buf)
+static uint8_t* read_inode_block(struct inode* inode, uint32_t block_num, uint8_t* buf)
 {
 	if(block_num > superblock->block_count) {
 		debug("read_inode_block: Invalid block_num (%d > %d)\n", block_num, superblock->block_count);
@@ -278,9 +278,9 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num, uint8_
 }
 
 // Returns the dirent for the n-th file in a directory inode
-static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
+static struct dirent* read_dirent(uint32_t inode_num, uint32_t offset)
 {
-	ext2_inode_t* inode = read_inode(inode_num);
+	struct inode* inode = read_inode(inode_num);
 	if(!inode)
 		return NULL;
 
@@ -308,11 +308,11 @@ static ext2_dirent_t* read_dirent(uint32_t inode_num, uint32_t offset)
 	// TODO Figure out how to find out the num of dirents in a block.
 	// separate struct, NULL pointer?
 
-	ext2_dirent_t* dirent = (ext2_dirent_t*)((intptr_t)block);
+	struct dirent* dirent = (struct dirent*)((intptr_t)block);
 
 	// Get offset
 	for(int i = 0; i < offset; i++)
-		dirent = ((ext2_dirent_t*)((intptr_t)dirent + dirent->record_len));
+		dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
 
 	// This surely can't be right
 	if(*((int*)dirent) == 0 || dirent->name == NULL || dirent->name_len == 0)
@@ -347,7 +347,7 @@ uint32_t inode_from_path(char* path)
 		// TODO Maybe use a binary search or something similar here
 		for(int i = 0;; i++)
 		{
-			ext2_dirent_t* dirent = read_dirent(current_inode_num, i);
+			struct dirent* dirent = read_dirent(current_inode_num, i);
 
 			// If this dirent is NULL, this means there are no more files
 			if(!dirent)
@@ -376,9 +376,9 @@ uint32_t inode_from_path(char* path)
 }
 
 // Reads multiple inode data blocks at once and create a continuous data stream
-uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num, uint8_t* buf)
+uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf)
 {
-	debug("Reading %d inode blocks for ext2_inode_t* 0x%x\n", num, inode);
+	debug("Reading %d inode blocks for struct inode* 0x%x\n", num, inode);
 	debug("kmalloc = %d\n", superblock_to_blocksize(superblock) * num);
 
 	for(int i = 0; i < num; i++)
@@ -395,7 +395,7 @@ uint8_t* read_inode_blocks(ext2_inode_t* inode, uint32_t num, uint8_t* buf)
 }
 
 #ifdef EXT2_DEBUG
-char* ext2_get_verbose_permissions(ext2_inode_t* inode) {
+char* ext2_get_verbose_permissions(struct inode* inode) {
 	char* permstring = "         ";
 	permstring[0] = (inode->mode & 0x0100) ? 'r' : '-';
 	permstring[1] = (inode->mode & 0x0080) ? 'w' : '-';
@@ -418,7 +418,7 @@ char* ext2_read_directory(char* path, uint32_t offset)
 	if(inode_num < 1)
 		return NULL;
 
-	ext2_dirent_t* dirent = read_dirent(inode_num, offset);
+	struct dirent* dirent = read_dirent(inode_num, offset);
 	if(!dirent)
 		return NULL;
 
@@ -439,11 +439,11 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 	if(inode_num < 1)
 		return NULL;
 
-	ext2_inode_t* inode = read_inode(inode_num);
+	struct inode* inode = read_inode(inode_num);
 	if(!inode)
 		return NULL;
 
-	debug("%s found at ext2_inode_t* 0x%x\n", path, inode);
+	debug("%s found at struct inode* 0x%x\n", path, inode);
 	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", path, inode->uid,
 		inode->gid, inode->size, filetype_to_verbose(mode_to_filetype(inode->mode)),
 		ext2_get_verbose_permissions(inode));
@@ -522,7 +522,7 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 void ext2_init()
 {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
-	superblock = (ext2_superblock_t*)kmalloc(1024);
+	superblock = (struct superblock*)kmalloc(1024);
 	read_sector_or_fail(, 0x1F0, 0, 2, (uint8_t*)superblock);
 	read_sector_or_fail(, 0x1F0, 0, 3, (uint8_t*)((void*)superblock + 512));
 
