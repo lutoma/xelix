@@ -72,83 +72,71 @@
 
 static char header[4] = {0x7f, 'E', 'L', 'F'};
 
+static void map_section(elf_t* bin, struct vmem_context* ctx, elf_section_t* shead) {
+	void* data = (intptr_t)bin + shead->offset;
+	debug("Allocating block from phys 0x%x -> 0x%x to virt 0x%x -> 0x%x\n",
+		data, data + shead->size, shead->addr, shead->addr + shead->size);
 
-// Breaks with -O3. That should probably be debugged by someone at some point.
-struct vmem_context* __attribute__((optimize("O0"))) map_task(elf_t* bin) {
-	/* 1:1 map "lower" memory (kernel etc.)
-	 * FIXME This is really generic and hacky. Should instead do some smart
-	 * stuff with memory/track.c – That is, as soon as we have a complete
-	 * collection of all the memory areas we need.
-	 */
-	struct vmem_context *ctx = vmem_new();
-	for (char *i = (char*)0; i <= (char*)0xfffffff; i += PAGE_SIZE)
-	{
-		struct vmem_page *page = vmem_new_page();
-		page->section = VMEM_SECTION_KERNEL;
-		page->cow = 0;
-		page->allocated = 1;
-		page->readonly = 1;
-		page->virt_addr = (void *)i;
-		page->phys_addr = (void *)i;
+	uint32_t pages_start = VMEM_ALIGN_DOWN(shead->addr);
+	uint32_t phys_start = VMEM_ALIGN_DOWN(data);
+	bool readonly = !(shead->flags & SHF_WRITE);
 
-		vmem_add_page(ctx, page);
+	// A bit hacky, should probably detect this based on SHF_EXECINSTR
+	int page_section = VMEM_SECTION_HEAP;
+	if(shead->type == SHT_PROGBITS && readonly) {
+		page_section = VMEM_SECTION_CODE;
 	}
 
+	debug("Pages start: 0x%x, phys start: 0x%x\n", pages_start, phys_start);
+	for(int j = 0; j < VMEM_ALIGN(shead->size); j += PAGE_SIZE)
+	{
+		debug("elf: - mapping page 0x%x to phys 0x%x\n", pages_start + j, phys_start + j);
+
+		struct vmem_page* opage = vmem_get_page_virt(ctx, pages_start + j);
+		if(opage) {
+			vmem_rm_page_virt(ctx, pages_start + j);
+		}
+
+		struct vmem_page *page = vmem_new_page();
+		page->section = page_section;
+		page->readonly = readonly;
+		page->cow = 0;
+		page->allocated = 1;
+		page->virt_addr = pages_start + j;
+		page->phys_addr = phys_start + j;
+		vmem_add_page(ctx, page);
+	}
+}
+
+void elf_read_sections(elf_t* bin, struct vmem_context* ctx) {
 	elf_section_t* shead = (elf_section_t*)((uint32_t)bin + bin->shoff);
 	for(int i = 0; i < bin->shnum; i++) {
+
+		/* Sections without a type are unused/empty. This is usually the case
+		 * for the first section.
+		 */
+		if(!shead->type) {
+			goto section_cont;
+		}
+
 		#ifdef ELF_DEBUG
 			elf_section_t* strings = (elf_section_t*)((uint32_t)bin + bin->shoff + (bin->shentsize * bin->shstrndx));
 			char* name = (char*)(uint32_t)bin + strings->offset + shead->name;
 			debug("elf: Section name %s, type 0x%x, addr 0x%x, size 0x%x\n", name, shead->type, shead->addr, shead->size);
 		#endif
 
-		// Unused block / block doesn't need to be allocated
-		if(!shead->type || !(shead->flags & SHF_ALLOC)) {
-			goto loop_cont;
+		if(ctx && (shead->flags & SHF_ALLOC)) {
+			map_section(bin, ctx, shead);
 		}
 
-		void* data = (intptr_t)bin + shead->offset;
-		debug("Allocating block %d from phys 0x%x -> 0x%x to virt 0x%x -> 0x%x\n",
-			i, data, data + shead->size, shead->addr, shead->addr + shead->size);
-
-		uint32_t pages_start = VMEM_ALIGN_DOWN(shead->addr);
-		uint32_t phys_start = VMEM_ALIGN_DOWN(data);
-		bool readonly = !(shead->flags & SHF_WRITE);
-
-		// A bit hacky, should probably detect this based on SHF_EXECINSTR
-		int page_section = VMEM_SECTION_HEAP;
-		if(shead->type == SHT_PROGBITS && readonly) {
-			page_section = VMEM_SECTION_CODE;
-		}
-
-		debug("Pages start: 0x%x, phys start: 0x%x\n", pages_start, phys_start);
-		for(int j = 0; j < VMEM_ALIGN(shead->size); j += PAGE_SIZE)
-		{
-			debug("elf: - mapping page 0x%x to phys 0x%x\n", pages_start + j, phys_start + j);
-
-			struct vmem_page* opage = vmem_get_page_virt(ctx, pages_start + j);
-			if(opage) {
-				vmem_rm_page_virt(ctx, pages_start + j);
-			}
-
-			struct vmem_page *page = vmem_new_page();
-			page->section = page_section;
-			page->readonly = readonly;
-			page->cow = 0;
-			page->allocated = 1;
-			page->virt_addr = pages_start + j;
-			page->phys_addr = phys_start + j;
-			vmem_add_page(ctx, page);
-		}
-
-		loop_cont:
+		section_cont:
 		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)bin->shentsize);
 	}
 
-	return ctx;
+	return;
 }
 
-task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc ,char** argv, uint32_t argc)
+task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** argv, uint32_t argc)
 {
 	if(bin <= (elf_t*)NULL)
 		return NULL;
@@ -180,7 +168,26 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc ,char** a
 	if(!bin->phnum)
 		fail("elf: No program headers\n");
 
-	struct vmem_context *ctx = map_task(bin);
+	/* 1:1 map "lower" memory (kernel etc.)
+	 * FIXME This is really generic and hacky. Should instead do some smart
+	 * stuff with memory/track.c – That is, as soon as we have a complete
+	 * collection of all the memory areas we need.
+	 */
+	struct vmem_context *ctx = vmem_new();
+	for (char *i = (char*)0; i <= (char*)0xfffffff; i += PAGE_SIZE)
+	{
+		struct vmem_page *page = vmem_new_page();
+		page->section = VMEM_SECTION_KERNEL;
+		page->cow = 0;
+		page->allocated = 1;
+		page->readonly = 1;
+		page->virt_addr = (void *)i;
+		page->phys_addr = (void *)i;
+
+		vmem_add_page(ctx, page);
+	}
+
+	elf_read_sections(bin, ctx);
 	debug("Entry point is 0x%x\n", bin->entry);
 
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, envc, argv,
