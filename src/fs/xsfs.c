@@ -59,8 +59,11 @@ char* xsfs_read_directory(char* path, uint32_t offset)
 }
 
 // The public read interface to the virtual file system
-size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
+size_t xsfs_read_file(void* dest, size_t size, vfs_file_t* fp)
 {
+	char* path = fp->mount_path;
+	uint32_t offset = fp->offset;
+
 	if(path[0] == '/') {
 		path++;
 	}
@@ -146,7 +149,7 @@ size_t xsfs_read_file(void* dest, size_t size, char* path, uint32_t offset)
 
 int xsfs_open(char* path) {
 	if(!strcmp(path, "/")) {
-		return 0;
+		return 1;
 	}
 
 	if(path[0] == '/') {
@@ -167,14 +170,14 @@ int xsfs_open(char* path) {
 		kfree(filesize_str);
 
 		if(!strncmp(rd, path, sizeidx - 1)) {
-			return 0;
+			return 1;
 		}
 
 		fileoffset += filesize;
 		rd += sizeidx + endidx;
 	}
 
-	return 1;
+	return 0;
 }
 
 void xsfs_init()

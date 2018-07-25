@@ -392,7 +392,7 @@ char* ext2_get_verbose_permissions(struct inode* inode) {
 #endif
 
 // The public open interface to the virtual file system
-int ext2_open(char* path) {
+uint32_t ext2_open(char* path) {
 	if(!path || !strcmp(path, "")) {
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
 		return NULL;
@@ -400,14 +400,14 @@ int ext2_open(char* path) {
 
 	uint32_t inode_num = inode_from_path(path);
 	if(inode_num < 1)
-		return 1;
+		return 0;
 
 	struct inode* inode = read_inode(inode_num);
 	if(!inode)
-		return 1;
+		return 0;
 
 	kfree(inode);
-	return 0;
+	return inode_num;
 }
 
 // The public readdir interface to the virtual file system
@@ -425,25 +425,20 @@ char* ext2_read_directory(char* path, uint32_t offset)
 }
 
 // The public read interface to the virtual file system
-size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
+size_t ext2_read_file(void* dest, uint32_t size, vfs_file_t* fp)
 {
-	if(!path || !strcmp(path, "")) {
-		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
+	if(!fp || !fp->inode) {
+		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
 		return NULL;
 	}
 
-	debug("ext2_read_file for %s, off %d, size %d\n", path, offset, size);
+	debug("ext2_read_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
 
-	uint32_t inode_num = inode_from_path(path);
-	if(inode_num < 1)
-		return NULL;
-
-	struct inode* inode = read_inode(inode_num);
+	struct inode* inode = read_inode(fp->inode);
 	if(!inode)
 		return NULL;
 
-	debug("%s found at struct inode* 0x%x\n", path, inode);
-	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", path, inode->uid,
+	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, inode->uid,
 		inode->gid, inode->size, filetype_to_verbose(mode_to_filetype(inode->mode)),
 		ext2_get_verbose_permissions(inode));
 
@@ -467,7 +462,9 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 			return NULL;
 		}
 
-		size_t r = ext2_read_file(dest, size, sym_path, offset);
+		vfs_file_t* new = vfs_open(sym_path);
+		new->offset = fp->offset;
+		size_t r = ext2_read_file(dest, size, new);
 		kfree(inode);
 		return r;
 	}
@@ -492,8 +489,8 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 		size = inode->size;
 	}
 
-	uint32_t num_blocks = (size + offset) / superblock_to_blocksize(superblock);
-	if((size + offset) % superblock_to_blocksize(superblock) != 0) {
+	uint32_t num_blocks = (size + fp->offset) / superblock_to_blocksize(superblock);
+	if((size + fp->offset) % superblock_to_blocksize(superblock) != 0) {
 		num_blocks++;
 	}
 
@@ -511,7 +508,7 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 	}
 
 	#ifdef EXT2_DEBUG
-		printf("Read file %s offset %d size %d with resulting md5sum of:\n\t", path, offset, size);
+		printf("Read file %s offset %d size %d with resulting md5sum of:\n\t", fp->mount_path, fp->offset, size);
 		MD5_dump(dest, size);
 	#endif
 

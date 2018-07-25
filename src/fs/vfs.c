@@ -63,7 +63,7 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp)
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	size_t read = mp.read_callback(dest, size, fp->mount_path, fp->offset);
+	size_t read = mp.read_callback(dest, size, fp);
 	fp->offset += size;
 
 	return read;
@@ -110,7 +110,9 @@ vfs_file_t* vfs_open(char* path)
 	}
 
 	struct mountpoint mp = mountpoints[0]; // Fixme
-	if(mp.open_callback(path)) {
+	uint32_t inode = mp.open_callback(path);
+
+	if(!inode) {
 		spinlock_release(&file_open_lock);
 		return NULL;
 	}
@@ -122,6 +124,7 @@ vfs_file_t* vfs_open(char* path)
 	strcpy(files[num].mount_path, path); // Fixme
 	files[num].offset = 0;
 	files[num].mountpoint = 0; // Fixme
+	files[num].inode = inode;
 
 	spinlock_release(&file_open_lock);
 	return &files[num];

@@ -30,10 +30,11 @@ typedef struct {
    char mount_path[512];
    uint32_t offset;
    uint32_t mountpoint;
+   uint32_t inode;
 } vfs_file_t;
 
-typedef int (*vfs_open_callback_t)(char* path);
-typedef size_t (*vfs_read_callback_t)(void* dest, size_t size, char* path, uint32_t offset);
+typedef uint32_t (*vfs_open_callback_t)(char* path);
+typedef size_t (*vfs_read_callback_t)(void* dest, size_t size, vfs_file_t* fp);
 typedef char* (*vfs_read_dir_callback_t)(char* path, uint32_t offset);
 
 
