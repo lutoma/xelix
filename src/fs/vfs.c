@@ -63,9 +63,6 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp)
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	if(!mp.read_callback)
-		return 0;
-
 	size_t read = mp.read_callback(dest, size, fp->mount_path, fp->offset);
 	fp->offset += size;
 
@@ -77,9 +74,6 @@ char* vfs_dir_read(vfs_file_t* dir)
 	strncpy(vfs_last_read_attempt, dir->path, 512);
 
 	struct mountpoint mp = mountpoints[dir->mountpoint];
-	if(!mp.read_dir_callback)
-		return NULL;
-
 	char* name = mp.read_dir_callback (dir->mount_path, dir->offset);
 	if(name) {
 		dir->offset++;
@@ -116,13 +110,9 @@ vfs_file_t* vfs_open(char* path)
 	}
 
 	struct mountpoint mp = mountpoints[0]; // Fixme
-	if(!mp.open_callback) {
-		log(LOG_WARN, "vfs: fs has no open callback, can not check file existence\n");
-	} else {
-		if(mp.open_callback(path)) {
-			spinlock_release(&file_open_lock);
-			return NULL;
-		}
+	if(mp.open_callback(path)) {
+		spinlock_release(&file_open_lock);
+		return NULL;
 	}
 
 	uint32_t num = (last_file == -1 ? last_file = 3 : ++last_file);
@@ -142,6 +132,11 @@ int vfs_mount(char* path,  vfs_open_callback_t open_callback,
 
 	if(!path || !strcmp(path, "")) {
 		log(LOG_ERR, "vfs: vfs_mount called with empty path.\n");
+		return NULL;
+	}
+
+	if(!open_callback || !read_callback || !read_dir_callback) {
+		log(LOG_ERR, "vfs: vfs_mount missing callback\n");
 		return NULL;
 	}
 

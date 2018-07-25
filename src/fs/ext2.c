@@ -350,8 +350,10 @@ uint32_t inode_from_path(char* path)
 			struct dirent* dirent = read_dirent(current_inode_num, i);
 
 			// If this dirent is NULL, this means there are no more files
-			if(!dirent)
+			if(!dirent) {
+				kfree(path_tmp);
 				return 0;
+			}
 
 			char* dirent_name = strndup(dirent->name, dirent->name_len);
 
@@ -410,6 +412,25 @@ char* ext2_get_verbose_permissions(struct inode* inode) {
 	return permstring;
 }
 #endif
+
+// The public open interface to the virtual file system
+int ext2_open(char* path) {
+	if(!path || !strcmp(path, "")) {
+		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
+		return NULL;
+	}
+
+	uint32_t inode_num = inode_from_path(path);
+	if(inode_num < 1)
+		return 1;
+
+	struct inode* inode = read_inode(inode_num);
+	if(!inode)
+		return 1;
+
+	kfree(inode);
+	return 0;
+}
 
 // The public readdir interface to the virtual file system
 char* ext2_read_directory(char* path, uint32_t offset)
@@ -571,7 +592,7 @@ void ext2_init()
 	debug("Loaded ext2 superblock. inode_count=%d, block_count=%d, block_size=%d\n",
 		superblock->inode_count, superblock->block_count, superblock_to_blocksize(superblock));
 
-	vfs_mount("/", NULL, ext2_read_file, ext2_read_directory);
+	vfs_mount("/", ext2_open, ext2_read_file, ext2_read_directory);
 }
 
 #endif /* ENABLE_EXT2 */
