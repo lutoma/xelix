@@ -146,6 +146,7 @@ struct dirent {
 static struct superblock* superblock = NULL;
 struct blockgroup* blockgroup_table = NULL;
 
+#ifdef EXT2_DEBUG
 static char* filetype_to_verbose(int filetype) {
 	switch(filetype) {
 		case FT_IFSOCK: return "FT_IFSOCK";
@@ -159,13 +160,29 @@ static char* filetype_to_verbose(int filetype) {
 	}
 }
 
+char* ext2_get_verbose_permissions(struct inode* inode) {
+	char* permstring = "         ";
+	permstring[0] = (inode->mode & 0x0100) ? 'r' : '-';
+	permstring[1] = (inode->mode & 0x0080) ? 'w' : '-';
+	permstring[2] = (inode->mode & 0x0040) ? 'x' : '-';
+	permstring[3] = (inode->mode & 0x0020) ? 'r' : '-';
+	permstring[4] = (inode->mode & 0x0010) ? 'w' : '-';
+	permstring[5] = (inode->mode & 0x0008) ? 'x' : '-';
+	permstring[6] = (inode->mode & 0x0004) ? 'r' : '-';
+	permstring[7] = (inode->mode & 0x0002) ? 'w' : '-';
+	permstring[8] = (inode->mode & 0x0001) ? 'x' : '-';
+	permstring[9] = 0;
+	return permstring;
+}
+#endif
+
 static uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_t* buf) {
 	debug("direct_read_blocks, reading block %d\n", block_num);
 
 	// Allocate correct size + one HDD sector (Since we can only read in 512
 	// byte chunks from the disk.
 	if(!buf) {
-		buf = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
+		buf = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) * read_num);
 	}
 
 	block_num *= superblock_to_blocksize(superblock);
@@ -255,40 +272,9 @@ static uint8_t* read_inode_block(struct inode* inode, uint32_t block_num, uint8_
 	return block;
 }
 
-// Returns the dirent for the n-th file in a directory inode
-static struct dirent* read_dirent(struct inode* inode, uint32_t offset)
-{
-	// TODO
-	uint8_t* block = read_inode_block(inode, 0, NULL);
-
-	if(!block) {
-		return NULL;
-	}
-
-	block += 0x18; // WHY?
-
-	// TODO Figure out how to find out the num of dirents in a block.
-	// separate struct, NULL pointer?
-
-	struct dirent* dirent = (struct dirent*)((intptr_t)block);
-
-	// Get offset
-	for(int i = 0; i < offset; i++)
-		dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
-
-	// This surely can't be right
-	if(*((int*)dirent) == 0 || dirent->name == NULL || dirent->name_len == 0)
-		return NULL;
-
-	return dirent;
-}
-
 // Reads multiple inode data blocks at once and create a continuous data stream
 uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf)
 {
-	debug("Reading %d inode blocks for struct inode* 0x%x\n", num, inode);
-	debug("kmalloc = %d\n", superblock_to_blocksize(superblock) * num);
-
 	for(int i = 0; i < num; i++)
 	{
 		uint8_t* current_block = read_inode_block(inode, i, buf + superblock_to_blocksize(superblock) * i);
@@ -302,22 +288,28 @@ uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf)
 	return buf;
 }
 
-#ifdef EXT2_DEBUG
-char* ext2_get_verbose_permissions(struct inode* inode) {
-	char* permstring = "         ";
-	permstring[0] = (inode->mode & 0x0100) ? 'r' : '-';
-	permstring[1] = (inode->mode & 0x0080) ? 'w' : '-';
-	permstring[2] = (inode->mode & 0x0040) ? 'x' : '-';
-	permstring[3] = (inode->mode & 0x0020) ? 'r' : '-';
-	permstring[4] = (inode->mode & 0x0010) ? 'w' : '-';
-	permstring[5] = (inode->mode & 0x0008) ? 'x' : '-';
-	permstring[6] = (inode->mode & 0x0004) ? 'r' : '-';
-	permstring[7] = (inode->mode & 0x0002) ? 'w' : '-';
-	permstring[8] = (inode->mode & 0x0001) ? 'x' : '-';
-	permstring[9] = 0;
-	return permstring;
+// Returns the dirent for the n-th file in a directory inode
+static struct dirent* read_dirent(struct inode* inode, uint32_t offset)
+{
+	uint8_t* block = kmalloc(inode->size);
+	uint8_t* read = read_inode_blocks(inode, inode->size / superblock_to_blocksize(superblock), block);
+	if(!read) {
+		kfree(block);
+		return NULL;
+	}
+
+	struct dirent* dirent = (struct dirent*)((intptr_t)block);
+
+	for(int i = 0; i < offset; i++) {
+		if(!dirent || !dirent->name_len) {
+			return NULL;
+		}
+
+		dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
+	}
+
+	return dirent;
 }
-#endif
 
 // The public open interface to the virtual file system
 uint32_t ext2_open(char* path) {
@@ -388,13 +380,14 @@ char* ext2_read_directory(vfs_file_t* fp, uint32_t offset)
 	}
 
 	struct inode* inode = read_inode(fp->inode);
-	if(!inode)
+	if(!inode) {
 		return NULL;
+	}
 
 	// Check if this inode is a directory
 	if(mode_to_filetype(inode->mode) != FT_IFDIR)
 	{
-		log(LOG_WARN, "ext2_read_directory: This inode isn't a directory "
+		debug("ext2_read_directory: This inode isn't a directory "
 			"(Is %s [%d])\n", filetype_to_verbose(mode_to_filetype(inode->mode)),
 				inode->mode);
 
@@ -402,10 +395,10 @@ char* ext2_read_directory(vfs_file_t* fp, uint32_t offset)
 		return NULL;
 	}
 
-
-	struct dirent* dirent = read_dirent(fp->inode, offset);
-	if(!dirent)
+	struct dirent* dirent = read_dirent(inode, offset);
+	if(!dirent) {
 		return NULL;
+	}
 
 	kfree(inode);
 	return strndup(dirent->name, dirent->name_len);
@@ -458,7 +451,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, uint32_t size)
 
 	if(file_type != FT_IFREG)
 	{
-		log(LOG_WARN, "ext2_read_file: Attempt to read something weird "
+		debug("ext2_read_file: Attempt to read something weird "
 			"(0x%x: %s)\n", inode->mode,
 			filetype_to_verbose(mode_to_filetype(inode->mode)));
 
