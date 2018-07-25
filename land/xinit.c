@@ -37,7 +37,7 @@ int main() {
 		char* __argv[] = { "xshell", "-l", NULL };
 		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
 
-		pid_t shell = execnew("/xshell", __argv, __env);
+		pid_t shell = execnew("/bin/xshell", __argv, __env);
 		if(shell < 1) {
 			printf("xinit: Could not launch shell. Exiting.\n");
 			exit(EXIT_FAILURE);

@@ -115,8 +115,6 @@ vfs_file_t* vfs_open(char* path)
 		return NULL;
 	}
 
-	printf("vfs_open for path \"%s\"\n", path);
-
 	struct mountpoint mp = mountpoints[0]; // Fixme
 	if(!mp.open_callback) {
 		log(LOG_WARN, "vfs: fs has no open callback, can not check file existence\n");

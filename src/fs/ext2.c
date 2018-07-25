@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended file system, version 2
- * Copyright © 2013-2015 Lukas Martini
+ * Copyright © 2013-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -159,6 +159,20 @@ static char* filetype_to_verbose(int filetype) {
 	}
 }
 
+static uint8_t* direct_read_block(uint32_t block_num) {
+	debug("direct_read_block, reading block %d\n", block_num);
+	block_num *= superblock_to_blocksize(superblock);
+
+	// Allocate correct size + one HDD sector (Since we can only read in 512
+	// byte chunks from the disk.
+	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
+	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512) {
+		read_sector_or_fail(0, 0x1F0, 0, (block_num + i) / 512, block + i);
+	}
+
+	return block;
+}
+
 /* Reads an inode. Takes the number of the inode as argument and locates and
  * returns the corresponding ext2_inode_t*.
  */
@@ -172,56 +186,54 @@ static ext2_inode_t* read_inode(uint32_t inode_num)
 	if(blockgroup_num > (superblock->block_count / superblock->blocks_per_group))
 		return NULL;
 
-	uint32_t blockgroup_table_disk_sector =
-		superblock_to_blocksize(superblock) / 512;
+	/* The number of blocks occupied by the blockgroup table
+	 * There doesn't seem to be a way to directly get the number of blockgroups,
+	 * so figure it out by dividing block count with blocks per group. Multiply
+	 * with struct size to get total space required, then divide by block size
+	 * to get ext2 blocks. Add 1 since partially used blocks also need to be
+	 * allocated.
+	 */
+	uint32_t num_table_blocks = superblock->block_count
+		/ superblock->blocks_per_group
+		* sizeof(ext2_blockgroup_t)
+		/ superblock_to_blocksize(superblock)
+		+ 1;
 
-	// FIXME This should rather calculate the absolute disk offset
-	if(superblock_to_blocksize(superblock) == 1024)
-		blockgroup_table_disk_sector *= 2;
+	// FIXME Only read relevant offset
+	ext2_blockgroup_t* blockgroup = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
+	for(int i = 0; i < num_table_blocks; i++) {
+		debug("Checking blockgroup block %d\n", i);
+		// FIXME Shouldn't hardcode 2, also should pass buffer
+		uint8_t* read = direct_read_block(2 + i);
+		memcpy((intptr_t)blockgroup + (superblock_to_blocksize(superblock) * i), read, superblock_to_blocksize(superblock));
 
-	uint8_t* blockgroup_table = (uint8_t*)kmalloc(512);
+	}
 
-	read_sector_or_fail(0, 0x1F0, 0, blockgroup_table_disk_sector, blockgroup_table);
+	blockgroup += blockgroup_num;
 
-	// Locate the entry for the relevant blockgroup
-	ext2_blockgroup_t* blockgroup =
-		(ext2_blockgroup_t*)((intptr_t)blockgroup_table +
-		(sizeof(ext2_blockgroup_t) * blockgroup_num));
+	if(!blockgroup || !blockgroup->inode_table) {
+		debug("Could not locate entry %d in blockgroup table\n", blockgroup_num);
+		kfree(blockgroup);
+		return NULL;
+	}
 
 	// Now that we have the blockgroup data, look for the inode
 	uint32_t inode_table_location = blockgroup->inode_table *
 		superblock_to_blocksize(superblock);
 
-	kfree(blockgroup_table);
+	kfree(blockgroup);
 
 	// Read inode table for this block group
-	// TODO Only read the relevant parts (Or just cache the darn thing)
-	uint8_t* inode_table_sector = (uint8_t*)kmalloc(
+	// TODO Only read the relevant parts (Or cache)
+	// TODO Use direct_read_block here
+	intptr_t inode = (uint8_t*)kmalloc(
 		superblock->inodes_per_group * superblock->inode_size);
 
 	for(int i = 0; i < (superblock->inodes_per_group * superblock->inode_size) / 512; i++)
-		read_sector_or_fail(NULL, 0x1F0, 0, (inode_table_location / 512) + i, inode_table_sector + i * 512);
+		read_sector_or_fail(NULL, 0x1F0, 0, (inode_table_location / 512) + i, (uint8_t*)(inode + i * 512));
 
-
-	ext2_inode_t* inode = (ext2_inode_t*)((intptr_t)inode_table_sector +
-		(((inode_num - 1) % superblock->inodes_per_group) *
-		superblock->inode_size));
-
-	return inode;
-}
-
-static uint8_t* direct_read_inode_block(uint32_t real_block_num) {
-	intptr_t block_location = real_block_num * superblock_to_blocksize(superblock);
-	debug("direct_read_inode_block, reading real block %d\n", real_block_num);
-
-	// Allocate correct size + one HDD sector (Since we can only read in 512
-	// byte chunks from the disk.
-	uint8_t* block = (uint8_t*)kmalloc(superblock_to_blocksize(superblock) + 512);
-	for(int i = 0; i < superblock_to_blocksize(superblock); i += 512) {
-		read_sector_or_fail(0, 0x1F0, 0, (block_location + i) / 512, block + i);
-	}
-
-	return block;
+	inode += (inode_num - 1) % superblock->inodes_per_group * superblock->inode_size;
+	return (ext2_inode_t*)inode;
 }
 
 static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
@@ -238,27 +250,14 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
 		debug("reading indirect block at 0x%x\n", inode->blocks[12]);
 
 		// Indirect block
-		uint32_t* blocks_table = (uint32_t*)direct_read_inode_block(inode->blocks[12]);
+		uint32_t* blocks_table = (uint32_t*)direct_read_block(inode->blocks[12]);
 		real_block_num = blocks_table[block_num - 12];
 		kfree(blocks_table);
 	} else if(block_num >= 268 && block_num < 12 + 256*256) {
-		uint32_t* blocks_table = (uint32_t*)direct_read_inode_block(inode->blocks[13]);
-		debug("Doubly indirect blocks table:\n");
-		for(int i = 0; blocks_table[i]; i++) {
-			debug("\t%d:\t0x%x\n", i, blocks_table[i]);
-		}
-
-		debug("offset: %d\n", (block_num - 268) / 256);
+		uint32_t* blocks_table = (uint32_t*)direct_read_block(inode->blocks[13]);
 		uint32_t indir_block_num = blocks_table[(block_num - 268) / 256];
 
-		blocks_table = (uint32_t*)direct_read_inode_block(indir_block_num);
-		debug("Doubly indirect blocks table 2:\n");
-		for(int i = 0; blocks_table[i]; i++) {
-			debug("\t%d:\t0x%x\n", i, blocks_table[i]);
-		}
-		debug("offset: %d\n", (block_num - 268) % 256);
-
-
+		blocks_table = (uint32_t*)direct_read_block(indir_block_num);
 		real_block_num = blocks_table[(block_num - 268) % 256];
 		kfree(blocks_table);
 	} else {
@@ -271,7 +270,7 @@ static uint8_t* read_inode_block(ext2_inode_t* inode, uint32_t block_num)
 
 	debug("read_inode_block: Translated inode block %d to real block %d\n", block_num, real_block_num);
 
-	uint8_t* block = direct_read_inode_block(real_block_num);
+	uint8_t* block = direct_read_block(real_block_num);
 	if(!block) {
 		return NULL;
 	}
@@ -442,7 +441,6 @@ size_t ext2_read_file(void* dest, uint32_t size, char* path, uint32_t offset)
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
 		return NULL;
 	}
-	serial_printf("path is \"%s\"\n", path);
 
 	debug("ext2_read_file for %s, off %d, size %d\n", path, offset, size);
 
