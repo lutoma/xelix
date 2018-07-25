@@ -142,6 +142,11 @@ vfs_file_t* vfs_open(char* path)
 int vfs_mount(char* path,  vfs_open_callback_t open_callback,
 	vfs_read_callback_t read_callback, vfs_read_dir_callback_t read_dir_callback) {
 
+	if(!path || !strcmp(path, "")) {
+		log(LOG_ERR, "vfs: vfs_mount called with empty path.\n");
+		return NULL;
+	}
+
 	uint32_t num;
 	spinlock_cmd(num = ++last_mountpoint, 20, -1);
 
