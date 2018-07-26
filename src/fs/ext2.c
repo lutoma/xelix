@@ -137,6 +137,7 @@ struct inode {
 
 static struct superblock* superblock = NULL;
 struct blockgroup* blockgroup_table = NULL;
+struct inode* root_inode = NULL;
 
 #ifdef EXT2_DEBUG
 static char* filetype_to_verbose(int filetype) {
@@ -194,6 +195,10 @@ static uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_
  */
 static struct inode* read_inode(uint32_t inode_num)
 {
+	if(inode_num == ROOT_INODE && root_inode) {
+		return root_inode;
+	}
+
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 
@@ -326,7 +331,8 @@ uint32_t ext2_open(char* path) {
 		{
 			// If this dirent is NULL, this means there are no more files
 			if(!dirent || !dirent->name_len) {
-				break;
+				kfree(dirent_block);
+				return 0;
 			}
 
 			char* dirent_name = strndup(dirent->name, dirent->name_len);
@@ -542,6 +548,9 @@ void ext2_init()
 		kfree(blockgroup_table);
 		return;
 	}
+
+	// Cache root inode
+	root_inode = read_inode(ROOT_INODE);
 
 	vfs_mount("/", ext2_open, ext2_read_file, ext2_getdents);
 }
