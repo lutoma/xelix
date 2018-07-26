@@ -46,8 +46,8 @@ SYSCALL_HANDLER(getdents)
 	intptr_t buf = (intptr_t)syscall.params[1];
 	uint32_t size = syscall.params[2];
 
-	vfs_dirent_t* kernel_ent = kmalloc(size);
-	int read = vfs_getdents(dd, kernel_ent, size);
+	vfs_dirent_t* kernel_ent = kmalloc(1024);
+	int read = vfs_getdents(dd, kernel_ent, 1024);
 	if(!read) {
 		SYSCALL_RETURN(0);
 	}

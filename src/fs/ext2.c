@@ -455,6 +455,11 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 }
 
 size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
+	if(size % 1024) {
+		log(LOG_ERR, "ext2: Size argument to ext2_getdents needs to be a multiple of 1024.\n");
+		return 0;
+	}
+
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_directory called without fp or fp missing inode.\n");
 		return 0;
@@ -476,23 +481,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 		return 0;
 	}
 
-	/* FIXME Should not allocate, but copy directly, but that is tricky because
-	 * can only read in 1kb chunks right now.
-	 */
-	uint8_t* block = kmalloc(inode->size);
-	uint8_t* read = read_inode_blocks(inode, inode->size / superblock_to_blocksize(superblock), block);
-	if(!read) {
-		kfree(block);
-		return 0;
-	}
-
-	if(size > inode->size) {
-		size = inode->size;
-	}
-
-	memcpy(dest, block, size);
-	kfree(block);
-	return size;
+	return read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest);
 }
 
 void ext2_init()
