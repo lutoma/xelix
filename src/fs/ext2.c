@@ -280,34 +280,11 @@ uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf)
 	return buf;
 }
 
-// Returns the dirent for the n-th file in a directory inode
-static vfs_dirent_t* read_dirent(struct inode* inode, uint32_t offset)
-{
-	uint8_t* block = kmalloc(inode->size);
-	uint8_t* read = read_inode_blocks(inode, inode->size / superblock_to_blocksize(superblock), block);
-	if(!read) {
-		kfree(block);
-		return NULL;
-	}
-
-	vfs_dirent_t* dirent = (vfs_dirent_t*)((intptr_t)block);
-
-	for(int i = 0; i < offset; i++) {
-		if(!dirent || !dirent->name_len) {
-			return NULL;
-		}
-
-		dirent = ((vfs_dirent_t*)((intptr_t)dirent + dirent->record_len));
-	}
-
-	return dirent;
-}
-
 // The public open interface to the virtual file system
 uint32_t ext2_open(char* path) {
 	if(!path || !strcmp(path, "")) {
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
-		return NULL;
+		return 0;
 	}
 
 	debug("Resolving inode for path %s\n", path);
@@ -325,19 +302,30 @@ uint32_t ext2_open(char* path) {
 	pch = strtok_r(path_tmp, "/", &sp);
 	struct inode* current_inode = NULL;
 	vfs_dirent_t* dirent = NULL;
+	uint8_t* dirent_block = NULL;
 
 	while(pch != NULL)
 	{
 		current_inode = read_inode(dirent ? dirent->inode : ROOT_INODE);
 
+		if(dirent_block) {
+			kfree(dirent_block);
+		}
+
+		dirent_block = kmalloc(current_inode->size);
+		if(!read_inode_blocks(current_inode, current_inode->size / superblock_to_blocksize(superblock), dirent_block)) {
+			kfree(dirent_block);
+			return 0;
+		}
+
+		dirent = (vfs_dirent_t*)dirent_block;
+
 		// Now search the current inode for the searched directory part
 		// TODO Maybe use a binary search or something similar here
 		for(int i = 0;; i++)
 		{
-			dirent = read_dirent(current_inode, i);
-
 			// If this dirent is NULL, this means there are no more files
-			if(!dirent) {
+			if(!dirent || !dirent->name_len) {
 				break;
 			}
 
@@ -347,12 +335,11 @@ uint32_t ext2_open(char* path) {
 			if(!strcmp(pch, dirent_name))
 			{
 				kfree(dirent_name);
-				kfree(dirent);
 				break;
 			}
 
 			kfree(dirent_name);
-			kfree(dirent);
+			dirent = ((vfs_dirent_t*)((intptr_t)dirent + dirent->record_len));
 		}
 
 		kfree(current_inode);
@@ -360,6 +347,7 @@ uint32_t ext2_open(char* path) {
 	}
 
 	kfree(path_tmp);
+	kfree(dirent_block);
 	return dirent->inode;
 }
 
