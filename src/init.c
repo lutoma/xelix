@@ -1,5 +1,5 @@
 /* init.c: Initialization code of the kernel
- * Copyright © 2010-2015 Lukas Martini
+ * Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -41,6 +41,7 @@
 #include <memory/vmem.h>
 #include <net/slip.h>
 #include <hw/ide.h>
+#include <fs/sysfs.h>
 #include <fs/ext2.h>
 #include <fs/xsfs.h>
 #include <net/udp.h>
@@ -114,6 +115,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	init(paging);
 	init(ide);
 
+	init(sysfs);
 	#ifdef ENABLE_EXT2
 	init(ext2);
 	#endif

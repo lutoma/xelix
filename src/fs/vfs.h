@@ -28,6 +28,7 @@ typedef struct {
    uint32_t num;
    char path[512];
    char mount_path[512];
+   void* mount_instance;
    uint32_t offset;
    uint32_t mountpoint;
    uint32_t inode;
@@ -45,7 +46,7 @@ typedef struct {
 	char name[];
 } __attribute__((packed)) vfs_dirent_t;
 
-typedef uint32_t (*vfs_open_callback_t)(char* path);
+typedef uint32_t (*vfs_open_callback_t)(char* path, void* mount_instance);
 typedef size_t (*vfs_read_callback_t)(vfs_file_t* fp, void* dest, size_t size);
 typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t size);
 
@@ -59,5 +60,6 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
 void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
 
-int vfs_mount(char* path, vfs_open_callback_t open_callback,
-	vfs_read_callback_t read_callback, vfs_getdents_callback_t getdents_callback);
+int vfs_mount(char* path, void* instance, char* dev, char* type,
+	vfs_open_callback_t open_callback, vfs_read_callback_t read_callback,
+	vfs_getdents_callback_t getdents_callback);

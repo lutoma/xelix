@@ -286,7 +286,7 @@ uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf)
 }
 
 // The public open interface to the virtual file system
-uint32_t ext2_open(char* path) {
+uint32_t ext2_open(char* path, void* mount_instance) {
 	if(!path || !strcmp(path, "")) {
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
 		return 0;
@@ -552,7 +552,7 @@ void ext2_init()
 	// Cache root inode
 	root_inode = read_inode(ROOT_INODE);
 
-	vfs_mount("/", ext2_open, ext2_read_file, ext2_getdents);
+	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_read_file, ext2_getdents);
 }
 
 #endif /* ENABLE_EXT2 */

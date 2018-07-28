@@ -152,7 +152,7 @@ size_t xsfs_read_file(vfs_file_t* fp, void* dest, size_t size)
 	return size;
 }
 
-int xsfs_open(char* path) {
+int xsfs_open(char* path, void* mount_instance) {
 	if(!strcmp(path, "/")) {
 		return 1;
 	}
@@ -203,5 +203,5 @@ void xsfs_init()
 	kfree(numstr);
 	header_end = find_substr(superblock, "\t");
 
-	vfs_mount("/", xsfs_open, xsfs_read_file, xsfs_getdents);
+	vfs_mount("/", NULL, "/dev/disk", "xsfs", xsfs_open, xsfs_read_file, xsfs_getdents);
 }
