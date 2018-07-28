@@ -50,7 +50,7 @@ void _vprintf(const char *fmt, void** arg, void (print_cb)(const char*), void (p
 				case 'u': print_cb(utoa(*(unsigned *)arg, (char*)&toa_result, 10)); break;
 				case 'y': print_cb(utoa(*(unsigned *)arg, (char*)&toa_result, 16)); break;
 				case 'x': print_cb(itoa(*(unsigned *)arg, (char*)&toa_result, 16)); break;
-				case 't': print_cb(*(unsigned *)arg ? "true" : "false"); break;
+				case 't': print_cb(*(unsigned *)arg ? "yes" : "no"); break;
 			}
 
 			if(unlikely(*fmt == '%'))

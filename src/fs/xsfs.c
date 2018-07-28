@@ -185,6 +185,11 @@ int xsfs_open(char* path, void* mount_instance) {
 	return 0;
 }
 
+
+int xsfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
+	return -1;
+}
+
 void xsfs_init()
 {
 	superblock = (char*)kmalloc(512);
@@ -203,5 +208,5 @@ void xsfs_init()
 	kfree(numstr);
 	header_end = find_substr(superblock, "\t");
 
-	vfs_mount("/", NULL, "/dev/disk", "xsfs", xsfs_open, xsfs_read_file, xsfs_getdents);
+	vfs_mount("/", NULL, "/dev/disk", "xsfs", xsfs_open, xsfs_stat, xsfs_read_file, xsfs_getdents);
 }

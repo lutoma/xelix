@@ -1,6 +1,6 @@
 /* generic.c: Generic terminal access
  * Copyright © 2011 Fritz Grimpen, Lukas Martini
- * Copyright © 2013-2014 Lukas Martini
+ * Copyright © 2013-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,6 +21,7 @@
 #include <lib/print.h>
 #include <lib/spinlock.h>
 #include <console/interface.h>
+#include <fs/sysfs.h>
 
 #define GET_CONSOLE(console, else) if (console == NULL)\
 	console = default_console; \
@@ -47,54 +48,6 @@ static spinlock_t console_write_lock = SPINLOCK_UNLOCKED;
 #ifndef CONSOLE_DEFAULT_BG
 #	define CONSOLE_DEFAULT_BG CONSOLE_COLOR_BLACK
 #endif
-
-void console_init()
-{
-	if (default_console == NULL)
-		default_console = (console_t*)kmalloc(sizeof(console_t));
-
-	default_console->info.rows = 25;
-	default_console->info.columns = 80;
-	default_console->info.tabstop = 8;
-	default_console->info.cursor_x = 0;
-	default_console->info.cursor_y = 0;
-	default_console->info.newline_mode = true;
-	default_console->info.auto_echo = true;
-	default_console->info.handle_backspace = true;
-
-	default_console->input_filter = NULL;
-	default_console->output_filter = NULL;
-
-	default_console->input_driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));
-	default_console->output_driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));
-
-#	ifdef CONSOLE_USE_SERIAL
-	console_driver_serial_init(default_console->output_driver);
-	console_driver_serial_init(default_console->input_driver);
-#	else
-	console_driver_display_init(default_console->output_driver);
-	console_driver_keyboard_init(default_console->input_driver);
-# endif
-
-	default_console->output_filter = console_filter_vt100_init(NULL);
-
-#	ifndef CONSOLE_NO_ECMA48
-	default_console->output_filter->next = console_filter_ecma48_init(NULL);
-#	endif
-
-	default_console->info.default_color.background = CONSOLE_DEFAULT_BG;
-	default_console->info.default_color.foreground = CONSOLE_DEFAULT_FG;
-
-	default_console->info.current_color = default_console->info.default_color;
-
-	default_console->info.nonblocking = false;
-	default_console->info.reverse_video = false;
-	default_console->info.bold = false;
-	default_console->info.blink = false;
-	default_console->info.underline = false;
-
-	console_clear(NULL);
-}
 
 void console_clear(console_t* console)
 {
@@ -226,4 +179,56 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 	}
 
 	return read;
+}
+
+void console_init()
+{
+	if (default_console == NULL)
+		default_console = (console_t*)kmalloc(sizeof(console_t));
+
+	default_console->info.rows = 25;
+	default_console->info.columns = 80;
+	default_console->info.tabstop = 8;
+	default_console->info.cursor_x = 0;
+	default_console->info.cursor_y = 0;
+	default_console->info.newline_mode = true;
+	default_console->info.auto_echo = true;
+	default_console->info.handle_backspace = true;
+
+	default_console->input_filter = NULL;
+	default_console->output_filter = NULL;
+
+	default_console->input_driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));
+	default_console->output_driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));
+
+#	ifdef CONSOLE_USE_SERIAL
+	console_driver_serial_init(default_console->output_driver);
+	console_driver_serial_init(default_console->input_driver);
+#	else
+	console_driver_display_init(default_console->output_driver);
+	console_driver_keyboard_init(default_console->input_driver);
+# endif
+
+	default_console->output_filter = console_filter_vt100_init(NULL);
+
+#	ifndef CONSOLE_NO_ECMA48
+	default_console->output_filter->next = console_filter_ecma48_init(NULL);
+#	endif
+
+	default_console->info.default_color.background = CONSOLE_DEFAULT_BG;
+	default_console->info.default_color.foreground = CONSOLE_DEFAULT_FG;
+
+	default_console->info.current_color = default_console->info.default_color;
+
+	default_console->info.nonblocking = false;
+	default_console->info.reverse_video = false;
+	default_console->info.bold = false;
+	default_console->info.blink = false;
+	default_console->info.underline = false;
+
+	console_clear(NULL);
+
+	sysfs_add_dev("stdin", NULL);
+	sysfs_add_dev("stdout", NULL);
+	sysfs_add_dev("stderr", NULL);
 }

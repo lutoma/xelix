@@ -212,3 +212,21 @@ int uname(struct utsname* name) {
 	strcpy(name->machine, "i686");
 	return 0;
 }
+
+int fstat(int file, struct stat* st) {
+	return syscall(14, file, st, 0);
+}
+
+int stat(const char *name, struct stat *st) {
+	int fp = open(name, 0);
+	if(!fp) {
+		return -1;
+	}
+
+	int r = fstat(fp, st);
+	int stat_errno = errno;
+
+	close(fp);
+	errno = stat_errno;
+	return r;
+}

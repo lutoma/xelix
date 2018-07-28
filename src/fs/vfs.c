@@ -30,6 +30,7 @@ struct mountpoint {
 	char* dev;
 	char* type;
 	vfs_open_callback_t open_callback;
+	vfs_stat_callback_t stat_callback;
 	vfs_read_callback_t read_callback;
 	vfs_getdents_callback_t getdents_callback;
 };
@@ -41,6 +42,33 @@ uint32_t last_file = -1;
 uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
+char* vfs_filetype_to_verbose(int filetype) {
+	switch(filetype) {
+		case FT_IFSOCK: return "FT_IFSOCK";
+		case FT_IFLNK: return "FT_IFLNK";
+		case FT_IFREG: return "FT_IFREG";
+		case FT_IFBLK: return "FT_IFBLK";
+		case FT_IFDIR: return "FT_IFDIR";
+		case FT_IFCHR: return "FT_IFCHR";
+		case FT_IFIFO: return "FT_IFIFO";
+		default: return NULL;
+	}
+}
+
+char* vfs_get_verbose_permissions(uint32_t mode) {
+	char* permstring = "         ";
+	permstring[0] = (mode & S_IRUSR) ? 'r' : '-';
+	permstring[1] = (mode & S_IWUSR) ? 'w' : '-';
+	permstring[2] = (mode & S_IXUSR) ? 'x' : '-';
+	permstring[3] = (mode & S_IRGRP) ? 'r' : '-';
+	permstring[4] = (mode & S_IWGRP) ? 'w' : '-';
+	permstring[5] = (mode & S_IXGRP) ? 'x' : '-';
+	permstring[6] = (mode & S_IROTH) ? 'r' : '-';
+	permstring[7] = (mode & S_IWOTH) ? 'w' : '-';
+	permstring[8] = (mode & S_IXOTH) ? 'x' : '-';
+	permstring[9] = 0;
+	return permstring;
+}
 
 vfs_file_t* vfs_get_from_id(uint32_t id) {
 	if(id < 1 || id > last_file || !spinlock_get(&file_open_lock, 30)) {
@@ -96,7 +124,7 @@ vfs_file_t* vfs_open(char* path)
 		return NULL;
 	}
 
-	uint32_t num = (last_file == -1 ? last_file = 3 : ++last_file);
+	uint32_t num = ++last_file;
 
 	files[num].num = num;
 	strcpy(files[num].path, path);
@@ -108,6 +136,21 @@ vfs_file_t* vfs_open(char* path)
 
 	spinlock_release(&file_open_lock);
 	return &files[num];
+}
+
+int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
+	strncpy(vfs_last_read_attempt, fp->path, 512);
+	struct mountpoint mp = mountpoints[fp->mountpoint];
+	int r = mp.stat_callback(fp, dest);
+	if(r == -1) {
+		return -1;
+	}
+
+	printf("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, dest->st_uid,
+		dest->st_gid, dest->st_size, vfs_filetype_to_verbose(vfs_mode_to_filetype(dest->st_mode)),
+		vfs_get_verbose_permissions(dest->st_mode));
+
+	return r;
 }
 
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
@@ -145,8 +188,8 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 }
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
-	vfs_open_callback_t open_callback, vfs_read_callback_t read_callback,
-	vfs_getdents_callback_t getdents_callback) {
+	vfs_open_callback_t open_callback, vfs_stat_callback_t stat_callback,
+	vfs_read_callback_t read_callback, vfs_getdents_callback_t getdents_callback) {
 
 	if(!path || !strncmp(path, "", 1)) {
 		log(LOG_ERR, "vfs: vfs_mount called with empty path.\n");
@@ -166,10 +209,17 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 	mountpoints[num].dev = dev;
 	mountpoints[num].type = type;
 	mountpoints[num].open_callback = open_callback;
+	mountpoints[num].stat_callback = stat_callback;
 	mountpoints[num].read_callback = read_callback;
 	mountpoints[num].getdents_callback = getdents_callback;
 
 	log(LOG_DEBUG, "vfs: Mounted %s (type %s) to %s\n", dev, type, path);
 
 	return 0;
+}
+
+void vfs_init() {
+	vfs_open("/dev/stdin");
+	vfs_open("/dev/stdout");
+	vfs_open("/dev/stderr");
 }

@@ -33,6 +33,7 @@ DEFINE_SYSCALL(set_hostname);
 DEFINE_SYSCALL(get_hostname);
 DEFINE_SYSCALL(uname);
 DEFINE_SYSCALL(open);
+DEFINE_SYSCALL(stat);
 DEFINE_SYSCALL(seek);
 DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(kill);
@@ -63,7 +64,7 @@ syscall_t syscall_table[] = {
 	sys_set_hostname,	// 11
 	sys_uname,			// 12
 	sys_open,			// 13
-	NULL,				// 14
+	sys_stat,			// 14
 	sys_seek,			// 15
 	sys_getdents,		// 16
 	NULL,				// 17
@@ -97,7 +98,7 @@ char* syscall_name_table[] = {
 	"set_hostname",	// 11
 	"uname",		// 12
 	"open",			// 13
-	NULL,			// 14
+	"stat",			// 14
 	"seek",			// 15
 	"getdents",		// 16
 	NULL,			// 17

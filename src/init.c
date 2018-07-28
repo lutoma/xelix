@@ -122,6 +122,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	#ifdef ENABLE_XSFS
 	init(xsfs);
 	#endif
+	init(vfs);
 
 	// Networking
 	init(udp);

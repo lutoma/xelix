@@ -113,18 +113,7 @@ struct inode {
 #define SUPERBLOCK_STATE_DIRTY 2
 #define ROOT_INODE 2
 
-// File Types
-#define FT_IFSOCK	0xC000
-#define FT_IFLNK	0xA000
-#define FT_IFREG	0x8000
-#define FT_IFBLK	0x6000
-#define FT_IFDIR	0x4000
-#define FT_IFCHR	0x2000
-#define FT_IFIFO	0x1000
-
-// Some helper macros for commonly needed conversions
 #define inode_to_blockgroup(inode) ((inode - 1) / superblock->inodes_per_group)
-#define mode_to_filetype(mode) (mode & 0xf000)
 // TODO Should use right shift for negative values
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
 
@@ -138,36 +127,6 @@ struct inode {
 static struct superblock* superblock = NULL;
 struct blockgroup* blockgroup_table = NULL;
 struct inode* root_inode = NULL;
-
-#ifdef EXT2_DEBUG
-static char* filetype_to_verbose(int filetype) {
-	switch(filetype) {
-		case FT_IFSOCK: return "FT_IFSOCK";
-		case FT_IFLNK: return "FT_IFLNK";
-		case FT_IFREG: return "FT_IFREG";
-		case FT_IFBLK: return "FT_IFBLK";
-		case FT_IFDIR: return "FT_IFDIR";
-		case FT_IFCHR: return "FT_IFCHR";
-		case FT_IFIFO: return "FT_IFIFO";
-		default: return NULL;
-	}
-}
-
-char* ext2_get_verbose_permissions(struct inode* inode) {
-	char* permstring = "         ";
-	permstring[0] = (inode->mode & 0x0100) ? 'r' : '-';
-	permstring[1] = (inode->mode & 0x0080) ? 'w' : '-';
-	permstring[2] = (inode->mode & 0x0040) ? 'x' : '-';
-	permstring[3] = (inode->mode & 0x0020) ? 'r' : '-';
-	permstring[4] = (inode->mode & 0x0010) ? 'w' : '-';
-	permstring[5] = (inode->mode & 0x0008) ? 'x' : '-';
-	permstring[6] = (inode->mode & 0x0004) ? 'r' : '-';
-	permstring[7] = (inode->mode & 0x0002) ? 'w' : '-';
-	permstring[8] = (inode->mode & 0x0001) ? 'x' : '-';
-	permstring[9] = 0;
-	return permstring;
-}
-#endif
 
 static uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_t* buf) {
 	debug("direct_read_blocks, reading block %d\n", block_num);
@@ -372,10 +331,10 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 		return NULL;
 
 	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, inode->uid,
-		inode->gid, inode->size, filetype_to_verbose(mode_to_filetype(inode->mode)),
-		ext2_get_verbose_permissions(inode));
+		inode->gid, inode->size, vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
+		vfs_get_verbose_permissions(inode->mode));
 
-	uint32_t file_type = mode_to_filetype(inode->mode);
+	uint32_t file_type = vfs_mode_to_filetype(inode->mode);
 
 	if(file_type == FT_IFLNK) {
 		/* For symlinks with up to 60 chars length, the path is stored in the
@@ -406,7 +365,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 	{
 		debug("ext2_read_file: Attempt to read something weird "
 			"(0x%x: %s)\n", inode->mode,
-			filetype_to_verbose(mode_to_filetype(inode->mode)));
+			vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)));
 
 		kfree(inode);
 		return NULL;
@@ -465,10 +424,10 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	}
 
 	// Check if this inode is a directory
-	if(mode_to_filetype(inode->mode) != FT_IFDIR)
+	if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR)
 	{
 		debug("ext2_read_directory: This inode isn't a directory "
-			"(Is %s [%d])\n", filetype_to_verbose(mode_to_filetype(inode->mode)),
+			"(Is %s [%d])\n", vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
 				inode->mode);
 
 		kfree(inode);
@@ -476,6 +435,30 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	}
 
 	return read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest);
+}
+
+int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
+	if(!fp || !fp->inode) {
+		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
+		return -1;
+	}
+
+	struct inode* inode = read_inode(fp->inode);
+	if(!inode)
+		return -1;
+
+	dest->st_dev = 1;
+	dest->st_ino = fp->inode;
+	dest->st_mode = inode->mode;
+	dest->st_nlink = 0;
+	dest->st_uid = inode->uid;
+	dest->st_gid = inode->gid;
+	dest->st_rdev = 0;
+	dest->st_size = inode->size;
+	dest->st_atime = inode->access_time;
+	dest->st_mtime = inode->modification_time;
+	dest->st_ctime = inode->creation_time;
+	return 0;
 }
 
 void ext2_init()
@@ -552,7 +535,7 @@ void ext2_init()
 	// Cache root inode
 	root_inode = read_inode(ROOT_INODE);
 
-	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_read_file, ext2_getdents);
+	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_stat, ext2_read_file, ext2_getdents);
 }
 
 #endif /* ENABLE_EXT2 */
