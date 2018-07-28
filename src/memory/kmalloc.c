@@ -30,7 +30,8 @@
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
-	#define SERIAL_DEBUG(args...) { if(vmem_kernelContext) serial_printf(args); }
+	char* _g_debug_file = "";
+	#define SERIAL_DEBUG(args...) { if(vmem_kernelContext && strcmp(_g_debug_file, "src/memory/vmem.c")) serial_printf(args); }
 #else
 	#define SERIAL_DEBUG(args...)
 #endif
@@ -138,6 +139,9 @@ static struct mem_block* set_block(size_t sz, intptr_t position) {
  */
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
 	const char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+	#ifdef KMALLOC_DEBUG
+	_g_debug_file = _debug_file;
+	#endif
 
 	if(unlikely(!initialized)) {
 		panic("Attempt to kmalloc before allocator is initialized.\n");
@@ -225,6 +229,10 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 
 void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
+	#ifdef KMALLOC_DEBUG
+	_g_debug_file = _debug_file;
+	#endif
+
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
 	SERIAL_DEBUG("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
 
