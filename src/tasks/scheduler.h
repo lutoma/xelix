@@ -25,6 +25,11 @@
 #define SCHEDULER_MAXNAME 256
 #define SCHEDULER_TASK_PATH_MAX 256
 
+typedef struct task_memory_allocation {
+	void* addr;
+	struct task_memory_allocation* next;
+} task_memory_allocation_t;
+
 typedef struct task {
 	uint32_t pid;
 	char name[SCHEDULER_MAXNAME];
@@ -37,6 +42,7 @@ typedef struct task {
 	void* entry;
 	void* binary_start;
 	struct vmem_context* memory_context;
+	task_memory_allocation_t* memory_allocations;
 
 	// Current task state
 	enum {

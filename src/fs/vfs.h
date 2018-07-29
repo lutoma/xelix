@@ -80,7 +80,7 @@ typedef struct {
 	uint32_t st_atime;
 	uint32_t st_mtime;
 	uint32_t st_ctime;
-} vfs_stat_t;
+} __attribute__((packed)) vfs_stat_t;
 
 
 typedef uint32_t (*vfs_open_callback_t)(char* path, void* mount_instance);

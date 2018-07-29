@@ -1,5 +1,5 @@
 /* mmap.c: Implementation of the POSIX mmap syscall
- * Copyright © 2013-2015 Lukas Martini
+ * Copyright © 2013-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -29,6 +29,11 @@ SYSCALL_HANDLER(mmap)
 
 	task_t* task = scheduler_get_current();
 	void* addr = tmalloc_a(length, task);
+
+	task_memory_allocation_t* ta = kmalloc(sizeof(task_memory_allocation_t));
+	ta->addr = addr;
+	ta->next = task->memory_allocations;
+	task->memory_allocations = ta;
 
 	for(intptr_t i = 0; i < length; i += PAGE_SIZE) {
 		struct vmem_page* page = vmem_new_page();

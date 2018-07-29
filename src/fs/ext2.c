@@ -35,6 +35,8 @@
   #define debug(...)
 #endif
 
+#define kfree_inode(addr, num) kfree((uint8_t*)addr - (num - 1) % superblock->inodes_per_group * superblock->inode_size)
+
 struct superblock {
 	uint32_t inode_count;
 	uint32_t block_count;
@@ -207,9 +209,10 @@ static uint8_t* read_inode_block(struct inode* inode, uint32_t block_num, uint8_
 		uint32_t* blocks_table = (uint32_t*)direct_read_blocks(inode->blocks[13], 1, NULL);
 		uint32_t indir_block_num = blocks_table[(block_num - 268) / 256];
 
-		blocks_table = (uint32_t*)direct_read_blocks(indir_block_num, 1, NULL);
-		real_block_num = blocks_table[(block_num - 268) % 256];
+		uint32_t* indir_blocks_table = (uint32_t*)direct_read_blocks(indir_block_num, 1, NULL);
+		real_block_num = indir_blocks_table[(block_num - 268) % 256];
 		kfree(blocks_table);
+		kfree(indir_blocks_table);
 	} else {
 		real_block_num = inode->blocks[block_num];
 	}
@@ -279,9 +282,12 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		dirent_block = kmalloc(current_inode->size);
 		if(!read_inode_blocks(current_inode, current_inode->size / superblock_to_blocksize(superblock), dirent_block)) {
 			kfree(dirent_block);
+			kfree(path_tmp);
+			kfree(current_inode);
 			return 0;
 		}
 
+		kfree(current_inode);
 		dirent = (vfs_dirent_t*)dirent_block;
 
 		// Now search the current inode for the searched directory part
@@ -291,6 +297,7 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 			// If this dirent is NULL, this means there are no more files
 			if(!dirent || !dirent->name_len) {
 				kfree(dirent_block);
+				kfree(path_tmp);
 				return 0;
 			}
 
@@ -307,7 +314,6 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 			dirent = ((vfs_dirent_t*)((intptr_t)dirent + dirent->record_len));
 		}
 
-		kfree(current_inode);
 		pch = strtok_r(NULL, "/", &sp);
 	}
 
@@ -343,21 +349,21 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 		 */
 		if(inode->size > 60) {
 			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
-			kfree(inode);
+			//kfree_inode(inode, fp->inode);
 			return NULL;
 		}
 
 		char* sym_path = (char*)inode->blocks;
 		if(sym_path[0] != '/') {
 			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
-			kfree(inode);
+			//kfree_inode(inode, fp->inode);
 			return NULL;
 		}
 
 		vfs_file_t* new = vfs_open(sym_path);
 		new->offset = fp->offset;
 		size_t r = ext2_read_file(new, dest, size);
-		kfree(inode);
+		//kfree_inode(inode, fp->inode);
 		return r;
 	}
 
@@ -367,12 +373,12 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 			"(0x%x: %s)\n", inode->mode,
 			vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)));
 
-		kfree(inode);
+		//kfree_inode(inode, fp->inode);
 		return NULL;
 	}
 
 	if(inode->size < 1) {
-		kfree(inode);
+		//kfree_inode(inode, fp->inode);
 		return NULL;
 	}
 
@@ -393,7 +399,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 	}
 
 	uint8_t* read = read_inode_blocks(inode, num_blocks, dest);
-	kfree(inode);
+	//kfree_inode(inode, fp->inode);
 
 	if(!read) {
 		return NULL;
@@ -430,11 +436,13 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 			"(Is %s [%d])\n", vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
 				inode->mode);
 
-		kfree(inode);
+		//kfree_inode(inode, fp->inode);
 		return 0;
 	}
 
-	return read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest);
+	uint8_t* r = read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest);
+	//kfree_inode(inode, fp->inode);
+	return r;
 }
 
 int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
@@ -458,6 +466,8 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	dest->st_atime = inode->access_time;
 	dest->st_mtime = inode->modification_time;
 	dest->st_ctime = inode->creation_time;
+
+	//kfree_inode(inode, fp->inode);
 	return 0;
 }
 

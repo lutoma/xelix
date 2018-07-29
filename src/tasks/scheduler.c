@@ -73,6 +73,17 @@ void scheduler_remove(task_t *t)
 		kfree(t->binary_start);
 	}
 
+	task_memory_allocation_t* ta = t->memory_allocations;
+	while(ta) {
+		kfree(ta->addr);
+		task_memory_allocation_t* to_free = ta;
+		ta = ta->next;
+		kfree(to_free);
+	}
+
+	kfree(t->state);
+	kfree_array(t->environ);
+	kfree_array(t->argv);
 	kfree(t);
 }
 

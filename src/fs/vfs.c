@@ -142,13 +142,11 @@ int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	int r = mp.stat_callback(fp, dest);
-	if(r == -1) {
-		return -1;
-	}
 
-	printf("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, dest->st_uid,
+	/*printf("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, dest->st_uid,
 		dest->st_gid, dest->st_size, vfs_filetype_to_verbose(vfs_mode_to_filetype(dest->st_mode)),
 		vfs_get_verbose_permissions(dest->st_mode));
+	*/
 
 	return r;
 }

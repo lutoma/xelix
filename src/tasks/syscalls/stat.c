@@ -30,7 +30,5 @@ SYSCALL_HANDLER(stat)
 		SYSCALL_RETURN(0);
 	}
 
-	printf("Stat called for fd %d, name %s\n", syscall.params[0], fd->path);
-	int r = vfs_stat(fd, syscall.params[1]);
-	SYSCALL_RETURN(r);
+	SYSCALL_RETURN(vfs_stat(fd, syscall.params[1]));
 }

@@ -31,4 +31,11 @@ void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char
 #define tmalloc_a(sz, task) _kmalloc(sz, true, task ->pid, __FILE__, __LINE__, __FUNCTION__)
 #define kfree(ptr) _kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
 
+#define kfree_array(arr) do { \
+	for(typeof(arr) i = arr; *i; i++) { \
+		kfree(*i); \
+	} \
+	kfree(arr); \
+} while(0)
+
 void kmalloc_init();

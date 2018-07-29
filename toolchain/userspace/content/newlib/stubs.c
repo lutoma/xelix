@@ -495,3 +495,16 @@ ssize_t getline(char **restrict lineptr, size_t *restrict n,
 	errno = ENOSYS;
 	return -1;
 }
+
+struct group* getgrgid(gid_t gid) {
+	errno = ENOSYS;
+	return NULL;
+}
+
+// Should probably be macros
+unsigned int major(dev_t dev) {
+	return 0;
+}
+unsigned int minor(dev_t dev) {
+	return 0;
+}
