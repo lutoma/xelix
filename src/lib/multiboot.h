@@ -42,7 +42,7 @@ typedef struct
 	uint32_t 	addr;
 	uint32_t 	reserved;
 } __attribute__((packed)) multiboot_aoutSymbolTable_t;
-     
+
 // The section header table for ELF.
 typedef struct
 {
@@ -83,19 +83,19 @@ typedef struct
 		multiboot_aoutSymbolTable_t aoutSym;
 		multiboot_elfSectionHeaderTable_t elfSec;
 	} u;
-	
+
 	uint32_t	mmapLength;
 	uint32_t	mmapAddr;
-	
+
 	uint32_t drivesLength;
 	uint32_t drivesAddr;
-	
+
 	// ROM configuration table
 	uint32_t configTable;
-	
+
 	char* bootLoaderName;
 	uint32_t apmTable;
-	
+
 	// Video
 	uint32_t vbeControlInfo;
 	uint32_t vbeModeInfo;
@@ -104,7 +104,3 @@ typedef struct
 	uint16_t vbeInterfaceOff;
 	uint16_t vbeInterfaceLen;
 } __attribute__((packed)) multiboot_info_t;
-
-multiboot_info_t* multiboot_info;
-
-void arch_multiboot_printInfo();

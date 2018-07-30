@@ -17,7 +17,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/multiboot.h>
 #include <lib/log.h>
 #include <lib/string.h>
 #include <lib/panic.h>
@@ -69,10 +68,8 @@ static void compiler_info()
 /* This is the very first function of our kernel and gets called
  * directly from the bootloader (GRUB etc.).
  */
-void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info_t* mBoot)
+void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
 {
-	multiboot_info = mBoot;
-
 	init(gdt);
 	init(interrupts);
 	init(panic);
@@ -104,10 +101,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 
 	compiler_info();
 	memory_track_print_areas();
-
-	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-		arch_multiboot_printInfo();
-	#endif
 
 	init(pci);
 	init(syscall);
