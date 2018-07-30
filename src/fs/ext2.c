@@ -35,8 +35,6 @@
   #define debug(...)
 #endif
 
-#define kfree_inode(addr, num) kfree((uint8_t*)addr - (num - 1) % superblock->inodes_per_group * superblock->inode_size)
-
 struct superblock {
 	uint32_t inode_count;
 	uint32_t block_count;
@@ -151,13 +149,11 @@ static uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_
 	return buf;
 }
 
-/* Reads an inode. Takes the number of the inode as argument and locates and
- * returns the corresponding struct inode*.
- */
-static struct inode* read_inode(uint32_t inode_num)
+static bool read_inode(struct inode* buf, uint32_t inode_num)
 {
 	if(inode_num == ROOT_INODE && root_inode) {
-		return root_inode;
+		memcpy(buf, root_inode, superblock->inode_size);
+		return true;
 	}
 
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
@@ -165,28 +161,30 @@ static struct inode* read_inode(uint32_t inode_num)
 
 	// Sanity check the blockgroup num
 	if(blockgroup_num > (superblock->block_count / superblock->blocks_per_group))
-		return NULL;
+		return false;
 
 	struct blockgroup* blockgroup = blockgroup_table + blockgroup_num;
 	if(!blockgroup || !blockgroup->inode_table) {
 		debug("Could not locate entry %d in blockgroup table\n", blockgroup_num);
-		return NULL;
+		return false;
 	}
 
 	// Read inode table for this block group
 	// TODO Only read the relevant parts (Or cache)
-	uint8_t* inode = (uint8_t*)kmalloc(superblock->inodes_per_group * superblock->inode_size);
+	uint8_t* table = (uint8_t*)kmalloc(superblock->inodes_per_group * superblock->inode_size);
 	uint32_t num_inode_blocks = superblock->inodes_per_group * superblock->inode_size / 1024;
-	uint8_t* read = direct_read_blocks((intptr_t)blockgroup->inode_table, num_inode_blocks, inode);
+	uint8_t* read = direct_read_blocks((intptr_t)blockgroup->inode_table, num_inode_blocks, table);
 
 	if(!read) {
-		kfree(inode);
-		return NULL;
+		kfree(table);
+		return false;
 	}
 
-	inode += (inode_num - 1) % superblock->inodes_per_group * superblock->inode_size;
-	return (struct inode*)inode;
+	memcpy(buf, table + ((inode_num - 1) % superblock->inodes_per_group * superblock->inode_size), superblock->inode_size);
+	kfree(table);
+	return true;
 }
+
 
 static uint8_t* read_inode_block(struct inode* inode, uint32_t block_num, uint8_t* buf)
 {
@@ -267,13 +265,15 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 	// Throwaway pointer for strtok_r
 	char* path_tmp = strndup(path, 500);
 	pch = strtok_r(path_tmp, "/", &sp);
-	struct inode* current_inode = NULL;
+	struct inode* current_inode = kmalloc(superblock->inode_size);
 	vfs_dirent_t* dirent = NULL;
 	uint8_t* dirent_block = NULL;
 
 	while(pch != NULL)
 	{
-		current_inode = read_inode(dirent ? dirent->inode : ROOT_INODE);
+		if(!read_inode(current_inode, dirent ? dirent->inode : ROOT_INODE)) {
+			continue;
+		}
 
 		if(dirent_block) {
 			kfree(dirent_block);
@@ -287,7 +287,6 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 			return 0;
 		}
 
-		kfree(current_inode);
 		dirent = (vfs_dirent_t*)dirent_block;
 
 		// Now search the current inode for the searched directory part
@@ -298,6 +297,7 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 			if(!dirent || !dirent->name_len) {
 				kfree(dirent_block);
 				kfree(path_tmp);
+				kfree(current_inode);
 				return 0;
 			}
 
@@ -317,6 +317,7 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		pch = strtok_r(NULL, "/", &sp);
 	}
 
+	kfree(current_inode);
 	kfree(path_tmp);
 	kfree(dirent_block);
 	return dirent->inode;
@@ -332,9 +333,10 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 
 	debug("ext2_read_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
 
-	struct inode* inode = read_inode(fp->inode);
-	if(!inode)
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!read_inode(inode, fp->inode)) {
 		return NULL;
+	}
 
 	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, inode->uid,
 		inode->gid, inode->size, vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
@@ -349,21 +351,21 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 		 */
 		if(inode->size > 60) {
 			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
-			//kfree_inode(inode, fp->inode);
+			kfree(inode);
 			return NULL;
 		}
 
 		char* sym_path = (char*)inode->blocks;
 		if(sym_path[0] != '/') {
 			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
-			//kfree_inode(inode, fp->inode);
+			kfree(inode);
 			return NULL;
 		}
 
 		vfs_file_t* new = vfs_open(sym_path);
 		new->offset = fp->offset;
 		size_t r = ext2_read_file(new, dest, size);
-		//kfree_inode(inode, fp->inode);
+		kfree(inode);
 		return r;
 	}
 
@@ -373,12 +375,12 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 			"(0x%x: %s)\n", inode->mode,
 			vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)));
 
-		//kfree_inode(inode, fp->inode);
+		kfree(inode);
 		return NULL;
 	}
 
 	if(inode->size < 1) {
-		//kfree_inode(inode, fp->inode);
+		kfree(inode);
 		return NULL;
 	}
 
@@ -399,7 +401,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 	}
 
 	uint8_t* read = read_inode_blocks(inode, num_blocks, dest);
-	//kfree_inode(inode, fp->inode);
+	kfree(inode);
 
 	if(!read) {
 		return NULL;
@@ -424,8 +426,8 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 		return 0;
 	}
 
-	struct inode* inode = read_inode(fp->inode);
-	if(!inode) {
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!read_inode(inode, fp->inode)) {
 		return 0;
 	}
 
@@ -436,12 +438,12 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 			"(Is %s [%d])\n", vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
 				inode->mode);
 
-		//kfree_inode(inode, fp->inode);
+		kfree(inode);
 		return 0;
 	}
 
 	uint8_t* r = read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest);
-	//kfree_inode(inode, fp->inode);
+	kfree(inode);
 	return r;
 }
 
@@ -451,9 +453,10 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 		return -1;
 	}
 
-	struct inode* inode = read_inode(fp->inode);
-	if(!inode)
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!read_inode(inode, fp->inode)) {
 		return -1;
+	}
 
 	dest->st_dev = 1;
 	dest->st_ino = fp->inode;
@@ -467,7 +470,7 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	dest->st_mtime = inode->modification_time;
 	dest->st_ctime = inode->creation_time;
 
-	//kfree_inode(inode, fp->inode);
+	kfree(inode);
 	return 0;
 }
 
@@ -538,13 +541,22 @@ void ext2_init()
 
 	blockgroup_table = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
 	if(!direct_read_blocks(2, num_table_blocks, (intptr_t)blockgroup_table)) {
+		kfree(superblock);
 		kfree(blockgroup_table);
 		return;
 	}
 
 	// Cache root inode
-	root_inode = read_inode(ROOT_INODE);
+	struct inode* root_inode_buf = kmalloc(superblock->inode_size);
+	if(!read_inode(root_inode_buf, ROOT_INODE)) {
+		log(LOG_ERR, "ext2: Could not read root inode.\n");
+		kfree(superblock);
+		kfree(root_inode_buf);
+		kfree(blockgroup_table);
+		return;
+	}
 
+	root_inode = root_inode_buf;
 	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_stat, ext2_read_file, ext2_getdents);
 }
 
