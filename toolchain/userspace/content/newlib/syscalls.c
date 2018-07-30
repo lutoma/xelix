@@ -214,10 +214,12 @@ int uname(struct utsname* name) {
 }
 
 int fstat(int file, struct stat* st) {
-	return syscall(14, file, st, 0);
+	int r = syscall(14, file, st, 0);
+	st->st_mode = S_IFDIR;
+	return r;
 }
 
-int stat(const char *name, struct stat *st) {
+int stat(const char* name, struct stat *st) {
 	int fp = open(name, 0);
 	if(!fp) {
 		return -1;
@@ -226,10 +228,15 @@ int stat(const char *name, struct stat *st) {
 	int r = fstat(fp, st);
 	int stat_errno = errno;
 
-	close(fp);
+	//close(fp);
 	errno = stat_errno;
 	return r;
 }
+
+int lstat(const char* name, struct stat *st) {
+	return stat(name, st);
+}
+
 int gettimeofday(struct timeval* p, void* tz) {
 	return syscall(17, p, tz, 0);
 }
