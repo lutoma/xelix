@@ -335,6 +335,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!read_inode(inode, fp->inode)) {
+		kfree(inode);
 		return NULL;
 	}
 
@@ -428,6 +429,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!read_inode(inode, fp->inode)) {
+		kfree(inode);
 		return 0;
 	}
 
@@ -455,6 +457,7 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!read_inode(inode, fp->inode)) {
+		kfree(inode);
 		return -1;
 	}
 
