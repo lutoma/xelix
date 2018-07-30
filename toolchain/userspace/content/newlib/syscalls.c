@@ -230,3 +230,6 @@ int stat(const char *name, struct stat *st) {
 	errno = stat_errno;
 	return r;
 }
+int gettimeofday(struct timeval* p, void* tz) {
+	return syscall(17, p, tz, 0);
+}

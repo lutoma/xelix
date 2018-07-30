@@ -48,6 +48,7 @@ DEFINE_SYSCALL(socket_recv);
 DEFINE_SYSCALL(execnew);
 DEFINE_SYSCALL(wait);
 DEFINE_SYSCALL(audio_play);
+DEFINE_SYSCALL(time);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -67,7 +68,7 @@ syscall_t syscall_table[] = {
 	sys_stat,			// 14
 	sys_seek,			// 15
 	sys_getdents,		// 16
-	NULL,				// 17
+	sys_time,			// 17
 	sys_kill,			// 18
 	sys_getexecdata,	// 19
 	sys_chdir,			// 20
@@ -101,7 +102,7 @@ char* syscall_name_table[] = {
 	"stat",			// 14
 	"seek",			// 15
 	"getdents",		// 16
-	NULL,			// 17
+	"time",			// 17
 	"kill",			// 18
 	"getexecdata",	// 19
 	"chdir",		// 20

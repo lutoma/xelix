@@ -102,6 +102,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	compiler_info();
 	memory_track_print_areas();
 
+	init(time);
 	init(pci);
 	init(syscall);
 	init(vmem);

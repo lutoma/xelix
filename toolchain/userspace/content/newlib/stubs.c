@@ -508,3 +508,13 @@ unsigned int major(dev_t dev) {
 unsigned int minor(dev_t dev) {
 	return 0;
 }
+
+int usleep(useconds_t useconds) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int stime(const time_t *t) {
+	errno = ENOSYS;
+	return -1;
+}
