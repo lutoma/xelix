@@ -317,9 +317,41 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		pch = strtok_r(NULL, "/", &sp);
 	}
 
-	kfree(current_inode);
 	kfree(path_tmp);
 	kfree(dirent_block);
+	kfree(current_inode);
+
+	// Handle symbolic links
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!read_inode(inode, dirent->inode)) {
+		return 0;
+	}
+
+	if(vfs_mode_to_filetype(inode->mode) == FT_IFLNK) {
+		/* For symlinks with up to 60 chars length, the path is stored in the
+		 * inode in the area where normally the block pointers would be.
+		 * Otherwise in the file itself.
+		 */
+		if(inode->size > 60) {
+			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
+			kfree(inode);
+			return NULL;
+		}
+
+		char* sym_path = (char*)inode->blocks;
+		if(sym_path[0] != '/') {
+			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
+			kfree(inode);
+			return NULL;
+		}
+
+		kfree(inode);
+
+		// FIXME Should be vfs_open to make symlinks across mount points possible
+		return ext2_open(sym_path, mount_instance);
+	}
+
+	kfree(inode);
 	return dirent->inode;
 }
 
@@ -343,34 +375,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 		inode->gid, inode->size, vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
 		vfs_get_verbose_permissions(inode->mode));
 
-	uint32_t file_type = vfs_mode_to_filetype(inode->mode);
-
-	if(file_type == FT_IFLNK) {
-		/* For symlinks with up to 60 chars length, the path is stored in the
-		 * inode in the area where normally the block pointers would be.
-		 * Otherwise in the file itself.
-		 */
-		if(inode->size > 60) {
-			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
-			kfree(inode);
-			return NULL;
-		}
-
-		char* sym_path = (char*)inode->blocks;
-		if(sym_path[0] != '/') {
-			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
-			kfree(inode);
-			return NULL;
-		}
-
-		vfs_file_t* new = vfs_open(sym_path);
-		new->offset = fp->offset;
-		size_t r = ext2_read_file(new, dest, size);
-		kfree(inode);
-		return r;
-	}
-
-	if(file_type != FT_IFREG)
+	if(vfs_mode_to_filetype(inode->mode) != FT_IFREG)
 	{
 		debug("ext2_read_file: Attempt to read something weird "
 			"(0x%x: %s)\n", inode->mode,
@@ -469,6 +474,7 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 		kfree(inode);
 		return -1;
 	}
+
 
 	dest->st_dev = 1;
 	dest->st_ino = fp->inode;
