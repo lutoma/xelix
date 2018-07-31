@@ -401,12 +401,21 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 		debug("\t%d: 0x%x\n", i, inode->blocks[i]);
 	}
 
-	uint8_t* read = read_inode_blocks(inode, num_blocks, dest);
+	/* This should copy directly to dest, however read_inode_blocks can only read
+	 * whole blocks right now, which means we could write more than size if size
+	 * is not mod the block size. Should rewrite read_inode_blocks.
+	 */
+	uint8_t* tmp = kmalloc(num_blocks * superblock_to_blocksize(superblock));
+	uint8_t* read = read_inode_blocks(inode, num_blocks, tmp);
 	kfree(inode);
 
 	if(!read) {
+		kfree(tmp);
 		return NULL;
 	}
+
+	memcpy(dest, tmp, size);
+	kfree(tmp);
 
 	#ifdef EXT2_DEBUG
 		printf("Read file %s offset %d size %d with resulting md5sum of:\n\t", fp->mount_path, fp->offset, size);
