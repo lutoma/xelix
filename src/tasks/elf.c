@@ -202,13 +202,26 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, uint32_t argc)
 {
 	vfs_file_t* fd = vfs_open(path);
-
-	// FIXME Use this properly
-	void* data = kmalloc_a(1024 * 1024 * 5);
-	size_t read = vfs_read(data, 1024 * 1024 * 5, fd);
-
-	if(read < 1)
+	if(!fd) {
 		return NULL;
+	}
+
+	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
+	if(vfs_stat(fd, stat) != 0 || !stat->st_size) {
+		kfree(stat);
+		return NULL;
+	}
+
+	// FIXME
+	stat->st_size = 1024 * 1024 * 5;
+	void* data = kmalloc_a(stat->st_size);
+	size_t read = vfs_read(data, stat->st_size, fd);
+	kfree(stat);
+
+	if(!read) {
+		kfree(data);
+		return NULL;
+	}
 
 	return elf_load(data, path, environ, envc, argv, argc);
 }

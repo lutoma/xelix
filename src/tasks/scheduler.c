@@ -96,6 +96,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc,
 	struct vmem_context* memory_context, bool map_structs)
 {
+	// FIXME Probably doesn't need to be aligned
 	task_t* task = (task_t*)kmalloc_a(sizeof(task_t));
 
 	task->stack = kmalloc_a(STACKSIZE);

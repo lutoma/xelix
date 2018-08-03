@@ -15,3 +15,5 @@ toolchain/userspace/content/newlib/configure
 *.sublime-*
 .gdb_history
 src/lib/config.h
+xelix.map
+Makefile
