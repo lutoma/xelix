@@ -72,7 +72,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 {
 	init(gdt);
 	init(interrupts);
-	init(panic);
+	init(panic, multiboot_info);
 	init(cpu);
 
 	// Check if we were actually booted by a multiboot bootloader
@@ -85,7 +85,7 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		panic("No memory information passed by bootloader.\n");
 	}
 
-	if((multiboot_info->memLower + multiboot_info->memUpper) < (60 * 1024)) {
+	if((multiboot_info->mem_lower + multiboot_info->mem_upper) < (60 * 1024)) {
 		panic("Not enough RAM to safely proceed - should be at least 60 MB.\n");
 	}
 
@@ -141,7 +141,6 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	if(!init) {
 		panic("Could not start init (Tried " INIT_PATH ").\n");
 	}
-
 	scheduler_add(init);
 
 	/* Is intentionally last. It's also intentional that the init()

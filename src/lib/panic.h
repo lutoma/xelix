@@ -23,13 +23,7 @@
 #include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
-
-#define PANIC_INFOMEM 0x100
-#define panic(error) do { \
-	interrupts_disable();  \
-	*((char**)PANIC_INFOMEM) = (char*)(error); \
-	asm("int 0x30; cli;"); \
-} while(0)
+#include <lib/multiboot.h>
 
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
 #define assert_nc(qry) { if(!(qry)) {														\
@@ -37,5 +31,5 @@
 	return;																					\
 }}
 
-void dumpCpuState(cpu_state_t* regs);
-void panic_init();
+void __attribute__((optimize("O0"))) panic(const char* error);
+void panic_init(multiboot_info_t* multiboot_info);

@@ -33,7 +33,7 @@ static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
 	uint32_t i = mmap_addr;
 	while (i < (mmap_addr + mmap_length))
 	{
-		// FIXME This should use the multiboot_memoryMap_t struct.
+		// FIXME This should use struct multiboot_memory_map.
 		uint32_t *size = (uint32_t *) i;
 		uint32_t *base_addr_low = (uint32_t *) (i + 4);
 		uint32_t *length_low = (uint32_t *) (i + 12);
@@ -110,13 +110,13 @@ void memory_track_print_areas() {
 void memory_track_init(multiboot_info_t* multiboot_info)
 {
 	memset(memory_track_areas, 0, sizeof(memory_track_area_t) * MEMORY_TRACK_MAX_AREAS);
-	copy_multiboot_areas(multiboot_info->mmapAddr, multiboot_info->mmapLength);
+	copy_multiboot_areas(multiboot_info->mmap_addr, multiboot_info->mmap_length);
 
 	// Add area for initrd(s)
-	for(int i = 0; i < multiboot_info->modsCount; i++) {
+	for(int i = 0; i < multiboot_info->mods_count; i++) {
 		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];
-		area->addr = (void*)multiboot_info->modsAddr[i].start;
-		area->size = multiboot_info->modsAddr[i].end - multiboot_info->modsAddr[i].start;
+		area->addr = (void*)multiboot_info->mods_addr[i].start;
+		area->size = multiboot_info->mods_addr[i].end - multiboot_info->mods_addr[i].start;
 		area->type = MEMORY_TYPE_INITRD;
 	}
 

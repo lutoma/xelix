@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010, 2011 Lukas Martini
+/* Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -34,64 +34,40 @@
 #define MULTIBOOT_FLAG_APM	 0x200
 #define MULTIBOOT_FLAG_VBE	 0x400
 
-// The symbol table for a.out.
-typedef struct
-{
-	uint32_t	 tabSize;
-	uint32_t 	strSize;
-	uint32_t 	addr;
-	uint32_t 	reserved;
-} __attribute__((packed)) multiboot_aoutSymbolTable_t;
+struct multiboot_memory_map {
+	uint32_t size;
+	uint64_t addr;
+	uint64_t length;
+	uint32_t type;
+} __attribute__((packed));
 
-// The section header table for ELF.
-typedef struct
-{
-	uint32_t	 num;
-	uint32_t	 size;
-	uint32_t 	addr;
-	uint32_t	 shndx;
-} __attribute__((packed)) multiboot_elfSectionHeaderTable_t;
+struct multiboot_module {
+	uint32_t start;
+	uint32_t end;
+	char* cmdline;
+	uint32_t reserved;
+} __attribute__((packed)) ;
 
-typedef struct
-{
-	uint32_t	size;
-	uint64_t	addr;
-	uint64_t	length;
-	uint32_t	type;
-} __attribute__((packed)) multiboot_memoryMap_t;
+typedef struct {
+	uint32_t flags;
+	uint32_t mem_lower;
+	uint32_t mem_upper;
+	uint32_t boot_device;
+	char* cmdline;
+	uint32_t mods_count;
+	struct multiboot_module* mods_addr;
 
-typedef struct
-{
-	uint32_t	start;
-	uint32_t	end;
-	char*		cmdLine;
-	uint32_t	reserved;
-} __attribute__((packed)) multiboot_module_t;
+	uint32_t elf_num;
+	uint32_t elf_size;
+	uint32_t elf_addr;
+	uint32_t elf_shndx;
 
-typedef struct
-{
-	uint32_t	flags;
-	uint32_t	memLower;
-	uint32_t	memUpper;
-	uint32_t	bootDevice;
-	char*	cmdLine;
-	uint32_t	modsCount;
-	multiboot_module_t*	modsAddr;
+	uint32_t mmap_length;
+	uint32_t mmap_addr;
+	uint32_t drives_length;
+	uint32_t drives_addr;
 
-	union
-	{
-		multiboot_aoutSymbolTable_t aoutSym;
-		multiboot_elfSectionHeaderTable_t elfSec;
-	} u;
-
-	uint32_t	mmapLength;
-	uint32_t	mmapAddr;
-
-	uint32_t drivesLength;
-	uint32_t drivesAddr;
-
-	// ROM configuration table
-	uint32_t configTable;
+	uint32_t config_table;
 
 	char* bootLoaderName;
 	uint32_t apmTable;

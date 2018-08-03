@@ -1,6 +1,5 @@
 /* panic.c: Handle kernel panics
- * Copyright © 2011 Benjamin Richter
- * Copyright © 2011-2016 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -30,8 +29,12 @@
 #include <fs/vfs.h>
 #include <lib/string.h>
 #include <memory/vmem.h>
+#include <memory/kmalloc.h>
 
-static inline void panic_printf(const char *fmt, ...) {
+// lib/walk_stack.asm
+extern int walk_stack(intptr_t* addresses, int naddr);
+
+static void panic_printf(const char *fmt, ...) {
 	vprintf(fmt, (void**)(&fmt) + 1);
 	serial_vprintf(fmt, (void**)(&fmt) + 1);
 }
@@ -54,38 +57,35 @@ static void bruteforce_print(char* chars) {
 	}
 }
 
-static void dump_registers(cpu_state_t* regs) {
-	panic_printf("CPU State:\n");
-	panic_printf("EAX=0x%x\tEBX=0x%x\tECX=0x%x\tEDX=0x%x\n",
-		regs->eax, regs->ebx, regs->ecx, regs->edx);
-	panic_printf("ESI=0x%x\tEDI=0x%x\tESP=0x%x\tEBP=0x%x\n",
-		regs->esi, regs->edi, regs->esp, regs->ebp);
-	panic_printf("DS=0x%x\tSS=0x%x\tCS=0x%x\tEFLAGS=0x%x\n",
-		regs->ds, regs->ss, regs->cs, regs->eflags);
-	panic_printf("ESP=0x%x\tEBP=0x%x\tEIP=0x%x\n",
-		regs->esp, regs->ebp, regs->eip);
+static void stacktrace() {
+	intptr_t addresses[10];
+	int read = walk_stack(addresses, 10);
+
+	for(int i = 0; i < read; i++) {
+		panic_printf("#%d\t0x%x\n", i, addresses[i]);
+	}
 }
 
-static  __attribute__((optimize("O0")))  void panic_handler(cpu_state_t* regs)
-{
+void __attribute__((optimize("O0"))) panic(const char* error) {
+	interrupts_disable();
+
 	bruteforce_print("Early Kernel Panic: ");
-	bruteforce_print(*((char**)PANIC_INFOMEM));
+	bruteforce_print(error);
 	bruteforce_print(" -- If you can see only this message, but not the full kernel "
 		"panic debug information, either the console framework / display driver "
 		"failed or the kernel panic occured in early startup before the "
 		"initialization of the needed drivers.");
 
-	panic_printf("\n%%Kernel Panic: %s%%\n", 0x04, *((char**)PANIC_INFOMEM));
+	panic_printf("\n%%Kernel Panic: %s%%\n", 0x04, error);
 
 	uint32_t ticknum = pit_getTickNum();
-	panic_printf("Last PIT ticknum: %d (tickrate %d, approx. uptime: %d seconds)\n",
+	panic_printf("Last PIT tick: %d (rate %d, uptime: %d seconds)\n",
 		ticknum,
 		PIT_RATE,
 		ticknum / PIT_RATE);
 
 	task_t* task = scheduler_get_current();
-
-	if(task != NULL) {
+	if(task) {
 		panic_printf("Running task: %d <%s>", task->pid, task->name);
 
 		uint32_t task_offset = task->state->eip - task->entry;
@@ -94,21 +94,20 @@ static  __attribute__((optimize("O0")))  void panic_handler(cpu_state_t* regs)
 		}
 
 		panic_printf("\n");
-	} else
+	} else {
 		panic_printf("Running task: [No task running]\n");
+	}
 
-	if(vfs_last_read_attempt[0] == '\0') {
-		strncpy(vfs_last_read_attempt, "No file system read attempts.", 512);
+	if(!vfs_last_read_attempt[0]) {
+		strcpy(vfs_last_read_attempt, "No file system read attempts.");
 	}
 
 	panic_printf("Last VFS read attempt: %s\n", vfs_last_read_attempt);
 	panic_printf("Active paging context: %s\n\n", vmem_get_name(vmem_currentContext));
 
-	dump_registers(regs);
+	panic_printf("Call trace:\n");
+	stacktrace();
 	freeze();
 }
 
-void panic_init()
-{
-	interrupts_registerHandler(0x30, panic_handler);
-}
+void panic_init(multiboot_info_t* multiboot_info) {}
