@@ -92,10 +92,8 @@ typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t siz
 // Used to always store the last read/write attempt (used for kernel panic debugging)
 char vfs_last_read_attempt[512];
 
-char* vfs_filetype_to_verbose(int filetype);
-char* vfs_get_verbose_permissions(uint32_t mode);
 vfs_file_t* vfs_get_from_id(uint32_t id);
-vfs_file_t* vfs_open(char* path);
+vfs_file_t* vfs_open(const char* path);
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
@@ -106,3 +104,32 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 	vfs_read_callback_t read_callback, vfs_getdents_callback_t getdents_callback);
 
 void vfs_init();
+
+
+static inline char* vfs_filetype_to_verbose(int filetype) {
+	switch(filetype) {
+		case FT_IFSOCK: return "FT_IFSOCK";
+		case FT_IFLNK: return "FT_IFLNK";
+		case FT_IFREG: return "FT_IFREG";
+		case FT_IFBLK: return "FT_IFBLK";
+		case FT_IFDIR: return "FT_IFDIR";
+		case FT_IFCHR: return "FT_IFCHR";
+		case FT_IFIFO: return "FT_IFIFO";
+		default: return NULL;
+	}
+}
+
+static inline char* vfs_get_verbose_permissions(uint32_t mode) {
+	char* permstring = "         ";
+	permstring[0] = (mode & S_IRUSR) ? 'r' : '-';
+	permstring[1] = (mode & S_IWUSR) ? 'w' : '-';
+	permstring[2] = (mode & S_IXUSR) ? 'x' : '-';
+	permstring[3] = (mode & S_IRGRP) ? 'r' : '-';
+	permstring[4] = (mode & S_IWGRP) ? 'w' : '-';
+	permstring[5] = (mode & S_IXGRP) ? 'x' : '-';
+	permstring[6] = (mode & S_IROTH) ? 'r' : '-';
+	permstring[7] = (mode & S_IWOTH) ? 'w' : '-';
+	permstring[8] = (mode & S_IXOTH) ? 'x' : '-';
+	permstring[9] = 0;
+	return permstring;
+}

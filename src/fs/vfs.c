@@ -42,32 +42,55 @@ uint32_t last_file = -1;
 uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
-char* vfs_filetype_to_verbose(int filetype) {
-	switch(filetype) {
-		case FT_IFSOCK: return "FT_IFSOCK";
-		case FT_IFLNK: return "FT_IFLNK";
-		case FT_IFREG: return "FT_IFREG";
-		case FT_IFBLK: return "FT_IFBLK";
-		case FT_IFDIR: return "FT_IFDIR";
-		case FT_IFCHR: return "FT_IFCHR";
-		case FT_IFIFO: return "FT_IFIFO";
-		default: return NULL;
+static char* normalize_path(const char* path, const char* cwd) {
+	if(!strcmp(path, ".")) {
+		return cwd;
 	}
-}
 
-char* vfs_get_verbose_permissions(uint32_t mode) {
-	char* permstring = "         ";
-	permstring[0] = (mode & S_IRUSR) ? 'r' : '-';
-	permstring[1] = (mode & S_IWUSR) ? 'w' : '-';
-	permstring[2] = (mode & S_IXUSR) ? 'x' : '-';
-	permstring[3] = (mode & S_IRGRP) ? 'r' : '-';
-	permstring[4] = (mode & S_IWGRP) ? 'w' : '-';
-	permstring[5] = (mode & S_IXGRP) ? 'x' : '-';
-	permstring[6] = (mode & S_IROTH) ? 'r' : '-';
-	permstring[7] = (mode & S_IWOTH) ? 'w' : '-';
-	permstring[8] = (mode & S_IXOTH) ? 'x' : '-';
-	permstring[9] = 0;
-	return permstring;
+	// Throwaway pointer for strtok_r
+	char* path_tmp = strndup(path, 500);
+	char* free_path = path_tmp;
+	char* sp;
+	char* pch = strtok_r(path_tmp, "/", &sp);
+	char* new_path = kmalloc(strlen(path) + strlen(cwd) + 1);
+	char* new_path_tmp = new_path;
+	int part_length = 0;
+
+	while(pch) {
+		if(!strcmp(pch, ".")) {
+			goto next;
+		}
+
+		if(!strcmp(pch, "..")) {
+			/* Remove previous component and the preceding /, but only if there
+			 * was a previous part (to allow for /../foo).
+			 */
+			if(part_length) {
+				new_path_tmp -= part_length + 1;
+			}
+
+			goto next;
+		}
+
+		*new_path_tmp = '/';
+		new_path_tmp++;
+
+		part_length = strlen(pch);
+		memcpy(new_path_tmp, pch, part_length);
+		new_path_tmp += part_length;
+
+		next:
+		pch = strtok_r(NULL, "/", &sp);
+	}
+
+	if(new_path == new_path_tmp) {
+		*new_path_tmp++ = '/';
+	}
+
+	*new_path_tmp = 0;
+
+	kfree(free_path);
+	return new_path;
 }
 
 vfs_file_t* vfs_get_from_id(uint32_t id) {
@@ -81,9 +104,9 @@ vfs_file_t* vfs_get_from_id(uint32_t id) {
 	return fd;
 }
 
-vfs_file_t* vfs_open(char* path)
+vfs_file_t* vfs_open(const char* orig_path)
 {
-	if(!path || !strcmp(path, "")) {
+	if(!orig_path || !strcmp(orig_path, "")) {
 		log(LOG_ERR, "vfs: vfs_open called with empty path.\n");
 		return NULL;
 	}
@@ -95,6 +118,8 @@ vfs_file_t* vfs_open(char* path)
 	int mp_num = -1;
 	struct mountpoint mp = mountpoints[0];
 	size_t longest_match = 0;
+
+	char* path = normalize_path(orig_path, "/");
 	char* mount_path = path;
 
 	for(int i = 0; i <= last_mountpoint; i++) {
@@ -115,11 +140,13 @@ vfs_file_t* vfs_open(char* path)
 	}
 
 	if(mp_num < 0) {
+		kfree(path);
 		return NULL;
 	}
 
 	uint32_t inode = mp.open_callback(mount_path, mp.instance);
 	if(!inode) {
+		kfree(path);
 		spinlock_release(&file_open_lock);
 		return NULL;
 	}
@@ -128,6 +155,7 @@ vfs_file_t* vfs_open(char* path)
 
 	files[num].num = num;
 	strcpy(files[num].path, path);
+	kfree(path);
 	strcpy(files[num].mount_path, mount_path);
 	files[num].mount_instance = mp.instance;
 	files[num].offset = 0;
