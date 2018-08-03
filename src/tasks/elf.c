@@ -73,12 +73,12 @@
 static char header[4] = {0x7f, 'E', 'L', 'F'};
 
 static void map_section(elf_t* bin, struct vmem_context* ctx, elf_section_t* shead) {
-	void* data = (intptr_t)bin + shead->offset;
+	void* data = (void*)((intptr_t)bin + shead->offset);
 	debug("Allocating block from phys 0x%x -> 0x%x to virt 0x%x -> 0x%x\n",
 		data, data + shead->size, shead->addr, shead->addr + shead->size);
 
-	uint32_t pages_start = VMEM_ALIGN_DOWN(shead->addr);
-	uint32_t phys_start = VMEM_ALIGN_DOWN(data);
+	uint32_t pages_start = (uint32_t)VMEM_ALIGN_DOWN(shead->addr);
+	uint32_t phys_start = (uint32_t)VMEM_ALIGN_DOWN(data);
 	bool readonly = !(shead->flags & SHF_WRITE);
 
 	// A bit hacky, should probably detect this based on SHF_EXECINSTR
@@ -92,9 +92,9 @@ static void map_section(elf_t* bin, struct vmem_context* ctx, elf_section_t* she
 	{
 		debug("elf: - mapping page 0x%x to phys 0x%x\n", pages_start + j, phys_start + j);
 
-		struct vmem_page* opage = vmem_get_page_virt(ctx, pages_start + j);
+		struct vmem_page* opage = vmem_get_page_virt(ctx, (void*)(pages_start + j));
 		if(opage) {
-			vmem_rm_page_virt(ctx, pages_start + j);
+			vmem_rm_page_virt(ctx, (void*)(pages_start + j));
 		}
 
 		struct vmem_page *page = vmem_new_page();
@@ -102,8 +102,8 @@ static void map_section(elf_t* bin, struct vmem_context* ctx, elf_section_t* she
 		page->readonly = readonly;
 		page->cow = 0;
 		page->allocated = 1;
-		page->virt_addr = pages_start + j;
-		page->phys_addr = phys_start + j;
+		page->virt_addr = (void*)(pages_start + j);
+		page->phys_addr = (void*)(phys_start + j);
 		vmem_add_page(ctx, page);
 	}
 }

@@ -21,9 +21,9 @@
 #include <lib/generic.h>
 
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
-	const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+	char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
-void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
 #define kmalloc(sz) _kmalloc(sz, false, 0, __FILE__, __LINE__, __FUNCTION__)
 #define kmalloc_a(sz) _kmalloc(sz, true, 0, __FILE__, __LINE__, __FUNCTION__)

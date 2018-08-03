@@ -335,14 +335,14 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		if(inode->size > 60) {
 			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
 			kfree(inode);
-			return NULL;
+			return 0;
 		}
 
 		char* sym_path = (char*)inode->blocks;
 		if(sym_path[0] != '/') {
 			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
 			kfree(inode);
-			return NULL;
+			return 0;
 		}
 
 		kfree(inode);
@@ -360,7 +360,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
-		return NULL;
+		return 0;
 	}
 
 	debug("ext2_read_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
@@ -368,7 +368,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!read_inode(inode, fp->inode)) {
 		kfree(inode);
-		return NULL;
+		return 0;
 	}
 
 	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, inode->uid,
@@ -382,12 +382,12 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 			vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)));
 
 		kfree(inode);
-		return NULL;
+		return 0;
 	}
 
 	if(inode->size < 1) {
 		kfree(inode);
-		return NULL;
+		return 0;
 	}
 
 	if(size > inode->size) {
@@ -416,7 +416,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 
 	if(!read) {
 		kfree(tmp);
-		return NULL;
+		return 0;
 	}
 
 	memcpy(dest, tmp, size);
@@ -458,9 +458,12 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 		return 0;
 	}
 
-	uint8_t* r = read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest);
+	if(!read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest)) {
+		return 0;
+	}
+
 	kfree(inode);
-	return r;
+	return 1;
 }
 
 int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
@@ -558,7 +561,7 @@ void ext2_init()
 		+ 1;
 
 	blockgroup_table = kmalloc(superblock_to_blocksize(superblock) * num_table_blocks);
-	if(!direct_read_blocks(2, num_table_blocks, (intptr_t)blockgroup_table)) {
+	if(!direct_read_blocks(2, num_table_blocks, (uint8_t*)blockgroup_table)) {
 		kfree(superblock);
 		kfree(blockgroup_table);
 		return;

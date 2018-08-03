@@ -30,5 +30,5 @@ SYSCALL_HANDLER(stat)
 		SYSCALL_RETURN(0);
 	}
 
-	SYSCALL_RETURN(vfs_stat(fd, syscall.params[1]));
+	SYSCALL_RETURN(vfs_stat(fd, (vfs_stat_t*)syscall.params[1]));
 }

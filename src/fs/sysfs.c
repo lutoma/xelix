@@ -117,7 +117,7 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	return total_length;
 }
 
-static void add_file(struct sysfs_file** table, char* name, sysfs_read_callback_t* read_cb) {
+static void add_file(struct sysfs_file** table, char* name, sysfs_read_callback_t read_cb) {
 	struct sysfs_file* fp = kmalloc(sizeof(struct sysfs_file));
 	strcpy(fp->name, name);
 	fp->read_cb = read_cb;
@@ -125,11 +125,11 @@ static void add_file(struct sysfs_file** table, char* name, sysfs_read_callback_
 	*table = fp;
 }
 
-void sysfs_add_file(char* name, sysfs_read_callback_t* read_cb) {
+void sysfs_add_file(char* name, sysfs_read_callback_t read_cb) {
 	add_file(&sys_files, name, read_cb);
 }
 
-void sysfs_add_dev(char* name, sysfs_read_callback_t* read_cb) {
+void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb) {
 	add_file(&dev_files, name, read_cb);
 }
 

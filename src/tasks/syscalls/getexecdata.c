@@ -19,6 +19,7 @@
 
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
+#include <lib/string.h>
 
 struct execdata {
 	uint32_t pid;
@@ -34,8 +35,7 @@ struct execdata {
 SYSCALL_HANDLER(getexecdata)
 {
 	task_t* task = scheduler_get_current();
-	struct execdata* execdata = syscall.params[0];
-	uint32_t length = syscall.params[1];
+	struct execdata* execdata = (struct execdata*)syscall.params[0];
 
 	execdata->pid = task->pid;
 	execdata->ppid = task->parent ? task->parent->pid : 0;

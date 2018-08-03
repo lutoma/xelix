@@ -47,8 +47,7 @@ SYSCALL_HANDLER(getdents)
 	uint32_t size = syscall.params[2];
 
 	vfs_dirent_t* kbuf = kmalloc(1024);
-	int read = vfs_getdents(dd, kbuf, 1024);
-	if(!read) {
+	if(!vfs_getdents(dd, kbuf, 1024)) {
 		kfree(kbuf);
 		SYSCALL_RETURN(0);
 	}
@@ -62,7 +61,7 @@ SYSCALL_HANDLER(getdents)
 			break;
 		}
 
-		struct newlib_dirent* ent = buf + offset;
+		struct newlib_dirent* ent = (struct newlib_dirent*)(buf + offset);
 		ent->d_ino = kernel_ent->inode;
 		ent->d_type = kernel_ent->type;
 		ent->d_reclen = (uint16_t)reclen;

@@ -40,8 +40,8 @@ SYSCALL_HANDLER(mmap)
 		page->section = VMEM_SECTION_MMAP;
 		page->cow = 0;
 		page->allocated = 1;
-		page->virt_addr = (intptr_t)addr + i;
-		page->phys_addr = (intptr_t)addr + i;
+		page->virt_addr = (void*)((intptr_t)addr + i);
+		page->phys_addr = (void*)((intptr_t)addr + i);
 		vmem_add_page(task->memory_context, page);
 	}
 

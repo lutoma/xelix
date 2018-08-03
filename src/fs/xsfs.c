@@ -152,7 +152,7 @@ size_t xsfs_read_file(vfs_file_t* fp, void* dest, size_t size)
 	return size;
 }
 
-int xsfs_open(char* path, void* mount_instance) {
+size_t xsfs_open(char* path, void* mount_instance) {
 	if(!strcmp(path, "/")) {
 		return 1;
 	}

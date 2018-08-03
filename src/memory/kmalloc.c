@@ -138,7 +138,7 @@ static struct mem_block* set_block(size_t sz, intptr_t position) {
  * For details on the attributes, see the GCC documentation at http://is.gd/6gmEqk.
  */
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
-	const char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
 	#ifdef KMALLOC_DEBUG
 	_g_debug_file = _debug_file;
 	#endif
@@ -180,7 +180,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		}
 	}
 
-	intptr_t result = (void*)((uint32_t)header + sizeof(struct mem_block));
+	intptr_t result = (intptr_t)((uint32_t)header + sizeof(struct mem_block));
 
 	/* When alignment is requested (i.e. result mod PAGE_SIZE should be 0), we
 	 * check if the result is already aligned (second cond). If not, move the
@@ -211,7 +211,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		last_free = offset_header;
 
 		// Add a new block header for the original allocation
-		header = set_block(sz, NEXT_BLOCK(offset_header));
+		header = set_block(sz, (intptr_t)NEXT_BLOCK(offset_header));
 		result = (intptr_t)header + sizeof(struct mem_block);
 	}
 
@@ -227,7 +227,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	return (void*)result;
 }
 
-void _kfree(void *ptr, const char* _debug_file, uint32_t _debug_line, const char* _debug_func)
+void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
 	#ifdef KMALLOC_DEBUG
 	_g_debug_file = _debug_file;
@@ -294,7 +294,7 @@ void kmalloc_init()
 	}
 
 	largest_area->type = MEMORY_TYPE_KMALLOC;
-	alloc_start = alloc_end = largest_area->addr;
+	alloc_start = alloc_end = (intptr_t)largest_area->addr;
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	initialized = true;
 }

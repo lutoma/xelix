@@ -26,8 +26,8 @@
 #include <memory/kmalloc.h>
 
 // Check an array to make sure it's NULL-terminated, then copy to kernel space
-static int copy_array(char** array, uint32_t* count) {
-	int size;
+static char** copy_array(char** array, uint32_t* count) {
+	int size = 0;
 
 	for(; size < 200; size++) {
 		if(!array[size]) {

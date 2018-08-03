@@ -20,6 +20,6 @@
 
 typedef size_t (*sysfs_read_callback_t)(void* dest, size_t size);
 
-void sysfs_add_file(char* name, sysfs_read_callback_t* read_cb);
-void sysfs_add_dev(char* name, sysfs_read_callback_t* read_cb);
+void sysfs_add_file(char* name, sysfs_read_callback_t read_cb);
+void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb);
 void sysfs_init();

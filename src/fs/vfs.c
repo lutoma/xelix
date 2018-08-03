@@ -42,7 +42,7 @@ uint32_t last_file = -1;
 uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
-static char* normalize_path(const char* path, const char* cwd) {
+static char* normalize_path(const char* path, char* cwd) {
 	if(!strcmp(path, ".")) {
 		return cwd;
 	}

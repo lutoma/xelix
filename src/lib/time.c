@@ -43,7 +43,7 @@ static uint8_t get_register(int reg) {
 }
 
 static time_t read_rtc() {
-	uint8_t century;
+	uint8_t century = 0;
 	uint8_t second;
 	uint8_t minute;
 	uint8_t hour;

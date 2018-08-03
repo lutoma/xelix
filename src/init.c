@@ -20,6 +20,7 @@
 #include <lib/log.h>
 #include <lib/string.h>
 #include <lib/panic.h>
+#include <lib/time.h>
 #include <hw/serial.h>
 #include <hw/cpu.h>
 #include <memory/interface.h>

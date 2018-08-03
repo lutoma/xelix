@@ -66,7 +66,7 @@ static void stacktrace() {
 	}
 }
 
-void __attribute__((optimize("O0"))) panic(const char* error) {
+void __attribute__((optimize("O0"))) panic(char* error) {
 	interrupts_disable();
 
 	bruteforce_print("Early Kernel Panic: ");

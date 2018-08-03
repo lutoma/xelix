@@ -31,5 +31,5 @@
 	return;																					\
 }}
 
-void __attribute__((optimize("O0"))) panic(const char* error);
+void __attribute__((optimize("O0"))) panic(char* error);
 void panic_init(multiboot_info_t* multiboot_info);
