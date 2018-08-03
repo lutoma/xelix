@@ -48,14 +48,6 @@ int close(int file) {
 	return -1;
 }
 
-
-int fstat(int file, struct stat *st) {
-	fprintf(stderr, "Warning: xelix newlib fstat(%d) stub called.\n", file);
-
-	errno = ENOSYS;
-	return -1;
-}
-
 int link(char *old, char *new){
 	//fprintf(stderr, "Warning: xelix newlib link() stub called.\n");
 
@@ -68,25 +60,6 @@ int readlink(const char *path, char *buf, size_t bufsize) {
 
 	errno = ENOSYS;
 	return -1;
-}
-
-int stat(const char *name, struct stat *st) {
-	//fprintf(stderr, "Warning: xelix newlib stat() stub called.\n");
-
-	st->st_dev = 1;
-	st->st_ino = 1;
-	st->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IXUSR;
-	st->st_nlink = 0;
-	st->st_uid = 1;
-	st->st_gid = 1;
-	st->st_rdev = 0;
-	st->st_size = 0x1000;
-	st->st_blksize = 512;
-	st->st_blocks = 16;
-	st->st_atime = 0;
-	st->st_mtime = 0;
-	st->st_ctime = 0;
-	return 0;
 }
 
 int symlink(const char *path1, const char *path2) {
@@ -147,13 +120,6 @@ speed_t cfgetospeed(const struct termios *termios_p) {
 
 int mkdir(const char *dir_path, mode_t mode) {
 	//fprintf(stderr, "Warning: xelix newlib mkdir() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int gettimeofday(struct timeval *__p, void *__tz) {
-	//fprintf(stderr, "Warning: xelix newlib gettimeofday() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
@@ -266,13 +232,6 @@ int pipe(int fildes[2]) {
 
 int sigaction(int sig, const struct sigaction* act, struct sigaction* oact) {
 	//fprintf(stderr, "Warning: xelix newlib sigaction() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int lstat(const char* path, struct stat* buf) {
-	//fprintf(stderr, "Warning: xelix newlib lstat() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
