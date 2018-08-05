@@ -34,6 +34,8 @@ struct execdata {
 // Return execution data.
 SYSCALL_HANDLER(getexecdata)
 {
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
+
 	task_t* task = scheduler_get_current();
 	struct execdata* execdata = (struct execdata*)syscall.params[0];
 

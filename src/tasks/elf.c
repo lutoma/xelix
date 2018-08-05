@@ -108,8 +108,11 @@ static void map_section(elf_t* bin, struct vmem_context* ctx, elf_section_t* she
 	}
 }
 
-void elf_read_sections(elf_t* bin, struct vmem_context* ctx) {
+// Returns the last allocated section's end address so we can set sbrk
+void* elf_read_sections(elf_t* bin, struct vmem_context* ctx) {
 	elf_section_t* shead = (elf_section_t*)((uint32_t)bin + bin->shoff);
+	elf_section_t* last = NULL;
+
 	for(int i = 0; i < bin->shnum; i++) {
 
 		/* Sections without a type are unused/empty. This is usually the case
@@ -127,13 +130,14 @@ void elf_read_sections(elf_t* bin, struct vmem_context* ctx) {
 
 		if(ctx && (shead->flags & SHF_ALLOC)) {
 			map_section(bin, ctx, shead);
+			last = shead;
 		}
 
 		section_cont:
 		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)bin->shentsize);
 	}
 
-	return;
+	return last ? VMEM_ALIGN((intptr_t)last->addr + last->size) : NULL;
 }
 
 task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** argv, uint32_t argc)
@@ -187,11 +191,11 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 		vmem_add_page(ctx, page);
 	}
 
-	elf_read_sections(bin, ctx);
-	debug("Entry point is 0x%x\n", bin->entry);
-
 	task_t* task = scheduler_new(bin->entry, NULL, name, environ, envc, argv,
 		argc, ctx, true);
+
+	task->sbrk = elf_read_sections(bin, ctx);
+	debug("Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
 
 	vmem_set_task(ctx, task);
 	task->binary_start = bin;
@@ -212,8 +216,6 @@ task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, ui
 		return NULL;
 	}
 
-	// FIXME
-	stat->st_size = 1024 * 1024 * 5;
 	void* data = kmalloc_a(stat->st_size);
 	size_t read = vfs_read(data, stat->st_size, fd);
 	kfree(stat);

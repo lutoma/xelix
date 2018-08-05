@@ -26,12 +26,8 @@
 DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);
 DEFINE_SYSCALL(read);
-DEFINE_SYSCALL(mmap);
-DEFINE_SYSCALL(munmap);
+DEFINE_SYSCALL(sbrk);
 DEFINE_SYSCALL(test);
-DEFINE_SYSCALL(set_hostname);
-DEFINE_SYSCALL(get_hostname);
-DEFINE_SYSCALL(uname);
 DEFINE_SYSCALL(open);
 DEFINE_SYSCALL(stat);
 DEFINE_SYSCALL(seek);
@@ -58,12 +54,12 @@ syscall_t syscall_table[] = {
 	NULL,				// 4
 	NULL,				// 5
 	NULL,				// 6
-	sys_mmap,			// 7
-	sys_munmap,			// 8
+	sys_sbrk,			// 7
+	NULL,				// 8
 	sys_test,			// 9
-	sys_get_hostname,	// 10
-	sys_set_hostname,	// 11
-	sys_uname,			// 12
+	NULL,				// 10
+	NULL,				// 11
+	NULL,				// 12
 	sys_open,			// 13
 	sys_stat,			// 14
 	sys_seek,			// 15
@@ -92,11 +88,11 @@ char* syscall_name_table[] = {
 	NULL,			// 4
 	NULL,			// 5
 	NULL,			// 6
-	"mmap",			// 7
-	"munmap",		// 8
+	"sbrk",			// 7
+	NULL,			// 8
 	"test",			// 9
-	"get_hostname",	// 10
-	"set_hostname",	// 11
+	NULL,			// 10
+	NULL,			// 11
 	"uname",		// 12
 	"open",			// 13
 	"stat",			// 14

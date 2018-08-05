@@ -75,7 +75,7 @@ void scheduler_remove(task_t *t)
 
 	task_memory_allocation_t* ta = t->memory_allocations;
 	while(ta) {
-		kfree(ta->addr);
+		kfree(ta->phys_addr);
 		task_memory_allocation_t* to_free = ta;
 		ta = ta->next;
 		kfree(to_free);

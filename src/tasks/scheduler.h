@@ -26,7 +26,8 @@
 #define SCHEDULER_TASK_PATH_MAX 256
 
 typedef struct task_memory_allocation {
-	void* addr;
+	void* phys_addr;
+	void* virt_addr;
 	struct task_memory_allocation* next;
 } task_memory_allocation_t;
 
@@ -41,6 +42,7 @@ typedef struct task {
 	void* stack;
 	void* entry;
 	void* binary_start;
+	void* sbrk;
 	struct vmem_context* memory_context;
 	task_memory_allocation_t* memory_allocations;
 
