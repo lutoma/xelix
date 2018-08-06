@@ -18,7 +18,7 @@
  */
 
 #include <tasks/syscall.h>
-#include <console/interface.h>
+#include <console/console.h>
 #include <lib/log.h>
 
 SYSCALL_HANDLER(test)

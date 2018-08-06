@@ -25,7 +25,7 @@
 #include <console/info.h>
 #include <hw/keyboard.h>
 #include <memory/kmalloc.h>
-#include <console/interface.h>
+#include <console/console.h>
 #include <lib/log.h>
 #include <lib/string.h>
 #include <hw/interrupts.h>

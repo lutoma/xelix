@@ -31,7 +31,7 @@
 #include <hw/speaker.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
-#include <console/interface.h>
+#include <console/console.h>
 #include <hw/pci.h>
 #include <hw/rtl8139.h>
 #include <tasks/elf.h>

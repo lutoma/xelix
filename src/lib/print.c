@@ -22,7 +22,7 @@
 #include "string.h"
 #include <stdarg.h>
 
-#include <console/interface.h>
+#include <console/console.h>
 
 void putchar(const char c) {
 	char s[2];

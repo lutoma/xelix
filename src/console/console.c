@@ -20,7 +20,7 @@
 
 #include <lib/print.h>
 #include <lib/spinlock.h>
-#include <console/interface.h>
+#include <console/console.h>
 #include <fs/sysfs.h>
 
 #define GET_CONSOLE(console, else) if (console == NULL)\

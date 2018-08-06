@@ -22,7 +22,7 @@
 #include <stdarg.h>
 #include <lib/string.h>
 #include <hw/serial.h>
-#include <console/interface.h>
+#include <console/console.h>
 
 #define vprintf(fmt, arg...) _vprintf(fmt, arg, print, putchar)
 #define serial_vprintf(fmt, arg...) _vprintf(fmt, arg, serial_print, serial_send)
