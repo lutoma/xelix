@@ -298,7 +298,7 @@ void vmem_handle_fault(cpu_state_t* regs)
 	uint32_t phys_addr = (uint32_t)regs->eip;
 	task_t* running_task = scheduler_get_current();
 
-	if(running_task)
+	if(vmem_currentContext != vmem_kernelContext && running_task)
 	{
 		struct vmem_page *pg = vmem_get_page_virt(running_task->memory_context, (void*)GET_PAGE(phys_addr));
 		uint32_t virt_addr = (uint32_t)pg->virt_addr + (phys_addr % PAGE_SIZE);
@@ -327,8 +327,7 @@ void vmem_handle_fault(cpu_state_t* regs)
 		return;
 	}
 
-	if (kernel_pg == NULL || kernel_pg->section == VMEM_SECTION_UNMAPPED)
-		panic("Unexpected page fault in kernel-mode\n");
+	panic("Unexpected page fault in kernel\n");
 }
 
 void vmem_set_cache(struct vmem_context *ctx, void *cache)
