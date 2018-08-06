@@ -1,5 +1,5 @@
 ; header.asm: Sets multiboot header
-; Copyright © 2010-2014 Lukas Martini
+; Copyright © 2010-2018 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -41,6 +41,10 @@ GLOBAL _start
 _start:
 	mov ebp, stack_begin
 	mov esp, stack_begin
-	push ebx
-	push eax
+	mov ecx, eax
+	mov edx, ebx
 	call main
+.il:
+	hlt
+	jmp .il
+	cli

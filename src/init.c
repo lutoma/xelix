@@ -47,7 +47,6 @@
 #include <net/echo.h>
 #include <hw/ac97.h>
 
-// Prints out compiler information, especially for GNU GCC
 static void compiler_info()
 {
 	log(LOG_INFO, "Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
@@ -65,10 +64,7 @@ static void compiler_info()
 	log(LOG_INFO, "\tTarget Architecture: %s\n", ARCHNAME);
 }
 
-/* This is the very first function of our kernel and gets called
- * directly from the bootloader (GRUB etc.).
- */
-void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
+void __attribute__((fastcall)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
 {
 	init(gdt);
 	init(interrupts);
@@ -102,11 +98,11 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 	compiler_info();
 	memory_track_print_areas();
 
+	init(vmem);
+	init(paging);
 	init(time);
 	init(pci);
 	init(syscall);
-	init(vmem);
-	init(paging);
 	init(ide);
 
 	init(sysfs);
@@ -142,19 +138,5 @@ void __attribute__((__cdecl__)) main(uint32_t multiboot_checksum, multiboot_info
 		panic("Could not start init (Tried " INIT_PATH ").\n");
 	}
 	scheduler_add(init);
-
-	/* Is intentionally last. It's also intentional that the init()
-	 * macro isn't used here. Seriously, don't mess around here.
-	 */
 	scheduler_init();
-
-	/* And now a comment from our old friend Captain Obvious:
-	 * If you disable interrupts in an interrupt handler and
-	 * forget to re-enable them, the sky will fall on your head, so
-	 * thank you for not doing that.
-	 */
-	while(true)
-		asm("hlt"); // Wait until interrupt fires
-
-	panic("Kernel returned.");
 }

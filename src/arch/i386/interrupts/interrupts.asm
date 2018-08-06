@@ -30,7 +30,7 @@
 		push %1
 		; Dummy value for cr2
 		push 0
-		jmp common_handler
+		jmp interrupts_common_handler
 %endmacro
 
 %macro INTERRUPT_ERRCODE 1
@@ -39,7 +39,7 @@
 		push %1
 		; Dummy value for cr2
 		push 0
-		jmp common_handler
+		jmp interrupts_common_handler
 %endmacro
 
 
@@ -58,13 +58,6 @@ INTERRUPT_ERRCODE 11
 INTERRUPT_ERRCODE 12
 INTERRUPT_ERRCODE 13
 
-; Assign the rest using a preprocessor loop
-%assign i 15
-%rep 241
-	INTERRUPT i
-	%assign i i+1
-%endrep
-
 ; Special handler for page faults that pushes cr2
 [GLOBAL interrupts_handler14]
 interrupts_handler14:
@@ -73,8 +66,14 @@ interrupts_handler14:
 	; The cr2 register contains the accessed address in case of page faults.
 	mov eax, cr2
 	push eax
-	jmp common_handler
+	jmp interrupts_common_handler
 
+; Assign the rest using a preprocessor loop
+%assign i 15
+%rep 241
+	INTERRUPT i
+	%assign i i+1
+%endrep
 
 ; In interrupts.c
 [EXTERN interrupts_callback]
@@ -83,7 +82,7 @@ interrupts_handler14:
 ; for kernel mode segments, handles spurious interrupts, calls the C-level
 ; handler, and finally restores the stack frame.
 
-common_handler:
+interrupts_common_handler:
 	; We have to push all the stuff in the cpu_state_t which
 	; interrupts_callback takes in reversed order
 	; (It's defined in hw/cpu.h). The cpu automatically pushes cs, eip,
@@ -112,11 +111,11 @@ common_handler:
 
 	; Is this a spurious interrupt on the master PIC? If yes, return
 	cmp ebx, IRQ7
-	je return
+	je .return
 
 	; Do we have to send an EOI (End of interrupt)?
 	cmp ebx, 31
-	jle no_eoi
+	jle .no_eoi
 
 	; Send EOI to master PIC
 	mov dx, PIT_MASTER
@@ -127,18 +126,18 @@ common_handler:
 	; (We do this here so the master PIC still get's an EOI as it can't
 	; know about the spuriousness of this interrupt).
 	cmp ebx, IRQ15
-	je return
+	je .return
 
 	; Check if we have to send an EOI to the secondary PIC
 	cmp ebx, 39
-	jle no_eoi
+	jle .no_eoi
 
 	; Send EOI to secondary PIC
 	mov dx, PIT_SLAVE
 	mov ax, PIT_CONFIRM
 	out dx, ax
 
-no_eoi:
+.no_eoi:
 	; Push argument to ..
  	push esp
 
@@ -151,7 +150,7 @@ no_eoi:
 	; Apply new stack
 	mov esp, eax
 
-return:
+.return:
 	; reload the original data segment descriptor
 	pop ebx
 	mov ds, bx
