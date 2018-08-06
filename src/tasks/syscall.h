@@ -20,6 +20,7 @@
 
 #include <lib/generic.h>
 #include <hw/interrupts.h>
+#include <tasks/scheduler.h>
 
 #define SYSCALL_INTERRUPT 0x80
 
@@ -38,11 +39,11 @@
 #define SYSCALL_SAFE_RESOLVE(par) _SYSC_RESOLVE(par, false)
 #define SYSCALL_SAFE_REVERSE_RESOLVE(par) _SYSC_RESOLVE(par, true)
 
-struct syscall
-{
+struct syscall {
 	int num;
-	int params[5];
+	int params[3];
 	cpu_state_t* state;
+	task_t* task;
 };
 
 typedef void (*syscall_t)(struct syscall);

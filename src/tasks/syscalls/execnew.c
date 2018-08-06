@@ -76,7 +76,7 @@ SYSCALL_HANDLER(execnew)
 		SYSCALL_RETURN(0);
 	}
 
-	new_task->parent = scheduler_get_current();
+	new_task->parent = syscall.task;
 	scheduler_add(new_task);
 
 	SYSCALL_RETURN(new_task->pid);

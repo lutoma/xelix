@@ -26,8 +26,7 @@ SYSCALL_HANDLER(chdir)
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
 	// FIXME This should seriously check if this directory even exists…
-	task_t* current = scheduler_get_current();
-	strncpy(current->cwd, (char*)syscall.params[0], SCHEDULER_TASK_PATH_MAX);
+	strncpy(syscall.task->cwd, (char*)syscall.params[0], SCHEDULER_TASK_PATH_MAX);
 	SYSCALL_RETURN(0);
 }
 
@@ -39,7 +38,6 @@ SYSCALL_HANDLER(getcwd)
 	if(syscall.params[1] > SCHEDULER_TASK_PATH_MAX)
 		syscall.params[1] = SCHEDULER_TASK_PATH_MAX;
 
-	task_t* current = scheduler_get_current();
-	strncpy((char*)syscall.params[0], current->cwd, syscall.params[1]);
+	strncpy((char*)syscall.params[0], syscall.task->cwd, syscall.params[1]);
 	SYSCALL_RETURN(syscall.params[0]);
 }

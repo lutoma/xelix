@@ -23,12 +23,7 @@
 
 SYSCALL_HANDLER(wait)
 {
-	task_t* cur = scheduler_get_current();
-	if(!cur) {
-		SYSCALL_FAIL();
-	}
-
-	cur->task_state = TASK_STATE_WAITING;
+	syscall.task->task_state = TASK_STATE_WAITING;
 	scheduler_yield();
 	SYSCALL_RETURN(0);
 }

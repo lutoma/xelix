@@ -26,7 +26,7 @@
 SYSCALL_HANDLER(sbrk)
 {
 	size_t length = VMEM_ALIGN(syscall.params[1]);
-	task_t* task = scheduler_get_current();
+	task_t* task = syscall.task;
 
 	if(length < 0) {
 		SYSCALL_RETURN(-1);
