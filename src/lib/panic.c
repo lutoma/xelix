@@ -30,9 +30,11 @@
 #include <lib/string.h>
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
+#include <lib/spinlock.h>
 
 // lib/walk_stack.asm
 extern int walk_stack(intptr_t* addresses, int naddr);
+static spinlock_t lock;
 
 static void panic_printf(const char *fmt, ...) {
 	vprintf(fmt, (void**)(&fmt) + 1);
@@ -67,6 +69,10 @@ static void stacktrace() {
 }
 
 void __attribute__((optimize("O0"))) panic(char* error) {
+	if(unlikely(!spinlock_get(&lock, 30))) {
+		freeze();
+	}
+
 	interrupts_disable();
 
 	bruteforce_print("Early Kernel Panic: ");
