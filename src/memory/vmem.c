@@ -1,6 +1,6 @@
 /* vm.c: Virtual memory management
  * Copyright © 2011 Fritz Grimpen
- * Copyright © 2013-2016 Lukas Martini
+ * Copyright © 2013-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -26,7 +26,7 @@
 #include <tasks/scheduler.h>
 
 #define FIND_NODE(node, cond) { \
-	while (!(cond) && node != NULL) \
+	while (node && !(cond)) \
 		node = node->next; \
 }
 
