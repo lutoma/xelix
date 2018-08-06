@@ -33,7 +33,7 @@
 #define STACKSIZE PAGE_SIZE
 
 task_t* current_task = NULL;
-uint64_t highest_pid = -0;
+uint64_t highest_pid = 0;
 
 void scheduler_yield()
 {
@@ -234,15 +234,19 @@ task_t* scheduler_select(cpu_state_t* last_regs)
 			continue;
 		}
 
-
 		if(current_task->task_state == TASK_STATE_STOPPED ||
-			current_task->task_state == TASK_STATE_WAITING) {
+			current_task->task_state == TASK_STATE_WAITING ||
+			current_task->task_state == TASK_STATE_SYSCALL) {
 
 			/* We're back at the original task, which is stopped or waiting.
 			 * This means that every task currently in the task list is waiting,
 			 * which is an unresolvable deadlock.
 			 */
 			if(current_task == orig_task) {
+				if(current_task->task_state == TASK_STATE_SYSCALL) {
+					break;
+				}
+
 				panic("scheduler: All tasks are waiting or stopped.\n");
 			}
 

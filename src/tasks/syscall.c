@@ -52,6 +52,9 @@ intptr_t task_resolve_address(intptr_t raddress, bool reverse)
 
 static void int_handler(cpu_state_t* regs)
 {
+	task_t* task = scheduler_get_current();
+	task->task_state = TASK_STATE_SYSCALL;
+
 	struct syscall syscall;
 	syscall.num = regs->eax;
 	syscall.params[0] = regs->ebx;
@@ -79,6 +82,8 @@ static void int_handler(cpu_state_t* regs)
 		regs->edx,
 		regs->eax);
 #endif
+
+	task->task_state = TASK_STATE_RUNNING;
 }
 
 void syscall_init()
