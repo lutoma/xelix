@@ -23,7 +23,6 @@
 #include <lib/time.h>
 #include <hw/serial.h>
 #include <hw/cpu.h>
-#include <memory/interface.h>
 #include <memory/track.h>
 #include <memory/gdt.h>
 #include <hw/interrupts.h>
