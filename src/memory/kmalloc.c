@@ -78,17 +78,28 @@ static intptr_t alloc_end;
 static intptr_t alloc_max;
 
 /* Do various checks on a header to make sure we're in a safe state
- * before doing anything.
+ * before changing anything.
  */
+#ifdef KMALLOC_DEBUG
 static void check_header(struct mem_block* header) {
-	if(unlikely(header->magic != KMALLOC_MAGIC)) {
+	if(header->magic != KMALLOC_MAGIC) {
 		panic("kmalloc: Metadata corruption (Block with invalid magic)\n");
 	}
 
-	if(likely((intptr_t)header != alloc_start)) {
-		if(unlikely(PREV_BLOCK(header)->magic != KMALLOC_MAGIC)) {
-			panic("kmalloc: Metadata corruption (previous block with invalid magic)");
-		}
+	if(header->size < sizeof(struct free_block)) {
+		panic("kmalloc: Metadata corruption (Block smaller than free_block struct)\n");
+	}
+
+	if(*GET_FOOTER(header) != header->size) {
+		panic("kmalloc: Metadata corruption (Block with invalid footer)\n");
+	}
+
+	if((intptr_t)header != alloc_start && PREV_BLOCK(header)->magic != KMALLOC_MAGIC) {
+		panic("kmalloc: Metadata corruption (previous block with invalid magic)");
+	}
+
+	if(alloc_end > (intptr_t)header + FULL_SIZE(header) && NEXT_BLOCK(header)->magic != KMALLOC_MAGIC) {
+		panic("kmalloc: Metadata corruption (next block with invalid magic)");
 	}
 
 	if(header->type == TYPE_FREE) {
@@ -99,6 +110,9 @@ static void check_header(struct mem_block* header) {
 		}
 	}
 }
+#else
+#define check_header(h)
+#endif
 
 static inline void unlink_free_block(struct free_block* fb) {
 	if(fb->next) {
@@ -132,7 +146,6 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 	 * cover this area. Otherwise write free block metadata and add block.
 	 */
 	if((intptr_t)header > alloc_start && prev->type == TYPE_FREE) {
-		check_header(prev);
 		header->magic = 0;
 		header = set_block(prev->size + FULL_SIZE(header), (intptr_t)prev);
 	} else {
@@ -152,8 +165,6 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 	// If next block is free, increase block size and unlink the next fb.
 	struct mem_block* next = NEXT_BLOCK(header);
 	if(check_next && alloc_end > (intptr_t)next && next->type == TYPE_FREE) {
-		check_header(next);
-
 		set_block(header->size + FULL_SIZE(next), header);
 		unlink_free_block(GET_FB(next));
 		next->magic = 0;
@@ -164,7 +175,7 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 
 static inline struct mem_block* split_block(struct mem_block* header, size_t sz) {
 	// Make sure the block is big enough to get split first
-	if(header->size < sz + sizeof(struct mem_block) + sizeof(uint32_t) + sizeof(struct free_block)) {
+	if(header->size < sz + sizeof(struct mem_block) + sizeof(uint32_t)) {
 		return NULL;
 	}
 
@@ -177,10 +188,11 @@ static inline struct mem_block* split_block(struct mem_block* header, size_t sz)
 
 static size_t get_alignment_offset(void* address) {
 	size_t offset = 0;
+	intptr_t content_addr = GET_CONTENT(address);
 
 	// Check if page is not already page aligned by circumstance
-	if((intptr_t)address & (PAGE_SIZE - 1)) {
-		offset = VMEM_ALIGN(GET_CONTENT(address)) - GET_CONTENT(address);
+	if(content_addr & (PAGE_SIZE - 1)) {
+		offset = VMEM_ALIGN(content_addr) - content_addr;
 
 		/* We need at least x bytes to store the headers and footers of our
 		 * block and of the new block we'll create in the offset
@@ -208,9 +220,11 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 		}
 
 		size_t sz_needed = sz;
+		size_t split_size = sz;
+		uint32_t alignment_offset = 0;
 		if(align) {
-			sz_needed += get_alignment_offset(GET_CONTENT(fblock));
-			sz_needed += sizeof(struct mem_block) + sizeof(uint32_t) + sizeof(struct free_block);
+			alignment_offset = get_alignment_offset(fblock);
+			sz_needed += alignment_offset + sizeof(struct mem_block) + sizeof(uint32_t);
 		}
 
 		if(fblock->size >= sz_needed) {
@@ -218,7 +232,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 			unlink_free_block(fb);
 
 			// Carve a chunk of the required size out of the block
-			struct mem_block* new = split_block(fblock, sz_needed);
+			struct mem_block* new = split_block(fblock, sz + alignment_offset);
 
 			if(new) {
 				// Already set this to prevent free_block from merging
@@ -266,9 +280,12 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	}
 
 	struct mem_block* header = get_free_block(sz, align);
-	bool need_alloc_end = false;
-
 	size_t sz_needed = sz;
+	size_t alignment_offset = 0;
+
+	if(align) {
+		alignment_offset = get_alignment_offset(header ? header : alloc_end);
+	}
 
 	if(!header) {
 		SERIAL_DEBUG("NEW ");
@@ -277,34 +294,29 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 			panic("kmalloc: Out of memory");
 		}
 
-
-		if(align) {
-			sz_needed += get_alignment_offset(GET_CONTENT(alloc_end));
-			sz_needed += sizeof(struct mem_block);
+		if(align && alignment_offset) {
+			sz_needed += get_alignment_offset(alloc_end);
+			serial_printf("sz needed is now 0x%x for header at 0x%x\n", alignment_offset, GET_CONTENT(alloc_end) + alignment_offset);
 		}
 
 		header = set_block(sz_needed, alloc_end);
 		alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
 	}
 
-	if(align) {
-		size_t offset_size = get_alignment_offset(GET_CONTENT(header));
+	if(align && alignment_offset) {
+		SERIAL_DEBUG("ALIGN off 0x%x ", alignment_offset);
 
-		if(offset_size) {
-			offset_size -= sizeof(uint32_t);
+		struct mem_block* new = split_block(header, alignment_offset - sizeof(struct mem_block) - sizeof(uint32_t));
 
-			SERIAL_DEBUG("ALIGN off 0x%x ", offset_size);
-
-			struct mem_block* new = split_block(header, offset_size);
-
-			new->type = TYPE_KERNEL;
-			free_block(header, true);
-			header = new;
-		}
+		new->type = TYPE_KERNEL;
+		free_block(header, true);
+		header = new;
 	}
 
 	header->type = pid ? TYPE_TASK : TYPE_KERNEL;
 	header->pid = pid;
+
+	check_header(header);
 
 	spinlock_release(&kmalloc_lock);
 	SERIAL_DEBUG("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
@@ -364,11 +376,13 @@ void kmalloc_stats() {
 
 	serial_printf("\nkmalloc_stats():\n");
 	for(; header < alloc_end; header = NEXT_BLOCK(header)) {
+		check_header(header);
 		if(header->magic != KMALLOC_MAGIC) {
 			serial_printf("0x%x\tcorrupted header\n", header);
 			continue;
 		}
 		serial_printf("0x%x\tsize 0x%x\tres 0x%x\t", header, header->size, (intptr_t)header + sizeof(struct mem_block));
+		serial_printf("fsz 0x%x\tend 0x%x\t ", FULL_SIZE(header), (intptr_t)header + FULL_SIZE(header));
 
 		if(header->type == TYPE_FREE) {
 			struct free_block* fb = GET_FB(header);
