@@ -66,9 +66,10 @@ static void compiler_info()
 
 void __attribute__((fastcall)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
 {
+	init(serial);
+	init(panic, multiboot_info);
 	init(gdt);
 	init(interrupts);
-	init(panic, multiboot_info);
 	init(cpu);
 
 	// Check if we were actually booted by a multiboot bootloader
@@ -92,7 +93,6 @@ void __attribute__((fastcall)) main(uint32_t multiboot_checksum, multiboot_info_
 	init(memory_track, multiboot_info);
 	init(kmalloc);
 	init(pit, PIT_RATE);
-	init(serial);
 	init(console);
 
 	compiler_info();

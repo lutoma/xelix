@@ -47,4 +47,5 @@ _start:
 .il:
 	hlt
 	jmp .il
+	ud2
 	cli
