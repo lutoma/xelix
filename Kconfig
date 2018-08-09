@@ -2,7 +2,7 @@ mainmenu "Xelix configuration"
 
 config INIT_PATH
 	string "Init process path"
-	default "/xinit"
+	default "/bin/xinit"
 
 config PIT_RATE
 	int "PIT tick rate / scheduling frequency (In Hz)"
@@ -11,9 +11,11 @@ config PIT_RATE
 menu "Debugging"
 	config KMALLOC_DEBUG
 		bool "kmalloc debugging"
-
-	config IDALLOC_DEBUG
-		bool "idalloc debugging"
+		---help---
+		Print out information for each allocation/free to serial. Makes
+		everything pretty slow. Since vmem allocates lots of small blocks,
+		vmem allocations are not printed by default to make load time
+		bearable.
 
 	config ELF_DEBUG
 		bool "ELF loader debugging"
@@ -66,7 +68,6 @@ menu "File systems"
 
 	config ENABLE_XSFS
 	bool "Enable xsfs support"
-	default y
 
 	config XSFS_MD5SUM_ALL
 	bool "xsfs: Dump md5sum for all files read"
