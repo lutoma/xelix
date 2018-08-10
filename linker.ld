@@ -9,7 +9,7 @@ SECTIONS
 	/* The multiboot header has to be in the first 8kb */
 	.text : {
 		*(multiboot)
-		*(.text)
+		*(.text*)
 	}
 
 	.data ALIGN(4096) : {
@@ -17,11 +17,15 @@ SECTIONS
 	}
 
 	.rodata ALIGN(4096) : {
-		*(.rodata)
+		*(.rodata*)
 	}
 
 	.bss ALIGN(4096) : {
 		*(.bss)
+	}
+
+	.eh_frame ALIGN(4096) : {
+		*(.eh_frame)
 	}
 
 	PROVIDE(__kernel_end = .);
