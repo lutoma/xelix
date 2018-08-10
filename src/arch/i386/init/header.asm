@@ -39,8 +39,8 @@ EXTERN main
 GLOBAL _start
 
 _start:
-	mov ebp, stack_begin
-	mov esp, stack_begin
+	mov ebp, stack_end
+	mov esp, stack_end
 	mov ecx, eax
 	mov edx, ebx
 	call main
