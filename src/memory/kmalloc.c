@@ -177,7 +177,7 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 
 static inline struct mem_block* split_block(struct mem_block* header, size_t sz) {
 	// Make sure the block is big enough to get split first
-	if(header->size < sz + sizeof(struct mem_block) + sizeof(uint32_t)) {
+	if(header->size < sz + sizeof(struct mem_block) + sizeof(uint32_t) + sizeof(struct free_block)) {
 		return NULL;
 	}
 
@@ -224,6 +224,19 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 		size_t sz_needed = sz;
 		size_t split_size = sz;
 		uint32_t alignment_offset = 0;
+
+		/* For aligned blocks, special care needs to be taken as usually, the
+		 * free block will have to be split up to an offset block and the
+		 * actual allocation. This changes our space requirements – We now need
+		 * a block with a content size big enough for the full size of the
+		 * offset header (variable depending on address, but needs to be at
+		 * least block header + footer size + minimum block size).
+		 *
+		 * Regardless of alignment, if our required size is smaller than the
+		 * free block, we will split the free block into our allocation and a
+		 * remainder. We also need to ensure the remainder is not smaller than
+		 * the minimum block size.
+		 */
 		if(align) {
 			alignment_offset = get_alignment_offset(fblock);
 			sz_needed += alignment_offset + sizeof(struct mem_block) + sizeof(uint32_t);
@@ -287,7 +300,6 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 
 	if(align) {
 		alignment_offset = get_alignment_offset(header ? header : alloc_end);
-		serial_printf("alignment offset is 0x%x for 0x%x\n", alignment_offset, (header ? header : alloc_end) + alignment_offset);
 	}
 
 	if(!header) {
@@ -299,7 +311,6 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 
 		if(align && alignment_offset) {
 			sz_needed += get_alignment_offset(alloc_end);
-			serial_printf("sz needed is now 0x%x for header at 0x%x\n", alignment_offset, GET_CONTENT(alloc_end) + alignment_offset);
 		}
 
 		header = set_block(sz_needed, alloc_end);
