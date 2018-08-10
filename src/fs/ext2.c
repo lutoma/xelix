@@ -317,13 +317,14 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		pch = strtok_r(NULL, "/", &sp);
 	}
 
+	uint32_t inode_num = dirent->inode;
 	kfree(path_tmp);
 	kfree(dirent_block);
 	kfree(current_inode);
 
 	// Handle symbolic links
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!read_inode(inode, dirent->inode)) {
+	if(!read_inode(inode, inode_num)) {
 		return 0;
 	}
 
@@ -352,7 +353,7 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 	}
 
 	kfree(inode);
-	return dirent->inode;
+	return inode_num;
 }
 
 // The public read interface to the virtual file system
