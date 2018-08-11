@@ -252,7 +252,7 @@ static void enableCard(struct rtl8139_card *card)
 		return;
 	}
 
-	interrupts_registerHandler(card->device->interruptLine + IRQ0, rtl8139_intHandler);
+	interrupts_register(card->device->interruptLine + IRQ0, rtl8139_intHandler);
 
 	int_out16(card, REG_INTERRUPT_MASK,  0x0005);
 	int_out16(card, REG_INTERRUPT_STATUS, 0);

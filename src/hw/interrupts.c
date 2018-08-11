@@ -1,5 +1,5 @@
 /* interrupts.c: Initialization of and interface to interrupts.
- * Copyright © 2011-2015 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -30,12 +30,12 @@ static interrupt_handler_t handlers[256];
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
-cpu_state_t* interrupts_callback(cpu_state_t* regs)
-{
+cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 	struct vmem_context* original_context = vmem_currentContext;
 
-	if(original_context != vmem_kernelContext)
+	if(original_context != vmem_kernelContext) {
 		paging_apply(vmem_kernelContext);
+	}
 
 	interrupt_handler_t handler = handlers[regs->interrupt];
 
@@ -45,40 +45,41 @@ cpu_state_t* interrupts_callback(cpu_state_t* regs)
 	/* Timer interrupt
 	 * FIXME Should get a normal interrupt handler like everything else
 	 */
-	if((regs->interrupt == IRQ0 || regs->interrupt == 0x31) && scheduler_state)
+	if((regs->interrupt == IRQ0 || regs->interrupt == 0x31) && scheduler_state != SCHEDULER_OFF)
 	{
 		task_t* new_task = scheduler_select(regs);
 
 		if(new_task && new_task->state && new_task->memory_context)
 		{
-			paging_apply(new_task->memory_context);
+			if(new_task->memory_context != original_context) {
+				paging_apply(new_task->memory_context);
+			}
+
 			return new_task->state;
 		}
 	}
 
-	if(original_context != vmem_currentContext)
+	if(original_context != vmem_currentContext) {
 		paging_apply(original_context);
+	}
 
 	return regs;
 }
 
-void interrupts_registerHandler(uint8_t n, interrupt_handler_t handler)
-{
+void interrupts_register(uint8_t n, interrupt_handler_t handler) {
 	handlers[n] = handler;
 	log(LOG_INFO, "interrupts: Registered handler for %d.\n", n);
 }
 
-void interrupts_bulkRegisterHandler(uint8_t start, uint8_t end, interrupt_handler_t handler)
-{
+void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t handler) {
 		for(uint8_t i = start; i <= end; i++)
 			handlers[i] = handler;
 
 		log(LOG_INFO, "interrupts: Registered handlers for %d - %d.\n", start, end);
 }
 
-void interrupts_init()
-{
+void interrupts_init() {
 	arch_interrupts_init();
-	memset(handlers, 0, 256 * sizeof(interrupt_handler_t));
+	bzero(handlers, sizeof(handlers));
 	interrupts_enable();
 }

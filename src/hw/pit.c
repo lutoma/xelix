@@ -25,7 +25,7 @@
 static uint64_t tick = 0;
 
 // The timer callback. Gets called every time the PIT fires.
-static void timerCallback(cpu_state_t* regs)
+static void timer_callback(cpu_state_t* regs)
 {
 	tick++;
 }
@@ -34,8 +34,7 @@ static void timerCallback(cpu_state_t* regs)
 void pit_init(uint16_t frequency)
 {
 	log(LOG_INFO, "pit: Setting frequency to %d Hz.\n", frequency);
-	// Firstly, register our timer callback.
-	interrupts_registerHandler(IRQ0, &timerCallback);
+	interrupts_register(IRQ0, &timer_callback);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is

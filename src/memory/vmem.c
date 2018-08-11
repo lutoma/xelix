@@ -63,7 +63,7 @@ struct vmem_context
 /* Initialize kernel context */
 void vmem_init()
 {
-	interrupts_registerHandler(14, &vmem_handle_fault);
+	interrupts_register(14, &vmem_handle_fault);
 
 	struct vmem_context *ctx = vmem_new();
 

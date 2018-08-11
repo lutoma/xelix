@@ -236,7 +236,7 @@ console_driver_t* console_driver_keyboard_init(console_driver_t* driver)
     dict_set(dictionary, "de", keymap_de);
 	current_keymap = keymap_en;
 
-	interrupts_registerHandler(IRQ1, &irq_handler);
+	interrupts_register(IRQ1, &irq_handler);
 
 	if(driver == NULL)
 		driver = (console_driver_t*)kmalloc(sizeof(console_driver_t));

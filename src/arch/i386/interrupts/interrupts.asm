@@ -138,14 +138,9 @@ interrupts_common_handler:
 	out dx, ax
 
 .no_eoi:
-	; Push argument to ..
- 	push esp
-
- 	; Call C level interrupt handler
+	; fastcall
+	mov ecx, esp
  	call interrupts_callback
-
-	; Take esp from stack. This is commented out as we immediately apply a new stack
-	;add esp, 4
 
 	; Apply new stack
 	mov esp, eax

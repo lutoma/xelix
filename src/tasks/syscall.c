@@ -91,7 +91,6 @@ static void int_handler(cpu_state_t* regs)
 	task->task_state = TASK_STATE_RUNNING;
 }
 
-void syscall_init()
-{
-	interrupts_registerHandler(SYSCALL_INTERRUPT, int_handler);
+void syscall_init() {
+	interrupts_register(SYSCALL_INTERRUPT, int_handler);
 }

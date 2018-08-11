@@ -26,8 +26,7 @@
 #include <memory/paging.h>
 #include <tasks/scheduler.h>
 
-static char* exception_names[] =
-{
+static char* exception_names[] = {
 	"Division by zero",
 	"Debug exception",
 	"Non maskable interrupt",
@@ -48,8 +47,7 @@ static char* exception_names[] =
 	"Machine check exception"
 };
 
-static void handler(cpu_state_t* regs)
-{
+static void handler(cpu_state_t* regs) {
 	task_t* proc = scheduler_get_current();
 	char* error_name = "Unknown CPU error";
 
@@ -71,9 +69,8 @@ static void handler(cpu_state_t* regs)
 	panic(error_name);
 }
 
-void cpu_init_fault_handlers()
-{
+void cpu_init_fault_handlers() {
 	// Interrupt 14 (page fault) is handled by memory/vmem.c
-	interrupts_bulkRegisterHandler(0, 13, &handler);
-	interrupts_bulkRegisterHandler(15, 0x1F, &handler);
+	interrupts_bulk_register(0, 13, &handler);
+	interrupts_bulk_register(15, 0x1F, &handler);
 }

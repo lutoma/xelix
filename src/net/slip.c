@@ -46,12 +46,12 @@ void slip_receive(cpu_state_t* state)
 	{
 		if(c != END)
 			return;
-		
-		buf = (uint8_t*)kmalloc(sizeof(uint8_t) * BUFSIZE);		
+
+		buf = (uint8_t*)kmalloc(sizeof(uint8_t) * BUFSIZE);
 		in_progress = true;
 		return;
 	}
-	
+
 	if((c == END && in_progress) || bufpos >= BUFSIZE)
 	{
 		in_progress = false;
@@ -59,7 +59,7 @@ void slip_receive(cpu_state_t* state)
 		net_receive(mydev, NET_PROTO_RAW, bufpos, buf);
 		bufpos = -1;
 	}
-	
+
 	switch(c)
 	{
 		case ESC:
@@ -106,5 +106,5 @@ void slip_init()
 	net_register_device(mydev);
 
 	// Hook up to the serial port #1 interrupt
-	interrupts_registerHandler(IRQ4, slip_receive);
+	interrupts_register(IRQ4, slip_receive);
 }

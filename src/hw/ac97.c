@@ -197,7 +197,7 @@ static void set_sample_rate(struct ac97_card* card) {
  * optimizations on. Seems to be a bug around static functions. Blame GCC.
  */
 static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) {
-	interrupts_registerHandler(card->device->interruptLine + IRQ0, interrupt_handler);
+	interrupts_register(card->device->interruptLine + IRQ0, interrupt_handler);
 
 	// Enable bus master, disable MSE
 	pci_config_write(card->device, 4, 5);

@@ -20,8 +20,5 @@
 [GLOBAL idt_load]
 
 idt_load:
-	; Get parameter. (+4??)
-	mov eax, [esp+4]
-	; Load new IDT.
-	lidt [eax]
+	lidt [ecx]
 	ret
