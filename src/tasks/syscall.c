@@ -54,6 +54,7 @@ static void int_handler(cpu_state_t* regs)
 {
 	task_t* task = scheduler_get_current();
 	if(!task) {
+		log(LOG_WARN, "syscall: Got interrupt, but there is no current task.\n");
 		return;
 	}
 

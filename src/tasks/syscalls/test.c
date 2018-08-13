@@ -23,7 +23,7 @@
 
 SYSCALL_HANDLER(test)
 {
-	log(LOG_DEBUG, "syscall: test: Test syscall successfull\n");
+	log(LOG_DEBUG, "syscall: test: Test syscall successful\n");
 	log(LOG_DEBUG, "Parameters: EAX=0x%x EBX=0x%x ECX=0x%x EDX=0x%x ESI=0x%x EDI=0x%x ESP=0x%x\n",\
 	  syscall.state->eax,
 	  syscall.state->ebx,
