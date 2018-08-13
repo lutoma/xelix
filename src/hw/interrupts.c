@@ -20,7 +20,7 @@
 #include <hw/interrupts.h>
 #include <lib/log.h>
 #include <lib/generic.h>
-#include <arch/interrupts.h>
+#include <hw/idt.h>
 #include <tasks/scheduler.h>
 #include <memory/vmem.h>
 #include <memory/paging.h>
@@ -79,7 +79,7 @@ void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t ha
 }
 
 void interrupts_init() {
-	arch_interrupts_init();
+	idt_init();
 	bzero(handlers, sizeof(handlers));
 	interrupts_enable();
 }

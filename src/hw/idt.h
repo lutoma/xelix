@@ -1,5 +1,6 @@
-/* interrupts.c: i386-interrupt-handling
- * Copyright © 2011 Lukas Martini
+#pragma once
+
+/* Copyright © 2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -14,14 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <hw/interrupts.h>
-#include "idt.h"
-
-void arch_interrupts_init()
-{
-	idt_init();
-}
+void idt_init();

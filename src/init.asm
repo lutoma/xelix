@@ -1,4 +1,4 @@
-; header.asm: Sets multiboot header
+; header.asm: Multiboot header and init
 ; Copyright © 2010-2018 Lukas Martini
 
 ; This file is part of Xelix.
@@ -29,7 +29,7 @@ dd  MBOOT_HEADER_FLAGS
 dd  MBOOT_CHECKSUM
 
 ; Reserve 4 KiB stack space
-[SECTION .bss]
+[section .bss]
 stack_begin:
 resb 4096
 stack_end:
