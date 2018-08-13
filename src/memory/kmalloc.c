@@ -36,8 +36,6 @@
 	#define SERIAL_DEBUG(args...)
 #endif
 
-#define kmalloc_panic(x) { kmalloc_stats(); panic(x); }
-
 #define GET_FOOTER(x) ((uint32_t*)((intptr_t)x + x->size + sizeof(struct mem_block)))
 #define GET_CONTENT(x) ((void*)((intptr_t)x + sizeof(struct mem_block)))
 #define GET_FB(x) ((struct free_block*)GET_CONTENT(x))
@@ -85,30 +83,30 @@ static intptr_t alloc_max;
 #ifdef KMALLOC_DEBUG
 static void check_header(struct mem_block* header) {
 	if(header->magic != KMALLOC_MAGIC) {
-		kmalloc_panic("kmalloc: Metadata corruption (Block with invalid magic)\n");
+		panic("kmalloc: Metadata corruption (Block with invalid magic)\n");
 	}
 
 	if(header->size < sizeof(struct free_block)) {
-		kmalloc_panic("kmalloc: Metadata corruption (Block smaller than free_block struct)\n");
+		panic("kmalloc: Metadata corruption (Block smaller than free_block struct)\n");
 	}
 
 	if(*GET_FOOTER(header) != header->size) {
-		kmalloc_panic("kmalloc: Metadata corruption (Block with invalid footer)\n");
+		panic("kmalloc: Metadata corruption (Block with invalid footer)\n");
 	}
 
 	if((intptr_t)header != alloc_start && PREV_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		kmalloc_panic("kmalloc: Metadata corruption (previous block with invalid magic)");
+		panic("kmalloc: Metadata corruption (previous block with invalid magic)");
 	}
 
 	if(alloc_end > (intptr_t)header + FULL_SIZE(header) && NEXT_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		kmalloc_panic("kmalloc: Metadata corruption (next block with invalid magic)");
+		panic("kmalloc: Metadata corruption (next block with invalid magic)");
 	}
 
 	if(header->type == TYPE_FREE) {
 		struct free_block* fb = GET_FB(header);
 
 		if(unlikely(fb->magic != KMALLOC_MAGIC)) {
-			kmalloc_panic("kmalloc: Metadata corruption (Free block without fb metadata)\n");
+			panic("kmalloc: Metadata corruption (Free block without fb metadata)\n");
 		}
 	}
 }
@@ -272,7 +270,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	#endif
 
 	if(unlikely(!initialized)) {
-		kmalloc_panic("Attempt to kmalloc before allocator is initialized.\n");
+		panic("Attempt to kmalloc before allocator is initialized.\n");
 	}
 
 	SERIAL_DEBUG("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
@@ -306,7 +304,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		SERIAL_DEBUG("NEW ");
 
 		if(alloc_end + sz_needed >= alloc_max) {
-			kmalloc_panic("kmalloc: Out of memory");
+			panic("kmalloc: Out of memory");
 		}
 
 		if(align && alignment_offset) {
@@ -318,7 +316,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	}
 
 	if(align && alignment_offset) {
-		SERIAL_DEBUG("ALIGN 0x%x ", alignment_offset);
+		SERIAL_DEBUG("ALIGN off 0x%x ", alignment_offset);
 
 		struct mem_block* new = split_block(header, alignment_offset - sizeof(struct mem_block) - sizeof(uint32_t));
 
@@ -374,7 +372,7 @@ void kmalloc_init()
 	}
 
 	if(!largest_area) {
-		kmalloc_panic("kmalloc: Could not find suitable memory area");
+		panic("kmalloc: Could not find suitable memory area");
 	}
 
 	largest_area->type = MEMORY_TYPE_KMALLOC;
@@ -390,6 +388,7 @@ void kmalloc_stats() {
 
 	serial_printf("\nkmalloc_stats():\n");
 	for(; header < alloc_end; header = NEXT_BLOCK(header)) {
+		check_header(header);
 		if(header->magic != KMALLOC_MAGIC) {
 			serial_printf("0x%x\tcorrupted header\n", header);
 			continue;
