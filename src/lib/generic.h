@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -70,14 +70,17 @@ typedef uint8_t byte;
 		log(LOG_INFO, "init: Initialized " #C "\n"); \
 	} while(0);
 
-bool init_haveGrub;
+
+static inline void __attribute__((noreturn)) freeze(void) {
+	asm volatile("cli; hlt");
+	__builtin_unreachable();
+}
 
 void memset(void* ptr, uint8_t fill, uint32_t size);
 void memcpy(void* dest, void* src, uint32_t size);
 char* itoa (int num, char* result, int base);
 char* utoa(unsigned int value, char* result, int base);
 uint64_t atoi(const char *s);
-void freeze(void);
 int32_t memcmp(const void* s1, const void* s2, size_t n);
 void sleep(time_t timeout);
 void sleep_ticks(time_t timeout);

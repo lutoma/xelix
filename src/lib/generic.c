@@ -108,15 +108,6 @@ uint64_t atoi(const char* s)
 	return n;
 }
 
-/* Freezes the kernel (without possibility to unfreeze).
- * Mainly used for debugging when developing and in panic(_raw).
- */
-void freeze(void)
-{
-	interrupts_disable();
-	asm volatile("hlt;");
-}
-
 // A Memcmp
 int32_t (memcmp)(const void *s1, const void *s2, size_t n)
 {
