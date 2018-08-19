@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,6 +20,7 @@
  */
 
 #include <lib/generic.h>
+#include <lib/log.h>
 #include <hw/cpu.h>
 
 #define IRQ0 32
@@ -43,7 +44,18 @@
 #define interrupts_enable() asm volatile("sti")
 
 typedef cpu_state_t* (*interrupt_handler_t)(cpu_state_t*);
+interrupt_handler_t interrupt_handlers[256];
 
-void interrupts_register(uint8_t n, interrupt_handler_t handler);
-void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t handler);
+static inline void interrupts_register(uint8_t n, interrupt_handler_t handler) {
+	interrupt_handlers[n] = handler;
+	log(LOG_INFO, "interrupts: Registered handler for 0x%x.\n", n);
+}
+
+static inline void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t handler) {
+		for(uint8_t i = start; i <= end; i++)
+			interrupt_handlers[i] = handler;
+
+		log(LOG_INFO, "interrupts: Registered handlers for 0x%x - 0x%x.\n", start, end);
+}
+
 void interrupts_init();

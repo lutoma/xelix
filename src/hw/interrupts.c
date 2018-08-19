@@ -18,14 +18,11 @@
  */
 
 #include <hw/interrupts.h>
-#include <lib/log.h>
 #include <lib/generic.h>
 #include <hw/idt.h>
 #include <tasks/scheduler.h>
 #include <memory/vmem.h>
 #include <memory/paging.h>
-
-static interrupt_handler_t handlers[256];
 
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
@@ -37,7 +34,7 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 		paging_apply(vmem_kernelContext);
 	}
 
-	interrupt_handler_t handler = handlers[regs->interrupt];
+	interrupt_handler_t handler = interrupt_handlers[regs->interrupt];
 
 	if(handler != NULL) {
 		regs = handler(regs);
@@ -67,20 +64,8 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 	return regs;
 }
 
-void interrupts_register(uint8_t n, interrupt_handler_t handler) {
-	handlers[n] = handler;
-	log(LOG_INFO, "interrupts: Registered handler for %d.\n", n);
-}
-
-void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t handler) {
-		for(uint8_t i = start; i <= end; i++)
-			handlers[i] = handler;
-
-		log(LOG_INFO, "interrupts: Registered handlers for %d - %d.\n", start, end);
-}
-
 void interrupts_init() {
 	idt_init();
-	bzero(handlers, sizeof(handlers));
+	bzero(interrupt_handlers, sizeof(interrupt_handlers));
 	interrupts_enable();
 }
