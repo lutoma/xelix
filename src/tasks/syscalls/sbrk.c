@@ -33,7 +33,7 @@ SYSCALL_HANDLER(sbrk)
 	}
 
 	if(!length) {
-		SYSCALL_RETURN(task->sbrk);
+		SYSCALL_RETURN((intptr_t)task->sbrk);
 	}
 
 	void* phys_addr = tmalloc_a(length, task);
@@ -72,6 +72,5 @@ SYSCALL_HANDLER(sbrk)
 		vmem_add_page(task->memory_context, page);
 	}
 
-	serial_printf("sbrk phys 0x%x to virt 0x%x\n", phys_addr, virt_addr);
 	SYSCALL_RETURN((intptr_t)virt_addr);
 }

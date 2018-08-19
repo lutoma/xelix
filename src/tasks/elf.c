@@ -137,7 +137,7 @@ void* elf_read_sections(elf_t* bin, struct vmem_context* ctx) {
 		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)bin->shentsize);
 	}
 
-	return last ? VMEM_ALIGN((intptr_t)last->addr + last->size) : NULL;
+	return last ? (void*)VMEM_ALIGN((intptr_t)last->addr + last->size) : NULL;
 }
 
 task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** argv, uint32_t argc)

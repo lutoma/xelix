@@ -128,8 +128,7 @@ static inline void unlink_free_block(struct free_block* fb) {
 	}
 }
 
-static inline struct mem_block* set_block(size_t sz, intptr_t position) {
-	struct mem_block* header = (struct mem_block*)position;
+static inline struct mem_block* set_block(size_t sz, struct mem_block* header) {
 	header->size = sz;
 	header->magic = KMALLOC_MAGIC;
 
@@ -147,7 +146,7 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 	 */
 	if((intptr_t)header > alloc_start && prev->type == TYPE_FREE) {
 		header->magic = 0;
-		header = set_block(prev->size + FULL_SIZE(header), (intptr_t)prev);
+		header = set_block(prev->size + FULL_SIZE(header), prev);
 	} else {
 		header->type = TYPE_FREE;
 
@@ -180,15 +179,15 @@ static inline struct mem_block* split_block(struct mem_block* header, size_t sz)
 	}
 
 	size_t orig_size = header->size;
-	set_block(sz, (intptr_t)header);
+	set_block(sz, header);
 
 	size_t new_size = orig_size - sz - sizeof(struct mem_block) - sizeof(uint32_t);
-	return set_block(new_size, (intptr_t)NEXT_BLOCK(header));
+	return set_block(new_size, NEXT_BLOCK(header));
 }
 
 static size_t get_alignment_offset(void* address) {
 	size_t offset = 0;
-	intptr_t content_addr = GET_CONTENT(address);
+	intptr_t content_addr = (intptr_t)GET_CONTENT(address);
 
 	// Check if page is not already page aligned by circumstance
 	if(content_addr & (PAGE_SIZE - 1)) {
@@ -208,7 +207,6 @@ static size_t get_alignment_offset(void* address) {
 
 static inline struct mem_block* get_free_block(size_t sz, bool align) {
 	SERIAL_DEBUG("FFB ");
-	struct free_block* fb = last_free;
 
 	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
 		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
@@ -220,7 +218,6 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 		}
 
 		size_t sz_needed = sz;
-		size_t split_size = sz;
 		uint32_t alignment_offset = 0;
 
 		/* For aligned blocks, special care needs to be taken as usually, the
@@ -297,7 +294,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	size_t alignment_offset = 0;
 
 	if(align) {
-		alignment_offset = get_alignment_offset(header ? header : alloc_end);
+		alignment_offset = get_alignment_offset(header ? header : (struct mem_block*)alloc_end);
 	}
 
 	if(!header) {
@@ -308,10 +305,10 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		}
 
 		if(align && alignment_offset) {
-			sz_needed += get_alignment_offset(alloc_end);
+			sz_needed += get_alignment_offset((struct mem_block*)alloc_end);
 		}
 
-		header = set_block(sz_needed, alloc_end);
+		header = set_block(sz_needed, (struct mem_block*)alloc_end);
 		alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
 	}
 
@@ -387,7 +384,7 @@ void kmalloc_stats() {
 	struct mem_block* header = (struct mem_block*)alloc_start;
 
 	serial_printf("\nkmalloc_stats():\n");
-	for(; header < alloc_end; header = NEXT_BLOCK(header)) {
+	for(; (intptr_t)header < alloc_end; header = NEXT_BLOCK(header)) {
 		check_header(header);
 		if(header->magic != KMALLOC_MAGIC) {
 			serial_printf("0x%x\tcorrupted header\n", header);
