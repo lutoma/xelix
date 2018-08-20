@@ -85,10 +85,5 @@ static inline uint32_t uptime(void) {
 	return (uint32_t)pit_tick / PIT_RATE;
 }
 
-
-char* itoa (int num, char* result, int base);
-char* utoa(unsigned int value, char* result, int base);
-uint64_t atoi(const char *s);
-
 extern void display_clear();
 #define clear() display_clear()

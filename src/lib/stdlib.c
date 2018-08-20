@@ -1,6 +1,5 @@
-/* generic.c: Common utilities often used.
- * Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+/* stdlib.c: POSIX stdlib functions
+ * Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,16 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "generic.h"
-
-#include "log.h"
-#include "string.h"
-#include "print.h"
-#include <memory/kmalloc.h>
-#include <hw/serial.h>
-#include <hw/pit.h>
-#include <hw/keyboard.h>
-#include <tasks/scheduler.h>
+#include <lib/generic.h>
 
 char* itoa(int value, char* result, int base)
 {

@@ -20,6 +20,7 @@
 #include <lib/generic.h>
 #include <lib/log.h>
 #include <lib/string.h>
+#include <lib/stdlib.h>
 #include <lib/md5.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>

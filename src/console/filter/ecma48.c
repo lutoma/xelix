@@ -18,6 +18,7 @@
  */
 
 #include <lib/generic.h>
+#include <lib/stdlib.h>
 #include <console/filter/ecma48.h>
 #include <memory/kmalloc.h>
 #include <lib/dict.h>
@@ -113,7 +114,7 @@ static void processColorSequence(console_info_t* info, strbuffer_t* buffer)
 static void processControlSequence(console_info_t* info, strbuffer_t* buffer, console_driver_t* output)
 {
 	int prefix = atoi(buffer->data + 2);
-	
+
 	switch (strbuffer_last(buffer))
 	{
 		case 'm':
