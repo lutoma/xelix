@@ -19,6 +19,9 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file gets included automatically by GCC
+
+#include <config.h>
 #include <stdint.h>
 #include "portio.h"
 #include <stddef.h>
