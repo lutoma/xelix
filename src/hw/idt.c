@@ -22,6 +22,7 @@
 
 #include <hw/interrupts.h>
 #include <lib/log.h>
+#include <lib/string.h>
 
 // A struct describing an interrupt gate.
 struct idt_entry {

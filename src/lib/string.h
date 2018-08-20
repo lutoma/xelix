@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,7 +21,8 @@
 
 #include "generic.h"
 
-// String functions (similiar to the string.h C standard library)
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+
 int strcmp(const char *s1, const char *s2);
 int strncmp(const char* s1, const char* s2, size_t n);
 char* strcat(char *dest, const char *src);
@@ -33,3 +34,6 @@ char* strtok(char *s, const char *delim);
 char* strtok_r(char *s, const char *delim, char **last);
 int find_substr(char *listPointer, char *itemPointer);
 char* strndup(const char* old, size_t num);
+void memset(void* ptr, uint8_t fill, uint32_t size);
+void memcpy(void* dest, void* src, uint32_t size);
+int32_t memcmp(const void* s1, const void* s2, size_t n);

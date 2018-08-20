@@ -17,6 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <lib/string.h>
 #include <console/driver.h>
 #include <console/color.h>
 #include <memory/kmalloc.h>
@@ -43,7 +44,7 @@ static uint8_t currentPage;
 #define DISP_WRITE(x, y, c) { \
 	*HW_CHAR(x, y) = c; \
 	*DISP_CHAR(x, y) = c; \
-} 
+}
 
 static void console_driver_display_setCursor(console_info_t *info, uint32_t x, uint32_t y)
 {
@@ -100,7 +101,7 @@ static int console_driver_display_write(console_info_t *info, char c)
 			info->cursor_x = info->columns - 1;
 		goto return_write;
 	}
-	
+
 	if (c == 0x8 || c == 0x7f)
 	{
 		if (info->cursor_x == 0 && info->cursor_y != 0)

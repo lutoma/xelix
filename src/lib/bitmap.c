@@ -20,8 +20,9 @@
 
 #include "bitmap.h"
 
-#include "log.h"
 #include <memory/kmalloc.h>
+#include <lib/log.h>
+#include <lib/string.h>
 
 /* returns the index of bitmap->bits[] or the offset in the
  * bitmap->bits[index]. Offset such that offset 0 is the lowest bit,
@@ -87,7 +88,7 @@ uint32_t bitmap_findFirstClear(bitmap_t bitmap)
 		int j;
 		for(j=0; j < 32; j++)
 			if(! bitmap_get(bitmap, 32*i+j))
-				return 32*i+j;		
+				return 32*i+j;
 	}
 
 	// No free bits left

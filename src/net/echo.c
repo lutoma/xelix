@@ -24,6 +24,7 @@
 #include <memory/kmalloc.h>
 #include <lib/endian.h>
 #include <lib/log.h>
+#include <lib/string.h>
 
 static void echo_server(net_device_t* origin, size_t size, udp_header_t* header, ip4_header_t* ip_packet) {
 	uint16_t content_length = endian_swap16(header->length) - sizeof(udp_header_t);

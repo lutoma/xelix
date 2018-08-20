@@ -29,28 +29,6 @@
 #include <hw/keyboard.h>
 #include <tasks/scheduler.h>
 
-void memset(void* ptr, uint8_t fill, uint32_t size) {
-	uint8_t* p = (uint8_t*) ptr;
-	uint8_t* max = p+size;
-
-	for(; p < max; p++){
-		*p = fill;
-	}
-}
-
-void memcpy(void* dest, void* src, uint32_t size) {
-	uint8_t* from = (uint8_t*) src;
-	uint8_t* to = (uint8_t*) dest;
-	while(size > 0)
-	{
-		*to = *from;
-
-		size--;
-		from++;
-		to++;
-	}
-}
-
 char* itoa(int value, char* result, int base)
 {
 	if (base < 2 || base > 36) { *result = '\0'; return result; }
@@ -103,17 +81,4 @@ uint64_t atoi(const char* s) {
 	uint64_t n = 0;
 	while (isCharDigit(*s)) n = 10 * n + *s++ - '0';
 	return n;
-}
-
-int32_t (memcmp)(const void *s1, const void *s2, size_t n) {
-	const unsigned char *us1 = (const unsigned char *) s1;
-	const unsigned char *us2 = (const unsigned char *) s2;
-	while (n-- != 0) {
-		if (*us1 != *us2)
-			return (*us1 < *us2) ? -1 : +1;
-
-		us1++;
-		us2++;
-	}
-	return 0;
 }

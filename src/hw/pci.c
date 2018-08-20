@@ -20,7 +20,7 @@
  */
 
 /* This file follows the following convention:
- * 
+ *
  * All functions prefixed by an underscore expect a bus, device & function
  * number as argument and should generally only be used internally. All
  * other functions take a pci_device_t* as argument (from which they will
@@ -29,6 +29,7 @@
 
 #include "pci.h"
 #include <lib/log.h>
+#include <lib/string.h>
 
 // See src/drivers/bus/pci.c:[223:312] of
 // de2c63d437317cd9d042e1a6e6a93c0cc78859d7 of
@@ -137,7 +138,7 @@ void pci_load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t fun
 }
 
 /* Searches a PCI device by vendor and device IDs.
- * returnDevices should be an allocated empty array, the size of which should be specified in maxNum. 
+ * returnDevices should be an allocated empty array, the size of which should be specified in maxNum.
  * vendor_device_combos should be an array of the format
  *
  * static uint32_t vendor_device_combos[][2] = {
@@ -217,7 +218,7 @@ void pci_init()
 				 */
 				if (vendor == 0xffff || vendor == 0)
 					continue;
-					
+
 				pci_load_device(devices + i, bus, dev, func);
 				log(LOG_INFO, "pci: %d:%d.%d: [%x:%x] 0x%x (rev %x class %x iobase %x type %x int %d pin %d)\n",
 						devices[i].bus,

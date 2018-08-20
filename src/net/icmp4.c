@@ -21,6 +21,7 @@
 #include <lib/generic.h>
 #include <lib/log.h>
 #include <lib/endian.h>
+#include <lib/string.h>
 #include <net/ip4.h>
 #include <memory/kmalloc.h>
 
@@ -85,7 +86,7 @@ static void handle_ping(net_device_t* origin, size_t size, ip4_header_t* ip_pack
 static void handle_traceroute(net_device_t* origin, size_t size, ip4_header_t* ip_packet) {
 	struct traceroute* in_traceroute = (struct traceroute*)((intptr_t)ip_packet +
 		ip_packet->hl * 4 + sizeof(icmp4_header_t));
-	
+
 	struct traceroute* traceroute = kmalloc(sizeof(struct traceroute));
 
 	traceroute->id = in_traceroute->id;

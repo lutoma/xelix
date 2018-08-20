@@ -48,8 +48,6 @@
 #define bit_toggle(num, bit) ((num) ^ 1 << (bit))
 #define bit_get(num, bit) ((num) & (1 << (bit)))
 
-#define bzero(s, n) memset(s, 0, n)
-
 typedef int32_t time_t;
 typedef uint8_t byte;
 
@@ -87,12 +85,10 @@ static inline uint32_t uptime(void) {
 	return (uint32_t)pit_tick / PIT_RATE;
 }
 
-void memset(void* ptr, uint8_t fill, uint32_t size);
-void memcpy(void* dest, void* src, uint32_t size);
+
 char* itoa (int num, char* result, int base);
 char* utoa(unsigned int value, char* result, int base);
 uint64_t atoi(const char *s);
-int32_t memcmp(const void* s1, const void* s2, size_t n);
 
 extern void display_clear();
 #define clear() display_clear()
