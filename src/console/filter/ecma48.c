@@ -17,12 +17,12 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <lib/stdlib.h>
+#include <generic.h>
+#include <stdlib.h>
 #include <console/filter/ecma48.h>
 #include <memory/kmalloc.h>
-#include <lib/dict.h>
-#include <lib/strbuffer/strbuffer.h>
+#include <dict.h>
+#include <strbuffer/strbuffer.h>
 
 static dict_t* buffer_dictionary = NULL;
 

@@ -19,12 +19,12 @@
  */
 
 #include "syscall.h"
-#include <lib/generic.h>
+#include <generic.h>
 #include <hw/interrupts.h>
-#include <lib/log.h>
+#include <log.h>
 #include <tasks/scheduler.h>
-#include <lib/print.h>
-#include <lib/panic.h>
+#include <print.h>
+#include <panic.h>
 #include <memory/vmem.h>
 
 #include "syscalls.h"

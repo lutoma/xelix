@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 #include <console/filter.h>
 
 console_filter_t* console_filter_ecma48_init(console_filter_t* filter);

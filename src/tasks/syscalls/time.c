@@ -18,7 +18,7 @@
  */
 
 #include <tasks/syscall.h>
-#include <lib/time.h>
+#include <time.h>
 
 SYSCALL_HANDLER(time)
 {

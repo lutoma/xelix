@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 
 #define SPINLOCK_LOCKED 1
 #define SPINLOCK_UNLOCKED 0

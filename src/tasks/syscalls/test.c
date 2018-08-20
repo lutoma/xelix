@@ -19,7 +19,7 @@
 
 #include <tasks/syscall.h>
 #include <console/console.h>
-#include <lib/log.h>
+#include <log.h>
 
 SYSCALL_HANDLER(test)
 {

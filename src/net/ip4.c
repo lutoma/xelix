@@ -18,15 +18,15 @@
  */
 
 #include "ip4.h"
-#include <lib/log.h>
-#include <lib/endian.h>
-#include <lib/string.h>
+#include <log.h>
+#include <endian.h>
+#include <string.h>
 #include <net/ether.h>
 #include <net/udp.h>
 #include <net/icmp4.h>
 #include <memory/kmalloc.h>
-#include <lib/panic.h>
-#include <lib/print.h>
+#include <panic.h>
+#include <print.h>
 
 /* These flags and the offset are stored in one uint16_t. The flags are bits
  * one to three, the offset occupies the remaining bits. The offset is also

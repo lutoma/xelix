@@ -18,11 +18,11 @@
  */
 
 #include <tasks/syscall.h>
-#include <lib/log.h>
+#include <log.h>
 #include <tasks/scheduler.h>
 #include <tasks/elf.h>
-#include <lib/multiboot.h>
-#include <lib/string.h>
+#include <multiboot.h>
+#include <string.h>
 #include <memory/kmalloc.h>
 
 // Check an array to make sure it's NULL-terminated, then copy to kernel space

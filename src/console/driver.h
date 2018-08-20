@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 #include <console/info.h>
 
 #define CONSOLE_DRV_CAP_CLEAR 0x01

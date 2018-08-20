@@ -21,7 +21,7 @@
 #include <hw/display.h>
 
 #include <memory/kmalloc.h>
-#include <lib/log.h>
+#include <log.h>
 
 // on-screen character grid
 #define COLUMNS 80

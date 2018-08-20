@@ -17,11 +17,11 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <lib/log.h>
-#include <lib/string.h>
-#include <lib/stdlib.h>
-#include <lib/md5.h>
+#include <generic.h>
+#include <log.h>
+#include <string.h>
+#include <stdlib.h>
+#include <md5.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
 #include <fs/vfs.h>

@@ -17,10 +17,10 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/log.h>
-#include <lib/string.h>
-#include <lib/panic.h>
-#include <lib/time.h>
+#include <log.h>
+#include <string.h>
+#include <panic.h>
+#include <time.h>
 #include <hw/serial.h>
 #include <hw/cpu.h>
 #include <memory/track.h>

@@ -18,7 +18,7 @@
  */
 
 #include "log.h"
-#include <lib/print.h>
+#include <print.h>
 #include <hw/pit.h>
 
 void log(uint32_t level, const char *fmt, ...) {

@@ -19,7 +19,7 @@
 
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
-#include <lib/log.h>
+#include <log.h>
 
 SYSCALL_HANDLER(wait)
 {

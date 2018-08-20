@@ -19,10 +19,10 @@
  */
 
 #include "vmem.h"
-#include <lib/log.h>
+#include <log.h>
 #include <memory/kmalloc.h>
-#include <lib/print.h>
-#include <lib/panic.h>
+#include <print.h>
+#include <panic.h>
 #include <tasks/scheduler.h>
 
 #define FIND_NODE(node, cond) { \

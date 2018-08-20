@@ -21,8 +21,8 @@
 #include "bitmap.h"
 
 #include <memory/kmalloc.h>
-#include <lib/log.h>
-#include <lib/string.h>
+#include <log.h>
+#include <string.h>
 
 /* returns the index of bitmap->bits[] or the offset in the
  * bitmap->bits[index]. Offset such that offset 0 is the lowest bit,

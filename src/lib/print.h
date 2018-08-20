@@ -20,7 +20,7 @@
 
 #include "generic.h"
 #include <stdarg.h>
-#include <lib/string.h>
+#include <string.h>
 #include <hw/serial.h>
 #include <console/console.h>
 

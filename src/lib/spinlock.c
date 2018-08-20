@@ -17,8 +17,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <lib/spinlock.h>
+#include <generic.h>
+#include <spinlock.h>
 #include <tasks/scheduler.h>
 
 /* See https://gcc.gnu.org/onlinedocs/gcc-4.4.3/gcc/Atomic-Builtins.html for

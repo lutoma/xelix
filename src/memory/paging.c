@@ -18,10 +18,10 @@
  */
 
 #include "paging.h"
-#include <lib/generic.h>
+#include <generic.h>
 #include <memory/kmalloc.h>
-#include <lib/log.h>
-#include <lib/print.h>
+#include <log.h>
+#include <print.h>
 #include <memory/vmem.h>
 #include <hw/interrupts.h>
 

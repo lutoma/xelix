@@ -27,10 +27,10 @@
 #include <hw/pit.h>
 #include <hw/serial.h>
 #include <fs/vfs.h>
-#include <lib/string.h>
+#include <string.h>
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
-#include <lib/spinlock.h>
+#include <spinlock.h>
 
 // lib/walk_stack.asm
 extern int walk_stack(intptr_t* addresses, int naddr);

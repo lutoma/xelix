@@ -17,14 +17,14 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 #include <net/udp.h>
 #include <net/ip4.h>
 #include <net/icmp4.h>
 #include <net/net.h>
-#include <lib/log.h>
-#include <lib/endian.h>
-#include <lib/string.h>
+#include <log.h>
+#include <endian.h>
+#include <string.h>
 #include <memory/kmalloc.h>
 
 // Todo use bitmap?

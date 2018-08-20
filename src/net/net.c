@@ -19,12 +19,12 @@
 
 #include "net.h"
 
-#include <lib/log.h>
+#include <log.h>
 #include <tasks/scheduler.h>
 #include <memory/kmalloc.h>
 #include <net/ether.h>
 #include <net/ip4.h>
-#include <lib/string.h>
+#include <string.h>
 #include <net/slip.h>
 
 static net_device_t *registered_devices[NET_MAX_DEVICES];

@@ -19,7 +19,7 @@
 
 #include <console/console.h>
 #include <fs/vfs.h>
-#include <lib/log.h>
+#include <log.h>
 #include <tasks/syscall.h>
 
 SYSCALL_HANDLER(read)

@@ -19,10 +19,10 @@
 
 #include "elf.h"
 
-#include <lib/generic.h>
-#include <lib/log.h>
-#include <lib/print.h>
-#include <lib/string.h>
+#include <generic.h>
+#include <log.h>
+#include <print.h>
+#include <string.h>
 #include <tasks/scheduler.h>
 #include <fs/vfs.h>
 #include <memory/vmem.h>

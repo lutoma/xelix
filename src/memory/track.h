@@ -18,8 +18,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
-#include <lib/multiboot.h>
+#include <generic.h>
+#include <multiboot.h>
 
 #define MEMORY_TRACK_MAX_AREAS 256
 

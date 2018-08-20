@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 
 #define VFS_SEEK_SET 0
 #define VFS_SEEK_CUR 1

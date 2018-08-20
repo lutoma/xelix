@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/string.h>
+#include <string.h>
 #include <console/driver.h>
 #include <console/color.h>
 #include <memory/kmalloc.h>

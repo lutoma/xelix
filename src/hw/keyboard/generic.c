@@ -26,13 +26,13 @@
 #include <hw/keyboard.h>
 #include <memory/kmalloc.h>
 #include <console/console.h>
-#include <lib/log.h>
-#include <lib/string.h>
+#include <log.h>
+#include <string.h>
 #include <hw/interrupts.h>
 #include <hw/display.h>
 #include <hw/pit.h>
 
-#include <lib/dict.h>
+#include <dict.h>
 
 struct keyboard_buffer {
 	char* data;

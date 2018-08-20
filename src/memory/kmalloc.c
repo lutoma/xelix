@@ -20,10 +20,10 @@
 #include "kmalloc.h"
 #include "track.h"
 #include "vmem.h"
-#include <lib/log.h>
-#include <lib/multiboot.h>
-#include <lib/panic.h>
-#include <lib/spinlock.h>
+#include <log.h>
+#include <multiboot.h>
+#include <panic.h>
+#include <spinlock.h>
 
 #define KMALLOC_MAGIC 0xCAFE
 

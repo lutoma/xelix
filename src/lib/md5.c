@@ -35,8 +35,8 @@
  * compile-time configuration.
  */
 
-#include <lib/generic.h>
-#include <lib/print.h>
+#include <generic.h>
+#include <print.h>
 #include <memory/kmalloc.h>
 
 #include "md5.h"

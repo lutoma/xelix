@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <lib/generic.h>
+#include <generic.h>
 
 /* Any 32-bit or wider unsigned integer data type will do */
 typedef unsigned int MD5_u32plus;

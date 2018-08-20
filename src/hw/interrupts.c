@@ -18,8 +18,8 @@
  */
 
 #include <hw/interrupts.h>
-#include <lib/generic.h>
-#include <lib/string.h>
+#include <generic.h>
+#include <string.h>
 #include <hw/idt.h>
 #include <tasks/scheduler.h>
 #include <memory/vmem.h>

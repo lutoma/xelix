@@ -21,7 +21,7 @@
 #include "string.h"
 
 #include <memory/kmalloc.h>
-#include <lib/log.h>
+#include <log.h>
 
 // Return the length of a string
 size_t strlen(const char* str)

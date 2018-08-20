@@ -17,11 +17,11 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 #include <memory/track.h>
-#include <lib/log.h>
-#include <lib/print.h>
-#include <lib/multiboot.h>
+#include <log.h>
+#include <print.h>
+#include <multiboot.h>
 #include <hw/serial.h>
 
 // Symbols defined by LD in linker.ld

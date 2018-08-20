@@ -19,7 +19,7 @@
 
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
-#include <lib/log.h>
+#include <log.h>
 #include <tasks/scheduler.h>
 
 // Only supports killing the current task so far

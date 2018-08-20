@@ -18,10 +18,10 @@
  */
 
 #include "icmp4.h"
-#include <lib/generic.h>
-#include <lib/log.h>
-#include <lib/endian.h>
-#include <lib/string.h>
+#include <generic.h>
+#include <log.h>
+#include <endian.h>
+#include <string.h>
 #include <net/ip4.h>
 #include <memory/kmalloc.h>
 

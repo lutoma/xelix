@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 #include <net/ip4.h>
 
 #define ICMP4_TYPE_ECHO_REPLY 0

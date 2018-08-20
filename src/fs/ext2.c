@@ -19,10 +19,10 @@
 
 #ifdef ENABLE_EXT2
 
-#include <lib/generic.h>
-#include <lib/log.h>
-#include <lib/string.h>
-#include <lib/md5.h>
+#include <generic.h>
+#include <log.h>
+#include <string.h>
+#include <md5.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
 #include <hw/serial.h>

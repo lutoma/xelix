@@ -28,8 +28,8 @@
  */
 
 #include "pci.h"
-#include <lib/log.h>
-#include <lib/string.h>
+#include <log.h>
+#include <string.h>
 
 // See src/drivers/bus/pci.c:[223:312] of
 // de2c63d437317cd9d042e1a6e6a93c0cc78859d7 of

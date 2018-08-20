@@ -18,11 +18,11 @@
  */
 
 #include "vfs.h"
-#include <lib/log.h>
+#include <log.h>
 #include <memory/kmalloc.h>
-#include <lib/string.h>
-#include <lib/list.h>
-#include <lib/spinlock.h>
+#include <string.h>
+#include <list.h>
+#include <spinlock.h>
 
 struct mountpoint {
 	char path[265];

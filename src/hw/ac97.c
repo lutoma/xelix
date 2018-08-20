@@ -22,12 +22,12 @@
 #include <hw/ac97.h>
 #include <hw/pci.h>
 
-#include <lib/log.h>
-#include <lib/portio.h>
+#include <log.h>
+#include <portio.h>
 #include <hw/interrupts.h>
 #include <memory/kmalloc.h>
-#include <lib/string.h>
-#include <lib/multiboot.h>
+#include <string.h>
+#include <multiboot.h>
 #include <fs/vfs.h>
 
 // Number of buffers to cache. More buffers = more latency. Maximum is 31.

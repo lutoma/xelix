@@ -20,7 +20,7 @@
 #include <console/console.h>
 #include <memory/vmem.h>
 #include <tasks/syscall.h>
-#include <lib/log.h>
+#include <log.h>
 
 SYSCALL_HANDLER(bind)
 {

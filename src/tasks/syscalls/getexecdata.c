@@ -19,7 +19,7 @@
 
 #include <tasks/syscall.h>
 #include <tasks/scheduler.h>
-#include <lib/string.h>
+#include <string.h>
 
 struct execdata {
 	uint32_t pid;

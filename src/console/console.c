@@ -18,8 +18,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/print.h>
-#include <lib/spinlock.h>
+#include <print.h>
+#include <spinlock.h>
 #include <console/console.h>
 #include <fs/sysfs.h>
 

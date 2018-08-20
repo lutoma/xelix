@@ -19,8 +19,8 @@
 
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
-#include <lib/log.h>
-#include <lib/print.h>
+#include <log.h>
+#include <print.h>
 
 SYSCALL_HANDLER(stat)
 {

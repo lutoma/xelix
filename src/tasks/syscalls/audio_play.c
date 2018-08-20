@@ -19,7 +19,7 @@
 
 #include <tasks/syscall.h>
 #include <hw/ac97.h>
-#include <lib/log.h>
+#include <log.h>
 
 SYSCALL_HANDLER(audio_play)
 {

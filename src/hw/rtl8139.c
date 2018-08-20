@@ -23,13 +23,13 @@
 #include <hw/rtl8139.h>
 #include <hw/pci.h>
 
-#include <lib/log.h>
-#include <lib/portio.h>
+#include <log.h>
+#include <portio.h>
 #include <hw/interrupts.h>
 #include <memory/kmalloc.h>
 #include <net/ether.h>
 #include <net/net.h>
-#include <lib/string.h>
+#include <string.h>
 
 static uint32_t vendor_device_combos[][2] = {
 	{0x10ec, 0x8139},

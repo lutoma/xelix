@@ -17,11 +17,11 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/print.h>
-#include <lib/generic.h>
-#include <lib/string.h>
+#include <print.h>
+#include <generic.h>
+#include <string.h>
 #include <stdarg.h>
-#include <lib/stdlib.h>
+#include <stdlib.h>
 
 #include <console/console.h>
 

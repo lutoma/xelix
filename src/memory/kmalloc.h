@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func);

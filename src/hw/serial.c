@@ -19,8 +19,8 @@
 
 #include "serial.h"
 
-#include <lib/generic.h>
-#include <lib/log.h>
+#include <generic.h>
+#include <log.h>
 
 #define PORT 0x3f8
 #define CAN_RECV (inb(PORT+5) & 1)

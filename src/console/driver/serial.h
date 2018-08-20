@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <generic.h>
 #include <console/driver.h>
 
 console_driver_t* console_driver_serial_init(console_driver_t* driver);

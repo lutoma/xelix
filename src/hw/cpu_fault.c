@@ -19,8 +19,8 @@
 
 #include "cpu.h"
 
-#include <lib/log.h>
-#include <lib/panic.h>
+#include <log.h>
+#include <panic.h>
 #include <hw/interrupts.h>
 #include <memory/vmem.h>
 #include <memory/paging.h>

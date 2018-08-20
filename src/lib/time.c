@@ -20,7 +20,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/portio.h>
+#include <portio.h>
 #include <hw/pit.h>
 #include "time.h"
 

@@ -23,7 +23,7 @@
 #include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <tasks/scheduler.h>
-#include <lib/multiboot.h>
+#include <multiboot.h>
 
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
 #define assert_nc(qry) { if(!(qry)) {														\

@@ -21,8 +21,8 @@
 
 #include "slip.h"
 
-#include <lib/log.h>
-#include <lib/string.h>
+#include <log.h>
+#include <string.h>
 #include <memory/kmalloc.h>
 #include <hw/interrupts.h>
 #include <hw/serial.h>

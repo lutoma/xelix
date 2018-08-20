@@ -21,8 +21,8 @@
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <tasks/scheduler.h>
-#include <lib/log.h>
-#include <lib/string.h>
+#include <log.h>
+#include <string.h>
 
 SYSCALL_HANDLER(sbrk)
 {
