@@ -1,4 +1,4 @@
-%.o: %.c
+%.o: %.c src/lib/generic.h src/lib/config.h
 	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm

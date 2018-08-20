@@ -1,7 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+/* Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,6 +19,10 @@
  */
 
 // This file gets included automatically by GCC
+
+#if __STDC_HOSTED__ != 0
+	#error Cannot compile in hosted mode, please use -ffreestanding
+#endif
 
 #include <config.h>
 #include <stdint.h>

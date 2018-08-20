@@ -9,7 +9,7 @@ ifeq ($(BUILD),)
 	BUILD := 0
 endif
 
-MAKE_CFLAGS = -O2 -g -std=gnu99 -Wall -I src -I src/lib -ffreestanding -nostdlib -lgcc -masm=intel -include "src/lib/generic.h" -D "XELIX" -pipe
+MAKE_CFLAGS = -std=gnu18 -ffreestanding -masm=intel -DXELIX -Wall -I src -I src/lib -include src/lib/generic.h -g -O2 -pipe
 MAKE_LDFLAGS = -T linker.ld -nostdlib -lgcc
 MAKE_ASFLAGS = -g -f elf
 
