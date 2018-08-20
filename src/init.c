@@ -47,23 +47,6 @@
 #include <net/echo.h>
 #include <hw/ac97.h>
 
-static void compiler_info()
-{
-	log(LOG_INFO, "Xelix %d.%d.%d%s (Build %d)\n", VERSION, VERSION_MINOR, VERSION_PATCHLEVEL, VERSION_APPENDIX, BUILD);
-	log(LOG_INFO, "\tCompiled at: %s %s\n", __DATE__, __TIME__);
-	#ifdef __GNUC__
-		// Test for GCC > 3.2.0
-		#if GCC_VERSION > 30200
-			log(LOG_INFO, "\tCompiler: GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-		#else
-			log(LOG_INFO, "\tCompiler: GCC (< 3.2.0)\n");
-		#endif
-	#endif
-	log(LOG_INFO, "\tBy: %s\n", __BUILDCOMP__);
-	log(LOG_INFO, "\tOS: %s\n", __BUILDSYS__);
-	log(LOG_INFO, "\tTarget Architecture: %s\n", ARCHNAME);
-}
-
 void __attribute__((fastcall)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
 {
 	init(serial);
@@ -95,7 +78,6 @@ void __attribute__((fastcall)) main(uint32_t multiboot_checksum, multiboot_info_
 	init(pit, PIT_RATE);
 	init(console);
 
-	compiler_info();
 	memory_track_print_areas();
 
 	init(vmem);

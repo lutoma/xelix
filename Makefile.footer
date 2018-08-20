@@ -1,48 +1,37 @@
 %.o: %.c
-	@echo -e "CC\t$<"
-	@$(CC) $(MAKE_CFLAGS) -o $@ -c $<
+	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
-	@echo -e "AS\t$<"
-	@$(AS) $(MAKE_ASFLAGS) -o $@ $<
+	$(AS) $(MAKE_ASFLAGS) -o $@ $<
 
 .PHONY: runqemu
 runqemu: xelix.bin
 	qemu -kernel xelix.bin $(MAKE_QEMU_FLAGS)
 
-.PHONY: runqemunox
-runqemunox: xelix.bin
-	@echo "Exit with ^A-x"
-	qemu -kernel xelix.bin -nographic $(MAKE_QEMU_FLAGS)
-
-.PHONY: count
-count:
-	( find -L {src,toolchain}/ -not -iregex "toolchain/\(userspace\|kernel\)/\(download\|local\|build\)/.*" -type f -iregex "^.*\.\(c\|h\|asm\)" -print0 -regextype "posix-extended" | xargs -0 cat ) | wc -l
-
 .PHONY: clean
 clean:
 	find -L src -type f -iregex "^.*\.o" | xargs rm -f
-
-.PHONY: todo
-todo:
-	grep -rie FIXME -e TODO src toolchain/userspace/content toolchain/userspace/patch toolchain/*/Makefile configure 
 
 .PHONY: land
 land:
 	make -C land
 
+.PHONY: config
 config: clean
 	make -C util/kconfig config
 	util/genconfigh.sh
 
+.PHONY: menuconfig
 menuconfig: clean
 	make -C util/kconfig menuconfig
 	util/genconfigh.sh
 
+.PHONY: xconfig
 xconfig: clean
 	make -C util/kconfig xconfig
 	util/genconfigh.sh
 
+.PHONY: gconfig
 gconfig: clean
 	make -C util/kconfig gconfig
 	util/genconfigh.sh
