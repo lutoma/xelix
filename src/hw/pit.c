@@ -18,23 +18,18 @@
  */
 
 #include "pit.h"
-
-#include <lib/log.h>
 #include <hw/interrupts.h>
 
-static uint64_t tick = 0;
-
 // The timer callback. Gets called every time the PIT fires.
-static cpu_state_t* timer_callback(cpu_state_t* regs)
-{
-	tick++;
+static cpu_state_t* timer_callback(cpu_state_t* regs) {
+	pit_tick++;
 	return regs;
 }
 
 // Initialize the PIT
 void pit_init(uint16_t frequency)
 {
-	log(LOG_INFO, "pit: Setting frequency to %d Hz.\n", frequency);
+	pit_tick = 0;
 	interrupts_register(IRQ0, &timer_callback);
 
 	// The value we send to the PIT is the value to divide it's input clock
@@ -51,10 +46,4 @@ void pit_init(uint16_t frequency)
 	// Send the frequency divisor.
 	outb(0x40, l);
 	outb(0x40, h);
-}
-
-// Get the tick num
-uint64_t pit_getTickNum()
-{
-	return tick;
 }

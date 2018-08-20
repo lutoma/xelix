@@ -1,6 +1,6 @@
 /* generic.c: Common utilities often used.
  * Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011-2013 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -28,19 +28,17 @@
 #include <hw/pit.h>
 #include <hw/keyboard.h>
 #include <tasks/scheduler.h>
-#include <hw/interrupts.h>
 
-// Memset function. Fills memory with something.
-void memset(void* ptr, uint8_t fill, uint32_t size)
-{
+void memset(void* ptr, uint8_t fill, uint32_t size) {
 	uint8_t* p = (uint8_t*) ptr;
 	uint8_t* max = p+size;
-	for(; p < max; p++)
+
+	for(; p < max; p++){
 		*p = fill;
+	}
 }
-// Memcpy
-void memcpy(void* dest, void* src, uint32_t size)
-{
+
+void memcpy(void* dest, void* src, uint32_t size) {
 	uint8_t* from = (uint8_t*) src;
 	uint8_t* to = (uint8_t*) dest;
 	while(size > 0)
@@ -101,16 +99,13 @@ char* utoa(unsigned int value, char* result, int base)
 	return result;
 }
 
-uint64_t atoi(const char* s)
-{
+uint64_t atoi(const char* s) {
 	uint64_t n = 0;
 	while (isCharDigit(*s)) n = 10 * n + *s++ - '0';
 	return n;
 }
 
-// A Memcmp
-int32_t (memcmp)(const void *s1, const void *s2, size_t n)
-{
+int32_t (memcmp)(const void *s1, const void *s2, size_t n) {
 	const unsigned char *us1 = (const unsigned char *) s1;
 	const unsigned char *us2 = (const unsigned char *) s2;
 	while (n-- != 0) {
@@ -121,28 +116,4 @@ int32_t (memcmp)(const void *s1, const void *s2, size_t n)
 		us2++;
 	}
 	return 0;
-}
-
-// Sleep x seconds
-void sleep(time_t timeout)
-{
-	timeout *= PIT_RATE;
-	timeout++; // Make sure we always wait at least 'timeout'. One tick too long doesn't matter.
-	int startTick = pit_getTickNum();
-	while(true) {
-		if(pit_getTickNum() > startTick + timeout) {
-			break;
-		}
-	}
-}
-
-// Sleep x ticks
-void sleep_ticks(time_t timeout)
-{
-	int startTick = pit_getTickNum();
-	while(true) {
-		if(pit_getTickNum() > startTick + timeout) {
-			break;
-		}
-	}
 }

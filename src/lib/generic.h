@@ -23,6 +23,7 @@
 #include "portio.h"
 #include <stddef.h>
 #include <stdbool.h>
+#include <hw/pit.h>
 
 #ifdef __GNUC__
 	#define GCC_VERSION (__GNUC__ * 10000 \
@@ -70,10 +71,20 @@ typedef uint8_t byte;
 		log(LOG_INFO, "init: Initialized " #C "\n"); \
 	} while(0);
 
+#define sleep(t) sleep_ticks((t) * PIT_RATE)
 
 static inline void __attribute__((noreturn)) freeze(void) {
 	asm volatile("cli; hlt");
 	__builtin_unreachable();
+}
+
+static inline void sleep_ticks(time_t timeout) {
+	uint64_t start = pit_tick;
+	while(pit_tick <= start + timeout);
+}
+
+static inline uint32_t uptime(void) {
+	return (uint32_t)pit_tick / PIT_RATE;
 }
 
 void memset(void* ptr, uint8_t fill, uint32_t size);
@@ -82,8 +93,6 @@ char* itoa (int num, char* result, int base);
 char* utoa(unsigned int value, char* result, int base);
 uint64_t atoi(const char *s);
 int32_t memcmp(const void* s1, const void* s2, size_t n);
-void sleep(time_t timeout);
-void sleep_ticks(time_t timeout);
 
 extern void display_clear();
 #define clear() display_clear()

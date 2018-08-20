@@ -18,13 +18,10 @@
  */
 
 #include "log.h"
-#include "string.h"
-#include "print.h"
-#include <memory/kmalloc.h>
+#include <lib/print.h>
 #include <hw/pit.h>
 
-void log(uint32_t level, const char *fmt, ...)
-{
-	printf("[%d:%d] ", (uint32_t)pit_getTickNum() / PIT_RATE, pit_getTickNum());
+void log(uint32_t level, const char *fmt, ...) {
+	printf("[%d:%d] ", uptime(), pit_tick);
 	vprintf(fmt, (void**)(&fmt) + 1);
 }

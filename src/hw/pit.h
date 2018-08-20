@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <lib/generic.h>
+#include <stdint.h>
 
+uint64_t pit_tick;
 void pit_init(uint16_t frequency);
-uint64_t pit_getTickNum();

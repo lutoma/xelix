@@ -151,14 +151,12 @@ static time_t read_rtc() {
 
 
 int time_get(struct timeval* tp) {
-	uint64_t tick_now = pit_getTickNum();
-
 	/* Can't use libgcc's 64 bit integer division functions right now.
 	 * The offset shouldn't be larger than a uint32 anyway.
 	 */
-	uint32_t offset = (tick_now - last_tick);
+	uint32_t offset = (pit_tick - last_tick);
 	last_timestamp += offset / PIT_RATE;
-	last_tick = tick_now;
+	last_tick = pit_tick;
 
 	tp->tv_sec = last_timestamp;
 	tp->tv_usec = 0;
@@ -168,5 +166,5 @@ int time_get(struct timeval* tp) {
 
 void time_init() {
 	last_timestamp = read_rtc();
-	last_tick = pit_getTickNum();
+	last_tick = pit_tick;
 }

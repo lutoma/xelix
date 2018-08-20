@@ -84,11 +84,8 @@ void __attribute__((optimize("O0"))) panic(char* error) {
 
 	panic_printf("\n%%Kernel Panic: %s%%\n", 0x04, error);
 
-	uint32_t ticknum = pit_getTickNum();
-	panic_printf("Last PIT tick: %d (rate %d, uptime: %d seconds)\n",
-		ticknum,
-		PIT_RATE,
-		ticknum / PIT_RATE);
+	panic_printf("Last PIT tick: %d (rate %d, uptime: %d second%p)\n",
+		(uint32_t)pit_tick, PIT_RATE, uptime());
 
 	task_t* task = scheduler_get_current();
 	if(task) {

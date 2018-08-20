@@ -28,15 +28,13 @@
 
 void serial_send(const char c)
 {
-	while (!CAN_SEND) {};
+	while(!CAN_SEND) {};
 	outb(PORT, c);
 }
 
 char serial_recv()
 {
-	while (!CAN_RECV)
-		sleep(0.0001);
-
+	while(!CAN_RECV);
 	return inb(PORT);
 }
 
