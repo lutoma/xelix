@@ -1,5 +1,5 @@
+.PHONY: all
 all: xelix.bin
-run: runqemu
 
 CC := toolchain/kernel/local/bin/i686-elf-gcc
 LD := $(CC)
@@ -21,3 +21,25 @@ MAKE_CFLAGS += $(CFLAGS)
 MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -serial mon:stdio -no-reboot -d cpu_reset -soundhw ac97
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
+
+%.o: %.c src/lib/generic.h src/lib/config.h
+	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
+
+%-asm.o: %.asm
+	$(AS) $(MAKE_ASFLAGS) -o $@ $<
+
+.PHONY: run
+run: xelix.bin
+	qemu -kernel xelix.bin $(MAKE_QEMU_FLAGS)
+
+.PHONY: clean
+clean:
+	find -L src -type f -iregex "^.*\.o" | xargs rm -f
+
+.PHONY: land
+land:
+	make -C land
+
+%config: clean
+	make -C util/kconfig $@
+	util/genconfigh.sh
