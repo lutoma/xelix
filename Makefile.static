@@ -1,7 +1,7 @@
 .PHONY: all
 all: xelix.bin
 
-CC := toolchain/kernel/local/bin/i686-elf-gcc
+CC := toolchain/local/bin/i786-pc-xelix-gcc
 LD := $(CC)
 AS := nasm
 
@@ -9,7 +9,7 @@ ifeq ($(BUILD),)
 	BUILD := 0
 endif
 
-MAKE_CFLAGS = -std=gnu18 -ffreestanding -masm=intel -DXELIX -Wall -I src -I src/lib -include src/lib/generic.h -g -O2 -pipe
+MAKE_CFLAGS = -std=gnu18 -ffreestanding -masm=intel -Wall -I src -I src/lib -include src/lib/generic.h -g -O2 -pipe
 MAKE_LDFLAGS = -T linker.ld -nostdlib -lgcc
 MAKE_ASFLAGS = -g -f elf
 
@@ -22,11 +22,14 @@ MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
-%.o: %.c src/lib/generic.h src/lib/config.h
+%.o: %.c $(CC) src/lib/generic.h src/lib/config.h
 	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
 	$(AS) $(MAKE_ASFLAGS) -o $@ $<
+
+$(CC):
+	make -C toolchain
 
 .PHONY: run
 run: xelix.bin

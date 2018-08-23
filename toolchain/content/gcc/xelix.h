@@ -1,8 +1,11 @@
 #undef TARGET_OS_CPP_BUILTINS
+
+/* The "XELIX" define is legacy for some in-kernel includes (strbuffer, kdict) */
 #define TARGET_OS_CPP_BUILTINS() \
     do { \
         builtin_define_std("xelix"); \
         builtin_define_std("unix"); \
+        builtin_define("XELIX"); \
         builtin_define("__xelix__"); \
         builtin_define("__unix__"); \
         builtin_assert("system=xelix"); \

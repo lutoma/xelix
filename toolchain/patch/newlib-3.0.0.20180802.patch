@@ -1,0 +1,85 @@
+diff -rupN download/newlib-3.0.0.20180802/config.sub download/newlib-3.0.0.20180802-xelix/config.sub
+--- download/newlib-3.0.0.20180802/config.sub	2018-08-01 20:02:56.000000000 +0200
++++ download/newlib-3.0.0.20180802-xelix/config.sub	2018-08-23 01:52:41.769440158 +0200
+@@ -1376,7 +1376,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd*)
++	     | midnightbsd* | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+diff -rupN download/newlib-3.0.0.20180802/newlib/configure.host download/newlib-3.0.0.20180802-xelix/newlib/configure.host
+--- download/newlib-3.0.0.20180802/newlib/configure.host	2011-11-29 07:33:48.000000000 +0100
++++ download/newlib-3.0.0.20180802-xelix/newlib/configure.host	2012-01-06 23:38:03.000000000 +0100
+@@ -343,6 +343,13 @@ esac
+ # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
+
+ case "${host}" in
++  i[3-7]86-*-xelix*)
++	sys_dir=xelix
++	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
++	newlib_cflags="${newlib_cflags} -DREENTRANT_SYSCALLS_PROVIDED"
++	posix_dir=posix
++	unix_dir=unix
++	;;
+   *-*-cygwin*)
+ 	posix_dir=posix
+ 	stdio64_dir=stdio64
+diff -rupN download/newlib-3.0.0.20180802/newlib/libc/sys/configure.in download/newlib-3.0.0.20180802-xelix/newlib/libc/sys/configure.in
+--- download/newlib-3.0.0.20180802/newlib/libc/sys/configure.in	2010-02-24 21:59:55.000000000 +0100
++++ download/newlib-3.0.0.20180802-xelix/newlib/libc/sys/configure.in	2012-01-06 23:38:45.000000000 +0100
+@@ -22,6 +22,7 @@ fi
+
+ if test -n "${sys_dir}"; then
+   case ${sys_dir} in
++	xelix) AC_CONFIG_SUBDIRS(xelix) ;;
+ 	a29khif) AC_CONFIG_SUBDIRS(a29khif) ;;
+ 	arc) AC_CONFIG_SUBDIRS(arc) ;;
+ 	arm) AC_CONFIG_SUBDIRS(arm) ;;
+--- download/newlib-3.0.0.20180802/newlib/libc/include/sys/stat.h	2018-07-23 09:34:43.211471869 +0200
++++ download/newlib-3.0.0.20180802/newlib/libc/include/sys/stat.h	2018-07-23 09:34:37.564479109 +0200
+@@ -152,7 +152,7 @@
+ int	stat (const char *__restrict __path, struct stat *__restrict __sbuf );
+ mode_t	umask (mode_t __mask );
+
+-#if defined (__SPU__) || defined(__rtems__) || defined(__CYGWIN__) && !defined(__INSIDE_CYGWIN__)
++#if defined (__SPU__) || defined(__rtems__) || defined(__xelix__) || defined(__CYGWIN__) && !defined(__INSIDE_CYGWIN__)
+ int	lstat (const char *__restrict __path, struct stat *__restrict __buf );
+ int	mknod (const char *__path, mode_t __mode, dev_t __dev );
+ #endif
+--- download/newlib-3.0.0.20180802/newlib/libc/include/glob.h	2018-07-23 10:32:35.198264689 +0200
++++ download/newlib-3.0.0.20180802/newlib/libc/include/glob.h	2018-07-23 10:32:10.619084204 +0200
+@@ -74,6 +74,7 @@
+ #define	GLOB_QUOTE	0x0400	/* Quote special chars with \. */
+ #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
+ #define	GLOB_LIMIT	0x1000	/* limit number of returned paths */
++#define GLOB_NOMATCH 0xffff
+
+ /* backwards compatibility, this is the old name for this option */
+ #define GLOB_MAXPATH	GLOB_LIMIT
+
+--- download/newlib-3.0.0.20180802/newlib/libc/include/sys/resource.h	2018-07-23 10:36:09.427233216 +0200
++++ download/newlib-3.0.0.20180802/newlib/libc/include/sys/resource.h	2018-07-23 10:35:38.407046458 +0200
+@@ -6,11 +6,20 @@
+ #define	RUSAGE_SELF	0		/* calling process */
+ #define	RUSAGE_CHILDREN	-1		/* terminated child processes */
+
++#define RLIM_INFINITY 0
++
+ struct rusage {
+   	struct timeval ru_utime;	/* user time used */
+ 	struct timeval ru_stime;	/* system time used */
+ };
+
++typedef uint32_t rlim_t;
++
++struct rlimit {
++	rlim_t rlim_cur;  /* Soft limit */
++	rlim_t rlim_max;  /* Hard limit (ceiling for rlim_cur) */
++};
++
+ int	getrusage (int, struct rusage*);
+
+ #endif

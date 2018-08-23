@@ -1,19 +1,19 @@
-TARGET=i586-pc-xelix
+TARGET=i786-pc-xelix
 PREFIX=$(CURDIR)/local
 
 BINUTILS_VERSION=2.31
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
 BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 
-GCC_VERSION=8.1.0
+GCC_VERSION=8.2.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 
-NEWLIB_VERSION=3.0.0.20180226
+NEWLIB_VERSION=3.0.0.20180802
 NEWLIB_URL=ftp://sources.redhat.com/pub/newlib
 NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
-PATH:=$(PATH):$(CURDIR)/local/bin 
+PATH:=$(PATH):$(CURDIR)/local/bin
 
 .PHONY: all install clean binutils gcc newlib
 
@@ -89,7 +89,7 @@ gcc-make:
 	@mkdir -p build/gcc
 	-@find build/gcc -name config.cache -delete
 	-@make -C build/gcc distclean
-	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-shared --enable-languages=c --without-headers --with-newlib --without-docdir 
+	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-shared --enable-languages=c --without-headers --with-newlib --without-docdir
 	@make -C build/gcc all-gcc
 	@make -C build/gcc all-target-libgcc
 

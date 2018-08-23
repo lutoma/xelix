@@ -20,6 +20,10 @@
 
 // This file gets included automatically by GCC
 
+#ifndef __xelix__
+	#error "Please use a Xelix cross-compiler to compile this code"
+#endif
+
 #if __STDC_HOSTED__ != 0
 	#error Cannot compile in hosted mode, please use -ffreestanding
 #endif
