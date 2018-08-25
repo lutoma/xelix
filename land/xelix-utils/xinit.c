@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <sys/execnew.h>
+#include <sys/xelix.h>
 
 int main() {
 	while(true) {

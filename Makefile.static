@@ -32,8 +32,8 @@ $(CC):
 	make -C toolchain
 
 .PHONY: run
-run: xelix.bin
-	qemu -kernel xelix.bin $(MAKE_QEMU_FLAGS)
+run: xelix.bin xelix.qcow2
+	qemu -kernel xelix.bin -hda xelix.qcow2 $(MAKE_QEMU_FLAGS)
 
 .PHONY: clean
 clean:
@@ -46,3 +46,7 @@ land:
 %config: clean
 	make -C util/kconfig $@
 	util/genconfigh.sh
+
+.PHONY: xelix.qcow2
+xelix.qcow2:
+	util/build-image.sh $@
