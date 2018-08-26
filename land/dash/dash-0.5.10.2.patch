@@ -1,0 +1,51 @@
+diff --git dash-0.5.10.2/config.h dash-0.5.10.2/config.h
+--- dash-0.5.10.2/config.h
++++ dash-0.5.10.2/config.h
+@@ -181,6 +181,8 @@
+ /* Define to 1 if you need to in order for `stat' and other things to work. */
+ /* #undef _POSIX_SOURCE */
+
++#ifdef __xelix__
++
+ /* 64-bit operations are the same as 32-bit */
+ #define fstat64 fstat
+
+@@ -195,3 +197,5 @@
+
+ /* 64-bit operations are the same as 32-bit */
+ #define stat64 stat
++
++#endif
+diff --git dash-0.5.10.2/src/jobs.c dash-0.5.10.2/src/jobs.c
+--- dash-0.5.10.2/src/jobs.c
++++ dash-0.5.10.2/src/jobs.c
+@@ -210,7 +210,7 @@ out:
+ 			}
+ 			if (pgrp == getpgrp())
+ 				break;
+-			killpg(0, SIGTTIN);
++			//killpg(0, SIGTTIN);
+ 		} while (1);
+ 		initialpgrp = pgrp;
+
+@@ -391,7 +391,7 @@ restartjob(struct job *jp, int mode)
+ 	pgid = jp->ps->pid;
+ 	if (mode == FORK_FG)
+ 		xtcsetpgrp(ttyfd, pgid);
+-	killpg(pgid, SIGCONT);
++	//killpg(pgid, SIGCONT);
+ 	ps = jp->ps;
+ 	i = jp->nprocs;
+ 	do {
+diff --git dash-0.5.10.2/src/system.h dash-0.5.10.2/src/system.h
+--- dash-0.5.10.2/src/system.h
++++ dash-0.5.10.2/src/system.h
+@@ -30,6 +30,8 @@
+ #include <signal.h>
+ #include <sys/types.h>
+
++#define HAVE_KILLPG
++
+ #ifndef SSIZE_MAX
+ #define SSIZE_MAX ((ssize_t)((size_t)-1 >> 1))
+ #endif
