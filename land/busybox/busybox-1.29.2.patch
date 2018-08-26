@@ -1,0 +1,1015 @@
+diff --git busybox-1.29.2/archival/libarchive/header_verbose_list.c busybox-1.29.2/archival/libarchive/header_verbose_list.c
+index be5140f..10e11a8 100644
+--- busybox-1.29.2/archival/libarchive/header_verbose_list.c
++++ busybox-1.29.2/archival/libarchive/header_verbose_list.c
+@@ -26,7 +26,7 @@ void FAST_FUNC header_verbose_list(const file_header_t *file_header)
+ 	group = file_header->tar__gname;
+ 	if (group == NULL) {
+ 		/*sprintf(gid, "%u", (unsigned)file_header->gid);*/
+-		group = utoa(file_header->gid);
++		group = bb_utoa(file_header->gid);
+ 	}
+ 	printf("%s %s/%s %9"OFF_FMT"u %4u-%02u-%02u %02u:%02u:%02u %s",
+ 		bb_mode_string(file_header->mode),
+diff --git busybox-1.29.2/coreutils/printf.c busybox-1.29.2/coreutils/printf.c
+index a666ff7..e357b11 100644
+--- busybox-1.29.2/coreutils/printf.c
++++ busybox-1.29.2/coreutils/printf.c
+@@ -82,7 +82,7 @@ typedef void FAST_FUNC (*converter)(const char *arg, void *result);
+ static int multiconvert(const char *arg, void *result, converter convert)
+ {
+ 	if (*arg == '"' || *arg == '\'') {
+-		arg = utoa((unsigned char)arg[1]);
++		arg = bb_utoa((unsigned char)arg[1]);
+ 	}
+ 	errno = 0;
+ 	convert(arg, result);
+diff --git busybox-1.29.2/editors/awk.c busybox-1.29.2/editors/awk.c
+index bafc9ba..b954b9f 100644
+--- busybox-1.29.2/editors/awk.c
++++ busybox-1.29.2/editors/awk.c
+@@ -879,7 +879,7 @@ static void setari_u(var *a, int idx, const char *s)
+ {
+ 	var *v;
+
+-	v = findvar(iamarray(a), itoa(idx));
++	v = findvar(iamarray(a), bb_itoa(idx));
+ 	setvar_u(v, s);
+ }
+
+diff --git busybox-1.29.2/include/inet_common.h busybox-1.29.2/include/inet_common.h
+index 4638aa9..3bf5201 100644
+--- busybox-1.29.2/include/inet_common.h
++++ busybox-1.29.2/include/inet_common.h
+@@ -6,6 +6,7 @@
+  * Heavily modified by Manuel Novoa III       Mar 12, 2001
+  *
+  */
++#if 0
+ #ifndef INET_COMMON_H
+ #define INET_COMMON_H 1
+
+@@ -30,3 +31,4 @@ char *INET6_rresolve(struct sockaddr_in6 *sin6, int numeric) FAST_FUNC;
+ POP_SAVED_FUNCTION_VISIBILITY
+
+ #endif
++#endif
+diff --git busybox-1.29.2/include/libbb.h busybox-1.29.2/include/libbb.h
+index d4ba031..ccbd860 100644
+--- busybox-1.29.2/include/libbb.h
++++ busybox-1.29.2/include/libbb.h
+@@ -40,14 +40,14 @@
+ #define basename dont_use_basename
+ #include <poll.h>
+ #include <sys/ioctl.h>
+-#include <sys/mman.h>
++//#include <sys/mman.h>
+ #include <sys/resource.h>
+ #include <sys/socket.h>
+ #include <sys/stat.h>
+ #include <sys/time.h>
+ #include <sys/types.h>
+ #if !defined(major) || defined(__GLIBC__)
+-# include <sys/sysmacros.h>
++//# include <sys/sysmacros.h>
+ #endif
+ #include <sys/wait.h>
+ #include <termios.h>
+@@ -140,7 +140,7 @@
+ #elif defined __APPLE__
+ # include <netinet/in.h>
+ #else
+-# include <arpa/inet.h>
++//# include <arpa/inet.h>
+ //This breaks on bionic:
+ //# if !defined(__socklen_t_defined) && !defined(_SOCKLEN_T_DECLARED)
+ ///* We #define socklen_t *after* includes, otherwise we get
+@@ -617,6 +617,7 @@ time_t validate_tm_time(const char *date_str, struct tm *ptm) FAST_FUNC;
+ char *strftime_HHMMSS(char *buf, unsigned len, time_t *tp) FAST_FUNC;
+ char *strftime_YYYYMMDDHHMMSS(char *buf, unsigned len, time_t *tp) FAST_FUNC;
+
++/*
+ int xsocket(int domain, int type, int protocol) FAST_FUNC;
+ void xbind(int sockfd, struct sockaddr *my_addr, socklen_t addrlen) FAST_FUNC;
+ void xlisten(int s, int backlog) FAST_FUNC;
+@@ -627,20 +628,21 @@ ssize_t xsendto(int s, const void *buf, size_t len, const struct sockaddr *to,
+ int setsockopt_int(int fd, int level, int optname, int optval) FAST_FUNC;
+ int setsockopt_1(int fd, int level, int optname) FAST_FUNC;
+ int setsockopt_SOL_SOCKET_int(int fd, int optname, int optval) FAST_FUNC;
+-int setsockopt_SOL_SOCKET_1(int fd, int optname) FAST_FUNC;
++int setsockopt_SOL_SOCKET_1(int fd, int optname) FAST_FUNC;*/
++
+ /* SO_REUSEADDR allows a server to rebind to an address that is already
+  * "in use" by old connections to e.g. previous server instance which is
+  * killed or crashed. Without it bind will fail until all such connections
+  * time out. Linux does not allow multiple live binds on same ip:port
+  * regardless of SO_REUSEADDR (unlike some other flavors of Unix).
+  * Turn it on before you call bind(). */
+-void setsockopt_reuseaddr(int fd) FAST_FUNC; /* On Linux this never fails. */
+-int setsockopt_keepalive(int fd) FAST_FUNC;
++//void setsockopt_reuseaddr(int fd) FAST_FUNC; /* On Linux this never fails. */
++/*int setsockopt_keepalive(int fd) FAST_FUNC;
+ int setsockopt_broadcast(int fd) FAST_FUNC;
+ int setsockopt_bindtodevice(int fd, const char *iface) FAST_FUNC;
+-int bb_getsockname(int sockfd, void *addr, socklen_t addrlen) FAST_FUNC;
++int bb_getsockname(int sockfd, void *addr, socklen_t addrlen) FAST_FUNC;*/
+ /* NB: returns port in host byte order */
+-unsigned bb_lookup_port(const char *port, const char *protocol, unsigned default_port) FAST_FUNC;
++/*unsigned bb_lookup_port(const char *port, const char *protocol, unsigned default_port) FAST_FUNC;
+ #if ENABLE_FEATURE_ETC_SERVICES
+ # define bb_lookup_std_port(portstr, protocol, portnum) bb_lookup_port(portstr, protocol, portnum)
+ #else
+@@ -668,67 +670,68 @@ enum {
+ 		}
+ 	)
+ };
++*/
+ /* Create stream socket, and allocate suitable lsa.
+  * (lsa of correct size and lsa->sa.sa_family (AF_INET/AF_INET6))
+  * af == AF_UNSPEC will result in trying to create IPv6 socket,
+  * and if kernel doesn't support it, fall back to IPv4.
+  * This is useful if you plan to bind to resulting local lsa.
+  */
+-int xsocket_type(len_and_sockaddr **lsap, int af, int sock_type) FAST_FUNC;
+-int xsocket_stream(len_and_sockaddr **lsap) FAST_FUNC;
++//int xsocket_type(len_and_sockaddr **lsap, int af, int sock_type) FAST_FUNC;
++//int xsocket_stream(len_and_sockaddr **lsap) FAST_FUNC;
+ /* Create server socket bound to bindaddr:port. bindaddr can be NULL,
+  * numeric IP ("N.N.N.N") or numeric IPv6 address,
+  * and can have ":PORT" suffix (for IPv6 use "[X:X:...:X]:PORT").
+  * Only if there is no suffix, port argument is used */
+ /* NB: these set SO_REUSEADDR before bind */
+-int create_and_bind_stream_or_die(const char *bindaddr, int port) FAST_FUNC;
+-int create_and_bind_dgram_or_die(const char *bindaddr, int port) FAST_FUNC;
++//int create_and_bind_stream_or_die(const char *bindaddr, int port) FAST_FUNC;
++//int create_and_bind_dgram_or_die(const char *bindaddr, int port) FAST_FUNC;
+ /* Create client TCP socket connected to peer:port. Peer cannot be NULL.
+  * Peer can be numeric IP ("N.N.N.N"), numeric IPv6 address or hostname,
+  * and can have ":PORT" suffix (for IPv6 use "[X:X:...:X]:PORT").
+  * If there is no suffix, port argument is used */
+-int create_and_connect_stream_or_die(const char *peer, int port) FAST_FUNC;
++//int create_and_connect_stream_or_die(const char *peer, int port) FAST_FUNC;
+ /* Connect to peer identified by lsa */
+-int xconnect_stream(const len_and_sockaddr *lsa) FAST_FUNC;
++//int xconnect_stream(const len_and_sockaddr *lsa) FAST_FUNC;
+ /* Get local address of bound or accepted socket */
+-len_and_sockaddr *get_sock_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
++//len_and_sockaddr *get_sock_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
+ /* Get remote address of connected or accepted socket */
+-len_and_sockaddr *get_peer_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
++//len_and_sockaddr *get_peer_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
+ /* Return malloc'ed len_and_sockaddr with socket address of host:port
+  * Currently will return IPv4 or IPv6 sockaddrs only
+  * (depending on host), but in theory nothing prevents e.g.
+  * UNIX socket address being returned, IPX sockaddr etc...
+  * On error does bb_error_msg and returns NULL */
+-len_and_sockaddr* host2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
++//len_and_sockaddr* host2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
+ /* Version which dies on error */
+-len_and_sockaddr* xhost2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
+-len_and_sockaddr* xdotted2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
++//len_and_sockaddr* xhost2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
++//len_and_sockaddr* xdotted2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
+ /* Same, useful if you want to force family (e.g. IPv6) */
+-#if !ENABLE_FEATURE_IPV6
++/*#if !ENABLE_FEATURE_IPV6
+ #define host_and_af2sockaddr(host, port, af) host2sockaddr((host), (port))
+ #define xhost_and_af2sockaddr(host, port, af) xhost2sockaddr((host), (port))
+ #else
+ len_and_sockaddr* host_and_af2sockaddr(const char *host, int port, sa_family_t af) FAST_FUNC RETURNS_MALLOC;
+ len_and_sockaddr* xhost_and_af2sockaddr(const char *host, int port, sa_family_t af) FAST_FUNC RETURNS_MALLOC;
+-#endif
++#endif*/
+ /* Assign sin[6]_port member if the socket is an AF_INET[6] one,
+  * otherwise no-op. Useful for ftp.
+  * NB: does NOT do htons() internally, just direct assignment. */
+-void set_nport(struct sockaddr *sa, unsigned port) FAST_FUNC;
++//void set_nport(struct sockaddr *sa, unsigned port) FAST_FUNC;
+ /* Retrieve sin[6]_port or return -1 for non-INET[6] lsa's */
+-int get_nport(const struct sockaddr *sa) FAST_FUNC;
++//int get_nport(const struct sockaddr *sa) FAST_FUNC;
+ /* Reverse DNS. Returns NULL on failure. */
+-char* xmalloc_sockaddr2host(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
++//char* xmalloc_sockaddr2host(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
+ /* This one doesn't append :PORTNUM */
+-char* xmalloc_sockaddr2host_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
++//char* xmalloc_sockaddr2host_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
+ /* This one also doesn't fall back to dotted IP (returns NULL) */
+-char* xmalloc_sockaddr2hostonly_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
++//char* xmalloc_sockaddr2hostonly_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
+ /* inet_[ap]ton on steroids */
+-char* xmalloc_sockaddr2dotted(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
+-char* xmalloc_sockaddr2dotted_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
++//char* xmalloc_sockaddr2dotted(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
++//char* xmalloc_sockaddr2dotted_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
+ // "old" (ipv4 only) API
+ // users: traceroute.c hostname.c - use _list_ of all IPs
+-struct hostent *xgethostbyname(const char *name) FAST_FUNC;
++//struct hostent *xgethostbyname(const char *name) FAST_FUNC;
+ // Also mount.c and inetd.c are using gethostbyname(),
+ // + inet_common.c has additional IPv4-only stuff
+
+@@ -964,11 +967,11 @@ char *safe_gethostname(void) FAST_FUNC;
+ /* Convert each alpha char in str to lower-case */
+ char* str_tolower(char *str) FAST_FUNC;
+
+-char *utoa(unsigned n) FAST_FUNC;
+-char *itoa(int n) FAST_FUNC;
++char *bb_utoa(unsigned n) FAST_FUNC;
++char *bb_itoa(int n) FAST_FUNC;
+ /* Returns a pointer past the formatted number, does NOT null-terminate */
+-char *utoa_to_buf(unsigned n, char *buf, unsigned buflen) FAST_FUNC;
+-char *itoa_to_buf(int n, char *buf, unsigned buflen) FAST_FUNC;
++char *bb_utoa_to_buf(unsigned n, char *buf, unsigned buflen) FAST_FUNC;
++char *bb_itoa_to_buf(int n, char *buf, unsigned buflen) FAST_FUNC;
+ /* Intelligent formatters of bignums */
+ char *smart_ulltoa4(unsigned long long ul, char buf[4], const char *scale) FAST_FUNC;
+ char *smart_ulltoa5(unsigned long long ul, char buf[5], const char *scale) FAST_FUNC;
+@@ -1041,8 +1044,8 @@ char* xuid2uname(uid_t uid) FAST_FUNC;
+ char* xgid2group(gid_t gid) FAST_FUNC;
+ char* uid2uname(uid_t uid) FAST_FUNC;
+ char* gid2group(gid_t gid) FAST_FUNC;
+-char* uid2uname_utoa(uid_t uid) FAST_FUNC;
+-char* gid2group_utoa(gid_t gid) FAST_FUNC;
++char* uid2uname_bb_utoa(uid_t uid) FAST_FUNC;
++char* gid2group_bb_utoa(gid_t gid) FAST_FUNC;
+ /* versions which cache results (useful for ps, ls etc) */
+ const char* get_cached_username(uid_t uid) FAST_FUNC;
+ const char* get_cached_groupname(gid_t gid) FAST_FUNC;
+diff --git busybox-1.29.2/include/platform.h busybox-1.29.2/include/platform.h
+index c365d5c..f414e0e 100644
+--- busybox-1.29.2/include/platform.h
++++ busybox-1.29.2/include/platform.h
+@@ -306,7 +306,7 @@ typedef unsigned smalluint;
+  || defined __dietlibc__ \
+  || defined __BIONIC__ \
+  || defined _NEWLIB_VERSION
+-# include <features.h>
++//# include <features.h>
+ #endif
+
+ /* Define bb_setpgrp */
+@@ -528,6 +528,11 @@ typedef unsigned smalluint;
+ # undef HAVE_PRINTF_PERCENTM
+ #endif
+
++#ifdef __xelix__
++# undef HAVE_MNTENT_H
++# undef HAVE_SYS_STATFS_H
++#endif
++
+ /*
+  * Now, define prototypes for all the functions defined in platform.c
+  * These must come after all the HAVE_* macros are defined (or not)
+diff --git busybox-1.29.2/libbb/bb_pwd.c busybox-1.29.2/libbb/bb_pwd.c
+index 32ff83a..8d4cc14 100644
+--- busybox-1.29.2/libbb/bb_pwd.c
++++ busybox-1.29.2/libbb/bb_pwd.c
+@@ -72,16 +72,16 @@ char* FAST_FUNC gid2group(gid_t gid)
+ 	return (gr) ? gr->gr_name : NULL;
+ }
+
+-char* FAST_FUNC uid2uname_utoa(uid_t uid)
++char* FAST_FUNC uid2uname_bb_utoa(uid_t uid)
+ {
+ 	char *name = uid2uname(uid);
+-	return (name) ? name : utoa(uid);
++	return (name) ? name : bb_utoa(uid);
+ }
+
+-char* FAST_FUNC gid2group_utoa(gid_t gid)
++char* FAST_FUNC gid2group_bb_utoa(gid_t gid)
+ {
+ 	char *name = gid2group(gid);
+-	return (name) ? name : utoa(gid);
++	return (name) ? name : bb_utoa(gid);
+ }
+
+ long FAST_FUNC xuname2uid(const char *name)
+diff --git busybox-1.29.2/libbb/inet_common.c busybox-1.29.2/libbb/inet_common.c
+index e9fbde7..0e96949 100644
+--- busybox-1.29.2/libbb/inet_common.c
++++ busybox-1.29.2/libbb/inet_common.c
+@@ -10,6 +10,8 @@
+ #include "libbb.h"
+ #include "inet_common.h"
+
++#if 0
++
+ #if 0
+ # define dbg(...) bb_error_msg(__VA_ARGS__)
+ #else
+@@ -194,3 +196,5 @@ char* FAST_FUNC INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
+ }
+
+ #endif  /* CONFIG_FEATURE_IPV6 */
++
++#endif
+diff --git busybox-1.29.2/libbb/makedev.c busybox-1.29.2/libbb/makedev.c
+index 06c4039..b6a4ca5 100644
+--- busybox-1.29.2/libbb/makedev.c
++++ busybox-1.29.2/libbb/makedev.c
+@@ -14,8 +14,8 @@
+  || defined(__APPLE__)
+ # include <sys/types.h>
+ #else
+-# include <features.h>
+-# include <sys/sysmacros.h>
++//# include <features.h>
++//# include <sys/sysmacros.h>
+ #endif
+
+ #ifdef __GLIBC__
+diff --git busybox-1.29.2/libbb/pidfile.c busybox-1.29.2/libbb/pidfile.c
+index a48dfc3..84a0d33 100644
+--- busybox-1.29.2/libbb/pidfile.c
++++ busybox-1.29.2/libbb/pidfile.c
+@@ -32,7 +32,7 @@ void FAST_FUNC write_pidfile(const char *path)
+
+ 	if (wrote_pidfile) {
+ 		/* few bytes larger, but doesn't use stdio */
+-		end = utoa_to_buf(getpid(), buf, sizeof(buf));
++		end = bb_utoa_to_buf(getpid(), buf, sizeof(buf));
+ 		*end = '\n';
+ 		full_write(pid_fd, buf, end - buf + 1);
+ 	}
+diff --git busybox-1.29.2/libbb/procps.c busybox-1.29.2/libbb/procps.c
+index 9d8a921..c99f0e1 100644
+--- busybox-1.29.2/libbb/procps.c
++++ busybox-1.29.2/libbb/procps.c
+@@ -52,7 +52,7 @@ static int get_cached(cache_t *cp, uid_t id)
+ #endif
+
+ static char* get_cached(cache_t *cp, uid_t id,
+-			char* FAST_FUNC x2x_utoa(uid_t id))
++			char* FAST_FUNC x2x_bb_utoa(uid_t id))
+ {
+ 	int i;
+ 	for (i = 0; i < cp->size; i++)
+@@ -62,16 +62,16 @@ static char* get_cached(cache_t *cp, uid_t id,
+ 	cp->cache = xrealloc_vector(cp->cache, 2, i);
+ 	cp->cache[i].id = id;
+ 	/* Never fails. Generates numeric string if name isn't found */
+-	safe_strncpy(cp->cache[i].name, x2x_utoa(id), sizeof(cp->cache[i].name));
++	safe_strncpy(cp->cache[i].name, x2x_bb_utoa(id), sizeof(cp->cache[i].name));
+ 	return cp->cache[i].name;
+ }
+ const char* FAST_FUNC get_cached_username(uid_t uid)
+ {
+-	return get_cached(&username, uid, uid2uname_utoa);
++	return get_cached(&username, uid, uid2uname_bb_utoa);
+ }
+ const char* FAST_FUNC get_cached_groupname(gid_t gid)
+ {
+-	return get_cached(&groupname, gid, gid2group_utoa);
++	return get_cached(&groupname, gid, gid2group_bb_utoa);
+ }
+
+
+diff --git busybox-1.29.2/libbb/signals.c busybox-1.29.2/libbb/signals.c
+index 3f58932..3881f98 100644
+--- busybox-1.29.2/libbb/signals.c
++++ busybox-1.29.2/libbb/signals.c
+@@ -104,8 +104,8 @@ void FAST_FUNC signal_SA_RESTART_empty_mask(int sig, void (*handler)(int))
+ 	struct sigaction sa;
+ 	memset(&sa, 0, sizeof(sa));
+ 	/*sigemptyset(&sa.sa_mask);*/
+-	sa.sa_flags = SA_RESTART;
+-	sa.sa_handler = handler;
++	//sa.sa_flags = SA_RESTART;
++	//sa.sa_handler = handler;
+ 	sigaction_set(sig, &sa);
+ }
+
+diff --git busybox-1.29.2/libbb/u_signal_names.c busybox-1.29.2/libbb/u_signal_names.c
+index b3038e3..88f6d78 100644
+--- busybox-1.29.2/libbb/u_signal_names.c
++++ busybox-1.29.2/libbb/u_signal_names.c
+@@ -212,7 +212,7 @@ const char* FAST_FUNC get_signame(int number)
+ 			return signals[number];
+ 	}
+
+-	return itoa(number);
++	return bb_itoa(number);
+ }
+
+
+diff --git busybox-1.29.2/libbb/xconnect.c busybox-1.29.2/libbb/xconnect.c
+index 39e56b2..66701a5 100644
+--- busybox-1.29.2/libbb/xconnect.c
++++ busybox-1.29.2/libbb/xconnect.c
+@@ -6,6 +6,7 @@
+  *
+  * Licensed under GPLv2, see file LICENSE in this source tree.
+  */
++#if 0
+ #include <sys/types.h>
+ #include <sys/socket.h> /* netinet/in.h needs it */
+ #include <netinet/in.h>
+@@ -507,3 +508,4 @@ char* FAST_FUNC xmalloc_sockaddr2dotted_noport(const struct sockaddr *sa)
+ {
+ 	return sockaddr2str(sa, NI_NUMERICHOST | NI_NUMERICSCOPE | IGNORE_PORT);
+ }
++#endif
+diff --git busybox-1.29.2/libbb/xfuncs.c busybox-1.29.2/libbb/xfuncs.c
+index b4d512b..0a84b00 100644
+--- busybox-1.29.2/libbb/xfuncs.c
++++ busybox-1.29.2/libbb/xfuncs.c
+@@ -59,7 +59,7 @@ char* FAST_FUNC strncpy_IFNAMSIZ(char *dst, const char *src)
+  * A truncated result contains the first few digits of the result ala strncpy.
+  * Returns a pointer past last generated digit, does _not_ store NUL.
+  */
+-char* FAST_FUNC utoa_to_buf(unsigned n, char *buf, unsigned buflen)
++char* FAST_FUNC bb_utoa_to_buf(unsigned n, char *buf, unsigned buflen)
+ {
+ 	unsigned i, out, res;
+
+@@ -90,8 +90,8 @@ char* FAST_FUNC utoa_to_buf(unsigned n, char *buf, unsigned buflen)
+ 	return buf;
+ }
+
+-/* Convert signed integer to ascii, like utoa_to_buf() */
+-char* FAST_FUNC itoa_to_buf(int n, char *buf, unsigned buflen)
++/* Convert signed integer to ascii, like bb_utoa_to_buf() */
++char* FAST_FUNC bb_itoa_to_buf(int n, char *buf, unsigned buflen)
+ {
+ 	if (!buflen)
+ 		return buf;
+@@ -100,7 +100,7 @@ char* FAST_FUNC itoa_to_buf(int n, char *buf, unsigned buflen)
+ 		*buf++ = '-';
+ 		buflen--;
+ 	}
+-	return utoa_to_buf((unsigned)n, buf, buflen);
++	return bb_utoa_to_buf((unsigned)n, buf, buflen);
+ }
+
+ // The following two functions use a static buffer, so calling either one a
+@@ -113,17 +113,17 @@ char* FAST_FUNC itoa_to_buf(int n, char *buf, unsigned buflen)
+ static char local_buf[sizeof(int) * 3];
+
+ /* Convert unsigned integer to ascii using a static buffer (returned). */
+-char* FAST_FUNC utoa(unsigned n)
++char* FAST_FUNC bb_utoa(unsigned n)
+ {
+-	*(utoa_to_buf(n, local_buf, sizeof(local_buf) - 1)) = '\0';
++	*(bb_utoa_to_buf(n, local_buf, sizeof(local_buf) - 1)) = '\0';
+
+ 	return local_buf;
+ }
+
+ /* Convert signed integer to ascii using a static buffer (returned). */
+-char* FAST_FUNC itoa(int n)
++char* FAST_FUNC bb_itoa(int n)
+ {
+-	*(itoa_to_buf(n, local_buf, sizeof(local_buf) - 1)) = '\0';
++	*(bb_itoa_to_buf(n, local_buf, sizeof(local_buf) - 1)) = '\0';
+
+ 	return local_buf;
+ }
+diff --git busybox-1.29.2/libpwdgrp/pwd_grp.c busybox-1.29.2/libpwdgrp/pwd_grp.c
+index b44ada4..7093f8a 100644
+--- busybox-1.29.2/libpwdgrp/pwd_grp.c
++++ busybox-1.29.2/libpwdgrp/pwd_grp.c
+@@ -463,11 +463,11 @@ struct group* FAST_FUNC getgrnam(const char *name)
+ }
+ struct passwd* FAST_FUNC getpwuid(uid_t id)
+ {
+-	return getXXnam(utoa(id), (0 << 2) + 2);
++	return getXXnam(bb_utoa(id), (0 << 2) + 2);
+ }
+ struct group* FAST_FUNC getgrgid(gid_t id)
+ {
+-	return getXXnam(utoa(id), (1 << 2) + 2);
++	return getXXnam(bb_utoa(id), (1 << 2) + 2);
+ }
+
+ /****** end/setXXend */
+diff --git busybox-1.29.2/loginutils/addgroup.c busybox-1.29.2/loginutils/addgroup.c
+index 6839eaf..fe909ca 100644
+--- busybox-1.29.2/loginutils/addgroup.c
++++ busybox-1.29.2/loginutils/addgroup.c
+@@ -76,7 +76,7 @@ static void xgroup_study(struct group *g)
+ 		}
+ 		if (option_mask32 & OPT_GID) {
+ 			/* -g N, cannot pick gid other than N: error */
+-			bb_error_msg_and_die("%s '%s' in use", "gid", itoa(g->gr_gid));
++			bb_error_msg_and_die("%s '%s' in use", "gid", bb_itoa(g->gr_gid));
+ 			/* this format strings is reused in adduser and addgroup */
+ 		}
+ 		if (g->gr_gid == max) {
+diff --git busybox-1.29.2/loginutils/adduser.c busybox-1.29.2/loginutils/adduser.c
+index b2b5be5..8cd8d16 100644
+--- busybox-1.29.2/loginutils/adduser.c
++++ busybox-1.29.2/loginutils/adduser.c
+@@ -110,7 +110,7 @@ static void passwd_study(struct passwd *p)
+ 	while (getpwuid(p->pw_uid) || (p->pw_gid == (gid_t)-1 && getgrgid(p->pw_uid))) {
+ 		if (option_mask32 & OPT_UID) {
+ 			/* -u N, cannot pick uid other than N: error */
+-			bb_error_msg_and_die("%s '%s' in use", "uid", itoa(p->pw_uid));
++			bb_error_msg_and_die("%s '%s' in use", "uid", bb_itoa(p->pw_uid));
+ 			/* this format string is reused in adduser and addgroup */
+ 		}
+ 		if (p->pw_uid == max) {
+@@ -145,7 +145,7 @@ static int addgroup_wrapper(struct passwd *p, const char *group_name)
+ 		 * found in passwd_study.
+ 		 */
+ 		argv[1] = (char*)"--gid";
+-		argv[2] = utoa(p->pw_gid);
++		argv[2] = bb_utoa(p->pw_gid);
+ 		argv[3] = (char*)"--";
+ 		argv[4] = p->pw_name;
+ 		argv[5] = NULL;
+diff --git busybox-1.29.2/loginutils/login.c busybox-1.29.2/loginutils/login.c
+index 25bb520..6f68367 100644
+--- busybox-1.29.2/loginutils/login.c
++++ busybox-1.29.2/loginutils/login.c
+@@ -209,8 +209,8 @@ static void run_login_script(struct passwd *pw, char *full_tty)
+ 		t_argv[1] = NULL;
+ 		xsetenv("LOGIN_TTY", full_tty);
+ 		xsetenv("LOGIN_USER", pw->pw_name);
+-		xsetenv("LOGIN_UID", utoa(pw->pw_uid));
+-		xsetenv("LOGIN_GID", utoa(pw->pw_gid));
++		xsetenv("LOGIN_UID", bb_utoa(pw->pw_uid));
++		xsetenv("LOGIN_GID", bb_utoa(pw->pw_gid));
+ 		xsetenv("LOGIN_SHELL", pw->pw_shell);
+ 		spawn_and_wait(t_argv); /* NOMMU-friendly */
+ 		unsetenv("LOGIN_TTY");
+diff --git busybox-1.29.2/miscutils/fbsplash.c busybox-1.29.2/miscutils/fbsplash.c
+index bc3c610..4191524 100644
+--- busybox-1.29.2/miscutils/fbsplash.c
++++ busybox-1.29.2/miscutils/fbsplash.c
+@@ -556,7 +556,7 @@ int fbsplash_main(int argc UNUSED_PARAM, char **argv)
+ 		num = atoi(num_buf);
+ 		if (isdigit(num_buf[0]) && (num <= 100)) {
+ #if DEBUG
+-			DEBUG_MESSAGE(itoa(num));
++			DEBUG_MESSAGE(bb_itoa(num));
+ #endif
+ 			fb_drawprogressbar(num);
+ 		}
+diff --git busybox-1.29.2/networking/ifenslave.c busybox-1.29.2/networking/ifenslave.c
+index 5e769b6..6a42046 100644
+--- busybox-1.29.2/networking/ifenslave.c
++++ busybox-1.29.2/networking/ifenslave.c
+@@ -469,7 +469,7 @@ static NOINLINE void get_drv_info(char *master_ifname)
+ 	info.cmd = ETHTOOL_GDRVINFO;
+ 	/* both fields are 32 bytes long (long enough) */
+ 	strcpy(info.driver, "ifenslave");
+-	strcpy(info.fw_version, utoa(BOND_ABI_VERSION));
++	strcpy(info.fw_version, bb_utoa(BOND_ABI_VERSION));
+ 	if (set_ifrname_and_do_ioctl(SIOCETHTOOL, &ifr, master_ifname) < 0) {
+ 		if (errno == EOPNOTSUPP)
+ 			return;
+diff --git busybox-1.29.2/networking/ifupdown.c busybox-1.29.2/networking/ifupdown.c
+index 5481134..61b80c6 100644
+--- busybox-1.29.2/networking/ifupdown.c
++++ busybox-1.29.2/networking/ifupdown.c
+@@ -402,7 +402,7 @@ static char *parse(const char *command, struct interface_defn_t *ifd)
+ 						if (varvalue) {
+ 							res = count_netmask_bits(varvalue);
+ 							if (res > 0) {
+-								const char *argument = utoa(res);
++								const char *argument = bb_utoa(res);
+ 								addstr(&result, argument, strlen(argument));
+ 								command = nextpercent + 1;
+ 								break;
+diff --git busybox-1.29.2/networking/libiproute/rt_names.c busybox-1.29.2/networking/libiproute/rt_names.c
+index 51f2e9b..60f8b26 100644
+--- busybox-1.29.2/networking/libiproute/rt_names.c
++++ busybox-1.29.2/networking/libiproute/rt_names.c
+@@ -104,14 +104,14 @@ static void rtnl_rtprot_initialize(void)
+ const char* FAST_FUNC rtnl_rtprot_n2a(int id)
+ {
+ 	if (id < 0 || id > RT_TABLE_MAX) {
+-		return itoa(id);
++		return bb_itoa(id);
+ 	}
+
+ 	rtnl_rtprot_initialize();
+
+ 	if (rtnl_rtprot_tab->tab[id])
+ 		return rtnl_rtprot_tab->tab[id];
+-	return itoa(id);
++	return bb_itoa(id);
+ }
+ #endif
+
+@@ -140,14 +140,14 @@ static void rtnl_rtscope_initialize(void)
+ const char* FAST_FUNC rtnl_rtscope_n2a(int id)
+ {
+ 	if (id < 0 || id > RT_TABLE_MAX) {
+-		return itoa(id);
++		return bb_itoa(id);
+ 	}
+
+ 	rtnl_rtscope_initialize();
+
+ 	if (rtnl_rtscope_tab->tab[id])
+ 		return rtnl_rtscope_tab->tab[id];
+-	return itoa(id);
++	return bb_itoa(id);
+ }
+
+ int FAST_FUNC rtnl_rtscope_a2n(uint32_t *id, char *arg)
+@@ -177,14 +177,14 @@ int FAST_FUNC rtnl_rtrealm_a2n(uint32_t *id, char *arg)
+ const char* FAST_FUNC rtnl_rtrealm_n2a(int id)
+ {
+ 	if (id < 0 || id > RT_TABLE_MAX) {
+-		return itoa(id);
++		return bb_itoa(id);
+ 	}
+
+ 	rtnl_rtrealm_initialize();
+
+ 	if (rtnl_rtrealm_tab->tab[id])
+ 		return rtnl_rtrealm_tab->tab[id];
+-	return itoa(id);
++	return bb_itoa(id);
+ }
+ #endif
+
+@@ -202,14 +202,14 @@ static void rtnl_rtdsfield_initialize(void)
+ const char* FAST_FUNC rtnl_dsfield_n2a(int id)
+ {
+ 	if (id < 0 || id > RT_TABLE_MAX) {
+-		return itoa(id);
++		return bb_itoa(id);
+ 	}
+
+ 	rtnl_rtdsfield_initialize();
+
+ 	if (rtnl_rtdsfield_tab->tab[id])
+ 		return rtnl_rtdsfield_tab->tab[id];
+-	return itoa(id);
++	return bb_itoa(id);
+ }
+
+ int FAST_FUNC rtnl_dsfield_a2n(uint32_t *id, char *arg)
+@@ -238,14 +238,14 @@ static void rtnl_rttable_initialize(void)
+ const char* FAST_FUNC rtnl_rttable_n2a(int id)
+ {
+ 	if (id < 0 || id > RT_TABLE_MAX) {
+-		return itoa(id);
++		return bb_itoa(id);
+ 	}
+
+ 	rtnl_rttable_initialize();
+
+ 	if (rtnl_rttable_tab->tab[id])
+ 		return rtnl_rttable_tab->tab[id];
+-	return itoa(id);
++	return bb_itoa(id);
+ }
+
+ int FAST_FUNC rtnl_rttable_a2n(uint32_t *id, char *arg)
+diff --git busybox-1.29.2/networking/libiproute/rtm_map.c busybox-1.29.2/networking/libiproute/rtm_map.c
+index e94c99a..5324b7c 100644
+--- busybox-1.29.2/networking/libiproute/rtm_map.c
++++ busybox-1.29.2/networking/libiproute/rtm_map.c
+@@ -39,7 +39,7 @@ const char* FAST_FUNC rtnl_rtntype_n2a(int id)
+ 	case RTN_XRESOLVE:
+ 		return "xresolve";
+ 	default:
+-		return itoa(id);
++		return bb_itoa(id);
+ 	}
+ }
+
+diff --git busybox-1.29.2/networking/netstat.c busybox-1.29.2/networking/netstat.c
+index f6bcd44..b7291d3 100644
+--- busybox-1.29.2/networking/netstat.c
++++ busybox-1.29.2/networking/netstat.c
+@@ -387,7 +387,7 @@ static const char *get_sname(int port, const char *proto, int numeric)
+ 			return se->s_name;
+ 	}
+ 	/* hummm, we may return static buffer here!! */
+-	return itoa(ntohs(port));
++	return bb_itoa(ntohs(port));
+ }
+
+ static char *ip_port_str(struct sockaddr *addr, int port, const char *proto, int numeric)
+@@ -540,7 +540,7 @@ static int FAST_FUNC raw_do_one(char *line)
+ 		return 1;
+
+ 	have_remaddr = NOT_NULL_ADDR(param.remaddr);
+-	print_inet_line(&param, itoa(param.state), "raw", have_remaddr);
++	print_inet_line(&param, bb_itoa(param.state), "raw", have_remaddr);
+ 	return 0;
+ }
+
+diff --git busybox-1.29.2/networking/tcpudp.c busybox-1.29.2/networking/tcpudp.c
+index c914221..1af7628 100644
+--- busybox-1.29.2/networking/tcpudp.c
++++ busybox-1.29.2/networking/tcpudp.c
+@@ -576,7 +576,7 @@ int tcpudpsvd_main(int argc UNUSED_PARAM, char **argv)
+ 			//compat? xsetenv_proto(proto, "REMOTEINFO", "");
+ 			/* additional */
+ 			if (cur_per_host > 0) /* can not be true for udp */
+-				xsetenv_plain("TCPCONCURRENCY", utoa(cur_per_host));
++				xsetenv_plain("TCPCONCURRENCY", bb_utoa(cur_per_host));
+ 		}
+ 		free(local_addr);
+ 		free(free_me0);
+@@ -592,7 +592,7 @@ int tcpudpsvd_main(int argc UNUSED_PARAM, char **argv)
+ 	sig_unblock(SIGCHLD);
+
+ #ifdef SSLSVD
+-	strcpy(id, utoa(pid));
++	strcpy(id, bb_utoa(pid));
+ 	ssl_io(0, argv);
+ 	bb_perror_msg_and_die("can't execute '%s'", argv[0]);
+ #else
+diff --git busybox-1.29.2/networking/tls.c busybox-1.29.2/networking/tls.c
+index c8d9e96..780c4ef 100644
+--- busybox-1.29.2/networking/tls.c
++++ busybox-1.29.2/networking/tls.c
+@@ -774,7 +774,7 @@ static const char *alert_text(int code)
+ 	case 40:  return "handshake failure";
+ 	case 112: return "unrecognized name";
+ 	}
+-	return itoa(code);
++	return bb_itoa(code);
+ }
+
+ static int tls_xread_record(tls_state_t *tls, const char *expected)
+diff --git busybox-1.29.2/procps/pidof.c busybox-1.29.2/procps/pidof.c
+index 98d7949..5d4750e 100644
+--- busybox-1.29.2/procps/pidof.c
++++ busybox-1.29.2/procps/pidof.c
+@@ -97,7 +97,7 @@ int pidof_main(int argc UNUSED_PARAM, char **argv)
+ 			if (!omits_p)
+ 				break;
+ 			/* are we asked to exclude the parent's process ID?  */
+-			omits_p->data = utoa((unsigned)getppid());
++			omits_p->data = bb_utoa((unsigned)getppid());
+ 		}
+ 	}
+ #endif
+diff --git busybox-1.29.2/procps/ps.c busybox-1.29.2/procps/ps.c
+index 54e6c40..2ff2d05 100644
+--- busybox-1.29.2/procps/ps.c
++++ busybox-1.29.2/procps/ps.c
+@@ -770,7 +770,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
+ 				}
+ 				else
+ 					endp = tty + sprintf(tty, "%d:", p->tty_major);
+-				strcpy(endp, utoa(p->tty_minor));
++				strcpy(endp, bb_utoa(p->tty_minor));
+
+ 				strftime(stime_str, 6, (elapsed >= (24 * 60 * 60)) ? "%b%d" : "%H:%M", tm);
+ 				stime_str[5] = '\0';
+diff --git busybox-1.29.2/procps/top.c busybox-1.29.2/procps/top.c
+index 1b49a5e..2002e6b 100644
+--- busybox-1.29.2/procps/top.c
++++ busybox-1.29.2/procps/top.c
+@@ -491,7 +491,7 @@ static void display_cpus(int scr_width, char *scrbuf, int *lines_rem_p)
+ 				/* Barely fits in 79 chars when in "decimals" mode. */
+ # if ENABLE_FEATURE_TOP_SMP_CPU
+ 				"CPU%s:"FMT"usr"FMT"sys"FMT"nic"FMT"idle"FMT"io"FMT"irq"FMT"sirq",
+-				(smp_cpu_info ? utoa(i) : ""),
++				(smp_cpu_info ? bb_utoa(i) : ""),
+ # else
+ 				"CPU:"FMT"usr"FMT"sys"FMT"nic"FMT"idle"FMT"io"FMT"irq"FMT"sirq",
+ # endif
+diff --git busybox-1.29.2/runit/chpst.c busybox-1.29.2/runit/chpst.c
+index c2641ce..5963229 100644
+--- busybox-1.29.2/runit/chpst.c
++++ busybox-1.29.2/runit/chpst.c
+@@ -455,8 +455,8 @@ int chpst_main(int argc UNUSED_PARAM, char **argv)
+ 	// OTOH chroot fails for non-roots.
+ 	// Solution: cache uid/gid before chroot, apply uid/gid after.
+ 	if (opt & OPT_U) {
+-		xsetenv("GID", utoa(ugid.gid));
+-		xsetenv("UID", utoa(ugid.uid));
++		xsetenv("GID", bb_utoa(ugid.gid));
++		xsetenv("UID", bb_utoa(ugid.uid));
+ 	}
+
+ 	if (opt & OPT_root) {
+diff --git busybox-1.29.2/runit/runsv.c busybox-1.29.2/runit/runsv.c
+index a67280b..e1f20c1 100644
+--- busybox-1.29.2/runit/runsv.c
++++ busybox-1.29.2/runit/runsv.c
+@@ -341,12 +341,12 @@ static void startservice(struct svdir *s)
+ 		arg[0] = "./finish";
+ 		arg[1] = "-1";
+ 		if (WIFEXITED(s->wstat)) {
+-			*utoa_to_buf(WEXITSTATUS(s->wstat), exitcode, sizeof(exitcode)) = '\0';
++			*bb_utoa_to_buf(WEXITSTATUS(s->wstat), exitcode, sizeof(exitcode)) = '\0';
+ 			arg[1] = exitcode;
+ 		}
+ 		//arg[2] = "0";
+ 		//if (WIFSIGNALED(s->wstat)) {
+-			arg[2] = utoa(WTERMSIG(s->wstat));
++			arg[2] = bb_utoa(WTERMSIG(s->wstat));
+ 		//}
+ 		arg[3] = NULL;
+ 	} else {
+diff --git busybox-1.29.2/runit/runsvdir.c busybox-1.29.2/runit/runsvdir.c
+index 11ab40a..51ab469 100644
+--- busybox-1.29.2/runit/runsvdir.c
++++ busybox-1.29.2/runit/runsvdir.c
+@@ -401,7 +401,7 @@ int runsvdir_main(int argc UNUSED_PARAM, char **argv)
+ 			pid_t pid;
+
+ 			/* Single parameter: signal# */
+-			opt_s_argv[1] = utoa(sig);
++			opt_s_argv[1] = bb_utoa(sig);
+ 			pid = spawn(opt_s_argv);
+ 			if (pid > 0) {
+ 				/* Remembering to wait for _any_ children,
+diff --git busybox-1.29.2/shell/ash.c busybox-1.29.2/shell/ash.c
+index 051cc67..3ac86d0 100644
+--- busybox-1.29.2/shell/ash.c
++++ busybox-1.29.2/shell/ash.c
+@@ -4934,11 +4934,11 @@ cmdtxt(union node *n)
+ 	case NFROMTO:
+ 		p = "<>";
+  redir:
+-		cmdputs(utoa(n->nfile.fd));
++		cmdputs(bb_utoa(n->nfile.fd));
+ 		cmdputs(p);
+ 		if (n->type == NTOFD || n->type == NFROMFD) {
+ 			if (n->ndup.dupfd >= 0)
+-				cmdputs(utoa(n->ndup.dupfd));
++				cmdputs(bb_utoa(n->ndup.dupfd));
+ 			else
+ 				cmdputs("-");
+ 			break;
+@@ -5944,7 +5944,7 @@ static struct ifsregion *ifslastp;
+ static struct arglist exparg;
+
+ /*
+- * Our own itoa().
++ * Our own bb_itoa().
+  * cvtnum() is used even if math support is off (to prepare $? values and such).
+  */
+ static int
+@@ -11166,7 +11166,7 @@ change_random(const char *value)
+ 		/* "get", generate */
+ 		t = next_random(&random_gen);
+ 		/* set without recursion */
+-		setvar(vrandom.var_text, utoa(t), VNOFUNC);
++		setvar(vrandom.var_text, bb_utoa(t), VNOFUNC);
+ 		vrandom.flags &= ~VNOFUNC;
+ 	} else {
+ 		/* set/reset */
+@@ -11261,7 +11261,7 @@ getopts(char *optstr, char *optvar, char **optfirst)
+ 		setvar0("OPTARG", nullstr);
+  out:
+ 	ind = optnext - optfirst + 1;
+-	setvar("OPTIND", itoa(ind), VNOFUNC);
++	setvar("OPTIND", bb_itoa(ind), VNOFUNC);
+ 	sbuf[0] = c;
+ 	/*sbuf[1] = '\0'; - already is */
+ 	setvar0(optvar, sbuf);
+@@ -13956,10 +13956,10 @@ init(void)
+
+ 		setvareq((char*)defoptindvar, VTEXTFIXED);
+
+-		setvar0("PPID", utoa(getppid()));
++		setvar0("PPID", bb_utoa(getppid()));
+ #if BASH_SHLVL_VAR
+ 		p = lookupvar("SHLVL");
+-		setvar("SHLVL", utoa((p ? atoi(p) : 0) + 1), VEXPORT);
++		setvar("SHLVL", bb_utoa((p ? atoi(p) : 0) + 1), VEXPORT);
+ #endif
+ #if BASH_HOSTNAME_VAR
+ 		if (!lookupvar("HOSTNAME")) {
+diff --git busybox-1.29.2/shell/hush.c busybox-1.29.2/shell/hush.c
+index 1f83267..802dd45 100644
+--- busybox-1.29.2/shell/hush.c
++++ busybox-1.29.2/shell/hush.c
+@@ -2144,11 +2144,11 @@ static const char* FAST_FUNC get_local_var_value(const char *name)
+ 		return (*vpp)->varstr + len + 1;
+
+ 	if (strcmp(name, "PPID") == 0)
+-		return utoa(G.root_ppid);
++		return bb_utoa(G.root_ppid);
+ 	// bash compat: UID? EUID?
+ #if ENABLE_HUSH_RANDOM_SUPPORT
+ 	if (strcmp(name, "RANDOM") == 0)
+-		return utoa(next_random(&G.random_gen));
++		return bb_utoa(next_random(&G.random_gen));
+ #endif
+ 	return NULL;
+ }
+@@ -5933,16 +5933,16 @@ static NOINLINE const char *expand_one_var(char **to_be_freed_pp, char *arg, cha
+ 	} else {
+ 		switch (var[0]) {
+ 		case '$': /* pid */
+-			val = utoa(G.root_pid);
++			val = bb_utoa(G.root_pid);
+ 			break;
+ 		case '!': /* bg pid */
+-			val = G.last_bg_pid ? utoa(G.last_bg_pid) : "";
++			val = G.last_bg_pid ? bb_utoa(G.last_bg_pid) : "";
+ 			break;
+ 		case '?': /* exitcode */
+-			val = utoa(G.last_exitcode);
++			val = bb_utoa(G.last_exitcode);
+ 			break;
+ 		case '#': /* argc */
+-			val = utoa(G.global_argc ? G.global_argc-1 : 0);
++			val = bb_utoa(G.global_argc ? G.global_argc-1 : 0);
+ 			break;
+ 		default:
+ 			val = get_local_var_value(var);
+@@ -5953,7 +5953,7 @@ static NOINLINE const char *expand_one_var(char **to_be_freed_pp, char *arg, cha
+ 	if (exp_op == 'L') {
+ 		reinit_unicode_for_hush();
+ 		debug_printf_expand("expand: length(%s)=", val);
+-		val = utoa(val ? unicode_strlen(val) : 0);
++		val = bb_utoa(val ? unicode_strlen(val) : 0);
+ 		debug_printf_expand("%s\n", val);
+ 	} else if (exp_op) {
+ 		if (exp_op == '%' || exp_op == '#') {
+@@ -5985,7 +5985,7 @@ static NOINLINE const char *expand_one_var(char **to_be_freed_pp, char *arg, cha
+ 					exp_word = exp_exp_word;
+ 				debug_printf_expand("expand: exp_exp_word:'%s'\n", exp_word);
+ 				/* HACK ALERT. We depend here on the fact that
+-				 * G.global_argv and results of utoa and get_local_var_value
++				 * G.global_argv and results of bb_utoa and get_local_var_value
+ 				 * are actually in writable memory:
+ 				 * scan_and_match momentarily stores NULs there. */
+ 				t = (char*)val;
+@@ -6031,7 +6031,7 @@ static NOINLINE const char *expand_one_var(char **to_be_freed_pp, char *arg, cha
+ 				repl = encode_then_expand_string(exp_word, /*process_bkslash:*/ 0, /*unbackslash:*/ 1);
+ 				debug_printf_varexp("repl:'%s'->'%s'\n", exp_word, repl);
+ 				/* HACK ALERT. We depend here on the fact that
+-				 * G.global_argv and results of utoa and get_local_var_value
++				 * G.global_argv and results of bb_utoa and get_local_var_value
+ 				 * are actually in writable memory:
+ 				 * replace_pattern momentarily stores NULs there. */
+ 				t = (char*)val;
+@@ -8395,7 +8395,7 @@ static NOINLINE int run_pipe(struct pipe *pi)
+
+ #if ENABLE_HUSH_LINENO_VAR
+ 		if (G.lineno_var)
+-			strcpy(G.lineno_var + sizeof("LINENO=")-1, utoa(command->lineno));
++			strcpy(G.lineno_var + sizeof("LINENO=")-1, bb_utoa(command->lineno));
+ #endif
+
+ 		if (argv[command->assignment_cnt] == NULL) {
+@@ -8619,7 +8619,7 @@ static NOINLINE int run_pipe(struct pipe *pi)
+
+ #if ENABLE_HUSH_LINENO_VAR
+ 		if (G.lineno_var)
+-			strcpy(G.lineno_var + sizeof("LINENO=")-1, utoa(command->lineno));
++			strcpy(G.lineno_var + sizeof("LINENO=")-1, bb_utoa(command->lineno));
+ #endif
+
+ 		command->pid = BB_MMU ? fork() : vfork();
+@@ -10467,7 +10467,7 @@ Test that VAR is a valid variable name?
+ 	} while (count <= G.getopt_count);
+
+ 	/* Set OPTIND. Prevent resetting of the magic counter! */
+-	set_local_var_from_halves("OPTIND", utoa(optind));
++	set_local_var_from_halves("OPTIND", bb_utoa(optind));
+ 	G.getopt_count = count; /* "next time, give me N+1'th result" */
+ 	GETOPT_RESET(); /* just in case */
+
+diff --git busybox-1.29.2/sysklogd/logger.c busybox-1.29.2/sysklogd/logger.c
+index 1e0384c..8e90a10 100644
+--- busybox-1.29.2/sysklogd/logger.c
++++ busybox-1.29.2/sysklogd/logger.c
+@@ -102,7 +102,7 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
+ 	setup_common_bufsiz();
+
+ 	/* Fill out the name string early (may be overwritten later) */
+-	str_t = uid2uname_utoa(geteuid());
++	str_t = uid2uname_bb_utoa(geteuid());
+
+ 	/* Parse any options */
+ 	opt = getopt32(argv, "p:st:", &str_p, &str_t);
+diff --git busybox-1.29.2/util-linux/mdev.c busybox-1.29.2/util-linux/mdev.c
+index 4b4eeaf..cb283ff 100644
+--- busybox-1.29.2/util-linux/mdev.c
++++ busybox-1.29.2/util-linux/mdev.c
+@@ -947,7 +947,7 @@ static void open_mdev_log(const char *seq, unsigned my_pid)
+ 	if (logfd >= 0) {
+ 		xmove_fd(logfd, STDERR_FILENO);
+ 		G.verbose = 2;
+-		applet_name = xasprintf("%s[%s]", applet_name, seq ? seq : utoa(my_pid));
++		applet_name = xasprintf("%s[%s]", applet_name, seq ? seq : bb_utoa(my_pid));
+ 	}
+ }
+
+@@ -990,7 +990,7 @@ wait_for_seqfile(unsigned expected_seq)
+ 		seqbuf[seqlen] = '\0';
+ 		if (seqbuf[0] == '\n' || seqbuf[0] == '\0') {
+ 			/* seed file: write out seq ASAP */
+-			xwrite_str(seq_fd, utoa(expected_seq));
++			xwrite_str(seq_fd, bb_utoa(expected_seq));
+ 			xlseek(seq_fd, 0, SEEK_SET);
+ 			dbg2("first seq written");
+ 			break;
+@@ -1138,7 +1138,7 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
+
+ 		dbg1("%s exiting", curtime());
+ 		if (seq_fd >= 0) {
+-			xwrite_str(seq_fd, utoa(seqnum + 1));
++			xwrite_str(seq_fd, bb_utoa(seqnum + 1));
+ 			signal_mdevs(my_pid);
+ 		}
+ 	}
