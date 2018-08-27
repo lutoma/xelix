@@ -17,7 +17,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <spinlock.h>
 #include <tasks/scheduler.h>
 

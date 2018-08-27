@@ -18,7 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <tasks/syscall.h>
 
 #define DEFINE_SYSCALL(name) extern void sys_ ## name (struct syscall syscall);

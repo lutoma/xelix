@@ -18,7 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 
 #define endian_swap16 __builtin_bswap16
 #define endian_swap32 __builtin_bswap32

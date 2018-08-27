@@ -18,7 +18,6 @@
  */
 
 #include <hw/interrupts.h>
-#include <generic.h>
 #include <string.h>
 #include <hw/idt.h>
 #include <tasks/scheduler.h>

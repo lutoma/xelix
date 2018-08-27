@@ -18,7 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <memory/vmem.h>
 
 struct paging_context;

@@ -19,7 +19,6 @@
  */
 
 #include "syscall.h"
-#include <generic.h>
 #include <hw/interrupts.h>
 #include <log.h>
 #include <tasks/scheduler.h>

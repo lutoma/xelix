@@ -18,7 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 
 #define DISPLAY_DIRECTION_UP -1
 #define DISPLAY_DIRECTION_DOWN 1

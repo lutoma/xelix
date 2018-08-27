@@ -19,7 +19,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 
 #define PCI_MAX_BUS  255
 #define PCI_MAX_DEV  32

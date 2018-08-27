@@ -19,7 +19,6 @@
 
 #include "elf.h"
 
-#include <generic.h>
 #include <log.h>
 #include <print.h>
 #include <string.h>

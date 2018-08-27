@@ -17,7 +17,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <stdlib.h>
 #include <console/filter/ecma48.h>
 #include <memory/kmalloc.h>

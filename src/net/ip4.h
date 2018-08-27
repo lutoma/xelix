@@ -18,7 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <net/net.h>
 
 #define IP4_TOS_ICMP 0x1

@@ -18,7 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <console/driver.h>
 
 // Wait until the command buffer is empty, then send.

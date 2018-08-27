@@ -21,7 +21,6 @@
  * See https://github.com/klange/osdev/blob/strawberry-dev/kernel/devices/ide.c
  */
 
-#include <generic.h>
 #include <log.h>
 #include <memory/kmalloc.h>
 #include <hw/interrupts.h>

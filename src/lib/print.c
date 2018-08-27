@@ -18,7 +18,6 @@
  */
 
 #include <print.h>
-#include <generic.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>

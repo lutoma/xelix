@@ -17,7 +17,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <net/udp.h>
 #include <net/ip4.h>
 #include <net/icmp4.h>

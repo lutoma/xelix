@@ -19,7 +19,6 @@
 
 #include "serial.h"
 
-#include <generic.h>
 #include <log.h>
 
 #define PORT 0x3f8

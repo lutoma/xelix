@@ -18,6 +18,5 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 
 void gdt_init();

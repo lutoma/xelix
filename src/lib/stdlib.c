@@ -17,7 +17,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <stdlib.h>
 
 char* itoa(int value, char* result, int base)

@@ -18,7 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 #include <hw/pci.h>
 
 #define AC97_MAX_CARDS 10

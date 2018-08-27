@@ -19,7 +19,6 @@
 
 #ifdef ENABLE_EXT2
 
-#include <generic.h>
 #include <log.h>
 #include <string.h>
 #include <md5.h>

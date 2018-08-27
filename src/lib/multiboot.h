@@ -18,7 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <generic.h>
 
 #define MULTIBOOT_KERNELMAGIC 0x2BADB002
 

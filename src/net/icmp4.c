@@ -18,7 +18,6 @@
  */
 
 #include "icmp4.h"
-#include <generic.h>
 #include <log.h>
 #include <endian.h>
 #include <string.h>

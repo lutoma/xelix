@@ -18,7 +18,6 @@
  */
 
 #include "paging.h"
-#include <generic.h>
 #include <memory/kmalloc.h>
 #include <log.h>
 #include <print.h>
