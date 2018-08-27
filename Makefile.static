@@ -9,7 +9,7 @@ ifeq ($(BUILD),)
 	BUILD := 0
 endif
 
-MAKE_CFLAGS = -std=gnu18 -ffreestanding -masm=intel -Wall -I src -I src/lib -include src/lib/generic.h -g -O2 -pipe
+MAKE_CFLAGS = -std=gnu18 -ffreestanding -masm=intel -mtune=sandybridge -Wall -I src -I src/lib -include src/lib/generic.h -g -O2 -pipe
 MAKE_LDFLAGS = -T linker.ld -nostdlib -lgcc
 MAKE_ASFLAGS = -g -f elf
 
@@ -18,7 +18,7 @@ ifeq ($(shell uname -s), Darwin)
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
-MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -serial mon:stdio -no-reboot -d cpu_reset -soundhw ac97
+MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -cpu SandyBridge -serial mon:stdio -no-reboot -d cpu_reset -soundhw ac97
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
