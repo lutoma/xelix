@@ -32,7 +32,7 @@ $(CC):
 	make -C toolchain
 
 .PHONY: run
-run: xelix.bin xelix.qcow2
+run: xelix.bin
 	qemu -kernel xelix.bin -hda xelix.qcow2 $(MAKE_QEMU_FLAGS)
 
 .PHONY: clean
