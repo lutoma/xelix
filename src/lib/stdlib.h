@@ -18,6 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define is_digit(C) ((C) >= '0' && (C) <= '9')
+
 char* itoa (int num, char* result, int base);
 char* utoa(unsigned int value, char* result, int base);
 uint64_t atoi(const char *s);

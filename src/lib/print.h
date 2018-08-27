@@ -24,11 +24,12 @@
 #include <hw/serial.h>
 #include <console/console.h>
 
-#define vprintf(fmt, arg...) _vprintf(fmt, arg, print, putchar)
+#define vprintf(fmt, arg...) _vprintf(fmt, arg, puts, putchar)
 #define serial_vprintf(fmt, arg...) _vprintf(fmt, arg, serial_print, serial_send)
+#define printf __builtin_printf
+#define puts __builtin_puts
+#define putchar __builtin_putchar
 
-void putchar(const char c);
-void print(const char* s);
 void _vprintf(const char *fmt, void** arg, void (print_cb)(const char*), void (putchar_cb)(const char));
-void printf(const char *fmt, ...);
 void serial_printf(const char *fmt, ...);
+

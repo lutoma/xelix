@@ -35,8 +35,6 @@
 #include <stdbool.h>
 #include <hw/pit.h>
 
-#define isCharDigit(C) ((C) >= '0' && (C) <= '9')
-
 #define POW2(x) (2 << (x - 1))
 #define max(a,b) \
 	({ __typeof__ (a) _a = (a); \

@@ -22,8 +22,11 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
-
 #include <console/console.h>
+
+#undef printf
+#undef putchar
+#undef puts
 
 void putchar(const char c) {
 	char s[2];
@@ -32,7 +35,7 @@ void putchar(const char c) {
 	console_write(NULL, s, 1);
 }
 
-void print(const char* s) {
+void puts(const char* s) {
 	console_write(NULL, s, strlen(s));
 }
 

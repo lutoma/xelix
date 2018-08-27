@@ -18,6 +18,7 @@
  */
 
 #include <generic.h>
+#include <stdlib.h>
 
 char* itoa(int value, char* result, int base)
 {
@@ -69,6 +70,6 @@ char* utoa(unsigned int value, char* result, int base)
 
 uint64_t atoi(const char* s) {
 	uint64_t n = 0;
-	while (isCharDigit(*s)) n = 10 * n + *s++ - '0';
+	while (is_digit(*s)) n = 10 * n + *s++ - '0';
 	return n;
 }

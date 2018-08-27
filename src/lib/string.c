@@ -1,6 +1,6 @@
 /* string.c: Common string operations
  * Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,12 +18,11 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "string.h"
-
 #include <memory/kmalloc.h>
+#include <string.h>
 #include <log.h>
 
-// Return the length of a string
+#undef strlen
 size_t strlen(const char* str)
 {
 	 const char *s;
@@ -31,6 +30,7 @@ size_t strlen(const char* str)
 	 return(s - str);
 }
 
+#undef strcpy
 char* strcpy(char* dest, const char* src)
 {
 	char* save = dest;
@@ -38,7 +38,7 @@ char* strcpy(char* dest, const char* src)
 	return save;
 }
 
-// Copy n bytes of src to dst
+#undef strncpy
 char* strncpy(char* dst, const char* src, size_t n)
 {
 	char* p = dst;
@@ -46,7 +46,7 @@ char* strncpy(char* dst, const char* src, size_t n)
 	return p;
 }
 
-// Compare two strings
+#undef strcmp
 int strcmp(const char* s1, const char* s2)
 {
 	 for(; *s1 == *s2; ++s1, ++s2)
@@ -55,7 +55,7 @@ int strcmp(const char* s1, const char* s2)
 	 return *(unsigned char *)s1 < *(unsigned char *)s2 ? -1 : 1;
 }
 
-// compare two strings without fearing buffer overflows :p
+#undef strncmp
 int strncmp(const char* s1, const char* s2, size_t n)
 {
     if (n == 0) return 0;
@@ -70,14 +70,13 @@ int strncmp(const char* s1, const char* s2, size_t n)
 }
 
 
-// Concatenate two strings
+#undef strcat
 char* strcat(char *dest, const char *src)
 {
 	 strcpy(dest + strlen(dest), src);
 	 return dest;
 }
 
-// Return part of string
 char* substr(char* src, size_t start, size_t len)
 {
 	char *dest = (char*)kmalloc(len+1);
@@ -86,13 +85,6 @@ char* substr(char* src, size_t start, size_t len)
 		dest[len] = '\0';
 	}
 	return dest;
-}
-
-char* strtok(char *s, const char *delim)
-{
-	log(LOG_WARN, "string: The usage of strtok is deprecated and dangerous. Please use strtok_r.\n");
-	static char *last;
-	return strtok_r(s, delim, &last);
 }
 
 char* strtok_r(char* s, const char* delim, char** last)
@@ -141,15 +133,15 @@ cont:
 }
 
 
-/* Return index of first match of itemPointer in listPointer. */
-int find_substr(char* listPointer, char* itemPointer)
+/* Return index of first match of item in list. */
+int find_substr(char* list, char* item)
 {
   int t;
   char* p, *p2;
 
-  for(t=0; listPointer[t]; t++) {
-    p = &listPointer[t];
-    p2 = itemPointer;
+  for(t=0; list[t]; t++) {
+    p = &list[t];
+    p2 = item;
 
     while(*p2 && *p2==*p) {
       p++;
@@ -160,14 +152,16 @@ int find_substr(char* listPointer, char* itemPointer)
    return -1; /* 2nd return */
 }
 
+#undef strndup
 char* strndup(const char* old, size_t num)
 {
 	char* new = kmalloc(sizeof(char) * (num + 1));
-	memset(new, 0, num + 1);
+	bzero(new, num + 1);
 	strncpy(new, old, num);
 	return new;
 }
 
+#undef memset
 void memset(void* ptr, uint8_t fill, uint32_t size) {
 	uint8_t* p = (uint8_t*) ptr;
 	uint8_t* max = p+size;
@@ -177,6 +171,7 @@ void memset(void* ptr, uint8_t fill, uint32_t size) {
 	}
 }
 
+#undef memcpy
 void memcpy(void* dest, void* src, uint32_t size) {
 	uint8_t* from = (uint8_t*) src;
 	uint8_t* to = (uint8_t*) dest;
@@ -190,7 +185,8 @@ void memcpy(void* dest, void* src, uint32_t size) {
 	}
 }
 
-int32_t (memcmp)(const void *s1, const void *s2, size_t n) {
+#undef memcmp
+int32_t memcmp(const void *s1, const void *s2, size_t n) {
 	const unsigned char *us1 = (const unsigned char *) s1;
 	const unsigned char *us2 = (const unsigned char *) s2;
 	while (n-- != 0) {

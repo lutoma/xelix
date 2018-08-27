@@ -22,18 +22,17 @@
 #include "generic.h"
 
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+#define strcmp __builtin_strcmp
+#define strncmp __builtin_strncmp
+#define strcat __builtin_strncat
+#define strcpy __builtin_strcpy
+#define strncpy __builtin_strncpy
+#define strlen __builtin_strlen
+#define strndup __builtin_strndup
+#define memset __builtin_memset
+#define memcpy __builtin_memcpy
+#define memcmp __builtin_memcmp
 
-int strcmp(const char *s1, const char *s2);
-int strncmp(const char* s1, const char* s2, size_t n);
-char* strcat(char *dest, const char *src);
-char* strcpy(char *dest, const char *src);
-char* strncpy(char *dst, const char *src, size_t n);
-size_t strlen(const char * str);
+char* strtok_r(char* s, const char* delim, char** last);
 char* substr(char* src, size_t start, size_t len);
-char* strtok(char *s, const char *delim);
-char* strtok_r(char *s, const char *delim, char **last);
-int find_substr(char *listPointer, char *itemPointer);
-char* strndup(const char* old, size_t num);
-void memset(void* ptr, uint8_t fill, uint32_t size);
-void memcpy(void* dest, void* src, uint32_t size);
-int32_t memcmp(const void* s1, const void* s2, size_t n);
+int find_substr(char* list, char* item);
