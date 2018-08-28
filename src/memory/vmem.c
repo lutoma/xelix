@@ -266,16 +266,16 @@ static cpu_state_t* vmem_handle_fault(cpu_state_t* regs)
 	uint32_t phys_addr = (uint32_t)regs->eip;
 	task_t* running_task = scheduler_get_current();
 
+	char* pgpres = bit_get(regs->errCode, 0) ? " (page present)" : "";
+	char* op = bit_get(regs->errCode, 1) ? "write" : "read";
+	char* mode = bit_get(regs->errCode, 2) ? "user" : "kernel";
+	char* bitoverwrite = bit_get(regs->errCode, 3) ? " (due to reserved bits being overwritten)" : "";
+	char* instrfetch = bit_get(regs->errCode, 4) ? " (during instruction fetch)" : "";
+
 	if(vmem_currentContext != vmem_kernelContext && running_task)
 	{
 		struct vmem_page *pg = vmem_get_page_virt(running_task->memory_context, (void*)GET_PAGE(phys_addr));
 		uint32_t virt_addr = (uint32_t)pg->virt_addr + (phys_addr % PAGE_SIZE);
-
-		char* pgpres = bit_get(regs->errCode, 0) ? " (page present)" : "";
-		char* op = bit_get(regs->errCode, 1) ? "write" : "read";
-		char* mode = bit_get(regs->errCode, 2) ? "user" : "kernel";
-		char* bitoverwrite = bit_get(regs->errCode, 3) ? " (due to reserved bits being overwritten)" : "";
-		char* instrfetch = bit_get(regs->errCode, 4) ? " (during instruction fetch)" : "";
 
 		log(LOG_WARN, "Page fault for %s to 0x%x in process <%s>+%x "
 			"at EIP 0x%x (phys 0x%x) of context %s, %s mode%s%s%s. Terminating the task.\n",
@@ -295,7 +295,8 @@ static cpu_state_t* vmem_handle_fault(cpu_state_t* regs)
 		return regs;
 	}
 
-	panic("Unexpected page fault in kernel\n");
+	panic("Page fault for %s to 0x%x in %s mode%s%s%s\n", op, regs->cr2, mode, pgpres,
+			instrfetch, bitoverwrite);
 	return regs;
 }
 

@@ -69,7 +69,7 @@ static void stacktrace() {
 	}
 }
 
-void __attribute__((optimize("O0"))) panic(char* error) {
+void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	if(unlikely(!spinlock_get(&lock, 30))) {
 		freeze();
 	}
@@ -83,7 +83,10 @@ void __attribute__((optimize("O0"))) panic(char* error) {
 		"failed or the kernel panic occured in early startup before the "
 		"initialization of the needed drivers.");
 
-	panic_printf("\nKernel Panic: %s\n", error);
+	panic_printf("\nKernel Panic: ");
+	vprintf(error, (void**)(&error) + 1);
+	serial_vprintf(error, (void**)(&error) + 1);
+	panic_printf("\n");
 
 	panic_printf("Last PIT tick:         %d (rate %d, uptime: %d seconds)\n",
 		(uint32_t)pit_tick, PIT_RATE, uptime());
