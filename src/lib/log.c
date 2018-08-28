@@ -20,6 +20,7 @@
 #include "log.h"
 #include <print.h>
 #include <hw/pit.h>
+#include <stdarg.h>
 
 void log(uint32_t level, const char *fmt, ...) {
 	printf("[%d:%d] ", uptime(), pit_tick);

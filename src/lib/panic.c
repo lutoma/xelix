@@ -31,6 +31,7 @@
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <spinlock.h>
+#include <stdarg.h>
 
 // lib/walk_stack.asm
 extern int walk_stack(intptr_t* addresses, int naddr);
@@ -82,9 +83,9 @@ void __attribute__((optimize("O0"))) panic(char* error) {
 		"failed or the kernel panic occured in early startup before the "
 		"initialization of the needed drivers.");
 
-	panic_printf("\n%%Kernel Panic: %s%%\n", 0x04, error);
+	panic_printf("\nKernel Panic: %s\n", error);
 
-	panic_printf("Last PIT tick: %d (rate %d, uptime: %d second%p)\n",
+	panic_printf("Last PIT tick: %d (rate %d, uptime: %d seconds)\n",
 		(uint32_t)pit_tick, PIT_RATE, uptime());
 
 	task_t* task = scheduler_get_current();
