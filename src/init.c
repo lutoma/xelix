@@ -42,7 +42,6 @@
 #include <hw/ide.h>
 #include <fs/sysfs.h>
 #include <fs/ext2.h>
-#include <fs/xsfs.h>
 #include <net/udp.h>
 #include <net/echo.h>
 #include <hw/ac97.h>
@@ -90,9 +89,6 @@ void __attribute__((fastcall, noreturn)) main(uint32_t multiboot_checksum, multi
 	init(sysfs);
 	#ifdef ENABLE_EXT2
 	init(ext2);
-	#endif
-	#ifdef ENABLE_XSFS
-	init(xsfs);
 	#endif
 	init(vfs);
 

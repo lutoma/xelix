@@ -65,17 +65,6 @@ menu "File systems"
 	config EXT2_DEBUG
 	bool "ext2 file system debugging"
 	depends on ENABLE_EXT2
-
-	config ENABLE_XSFS
-	bool "Enable xsfs support"
-
-	config XSFS_MD5SUM_ALL
-	bool "xsfs: Dump md5sum for all files read"
-	depends on ENABLE_XSFS
-
-	config XSFS_DEBUG
-	bool "xsfs debugging"
-	depends on ENABLE_XSFS
 endmenu
 
 
