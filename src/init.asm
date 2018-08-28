@@ -44,8 +44,3 @@ _start:
 	mov ecx, eax
 	mov edx, ebx
 	call main
-.il:
-	hlt
-	jmp .il
-	ud2
-	cli

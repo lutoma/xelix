@@ -47,7 +47,7 @@
 #include <net/echo.h>
 #include <hw/ac97.h>
 
-void __attribute__((fastcall)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
+void __attribute__((fastcall, noreturn)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
 {
 	init(serial);
 	init(panic, multiboot_info);
@@ -121,4 +121,13 @@ void __attribute__((fastcall)) main(uint32_t multiboot_checksum, multiboot_info_
 	}
 	scheduler_add(init);
 	scheduler_init();
+
+	asm(
+	".il:"
+		"hlt;"
+		"jmp .il;"
+		"ud2;"
+		"cli;"
+	);
+	__builtin_unreachable();
 }
