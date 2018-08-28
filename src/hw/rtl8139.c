@@ -284,10 +284,8 @@ static void enableCard(struct rtl8139_card *card)
 	int_out8(card, REG_COMMAND, CR_RECEIVER_ENABLE | CR_TRANSMITTER_ENABLE);
 	log(LOG_DEBUG, "rtl8139: Enabled receiver / transmitter.\n");
 
-	char itoa_buf[5];
 	card->netDevice = kmalloc(sizeof(net_device_t));
-	strcpy(card->netDevice->name, "eth");
-	strcpy(card->netDevice->name + 3, itoa(net_ether_offset++, itoa_buf, 10));
+	snprintf(card->netDevice->name, 15, "eth%d", ++net_ether_offset);
 	memcpy(card->netDevice->hwaddr, card->macAddr, 6);
 	card->netDevice->mtu = 1500;
 	card->netDevice->proto = NET_PROTO_ETH;

@@ -19,7 +19,8 @@
  */
 
 #define is_digit(C) ((C) >= '0' && (C) <= '9')
-
-char* itoa (int num, char* result, int base);
-char* utoa(unsigned int value, char* result, int base);
-uint64_t atoi(const char *s);
+static inline uint32_t atoi(const char* s) {
+	uint32_t n = 0;
+	while (is_digit(*s)) n = 10 * n + *s++ - '0';
+	return n;
+}
