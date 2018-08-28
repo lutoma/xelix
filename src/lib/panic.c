@@ -65,7 +65,7 @@ static void stacktrace() {
 	int read = walk_stack(addresses, 10);
 
 	for(int i = 0; i < read; i++) {
-		panic_printf("#%d\t0x%x\n", i, addresses[i]);
+		panic_printf("#%-22d0x%x\n", i, addresses[i]);
 	}
 }
 
@@ -85,21 +85,21 @@ void __attribute__((optimize("O0"))) panic(char* error) {
 
 	panic_printf("\nKernel Panic: %s\n", error);
 
-	panic_printf("Last PIT tick: %d (rate %d, uptime: %d seconds)\n",
+	panic_printf("Last PIT tick:         %d (rate %d, uptime: %d seconds)\n",
 		(uint32_t)pit_tick, PIT_RATE, uptime());
 
 	task_t* task = scheduler_get_current();
 	if(task) {
-		panic_printf("Running task: %d <%s>", task->pid, task->name);
+		panic_printf("Running task:          %d <%s>", task->pid, task->name);
 
 		uint32_t task_offset = task->state->eip - task->entry;
 		if(task_offset >= 0) {
-			panic_printf("+%x", task_offset);
+			panic_printf("+%x at 0x%x", task_offset, task->state->eip);
 		}
 
 		panic_printf("\n");
 	} else {
-		panic_printf("Running task: [No task running]\n");
+		panic_printf("Running task:          [No task running]\n");
 	}
 
 	if(!vfs_last_read_attempt[0]) {

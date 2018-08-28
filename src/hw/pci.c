@@ -152,9 +152,7 @@ void pci_load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t fun
 uint32_t pci_search_by_id(pci_device_t** returnDevices, uint32_t vendor_device_combos[][2], uint32_t maxNum)
 {
 
-	if(!vendor_device_combos[0] || !vendor_device_combos[0][0])
-	{
-		log(LOG_ERR, "pci: Some dumbass is passing pci_search_by_id empty combo arrays\n");
+	if(!vendor_device_combos[0] || !vendor_device_combos[0][0])	{
 		return 0;
 	}
 
@@ -220,7 +218,7 @@ void pci_init()
 					continue;
 
 				pci_load_device(devices + i, bus, dev, func);
-				log(LOG_INFO, "pci: %d:%d.%d: [%x:%x] 0x%x (rev %x class %x iobase %x type %x int %d pin %d)\n",
+				printf("    %d:%d.%d: [%x:%x] %-2x rev %-2x class %-2x iobase %-4x type %-2x int %-2d pin %-2d\n",
 						devices[i].bus,
 						devices[i].dev,
 						devices[i].func,

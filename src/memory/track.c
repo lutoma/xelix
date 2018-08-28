@@ -91,7 +91,7 @@ void memory_track_print_areas() {
 
 	char* type_names[] = {
 		"Free",
-		"Kernel binary",
+		"Kernel",
 		"Initrd",
 		"ACPI",
 		"Hibernate",
@@ -102,7 +102,8 @@ void memory_track_print_areas() {
 
 	for(int i = 0; i < memory_track_num_areas; i++) {
 		memory_track_area_t* area = &memory_track_areas[i];
-		printf("\t#%d at 0x%x\tend 0x%x\tsize 0x%x\t%s\n", i, area->addr, area->addr + area->size - 1, area->size, type_names[area->type]);
+		printf("    #%-2d %-9s at 0x%-9x end 0x%-9x size 0x%-9x\n",
+			i, type_names[area->type], area->addr, area->addr + area->size - 1, area->size);
 	}
 }
 
