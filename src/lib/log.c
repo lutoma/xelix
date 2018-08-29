@@ -28,14 +28,14 @@ void log(uint32_t level, const char *fmt, ...) {
 
 	#if LOG_SERIAL_LEVEL != 0
 	if(level >= LOG_SERIAL_LEVEL) {
-		serial_printf("[%d:%d] ", uptime(), pit_tick);
+		serial_printf("[%d:%03d] ", uptime(), pit_tick);
 		serial_vprintf(fmt, va);
 	}
 	#endif
 
 	#if LOG_PRINT_LEVEL != 0
 	if(level >= LOG_PRINT_LEVEL) {
-		printf("[%d:%d] ", uptime(), pit_tick);
+		printf("[%d:%03d] ", uptime(), pit_tick);
 		vprintf(fmt, va);
 	}
 	#endif

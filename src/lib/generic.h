@@ -62,9 +62,9 @@ typedef uint8_t byte;
 #define init(C, args...) \
 	do \
 	{ \
-		log(LOG_INFO, "init: Starting to initialize " #C "\n"); \
+		log(LOG_INFO, "Starting to initialize " #C "\n"); \
 		C ## _init(args); \
-		log(LOG_INFO, "init: Initialized " #C "\n"); \
+		log(LOG_INFO, "Initialized " #C "\n"); \
 	} while(0);
 
 #define sleep(t) sleep_ticks((t) * PIT_RATE)

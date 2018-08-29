@@ -204,6 +204,7 @@ void pci_init()
 	uint8_t bus, dev, func;
 	uint16_t vendor;
 
+	log(LOG_INFO, "PCI devices:\n");
 	for(bus = 0; bus < PCI_MAX_BUS; bus++)
 	{
 		for(dev = 0; dev < PCI_MAX_DEV; dev++)
@@ -219,7 +220,7 @@ void pci_init()
 					continue;
 
 				pci_load_device(devices + i, bus, dev, func);
-				printf("    %d:%d.%d: [%x:%x] %-2x rev %-2x class %-2x iobase %-4x type %-2x int %-2d pin %-2d\n",
+				log(LOG_INFO, "  %d:%d.%d: %x:%x %-2x rev %-2x class %-2x iobase %-4x type %-2x int %-2d pin %d\n",
 						devices[i].bus,
 						devices[i].dev,
 						devices[i].func,
