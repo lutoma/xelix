@@ -79,7 +79,7 @@ static cpu_state_t* int_handler(cpu_state_t* regs)
 
 #ifdef SYSCALL_DEBUG
 	task_t* cur = scheduler_get_current();
-	serial_printf("PID %d <%s>: %s(0x%x 0x%x 0x%x) -> 0x%x\n",
+	log(LOG_DEBUG, "PID %d <%s>: %s(0x%x 0x%x 0x%x) -> 0x%x\n",
 		cur->pid, cur->name,
 		syscall_name_table[syscall.num],
 		regs->ebx,

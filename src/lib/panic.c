@@ -38,8 +38,11 @@ extern int walk_stack(intptr_t* addresses, int naddr);
 static spinlock_t lock;
 
 static void panic_printf(const char *fmt, ...) {
-	vprintf(fmt, (void**)(&fmt) + 1);
-	serial_vprintf(fmt, (void**)(&fmt) + 1);
+	va_list va;
+	va_start(va, fmt);
+	vprintf(fmt, va);
+	serial_vprintf(fmt, va);
+	va_end(va);
 }
 
 /* Write to display/serial, completely circumventing the console framework and
@@ -74,6 +77,8 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 		freeze();
 	}
 
+	va_list va;
+	va_start(va, error);
 	interrupts_disable();
 
 	bruteforce_print("Early Kernel Panic: ");
@@ -84,9 +89,10 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 		"initialization of the needed drivers.");
 
 	panic_printf("\nKernel Panic: ");
-	vprintf(error, (void**)(&error) + 1);
-	serial_vprintf(error, (void**)(&error) + 1);
+	vprintf(error, va);
+	serial_vprintf(error, va);
 	panic_printf("\n");
+	va_end(va);
 
 	panic_printf("Last PIT tick:         %d (rate %d, uptime: %d seconds)\n",
 		(uint32_t)pit_tick, PIT_RATE, uptime());

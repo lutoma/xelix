@@ -29,7 +29,7 @@
 #include <memory/track.h>
 
 #ifdef ELF_DEBUG
- #define debug(args...) serial_printf(args);
+ #define debug(args...) log(LOG_DEBUG, args);
 #else
  #define debug(...)
 #endif

@@ -29,7 +29,7 @@
 #include "ext2.h"
 
 #ifdef EXT2_DEBUG
-  #define debug(args...) serial_printf("ext2: " args)
+  #define debug(args...) log(LOG_DEBUG, "ext2: " args)
 #else
   #define debug(...)
 #endif

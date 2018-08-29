@@ -22,6 +22,26 @@ menu "Debugging"
 
 	config SYSCALL_DEBUG
 		bool "Syscall debugging"
+
+	config LOG_PRINT_LEVEL
+		int "TTY log level"
+		default 2
+		---help---
+		0 Disabled
+		1 Debug
+		2 Info
+		3 Warn
+		4 Error
+
+	config LOG_SERIAL_LEVEL
+		int "Serial log level"
+		default 1
+		---help---
+		0 Disabled
+		1 Debug
+		2 Info
+		3 Warn
+		4 Error
 endmenu
 
 menu "Audio"

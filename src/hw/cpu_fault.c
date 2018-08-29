@@ -61,9 +61,6 @@ static cpu_state_t* handler(cpu_state_t* regs) {
 		log(LOG_WARN, "%s in PID %d <%s>+%x at EIP 0x%x.\n",
 			error_name, proc->pid, proc->name, (regs->eip - (uint32_t)proc->entry),
 			regs->eip);
-		serial_printf("%s in PID %d <%s>+%x at EIP 0x%x.\n",
-			error_name, proc->pid, proc->name, (regs->eip - (uint32_t)proc->entry),
-			regs->eip);
 
 		scheduler_terminate_current();
 		return regs;

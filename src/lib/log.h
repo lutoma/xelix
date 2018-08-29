@@ -20,10 +20,9 @@
 
 #include "generic.h"
 
-#define LOG_ERR			1
-#define LOG_WARN		2
-#define LOG_INFO		3
-#define LOG_DEBUG		4
-#define LOG_ALWAYS		100
+#define LOG_DEBUG		1
+#define LOG_INFO		2
+#define LOG_WARN		3
+#define LOG_ERR			4
 
 void log(uint32_t level, const char *fmt, ...);

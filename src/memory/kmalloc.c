@@ -31,9 +31,9 @@
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
 	char* _g_debug_file = "";
-	#define SERIAL_DEBUG(args...) { if(vmem_kernelContext && strcmp(_g_debug_file, "src/memory/vmem.c")) serial_printf(args); }
+	#define KMALLOC_DEBUG(args...) { if(vmem_kernelContext && strcmp(_g_debug_file, "src/memory/vmem.c")) log(LOG_DEBUG, args); }
 #else
-	#define SERIAL_DEBUG(args...)
+	#define KMALLOC_DEBUG(args...)
 #endif
 
 #define GET_FOOTER(x) ((uint32_t*)((intptr_t)x + x->size + sizeof(struct mem_block)))
@@ -206,7 +206,7 @@ static size_t get_alignment_offset(void* address) {
 }
 
 static inline struct mem_block* get_free_block(size_t sz, bool align) {
-	SERIAL_DEBUG("FFB ");
+	KMALLOC_DEBUG("FFB ");
 
 	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
 		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
@@ -238,7 +238,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 		}
 
 		if(fblock->size >= sz_needed) {
-			SERIAL_DEBUG("HIT 0x%x size 0x%x ", fblock, fblock->size);
+			KMALLOC_DEBUG("HIT 0x%x size 0x%x ", fblock, fblock->size);
 			unlink_free_block(fb);
 
 			// Carve a chunk of the required size out of the block
@@ -262,6 +262,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
  */
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+
 	#ifdef KMALLOC_DEBUG
 	_g_debug_file = _debug_file;
 	#endif
@@ -270,7 +271,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		panic("Attempt to kmalloc before allocator is initialized.\n");
 	}
 
-	SERIAL_DEBUG("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
+	KMALLOC_DEBUG("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
 
 	if(sz < sizeof(struct free_block)) {
 		sz = sizeof(struct free_block);
@@ -278,14 +279,14 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 
 	#ifdef KMALLOC_DEBUG
 		if(sz >= (1024 * 1024)) {
-			SERIAL_DEBUG("(%d MB) ", sz / (1024 * 1024));
+			KMALLOC_DEBUG("(%d MB) ", sz / (1024 * 1024));
 		} else if(sz >= 1024) {
-			SERIAL_DEBUG("(%d KB) ", sz / 1024);
+			KMALLOC_DEBUG("(%d KB) ", sz / 1024);
 		}
 	#endif
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		SERIAL_DEBUG("Could not get spinlock\n");
+		KMALLOC_DEBUG("Could not get spinlock\n");
 		return NULL;
 	}
 
@@ -298,7 +299,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	}
 
 	if(!header) {
-		SERIAL_DEBUG("NEW ");
+		KMALLOC_DEBUG("NEW ");
 
 		if(alloc_end + sz_needed >= alloc_max) {
 			panic("kmalloc: Out of memory");
@@ -313,7 +314,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	}
 
 	if(align && alignment_offset) {
-		SERIAL_DEBUG("ALIGN off 0x%x ", alignment_offset);
+		KMALLOC_DEBUG("ALIGN off 0x%x ", alignment_offset);
 
 		struct mem_block* new = split_block(header, alignment_offset - sizeof(struct mem_block) - sizeof(uint32_t));
 
@@ -328,7 +329,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	check_header(header);
 
 	spinlock_release(&kmalloc_lock);
-	SERIAL_DEBUG("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
+	KMALLOC_DEBUG("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
 	return (void*)GET_CONTENT(header);
 }
 
@@ -339,17 +340,17 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 	#endif
 
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
-	SERIAL_DEBUG("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
+	KMALLOC_DEBUG("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
 
 	if(unlikely((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end)) {
-		SERIAL_DEBUG("INVALID_BOUNDS\n");
+		KMALLOC_DEBUG("INVALID_BOUNDS\n");
 		return;
 	}
 
 	check_header(header);
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		SERIAL_DEBUG("Could not get spinlock\n");
+		KMALLOC_DEBUG("Could not get spinlock\n");
 		return;
 	}
 
@@ -383,31 +384,31 @@ void kmalloc_stats() {
 	// Walk allocations
 	struct mem_block* header = (struct mem_block*)alloc_start;
 
-	serial_printf("\nkmalloc_stats():\n");
+	log(LOG_DEBUG, "\nkmalloc_stats():\n");
 	for(; (intptr_t)header < alloc_end; header = NEXT_BLOCK(header)) {
 		check_header(header);
 		if(header->magic != KMALLOC_MAGIC) {
-			serial_printf("0x%x\tcorrupted header\n", header);
+			log(LOG_DEBUG, "0x%x\tcorrupted header\n", header);
 			continue;
 		}
-		serial_printf("0x%x\tsize 0x%x\tres 0x%x\t", header, header->size, (intptr_t)header + sizeof(struct mem_block));
-		serial_printf("fsz 0x%x\tend 0x%x\t ", FULL_SIZE(header), (intptr_t)header + FULL_SIZE(header));
+		log(LOG_DEBUG, "0x%x\tsize 0x%x\tres 0x%x\t", header, header->size, (intptr_t)header + sizeof(struct mem_block));
+		log(LOG_DEBUG, "fsz 0x%x\tend 0x%x\t ", FULL_SIZE(header), (intptr_t)header + FULL_SIZE(header));
 
 		if(header->type == TYPE_FREE) {
 			struct free_block* fb = GET_FB(header);
 
-			serial_printf("free\tprev free: 0x%x next: 0x%x", fb->prev, fb->next);
+			log(LOG_DEBUG, "free\tprev free: 0x%x next: 0x%x", fb->prev, fb->next);
 		} else if(header->type == TYPE_TASK) {
-			serial_printf("task %d", header->pid);
+			log(LOG_DEBUG, "task %d", header->pid);
 		} else {
-			serial_printf("kernel");
+			log(LOG_DEBUG, "kernel");
 		}
 
-		serial_printf("\n");
+		log(LOG_DEBUG, "\n");
 	}
 
-	serial_printf("\n");
-	serial_printf("alloc end:\t0x%x\n", alloc_end);
-	serial_printf("last free:\t0x%x\n", last_free);
-	serial_printf("\n");
+	log(LOG_DEBUG, "\n");
+	log(LOG_DEBUG, "alloc end:\t0x%x\n", alloc_end);
+	log(LOG_DEBUG, "last free:\t0x%x\n", last_free);
+	log(LOG_DEBUG, "\n");
 }
