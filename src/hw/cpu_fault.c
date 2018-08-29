@@ -58,9 +58,12 @@ static cpu_state_t* handler(cpu_state_t* regs) {
 	// Always do a full panic on double faults
 	if(proc && regs->interrupt != 8) {
 
-		log(LOG_WARN, "%s in process <%s>+%x at EIP 0x%x of context %s. Terminating the task.\n",
-			error_name, proc->name, (regs->eip - (uint32_t)proc->entry),
-			regs->eip, vmem_get_name(proc->memory_context));
+		log(LOG_WARN, "%s in PID %d <%s>+%x at EIP 0x%x.\n",
+			error_name, proc->pid, proc->name, (regs->eip - (uint32_t)proc->entry),
+			regs->eip);
+		serial_printf("%s in PID %d <%s>+%x at EIP 0x%x.\n",
+			error_name, proc->pid, proc->name, (regs->eip - (uint32_t)proc->entry),
+			regs->eip);
 
 		scheduler_terminate_current();
 		return regs;
