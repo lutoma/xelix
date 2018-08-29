@@ -81,7 +81,7 @@ static intptr_t alloc_max;
 /* Do various checks on a header to make sure we're in a safe state
  * before changing anything.
  */
-#ifdef debug
+#ifdef KMALLOC_DEBUG
 static void check_header(struct mem_block* header) {
 	if(header->magic != KMALLOC_MAGIC) {
 		panic("kmalloc: Metadata corruption (Block with invalid magic)\n");
@@ -264,7 +264,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
 
-	#ifdef debug
+	#ifdef KMALLOC_DEBUG
 	_g_debug_file = _debug_file;
 	#endif
 
@@ -278,7 +278,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		sz = sizeof(struct free_block);
 	}
 
-	#ifdef debug
+	#ifdef KMALLOC_DEBUG
 		if(sz >= (1024 * 1024)) {
 			debug("(%d MB) ", sz / (1024 * 1024));
 		} else if(sz >= 1024) {
@@ -336,7 +336,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 
 void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
-	#ifdef debug
+	#ifdef KMALLOC_DEBUG
 	_g_debug_file = _debug_file;
 	#endif
 
