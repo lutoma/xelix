@@ -215,7 +215,7 @@ task_t* scheduler_select(cpu_state_t* last_regs)
 	}
 
 	// Save CPU register state of previous task
-	current_task->state = last_regs;
+	memcpy(current_task->state, last_regs, sizeof(cpu_state_t));
 
 	/* Cycle through tasks until we find one that isn't killed or terminated,
 	 * while along the way unlinking the killed/terminated ones.
