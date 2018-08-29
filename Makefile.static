@@ -1,7 +1,8 @@
 .PHONY: all
 all: xelix.bin
 
-CC := toolchain/local/bin/i786-pc-xelix-gcc
+PATH += :toolchain/local/bin
+CC := i786-pc-xelix-gcc
 LD := $(CC)
 AS := nasm
 
@@ -22,7 +23,11 @@ MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
-%.o: %.c $(CC) src/lib/generic.h src/lib/config.h
+# Work around missing stringbuffer include
+src/lib/strbuffer/%.o: src/lib/strbuffer/%.c src/lib/generic.h src/lib/config.h
+	$(CC) $(MAKE_CFLAGS) -include "src/lib/string.h" -o $@ -c $<
+
+%.o: %.c src/lib/generic.h src/lib/config.h
 	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm

@@ -104,7 +104,7 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 
 	for(int i = 2; file; i++) {
 		dir->name_len = strlen(file->name);
-		strncpy(dir->name, file->name, dir->name_len);
+		memcpy(dir->name, file->name, dir->name_len + 1);
 		dir->inode = i;
 		dir->record_len = sizeof(vfs_dirent_t) + dir->name_len;
 

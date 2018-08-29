@@ -23,6 +23,7 @@
 #include <memory/kmalloc.h>
 #include <print.h>
 #include <panic.h>
+#include <string.h>
 #include <tasks/scheduler.h>
 
 #define FIND_NODE(node, cond) { \

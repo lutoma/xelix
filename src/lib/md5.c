@@ -36,9 +36,9 @@
  */
 
 #include <print.h>
+#include <string.h>
 #include <memory/kmalloc.h>
-
-#include "md5.h"
+#include <md5.h>
 
 /*
  * The basic MD5 functions.

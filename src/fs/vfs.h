@@ -64,7 +64,7 @@ typedef struct {
 	uint16_t record_len;
 	uint8_t name_len;
 	uint8_t type;
-	char name[];
+	char name[] __attribute__ ((nonstring));
 } __attribute__((packed)) vfs_dirent_t;
 
 typedef struct {

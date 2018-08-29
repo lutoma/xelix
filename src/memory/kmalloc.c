@@ -21,6 +21,7 @@
 #include "track.h"
 #include "vmem.h"
 #include <log.h>
+#include <string.h>
 #include <multiboot.h>
 #include <panic.h>
 #include <spinlock.h>
@@ -31,9 +32,9 @@
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
 	char* _g_debug_file = "";
-	#define KMALLOC_DEBUG(args...) { if(vmem_kernelContext && strcmp(_g_debug_file, "src/memory/vmem.c")) log(LOG_DEBUG, args); }
+	#define debug(args...) { if(vmem_kernelContext && strcmp(_g_debug_file, "src/memory/vmem.c")) log(LOG_DEBUG, args); }
 #else
-	#define KMALLOC_DEBUG(args...)
+	#define debug(args...)
 #endif
 
 #define GET_FOOTER(x) ((uint32_t*)((intptr_t)x + x->size + sizeof(struct mem_block)))
@@ -80,7 +81,7 @@ static intptr_t alloc_max;
 /* Do various checks on a header to make sure we're in a safe state
  * before changing anything.
  */
-#ifdef KMALLOC_DEBUG
+#ifdef debug
 static void check_header(struct mem_block* header) {
 	if(header->magic != KMALLOC_MAGIC) {
 		panic("kmalloc: Metadata corruption (Block with invalid magic)\n");
@@ -206,7 +207,7 @@ static size_t get_alignment_offset(void* address) {
 }
 
 static inline struct mem_block* get_free_block(size_t sz, bool align) {
-	KMALLOC_DEBUG("FFB ");
+	debug("FFB ");
 
 	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
 		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
@@ -238,7 +239,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 		}
 
 		if(fblock->size >= sz_needed) {
-			KMALLOC_DEBUG("HIT 0x%x size 0x%x ", fblock, fblock->size);
+			debug("HIT 0x%x size 0x%x ", fblock, fblock->size);
 			unlink_free_block(fb);
 
 			// Carve a chunk of the required size out of the block
@@ -263,7 +264,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
 
-	#ifdef KMALLOC_DEBUG
+	#ifdef debug
 	_g_debug_file = _debug_file;
 	#endif
 
@@ -271,22 +272,22 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		panic("Attempt to kmalloc before allocator is initialized.\n");
 	}
 
-	KMALLOC_DEBUG("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
+	debug("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
 
 	if(sz < sizeof(struct free_block)) {
 		sz = sizeof(struct free_block);
 	}
 
-	#ifdef KMALLOC_DEBUG
+	#ifdef debug
 		if(sz >= (1024 * 1024)) {
-			KMALLOC_DEBUG("(%d MB) ", sz / (1024 * 1024));
+			debug("(%d MB) ", sz / (1024 * 1024));
 		} else if(sz >= 1024) {
-			KMALLOC_DEBUG("(%d KB) ", sz / 1024);
+			debug("(%d KB) ", sz / 1024);
 		}
 	#endif
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		KMALLOC_DEBUG("Could not get spinlock\n");
+		debug("Could not get spinlock\n");
 		return NULL;
 	}
 
@@ -299,7 +300,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	}
 
 	if(!header) {
-		KMALLOC_DEBUG("NEW ");
+		debug("NEW ");
 
 		if(alloc_end + sz_needed >= alloc_max) {
 			panic("kmalloc: Out of memory");
@@ -314,7 +315,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	}
 
 	if(align && alignment_offset) {
-		KMALLOC_DEBUG("ALIGN off 0x%x ", alignment_offset);
+		debug("ALIGN off 0x%x ", alignment_offset);
 
 		struct mem_block* new = split_block(header, alignment_offset - sizeof(struct mem_block) - sizeof(uint32_t));
 
@@ -329,28 +330,28 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 	check_header(header);
 
 	spinlock_release(&kmalloc_lock);
-	KMALLOC_DEBUG("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
+	debug("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
 	return (void*)GET_CONTENT(header);
 }
 
 void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func)
 {
-	#ifdef KMALLOC_DEBUG
+	#ifdef debug
 	_g_debug_file = _debug_file;
 	#endif
 
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
-	KMALLOC_DEBUG("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
+	debug("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
 
 	if(unlikely((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end)) {
-		KMALLOC_DEBUG("INVALID_BOUNDS\n");
+		debug("INVALID_BOUNDS\n");
 		return;
 	}
 
 	check_header(header);
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
-		KMALLOC_DEBUG("Could not get spinlock\n");
+		debug("Could not get spinlock\n");
 		return;
 	}
 

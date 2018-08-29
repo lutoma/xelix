@@ -38,6 +38,6 @@ SYSCALL_HANDLER(getcwd)
 	if(syscall.params[1] > SCHEDULER_TASK_PATH_MAX)
 		syscall.params[1] = SCHEDULER_TASK_PATH_MAX;
 
-	strncpy((char*)syscall.params[0], syscall.task->cwd, syscall.params[1]);
+	memcpy((char*)syscall.params[0], syscall.task->cwd, syscall.params[1]);
 	SYSCALL_RETURN(syscall.params[0]);
 }

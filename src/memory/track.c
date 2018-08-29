@@ -20,6 +20,7 @@
 #include <memory/track.h>
 #include <log.h>
 #include <print.h>
+#include <string.h>
 #include <multiboot.h>
 #include <hw/serial.h>
 

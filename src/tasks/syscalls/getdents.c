@@ -23,6 +23,7 @@
 #include <fs/vfs.h>
 #include <log.h>
 #include <print.h>
+#include <string.h>
 #include <memory/kmalloc.h>
 
 // Needs to be in this format to stay compatible with newlib
@@ -31,7 +32,7 @@ struct newlib_dirent {
 	uint32_t d_off;
 	uint16_t d_reclen;
     uint8_t d_type;
-	char d_name[];
+	char d_name[] __attribute__ ((nonstring));
 };
 
 SYSCALL_HANDLER(getdents)
@@ -65,7 +66,7 @@ SYSCALL_HANDLER(getdents)
 		ent->d_ino = kernel_ent->inode;
 		ent->d_type = kernel_ent->type;
 		ent->d_reclen = (uint16_t)reclen;
-		strncpy(ent->d_name, kernel_ent->name, kernel_ent->name_len);
+		memcpy(ent->d_name, kernel_ent->name, kernel_ent->name_len);
 		offset += ent->d_reclen;
 		ent->d_off = offset;
 
