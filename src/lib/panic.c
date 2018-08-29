@@ -68,7 +68,7 @@ static void stacktrace() {
 	int read = walk_stack(addresses, 10);
 
 	for(int i = 0; i < read; i++) {
-		panic_printf("#%-22d0x%x\n", i, addresses[i]);
+		panic_printf("#%-16d0x%x\n", i, addresses[i]);
 	}
 }
 
@@ -94,12 +94,12 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	panic_printf("\n");
 	va_end(va);
 
-	panic_printf("Last PIT tick:         %d (rate %d, uptime: %d seconds)\n",
+	panic_printf("Last PIT tick:   %d (rate %d, uptime: %d seconds)\n",
 		(uint32_t)pit_tick, PIT_RATE, uptime());
 
 	task_t* task = scheduler_get_current();
 	if(task) {
-		panic_printf("Running task:          %d <%s>", task->pid, task->name);
+		panic_printf("Running task:    %d <%s>", task->pid, task->name);
 
 		uint32_t task_offset = task->state->eip - task->entry;
 		if(task_offset >= 0) {
@@ -108,15 +108,15 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 
 		panic_printf("\n");
 	} else {
-		panic_printf("Running task:          [No task running]\n");
+		panic_printf("Running task:    [No task running]\n");
 	}
 
 	if(!vfs_last_read_attempt[0]) {
 		strcpy(vfs_last_read_attempt, "No file system read attempts.");
 	}
 
-	panic_printf("Last VFS read attempt: %s\n", vfs_last_read_attempt);
-	panic_printf("Active paging context: %s\n\n", vmem_get_name(vmem_currentContext));
+	panic_printf("Last VFS read:   %s\n", vfs_last_read_attempt);
+	panic_printf("Paging context:  %s\n\n", vmem_get_name(vmem_currentContext));
 
 	panic_printf("Call trace:\n");
 	stacktrace();
