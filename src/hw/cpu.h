@@ -27,7 +27,7 @@ typedef struct {
 	uint32_t edi;
 	uint32_t esi;
 	uint8_t* ebp;
-	uint32_t user_esp;
+	void* user_esp;
 	uint32_t ebx;
 	uint32_t edx;
 	uint32_t ecx;
@@ -39,6 +39,7 @@ typedef struct {
 	// Interrupt number and error code (if applicable)
 	uint32_t interrupt;
 	uint32_t errCode;
+	void* esp;
 
 	/* Pushed by the processor automatically. This is what the processor
 	 * expects to be in the stack when doing an iret. useresp and ss are
@@ -47,8 +48,6 @@ typedef struct {
 	void* eip;
 	uint32_t cs;
 	uint32_t eflags;
-	void* esp;
-	uint32_t ss;
 } __attribute__((__packed__)) cpu_state_t;
 
 

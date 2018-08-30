@@ -119,11 +119,11 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	task->memory_context = memory_context;
 
 	// Stack
-	task->state->esp = task->stack + STACKSIZE - 3;
+	task->state->esp = task->stack + STACKSIZE - (3 * sizeof(uint32_t));
 	task->state->ebp = task->state->esp;
 
-	*(task->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
-	*(task->state->ebp + 2) = (intptr_t)NULL; // base pointer
+	//*(task->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
+	//*(task->state->ebp + 2) = (intptr_t)NULL; // base pointer
 
 	// Instruction pointer (= start of the program)
 	task->entry = entry;
@@ -131,7 +131,10 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 	task->state->eflags = 0x200;
 	task->state->cs = 0x08;
 	task->state->ds = 0x10;
-	task->state->ss = 0x10;
+
+	*(uint32_t*)task->state->esp = task->state->eip;
+	*((uint32_t*)task->state->esp + 1) = task->state->cs;
+	*((uint32_t*)task->state->esp + 2) = task->state->eflags;
 
 	task->pid = ++highest_pid;
 	strcpy(task->name, name);
@@ -195,7 +198,6 @@ task_t* scheduler_fork(task_t* to_fork, cpu_state_t* state)
 	new_task->state->esi = state->esi;
 	new_task->state->cs = state->cs;
 	new_task->state->eflags = state->eflags;
-	new_task->state->ss = state->ss;
 
 	// Copy stack & calculate correct stack offset for fork's ESP
 	memcpy(new_task->stack, to_fork->stack, STACKSIZE);

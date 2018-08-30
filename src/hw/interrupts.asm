@@ -25,6 +25,8 @@
 %macro INTERRUPT 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
+		push esp
+
 		; Dummy value for error code
 		push 0
 		push %1
@@ -36,6 +38,8 @@
 %macro INTERRUPT_ERRCODE 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
+		push esp
+
 		push %1
 		; Dummy value for cr2
 		push 0
@@ -61,6 +65,7 @@ INTERRUPT_ERRCODE 13
 ; Special handler for page faults that pushes cr2
 [GLOBAL interrupts_handler14]
 interrupts_handler14:
+	push esp
 	push 14
 
 	; The cr2 register contains the accessed address in case of page faults.
@@ -83,12 +88,13 @@ interrupts_handler14:
 ; handler, and finally restores the stack frame.
 
 interrupts_common_handler:
-	; We have to push all the stuff in the cpu_state_t which
-	; interrupts_callback takes in reversed order
-	; (It's defined in hw/cpu.h). The cpu automatically pushes cs, eip,
-	; eflags, ss and esp. Our macros above push one byte containing the
-	; error code (if any, otherwise 0) and another one containing the
-	; interrupt's number. The rest is up to us.
+	cli
+	; We have to push all the stuff in the cpu_state_t (hw/cpu.h) which
+	; interrupts_callback takes in reversed order.
+	;
+	; The cpu automatically pushes eflags, cs, and eip. Our macros above push
+	; the error code (if any, otherwise 0), the interrupt's number, and cr2
+	; (for page faults). The rest is up to us.
 
 	pusha
 
@@ -142,7 +148,7 @@ interrupts_common_handler:
 	mov ecx, esp
  	call interrupts_callback
 
-	; Apply new stack
+	; Use cpu_state_t as stack
 	mov esp, eax
 
 .return:
@@ -156,9 +162,10 @@ interrupts_common_handler:
 	; Reload the original values of the GP registers
 	popa
 
-	; Cleans up the pushed error code, ISR number and cr2
-	add esp, 12
+	; Restore original stack
+	add esp, 3*4
+	pop esp
 
 	; Now, quit interrupthandler. This automatically pops cs, eip,
-	; eflags, css and esp.
+	; eflags.
 	iret
