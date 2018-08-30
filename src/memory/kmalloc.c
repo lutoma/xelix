@@ -82,25 +82,26 @@ static intptr_t alloc_max;
  * before changing anything.
  */
 #ifdef KMALLOC_DEBUG
+#define block_panic(fmt) panic("kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
 static void check_header(struct mem_block* header) {
 	if(header->magic != KMALLOC_MAGIC) {
-		panic("kmalloc: Metadata corruption (Block with invalid magic)\n");
+		block_panic("Invalid magic");
 	}
 
 	if(header->size < sizeof(struct free_block)) {
-		panic("kmalloc: Metadata corruption (Block smaller than free_block struct)\n");
+		block_panic("Smaller than free_block struct");
 	}
 
 	if(*GET_FOOTER(header) != header->size) {
-		panic("kmalloc: Metadata corruption (Block with invalid footer)\n");
+		block_panic("Invalid footer");
 	}
 
 	if((intptr_t)header != alloc_start && PREV_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		panic("kmalloc: Metadata corruption (previous block with invalid magic)");
+		block_panic("Invalid prev magic");
 	}
 
 	if(alloc_end > (intptr_t)header + FULL_SIZE(header) && NEXT_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		panic("kmalloc: Metadata corruption (next block with invalid magic)");
+		block_panic("Invalid next magic");
 	}
 
 	if(header->type == TYPE_FREE) {
