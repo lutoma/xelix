@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010-2016 Lukas Martini
+/* Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,6 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <log.h>
 
 typedef struct {
 	// Data segment selector
@@ -57,3 +58,9 @@ static inline void cpu_init() {
 	cpu_init_fault_handlers();
 }
 
+static inline void dump_cpu_state(cpu_state_t* state) {
+	log(LOG_DEBUG, "cpu_state_t at 0x%x:\n", state);
+	log(LOG_DEBUG, "  EAX=0x%-10x EBX=0x%-10x ECX=0x%-10x EDX=0x%-10x\n", state->eax, state->ebx, state->ecx, state->edx);
+	log(LOG_DEBUG, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
+	log(LOG_DEBUG, "  EIP=0x%-10x INT=0x%-10x CR2=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->interrupt, state->cr2, state->eflags);
+}
