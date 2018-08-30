@@ -154,7 +154,7 @@ static void handleScancode(uint8_t code, uint8_t code2)
 }
 
 // Handles the IRQs we catch
-static cpu_state_t* irq_handler(cpu_state_t* regs)
+static void irq_handler(cpu_state_t* regs)
 {
 	// Escape sequences consist of two scancodes: One first that tells us
 	// we're now in an escape sequence, and the second one with the actual
@@ -165,20 +165,20 @@ static cpu_state_t* irq_handler(cpu_state_t* regs)
 	uint8_t code = inb(0x60);
 
 	// Escape sequence scancode
-	if(unlikely(code == 0xe0)) {
+	if(unlikely(code == 0xe0))
+	{
 		escape_seq_wait = true;
-		return regs;
+		return;
 	}
 
-	if(unlikely(escape_seq_wait)) {
+	if(unlikely(escape_seq_wait))
+	{
 		// This is the second scancode to the escape sequence
 		escape_seq_wait = false;
 		handleScancode(0xe0, code);
-	} else {
-		handleScancode(code, 0); // normal scancode
 	}
-
-	return regs;
+	else
+		handleScancode(code, 0); // normal scancode
 }
 
 static console_read_t* console_driver_keyboard_read(console_info_t *info)

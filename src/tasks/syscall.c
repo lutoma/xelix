@@ -49,12 +49,12 @@ intptr_t task_resolve_address(intptr_t raddress, bool reverse)
 	return v + diff;
 }
 
-static cpu_state_t* int_handler(cpu_state_t* regs)
+static void int_handler(cpu_state_t* regs)
 {
 	task_t* task = scheduler_get_current();
 	if(!task) {
 		log(LOG_WARN, "syscall: Got interrupt, but there is no current task.\n");
-		return regs;
+		return;
 	}
 
 	task->task_state = TASK_STATE_SYSCALL;
@@ -72,7 +72,7 @@ static cpu_state_t* int_handler(cpu_state_t* regs)
 	{
 		log(LOG_INFO, "syscall: Invalid syscall %d\n", syscall.num);
 		syscall.num = -1;
-		return regs;
+		return;
 	}
 
 	call(syscall);
@@ -89,7 +89,6 @@ static cpu_state_t* int_handler(cpu_state_t* regs)
 #endif
 
 	task->task_state = TASK_STATE_RUNNING;
-	return regs;
 }
 
 void syscall_init() {

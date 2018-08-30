@@ -39,18 +39,18 @@ static uint8_t* buf;
 static bool in_progress = false;
 static int bufpos = 0;
 
-cpu_state_t* slip_receive(cpu_state_t* regs)
+void slip_receive(cpu_state_t* state)
 {
 	uint8_t c = serial_recv();
 
 	if(!in_progress)
 	{
 		if(c != END)
-			return regs;
+			return;
 
 		buf = (uint8_t*)kmalloc(sizeof(uint8_t) * BUFSIZE);
 		in_progress = true;
-		return regs;
+		return;
 	}
 
 	if((c == END && in_progress) || bufpos >= BUFSIZE)
@@ -70,8 +70,6 @@ cpu_state_t* slip_receive(cpu_state_t* regs)
 		default:
 			buf[bufpos++] = c;
 	}
-
-	return regs;
 }
 
 static void slip_send(net_device_t *dev, uint8_t* buf, size_t len)

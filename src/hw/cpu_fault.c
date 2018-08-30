@@ -47,7 +47,7 @@ static char* exception_names[] = {
 	"Machine check exception"
 };
 
-static cpu_state_t* handler(cpu_state_t* regs) {
+static void handler(cpu_state_t* regs) {
 	task_t* proc = scheduler_get_current();
 	char* error_name = "Unknown CPU error";
 
@@ -63,11 +63,10 @@ static cpu_state_t* handler(cpu_state_t* regs) {
 			regs->eip);
 
 		scheduler_terminate_current();
-		return regs;
+		return;
 	}
 
 	panic(error_name);
-	return regs;
 }
 
 void cpu_init_fault_handlers() {

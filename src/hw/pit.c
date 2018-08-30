@@ -21,9 +21,8 @@
 #include <hw/interrupts.h>
 
 // The timer callback. Gets called every time the PIT fires.
-static cpu_state_t* timer_callback(cpu_state_t* regs) {
+static void timer_callback(cpu_state_t* regs) {
 	pit_tick++;
-	return regs;
 }
 
 // Initialize the PIT

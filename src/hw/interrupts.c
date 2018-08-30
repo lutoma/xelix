@@ -36,9 +36,8 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 
 	interrupt_handler_t handler = interrupt_handlers[regs->interrupt];
 
-	if(handler != NULL) {
-		regs = handler(regs);
-	}
+	if(handler != NULL)
+		handler(regs);
 
 	/* Timer interrupt
 	 * FIXME Should get a normal interrupt handler like everything else

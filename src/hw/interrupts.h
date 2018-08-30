@@ -42,7 +42,7 @@
 #define interrupts_disable() asm volatile("cli")
 #define interrupts_enable() asm volatile("sti")
 
-typedef cpu_state_t* (*interrupt_handler_t)(cpu_state_t*);
+typedef void (*interrupt_handler_t)(cpu_state_t*);
 interrupt_handler_t interrupt_handlers[256];
 
 static inline void interrupts_register(uint8_t n, interrupt_handler_t handler) {
