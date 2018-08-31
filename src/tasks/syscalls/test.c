@@ -19,20 +19,13 @@
 
 #include <tasks/syscall.h>
 #include <console/console.h>
+#include <hw/cpu.h>
 #include <log.h>
 
 SYSCALL_HANDLER(test)
 {
 	log(LOG_INFO, "syscall: test: Test syscall successful\n");
-	log(LOG_INFO, "Parameters: EAX=0x%x EBX=0x%x ECX=0x%x EDX=0x%x ESI=0x%x EDI=0x%x ESP=0x%x\n",\
-	  syscall.state->eax,
-	  syscall.state->ebx,
-	  syscall.state->ecx,
-	  syscall.state->edx,
-	  syscall.state->esi,
-	  syscall.state->edi,
-	  syscall.state->esp
-	);
+	dump_cpu_state(LOG_INFO, syscall.state);
 
 	SYSCALL_RETURN(syscall.params[0] + syscall.params[1] + syscall.params[2]);
 }
