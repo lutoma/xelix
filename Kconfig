@@ -23,6 +23,9 @@ menu "Debugging"
 	config SYSCALL_DEBUG
 		bool "Syscall debugging"
 
+	config INTERRUPTS_DEBUG
+		bool "Interrupts debugging"
+
 	config LOG_PRINT_LEVEL
 		int "TTY log level"
 		default 2

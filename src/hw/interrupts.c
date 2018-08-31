@@ -24,6 +24,8 @@
 #include <memory/vmem.h>
 #include <memory/paging.h>
 
+#define debug(args...) log(LOG_DEBUG, "interrupts: " args)
+
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
@@ -32,6 +34,11 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 
 	paging_apply(vmem_kernelContext);
 	interrupt_handler_t handler = interrupt_handlers[regs->interrupt];
+
+	#ifdef INTERRUPTS_DEBUG
+	debug("state before:\n");
+	dump_cpu_state(LOG_DEBUG, regs);
+	#endif
 
 	if(handler != NULL)
 		handler(regs);
@@ -46,11 +53,19 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 		if(new_task && new_task->state && new_task->memory_context)
 		{
 			paging_apply(new_task->memory_context);
+			#ifdef INTERRUPTS_DEBUG
+			debug("state after (task selection):\n");
+			dump_cpu_state(LOG_DEBUG, new_task->state);
+			#endif
 			return new_task->state;
 		}
 	}
 
 	paging_apply(original_context);
+	#ifdef INTERRUPTS_DEBUG
+	debug("state after:\n");
+	dump_cpu_state(LOG_DEBUG, regs);
+	#endif
 	return regs;
 }
 
