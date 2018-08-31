@@ -3,7 +3,7 @@
 GLOBAL _start
 _start:
 	; Call the test syscall
-	mov eax, 8
+	mov eax, 9
 	int 80h
 
 	; Call the exit syscall
