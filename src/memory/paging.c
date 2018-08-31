@@ -48,6 +48,8 @@ struct paging_context {
 	page_table_t tables[1024];
 };
 
+static bool paging_initialized = false;
+
 static int paging_assign(struct paging_context *ctx, uint32_t virtual, uint32_t physical, bool rw, bool user, bool mapped)
 {
 	// Align virtual and physical addresses to 4096 byte
@@ -96,6 +98,10 @@ static void paging_vmIterator(struct vmem_context *ctx, struct vmem_page *pg, ui
 
 int paging_apply(struct vmem_context *ctx)
 {
+	if(!paging_initialized) {
+		return false;
+	}
+
 	struct paging_context *pgCtx = vmem_get_cache(ctx);
 
 	if (pgCtx == NULL)
@@ -118,6 +124,7 @@ int paging_apply(struct vmem_context *ctx)
 
 void paging_init()
 {
+	paging_initialized = true;
 	vmem_applyPage = paging_applyPage;
 	paging_apply(vmem_kernelContext);
 

@@ -30,10 +30,7 @@
 cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 	struct vmem_context* original_context = vmem_currentContext;
 
-	if(original_context != vmem_kernelContext) {
-		paging_apply(vmem_kernelContext);
-	}
-
+	paging_apply(vmem_kernelContext);
 	interrupt_handler_t handler = interrupt_handlers[regs->interrupt];
 
 	if(handler != NULL)
@@ -48,18 +45,12 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 
 		if(new_task && new_task->state && new_task->memory_context)
 		{
-			if(new_task->memory_context != original_context) {
-				paging_apply(new_task->memory_context);
-			}
-
+			paging_apply(new_task->memory_context);
 			return new_task->state;
 		}
 	}
 
-	if(original_context != vmem_currentContext) {
-		paging_apply(original_context);
-	}
-
+	paging_apply(original_context);
 	return regs;
 }
 
