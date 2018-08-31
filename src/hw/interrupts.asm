@@ -1,5 +1,5 @@
 ; interrupts.asm: Hardware part of interrupt handling
-; Copyright © 2010-2016 Lukas Martini
+; Copyright © 2010-2018 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -46,7 +46,13 @@
 		jmp interrupts_common_handler
 %endmacro
 
+; Reserve 4 KiB stack space
+[section .bss]
+intr_stack_begin:
+resb 4096
+intr_stack_end:
 
+[section .text]
 INTERRUPT 0
 INTERRUPT 1
 INTERRUPT 2
@@ -146,6 +152,11 @@ interrupts_common_handler:
 .no_eoi:
 	; fastcall
 	mov ecx, esp
+
+	; Set up a stack for the kernel
+	mov esp, intr_stack_end
+	mov ebp, intr_stack_end
+
  	call interrupts_callback
 
 	; Use cpu_state_t as stack
