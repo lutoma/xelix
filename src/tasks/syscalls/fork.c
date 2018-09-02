@@ -19,11 +19,11 @@
 
 #include <log.h>
 #include <tasks/syscall.h>
-#include <tasks/scheduler.h>
+#include <tasks/task.h>
 
 SYSCALL_HANDLER(fork)
 {
-	task_t* fork_task = scheduler_fork(syscall.task, syscall.state);
+	task_t* fork_task = task_fork(syscall.task, syscall.state);
 
 	if(fork_task == NULL) {
 		SYSCALL_FAIL();

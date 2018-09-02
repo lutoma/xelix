@@ -18,7 +18,7 @@
  */
 
 #include <tasks/syscall.h>
-#include <tasks/scheduler.h>
+#include <tasks/task.h>
 #include <string.h>
 
 SYSCALL_HANDLER(chdir)
@@ -26,7 +26,7 @@ SYSCALL_HANDLER(chdir)
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
 	// FIXME This should seriously check if this directory even exists…
-	strncpy(syscall.task->cwd, (char*)syscall.params[0], SCHEDULER_TASK_PATH_MAX);
+	strncpy(syscall.task->cwd, (char*)syscall.params[0], TASK_PATH_MAX);
 	SYSCALL_RETURN(0);
 }
 
@@ -35,8 +35,8 @@ SYSCALL_HANDLER(getcwd)
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
 	// Maximum return string size
-	if(syscall.params[1] > SCHEDULER_TASK_PATH_MAX)
-		syscall.params[1] = SCHEDULER_TASK_PATH_MAX;
+	if(syscall.params[1] > TASK_PATH_MAX)
+		syscall.params[1] = TASK_PATH_MAX;
 
 	memcpy((char*)syscall.params[0], syscall.task->cwd, syscall.params[1]);
 	SYSCALL_RETURN(syscall.params[0]);

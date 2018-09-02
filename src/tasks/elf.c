@@ -22,10 +22,11 @@
 #include <log.h>
 #include <print.h>
 #include <string.h>
-#include <tasks/scheduler.h>
+#include <tasks/task.h>
 #include <fs/vfs.h>
 #include <memory/kmalloc.h>
 #include <memory/track.h>
+#include <memory/vmem.h>
 
 #ifdef ELF_DEBUG
  #define debug(args...) log(LOG_DEBUG, args);
@@ -170,7 +171,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 	if(!bin->phnum)
 		fail("elf: No program headers\n");
 
-	task_t* task = scheduler_new(bin->entry, NULL, name, environ, envc, argv, argc);
+	task_t* task = task_new(bin->entry, NULL, name, environ, envc, argv, argc);
 
 	task->sbrk = elf_read_sections(bin, task->memory_context);
 	debug("Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
