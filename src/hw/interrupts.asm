@@ -86,8 +86,8 @@ interrupts_handler14:
 	%assign i i+1
 %endrep
 
-; In interrupts.c
 [EXTERN interrupts_callback]
+[EXTERN paging_kernel_cr3]
 
 ; This is our common Interrupt handler. It saves the processor state, sets up
 ; for kernel mode segments, handles spurious interrupts, calls the C-level
@@ -103,6 +103,8 @@ interrupts_common_handler:
 	; (for page faults). The rest is up to us.
 
 	pusha
+	mov eax, cr3
+	push eax
 
 	; push ds
 	xor eax, eax
@@ -117,9 +119,9 @@ interrupts_common_handler:
 	mov gs, ax
 
 	; Calculate offset to the position of the interrupt number on the
-	; stack and mov it to eax. (10 = Ten 32 bit registers pushed since
+	; stack and mov it to eax. (11 32-bit registers pushed since
 	; the beginning of this function).
-	mov ebx, [esp + (4 * 10)]
+	mov ebx, [esp + (4 * 11)]
 
 	; Is this a spurious interrupt on the master PIC? If yes, return
 	cmp ebx, IRQ7
@@ -150,6 +152,12 @@ interrupts_common_handler:
 	out dx, ax
 
 .no_eoi:
+	mov eax, [paging_kernel_cr3]
+	test eax, eax
+	jz .no_paging
+	mov cr3, eax
+.no_paging:
+
 	; fastcall
 	mov ecx, esp
 
@@ -169,6 +177,9 @@ interrupts_common_handler:
 	mov es, bx
 	mov fs, bx
 	mov gs, bx
+
+	pop eax
+	mov cr3, eax
 
 	; Reload the original values of the GP registers
 	popa

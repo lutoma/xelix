@@ -30,9 +30,6 @@
  * handlers, which do fiddling like EOIs (i386).
  */
 cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
-	struct vmem_context* original_context = vmem_currentContext;
-
-	paging_apply(vmem_kernelContext);
 	interrupt_handler_t handler = interrupt_handlers[regs->interrupt];
 
 	#ifdef INTERRUPTS_DEBUG
@@ -52,7 +49,6 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 
 		if(new_task && new_task->state && new_task->memory_context)
 		{
-			paging_apply(new_task->memory_context);
 			#ifdef INTERRUPTS_DEBUG
 			debug("state after (task selection):\n");
 			dump_cpu_state(LOG_DEBUG, new_task->state);
@@ -61,7 +57,6 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 		}
 	}
 
-	paging_apply(original_context);
 	#ifdef INTERRUPTS_DEBUG
 	debug("state after:\n");
 	dump_cpu_state(LOG_DEBUG, regs);

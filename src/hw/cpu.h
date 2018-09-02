@@ -24,6 +24,7 @@ typedef struct {
 	// Data segment selector
 	uint32_t ds;
 
+	uint32_t cr3;
 	uint32_t edi;
 	uint32_t esi;
 	uint8_t* ebp;
@@ -61,5 +62,6 @@ static inline void dump_cpu_state(uint32_t level, cpu_state_t* state) {
 	log(level, "cpu_state_t at 0x%x:\n", state);
 	log(level, "  EAX=0x%-10x EBX=0x%-10x ECX=0x%-10x EDX=0x%-10x\n", state->eax, state->ebx, state->ecx, state->edx);
 	log(level, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
-	log(level, "  EIP=0x%-10x INT=0x%-10x CR2=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->interrupt, state->cr2, state->eflags);
+	log(level, "  EIP=0x%-10x CR2=0x%-10x CR3=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->cr2, state->cr3, state->eflags);
+	log(level, "  Last interrupt: 0x%x\n", state->interrupt);
 }

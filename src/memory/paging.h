@@ -21,7 +21,8 @@
 #include <memory/vmem.h>
 
 struct paging_context;
+struct paging_context* paging_kernel_cr3;
 
 void paging_applyPage(struct vmem_context *ctx, struct vmem_page *pg);
-int paging_apply(struct vmem_context *ctx);
+struct paging_context* paging_get_context(struct vmem_context* ctx);
 void paging_init();

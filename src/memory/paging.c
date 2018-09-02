@@ -1,5 +1,6 @@
 /* paging.c: Paging intialization / allocation
- * Copyright © 2011 Lukas Martini, Fritz Grimpen
+ * Copyright © 2011 Fritz Grimpen
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -96,12 +97,7 @@ static void paging_vmIterator(struct vmem_context *ctx, struct vmem_page *pg, ui
 	paging_applyPage(ctx, pg);
 }
 
-int paging_apply(struct vmem_context *ctx)
-{
-	if(!paging_initialized) {
-		return false;
-	}
-
+struct paging_context* paging_get_context(struct vmem_context* ctx) {
 	struct paging_context *pgCtx = vmem_get_cache(ctx);
 
 	if (pgCtx == NULL)
@@ -116,23 +112,23 @@ int paging_apply(struct vmem_context *ctx)
 		vmem_iterate(ctx, paging_vmIterator);
 	}
 
-	vmem_currentContext = ctx;
-	asm volatile("mov cr3, %0"::"r"(pgCtx));
-
-	return true;
+	return pgCtx;
 }
 
 void paging_init()
 {
 	paging_initialized = true;
 	vmem_applyPage = paging_applyPage;
-	paging_apply(vmem_kernelContext);
 
-	// Get the value of cr0
-	uint32_t cr0;
-	asm volatile("mov %0, cr0": "=r"(cr0));
+	vmem_currentContext = vmem_kernelContext;
+	paging_kernel_cr3 = paging_get_context(vmem_kernelContext);
 
-	// Enable the paging bit
-	cr0 |= 0x80000000;
-	asm volatile("mov cr0, %0":: "r"(cr0));
+	asm volatile(
+		"cli;"
+		"mov cr3, %0;"
+		"mov eax, cr0;"
+		"or eax, 0x80000000;"
+		"mov cr0, eax;"
+		"sti;"
+	:: "r"(paging_kernel_cr3) : "memory", "eax");
 }

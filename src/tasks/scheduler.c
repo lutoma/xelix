@@ -101,6 +101,7 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 
 	task->stack = kmalloc_a(STACKSIZE);
 	memset(task->stack, 0, STACKSIZE);
+	task->state = kmalloc_a(sizeof(cpu_state_t));
 
 	if (map_structs) {
 		// 1:1 map the stack
@@ -113,10 +114,21 @@ task_t* scheduler_new(void* entry, task_t* parent, char name[SCHEDULER_MAXNAME],
 		page->virt_addr = task->stack;
 		page->phys_addr = task->stack;
 		vmem_add_page(memory_context, page);
+
+		// 1:1 map the task state struct (used in the interrupt return)
+		vmem_rm_page_virt(memory_context, task);
+
+		struct vmem_page* tpage = vmem_new_page();
+		tpage->section = VMEM_SECTION_KERNEL;
+		tpage->cow = 0;
+		tpage->allocated = 1;
+		tpage->virt_addr = task->state;
+		tpage->phys_addr = task->state;
+		vmem_add_page(memory_context, tpage);
 	}
 
-	task->state = kmalloc_a(sizeof(cpu_state_t));
 	task->memory_context = memory_context;
+	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
 
 	// Stack
 	task->state->esp = task->stack + STACKSIZE - (3 * sizeof(uint32_t));
