@@ -24,7 +24,6 @@
 #include <string.h>
 #include <tasks/scheduler.h>
 #include <fs/vfs.h>
-#include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <memory/track.h>
 
@@ -139,9 +138,6 @@ void* elf_read_sections(elf_t* bin, struct vmem_context* ctx) {
 	return last ? (void*)VMEM_ALIGN((intptr_t)last->addr + last->size) : NULL;
 }
 
-extern void* __kernel_start;
-extern void* __kernel_end;
-
 task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** argv, uint32_t argc)
 {
 	if(bin <= (elf_t*)NULL)
@@ -174,32 +170,11 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 	if(!bin->phnum)
 		fail("elf: No program headers\n");
 
-	/* 1:1 map kernel memory
-	 * FIXME This is really generic and hacky. Should instead do some smart
-	 * stuff with memory/track.c – That is, as soon as we have a complete
-	 * collection of all the memory areas we need.
-	 */
-	struct vmem_context *ctx = vmem_new();
-	for (char *i = (char*)VMEM_ALIGN_DOWN(&__kernel_start); i <= (char*)VMEM_ALIGN(&__kernel_end); i += PAGE_SIZE)
-	{
-		struct vmem_page *page = vmem_new_page();
-		page->section = VMEM_SECTION_KERNEL;
-		page->cow = 0;
-		page->allocated = 1;
-		page->readonly = 1;
-		page->virt_addr = (void *)i;
-		page->phys_addr = (void *)i;
+	task_t* task = scheduler_new(bin->entry, NULL, name, environ, envc, argv, argc);
 
-		vmem_add_page(ctx, page);
-	}
-
-	task_t* task = scheduler_new(bin->entry, NULL, name, environ, envc, argv,
-		argc, ctx, true);
-
-	task->sbrk = elf_read_sections(bin, ctx);
+	task->sbrk = elf_read_sections(bin, task->memory_context);
 	debug("Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
 
-	vmem_set_task(ctx, task);
 	task->binary_start = bin;
 
 	return task;
