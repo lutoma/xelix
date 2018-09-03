@@ -67,6 +67,22 @@ INTERRUPT_ERRCODE 10
 INTERRUPT_ERRCODE 11
 INTERRUPT_ERRCODE 12
 INTERRUPT_ERRCODE 13
+INTERRUPT 15
+INTERRUPT 16
+INTERRUPT_ERRCODE 17
+INTERRUPT 18
+INTERRUPT 19
+INTERRUPT 20
+INTERRUPT 21
+INTERRUPT 22
+INTERRUPT 23
+INTERRUPT 24
+INTERRUPT 25
+INTERRUPT 26
+INTERRUPT 27
+INTERRUPT 28
+INTERRUPT 29
+INTERRUPT_ERRCODE 30
 
 ; Special handler for page faults that pushes cr2
 [GLOBAL interrupts_handler14]
@@ -80,7 +96,7 @@ interrupts_handler14:
 	jmp interrupts_common_handler
 
 ; Assign the rest using a preprocessor loop
-%assign i 15
+%assign i 31
 %rep 241
 	INTERRUPT i
 	%assign i i+1
