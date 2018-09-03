@@ -1,6 +1,6 @@
 /* gdt.c: Disable segmentation by defining one large segment
  * Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,66 +20,53 @@
 
 #include "gdt.h"
 
-#include <log.h>
+struct entry {
+	uint16_t limit_low;
+	uint16_t base_low;
+	uint8_t base_mid;
 
-/* For internal use only */
-typedef struct
-{
-	uint16_t lowLimit; // The lower 16 bits of the limit.
-	uint16_t lowBase; // The lower 16 bits of the base.
-	uint8_t  middleBase; // The next 8 bits of the base.
-	uint8_t  access; // Access flags, determine what ring this segment can be used in.
-	uint8_t  granularity;
-	uint8_t  highBase; // The last 8 bits of the base.
-} __attribute__((packed))
-entry_t;
+	// Access flags, determine what ring this segment can be used in.
+	uint8_t access;
+	uint8_t granularity;
 
-typedef struct
-{
-	uint16_t limit; // The upper 16 bits of all selector limits.
-	uint32_t base; // The address of the first gdt_entry_t struct.
-} __attribute__((packed))
-pointer_t;
+	uint8_t base_high;
+} __attribute__((packed));
 
-// Defined in gdt.asm
-extern void gdt_flush(uint32_t);
+struct pointer {
+	// The upper 16 bits of all selector limits.
+	uint16_t limit;
+	void* base;
+} __attribute__((packed));
 
-static entry_t entries[5];
-static pointer_t pointer;
+// gdt.asm
+extern void gdt_flush(void*);
 
-// Set the value of one GDT entry.
-static void setGate(int32_t num, uint32_t base, uint32_t limit,
-					uint8_t access, uint8_t gran)
-{
-	if(num > 4)
-	{
-		log(LOG_ERR, "gdt: Trying to set invalid gate %d.\n", num);
-		return;
-	}
-	
-	entries[num].lowBase    = (base & 0xFFFF);
-	entries[num].middleBase = (base >> 16) & 0xFF;
-	entries[num].highBase   = (base >> 24) & 0xFF;
+static struct entry entries[5];
+static struct pointer pointer;
 
-	entries[num].lowLimit   = (limit & 0xFFFF);
-	entries[num].granularity = (limit >> 16) & 0x0F;
+static inline void set_gate(int32_t num, uint32_t base, uint32_t limit,
+	uint8_t access, uint8_t gran) {
 
-	entries[num].granularity |= gran & 0xF0;
+	entries[num].base_low = (base & 0xffff);
+	entries[num].base_mid = (base >> 16) & 0xff;
+	entries[num].base_high = (base >> 24) & 0xff;
+
+	entries[num].limit_low = (limit & 0xffff);
+	entries[num].granularity = (limit >> 16) & 0x0f;
+
+	entries[num].granularity |= gran & 0xf0;
 	entries[num].access = access;
 }
 
-// Initialisation routine - zeroes all the interrupt service routines,
-// initialises the GDT and IDT.
-void gdt_init()
-{
-	pointer.limit = (sizeof(entry_t) * 5) - 1;
-	pointer.base  = (uint32_t)&entries;
+void gdt_init() {
+	pointer.limit = (sizeof(struct entry) * 5) - 1;
+	pointer.base = &entries;
 
-	setGate(0, 0, 0, 0, 0); // Null segment
-	setGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // 0x04: User mode Code segment
-	setGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // 0x08: Kernel Code segment
-	setGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // 0x0C: User mode Data segment
-	setGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // 0x10: Kernel Data segment
+	set_gate(0, 0, 0, 0, 0);
+	set_gate(1, 0, 0xffffffff, 0x9a, 0xcf); // 0x04: User mode Code segment
+	set_gate(2, 0, 0xffffffff, 0x92, 0xcf); // 0x08: Kernel Code segment
+	set_gate(3, 0, 0xffffffff, 0xfa, 0xcf); // 0x0C: User mode Data segment
+	set_gate(4, 0, 0xffffffff, 0xf2, 0xcf); // 0x10: Kernel Data segment
 
-	gdt_flush((uint32_t)&pointer);
+	gdt_flush(&pointer);
 }
