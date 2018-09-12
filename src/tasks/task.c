@@ -50,7 +50,7 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	vmem_rm_page_virt(task->memory_context, task->stack);
 
 	struct vmem_page* page = vmem_new_page();
-	page->section = VMEM_SECTION_KERNEL;
+	page->section = VMEM_SECTION_DATA;
 	page->cow = 0;
 	page->allocated = 1;
 	page->virt_addr = task->stack;
@@ -61,7 +61,7 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	vmem_rm_page_virt(task->memory_context, task);
 
 	struct vmem_page* tpage = vmem_new_page();
-	tpage->section = VMEM_SECTION_KERNEL;
+	tpage->section = VMEM_SECTION_DATA;
 	tpage->cow = 0;
 	tpage->allocated = 1;
 	tpage->virt_addr = task->state;

@@ -65,7 +65,7 @@ SYSCALL_HANDLER(sbrk)
 		}
 
 		struct vmem_page* page = vmem_new_page();
-		page->section = VMEM_SECTION_MMAP;
+		page->section = VMEM_SECTION_HEAP;
 		page->cow = 0;
 		page->allocated = 1;
 		page->virt_addr = (void*)((intptr_t)virt_addr + i);
