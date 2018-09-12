@@ -20,7 +20,7 @@ ifeq ($(shell uname -s), Darwin)
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
-MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -cpu SandyBridge -serial mon:stdio -no-reboot -d cpu_reset -soundhw ac97
+MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -cpu SandyBridge -serial mon:stdio -no-reboot -soundhw ac97 -d mmu,cpu_reset,guest_errors,page,unimp
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
@@ -56,3 +56,11 @@ land:
 .PHONY: xelix.qcow2
 xelix.qcow2:
 	util/build-image.sh $@
+
+mount:
+	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
+	sudo mount /dev/nbd0 mnt
+
+umount:
+	sudo umount mnt
+	sudo qemu-nbd --disconnect /dev/nbd0

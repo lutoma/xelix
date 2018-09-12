@@ -46,9 +46,9 @@ typedef struct {
 	 * expects to be in the stack when doing an iret. useresp and ss are
 	 * only used when returning to another privilege level
 	 */
-	void* eip;
+/*	void* eip;
 	uint32_t cs;
-	uint32_t eflags;
+	uint32_t eflags;*/
 } __attribute__((__packed__)) cpu_state_t;
 
 
@@ -62,6 +62,6 @@ static inline void dump_cpu_state(uint32_t level, cpu_state_t* state) {
 	log(level, "cpu_state_t at 0x%x:\n", state);
 	log(level, "  EAX=0x%-10x EBX=0x%-10x ECX=0x%-10x EDX=0x%-10x\n", state->eax, state->ebx, state->ecx, state->edx);
 	log(level, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
-	log(level, "  EIP=0x%-10x CR2=0x%-10x CR3=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->cr2, state->cr3, state->eflags);
+	//log(level, "  EIP=0x%-10x CR2=0x%-10x CR3=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->cr2, state->cr3, state->eflags);
 	log(level, "  Last interrupt: 0x%x\n", state->interrupt);
 }

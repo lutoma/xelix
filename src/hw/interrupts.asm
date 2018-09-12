@@ -48,6 +48,7 @@
 
 ; Reserve 4 KiB stack space
 [section .bss]
+GLOBAL intr_stack_end
 intr_stack_begin:
 resb 4096
 intr_stack_end:
@@ -153,7 +154,7 @@ interrupts_common_handler:
 	out dx, ax
 
 	; Is this a spurious interrupt on the secondary PIC? If yes, return
-	; (We do this here so the master PIC still get's an EOI as it can't
+	; (We do this here so the master PIC still receives an EOI as it can't
 	; know about the spuriousness of this interrupt).
 	cmp ebx, IRQ15
 	je .return
@@ -168,34 +169,36 @@ interrupts_common_handler:
 	out dx, ax
 
 .no_eoi:
-	mov eax, [paging_kernel_cr3]
-	test eax, eax
-	jz .no_paging
-	mov cr3, eax
+	mov ecx, [paging_kernel_cr3]
+	jecxz .no_paging
+
+	mov ebx, cr3
+	cmp ecx, ebx
+	je .no_paging
+	mov cr3, ecx
 .no_paging:
 
 	; fastcall
 	mov ecx, esp
-
-	; Set up a stack for the kernel
-	mov esp, intr_stack_end
-	mov ebp, intr_stack_end
-
  	call interrupts_callback
 
 	; Use cpu_state_t as stack
 	mov esp, eax
 
 .return:
-	; reload the original data segment descriptor
+	; reload original paging context & data segment descriptor
 	pop ebx
+	pop eax
+
+	cmp eax, [paging_kernel_cr3]
+	je .no_pgreset
+	mov cr3, eax
+	.no_pgreset:
+
 	mov ds, bx
 	mov es, bx
 	mov fs, bx
 	mov gs, bx
-
-	pop eax
-	mov cr3, eax
 
 	; Reload the original values of the GP registers
 	popa

@@ -101,11 +101,11 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	if(task) {
 		panic_printf("Running task:    %d <%s>", task->pid, task->name);
 
-		uint32_t task_offset = task->state->eip - task->entry;
+	/*	uint32_t task_offset = task->state->eip - task->entry;
 		if(task_offset >= 0) {
 			panic_printf("+%x at 0x%x", task_offset, task->state->eip);
 		}
-
+*/
 		panic_printf("\n");
 	} else {
 		panic_printf("Running task:    [No task running]\n");

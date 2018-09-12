@@ -37,8 +37,7 @@ extern void* __kernel_end;
 task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
-	// FIXME Probably doesn't need to be aligned
-	task_t* task = (task_t*)kmalloc_a(sizeof(task_t));
+	task_t* task = (task_t*)kmalloc(sizeof(task_t));
 
 	task->stack = kmalloc_a(STACKSIZE);
 	memset(task->stack, 0, STACKSIZE);
@@ -90,22 +89,21 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
 
 	// Stack
-	task->state->esp = task->stack + STACKSIZE - (3 * sizeof(uint32_t));
-	task->state->ebp = task->state->esp;
+	task->state->ebp = task->stack + STACKSIZE;
+	task->state->esp = task->state->ebp - (5 * sizeof(uint32_t));
 
 	//*(task->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
 	//*(task->state->ebp + 2) = (intptr_t)NULL; // base pointer
 
-	// Instruction pointer (= start of the program)
 	task->entry = entry;
-	task->state->eip = entry;
-	task->state->eflags = 0x200;
-	task->state->cs = 0x08;
-	task->state->ds = 0x10;
+	task->state->ds = 0x23; // 0x23
 
-	*(void**)task->state->esp = task->state->eip;
-	*((uint32_t*)task->state->esp + 1) = task->state->cs;
-	*((uint32_t*)task->state->esp + 2) = task->state->eflags;
+	// Return stack for iret. eip, cs, eflags, esp, ss.
+	*(void**)task->state->esp = entry;
+	*((uint32_t*)task->state->esp + 1) = 0x1b; // 0x1b
+	*((uint32_t*)task->state->esp + 2) = 0x200; // 0x200
+	*((uint32_t*)task->state->esp + 3) = task->state->ebp;
+	*((uint32_t*)task->state->esp + 4) = 0x23; // 0x23
 
 	task->pid = ++highest_pid;
 	strcpy(task->name, name);
@@ -134,7 +132,7 @@ task_t* task_fork(task_t* to_fork, cpu_state_t* state)
 	char* __argv[] = { "dash", "-liV", NULL };
 
 	// FIXME Make copy of memory context instead of just using the same
-	task_t* new_task = task_new(state->eip, to_fork, "fork", __env, 6, __argv, 2);
+	task_t* new_task = task_new(0, to_fork, "fork", __env, 6, __argv, 2);
 
 	// Copy registers
 	new_task->state->ebx = state->ebx;
@@ -143,8 +141,8 @@ task_t* task_fork(task_t* to_fork, cpu_state_t* state)
 	new_task->state->ds = state->ds;
 	new_task->state->edi = state->edi;
 	new_task->state->esi = state->esi;
-	new_task->state->cs = state->cs;
-	new_task->state->eflags = state->eflags;
+//	new_task->state->cs = state->cs;
+//	new_task->state->eflags = state->eflags;
 
 	// Copy stack & calculate correct stack offset for fork's ESP
 	memcpy(new_task->stack, to_fork->stack, STACKSIZE);

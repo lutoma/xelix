@@ -296,7 +296,7 @@ char* vmem_get_name(struct vmem_context* ctx) {
 
 void vmem_handle_fault(cpu_state_t* regs)
 {
-	uint32_t phys_addr = (uint32_t)regs->eip;
+	uint32_t phys_addr = 0;//(uint32_t)regs->eip;
 	task_t* running_task = scheduler_get_current();
 
 	char* pgpres = bit_get(regs->errCode, 0) ? " (page present)" : "";

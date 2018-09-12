@@ -50,9 +50,6 @@ void __attribute__((fastcall, noreturn)) main(uint32_t multiboot_checksum, multi
 {
 	init(serial);
 	init(panic, multiboot_info);
-	init(gdt);
-	init(interrupts);
-	init(cpu);
 
 	// Check if we were actually booted by a multiboot bootloader
 	if(multiboot_checksum != MULTIBOOT_KERNELMAGIC) {
@@ -74,6 +71,9 @@ void __attribute__((fastcall, noreturn)) main(uint32_t multiboot_checksum, multi
 
 	init(memory_track, multiboot_info);
 	init(kmalloc);
+	init(gdt);
+	init(interrupts);
+	init(cpu);
 	init(pit, PIT_RATE);
 	init(console);
 
