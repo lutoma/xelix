@@ -42,7 +42,7 @@ static char** copy_array(char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		new_array[i] = strndup(array[i], 200);
+		new_array[i] = strndup((char*)task_resolve_address((intptr_t)array[i], false), 200);
 	}
 
 	new_array[i] = NULL;
