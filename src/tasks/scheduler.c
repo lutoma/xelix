@@ -67,25 +67,7 @@ void scheduler_remove(task_t *t) {
 		t->parent->task_state = TASK_STATE_RUNNING;
 	}
 
-	kfree(t->stack);
-	vmem_rm_context(t->memory_context);
-
-	if(t->binary_start) {
-		kfree(t->binary_start);
-	}
-
-	task_memory_allocation_t* ta = t->memory_allocations;
-	while(ta) {
-		kfree(ta->phys_addr);
-		task_memory_allocation_t* to_free = ta;
-		ta = ta->next;
-		kfree(to_free);
-	}
-
-	kfree(t->state);
-	kfree_array(t->environ);
-	kfree_array(t->argv);
-	kfree(t);
+	task_cleanup(t);
 }
 
 task_t* scheduler_select(cpu_state_t* last_regs) {

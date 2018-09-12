@@ -65,7 +65,8 @@
                      SEG_PRIV(3)     | SEG_DATA_RDWR
 
 extern void gdt_flush(void*);
-extern void* intr_stack_end;
+extern void* stack_end;
+static uint32_t* tss;
 
 static struct pointer {
 	// The upper 16 bits of all selector limits.
@@ -74,7 +75,7 @@ static struct pointer {
 } __attribute__((packed)) pointer;
 static uint64_t* descs;
 
-void create_descriptor(uint32_t num, uint32_t base, uint32_t limit, uint16_t flag) {
+static void create_descriptor(uint32_t num, uint32_t base, uint32_t limit, uint16_t flag) {
     // Create the high 32 bit segment
     descs[num]  =  limit       & 0x000F0000;         // set limit bits 19:16
     descs[num] |= (flag <<  8) & 0x00F0FF00;         // set type, p, dpl, s, g, d/b, l and avl fields
@@ -89,6 +90,15 @@ void create_descriptor(uint32_t num, uint32_t base, uint32_t limit, uint16_t fla
     descs[num] |= limit  & 0x0000FFFF;               // set limit bits 15:0
 }
 
+void gdt_set_tss(void* addr) {
+	bzero(tss, 0x60);
+	*(tss + 1) = (uint32_t)addr;
+	*(tss + 2) = 0x10;
+
+	create_descriptor(5, (uint32_t)tss, 0x60, 0x89);
+	gdt_flush(&pointer);
+}
+
 void gdt_init() {
 	descs = kmalloc(sizeof(uint64_t) * 6);
 	pointer.limit = (sizeof(uint64_t) * 6) - 1;
@@ -100,12 +110,6 @@ void gdt_init() {
 	create_descriptor(3, 0, 0xffffffff, GDT_CODE_PL3); // 0x1b
 	create_descriptor(4, 0, 0xffffffff, GDT_DATA_PL3); // 0x23
 
-	// Add TSS
-	uint32_t* tss = kmalloc(0x60);
-	bzero(tss, 0x60);
-	*(tss + 1) = &intr_stack_end;
-	*(tss + 2) = 0x10;
-	create_descriptor(5, tss, 0x60, 0x89);
-
-	gdt_flush(&pointer);
+ 	tss = kmalloc(0x60);
+	gdt_set_tss(&stack_end);
 }

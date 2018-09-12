@@ -40,13 +40,16 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	task_t* task = (task_t*)kmalloc(sizeof(task_t));
 
 	task->stack = kmalloc_a(STACKSIZE);
-	memset(task->stack, 0, STACKSIZE);
+	bzero(task->stack, STACKSIZE);
 	task->state = kmalloc_a(sizeof(cpu_state_t));
+
+	task->kernel_stack = kmalloc_a(STACKSIZE);
+	bzero(task->kernel_stack, STACKSIZE);
 
 	task->memory_context = vmem_new();
 	vmem_set_task(task->memory_context, task);
 
-	// 1:1 map the stack
+	// 1:1 map the stacks
 	vmem_rm_page_virt(task->memory_context, task->stack);
 
 	struct vmem_page* page = vmem_new_page();
@@ -55,6 +58,16 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	page->allocated = 1;
 	page->virt_addr = task->stack;
 	page->phys_addr = task->stack;
+	vmem_add_page(task->memory_context, page);
+
+	vmem_rm_page_virt(task->memory_context, task->kernel_stack);
+
+	page = vmem_new_page();
+	page->section = VMEM_SECTION_KERNEL;
+	page->cow = 0;
+	page->allocated = 1;
+	page->virt_addr = task->kernel_stack;
+	page->phys_addr = task->kernel_stack;
 	vmem_add_page(task->memory_context, page);
 
 	// 1:1 map the task state struct (used in the interrupt return)
@@ -150,4 +163,27 @@ task_t* task_fork(task_t* to_fork, cpu_state_t* state)
 
 	strncpy(new_task->name, to_fork->name, TASK_MAXNAME);
 	return new_task;
+}
+
+void task_cleanup(task_t* t) {
+	kfree(t->stack);
+	kfree(t->kernel_stack);
+	vmem_rm_context(t->memory_context);
+
+	if(t->binary_start) {
+		kfree(t->binary_start);
+	}
+
+	task_memory_allocation_t* ta = t->memory_allocations;
+	while(ta) {
+		kfree(ta->phys_addr);
+		task_memory_allocation_t* to_free = ta;
+		ta = ta->next;
+		kfree(to_free);
+	}
+
+	kfree(t->state);
+	kfree_array(t->environ);
+	kfree_array(t->argv);
+	kfree(t);
 }

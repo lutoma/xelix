@@ -30,6 +30,7 @@ dd  MBOOT_CHECKSUM
 
 ; Reserve 4 KiB stack space
 [section .bss]
+GLOBAL stack_end
 stack_begin:
 resb 4096
 stack_end:

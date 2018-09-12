@@ -46,14 +46,6 @@
 		jmp interrupts_common_handler
 %endmacro
 
-; Reserve 4 KiB stack space
-[section .bss]
-GLOBAL intr_stack_end
-intr_stack_begin:
-resb 4096
-intr_stack_end:
-
-[section .text]
 INTERRUPT 0
 INTERRUPT 1
 INTERRUPT 2

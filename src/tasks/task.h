@@ -41,6 +41,10 @@ typedef struct task {
 	void* entry;
 	void* binary_start;
 	void* sbrk;
+
+	// Kernel stack used for interrupts. This will be loaded into the TSS
+	void* kernel_stack;
+
 	struct vmem_context* memory_context;
 	task_memory_allocation_t* memory_allocations;
 
@@ -67,3 +71,4 @@ typedef struct task {
 task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
 task_t* task_fork(task_t* to_fork, cpu_state_t* state);
+void task_cleanup(task_t* t);

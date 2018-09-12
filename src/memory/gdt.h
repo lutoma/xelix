@@ -1,6 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Christoph Sünderhauf
+ * Copyright © 2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,5 +19,5 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+void gdt_set_tss(void* addr);
 void gdt_init();

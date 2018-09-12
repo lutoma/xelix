@@ -23,6 +23,7 @@
 #include <tasks/scheduler.h>
 #include <memory/vmem.h>
 #include <memory/paging.h>
+#include <memory/gdt.h>
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
@@ -53,6 +54,8 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 			debug("state after (task selection):\n");
 			dump_cpu_state(LOG_DEBUG, new_task->state);
 			#endif
+
+			gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
 			return new_task->state;
 		}
 	}
