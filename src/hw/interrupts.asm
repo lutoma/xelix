@@ -111,7 +111,6 @@ interrupts_handler14:
 ; handler, and finally restores the stack frame.
 
 interrupts_common_handler:
-	cli
 	; We have to push all the stuff in the cpu_state_t (hw/cpu.h) which
 	; interrupts_callback takes in reversed order.
 	;
@@ -180,6 +179,7 @@ interrupts_common_handler:
 
 	; fastcall
 	mov ecx, esp
+	sti
  	call interrupts_callback
 
 	; Use cpu_state_t as stack

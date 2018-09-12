@@ -20,7 +20,7 @@ ifeq ($(shell uname -s), Darwin)
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
-MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -cpu SandyBridge -serial mon:stdio -no-reboot -soundhw ac97 -d mmu,cpu_reset,guest_errors,page,unimp
+MAKE_QEMU_FLAGS = -ctrl-grab -netdev user,id=mnet0 -device rtl8139,netdev=mnet0 -m 250 -no-kvm -cpu SandyBridge -serial mon:stdio -no-reboot -soundhw ac97 -d cpu_reset,guest_errors,unimp,page
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
