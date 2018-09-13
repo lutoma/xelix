@@ -77,6 +77,7 @@ SYSCALL_HANDLER(execnew)
 	}
 
 	new_task->parent = syscall.task;
+	strncpy(new_task->cwd, syscall.task->cwd, TASK_PATH_MAX);
 	scheduler_add(new_task);
 
 	SYSCALL_RETURN(new_task->pid);

@@ -19,14 +19,19 @@
 
 #include <tasks/syscall.h>
 #include <tasks/task.h>
+#include <fs/vfs.h>
 #include <string.h>
 
 SYSCALL_HANDLER(chdir)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
-	// FIXME This should seriously check if this directory even exists…
-	strncpy(syscall.task->cwd, (char*)syscall.params[0], TASK_PATH_MAX);
+	vfs_file_t* fp = vfs_open((char*)syscall.params[0], syscall.task);
+	if(!fp) {
+		SYSCALL_RETURN(-1);
+	}
+
+	strncpy(syscall.task->cwd, fp->path, TASK_PATH_MAX);
 	SYSCALL_RETURN(0);
 }
 

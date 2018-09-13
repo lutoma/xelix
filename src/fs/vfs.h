@@ -18,6 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <tasks/task.h>
 
 #define VFS_SEEK_SET 0
 #define VFS_SEEK_CUR 1
@@ -68,17 +69,23 @@ typedef struct {
 } __attribute__((packed)) vfs_dirent_t;
 
 typedef struct {
-	uint32_t st_dev;
-	uint32_t st_ino;
+	uint16_t st_dev;
+	uint16_t st_ino;
 	uint32_t st_mode;
 	uint32_t st_nlink;
 	uint16_t st_uid;
 	uint16_t st_gid;
 	uint32_t st_rdev;
 	uint32_t st_size;
-	uint32_t st_atime;
-	uint32_t st_mtime;
-	uint32_t st_ctime;
+	time_t st_atime;
+	long st_spare1;
+	time_t st_mtime;
+	long st_spare2;
+	time_t st_ctime;
+	long st_spare3;
+	uint32_t st_blksize;
+	uint32_t st_blocks;
+	long st_spare4[2];
 } __attribute__((packed)) vfs_stat_t;
 
 
@@ -92,7 +99,7 @@ typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t siz
 char vfs_last_read_attempt[512];
 
 vfs_file_t* vfs_get_from_id(uint32_t id);
-vfs_file_t* vfs_open(const char* path);
+vfs_file_t* vfs_open(const char* path, task_t* task);
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);

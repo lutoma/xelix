@@ -104,7 +104,7 @@ vfs_file_t* vfs_get_from_id(uint32_t id) {
 	return fd;
 }
 
-vfs_file_t* vfs_open(const char* orig_path)
+vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 {
 	if(!orig_path || !strcmp(orig_path, "")) {
 		log(LOG_ERR, "vfs: vfs_open called with empty path.\n");
@@ -119,7 +119,12 @@ vfs_file_t* vfs_open(const char* orig_path)
 	struct mountpoint mp = mountpoints[0];
 	size_t longest_match = 0;
 
-	char* path = normalize_path(orig_path, "/");
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = normalize_path(orig_path, pwd);
 	char* mount_path = path;
 
 	for(int i = 0; i <= last_mountpoint; i++) {
@@ -245,7 +250,7 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 }
 
 void vfs_init() {
-	vfs_open("/dev/stdin");
-	vfs_open("/dev/stdout");
-	vfs_open("/dev/stderr");
+	vfs_open("/dev/stdin", NULL);
+	vfs_open("/dev/stdout", NULL);
+	vfs_open("/dev/stderr", NULL);
 }

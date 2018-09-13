@@ -478,7 +478,6 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 		return -1;
 	}
 
-
 	dest->st_dev = 1;
 	dest->st_ino = fp->inode;
 	dest->st_mode = inode->mode;

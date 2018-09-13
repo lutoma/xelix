@@ -63,9 +63,9 @@ int main(int argc, char* argv[]) {
 	char* cmd = malloc(500);
 	char* user = getenv("USER");
 	char* host = getenv("HOST");
+	getcwd(cwd, PATH_MAX);
 
 	while(true) {
-		getcwd(cwd, PATH_MAX);
 
 		printf("%s@%s %s# ", user, host, cwd);
 
@@ -102,6 +102,19 @@ int main(int argc, char* argv[]) {
 			}
 
 			printf("%s\n", cmd + offset);
+			continue;
+		}
+
+		int cd_len = strlen("cd");
+		if(!strncmp(cmd, "cd", cd_len)) {
+			int offset = cd_len;
+
+			if(strlen(cmd) > cd_len + 1) {
+				offset++;
+			}
+
+			strncpy(cwd, cmd + offset, PATH_MAX);
+			chdir(cmd + offset);
 			continue;
 		}
 

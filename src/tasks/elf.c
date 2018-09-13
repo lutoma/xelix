@@ -183,7 +183,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 
 task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, uint32_t argc)
 {
-	vfs_file_t* fd = vfs_open(path);
+	vfs_file_t* fd = vfs_open(path, NULL);
 	if(!fd) {
 		return NULL;
 	}

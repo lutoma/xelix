@@ -8,19 +8,12 @@ int main(int argc, char* argv[]) {
 	char* dir;
 
 	if(argc >= 2) {
-		dir = strdup(argv[1]);
+		dir = argv[1];
 	} else {
-		dir = malloc(100);
-
-		if(!getcwd(dir, 100)) {
-			perror("getcwd failed");
-			free(dir);
-			exit(EXIT_FAILURE);
-		}
+		dir = ".";
 	}
 
 	DIR* dd = opendir(dir);
-	free(dir);
 
 	if(!dd) {
 		perror("opendir failed");

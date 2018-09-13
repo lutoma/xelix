@@ -245,7 +245,7 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 }
 
 void ac97_play(struct ac97_card* card, char* file) {
-	vfs_file_t* fd = vfs_open(file);
+	vfs_file_t* fd = vfs_open(file, NULL);
 
 
 	size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
