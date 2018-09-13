@@ -19,6 +19,8 @@
 #ifndef _SYS_XELIX_H
 #define _SYS_XELIX_H
 
+#define XELIX_EXECDATA_BUF_SIZE 0x400
+
 struct _xelix_execdata {
 	uint32_t pid;
 	uint32_t ppid;
@@ -29,6 +31,7 @@ struct _xelix_execdata {
 	char* argv_environ[];
 };
 
+char _xelix_execdata_buf[XELIX_EXECDATA_BUF_SIZE];
 struct _xelix_execdata* _xelix_execdata;
 
 pid_t execnew(const char* path, char* __argv[], char* __env[]);
