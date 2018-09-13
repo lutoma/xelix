@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <string.h>
 
 int main(int argc, char* argv[]) {
 	char* dir;
 
 	if(argc >= 2) {
-		dir = argv[1];
+		dir = strdup(argv[1]);
 	} else {
 		dir = malloc(100);
 
