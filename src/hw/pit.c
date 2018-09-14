@@ -19,10 +19,17 @@
 
 #include "pit.h"
 #include <hw/interrupts.h>
+#include <fs/sysfs.h>
 
 // The timer callback. Gets called every time the PIT fires.
 static void timer_callback(cpu_state_t* regs) {
 	pit_tick++;
+}
+
+static size_t sfs_read(void* dest, size_t size) {
+	size_t rsize = 0;
+	sysfs_printf("%d %d %d\n", uptime(), pit_tick, (PIT_RATE));
+	return rsize;
 }
 
 // Initialize the PIT
@@ -45,4 +52,6 @@ void pit_init(uint16_t frequency)
 	// Send the frequency divisor.
 	outb(0x40, l);
 	outb(0x40, h);
+
+	sysfs_add_file("tick", sfs_read);
 }

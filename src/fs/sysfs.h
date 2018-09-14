@@ -18,6 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define sysfs_printf(args...) rsize += snprintf(dest + rsize, size - rsize, args);
+
 typedef size_t (*sysfs_read_callback_t)(void* dest, size_t size);
 
 void sysfs_add_file(char* name, sysfs_read_callback_t read_cb);

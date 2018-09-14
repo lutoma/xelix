@@ -8,4 +8,5 @@ play
 pwd
 xinit
 xshell
-
+ps
+uptime

@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <pwd.h>
+#include <sys/wait.h>
 #include <sys/xelix.h>
 
 int main() {
@@ -32,12 +35,19 @@ int main() {
 		user[strlen(user) - 1] = (char)0;
 		pass[strlen(pass) - 1] = (char)0;
 
+		errno = 0;
+		struct passwd* pwd = getpwnam(user);
 		printf("\n");
 
-		char* __argv[] = { "xshell", "-l", NULL };
-		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL }; 
+		if(!pwd || strcmp(pass, pwd->pw_passwd)) {
+			printf("Login incorrect.\n");
+			continue;
+		}
 
-		pid_t shell = execnew("/bin/xshell", __argv, __env);
+		char* __argv[] = { pwd->pw_shell, "-l", NULL };
+		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
+
+		pid_t shell = execnew(pwd->pw_shell, __argv, __env);
 		if(shell < 1) {
 			printf("xinit: Could not launch shell. Exiting.\n");
 			exit(EXIT_FAILURE);

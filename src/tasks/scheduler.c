@@ -28,6 +28,7 @@
 #include <memory/paging.h>
 #include <multiboot.h>
 #include <tasks/elf.h>
+#include <fs/sysfs.h>
 
 static task_t* current_task = NULL;
 
@@ -122,6 +123,33 @@ task_t* scheduler_select(cpu_state_t* last_regs) {
 	return current_task;
 }
 
+static size_t sfs_read(void* dest, size_t size) {
+	size_t rsize = 0;
+	sysfs_printf("# pid ppid state name entry sbrk stack\n")
+
+	task_t* task = current_task;
+	do {
+		uint32_t ppid = task->parent ? task->parent->pid : 0;
+
+		char state = '?';
+		switch(task->task_state) {
+			case TASK_STATE_KILLED: state = 'K'; break;
+			case TASK_STATE_TERMINATED: state = 'T'; break;
+			case TASK_STATE_BLOCKING: state = 'B'; break;
+			case TASK_STATE_STOPPED: state = 'S'; break;
+			case TASK_STATE_RUNNING: state = 'R'; break;
+			case TASK_STATE_WAITING: state = 'W'; break;
+			case TASK_STATE_SYSCALL: state = 'C'; break;
+		}
+
+		sysfs_printf("%d %d %c %s 0x%x 0x%x 0x%x\n", task->pid, ppid, state, task->name, task->entry, task->sbrk, task->stack);
+		task = task->next;
+	} while(task != current_task);
+
+	return rsize;
+}
+
 void scheduler_init() {
 	scheduler_state = SCHEDULER_INITIALIZING;
+	sysfs_add_file("tasks", sfs_read);
 }

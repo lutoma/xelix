@@ -1,8 +1,3 @@
-#ifdef __linux__
-  // Needed for execvpe header
-  #define _GNU_SOURCE
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

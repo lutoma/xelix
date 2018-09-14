@@ -22,6 +22,10 @@ int main(int argc, char* argv[]) {
 
 	struct dirent *ep;
 	while (ep = readdir (dd)) {
+		if(!strcmp(ep->d_name, ".") || !strcmp(ep->d_name, "..")) {
+			continue;
+		}
+
 		printf("%s ", ep->d_name);
 	}
 

@@ -21,6 +21,7 @@
 #include <string.h>
 #include <memory/kmalloc.h>
 #include <fs/vfs.h>
+#include <print.h>
 #include "sysfs.h"
 
 struct sysfs_file {

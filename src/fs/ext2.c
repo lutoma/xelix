@@ -531,8 +531,8 @@ void ext2_init()
 	//if(superblock->features_incompat || superblock->features_ro)
 	if(superblock->features_incompat)
 	{
-		log(LOG_ERR, "ext2: Sorry, but this filesystem uses some extensions "
-			"which I don't support (incompat: 0x%x, ro: 0x%x)\n",
+		log(LOG_WARN, "ext2: This filesystem uses some extensions "
+			"which we don't support (incompat: 0x%x, ro: 0x%x)\n",
 			superblock->features_incompat, superblock->features_ro);
 		//return;
 	}
@@ -540,7 +540,7 @@ void ext2_init()
 	if(superblock->features_compat)
 	{
 		log(LOG_INFO, "ext2: This file system supports additional special "
-			"features. I'll ignore them (0x%x).\n", superblock->features_compat);
+			"features. We'll ignore them (0x%x).\n", superblock->features_compat);
 	}
 
 	debug("Loaded ext2 superblock. inode_count=%d, block_count=%d, block_size=%d\n",
