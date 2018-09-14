@@ -157,10 +157,8 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 	if(bin->type != ELF_TYPE_EXEC)
 		fail("elf: elf_load: Attempt to load an inexecutable elf file\n");
 
-	#if ARCH == ARCH_i386 || ARCH == ARCH_amd64
-		if(bin->machine != ELF_ARCH_386)
-			fail("elf: elf_load: Attempt to load an elf file for an other architecture\n");
-	#endif
+	if(bin->machine != ELF_ARCH_386)
+		fail("elf: elf_load: Attempt to load an elf file for an other architecture\n");
 
 	if(bin->version != ELF_VERSION_CURRENT)
 		fail("elf: elf_load: Attempt to load an elf of an unsupported version\n");
@@ -189,7 +187,7 @@ task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, ui
 	}
 
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_stat(fd, stat) != 0 || !stat->st_size) {
+	if(vfs_stat(fd, stat) != 0 || !stat->st_size || !(stat->st_mode & S_IXUSR)) {
 		kfree(stat);
 		return NULL;
 	}

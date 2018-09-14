@@ -176,7 +176,7 @@ void task_cleanup(task_t* t) {
 
 	task_memory_allocation_t* ta = t->memory_allocations;
 	while(ta) {
-		kfree(ta->phys_addr);
+		kfree(ta->addr);
 		task_memory_allocation_t* to_free = ta;
 		ta = ta->next;
 		kfree(to_free);

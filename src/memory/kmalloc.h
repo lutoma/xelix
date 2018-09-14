@@ -18,16 +18,17 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <tasks/task.h>
 
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, task_t* task,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
 void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
-#define kmalloc(sz) _kmalloc(sz, false, 0, __FILE__, __LINE__, __FUNCTION__)
-#define kmalloc_a(sz) _kmalloc(sz, true, 0, __FILE__, __LINE__, __FUNCTION__)
-#define tmalloc(sz, task) _kmalloc(sz, false, task ->pid, __FILE__, __LINE__, __FUNCTION__)
-#define tmalloc_a(sz, task) _kmalloc(sz, true, task ->pid, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc(sz) _kmalloc(sz, false, NULL, __FILE__, __LINE__, __FUNCTION__)
+#define kmalloc_a(sz) _kmalloc(sz, true, NULL, __FILE__, __LINE__, __FUNCTION__)
+#define tmalloc(sz, task) _kmalloc(sz, false, task, __FILE__, __LINE__, __FUNCTION__)
+#define tmalloc_a(sz, task) _kmalloc(sz, true, task, __FILE__, __LINE__, __FUNCTION__)
 #define kfree(ptr) _kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
 
 #define kfree_array(arr) do { \

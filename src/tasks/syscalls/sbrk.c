@@ -47,17 +47,6 @@ SYSCALL_HANDLER(sbrk)
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	task_memory_allocation_t* ta = kmalloc(sizeof(task_memory_allocation_t));
-	if(!ta) {
-		kfree(phys_addr);
-		SYSCALL_RETURN(-1);
-	}
-
-	ta->phys_addr = phys_addr;
-	ta->virt_addr = virt_addr;
-	ta->next = task->memory_allocations;
-	task->memory_allocations = ta;
-
 	for(intptr_t i = 0; i < length; i += PAGE_SIZE) {
 		struct vmem_page* opage = vmem_get_page_virt(task->memory_context, (void*)((intptr_t)virt_addr + i));
 		if(opage) {

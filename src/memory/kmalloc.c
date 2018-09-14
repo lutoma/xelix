@@ -56,9 +56,6 @@ struct mem_block {
 		TYPE_TASK,
 		TYPE_FREE
 	} type;
-
-	// legacy
-	uint32_t pid;
 };
 
 /* For free blocks, this struct gets stored inside the allocated area. As a
@@ -262,7 +259,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 /* Use the macros instead of directly calling this function.
  * For details on the attributes, see the GCC documentation at http://is.gd/6gmEqk.
  */
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pid,
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, task_t* task,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
 
 	#ifdef KMALLOC_DEBUG
@@ -325,12 +322,17 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, uint32_t pi
 		header = new;
 	}
 
-	header->type = pid ? TYPE_TASK : TYPE_KERNEL;
-	header->pid = pid;
-
+	header->type = task ? TYPE_TASK : TYPE_KERNEL;
 	check_header(header);
-
 	spinlock_release(&kmalloc_lock);
+
+	if(task) {
+		task_memory_allocation_t* ta = kmalloc(sizeof(task_memory_allocation_t));
+		ta->addr = (void*)GET_CONTENT(header);
+		ta->next = task->memory_allocations;
+		task->memory_allocations = ta;
+	}
+
 	debug("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
 	return (void*)GET_CONTENT(header);
 }
@@ -401,7 +403,7 @@ void kmalloc_stats() {
 
 			log(LOG_DEBUG, "free\tprev free: 0x%x next: 0x%x", fb->prev, fb->next);
 		} else if(header->type == TYPE_TASK) {
-			log(LOG_DEBUG, "task %d", header->pid);
+			log(LOG_DEBUG, "task");
 		} else {
 			log(LOG_DEBUG, "kernel");
 		}

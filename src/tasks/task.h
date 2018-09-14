@@ -24,8 +24,7 @@
 #define TASK_PATH_MAX 256
 
 typedef struct task_memory_allocation {
-	void* phys_addr;
-	void* virt_addr;
+	void* addr;
 	struct task_memory_allocation* next;
 } task_memory_allocation_t;
 
