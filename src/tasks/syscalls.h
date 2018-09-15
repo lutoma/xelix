@@ -20,7 +20,7 @@
 
 #include <tasks/syscall.h>
 
-#define DEFINE_SYSCALL(name) extern void sys_ ## name (struct syscall syscall);
+#define DEFINE_SYSCALL(name) extern uint32_t sys_ ## name (struct syscall syscall);
 
 DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);

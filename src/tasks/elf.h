@@ -40,6 +40,17 @@ typedef struct {
 } __attribute__((packed)) elf_section_t;
 
 typedef struct {
+	uint32_t type;
+	uint32_t offset;
+	void* vaddr;
+	void* paddr;
+	uint32_t filesz;
+	uint32_t memsz;
+	uint32_t flags;
+	uint32_t align;
+} __attribute__((packed)) elf_program_header_t;
+
+typedef struct {
 	elf_ident_t ident;
 	uint16_t	type;		/* Object file type */
 	uint16_t	machine;	/* Architecture */

@@ -38,7 +38,6 @@ typedef struct task {
 
 	void* stack;
 	void* entry;
-	void* binary_start;
 	void* sbrk;
 
 	// Kernel stack used for interrupts. This will be loaded into the TSS

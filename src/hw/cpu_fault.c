@@ -58,7 +58,7 @@ static void handler(cpu_state_t* regs) {
 	// Always do a full panic on double faults
 	if(proc && regs->interrupt != 8) {
 
-		log(LOG_WARN, "%s in PID %d <%s>.\n",
+		log(LOG_ERR, "%s in PID %d <%s>.\n",
 			error_name, proc->pid, proc->name);
 
 		scheduler_terminate_current();

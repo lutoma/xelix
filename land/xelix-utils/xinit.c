@@ -44,7 +44,7 @@ int main() {
 			continue;
 		}
 
-		char* __argv[] = { pwd->pw_shell, "-l", NULL };
+		char* __argv[] = { pwd->pw_shell, "-il", NULL };
 		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
 
 		pid_t shell = execnew(pwd->pw_shell, __argv, __env);

@@ -39,11 +39,11 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 
 	task_t* task = (task_t*)kmalloc(sizeof(task_t));
 
-	task->stack = kmalloc_a(STACKSIZE);
+	task->stack = tmalloc_a(STACKSIZE, task);
 	bzero(task->stack, STACKSIZE);
-	task->state = kmalloc_a(sizeof(cpu_state_t));
+	task->state = tmalloc_a(sizeof(cpu_state_t), task);
 
-	task->kernel_stack = kmalloc_a(STACKSIZE);
+	task->kernel_stack = tmalloc_a(STACKSIZE, task);
 	bzero(task->kernel_stack, STACKSIZE);
 
 	task->memory_context = vmem_new();
@@ -166,13 +166,7 @@ task_t* task_fork(task_t* to_fork, cpu_state_t* state)
 }
 
 void task_cleanup(task_t* t) {
-	kfree(t->stack);
-	kfree(t->kernel_stack);
 	vmem_rm_context(t->memory_context);
-
-	if(t->binary_start) {
-		kfree(t->binary_start);
-	}
 
 	task_memory_allocation_t* ta = t->memory_allocations;
 	while(ta) {
@@ -182,7 +176,6 @@ void task_cleanup(task_t* t) {
 		kfree(to_free);
 	}
 
-	kfree(t->state);
 	kfree_array(t->environ);
 	kfree_array(t->argv);
 	kfree(t);

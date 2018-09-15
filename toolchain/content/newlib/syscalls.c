@@ -49,8 +49,10 @@ static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, ui
 	register uint32_t _arg2 asm("ecx") = arg2;
 	register uint32_t _arg3 asm("edx") = arg3;
 	register uint32_t result asm("eax");
+	register uint32_t sc_errno asm("ebx");
 
-	asm volatile("int $0x80;" : "=r" (result) : "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3));
+	asm volatile("int $0x80;" : "=r" (result), "=r" (sc_errno) : "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3));
+	//errno = sc_errno;
 	return result;
 }
 
