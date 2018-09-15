@@ -49,3 +49,16 @@ diff --git dash-0.5.10.2/src/system.h dash-0.5.10.2/src/system.h
  #ifndef SSIZE_MAX
  #define SSIZE_MAX ((ssize_t)((size_t)-1 >> 1))
  #endif
+--- dash-0.5.10.2/src/trap.c	2018-05-17 13:10:58.000000000 +0200
++++ dash-0.5.10.2/src/trap.c	2018-09-14 21:18:43.796032578 +0200
+@@ -363,9 +363,9 @@
+ 	if (++on == is_interactive)
+ 		return;
+ 	is_interactive = on;
+-	setsignal(SIGINT);
+-	setsignal(SIGQUIT);
+-	setsignal(SIGTERM);
++	//setsignal(SIGINT);
++	//setsignal(SIGQUIT);
++	//setsignal(SIGTERM);
+ }

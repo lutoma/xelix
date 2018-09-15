@@ -11,6 +11,7 @@ all: $(PACKAGE_NAME).tar.gz
 	cd ./$(PACKAGE_NAME) && ./configure --host=i786-pc-xelix --prefix=/
 	patch -p0 < ${PACKAGE_NAME}.patch
 	make -C $(PACKAGE_NAME)
+	strip dash-0.5.10.2/src/dash
 
 .PHONY: install
 install:
