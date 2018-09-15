@@ -29,17 +29,17 @@ SYSCALL_HANDLER(sbrk)
 	size_t length = VMEM_ALIGN(syscall.params[1]);
 	task_t* task = syscall.task;
 
-	if(length < 0) {
-		SYSCALL_RETURN(-1);
+	if(length < 0 || length > 0x500000) {
+		return -1;
 	}
 
 	if(!length) {
-		SYSCALL_RETURN((intptr_t)task->sbrk);
+		return (intptr_t)task->sbrk;
 	}
 
 	void* phys_addr = tmalloc_a(length, task);
 	if(!phys_addr) {
-		SYSCALL_RETURN(-1);
+		return -1;
 	}
 
 	bzero(phys_addr, length);
@@ -62,5 +62,5 @@ SYSCALL_HANDLER(sbrk)
 		vmem_add_page(task->memory_context, page);
 	}
 
-	SYSCALL_RETURN((intptr_t)virt_addr);
+	return (intptr_t)virt_addr;
 }

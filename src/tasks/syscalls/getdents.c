@@ -41,7 +41,7 @@ SYSCALL_HANDLER(getdents)
 
 	vfs_file_t* dd = vfs_get_from_id(syscall.params[0]);
 	if(!dd) {
-		SYSCALL_RETURN(0);
+		return 0;
 	}
 
 	intptr_t buf = (intptr_t)syscall.params[1];
@@ -50,7 +50,7 @@ SYSCALL_HANDLER(getdents)
 	vfs_dirent_t* kbuf = kmalloc(1024);
 	if(!vfs_getdents(dd, kbuf, 1024)) {
 		kfree(kbuf);
-		SYSCALL_RETURN(0);
+		return 0;
 	}
 
 	uint32_t offset = 0;
@@ -74,5 +74,5 @@ SYSCALL_HANDLER(getdents)
 	}
 
 	kfree(kbuf);
-	SYSCALL_RETURN(offset);
+	return offset;
 }

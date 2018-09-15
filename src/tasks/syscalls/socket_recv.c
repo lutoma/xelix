@@ -25,5 +25,5 @@
 SYSCALL_HANDLER(socket_recv)
 {
 	log(LOG_DEBUG, "syscall: socket_recv(%d, %d, %d) -> 0\n", syscall.params[0], syscall.params[1], syscall.params[2]);
-	SYSCALL_RETURN(0);
+	return 0;
 }

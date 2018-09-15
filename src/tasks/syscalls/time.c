@@ -23,5 +23,5 @@
 SYSCALL_HANDLER(time)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(0)
-	SYSCALL_RETURN(time_get((struct timeval*)syscall.params[0]));
+	return time_get((struct timeval*)syscall.params[0]);
 }

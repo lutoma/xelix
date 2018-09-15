@@ -25,5 +25,5 @@ SYSCALL_HANDLER(wait)
 {
 	syscall.task->task_state = TASK_STATE_WAITING;
 	scheduler_yield();
-	SYSCALL_RETURN(0);
+	return 0;
 }

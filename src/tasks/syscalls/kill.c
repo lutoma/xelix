@@ -55,7 +55,7 @@ SYSCALL_HANDLER(kill)
 	int sig = syscall.params[1];
 
 	if(pid != syscall.task->pid)
-		SYSCALL_FAIL();
+		return -1;
 
 	char* sig_name = signal_names[sig];
 	if(!sig_name)
@@ -64,5 +64,5 @@ SYSCALL_HANDLER(kill)
 	log(LOG_INFO, "tasks: PID %d was killed by %s from PID %d\n", pid, sig_name, syscall.task->pid);
 
 	scheduler_terminate_current();
-	SYSCALL_RETURN(0);
+	return 0;
 }

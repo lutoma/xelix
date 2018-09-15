@@ -27,5 +27,5 @@ SYSCALL_HANDLER(audio_play)
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 	ac97_play(&ac97_cards[0], (char*)syscall.params[0]);
 	#endif
-	SYSCALL_RETURN(0);
+	return 0;
 }

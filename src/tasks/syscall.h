@@ -23,14 +23,12 @@
 
 #define SYSCALL_INTERRUPT 0x80
 
-#define SYSCALL_HANDLER(name) void sys_ ## name (struct syscall syscall)
-#define SYSCALL_RETURN(val) {syscall.state->eax = (val); return;}
-#define SYSCALL_FAIL() SYSCALL_RETURN(-1)
+#define SYSCALL_HANDLER(name) uint32_t sys_ ## name (struct syscall syscall)
 
 #define _SYSC_RESOLVE(par, reverse) {									\
 	par = (typeof(par))task_resolve_address((intptr_t)par, reverse);	\
 	if(!par) {															\
-		SYSCALL_FAIL();													\
+		return -1;														\
 	}																	\
 }
 
@@ -45,6 +43,6 @@ struct syscall {
 	task_t* task;
 };
 
-typedef void (*syscall_t)(struct syscall);
+typedef uint32_t (*syscall_t)(struct syscall);
 intptr_t task_resolve_address(intptr_t raddress, bool reverse);
 void syscall_init();

@@ -27,12 +27,12 @@ SYSCALL_HANDLER(read)
 	SYSCALL_SAFE_RESOLVE_PARAM(1);
 
 	if (syscall.params[0] == 0)
-		SYSCALL_RETURN(console_read(NULL, (char*)syscall.params[1], syscall.params[2]));
+		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
 
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
 	if(fd == NULL)
-		SYSCALL_FAIL();
+		return -1;
 
 	size_t read = vfs_read((void*)syscall.params[1], syscall.params[2], fd);
-	SYSCALL_RETURN(read);
+	return read;
 }

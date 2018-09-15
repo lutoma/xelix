@@ -25,5 +25,5 @@ SYSCALL_HANDLER(exit)
 {
 	syscall.task->task_state = TASK_STATE_TERMINATED;
 	scheduler_yield();
-	SYSCALL_RETURN(0);
+	return 0;
 }

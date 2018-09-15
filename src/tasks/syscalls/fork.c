@@ -26,10 +26,10 @@ SYSCALL_HANDLER(fork)
 	task_t* fork_task = task_fork(syscall.task, syscall.state);
 
 	if(fork_task == NULL) {
-		SYSCALL_FAIL();
+		return -1;
 	}
 
 	scheduler_add(fork_task);
-	SYSCALL_RETURN(fork_task->pid);
+	return fork_task->pid;
 }
 

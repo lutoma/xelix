@@ -28,11 +28,11 @@ SYSCALL_HANDLER(chdir)
 
 	vfs_file_t* fp = vfs_open((char*)syscall.params[0], syscall.task);
 	if(!fp) {
-		SYSCALL_RETURN(-1);
+		return -1;
 	}
 
 	strncpy(syscall.task->cwd, fp->path, TASK_PATH_MAX);
-	SYSCALL_RETURN(0);
+	return 0;
 }
 
 SYSCALL_HANDLER(getcwd)
@@ -44,5 +44,5 @@ SYSCALL_HANDLER(getcwd)
 		syscall.params[1] = TASK_PATH_MAX;
 
 	memcpy((char*)syscall.params[0], syscall.task->cwd, syscall.params[1]);
-	SYSCALL_RETURN(syscall.params[0]);
+	return syscall.params[0];
 }

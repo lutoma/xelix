@@ -27,6 +27,6 @@ SYSCALL_HANDLER(test)
 	log(LOG_INFO, "syscall: test: Test syscall successful\n");
 	dump_cpu_state(LOG_INFO, syscall.state);
 
-	SYSCALL_RETURN(syscall.params[0] + syscall.params[1] + syscall.params[2]);
+	return syscall.params[0] + syscall.params[1] + syscall.params[2];
 }
 

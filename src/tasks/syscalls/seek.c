@@ -24,8 +24,8 @@ SYSCALL_HANDLER(seek)
 {
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
 	if(fd == NULL)
-		SYSCALL_RETURN(-2);
+		return -2;
 
 	vfs_seek(fd, syscall.params[1], syscall.params[2]);
-	SYSCALL_RETURN(0);
+	return 0;
 }

@@ -55,5 +55,5 @@ SYSCALL_HANDLER(getexecdata)
 		offset += strlen(task->environ[i]) + 1;
 	}
 
-	SYSCALL_RETURN(1);
+	return 1;
 }
