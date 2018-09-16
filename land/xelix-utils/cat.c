@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 
 	FILE* fp = fopen(file, "r");
 	if(!fp) {
-		perror("fopen");
+		perror("Could not open file");
 		exit(EXIT_FAILURE);
 	}
 
@@ -19,5 +19,6 @@ int main(int argc, char* argv[]) {
 	size_t read = fread(data, 1024, 1, fp);
 
 	puts(data);
+	free(data);
 	exit(EXIT_SUCCESS);
 }

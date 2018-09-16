@@ -8,7 +8,7 @@ $(PACKAGE_NAME).tar.gz:
 .PHONY: all
 all: $(PACKAGE_NAME).tar.gz
 	tar xf $(PACKAGE_NAME).tar.gz
-	cd ./$(PACKAGE_NAME) && ./configure --host=i786-pc-xelix --prefix=/
+	cd ./$(PACKAGE_NAME) && ./configure --host=i786-pc-xelix --prefix=/usr
 	patch -p0 < ${PACKAGE_NAME}.patch
 	make -C $(PACKAGE_NAME)
 	strip dash-0.5.10.2/src/dash

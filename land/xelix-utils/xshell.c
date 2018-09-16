@@ -36,7 +36,7 @@ static char** parse_arguments(char* args) {
 static inline bool run_command(char* cmd, char* _argv[], char* _env[]) {
 	#ifdef __xelix__
 		char* full_path = malloc(500);
-		snprintf(full_path, 500, "/bin/%s", cmd);
+		snprintf(full_path, 500, "/usr/bin/%s", cmd);
 		return execnew(full_path, _argv, _env);
 		free(full_path);
 	#else
@@ -61,7 +61,6 @@ int main(int argc, char* argv[]) {
 	getcwd(cwd, PATH_MAX);
 
 	while(true) {
-
 		printf("%s@%s %s# ", user, host, cwd);
 
 		// Will only print after \n otherwise
@@ -108,8 +107,16 @@ int main(int argc, char* argv[]) {
 				offset++;
 			}
 
-			strncpy(cwd, cmd + offset, PATH_MAX);
-			chdir(cmd + offset);
+			if(chdir(cmd + offset) == -1) {
+				perror("Could not change directory");
+			} else {
+				getcwd(cwd, PATH_MAX);
+			}
+			continue;
+		}
+
+		if(!strcmp(cmd, "pwd")) {
+			printf("%s\n", cwd);
 			continue;
 		}
 

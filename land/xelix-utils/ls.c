@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <string.h>
+#include <errno.h>
 
 int main(int argc, char* argv[]) {
 	char* dir;
@@ -21,15 +22,19 @@ int main(int argc, char* argv[]) {
 	}
 
 	struct dirent *ep;
+	size_t nent = 0;
 	while (ep = readdir (dd)) {
 		if(!strcmp(ep->d_name, ".") || !strcmp(ep->d_name, "..")) {
 			continue;
 		}
 
 		printf("%s ", ep->d_name);
+		nent++;
 	}
 
-	printf("\n");
+	if(nent) {
+		printf("\n");
+	}
 
 	//closedir(dd);
 	return EXIT_SUCCESS;

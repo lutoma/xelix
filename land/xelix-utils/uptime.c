@@ -21,9 +21,12 @@ int main(int argc, char* argv[]) {
 
 	time_t rtime = time(NULL);
 	struct tm* timeinfo = localtime(&rtime);
-	char* ftime = asctime(timeinfo);
-	ftime[strlen(ftime) - 1] = 0;
 
-	printf("%s up %d seconds\n", ftime, uptime);
+	char buffer[80];
+	strftime(buffer, 80, "%H:%M:%S", timeinfo);
+
+	printf(" %s up %02d:%02d\n", buffer, uptime / 60, uptime % 60);
+
+	fclose(fp);
 	exit(EXIT_SUCCESS);
 }

@@ -44,9 +44,28 @@ int main() {
 			continue;
 		}
 
-		char* __argv[] = { pwd->pw_shell, "-il", NULL };
-		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
+		FILE* motd_fp = fopen("/etc/motd", "r");
+		if(motd_fp) {
+			char* motd = (char*)malloc(1024);
+			size_t read = fread(motd, 1024, 1, motd_fp);
+			puts(motd);
+			free(motd);
+		}
 
+		char* __argv[] = { pwd->pw_shell, "-il", NULL };
+
+		char env_user[50];
+		snprintf(env_user, 50, "USER=%s", pwd->pw_name);
+
+		char env_home[100];
+		snprintf(env_home, 100, "HOME=%s", pwd->pw_dir);
+
+		char env_pwd[100];
+		snprintf(env_pwd, 100, "PWD=%s", pwd->pw_dir);
+
+		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", env_home, "TERM=vt100", env_pwd, env_user, "HOST=default", NULL };
+
+		chdir(pwd->pw_dir);
 		pid_t shell = execnew(pwd->pw_shell, __argv, __env);
 		if(shell < 1) {
 			printf("xinit: Could not launch shell. Exiting.\n");

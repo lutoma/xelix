@@ -4,8 +4,6 @@ cd
 checkregs
 ls
 malloctest
-play
-pwd
 xinit
 xshell
 ps

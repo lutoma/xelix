@@ -1,8 +1,8 @@
 PATH += :../../toolchain/local/bin/
 CC := i786-pc-xelix-gcc
-CFLAGS += -std=gnu18 -O0 -g -D_GNU_SOURCE
+CFLAGS += -std=gnu18 -O3 -g -D_GNU_SOURCE
 
-TARGETS=xinit xshell cat ls pwd cd play malloctest basictest checkregs ps uptime
+TARGETS=xinit xshell cat ls cd malloctest basictest checkregs ps uptime
 
 all: $(TARGETS)
 
@@ -16,5 +16,5 @@ clean:
 
 .PHONY: install
 install:
-	install -d ../../mnt/bin/
-	install -D $(TARGETS) ../../mnt/bin/
+	install -d ../../mnt/usr/bin/
+	install -D $(TARGETS) ../../mnt/usr/bin/
