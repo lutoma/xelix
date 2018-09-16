@@ -42,54 +42,67 @@ uint32_t last_file = -1;
 uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
-static char* normalize_path(const char* path, char* cwd) {
-	if(!strcmp(path, ".")) {
+static char* normalize_path(const char* orig_path, char* cwd) {
+	if(!strcmp(orig_path, ".")) {
 		return cwd;
 	}
 
-	// Throwaway pointer for strtok_r
-	char* path_tmp = strndup(path, 500);
-	char* free_path = path_tmp;
-	char* sp;
-	char* pch = strtok_r(path_tmp, "/", &sp);
-	char* new_path = kmalloc(strlen(path) + strlen(cwd) + 1);
-	char* new_path_tmp = new_path;
-	int part_length = 0;
-
-	while(pch) {
-		if(!strcmp(pch, ".")) {
-			goto next;
-		}
-
-		if(!strcmp(pch, "..")) {
-			/* Remove previous component and the preceding /, but only if there
-			 * was a previous part (to allow for /../foo).
-			 */
-			if(part_length) {
-				new_path_tmp -= part_length + 1;
-			}
-
-			goto next;
-		}
-
-		*new_path_tmp = '/';
-		new_path_tmp++;
-
-		part_length = strlen(pch);
-		memcpy(new_path_tmp, pch, part_length);
-		new_path_tmp += part_length;
-
-		next:
-		pch = strtok_r(NULL, "/", &sp);
+	char* path;
+	if(orig_path[0] != '/') {
+		path = kmalloc(strlen(orig_path) + strlen(cwd) + 2);
+		snprintf(path, strlen(orig_path) + strlen(cwd) + 2, "%s/%s", cwd, orig_path);
+	} else {
+		path = strdup(orig_path);
 	}
 
-	if(new_path == new_path_tmp) {
-		*new_path_tmp++ = '/';
+	size_t plen = strlen(path);
+	char* ptr = path + plen - 1;
+	char* new_path = kmalloc(plen + 1);
+	bzero(new_path, plen + 1);
+	char* nptr = new_path + plen;
+	int skip = 0;
+	int set = 0;
+
+	for(; ptr >= path; ptr--) {
+		if(likely(*ptr != '/')) {
+			continue;
+		}
+
+		*ptr = 0;
+		char* seg = ptr + 1;
+
+		// Double slashes
+		if(!*seg) {
+			continue;
+		}
+
+		if(!strcmp(seg, ".")) {
+			continue;
+		}
+
+		if(!strcmp(seg, "..")) {
+			skip++;
+			continue;
+		}
+
+		if(skip) {
+			skip--;
+			continue;
+		}
+
+		size_t slen = strlen(seg);
+		nptr -= slen;
+		memcpy(nptr, seg, slen);
+		*--nptr = '/';
+		set++;
 	}
 
-	*new_path_tmp = 0;
+	if(!set) {
+		*--nptr = '/';
+	}
 
-	kfree(free_path);
+	kfree(path);
+	memmove(new_path, nptr, strlen(nptr) + 1);
 	return new_path;
 }
 
@@ -160,8 +173,8 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 
 	files[num].num = num;
 	strcpy(files[num].path, path);
-	kfree(path);
 	strcpy(files[num].mount_path, mount_path);
+	kfree(path);
 	files[num].mount_instance = mp.instance;
 	files[num].offset = 0;
 	files[num].mountpoint = mp_num;
