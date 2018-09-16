@@ -22,6 +22,7 @@
 #include "generic.h"
 
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+#define strdup(string) strndup(string, strlen(string))
 #define strcmp __builtin_strcmp
 #define strncmp __builtin_strncmp
 #define strcat __builtin_strncat
@@ -32,6 +33,7 @@
 #define memset __builtin_memset
 #define memcpy __builtin_memcpy
 #define memcmp __builtin_memcmp
+#define memmove __builtin_memmove
 
 char* strtok_r(char* s, const char* delim, char** last);
 char* substr(char* src, size_t start, size_t len);

@@ -58,15 +58,15 @@ int strcmp(const char* s1, const char* s2)
 #undef strncmp
 int strncmp(const char* s1, const char* s2, size_t n)
 {
-    if (n == 0) return 0;
-    do {
-        if (*s1 < *s2)
-            return -1;
-        if (*s1 > *s2)
-            return 1;
-        s1++; s2++;
-    } while (n--);
-    return 0;
+	if (n == 0) return 0;
+	do {
+		if (*s1 < *s2)
+			return -1;
+		if (*s1 > *s2)
+			return 1;
+		s1++; s2++;
+	} while (n--);
+	return 0;
 }
 
 
@@ -140,14 +140,14 @@ int find_substr(char* list, char* item)
   char* p, *p2;
 
   for(t=0; list[t]; t++) {
-    p = &list[t];
-    p2 = item;
+	p = &list[t];
+	p2 = item;
 
-    while(*p2 && *p2==*p) {
-      p++;
-      p2++;
-    }
-    if(!*p2) return t; /* 1st return */
+	while(*p2 && *p2==*p) {
+	  p++;
+	  p2++;
+	}
+	if(!*p2) return t; /* 1st return */
   }
    return -1; /* 2nd return */
 }
@@ -172,7 +172,7 @@ void memset(void* ptr, uint8_t fill, uint32_t size) {
 }
 
 #undef memcpy
-void memcpy(void* dest, void* src, uint32_t size) {
+void* memcpy(void* dest, void* src, uint32_t size) {
 	uint8_t* from = (uint8_t*) src;
 	uint8_t* to = (uint8_t*) dest;
 	while(size > 0)
@@ -183,6 +183,8 @@ void memcpy(void* dest, void* src, uint32_t size) {
 		from++;
 		to++;
 	}
+
+	return dest;
 }
 
 #undef memcmp
@@ -197,4 +199,74 @@ int32_t memcmp(const void *s1, const void *s2, size_t n) {
 		us2++;
 	}
 	return 0;
+}
+
+#undef memmove
+void* memmove(void *dst, const void *src, size_t len) {
+		size_t i;
+
+		/*
+		 * If the buffers don't overlap, it doesn't matter what direction
+		 * we copy in. If they do, it does, so just assume they always do.
+		 * We don't concern ourselves with the possibility that the region
+		 * to copy might roll over across the top of memory, because it's
+		 * not going to happen.
+		 *
+		 * If the destination is above the source, we have to copy
+		 * back to front to avoid overwriting the data we want to
+		 * copy.
+		 *
+		 *      dest:       dddddddd
+		 *      src:    ssssssss   ^
+		 *              |   ^  |___|
+		 *              |___|
+		 *
+		 * If the destination is below the source, we have to copy
+		 * front to back.
+		 *
+		 *      dest:   dddddddd
+		 *      src:    ^   ssssssss
+		 *              |___|  ^   |
+		 *                     |___|
+		 */
+
+		if ((uintptr_t)dst < (uintptr_t)src) {
+				/*
+				 * As author/maintainer of libc, take advantage of the
+				 * fact that we know memcpy copies forwards.
+				 */
+				return memcpy(dst, src, len);
+		}
+
+		/*
+		 * Copy by words in the common case. Look in memcpy.c for more
+		 * information.
+		 */
+
+		if ((uintptr_t)dst % sizeof(long) == 0 &&
+			(uintptr_t)src % sizeof(long) == 0 &&
+			len % sizeof(long) == 0) {
+
+				long *d = dst;
+				const long *s = src;
+
+				/*
+				 * The reason we copy index i-1 and test i>0 is that
+				 * i is unsigned -- so testing i>=0 doesn't work.
+				 */
+
+				for (i=len/sizeof(long); i>0; i--) {
+						d[i-1] = s[i-1];
+				}
+		}
+		else {
+				char *d = dst;
+				const char *s = src;
+
+				for (i=len; i>0; i--) {
+						d[i-1] = s[i-1];
+				}
+		}
+
+		return dst;
 }
