@@ -41,14 +41,14 @@
 #include <poll.h>
 
 
-int close(int file) {
+int _close(int file) {
 	//fprintf(stderr, "Warning: xelix newlib close() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
 }
 
-int link(char *old, char *new){
+int _link(char *old, char *new){
 	//fprintf(stderr, "Warning: xelix newlib link() stub called.\n");
 
 	errno = ENOSYS;
@@ -69,14 +69,14 @@ int symlink(const char *path1, const char *path2) {
 	return -1;
 }
 
-clock_t times(struct tms *buf) {
+clock_t _times(struct tms *buf) {
 	//fprintf(stderr, "Warning: xelix newlib times() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
 }
 
-int unlink(char *name) {
+int _unlink(char *name) {
 	//fprintf(stderr, "Warning: xelix newlib unlink() stub called.\n");
 
 	errno = ENOSYS;

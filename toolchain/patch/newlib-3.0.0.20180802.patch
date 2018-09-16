@@ -11,22 +11,30 @@ diff -rupN download/newlib-3.0.0.20180802/config.sub download/newlib-3.0.0.20180
  		;;
  	qnx*)
 diff -rupN download/newlib-3.0.0.20180802/newlib/configure.host download/newlib-3.0.0.20180802-xelix/newlib/configure.host
---- download/newlib-3.0.0.20180802/newlib/configure.host	2011-11-29 07:33:48.000000000 +0100
-+++ download/newlib-3.0.0.20180802-xelix/newlib/configure.host	2012-01-06 23:38:03.000000000 +0100
-@@ -343,6 +343,13 @@ esac
- # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
-
- case "${host}" in
-+  i[3-7]86-*-xelix*)
+--- download/newlib-3.0.0.20180802/newlib/configure.host	2018-08-01 20:02:56.000000000 +0200
++++ download/newlib-3.0.0.20180802/newlib/configure.host	2018-09-16 22:16:22.530981410 +0200
+@@ -578,6 +578,11 @@
+   w65-*-*)
+ 	sys_dir=w65
+ 	;;
++  *-*-xelix*)
 +	sys_dir=xelix
-+	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
-+	newlib_cflags="${newlib_cflags} -DREENTRANT_SYSCALLS_PROVIDED"
 +	posix_dir=posix
 +	unix_dir=unix
 +	;;
-   *-*-cygwin*)
- 	posix_dir=posix
- 	stdio64_dir=stdio64
+   z8k-*-coff)
+ 	sys_dir=z8ksim
+ 	;;
+@@ -862,6 +867,9 @@
+   xc16x-*)
+           syscall_dir=syscalls
+         ;;
++  *-*-xelix*)
++	syscall_dir=syscalls
++	;;
+   xstormy16-*-*)
+ 	syscall_dir=syscalls
+ 	;;
 diff -rupN download/newlib-3.0.0.20180802/newlib/libc/sys/configure.in download/newlib-3.0.0.20180802-xelix/newlib/libc/sys/configure.in
 --- download/newlib-3.0.0.20180802/newlib/libc/sys/configure.in	2010-02-24 21:59:55.000000000 +0100
 +++ download/newlib-3.0.0.20180802-xelix/newlib/libc/sys/configure.in	2012-01-06 23:38:45.000000000 +0100

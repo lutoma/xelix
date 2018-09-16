@@ -66,13 +66,13 @@ void _exit(int return_code) {
 	syscall(1, return_code, 0, 0);
 }
 
-int fork() {
+int _fork() {
 	// Todo: Set proper errno in case something goes wonky
 	errno = ENOSYS;
 	return syscall(22, 0, 0, 0);
 }
 
-pid_t getpid() {
+pid_t _getpid() {
 	return (pid_t)_xelix_execdata->pid;
 }
 
@@ -80,7 +80,7 @@ pid_t getppid(void) {
 	return (pid_t)_xelix_execdata->ppid;
 }
 
-int kill(int pid, int sig) {
+int _kill(int pid, int sig) {
 	int ret = syscall(18, pid, sig, 0);
 
 	switch(ret)
@@ -94,7 +94,7 @@ int kill(int pid, int sig) {
 	return ret;
 }
 
-int lseek(int file, int ptr, int dir) {
+int _lseek(int file, int ptr, int dir) {
 	int ret = syscall(14, file, ptr, dir);
 
 	if(ret == -2)
@@ -105,7 +105,7 @@ int lseek(int file, int ptr, int dir) {
 	return -1;
 }
 
-int open(const char* name, int flags, ...) {
+int _open(const char* name, int flags, ...) {
 	// Filter out (obviously) empty paths
 	if(name[0] == '\0' || !strcmp(name, " "))
 	{
@@ -126,7 +126,7 @@ int open(const char* name, int flags, ...) {
 	return fd;
 }
 
-ssize_t read(int file, char *buf, int len) {
+ssize_t _read(int file, char *buf, int len) {
 	int read = syscall(2, file, buf, len);
 	/*if (!read) {
 		errno = EINTR;
@@ -136,11 +136,11 @@ ssize_t read(int file, char *buf, int len) {
 	return read;
 }
 
-void* sbrk(int incr) {
+void* _sbrk(int incr) {
 	return (void*)syscall(7, 0, incr, 0);
 }
 
-int wait(int* status) {
+int _wait(int* status) {
 	return syscall(29, status, 0, 0);
 }
 
@@ -148,7 +148,7 @@ pid_t waitpid(pid_t pid, int* stat_loc, int options) {
 	return syscall(29, stat_loc, 0, 0); // FIXME Just the wait syscall
 }
 
-int write(int file, char *buf, int len) {
+int _write(int file, char *buf, int len) {
 	return syscall(3, file, buf, len);
 }
 
@@ -215,13 +215,13 @@ int uname(struct utsname* name) {
 	return 0;
 }
 
-int fstat(int file, struct stat* st) {
+int _fstat(int file, struct stat* st) {
 	int r = syscall(14, file, st, 0);
 	st->st_mode = S_IFDIR;
 	return r;
 }
 
-int stat(const char* name, struct stat *st) {
+int _stat(const char* name, struct stat *st) {
 	int fp = open(name, 0);
 	if(!fp) {
 		return -1;
@@ -239,6 +239,6 @@ int lstat(const char* name, struct stat *st) {
 	return stat(name, st);
 }
 
-int gettimeofday(struct timeval* p, void* tz) {
+int _gettimeofday(struct timeval* p, void* tz) {
 	return syscall(17, p, tz, 0);
 }
