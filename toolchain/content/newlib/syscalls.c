@@ -62,7 +62,8 @@ static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, ui
 		"int $0x80;"
 
 		: "=r" (result), "=r" (sce)
-		: "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3));
+		: "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3)
+		: "memory");
 
 	errno = sce;
 	return result;
