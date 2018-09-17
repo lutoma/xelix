@@ -122,10 +122,12 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 {
 	if(!orig_path || !strcmp(orig_path, "")) {
 		log(LOG_ERR, "vfs: vfs_open called with empty path.\n");
+		sc_errno = ENOENT;
 		return NULL;
 	}
 
 	if(!spinlock_get(&file_open_lock, 30)) {
+		sc_errno = EAGAIN;
 		return NULL;
 	}
 
@@ -160,6 +162,7 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 
 	if(mp_num < 0) {
 		kfree(path);
+		sc_errno = ENOENT;
 		return NULL;
 	}
 
@@ -210,6 +213,7 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size) {
 	if(dir->offset) {
+		sc_errno = ENOSYS;
 		return 0;
 	}
 	strncpy(vfs_last_read_attempt, dir->path, 512);

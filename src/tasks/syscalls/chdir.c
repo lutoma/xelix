@@ -1,5 +1,5 @@
-/* cwd.c: Get/set current working directory
- * Copyright © 2013-2015 Lukas Martini
+/* cwd.c: Set current working directory
+ * Copyright © 2013-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,8 +19,10 @@
 
 #include <tasks/syscall.h>
 #include <tasks/task.h>
+#include <memory/kmalloc.h>
 #include <fs/vfs.h>
 #include <string.h>
+#include <errno.h>
 
 SYSCALL_HANDLER(chdir)
 {
@@ -31,18 +33,19 @@ SYSCALL_HANDLER(chdir)
 		return -1;
 	}
 
+	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
+	if(vfs_stat(fp, stat) != 0) {
+		kfree(stat);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(vfs_mode_to_filetype(stat->st_mode) != FT_IFDIR) {
+		sc_errno = ENOTDIR;
+		return -1;
+	}
+
+	kfree(stat);
 	strncpy(syscall.task->cwd, fp->path, TASK_PATH_MAX);
 	return 0;
-}
-
-SYSCALL_HANDLER(getcwd)
-{
-	SYSCALL_SAFE_RESOLVE_PARAM(0);
-
-	// Maximum return string size
-	if(syscall.params[1] > TASK_PATH_MAX)
-		syscall.params[1] = TASK_PATH_MAX;
-
-	memcpy((char*)syscall.params[0], syscall.task->cwd, syscall.params[1]);
-	return syscall.params[0];
 }

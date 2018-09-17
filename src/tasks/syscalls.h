@@ -35,7 +35,6 @@ DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(kill);
 DEFINE_SYSCALL(getexecdata);
 DEFINE_SYSCALL(chdir);
-DEFINE_SYSCALL(getcwd);
 DEFINE_SYSCALL(fork);
 DEFINE_SYSCALL(socket);
 DEFINE_SYSCALL(bind);
@@ -68,7 +67,7 @@ syscall_t syscall_table[] = {
 	sys_kill,			// 18
 	sys_getexecdata,	// 19
 	sys_chdir,			// 20
-	sys_getcwd,			// 21
+	NULL,				// 21
 	sys_fork,			// 22
 	NULL,				// 23
 	sys_socket,			// 24
@@ -102,7 +101,7 @@ char* syscall_name_table[] = {
 	"kill",			// 18
 	"getexecdata",	// 19
 	"chdir",		// 20
-	"getcwd",		// 21
+	NULL,			// 21
 	"fork",			// 22
 	NULL,			// 23
 	"socket",		// 24

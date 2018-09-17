@@ -79,8 +79,6 @@ void _exit(int return_code) {
 }
 
 int _fork() {
-	// Todo: Set proper errno in case something goes wonky
-	errno = ENOSYS;
 	return syscall(22, 0, 0, 0);
 }
 
@@ -118,19 +116,6 @@ int _lseek(int file, int ptr, int dir) {
 }
 
 int _open(const char* name, int flags, ...) {
-	// Filter out (obviously) empty paths
-	if(name[0] == '\0' || !strcmp(name, " "))
-	{
-		fprintf(stderr, "libc: Warning: Call to open() with empty path.\n");
-		errno = ENOENT;
-		return -1;
-	}
-
-	if(flags & O_WRONLY) {
-		errno = ENOSYS;
-		return -1;
-	}
-
 	return syscall(13, name, 0, 0);
 }
 
@@ -161,7 +146,9 @@ int _write(int file, char *buf, int len) {
 }
 
 int chdir(const char *path) {
-	return syscall(20, path, 0, 0);
+	int r = syscall(20, path, 0, 0);
+	*__errno() = errno;
+	return r;
 }
 
 int socket(int domain, int type, int protocol) {
@@ -205,7 +192,6 @@ pid_t execnew(const char* path, char* __argv[], char* __env[]) {
 }
 
 int _execve(char *name, char **argv, char **env) {
-	errno = ENOSYS;
 	return syscall(23, name, argv, env);
 }
 
