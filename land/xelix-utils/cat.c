@@ -17,6 +17,11 @@ int main(int argc, char* argv[]) {
 
 	char* data = malloc(1024);
 	size_t read = fread(data, 1024, 1, fp);
+	if(read == -1) {
+		perror("Could not read file");
+		free(data);
+		exit(EXIT_FAILURE);
+	}
 
 	puts(data);
 	free(data);

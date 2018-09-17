@@ -21,6 +21,7 @@
 
 #include <log.h>
 #include <string.h>
+#include <errno.h>
 #include <md5.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
@@ -368,7 +369,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!read_inode(inode, fp->inode)) {
 		kfree(inode);
-		return 0;
+		return -1;
 	}
 
 	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, inode->uid,
@@ -382,12 +383,13 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 			vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)));
 
 		kfree(inode);
-		return 0;
+		sc_errno = EISDIR;
+		return -1;
 	}
 
 	if(inode->size < 1) {
 		kfree(inode);
-		return 0;
+		return -1;
 	}
 
 	if(size > inode->size) {

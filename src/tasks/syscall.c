@@ -88,6 +88,10 @@ static void int_handler(cpu_state_t* regs)
 	regs->eax = call(syscall);
 	regs->ebx = task->syscall_errno;
 	task->task_state = TASK_STATE_RUNNING;
+
+#ifdef SYSCALL_DEBUG
+	log(LOG_DEBUG, "Result: %d, errno: %d\n", regs->eax, regs->ebx);
+#endif
 }
 
 void syscall_init() {

@@ -20,6 +20,7 @@
 #include <console/console.h>
 #include <fs/vfs.h>
 #include <log.h>
+#include <errno.h>
 #include <tasks/syscall.h>
 
 SYSCALL_HANDLER(read)
@@ -30,9 +31,10 @@ SYSCALL_HANDLER(read)
 		return console_read(NULL, (char*)syscall.params[1], syscall.params[2]);
 
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
-	if(fd == NULL)
+	if(!fd) {
+		sc_errno = EBADF;
 		return -1;
+	}
 
-	size_t read = vfs_read((void*)syscall.params[1], syscall.params[2], fd);
-	return read;
+	return vfs_read((void*)syscall.params[1], syscall.params[2], fd);
 }

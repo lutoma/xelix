@@ -21,8 +21,6 @@
 
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
-#include <log.h>
-#include <print.h>
 #include <string.h>
 #include <memory/kmalloc.h>
 

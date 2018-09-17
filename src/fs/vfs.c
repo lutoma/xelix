@@ -206,8 +206,7 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	size_t read = mp.read_callback(fp, dest, size);
-	fp->offset += size;
-
+	fp->offset += read;
 	return read;
 }
 

@@ -120,13 +120,7 @@ int _open(const char* name, int flags, ...) {
 }
 
 ssize_t _read(int file, char *buf, int len) {
-	int read = syscall(2, file, buf, len);
-	/*if (!read) {
-		errno = EINTR;
-		return -1;
-	}*/
-
-	return read;
+	return syscall(2, file, buf, len);
 }
 
 void* _sbrk(int incr) {
