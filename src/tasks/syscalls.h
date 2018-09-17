@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2014-2016 Lukas Martini
+/* Copyright © 2014-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,6 +19,7 @@
  */
 
 #include <tasks/syscall.h>
+#include <tasks/scheduler.h>
 
 #define DEFINE_SYSCALL(name) extern uint32_t sys_ ## name (struct syscall syscall);
 

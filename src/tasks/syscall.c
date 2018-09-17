@@ -84,6 +84,7 @@ static void int_handler(cpu_state_t* regs)
 		regs->edx);
 #endif
 
+	task->syscall_errno = 0;
 	regs->eax = call(syscall);
 	regs->ebx = task->syscall_errno;
 	task->task_state = TASK_STATE_RUNNING;

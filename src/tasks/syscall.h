@@ -19,7 +19,8 @@
  */
 
 #include <hw/interrupts.h>
-#include <tasks/scheduler.h>
+#include <tasks/task.h>
+#include <print.h>
 
 #define SYSCALL_INTERRUPT 0x80
 

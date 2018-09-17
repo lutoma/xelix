@@ -23,6 +23,7 @@
 #include <string.h>
 #include <list.h>
 #include <spinlock.h>
+#include <errno.h>
 
 struct mountpoint {
 	char path[265];
@@ -166,6 +167,7 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 	if(!inode) {
 		kfree(path);
 		spinlock_release(&file_open_lock);
+		sc_errno = ENOENT;
 		return NULL;
 	}
 

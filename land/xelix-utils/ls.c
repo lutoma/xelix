@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 	DIR* dd = opendir(dir);
 
 	if(!dd) {
-		perror("opendir failed");
+		perror("Could not open directory");
 		exit(EXIT_FAILURE);
 	}
 

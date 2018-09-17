@@ -20,6 +20,7 @@
 #include <fs/vfs.h>
 #include <log.h>
 #include <string.h>
+#include <errno.h>
 #include <tasks/syscall.h>
 
 SYSCALL_HANDLER(open)

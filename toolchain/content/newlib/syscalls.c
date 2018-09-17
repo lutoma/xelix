@@ -41,6 +41,13 @@
 #include <limits.h>
 #include <poll.h>
 
+/* Normally errno is defined as a macro that does reentrancy magic. Our
+ * syscalls only get called from the reentrant mappings in reent/ and syscall/,
+ * so we need to use the system-dependent plain errno.
+ */
+#undef errno
+extern int errno;
+
 #define syscall(call, a1, a2, a3) __syscall(call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
 
 static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
@@ -49,10 +56,15 @@ static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, ui
 	register uint32_t _arg2 asm("ecx") = arg2;
 	register uint32_t _arg3 asm("edx") = arg3;
 	register uint32_t result asm("eax");
-	register uint32_t sc_errno asm("ebx");
+	register uint32_t sce asm("ebx");
 
-	asm volatile("int $0x80;" : "=r" (result), "=r" (sc_errno) : "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3));
-	//errno = sc_errno;
+	asm volatile(
+		"int $0x80;"
+
+		: "=r" (result), "=r" (sce)
+		: "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3));
+
+	errno = sce;
 	return result;
 }
 
@@ -119,11 +131,7 @@ int _open(const char* name, int flags, ...) {
 		return -1;
 	}
 
-	int fd = syscall(13, name, 0, 0);
-	if(fd == -1)
-		errno = ENOENT;
-
-	return fd;
+	return syscall(13, name, 0, 0);
 }
 
 ssize_t _read(int file, char *buf, int len) {
