@@ -28,7 +28,7 @@ static void timer_callback(cpu_state_t* regs) {
 
 static size_t sfs_read(void* dest, size_t size) {
 	size_t rsize = 0;
-	sysfs_printf("%d %d %d\n", uptime(), pit_tick, (PIT_RATE));
+	sysfs_printf("%d %d %d", uptime(), pit_tick, (PIT_RATE));
 	return rsize;
 }
 

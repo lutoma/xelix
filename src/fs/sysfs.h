@@ -18,6 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <print.h>
+
 #define sysfs_printf(args...) rsize += snprintf(dest + rsize, size - rsize, args);
 
 typedef size_t (*sysfs_read_callback_t)(void* dest, size_t size);

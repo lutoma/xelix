@@ -234,5 +234,21 @@ int lstat(const char* name, struct stat *st) {
 }
 
 int _gettimeofday(struct timeval* p, void* tz) {
-	return syscall(17, p, tz, 0);
+	FILE* fp = fopen("/sys/time", "r");
+	if(!fp) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	uint32_t tsec;
+	if(fscanf(fp, "%d", &tsec) != 1) {
+		fclose(fp);
+		errno = EINVAL;
+		return -1;
+	}
+
+	p->tv_sec = tsec;
+	p->tv_usec = 0;
+	fclose(fp);
+	return 0;
 }

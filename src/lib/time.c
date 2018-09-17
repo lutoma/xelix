@@ -22,6 +22,7 @@
 
 #include <portio.h>
 #include <hw/pit.h>
+#include <fs/sysfs.h>
 #include "time.h"
 
 #define CURRENT_YEAR        2018
@@ -149,22 +150,21 @@ static time_t read_rtc() {
 	return t;
 }
 
+static size_t sfs_read(void* dest, size_t size) {
+	size_t rsize = 0;
 
-int time_get(struct timeval* tp) {
 	/* Can't use libgcc's 64 bit integer division functions right now.
 	 * The offset shouldn't be larger than a uint32 anyway.
 	 */
 	uint32_t offset = (pit_tick - last_tick);
 	last_timestamp += offset / PIT_RATE;
 	last_tick = pit_tick;
-
-	tp->tv_sec = last_timestamp;
-	tp->tv_usec = 0;
-
-	return 0;
+	sysfs_printf("%d", last_timestamp);
+	return rsize;
 }
 
 void time_init() {
 	last_timestamp = read_rtc();
 	last_tick = pit_tick;
+	sysfs_add_file("time", sfs_read);
 }
