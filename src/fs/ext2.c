@@ -361,7 +361,8 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
-		return 0;
+		sc_errno = EBADF;
+		return -1;
 	}
 
 	debug("ext2_read_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
@@ -369,6 +370,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!read_inode(inode, fp->inode)) {
 		kfree(inode);
+		sc_errno = EBADF;
 		return -1;
 	}
 
@@ -389,7 +391,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 
 	if(inode->size < 1) {
 		kfree(inode);
-		return -1;
+		return 0;
 	}
 
 	if(size > inode->size) {
