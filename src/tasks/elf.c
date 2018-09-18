@@ -72,11 +72,11 @@
 static char header[4] = {0x7f, 'E', 'L', 'F'};
 
 // Returns the last allocated section's end address so we can set sbrk
-void* elf_read_sections(elf_t* bin, void* binary_start) {
+int elf_read_sections(elf_t* bin, void* binary_start, uint32_t memsize) {
 	elf_section_t* shead = (elf_section_t*)((uint32_t)bin + bin->shoff);
-	elf_section_t* last = NULL;
 
-	for(int i = 0; i < bin->shnum; i++) {
+	int i = 0;
+	for(; i < bin->shnum; i++) {
 
 		/* Sections without a type are unused/empty. This is usually the case
 		 * for the first section.
@@ -88,26 +88,29 @@ void* elf_read_sections(elf_t* bin, void* binary_start) {
 		#ifdef ELF_DEBUG
 			elf_section_t* strings = (elf_section_t*)((uint32_t)bin + bin->shoff + (bin->shentsize * bin->shstrndx));
 			char* name = (char*)(uint32_t)bin + strings->offset + shead->name;
-			debug("elf: Section %s, type 0x%x, virt 0x%x, phys 0x%x, size 0x%x\n", name, shead->type, shead->addr, (intptr_t)binary_start + shead->offset, shead->size);
+			debug("elf: Section %s, type 0x%x, size 0x%x\n", name, shead->type, shead->size);
 		#endif
 
 		if(shead->flags & SHF_ALLOC) {
-			debug("elf: - Copied from source 0x%x\n", (intptr_t)bin + shead->offset);
+			debug("elf: - Physical addr. 0x%x - 0x%x, virtual 0x%x - 0x%x\n",
+				(intptr_t)binary_start + shead->offset,
+				(intptr_t)binary_start + shead->offset + shead->size,
+				shead->addr, shead->addr + shead->size);
 
-			if(shead->type == SHT_NOBITS) {
-				bzero((void*)((intptr_t)binary_start + shead->offset), shead->size);
-			} else {
+			if(shead->type != SHT_NOBITS) {
+				if(shead->offset + shead->size > memsize) {
+					return -1;
+				}
+
 				memcpy((void*)((intptr_t)binary_start + shead->offset), (void*)((intptr_t)bin + shead->offset), shead->size);
 			}
-
-			last = shead;
 		}
 
 		section_cont:
 		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)bin->shentsize);
 	}
 
-	return last ? (void*)VMEM_ALIGN((intptr_t)last->addr + last->size) : NULL;
+	return i;
 }
 
 uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
@@ -118,7 +121,7 @@ uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
 
 	uint32_t memsize = 0;
 	intptr_t phead = (intptr_t)bin + bin->phoff;
-	uint32_t pages_start = (uint32_t)((elf_program_header_t*)phead)->vaddr;
+	void* pages_start = ((elf_program_header_t*)phead)->vaddr;
 
 	for(int i = 0; i < bin->phnum; i++) {
 		memsize += ((elf_program_header_t*)phead)->memsz;
@@ -126,23 +129,13 @@ uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
 	}
 
 	memsize = VMEM_ALIGN(memsize);
+	task->sbrk = pages_start + memsize;
 	*binary_start = tmalloc_a(memsize, task);
 	bzero(*binary_start, memsize);
 
-	for(int j = 0; j < memsize; j += PAGE_SIZE)
-	{
-		debug("elf: Mapping page 0x%x to phys 0x%x\n", pages_start + j, (intptr_t)*binary_start + j);
+	vmem_map(task->memory_context, pages_start, *binary_start, memsize, VMEM_SECTION_CODE);
 
-		struct vmem_page *page = vmem_new_page();
-		page->section = VMEM_SECTION_CODE;
-		page->readonly = 0;
-		page->cow = 0;
-		page->allocated = 1;
-		page->virt_addr = (void*)(pages_start + j);
-		page->phys_addr = (void*)((intptr_t)*binary_start + j);
-		vmem_add_page(task->memory_context, page);
-	}
-
+	debug("elf: Allocated physical memory region from 0x%x to 0x%x\n", *binary_start, (intptr_t)*binary_start + memsize);
 	return memsize;
 }
 
@@ -179,10 +172,12 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 	task_t* task = task_new(bin->entry, NULL, name, environ, envc, argv, argc);
 
 	void* binary_start = NULL;
-	alloc_memory(bin, &binary_start, task);
-	task->sbrk = elf_read_sections(bin, binary_start);
-	debug("Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
+	uint32_t memsize = alloc_memory(bin, &binary_start, task);
+	if(elf_read_sections(bin, binary_start, memsize) < 1) {
+		fail("elf: Loading sections failed.\n");
+	}
 
+	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
 	return task;
 }
 

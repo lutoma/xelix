@@ -67,29 +67,7 @@ void vmem_init()
 	interrupts_register(14, &vmem_handle_fault);
 
 	struct vmem_context *ctx = vmem_new();
-
-	vmem_faultAddress = kmalloc_a(PAGE_SIZE);
-
-	struct vmem_page *debugPage = vmem_new_page();
-	debugPage->section = VMEM_SECTION_UNMAPPED;
-	debugPage->virt_addr = vmem_faultAddress;
-
-	vmem_add_page(ctx, debugPage);
-
-	for (char *i = (char*)0; i <= (char*)0xffffe000U; i += 4096)
-	{
-		if (i == vmem_faultAddress)
-			continue;
-		struct vmem_page *page = vmem_new_page();
-		page->section = VMEM_SECTION_KERNEL;
-		page->cow = 0;
-		page->allocated = 1;
-		page->virt_addr = (void *)i;
-		page->phys_addr = (void *)i;
-
-		vmem_add_page(ctx, page);
-	}
-
+	vmem_map(ctx, 0, 0, 0xffffe000U, VMEM_SECTION_KERNEL);
 	vmem_kernelContext = ctx;
 }
 
@@ -317,14 +295,6 @@ void vmem_handle_fault(cpu_state_t* regs)
 		return;
 	}
 
-	struct vmem_page *kernel_pg = vmem_get_page_virt(vmem_kernelContext, (void *)GET_PAGE(phys_addr));
-
-	if (kernel_pg->virt_addr == vmem_faultAddress)
-	{
-		log(LOG_DEBUG, "Received debugging page fault\n");
-		return;
-	}
-
 	panic("Page fault for %s to 0x%x in %s mode%s\n", op, regs->cr2, mode, pgpres);
 }
 
@@ -336,6 +306,20 @@ void vmem_set_cache(struct vmem_context *ctx, void *cache)
 void *vmem_get_cache(struct vmem_context *ctx)
 {
 	return ctx->cache;
+}
+
+void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, int section) {
+	for(uint32_t i = 0; i < VMEM_ALIGN(size); i += PAGE_SIZE)
+	{
+		struct vmem_page *page = vmem_new_page();
+		page->section = section;
+		page->readonly = 0;
+		page->cow = 0;
+		page->allocated = 1;
+		page->virt_addr = virt_start + i;
+		page->phys_addr = phys_start + i;
+		vmem_add_page(ctx, page);
+	}
 }
 
 static void vmem_dump_page_internal(struct vmem_context *ctx, struct vmem_page *pg, uint32_t i)

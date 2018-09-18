@@ -94,7 +94,7 @@ static void int_handler(cpu_state_t* regs)
 	}
 
 #ifdef SYSCALL_DEBUG
-	log(LOG_DEBUG, "Result: %d, errno: %d\n", regs->eax, regs->ebx);
+	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", regs->eax, regs->ebx);
 #endif
 }
 

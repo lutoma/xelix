@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2011 Fritz Grimpen
- * Copyright © 2013-2015 Lukas Martini
+ * Copyright © 2013-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -52,7 +52,6 @@ void vmem_init();
 struct vmem_context *vmem_kernelContext;
 struct vmem_context *vmem_currentContext;
 struct vmem_context *vmem_processContext;
-void *vmem_faultAddress;
 
 /* Some callbacks for magic functions */
 void (*vmem_applyPage)(struct vmem_context *, struct vmem_page *);
@@ -87,6 +86,8 @@ void vmem_handle_fault(cpu_state_t* regs);
 /* Get/Set cached paging context */
 void vmem_set_cache(struct vmem_context *ctx, void *cache);
 void *vmem_get_cache(struct vmem_context *ctx);
+
+void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, int section);
 
 #ifdef __i386__
 	#define PAGE_SIZE 4096

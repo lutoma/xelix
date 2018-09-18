@@ -47,6 +47,8 @@ SYSCALL_HANDLER(sbrk)
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
+	vmem_map(task->memory_context, virt_addr, phys_addr, length, VMEM_SECTION_HEAP);
+
 	for(intptr_t i = 0; i < length; i += PAGE_SIZE) {
 		struct vmem_page* opage = vmem_get_page_virt(task->memory_context, (void*)((intptr_t)virt_addr + i));
 		if(opage) {
