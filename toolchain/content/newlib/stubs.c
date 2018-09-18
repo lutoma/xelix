@@ -251,7 +251,7 @@ int setpgid(pid_t pid, pid_t pgid) {
 	return -1;
 }
 
-int fcntl(int fildes, int cmd, ...) {
+int _fcntl(int fildes, int cmd, ...) {
 	//fprintf(stderr, "Warning: xelix newlib fcntl() stub called.\n");
 
 	errno = ENOSYS;
