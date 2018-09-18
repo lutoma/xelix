@@ -88,6 +88,7 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 		"failed or the kernel panic occured in early startup before the "
 		"initialization of the needed drivers.");
 
+	console_clear(NULL);
 	panic_printf("\nKernel Panic: ");
 	vprintf(error, va);
 	serial_vprintf(error, va);
