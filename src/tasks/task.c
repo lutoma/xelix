@@ -115,7 +115,7 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	*(void**)task->state->esp = entry;
 	*((uint32_t*)task->state->esp + 1) = 0x1b; // 0x1b
 	*((uint32_t*)task->state->esp + 2) = 0x200; // 0x200
-	*((uint32_t*)task->state->esp + 3) = task->state->ebp;
+	*((uint32_t*)task->state->esp + 3) = (uint32_t)task->state->ebp;
 	*((uint32_t*)task->state->esp + 4) = 0x23; // 0x23
 
 	task->pid = ++highest_pid;

@@ -172,7 +172,7 @@ void memset(void* ptr, uint8_t fill, uint32_t size) {
 }
 
 #undef memcpy
-void* memcpy(void* dest, void* src, uint32_t size) {
+void* memcpy(void* dest, const void* src, uint32_t size) {
 	uint8_t* from = (uint8_t*) src;
 	uint8_t* to = (uint8_t*) dest;
 	while(size > 0)

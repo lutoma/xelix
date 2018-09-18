@@ -95,9 +95,9 @@ void* elf_read_sections(elf_t* bin, void* binary_start) {
 			debug("elf: - Copied from source 0x%x\n", (intptr_t)bin + shead->offset);
 
 			if(shead->type == SHT_NOBITS) {
-				bzero((intptr_t)binary_start + shead->offset, shead->size);
+				bzero((void*)((intptr_t)binary_start + shead->offset), shead->size);
 			} else {
-				memcpy((intptr_t)binary_start + shead->offset, (intptr_t)bin + shead->offset, shead->size);
+				memcpy((void*)((intptr_t)binary_start + shead->offset), (void*)((intptr_t)bin + shead->offset), shead->size);
 			}
 
 			last = shead;
@@ -118,7 +118,7 @@ uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
 
 	uint32_t memsize = 0;
 	intptr_t phead = (intptr_t)bin + bin->phoff;
-	uint32_t pages_start = ((elf_program_header_t*)phead)->vaddr;
+	uint32_t pages_start = (uint32_t)((elf_program_header_t*)phead)->vaddr;
 
 	for(int i = 0; i < bin->phnum; i++) {
 		memsize += ((elf_program_header_t*)phead)->memsz;
@@ -179,7 +179,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 	task_t* task = task_new(bin->entry, NULL, name, environ, envc, argv, argc);
 
 	void* binary_start = NULL;
-	uint32_t memsize = alloc_memory(bin, &binary_start, task);
+	alloc_memory(bin, &binary_start, task);
 	task->sbrk = elf_read_sections(bin, binary_start);
 	debug("Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
 

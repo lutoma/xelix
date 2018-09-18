@@ -22,6 +22,7 @@
 #include <memory/kmalloc.h>
 #include <string.h>
 #include <list.h>
+#include <print.h>
 #include <spinlock.h>
 #include <errno.h>
 

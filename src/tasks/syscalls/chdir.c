@@ -46,6 +46,6 @@ SYSCALL_HANDLER(chdir)
 	}
 
 	kfree(stat);
-	strncpy(syscall.task->cwd, fp->path, TASK_PATH_MAX);
+	strcpy(syscall.task->cwd, fp->path);
 	return 0;
 }

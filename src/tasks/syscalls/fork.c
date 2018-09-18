@@ -20,6 +20,7 @@
 #include <log.h>
 #include <tasks/syscall.h>
 #include <tasks/task.h>
+#include <tasks/scheduler.h>
 
 SYSCALL_HANDLER(fork)
 {
