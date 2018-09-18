@@ -274,7 +274,6 @@ char* vmem_get_name(struct vmem_context* ctx) {
 
 void vmem_handle_fault(cpu_state_t* regs)
 {
-	uint32_t phys_addr = 0;//(uint32_t)regs->eip;
 	task_t* running_task = scheduler_get_current();
 
 	char* pgpres = bit_get(regs->errCode, 0) ? " (page present)" : "";
@@ -283,13 +282,8 @@ void vmem_handle_fault(cpu_state_t* regs)
 
 	if(running_task)
 	{
-		struct vmem_page *pg = vmem_get_page_virt(running_task->memory_context, (void*)GET_PAGE(phys_addr));
-		uint32_t virt_addr = (uint32_t)pg->virt_addr + (phys_addr % PAGE_SIZE);
-
-		log(LOG_ERR, "Page fault for %s to 0x%x in process <%s>+%x "
-			"at EIP 0x%x (phys 0x%x) of context %s, %s mode%s. Terminating the task.\n",
-			op, regs->cr2, running_task->name, (virt_addr - (uint32_t)running_task->entry),
-			virt_addr, phys_addr, vmem_get_name(running_task->memory_context), mode, pgpres);
+		log(LOG_ERR, "Page fault for %s to 0x%x in process <%s> %s mode%s.\n",
+			op, regs->cr2, running_task->name, mode, pgpres);
 
 		scheduler_terminate_current();
 		return;
