@@ -87,7 +87,11 @@ static void int_handler(cpu_state_t* regs)
 	task->syscall_errno = 0;
 	regs->eax = call(syscall);
 	regs->ebx = task->syscall_errno;
-	task->task_state = TASK_STATE_RUNNING;
+
+	// Only change state back if it hasn't alreay been modified
+	if(task->task_state == TASK_STATE_SYSCALL) {
+		task->task_state = TASK_STATE_RUNNING;
+	}
 
 #ifdef SYSCALL_DEBUG
 	log(LOG_DEBUG, "Result: %d, errno: %d\n", regs->eax, regs->ebx);

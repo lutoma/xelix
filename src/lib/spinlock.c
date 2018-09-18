@@ -29,8 +29,6 @@ bool spinlock_get(spinlock_t* lock, uint32_t numretries) {
 		if(__sync_bool_compare_and_swap(lock, 0, 1)) {
 			return true;
 		}
-
-		scheduler_yield();
 	}
 
 	return false;

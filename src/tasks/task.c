@@ -126,6 +126,7 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	task->envc = envc;
 	task->argv = argv;
 	task->argc = argc;
+	task->interrupt_yield = false;
 
 	if(parent)
 		memcpy(task->cwd, parent->cwd, TASK_PATH_MAX);

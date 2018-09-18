@@ -24,6 +24,6 @@
 SYSCALL_HANDLER(exit)
 {
 	syscall.task->task_state = TASK_STATE_TERMINATED;
-	scheduler_yield();
+	syscall.task->interrupt_yield = true;
 	return 0;
 }

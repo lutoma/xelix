@@ -65,6 +65,13 @@ typedef struct task {
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[TASK_PATH_MAX + 1];
 	uint32_t syscall_errno;
+
+	/* If set, this will cause the interrupt handler to not return this task's
+	 * state after a syscall as usual, but instead run the scheduler as if a
+	 * timer interrupt had occured. Used for scheduler_yield/to make sure tasks
+	 * that called exit() don't get called again.
+	 */
+	bool interrupt_yield;
 } task_t;
 
 task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],

@@ -33,11 +33,10 @@ task_t* scheduler_select(cpu_state_t* lastRegs);
 void scheduler_init();
 void scheduler_remove(task_t *t);
 
-static inline void scheduler_yield() {
-	asm("int 0x31");
-}
-
 static inline void scheduler_terminate_current() {
-	scheduler_get_current()->task_state = TASK_STATE_TERMINATED;
-	scheduler_yield();
+	task_t* task = scheduler_get_current();
+	if(task) {
+		task->task_state = TASK_STATE_TERMINATED;
+		task->interrupt_yield = true;
+	}
 }

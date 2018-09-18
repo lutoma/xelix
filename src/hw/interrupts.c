@@ -32,6 +32,7 @@
  */
 cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 	interrupt_handler_t handler = interrupt_handlers[regs->interrupt];
+	task_t* task = scheduler_get_current();
 
 	#ifdef INTERRUPTS_DEBUG
 	debug("state before:\n");
@@ -41,11 +42,13 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 	if(handler != NULL)
 		handler(regs);
 
-	/* Timer interrupt
-	 * FIXME Should get a normal interrupt handler like everything else
-	 */
-	if((regs->interrupt == IRQ0 || regs->interrupt == 0x31) && scheduler_state != SCHEDULER_OFF)
+	// Timer interrupt
+	if(scheduler_state != SCHEDULER_OFF && (regs->interrupt == IRQ0 || (task && task->interrupt_yield)))
 	{
+		if((task && task->interrupt_yield)) {
+			task->interrupt_yield = false;
+		}
+
 		task_t* new_task = scheduler_select(regs);
 
 		if(new_task && new_task->state && new_task->memory_context)
