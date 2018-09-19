@@ -19,19 +19,17 @@
 #ifndef _SYS_XELIX_H
 #define _SYS_XELIX_H
 
-#define XELIX_EXECDATA_BUF_SIZE 0x400
+#include <stdint.h>
 
 struct _xelix_execdata {
 	uint32_t pid;
 	uint32_t ppid;
 	uint32_t argc;
 	uint32_t envc;
-
-	// Contains argc arguments, then environment until NULL.
-	char* argv_environ[];
+	void** argv;
+	void** env;
 };
 
-char _xelix_execdata_buf[XELIX_EXECDATA_BUF_SIZE];
 struct _xelix_execdata* _xelix_execdata;
 
 pid_t execnew(const char* path, char* __argv[], char* __env[]);

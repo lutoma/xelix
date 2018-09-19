@@ -1,5 +1,6 @@
-/* crt0.c: crt0 for userland tasks
- * Copyright © 2018 Lukas Martini
+#pragma once
+
+/* Copyright © 2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,18 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/xelix.h>
+#include <tasks/task.h>
 
-extern int main(int argc, char** argv);
-
-void __attribute__((__fastcall__)) _start() {
-	_xelix_execdata = (struct _xelix_execdata*)0x5000;
-	environ = _xelix_execdata->env;
-	int ret = main(_xelix_execdata->argc, _xelix_execdata->argv);
-	exit(ret);
-}
+void task_setup_execdata(task_t* task);

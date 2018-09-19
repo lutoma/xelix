@@ -18,6 +18,7 @@
  */
 
 #include <tasks/task.h>
+#include <tasks/execdata.h>
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <memory/paging.h>
@@ -96,6 +97,7 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	*((uint32_t*)task->state->esp + 3) = (uint32_t)task->state->ebp;
 	*((uint32_t*)task->state->esp + 4) = GDT_SEG_DATA_PL3;
 
+	task_setup_execdata(task);
 	return task;
 }
 

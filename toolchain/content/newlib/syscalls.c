@@ -69,12 +69,6 @@ static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, ui
 	return result;
 }
 
-int _xelix_getexecdata() {
-	_xelix_execdata = (struct xelix_execdata*)&_xelix_execdata_buf;
-	syscall(19, _xelix_execdata, XELIX_EXECDATA_BUF_SIZE, 0);
-	return 0;
-}
-
 void _exit(int return_code) {
 	syscall(1, return_code, 0, 0);
 }
