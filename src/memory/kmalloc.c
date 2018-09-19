@@ -331,6 +331,9 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, task_t* tas
 		ta->addr = (void*)GET_CONTENT(header);
 		ta->next = task->memory_allocations;
 		task->memory_allocations = ta;
+
+		// Always zero task memory to prevent data leaks
+		bzero((void*)GET_CONTENT(header), sz);
 	}
 
 	debug("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));

@@ -38,16 +38,12 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = (task_t*)kmalloc(sizeof(task_t));
+	bzero(task, sizeof(task_t));
 
+	// tmalloc automatically zeros memory.
 	task->state = tmalloc_a(sizeof(cpu_state_t), task);
-	bzero(task->state, sizeof(cpu_state_t));
-
 	task->stack = tmalloc_a(STACKSIZE, task);
-	bzero(task->stack, STACKSIZE);
-
 	task->kernel_stack = tmalloc_a(STACKSIZE, task);
-	bzero(task->kernel_stack, STACKSIZE);
-
 	task->memory_context = vmem_new();
 	vmem_set_task(task->memory_context, task);
 
