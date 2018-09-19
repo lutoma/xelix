@@ -21,6 +21,7 @@
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <memory/paging.h>
+#include <memory/gdt.h>
 #include <string.h>
 
 #define STACKSIZE PAGE_SIZE
@@ -29,19 +30,20 @@ uint32_t highest_pid = 0;
 extern void* __kernel_start;
 extern void* __kernel_end;
 
-/* Setup a new task, including the necessary paging context.
- * However, mapping the program itself into the context is
- * UP TO YOU as the scheduler has no clue about how long
- * your program is.
+/* Sets up a new task, including the necessary paging context, stacks,
+ * interrupt stack frame etc. The binary still has to be mapped into the paging
+ * context separately (usually in the ELF loader).
  */
 task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = (task_t*)kmalloc(sizeof(task_t));
 
+	task->state = tmalloc_a(sizeof(cpu_state_t), task);
+	bzero(task->state, sizeof(cpu_state_t));
+
 	task->stack = tmalloc_a(STACKSIZE, task);
 	bzero(task->stack, STACKSIZE);
-	task->state = tmalloc_a(sizeof(cpu_state_t), task);
 
 	task->kernel_stack = tmalloc_a(STACKSIZE, task);
 	bzero(task->kernel_stack, STACKSIZE);
@@ -49,77 +51,9 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	task->memory_context = vmem_new();
 	vmem_set_task(task->memory_context, task);
 
-	// 1:1 map the stacks
-	vmem_rm_page_virt(task->memory_context, task->stack);
-
-	struct vmem_page* page = vmem_new_page();
-	page->section = VMEM_SECTION_DATA;
-	page->cow = 0;
-	page->allocated = 1;
-	page->virt_addr = task->stack;
-	page->phys_addr = task->stack;
-	vmem_add_page(task->memory_context, page);
-
-	vmem_rm_page_virt(task->memory_context, task->kernel_stack);
-
-	page = vmem_new_page();
-	page->section = VMEM_SECTION_KERNEL;
-	page->cow = 0;
-	page->allocated = 1;
-	page->virt_addr = task->kernel_stack;
-	page->phys_addr = task->kernel_stack;
-	vmem_add_page(task->memory_context, page);
-
-	// 1:1 map the task state struct (used in the interrupt return)
-	vmem_rm_page_virt(task->memory_context, task);
-
-	struct vmem_page* tpage = vmem_new_page();
-	tpage->section = VMEM_SECTION_DATA;
-	tpage->cow = 0;
-	tpage->allocated = 1;
-	tpage->virt_addr = task->state;
-	tpage->phys_addr = task->state;
-	vmem_add_page(task->memory_context, tpage);
-
-	/* 1:1 map kernel memory
-	 * FIXME This is really generic and hacky. Should instead do some smart
-	 * stuff with memory/track.c – That is, as soon as we have a complete
-	 * collection of all the memory areas we need.
-	 */
-	for (char *i = (char*)VMEM_ALIGN_DOWN(&__kernel_start); i <= (char*)VMEM_ALIGN(&__kernel_end); i += PAGE_SIZE)
-	{
-		struct vmem_page* page = vmem_new_page();
-		page->section = VMEM_SECTION_KERNEL;
-		page->cow = 0;
-		page->allocated = 1;
-		page->readonly = 1;
-		page->virt_addr = (void *)i;
-		page->phys_addr = (void *)i;
-
-		vmem_add_page(task->memory_context, page);
-	}
-
-	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
-
-	// Stack
-	task->state->ebp = task->stack + STACKSIZE;
-	task->state->esp = task->state->ebp - (5 * sizeof(uint32_t));
-
-	//*(task->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
-	//*(task->state->ebp + 2) = (intptr_t)NULL; // base pointer
-
-	task->entry = entry;
-	task->state->ds = 0x23; // 0x23
-
-	// Return stack for iret. eip, cs, eflags, esp, ss.
-	*(void**)task->state->esp = entry;
-	*((uint32_t*)task->state->esp + 1) = 0x1b; // 0x1b
-	*((uint32_t*)task->state->esp + 2) = 0x200; // 0x200
-	*((uint32_t*)task->state->esp + 3) = (uint32_t)task->state->ebp;
-	*((uint32_t*)task->state->esp + 4) = 0x23; // 0x23
-
-	task->pid = ++highest_pid;
 	strcpy(task->name, name);
+	task->entry = entry;
+	task->pid = ++highest_pid;
 	task->parent = parent;
 	task->task_state = TASK_STATE_RUNNING;
 	task->environ = environ;
@@ -132,6 +66,39 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 		memcpy(task->cwd, parent->cwd, TASK_PATH_MAX);
 	else
 		strcpy(task->cwd, "/");
+
+	/* 1:1 map required memory regions:
+	 *  - Task stack
+	 *  - Kernel task stack (for TSS).
+	 *  - Task state struct (used in the interrupt return).
+	 *  - Kernel memory
+	 *
+	 * Todo: Investigate if we can put all the kernel code that runs before
+	 * the paging context switch in a separate ELF section and maybe only map
+	 * that.
+	 */
+	vmem_map_flat(task->memory_context, task->stack, STACKSIZE, VMEM_SECTION_DATA);
+	vmem_map_flat(task->memory_context, task->kernel_stack, STACKSIZE, VMEM_SECTION_KERNEL);
+	vmem_map_flat(task->memory_context, task->state, sizeof(task->state), VMEM_SECTION_DATA);
+
+	void* kernel_start = VMEM_ALIGN_DOWN(&__kernel_start);
+	uint32_t kernel_size = (uint32_t)&__kernel_end - (uint32_t)kernel_start;
+	vmem_map_flat(task->memory_context, kernel_start, kernel_size, VMEM_SECTION_KERNEL);
+
+	//*(task->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
+	//*(task->state->ebp + 2) = (intptr_t)NULL; // base pointer
+
+	task->state->ds = GDT_SEG_DATA_PL3;
+	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+	task->state->ebp = task->stack + STACKSIZE;
+	task->state->esp = task->state->ebp - (5 * sizeof(uint32_t));
+
+	// Return stack for iret. eip, cs, eflags, esp, ss.
+	*(void**)task->state->esp = entry;
+	*((uint32_t*)task->state->esp + 1) = GDT_SEG_CODE_PL3;
+	*((uint32_t*)task->state->esp + 2) = EFLAGS_IF;
+	*((uint32_t*)task->state->esp + 3) = (uint32_t)task->state->ebp;
+	*((uint32_t*)task->state->esp + 4) = GDT_SEG_DATA_PL3;
 
 	return task;
 }

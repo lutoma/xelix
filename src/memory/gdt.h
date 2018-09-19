@@ -19,5 +19,10 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define GDT_SEG_CODE_PL0 0x08
+#define GDT_SEG_DATA_PL0 0x10
+#define GDT_SEG_CODE_PL3 0x1b
+#define GDT_SEG_DATA_PL3 0x23
+
 void gdt_set_tss(void* addr);
 void gdt_init();

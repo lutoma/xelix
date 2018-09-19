@@ -20,6 +20,8 @@
 
 #include <log.h>
 
+#define EFLAGS_IF 0x200
+
 typedef struct {
 	// Data segment selector
 	uint32_t ds;
