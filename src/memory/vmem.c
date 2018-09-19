@@ -316,6 +316,22 @@ void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint
 	}
 }
 
+intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool reverse)
+{
+	struct vmem_page* (*_get_pg)(struct vmem_context*, void*) = reverse ? vmem_get_page_phys : vmem_get_page_virt;
+
+	int diff = raddress % PAGE_SIZE;
+	raddress -= diff;
+
+	struct vmem_page* page = _get_pg(ctx, (void*)raddress);
+
+	if(!page)
+		return (intptr_t)NULL;
+
+	intptr_t v = reverse ? (intptr_t)page->virt_addr : (intptr_t)page->phys_addr;
+	return v + diff;
+}
+
 static void vmem_dump_page_internal(struct vmem_context *ctx, struct vmem_page *pg, uint32_t i)
 {
 	char *typeString = "UNKNOWN";

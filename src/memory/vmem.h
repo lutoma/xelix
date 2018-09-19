@@ -90,6 +90,8 @@ void *vmem_get_cache(struct vmem_context *ctx);
 void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, int section);
 #define vmem_map_flat(ctx, start, size, section) vmem_map(ctx, start, start, size, section)
 
+intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool reverse);
+
 #ifdef __i386__
 	#define PAGE_SIZE 4096
 	#define VMEM_ALIGN(x) (typeof(x))(((intptr_t)(x) & 0xFFFFF000) + 0x1000)

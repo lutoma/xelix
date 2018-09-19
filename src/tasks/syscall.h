@@ -20,6 +20,7 @@
 
 #include <hw/interrupts.h>
 #include <tasks/task.h>
+#include <memory/vmem.h>
 #include <print.h>
 
 #define SYSCALL_INTERRUPT 0x80
@@ -27,7 +28,7 @@
 #define SYSCALL_HANDLER(name) uint32_t sys_ ## name (struct syscall syscall)
 
 #define _SYSC_RESOLVE(par, reverse) {									\
-	par = (typeof(par))task_resolve_address((intptr_t)par, reverse);	\
+	par = (typeof(par))vmem_translate(syscall.task->memory_context, (intptr_t)par, reverse);	\
 	if(!par) {															\
 		return -1;														\
 	}																	\
@@ -45,5 +46,4 @@ struct syscall {
 };
 
 typedef uint32_t (*syscall_t)(struct syscall);
-intptr_t task_resolve_address(intptr_t raddress, bool reverse);
 void syscall_init();

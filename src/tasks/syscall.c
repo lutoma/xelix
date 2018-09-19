@@ -27,27 +27,6 @@
 
 #include "syscalls.h"
 
-/* Resolves a virtual address from within the virtual address space of the
- * current task to the corresponding physical address we can use.
- * If reverse is true, do the exact opposite (phys address -> task address).
- */
-intptr_t task_resolve_address(intptr_t raddress, bool reverse)
-{
-	struct vmem_page* (*_get_pg)(struct vmem_context*, void*) = reverse ? vmem_get_page_phys : vmem_get_page_virt;
-	task_t* task = scheduler_get_current();
-
-	int diff = raddress % PAGE_SIZE;
-	raddress -= diff;
-
-	struct vmem_page* page = _get_pg(task->memory_context, (void*)raddress);
-
-	if(!page)
-		return (intptr_t)NULL;
-
-	intptr_t v = reverse ? (intptr_t)page->virt_addr : (intptr_t)page->phys_addr;
-	return v + diff;
-}
-
 static void int_handler(cpu_state_t* regs)
 {
 	task_t* task = scheduler_get_current();

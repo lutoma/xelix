@@ -24,9 +24,10 @@
 #include <multiboot.h>
 #include <string.h>
 #include <memory/kmalloc.h>
+#include <memory/vmem.h>
 
 // Check an array to make sure it's NULL-terminated, then copy to kernel space
-static char** copy_array(char** array, uint32_t* count) {
+static char** copy_array(task_t* task, char** array, uint32_t* count) {
 	int size = 0;
 
 	for(; size < 200; size++) {
@@ -42,7 +43,7 @@ static char** copy_array(char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		new_array[i] = strndup((char*)task_resolve_address((intptr_t)array[i], false), 200);
+		new_array[i] = strndup((char*)vmem_translate(task->memory_context, (intptr_t)array[i], false), 200);
 	}
 
 	new_array[i] = NULL;
@@ -62,8 +63,8 @@ SYSCALL_HANDLER(execnew)
 
 	uint32_t __argc = 0;
 	uint32_t __envc = 0;
-	char** __argv = copy_array((char**)syscall.params[1], &__argc);
-	char** __env = copy_array((char**)syscall.params[2], &__envc);
+	char** __argv = copy_array(syscall.task, (char**)syscall.params[1], &__argc);
+	char** __env = copy_array(syscall.task, (char**)syscall.params[2], &__envc);
 
 	if(!__argv || !__env) {
 		log(LOG_WARN, "execnew: array check fail\n");
