@@ -349,11 +349,15 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
 	debug("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
 
-	if(unlikely((intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end)) {
-		debug("INVALID_BOUNDS\n");
+	if(unlikely(
+		(intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end ||
+		header->magic != KMALLOC_MAGIC || header->type == TYPE_FREE)) {
+
+		log(LOG_ERR, "kmalloc: Attempt to free invalid block");
 		return;
 	}
 
+	// Only runs in debug
 	check_header(header);
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
