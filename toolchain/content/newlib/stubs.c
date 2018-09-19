@@ -39,6 +39,7 @@
 #include <sgtty.h>
 #include <limits.h>
 #include <poll.h>
+#include <mntent.h>
 
 
 int _close(int file) {
@@ -476,4 +477,9 @@ int usleep(useconds_t useconds) {
 int stime(const time_t *t) {
 	errno = ENOSYS;
 	return -1;
+}
+
+struct mntent *getmntent(FILE *stream) {
+	errno = ENOSYS;
+	return NULL;
 }
