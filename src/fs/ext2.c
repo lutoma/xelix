@@ -340,16 +340,29 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		}
 
 		char* sym_path = (char*)inode->blocks;
+		char* new_path;
 		if(sym_path[0] != '/') {
-			log(LOG_WARN, "ext2: Relative symlinks not supported right now.\n");
-			kfree(inode);
-			return 0;
+			char* base_path = strdup(path);
+			char* c = base_path + strlen(path);
+			for(; c > path; c--) {
+				if(*c == '/') {
+					*c = 0;
+					break;
+				}
+			}
+
+			new_path = vfs_normalize_path(sym_path, base_path);
+			kfree(base_path);
+		} else {
+			new_path = strdup(sym_path);
 		}
 
 		kfree(inode);
 
 		// FIXME Should be vfs_open to make symlinks across mount points possible
-		return ext2_open(sym_path, mount_instance);
+		uint32_t r = ext2_open(new_path, mount_instance);
+		kfree(new_path);
+		return r;
 	}
 
 	kfree(inode);

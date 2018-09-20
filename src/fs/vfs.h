@@ -98,6 +98,7 @@ typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t siz
 // Used to always store the last read/write attempt (used for kernel panic debugging)
 char vfs_last_read_attempt[512];
 
+char* vfs_normalize_path(const char* orig_path, char* cwd);
 vfs_file_t* vfs_get_from_id(uint32_t id);
 vfs_file_t* vfs_open(const char* path, task_t* task);
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);

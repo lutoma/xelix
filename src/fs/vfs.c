@@ -44,7 +44,7 @@ uint32_t last_file = -1;
 uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
-static char* normalize_path(const char* orig_path, char* cwd) {
+char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	if(!strcmp(orig_path, ".")) {
 		return cwd;
 	}
@@ -52,7 +52,7 @@ static char* normalize_path(const char* orig_path, char* cwd) {
 	char* path;
 	if(orig_path[0] != '/') {
 		path = kmalloc(strlen(orig_path) + strlen(cwd) + 2);
-		snprintf(path, strlen(orig_path) + strlen(cwd) + 2, "%s/%s", cwd, orig_path);
+		snprintf(path, strlen(orig_path) + strlen(cwd) + 3, "/%s/%s", cwd, orig_path);
 	} else {
 		path = strdup(orig_path);
 	}
@@ -141,7 +141,7 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 		pwd = strndup(task->cwd, 265);
 	}
 
-	char* path = normalize_path(orig_path, pwd);
+	char* path = vfs_normalize_path(orig_path, pwd);
 	char* mount_path = path;
 
 	for(int i = 0; i <= last_mountpoint; i++) {
