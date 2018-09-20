@@ -193,6 +193,11 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 
 	uint32_t num = ++last_file;
 
+	if(num >= VFS_MAX_OPENFILES) {
+		sc_errno = ENFILE;
+		return NULL;
+	}
+
 	files[num].num = num;
 	strcpy(files[num].path, path);
 	strcpy(files[num].mount_path, mount_path);
