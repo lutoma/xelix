@@ -74,9 +74,11 @@ static inline void __attribute__((noreturn)) freeze(void) {
 	__builtin_unreachable();
 }
 
-static inline void sleep_ticks(time_t timeout) {
-	uint64_t start = pit_tick;
-	while(pit_tick <= start + timeout);
+static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
+	const uint32_t until = pit_tick + timeout;
+	while(pit_tick <= until) {
+		asm volatile("hlt");
+	}
 }
 
 static inline uint32_t uptime(void) {
