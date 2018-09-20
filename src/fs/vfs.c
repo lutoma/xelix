@@ -26,6 +26,15 @@
 #include <spinlock.h>
 #include <errno.h>
 
+#ifdef VFS_DEBUG
+# define debug(fmt, args...) log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s " fmt, \
+	fp->task ? fp->task->pid : 0, \
+	fp->task ? fp->task->name : "kernel", \
+	__func__ + 4, fp->num, fp->path, args)
+#else
+# define debug
+#endif
+
 struct mountpoint {
 	char path[265];
 	void* instance;
@@ -121,6 +130,13 @@ vfs_file_t* vfs_get_from_id(uint32_t id) {
 
 vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 {
+	#ifdef VFS_DEBUG
+	log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s\n",
+		task ? task->pid : 0,
+		task ? task->name : "kernel",
+		"open", 0, orig_path);
+	#endif
+
 	if(!orig_path || !strcmp(orig_path, "")) {
 		log(LOG_ERR, "vfs: vfs_open called with empty path.\n");
 		sc_errno = ENOENT;
@@ -185,12 +201,14 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 	files[num].offset = 0;
 	files[num].mountpoint = mp_num;
 	files[num].inode = inode;
+	files[num].task = task;
 
 	spinlock_release(&file_open_lock);
 	return &files[num];
 }
 
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
+	debug("\n", NULL);
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	int r = mp.stat_callback(fp, dest);
@@ -204,6 +222,7 @@ int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 }
 
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
+	debug("size %d\n", size);
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	size_t read = mp.read_callback(fp, dest, size);
@@ -211,20 +230,24 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 	return read;
 }
 
-size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size) {
-	if(dir->offset) {
+size_t vfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
+	debug("size %d\n", size);
+
+	if(fp->offset) {
 		sc_errno = ENOSYS;
 		return 0;
 	}
-	strncpy(vfs_last_read_attempt, dir->path, 512);
-	struct mountpoint mp = mountpoints[dir->mountpoint];
-	size_t read = mp.getdents_callback(dir, dest, size);
-	dir->offset += read;
+	strncpy(vfs_last_read_attempt, fp->path, 512);
+	struct mountpoint mp = mountpoints[fp->mountpoint];
+	size_t read = mp.getdents_callback(fp, dest, size);
+	fp->offset += read;
 	return read;
 }
 
 
 void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
+	debug("offset %d origin %d\n", offset, origin);
+
 	switch(origin) {
 		case VFS_SEEK_SET:
 			fp->offset = offset;

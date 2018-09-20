@@ -54,6 +54,7 @@ typedef struct {
    uint32_t offset;
    uint32_t mountpoint;
    uint32_t inode;
+   task_t* task;
 } vfs_file_t;
 
 

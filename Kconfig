@@ -7,6 +7,9 @@ config INIT_PATH
 config PIT_RATE
 	int "PIT tick rate / scheduling frequency (In Hz)"
 	default 500
+	---help---
+	How often the interrupt timer should fire per second. This is also
+	the task switching frequency, and the maximum time resolution.
 
 menu "Debugging"
 	config KMALLOC_DEBUG
@@ -25,6 +28,9 @@ menu "Debugging"
 
 	config INTERRUPTS_DEBUG
 		bool "Interrupts debugging"
+
+	config VFS_DEBUG
+		bool "File system debugging"
 
 	config LOG_PRINT_LEVEL
 		int "TTY log level"
