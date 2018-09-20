@@ -25,6 +25,7 @@
 #include <multiboot.h>
 #include <panic.h>
 #include <spinlock.h>
+#include <fs/sysfs.h>
 
 #define KMALLOC_MAGIC 0xCAFE
 
@@ -369,6 +370,19 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 	spinlock_release(&kmalloc_lock);
 }
 
+static size_t sfs_read(void* dest, size_t size) {
+	size_t rsize = 0;
+	uint32_t free = alloc_max - alloc_end;
+
+	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
+		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
+		free += fblock->size;
+	}
+
+	sysfs_printf("%d %d\n", alloc_max - alloc_start, free);
+	return rsize;
+}
+
 void kmalloc_init()
 {
 	memory_track_area_t* largest_area = NULL;
@@ -388,7 +402,7 @@ void kmalloc_init()
 	alloc_start = alloc_end = (intptr_t)largest_area->addr;
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	initialized = true;
-
+	sysfs_add_file("memfree", sfs_read);
 }
 
 void kmalloc_stats() {
