@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 1.29.2
-# Sun Aug 26 17:52:21 2018
+# Thu Sep 20 03:28:52 2018
 #
 CONFIG_HAVE_DOT_CONFIG=y
 
@@ -25,7 +25,7 @@ CONFIG_HAVE_DOT_CONFIG=y
 CONFIG_PID_FILE_PATH=""
 # CONFIG_BUSYBOX is not set
 # CONFIG_FEATURE_INSTALLER is not set
-CONFIG_INSTALL_NO_USR=n
+# CONFIG_INSTALL_NO_USR is not set
 # CONFIG_FEATURE_SUID is not set
 # CONFIG_FEATURE_SUID_CONFIG is not set
 # CONFIG_FEATURE_SUID_CONFIG_QUIET is not set
@@ -57,14 +57,14 @@ CONFIG_EXTRA_LDLIBS=""
 #
 # Installation Options ("make install" behavior)
 #
-# CONFIG_INSTALL_APPLET_SYMLINKS is not set
+CONFIG_INSTALL_APPLET_SYMLINKS=y
 # CONFIG_INSTALL_APPLET_HARDLINKS is not set
 # CONFIG_INSTALL_APPLET_SCRIPT_WRAPPERS is not set
-CONFIG_INSTALL_APPLET_DONT=y
+# CONFIG_INSTALL_APPLET_DONT is not set
 # CONFIG_INSTALL_SH_APPLET_SYMLINK is not set
 # CONFIG_INSTALL_SH_APPLET_HARDLINK is not set
 # CONFIG_INSTALL_SH_APPLET_SCRIPT_WRAPPER is not set
-CONFIG_PREFIX="../../../mnt"
+CONFIG_PREFIX="../../../mnt/usr"
 
 #
 # Debugging Options
