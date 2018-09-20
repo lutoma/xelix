@@ -19,7 +19,8 @@
  */
 
 #include <console/console.h>
-#include <memory/vmem.h>
+#include <fs/vfs.h>
+#include <errno.h>
 #include <tasks/syscall.h>
 
 SYSCALL_HANDLER(write)
@@ -29,6 +30,12 @@ SYSCALL_HANDLER(write)
 	if (syscall.params[0] == 1 || syscall.params[0] == 2)
 		return console_write(NULL, (char*)syscall.params[1], syscall.params[2]);
 
-	return -1;
+	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
+	if(!fd) {
+		sc_errno = EBADF;
+		return -1;
+	}
+
+	return vfs_write((void*)syscall.params[1], syscall.params[2], fd);
 }
 

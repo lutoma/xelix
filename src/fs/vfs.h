@@ -93,6 +93,7 @@ typedef struct {
 typedef uint32_t (*vfs_open_callback_t)(char* path, void* mount_instance);
 typedef int (*vfs_stat_callback_t)(vfs_file_t* fp, vfs_stat_t* dest);
 typedef size_t (*vfs_read_callback_t)(vfs_file_t* fp, void* dest, size_t size);
+typedef size_t (*vfs_write_callback_t)(vfs_file_t* fp, void* source, size_t size);
 typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t size);
 
 
@@ -104,12 +105,14 @@ vfs_file_t* vfs_get_from_id(uint32_t id);
 vfs_file_t* vfs_open(const char* path, task_t* task);
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
+size_t vfs_write(void* source, size_t size, vfs_file_t* fp);
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
 void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	vfs_open_callback_t open_callback, vfs_stat_callback_t stat_callback,
-	vfs_read_callback_t read_callback, vfs_getdents_callback_t getdents_callback);
+	vfs_read_callback_t read_callback, vfs_write_callback_t write_callback,
+	vfs_getdents_callback_t getdents_callback);
 
 void vfs_init();
 

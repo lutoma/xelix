@@ -166,5 +166,5 @@ static size_t sfs_read(void* dest, size_t size) {
 void time_init() {
 	last_timestamp = read_rtc();
 	last_tick = pit_tick;
-	sysfs_add_file("time", sfs_read);
+	sysfs_add_file("time", sfs_read, NULL);
 }

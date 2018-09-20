@@ -19,7 +19,6 @@
 
 #include <console/console.h>
 #include <fs/vfs.h>
-#include <log.h>
 #include <errno.h>
 #include <tasks/syscall.h>
 

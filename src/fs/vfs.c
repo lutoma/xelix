@@ -43,6 +43,7 @@ struct mountpoint {
 	vfs_open_callback_t open_callback;
 	vfs_stat_callback_t stat_callback;
 	vfs_read_callback_t read_callback;
+	vfs_write_callback_t write_callback;
 	vfs_getdents_callback_t getdents_callback;
 };
 
@@ -235,6 +236,15 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 	return read;
 }
 
+size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
+	debug("size %d\n", size);
+	strncpy(vfs_last_read_attempt, fp->path, 512);
+	struct mountpoint mp = mountpoints[fp->mountpoint];
+	size_t written = mp.write_callback(fp, source, size);
+	fp->offset += written;
+	return written;
+}
+
 size_t vfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	debug("size %d\n", size);
 
@@ -267,7 +277,8 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	vfs_open_callback_t open_callback, vfs_stat_callback_t stat_callback,
-	vfs_read_callback_t read_callback, vfs_getdents_callback_t getdents_callback) {
+	vfs_read_callback_t read_callback, vfs_write_callback_t write_callback,
+	vfs_getdents_callback_t getdents_callback) {
 
 	if(!path || !strncmp(path, "", 1)) {
 		log(LOG_ERR, "vfs: vfs_mount called with empty path.\n");
@@ -289,6 +300,7 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 	mountpoints[num].open_callback = open_callback;
 	mountpoints[num].stat_callback = stat_callback;
 	mountpoints[num].read_callback = read_callback;
+	mountpoints[num].write_callback = write_callback;
 	mountpoints[num].getdents_callback = getdents_callback;
 
 	log(LOG_DEBUG, "vfs: Mounted %s (type %s) to %s\n", dev, type, path);

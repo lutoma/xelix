@@ -402,7 +402,7 @@ void kmalloc_init()
 	alloc_start = alloc_end = (intptr_t)largest_area->addr;
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	initialized = true;
-	sysfs_add_file("memfree", sfs_read);
+	sysfs_add_file("memfree", sfs_read, NULL);
 }
 
 void kmalloc_stats() {

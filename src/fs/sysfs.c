@@ -19,6 +19,7 @@
 
 #include <log.h>
 #include <string.h>
+#include <errno.h>
 #include <memory/kmalloc.h>
 #include <fs/vfs.h>
 #include <print.h>
@@ -27,6 +28,7 @@
 struct sysfs_file {
 	char name[40];
 	sysfs_read_callback_t read_cb;
+	sysfs_write_callback_t write_cb;
 	struct sysfs_file* next;
 };
 
@@ -82,15 +84,32 @@ int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 
 size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size) {
 	if(fp->offset) {
-		return 0;
+		sc_errno = EINVAL;
+		return -1;
 	}
 
 	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
 	if(!file || !file->read_cb) {
-		return 0;
+		sc_errno = file ? ENXIO : ENOENT;
+		return -1;
 	}
 
 	return file->read_cb(dest, size);
+}
+
+size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size) {
+	if(fp->offset) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
+	if(!file || !file->write_cb) {
+		sc_errno = file ? ENXIO : ENOENT;
+		return -1;
+	}
+
+	return file->write_cb(source, size);
 }
 
 size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
@@ -117,23 +136,24 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	return total_length;
 }
 
-static void add_file(struct sysfs_file** table, char* name, sysfs_read_callback_t read_cb) {
+static void add_file(struct sysfs_file** table, char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
 	struct sysfs_file* fp = kmalloc(sizeof(struct sysfs_file));
 	strcpy(fp->name, name);
 	fp->read_cb = read_cb;
+	fp->write_cb = write_cb;
 	fp->next = *table ? *table : NULL;
 	*table = fp;
 }
 
-void sysfs_add_file(char* name, sysfs_read_callback_t read_cb) {
-	add_file(&sys_files, name, read_cb);
+void sysfs_add_file(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
+	add_file(&sys_files, name, read_cb, write_cb);
 }
 
-void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb) {
-	add_file(&dev_files, name, read_cb);
+void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
+	add_file(&dev_files, name, read_cb, write_cb);
 }
 
 void sysfs_init() {
-	vfs_mount("/sys", &sys_files, "sys", "sysfs", sysfs_open, sysfs_stat, sysfs_read_file, sysfs_getdents);
-	vfs_mount("/dev", &dev_files, "dev", "sysfs", sysfs_open, sysfs_stat, sysfs_read_file, sysfs_getdents);
+	vfs_mount("/sys", &sys_files, "sys", "sysfs", sysfs_open, sysfs_stat, sysfs_read_file, sysfs_write_file, sysfs_getdents);
+	vfs_mount("/dev", &dev_files, "dev", "sysfs", sysfs_open, sysfs_stat, sysfs_read_file, sysfs_write_file, sysfs_getdents);
 }

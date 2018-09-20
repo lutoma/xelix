@@ -181,6 +181,14 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 	return read;
 }
 
+static size_t sfs_stdin_read(void* dest, size_t size) {
+	return console_read(NULL, dest, size);
+}
+
+static size_t sfs_stdout_write(void* source, size_t size) {
+	return console_write(NULL, source, size);
+}
+
 void console_init()
 {
 	if (default_console == NULL)
@@ -228,7 +236,7 @@ void console_init()
 
 	console_clear(NULL);
 
-	sysfs_add_dev("stdin", NULL);
-	sysfs_add_dev("stdout", NULL);
-	sysfs_add_dev("stderr", NULL);
+	sysfs_add_dev("stdin", sfs_stdin_read, NULL);
+	sysfs_add_dev("stdout", NULL, sfs_stdout_write);
+	sysfs_add_dev("stderr", NULL, sfs_stdout_write);
 }

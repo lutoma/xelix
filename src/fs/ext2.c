@@ -447,6 +447,11 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size)
 	return size;
 }
 
+size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
+	sc_errno = ENOSYS;
+	return -1;
+}
+
 size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	if(size % 1024) {
 		log(LOG_ERR, "ext2: Size argument to ext2_getdents needs to be a multiple of 1024.\n");
@@ -594,7 +599,7 @@ void ext2_init()
 	}
 
 	root_inode = root_inode_buf;
-	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_stat, ext2_read_file, ext2_getdents);
+	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_stat, ext2_read_file, ext2_write_file, ext2_getdents);
 }
 
 #endif /* ENABLE_EXT2 */

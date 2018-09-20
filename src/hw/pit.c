@@ -53,5 +53,5 @@ void pit_init(uint16_t frequency)
 	outb(0x40, l);
 	outb(0x40, h);
 
-	sysfs_add_file("tick", sfs_read);
+	sysfs_add_file("tick", sfs_read, NULL);
 }
