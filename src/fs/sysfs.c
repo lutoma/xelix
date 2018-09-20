@@ -62,11 +62,11 @@ uint32_t sysfs_open(char* path, void* mount_instance) {
 
 int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	bool is_root = !strncmp(fp->mount_path, "/", 2);
-	if(is_root || !get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance)) {
+	if(!is_root && !get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance)) {
 		return -1;
 	}
 
-	dest->st_dev = 2;
+	dest->st_dev = fp->mount_instance == &sys_files ? 2 : 3;
 	dest->st_ino = 1;
 	dest->st_mode = (is_root ? FT_IFDIR | S_IXUSR : FT_IFREG) | S_IRUSR | S_IWUSR;
 	dest->st_nlink = 0;
