@@ -25,10 +25,16 @@
 #include <sys/xelix.h>
 
 extern int main(int argc, char** argv);
+extern void __libc_init_array();
+extern void __libc_fini_array();
 
 void __attribute__((__fastcall__)) _start() {
+	__libc_init_array();
+
 	_xelix_execdata = (struct _xelix_execdata*)0x5000;
 	environ = _xelix_execdata->env;
+
+	atexit(__libc_fini_array);
 	int ret = main(_xelix_execdata->argc, _xelix_execdata->argv);
 	exit(ret);
 }

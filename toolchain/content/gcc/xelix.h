@@ -13,15 +13,6 @@
         builtin_assert("system=posix"); \
     } while (0);
 
-/* Files that are linked before user code.
-   The %s tells GCC to look for these files in the library directory. */
-#undef STARTFILE_SPEC
-#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
-
-/* Files that are linked after user code. */
-#undef ENDFILE_SPEC
-#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
-
 /* Default arguments when running toolchain */
 #undef LIB_SPEC
 #define LIB_SPEC "-lc"
@@ -41,8 +32,3 @@
 
 #undef  OBJECT_FORMAT_ELF
 #define OBJECT_FORMAT_ELF
-
-/* This macro applies on top of OBJECT_FORMAT_ELF and indicates that
-   we want to support both flat and ELF output.  */
-#undef OBJECT_FORMAT_FLAT
-#define OBJECT_FORMAT_FLAT

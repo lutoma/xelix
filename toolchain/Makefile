@@ -119,6 +119,8 @@ newlib-download:
 newlib-install:
 	@echo "Installing newlib"
 	@PATH="${PATH}:`pwd`/local/bin/" make -C build/newlib install
+	@cp build/newlib/i786-pc-xelix/newlib/libc/sys/xelix/crti.o local/i786-pc-xelix/lib/
+	@cp build/newlib/i786-pc-xelix/newlib/libc/sys/xelix/crtn.o local/i786-pc-xelix/lib/
 
 newlib-make:
 	@echo "Building newlib"
@@ -127,8 +129,6 @@ newlib-make:
 newlib-copy:
 	@mkdir -p download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix
 	@cp -R content/newlib/* download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/
-	#@# Hacky. Probably shouldn't do this.
-	#@cp -R content/newlib/include/* download/newlib-${NEWLIB_VERSION}/newlib/libc/include/
 
 newlib-reconfig:
 	@echo "Patching newlib autoconf files"
