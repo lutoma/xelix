@@ -32,7 +32,7 @@
 	fp->task ? fp->task->name : "kernel", \
 	__func__ + 4, fp->num, fp->path, args)
 #else
-# define debug
+# define debug(args...)
 #endif
 
 struct mountpoint {
@@ -238,6 +238,11 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 
 size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
 	debug("size %d\n", size);
+
+	if(!size) {
+		return 0;
+	}
+
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	size_t written = mp.write_callback(fp, source, size);

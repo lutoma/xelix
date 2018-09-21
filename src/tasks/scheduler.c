@@ -84,7 +84,6 @@ task_t* scheduler_select(cpu_state_t* last_regs) {
 	/* Cycle through tasks until we find one that isn't killed or terminated,
 	 * while along the way unlinking the killed/terminated ones.
 	*/
-	task_t* orig_task = current_task;
 	current_task = current_task->next;
 
 	for(;; current_task = current_task->next) {

@@ -45,11 +45,11 @@ struct execdata {
  */
 void task_setup_execdata(task_t* task) {
 	void* page = tmalloc_a(PAGE_SIZE, task);
-	vmem_map(task->memory_context, EXECDATA_LOCATION, page, PAGE_SIZE, VMEM_SECTION_DATA);
+	vmem_map(task->memory_context, (void*)EXECDATA_LOCATION, page, PAGE_SIZE, VMEM_SECTION_DATA);
 
 	struct execdata* exc = (struct execdata*)page;
-	char** argv = exc + sizeof(struct execdata);
-	void* args = argv + sizeof(char*) * (task->argc + 1);
+	char** argv = (char**)exc + sizeof(struct execdata);
+	intptr_t args = (intptr_t)argv + sizeof(char*) * (task->argc + 1);
 
 	uint32_t offset = 0;
 	for(int i = 0; i < task->argc; i++) {
@@ -58,8 +58,8 @@ void task_setup_execdata(task_t* task) {
 		offset += strlen(task->argv[i]) + 1;
 	}
 
-	char** environ = args + offset;
-	void* env = environ + sizeof(char*) * (task->envc + 1);
+	char** environ = (char**)args + offset;
+	intptr_t env = (intptr_t)environ + sizeof(char*) * (task->envc + 1);
 
 	offset = 0;
 	for(int i = 0; i < task->envc; i++) {
@@ -72,6 +72,6 @@ void task_setup_execdata(task_t* task) {
 	exc->ppid = task->parent ? task->parent->pid : 0;
 	exc->argc = task->argc;
 	exc->envc = task->envc;
-	exc->argv = vmem_translate(task->memory_context, argv, true);
-	exc->env = vmem_translate(task->memory_context, environ, true);
+	exc->argv = (void*)vmem_translate(task->memory_context, (intptr_t)argv, true);
+	exc->env = (void*)vmem_translate(task->memory_context, (intptr_t)environ, true);
 }

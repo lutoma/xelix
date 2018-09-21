@@ -92,7 +92,7 @@ int elf_read_sections(elf_t* bin, void* binary_start, uint32_t memsize, task_t* 
 		#endif
 
 		if(shead->flags & SHF_ALLOC) {
-			void* dest = vmem_translate(task->memory_context, shead->addr, false);
+			void* dest = (void*)vmem_translate(task->memory_context, (intptr_t)shead->addr, false);
 			if(!dest) {
 				return -1;
 			}
