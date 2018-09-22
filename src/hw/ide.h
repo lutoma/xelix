@@ -71,7 +71,7 @@
 
 #define IDE_ATA        0x00
 #define IDE_ATAPI      0x01
- 
+
 #define ATA_MASTER     0x00
 #define ATA_SLAVE      0x01
 
@@ -158,4 +158,5 @@ mbr_t mbr;
 
 void ide_init();
 bool ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);
-void ide_write_sector_retry(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);
+void ide_write_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);
+//void ide_write_sector_retry(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);

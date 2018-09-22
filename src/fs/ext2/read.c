@@ -41,7 +41,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 	debug("ext2_read_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!read_inode(inode, fp->inode)) {
+	if(!ext2_read_inode(inode, fp->inode)) {
 		kfree(inode);
 		sc_errno = EBADF;
 		return -1;
@@ -88,7 +88,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 	 * is not mod the block size. Should rewrite read_inode_blocks.
 	 */
 	uint8_t* tmp = kmalloc(num_blocks * superblock_to_blocksize(superblock));
-	uint8_t* read = read_inode_blocks(inode, num_blocks, tmp);
+	uint8_t* read = ext2_read_inode_blocks(inode, num_blocks, tmp);
 	kfree(inode);
 
 	if(!read) {

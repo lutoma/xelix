@@ -28,13 +28,7 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-// The public open interface to the virtual file system
-uint32_t ext2_open(char* path, void* mount_instance) {
-	if(!path || !strcmp(path, "")) {
-		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
-		return 0;
-	}
-
+static uint32_t resolve_inode(const char* path) {
 	debug("Resolving inode for path %s\n", path);
 
 	// The root directory always has inode 2
@@ -51,10 +45,11 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 	struct inode* current_inode = kmalloc(superblock->inode_size);
 	vfs_dirent_t* dirent = NULL;
 	uint8_t* dirent_block = NULL;
+	uint32_t result = 0;
 
 	while(pch != NULL)
 	{
-		if(!read_inode(current_inode, dirent ? dirent->inode : ROOT_INODE)) {
+		if(!ext2_read_inode(current_inode, dirent ? dirent->inode : ROOT_INODE)) {
 			continue;
 		}
 
@@ -63,11 +58,8 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		}
 
 		dirent_block = kmalloc(current_inode->size);
-		if(!read_inode_blocks(current_inode, current_inode->size / superblock_to_blocksize(superblock), dirent_block)) {
-			kfree(dirent_block);
-			kfree(path_tmp);
-			kfree(current_inode);
-			return 0;
+		if(!ext2_read_inode_blocks(current_inode, current_inode->size / superblock_to_blocksize(superblock), dirent_block)) {
+			goto bye;
 		}
 
 		dirent = (vfs_dirent_t*)dirent_block;
@@ -77,11 +69,10 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		for(int i = 0;; i++)
 		{
 			// If this dirent is NULL, this means there are no more files
+			// FIXME: This ^ is actually not true, there could be more valid dirents
+			// after a NULL dirent. Should iterate complete dirent block size
 			if(!dirent || !dirent->name_len) {
-				kfree(dirent_block);
-				kfree(path_tmp);
-				kfree(current_inode);
-				return 0;
+				goto bye;
 			}
 
 			char* dirent_name = strndup(dirent->name, dirent->name_len);
@@ -100,51 +91,95 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		pch = strtok_r(NULL, "/", &sp);
 	}
 
-	uint32_t inode_num = dirent->inode;
+	result = dirent->inode;
+bye:
 	kfree(path_tmp);
 	kfree(dirent_block);
 	kfree(current_inode);
+	return result;
+}
 
-	// Handle symbolic links
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!read_inode(inode, inode_num)) {
+static inline char* chop_path(const char* path, char** ent) {
+	char* base_path = strdup(path);
+	char* c = base_path + strlen(path);
+	for(; c > path; c--) {
+		if(*c == '/') {
+			*c = 0;
+
+			if(ent) {
+				*ent = c+1;
+			}
+			break;
+		}
+	}
+	return base_path;
+}
+
+static uint32_t handle_symlink(struct inode* inode, const char* path, void* mount_instance) {
+	/* For symlinks with up to 60 chars length, the path is stored in the
+	 * inode in the area where normally the block pointers would be.
+	 * Otherwise in the file itself.
+	 */
+	if(inode->size > 60) {
+		log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
+		kfree(inode);
 		return 0;
 	}
 
-	if(vfs_mode_to_filetype(inode->mode) == FT_IFLNK) {
-		/* For symlinks with up to 60 chars length, the path is stored in the
-		 * inode in the area where normally the block pointers would be.
-		 * Otherwise in the file itself.
-		 */
-		if(inode->size > 60) {
-			log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
-			kfree(inode);
+	char* sym_path = (char*)inode->blocks;
+	char* new_path;
+	if(sym_path[0] != '/') {
+		char* base_path = chop_path(path, NULL);
+		new_path = vfs_normalize_path(sym_path, base_path);
+		kfree(base_path);
+	} else {
+		new_path = strdup(sym_path);
+	}
+
+	// FIXME Should be vfs_open to make symlinks across mount points possible
+	uint32_t r = ext2_open(new_path, mount_instance);
+	kfree(new_path);
+	return r;
+}
+
+// The public open interface to the virtual file system
+uint32_t ext2_open(char* path, void* mount_instance) {
+	if(!path || !strcmp(path, "")) {
+		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
+		return 0;
+	}
+
+	uint32_t inode_num = resolve_inode(path);
+	struct inode* inode;
+	bool created = false;
+
+	if(!inode_num) {
+		debug("ext2_open: Could not find inode, creating one.\n");
+		char* name;
+		char* dir_path = chop_path(path, &name);
+		if(!name) {
 			return 0;
 		}
 
-		char* sym_path = (char*)inode->blocks;
-		char* new_path;
-		if(sym_path[0] != '/') {
-			char* base_path = strdup(path);
-			char* c = base_path + strlen(path);
-			for(; c > path; c--) {
-				if(*c == '/') {
-					*c = 0;
-					break;
-				}
-			}
+		// FIXME Should cache ino from above resolve_inode invocation above.
+		uint32_t dir_inode = resolve_inode(dir_path);
+		inode_num = ext2_new_inode(&inode);
 
-			new_path = vfs_normalize_path(sym_path, base_path);
-			kfree(base_path);
-		} else {
-			new_path = strdup(sym_path);
+		#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+		ext2_insert_dirent(dir_inode, inode_num, name, (uint8_t)FT_IFREG);
+
+		kfree(dir_path);
+		created = true;
+	} else {
+		inode = kmalloc(superblock->inode_size);
+		if(!ext2_read_inode(inode, inode_num)) {
+			return 0;
 		}
+	}
 
+	if(!created && vfs_mode_to_filetype(inode->mode) == FT_IFLNK) {
+		int r = handle_symlink(inode, path, mount_instance);
 		kfree(inode);
-
-		// FIXME Should be vfs_open to make symlinks across mount points possible
-		uint32_t r = ext2_open(new_path, mount_instance);
-		kfree(new_path);
 		return r;
 	}
 

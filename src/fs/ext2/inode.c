@@ -29,46 +29,69 @@
 #include <fs/block.h>
 #include <fs/ext2.h>
 
-bool direct_write_blocks(uint32_t block_num, uint32_t write_num, uint8_t* buf) {
-	debug("direct_write_blocks, writing from block %d size %d\n", block_num, write_num);
 
-	block_num *= superblock_to_blocksize(superblock);
-	block_num /= 512;
-	write_num *= superblock_to_blocksize(superblock);
-	write_num /= 512;
-
-	for(int i = 0; i < write_num; i++) {
-		ide_write_sector_retry(0x1F0, 0, block_num + i, buf + (i * 512));
-	}
-
-	return true;
-}
-
-bool read_inode(struct inode* buf, uint32_t inode_num) {
-	if(inode_num == ROOT_INODE && root_inode) {
-		memcpy(buf, root_inode, superblock->inode_size);
-		return true;
-	}
-
+static uint32_t find_inode(uint32_t inode_num) {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 
 	// Sanity check the blockgroup num
 	if(blockgroup_num > (superblock->block_count / superblock->blocks_per_group))
-		return false;
+		return 0;
 
 	struct blockgroup* blockgroup = blockgroup_table + blockgroup_num;
 	if(!blockgroup || !blockgroup->inode_table) {
 		debug("Could not locate entry %d in blockgroup table\n", blockgroup_num);
+		return 0;
+	}
+
+	return bl_off(blockgroup->inode_table)
+		+ ((inode_num - 1) % superblock->inodes_per_group * superblock->inode_size);
+}
+
+bool ext2_read_inode(struct inode* buf, uint32_t inode_num) {
+	if(inode_num == ROOT_INODE && root_inode) {
+		memcpy(buf, root_inode, superblock->inode_size);
+		return true;
+	}
+
+	uint32_t inode_off = find_inode(inode_num);
+	if(!inode_off) {
 		return false;
 	}
 
-	return vfs_block_read(bl_off(blockgroup->inode_table) +
-		((inode_num - 1) % superblock->inodes_per_group * superblock->inode_size),
-		superblock->inode_size, buf);
+	return vfs_block_read(inode_off, superblock->inode_size, (uint8_t*)buf);
 }
 
-uint32_t resolve_inode_blocknum(struct inode* inode, uint32_t block_num) {
+bool ext2_write_inode(struct inode* buf, uint32_t inode_num) {
+	if(inode_num == ROOT_INODE && root_inode) {
+		memcpy(root_inode, buf, superblock->inode_size);
+	}
+
+	uint32_t inode_off = find_inode(inode_num);
+	if(!inode_off) {
+		return false;
+	}
+
+	return vfs_block_write(inode_off, superblock->inode_size, (uint8_t*)buf);
+}
+
+uint32_t ext2_new_inode(struct inode** inodeptr) {
+	struct blockgroup* blockgroup = blockgroup_table;
+	while(!blockgroup->free_inodes) { blockgroup++; }
+	uint32_t inode_num = ext2_bitmap_search_and_claim(blockgroup->inode_bitmap);
+
+	// TODO Decrement blockgroup->free_blocks
+	*inodeptr = kmalloc(superblock->inode_size);
+	bzero(*inodeptr, sizeof(struct inode));
+	(*inodeptr)->link_count = 1;
+	(*inodeptr)->mode = FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+
+	ext2_write_inode(*inodeptr, inode_num);
+	return inode_num;
+}
+
+// FIXME This is a mess (and also has no triply-indirect block support).
+uint32_t ext2_resolve_inode_blocknum(struct inode* inode, uint32_t block_num) {
 	uint32_t real_block_num = 0;
 
 	if(block_num > superblock->block_count) {
@@ -82,16 +105,16 @@ uint32_t resolve_inode_blocknum(struct inode* inode, uint32_t block_num) {
 
 		// Indirect block
 		uint32_t* blocks_table = (uint32_t*)kmalloc(bl_off(1));
-		vfs_block_read(bl_off(inode->blocks[12]), bl_off(1), blocks_table);
+		vfs_block_read(bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)blocks_table);
 		real_block_num = blocks_table[block_num - 12];
 		kfree(blocks_table);
 	} else if(block_num >= 268 && block_num < 12 + 256*256) {
 		uint32_t* blocks_table = (uint32_t*)kmalloc(bl_off(1));
-		vfs_block_read(bl_off(inode->blocks[13]), bl_off(1), blocks_table);
+		vfs_block_read(bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)blocks_table);
 		uint32_t indir_block_num = blocks_table[(block_num - 268) / 256];
 
 		uint32_t* indir_blocks_table = (uint32_t*)kmalloc(bl_off(1));
-		vfs_block_read(bl_off(indir_block_num), bl_off(1), indir_blocks_table);
+		vfs_block_read(bl_off(indir_block_num), bl_off(1), (uint8_t*)indir_blocks_table);
 		real_block_num = indir_blocks_table[(block_num - 268) % 256];
 		kfree(blocks_table);
 		kfree(indir_blocks_table);
@@ -103,17 +126,15 @@ uint32_t resolve_inode_blocknum(struct inode* inode, uint32_t block_num) {
 	return real_block_num;
 }
 
-uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf) {
-	uint32_t block_size = superblock_to_blocksize(superblock);
-
+uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf) {
 	for(int i = 0; i < num; i++) {
-		uint32_t block_num = resolve_inode_blocknum(inode, i);
+		uint32_t block_num = ext2_resolve_inode_blocknum(inode, i);
 		if(!block_num) {
 			return NULL;
 		}
 
-		if(!vfs_block_read(block_num * block_size, block_size, buf + block_size * i)) {
-			debug("read_inode_blocks: read_inode_block for block %d failed\n", i);
+		if(!vfs_block_read(bl_off(block_num), bl_off(1), buf + bl_off(i))) {
+			debug("read_inode_blocks: read for block %d failed\n", i);
 			return NULL;
 		}
 	}
@@ -121,20 +142,32 @@ uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf) {
 	return buf;
 }
 
-int write_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf) {
+int ext2_write_inode_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf) {
 	for(int i = 0; i < num; i++)
 	{
-		uint32_t real_block_num = resolve_inode_blocknum(inode, i);
-		if(!real_block_num) {
+		uint32_t block_num = ext2_resolve_inode_blocknum(inode, i);
+		if(!block_num) {
+			block_num = ext2_new_block(inode_num);
+			if(!block_num) {
+				return 0;
+			}
+		}
+
+		if(!vfs_block_write(bl_off(block_num), bl_off(1), buf + bl_off(i))) {
+			debug("write_inode_blocks: write for block %d failed\n", i);
 			return 0;
 		}
 
-		if(!direct_write_blocks(real_block_num, 1, buf + superblock_to_blocksize(superblock) * i)) {
-			debug("write_inode_blocks: write for block %d failed\n", i);
+		if(i < 12) {
+			inode->blocks[i] = block_num;
+		} else {
+			// TODO
+			log(LOG_ERR, "ext2: Indirect block writes not supported atm.\n");
 			return 0;
 		}
 	}
 
+	ext2_write_inode(inode, inode_num);
 	return 1;
 }
 

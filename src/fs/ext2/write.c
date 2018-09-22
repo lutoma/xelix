@@ -29,12 +29,24 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 #include <print.h>
-/*
-// TODO add neighbor param to try to find new block close to other ino blocks to avoid fragmentation
-static uint32_t find_free_block() {
-	printf("find_free_block\n");
+
+uint32_t ext2_new_block(uint32_t neighbor) {
+	uint32_t pref_blockgroup = inode_to_blockgroup(neighbor);
+
+	struct blockgroup* blockgroup = blockgroup_table + pref_blockgroup;
+	if(!blockgroup || !blockgroup->inode_table) {
+		log(LOG_ERR, "ext2: Could not locate entry %d in blockgroup table\n", pref_blockgroup);
+		return 0;
+	}
+
+	uint32_t block_num = ext2_bitmap_search_and_claim(blockgroup->block_bitmap);
+
+	// TODO Decrement blockgroup->free_blocks
+	printf("Found free block %d\n", block_num);
+	return block_num;
+
 }
-*/
+
 size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_write_file called without fp or fp missing inode.\n");
@@ -52,7 +64,7 @@ size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!read_inode(inode, fp->inode)) {
+	if(!ext2_read_inode(inode, fp->inode)) {
 		kfree(inode);
 		sc_errno = EBADF;
 		return -1;
@@ -62,8 +74,7 @@ size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
 		inode->gid, inode->size, vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
 		vfs_get_verbose_permissions(inode->mode));
 
-	if(vfs_mode_to_filetype(inode->mode) != FT_IFREG)
-	{
+	if(vfs_mode_to_filetype(inode->mode) != FT_IFREG) {
 		debug("ext2_write_file: Attempt to write to something weird "
 			"(0x%x: %s)\n", inode->mode,
 			vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)));
@@ -73,29 +84,24 @@ size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
 		return -1;
 	}
 
-	if(size > inode->size) {
-		debug("ext2_write_file: Attempt to write 0x%x bytes, but file is only 0x%x bytes. Capping.\n", size, inode->size);
-		size = inode->size;
-	}
-
-	uint32_t num_blocks = (size + fp->offset) / superblock_to_blocksize(superblock);
+	uint32_t block_num = (size + fp->offset) / superblock_to_blocksize(superblock);
 	if((size + fp->offset) % superblock_to_blocksize(superblock) != 0) {
-		num_blocks++;
+		block_num++;
 	}
 
-	debug("Inode has %d blocks:\n", num_blocks);
-	debug("Blocks table:\n");
+	serial_printf("Blocks table:\n");
 	for(uint32_t i = 0; i < 15; i++) {
-		debug("\t%2d: 0x%x\n", i, inode->blocks[i]);
+		serial_printf("\t%2d: 0x%x\n", i, inode->blocks[i]);
 	}
 
-	uint8_t* tmp = kmalloc(num_blocks * superblock_to_blocksize(superblock));
-	bzero(tmp, num_blocks * superblock_to_blocksize(superblock));
-	uint8_t* read = read_inode_blocks(inode, num_blocks, tmp);
-	memcpy(read, source, size);
-	write_inode_blocks(inode, num_blocks, read);
+	// FIXME: Reads across input buffer boundary if size not mod block size
+	printf("write: block num is %d, size is %d\n", block_num, size);
+	ext2_write_inode_blocks(inode, fp->inode, block_num, source);
+
+	printf("writing new inode, size %d\n", size);
+	inode->size = size;
+	ext2_write_inode(inode, fp->inode);
 	kfree(inode);
-	kfree(tmp);
 
 	return 1;
 }

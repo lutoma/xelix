@@ -28,47 +28,8 @@
 #include <hw/serial.h>
 #include <fs/vfs.h>
 #include <fs/ext2.h>
+#include <fs/block.h>
 
-size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
-	if(size % 1024) {
-		log(LOG_ERR, "ext2: Size argument to ext2_getdents needs to be a multiple of 1024.\n");
-		return 0;
-	}
-
-	if(!fp || !fp->inode) {
-		log(LOG_ERR, "ext2: ext2_read_directory called without fp or fp missing inode.\n");
-		return 0;
-	}
-
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!read_inode(inode, fp->inode)) {
-		kfree(inode);
-		return 0;
-	}
-
-	// Check if this inode is a directory
-	if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR)
-	{
-		debug("ext2_read_directory: This inode isn't a directory "
-			"(Is %s [%d])\n", vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
-				inode->mode);
-
-		kfree(inode);
-		return 0;
-	}
-
-	if(size > inode->size) {
-		debug("ext2_read_file: Attempt to read 0x%x bytes, but file is only 0x%x bytes. Capping.\n", size, inode->size);
-		size = inode->size;
-	}
-
-	if(!read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest)) {
-		return 0;
-	}
-
-	kfree(inode);
-	return size;
-}
 
 int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	if(!fp || !fp->inode) {
@@ -77,7 +38,7 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!read_inode(inode, fp->inode)) {
+	if(!ext2_read_inode(inode, fp->inode)) {
 		kfree(inode);
 		return -1;
 	}
@@ -174,7 +135,7 @@ void ext2_init() {
 
 	// Cache root inode
 	struct inode* root_inode_buf = kmalloc(superblock->inode_size);
-	if(!read_inode(root_inode_buf, ROOT_INODE)) {
+	if(!ext2_read_inode(root_inode_buf, ROOT_INODE)) {
 		log(LOG_ERR, "ext2: Could not read root inode.\n");
 		kfree(superblock);
 		kfree(root_inode_buf);

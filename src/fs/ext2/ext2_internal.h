@@ -122,16 +122,22 @@ struct superblock* superblock;
 struct blockgroup* blockgroup_table;
 struct inode* root_inode;
 
-uint8_t* direct_read_blocks(uint32_t block_num, uint32_t read_num, uint8_t* buf);
-bool direct_write_blocks(uint32_t block_num, uint32_t write_num, uint8_t* buf);
-bool read_inode(struct inode* buf, uint32_t inode_num);
-uint32_t resolve_inode_blocknum(struct inode* inode, uint32_t block_num);
-uint8_t* read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf);
-int write_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf);
+bool ext2_write_inode(struct inode* buf, uint32_t inode_num);
+bool ext2_read_inode(struct inode* buf, uint32_t inode_num);
+uint32_t ext2_new_inode(struct inode** inodeptr);
+uint32_t ext2_resolve_inode_blocknum(struct inode* inode, uint32_t block_num);
+uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf);
+int ext2_write_inode_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf);
+
+uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
+uint32_t ext2_new_block();
+size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size);
+
+size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
+void ext2_insert_dirent(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
 uint32_t ext2_open(char* path, void* mount_instance);
 size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size);
-size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size);
 
 static inline void dump_inode(struct inode* buf) {
 	debug("%-19s: %d\n", "uid", buf->uid);

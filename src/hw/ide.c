@@ -114,7 +114,7 @@ try_again:
 
 	ata_wait_ready(bus);
 
-	outb(bus + ATA_REG_HDDEVSEL,  0xe0 | slave << 4 | 
+	outb(bus + ATA_REG_HDDEVSEL,  0xe0 | slave << 4 |
 								 (lba & 0x0f000000) >> 24);
 	outb(bus + ATA_REG_FEATURES, 0x00);
 	outb(bus + ATA_REG_SECCOUNT0, 1);
@@ -143,7 +143,7 @@ void ide_write_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) 
 
 	ata_wait_ready(bus);
 
-	outb(bus + ATA_REG_HDDEVSEL,  0xe0 | slave << 4 | 
+	outb(bus + ATA_REG_HDDEVSEL,  0xe0 | slave << 4 |
 								 (lba & 0x0f000000) >> 24);
 	ata_wait(bus, 0);
 	outb(bus + ATA_REG_FEATURES, 0x00);
@@ -159,6 +159,7 @@ void ide_write_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) 
 	ata_wait(bus, 0);
 }
 
+#if 0
 int ide_cmp(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
 	if(!(size % 4))
 		return -1;
@@ -183,3 +184,4 @@ void ide_write_sector_retry(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t *
 	kfree(read_buf);
 	interrupts_enable();
 }
+#endif

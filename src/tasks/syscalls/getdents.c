@@ -54,8 +54,8 @@ SYSCALL_HANDLER(getdents)
 
 	uint32_t offset = 0;
 	vfs_dirent_t* kernel_ent = kbuf;
-	while(kernel_ent < kbuf + read) {
-		if(!kernel_ent->name_len) {
+	while((void*)kernel_ent < kbuf + read) {
+		if(!kernel_ent->inode) {
 			goto next;
 		}
 
@@ -71,8 +71,6 @@ SYSCALL_HANDLER(getdents)
 		memcpy(ent->d_name, kernel_ent->name, kernel_ent->name_len);
 		offset += ent->d_reclen;
 		ent->d_off = offset;
-
-		char* termname = strndup(kernel_ent->name, kernel_ent->name_len);
 
 		next:
 		kernel_ent = (vfs_dirent_t*)((intptr_t)kernel_ent + (intptr_t)kernel_ent->record_len);
