@@ -106,17 +106,13 @@ struct inode {
 #define SUPERBLOCK_STATE_DIRTY 2
 #define ROOT_INODE 2
 
+#define EXT2_INDEX_FL 0x00001000
+
 #define inode_to_blockgroup(inode) ((inode - 1) / superblock->inodes_per_group)
 // TODO Should use right shift for negative values
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
 #define bl_off(block) ((block) * superblock_to_blocksize(superblock))
-
-#define read_sector_or_fail(rc, args...) do {													\
-		if(ide_read_sector(args) != true) {														\
-			log(LOG_ERR, "ext2: IDE read failed in %s line %d, bailing.", __func__, __LINE__);	\
-			return rc;																			\
-		}																						\
-	} while(0)
+#define write_superblock() vfs_block_write(1024, sizeof(struct superblock), superblock)
 
 struct superblock* superblock;
 struct blockgroup* blockgroup_table;

@@ -18,4 +18,5 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+uint32_t time_get();
 void time_init();

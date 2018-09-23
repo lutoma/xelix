@@ -23,6 +23,7 @@
 #include <log.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
 #include <hw/serial.h>
@@ -62,8 +63,7 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 void ext2_init() {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
 	superblock = (struct superblock*)kmalloc(1024);
-	read_sector_or_fail(, 0x1F0, 0, 2, (uint8_t*)superblock);
-	read_sector_or_fail(, 0x1F0, 0, 3, (uint8_t*)((void*)superblock + 512));
+	vfs_block_read(1024, sizeof(struct superblock), superblock);
 
 	if(superblock->magic != SUPERBLOCK_MAGIC)
 	{
@@ -144,6 +144,10 @@ void ext2_init() {
 	}
 
 	root_inode = root_inode_buf;
+	superblock->mount_count++;
+	superblock->mount_time = time_get();
+	write_superblock();
+
 	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_stat,
 		ext2_read_file, ext2_write_file, ext2_getdents);
 }

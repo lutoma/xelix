@@ -150,16 +150,19 @@ static time_t read_rtc() {
 	return t;
 }
 
-static size_t sfs_read(void* dest, size_t size) {
-	size_t rsize = 0;
-
+uint32_t time_get() {
 	/* Can't use libgcc's 64 bit integer division functions right now.
 	 * The offset shouldn't be larger than a uint32 anyway.
 	 */
 	uint32_t offset = (pit_tick - last_tick);
 	last_timestamp += offset / PIT_RATE;
 	last_tick = pit_tick;
-	sysfs_printf("%d", last_timestamp);
+	return last_timestamp;
+}
+
+static size_t sfs_read(void* dest, size_t size) {
+	size_t rsize = 0;
+	sysfs_printf("%d", time_get());
 	return rsize;
 }
 

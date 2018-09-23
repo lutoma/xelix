@@ -22,6 +22,7 @@
 #include "ext2_internal.h"
 #include <log.h>
 #include <string.h>
+#include <time.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
 #include <hw/serial.h>
@@ -80,13 +81,21 @@ uint32_t ext2_new_inode(struct inode** inodeptr) {
 	while(!blockgroup->free_inodes) { blockgroup++; }
 	uint32_t inode_num = ext2_bitmap_search_and_claim(blockgroup->inode_bitmap);
 
-	// TODO Decrement blockgroup->free_blocks
 	*inodeptr = kmalloc(superblock->inode_size);
 	bzero(*inodeptr, sizeof(struct inode));
 	(*inodeptr)->link_count = 1;
 	(*inodeptr)->mode = FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
+	uint32_t t = time_get();
+	(*inodeptr)->creation_time = t;
+	(*inodeptr)->modification_time = t;
+	(*inodeptr)->access_time = t;
 	ext2_write_inode(*inodeptr, inode_num);
+
+	// TODO Also decrement blockgroup->free_inodes
+	superblock->free_inodes--;
+	write_superblock();
+
 	return inode_num;
 }
 
@@ -151,6 +160,9 @@ int ext2_write_inode_blocks(struct inode* inode, uint32_t inode_num, uint32_t nu
 			if(!block_num) {
 				return 0;
 			}
+
+			// Counts 512-byte ide blocks, not ext2 blocks, so 2.
+			inode->block_count += 2;
 		}
 
 		if(!vfs_block_write(bl_off(block_num), bl_off(1), buf + bl_off(i))) {

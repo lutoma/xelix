@@ -42,6 +42,9 @@ uint32_t ext2_new_block(uint32_t neighbor) {
 	uint32_t block_num = ext2_bitmap_search_and_claim(blockgroup->block_bitmap);
 
 	// TODO Decrement blockgroup->free_blocks
+	superblock->free_blocks--;
+	write_superblock();
+
 	printf("Found free block %d\n", block_num);
 	return block_num;
 

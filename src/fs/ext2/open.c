@@ -178,9 +178,7 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 	}
 
 	if(!created && vfs_mode_to_filetype(inode->mode) == FT_IFLNK) {
-		int r = handle_symlink(inode, path, mount_instance);
-		kfree(inode);
-		return r;
+		inode_num = handle_symlink(inode, path, mount_instance);
 	}
 
 	kfree(inode);

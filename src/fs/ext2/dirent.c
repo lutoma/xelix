@@ -33,13 +33,24 @@
 void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
 	debug("ext2_new_dirent dir %d ino %d name %s\n", dir_num, inode_num, name);
 
-	size_t dlen = sizeof(vfs_dirent_t) + strlen(name);
 	struct inode* dir = kmalloc(sizeof(struct inode));
 	ext2_read_inode(dir, dir_num);
+
+	if(dir->flags & EXT2_INDEX_FL) {
+		log(LOG_ERR, "ext2_insert_dirent: No support for writing to indexed dirents.\n");
+		kfree(dir);
+		return;
+	}
 
 	void* dirents = kmalloc(dir->size);
 	if(!ext2_read_inode_blocks(dir, dir->size / superblock_to_blocksize(superblock), dirents)) {
 		return;
+	}
+
+	// Length/offsets need to be 4-aligned
+	size_t dlen = sizeof(vfs_dirent_t) + strlen(name);
+	if(dlen % 4) {
+		dlen = (dlen & -4) + 4;
 	}
 
 	vfs_dirent_t* current_ent = dirents;
@@ -58,15 +69,16 @@ void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_
 	}
 
 	vfs_dirent_t* new_dirent = kmalloc(dlen);
+	bzero(new_dirent, dlen);
+
 	new_dirent->inode = inode_num;
 	new_dirent->record_len = dlen;
 	new_dirent->name_len = strlen(name);
 	memcpy((void*)new_dirent + sizeof(vfs_dirent_t), name, new_dirent->name_len);
 
-	uint32_t orig_len = current_ent->record_len;
+	uint32_t new_len = current_ent->record_len - dlen;
 	current_ent->record_len = sizeof(vfs_dirent_t) + current_ent->name_len;
-	new_dirent->record_len = orig_len - dlen;
-
+	new_dirent->record_len = new_len;
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	ext2_write_inode_blocks(dir, dir_num, dir->size / superblock_to_blocksize(superblock), dirents);
 
