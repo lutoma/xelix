@@ -21,6 +21,7 @@
 #include <hw/ide.h>
 #include <lib/log.h>
 #include <fs/vfs.h>
+#include <fs/block.h>
 
 #ifdef EXT2_DEBUG
   #define debug(args...) log(LOG_DEBUG, "ext2: " args)
@@ -112,7 +113,7 @@ struct inode {
 // TODO Should use right shift for negative values
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
 #define bl_off(block) ((block) * superblock_to_blocksize(superblock))
-#define write_superblock() vfs_block_write(1024, sizeof(struct superblock), superblock)
+#define write_superblock() vfs_block_write(1024, sizeof(struct superblock), (uint8_t*)superblock)
 
 struct superblock* superblock;
 struct blockgroup* blockgroup_table;
@@ -132,7 +133,7 @@ size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size);
 size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
 void ext2_insert_dirent(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
-uint32_t ext2_open(char* path, void* mount_instance);
+uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance);
 size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size);
 
 static inline void dump_inode(struct inode* buf) {

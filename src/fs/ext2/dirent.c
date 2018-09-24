@@ -82,6 +82,7 @@ void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	ext2_write_inode_blocks(dir, dir_num, dir->size / superblock_to_blocksize(superblock), dirents);
 
+	// FIXME Update parent directory mtime/ctime
 	kfree(new_dirent);
 	kfree(dirents);
 	kfree(dir);

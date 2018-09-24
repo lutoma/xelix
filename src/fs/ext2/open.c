@@ -22,9 +22,9 @@
 #include "ext2_internal.h"
 #include <log.h>
 #include <string.h>
+#include <errno.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
-#include <hw/serial.h>
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
@@ -115,7 +115,7 @@ static inline char* chop_path(const char* path, char** ent) {
 	return base_path;
 }
 
-static uint32_t handle_symlink(struct inode* inode, const char* path, void* mount_instance) {
+static uint32_t handle_symlink(struct inode* inode, const char* path, uint32_t flags, void* mount_instance) {
 	/* For symlinks with up to 60 chars length, the path is stored in the
 	 * inode in the area where normally the block pointers would be.
 	 * Otherwise in the file itself.
@@ -137,13 +137,13 @@ static uint32_t handle_symlink(struct inode* inode, const char* path, void* moun
 	}
 
 	// FIXME Should be vfs_open to make symlinks across mount points possible
-	uint32_t r = ext2_open(new_path, mount_instance);
+	uint32_t r = ext2_open(new_path, flags, mount_instance);
 	kfree(new_path);
 	return r;
 }
 
 // The public open interface to the virtual file system
-uint32_t ext2_open(char* path, void* mount_instance) {
+uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 	if(!path || !strcmp(path, "")) {
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
 		return 0;
@@ -154,10 +154,16 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 	bool created = false;
 
 	if(!inode_num) {
+		if(!(flags & O_CREAT)) {
+			sc_errno = ENOENT;
+			return 0;
+		}
+
 		debug("ext2_open: Could not find inode, creating one.\n");
 		char* name;
 		char* dir_path = chop_path(path, &name);
 		if(!name) {
+			sc_errno = ENOENT;
 			return 0;
 		}
 
@@ -171,14 +177,25 @@ uint32_t ext2_open(char* path, void* mount_instance) {
 		kfree(dir_path);
 		created = true;
 	} else {
+		if((flags & O_CREAT) && (flags & O_EXCL)) {
+			sc_errno = EEXIST;
+			return 0;
+		}
+
 		inode = kmalloc(superblock->inode_size);
 		if(!ext2_read_inode(inode, inode_num)) {
 			return 0;
 		}
 	}
 
-	if(!created && vfs_mode_to_filetype(inode->mode) == FT_IFLNK) {
-		inode_num = handle_symlink(inode, path, mount_instance);
+	uint32_t ft = vfs_mode_to_filetype(inode->mode);
+	if(ft == FT_IFDIR && (flags & O_WRONLY || flags & O_RDWR)) {
+		inode_num = 0;
+		sc_errno = EISDIR;
+	}
+
+	if(!created && ft == FT_IFLNK) {
+		inode_num = handle_symlink(inode, path, flags, mount_instance);
 	}
 
 	kfree(inode);

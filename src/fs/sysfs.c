@@ -55,7 +55,7 @@ static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
 	return NULL;
 }
 
-uint32_t sysfs_open(char* path, void* mount_instance) {
+uint32_t sysfs_open(char* path, uint32_t flags, void* mount_instance) {
 	if(!strncmp(path, "/", 2) || get_file(path, *(struct sysfs_file**)mount_instance)) {
 		return 1;
 	}

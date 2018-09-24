@@ -111,7 +111,7 @@ int _lseek(int file, int ptr, int dir) {
 }
 
 int _open(const char* name, int flags, ...) {
-	return syscall(13, name, 0, 0);
+	return syscall(13, name, flags, 0);
 }
 
 ssize_t _read(int file, char *buf, int len) {

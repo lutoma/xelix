@@ -63,7 +63,7 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 void ext2_init() {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
 	superblock = (struct superblock*)kmalloc(1024);
-	vfs_block_read(1024, sizeof(struct superblock), superblock);
+	vfs_block_read(1024, sizeof(struct superblock), (uint8_t*)superblock);
 
 	if(superblock->magic != SUPERBLOCK_MAGIC)
 	{

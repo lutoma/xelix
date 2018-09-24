@@ -28,7 +28,7 @@ SYSCALL_HANDLER(chdir)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 
-	vfs_file_t* fp = vfs_open((char*)syscall.params[0], syscall.task);
+	vfs_file_t* fp = vfs_open((char*)syscall.params[0], O_RDONLY, syscall.task);
 	if(!fp) {
 		return -1;
 	}

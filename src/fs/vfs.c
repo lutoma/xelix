@@ -129,8 +129,7 @@ vfs_file_t* vfs_get_from_id(uint32_t id) {
 	return fd;
 }
 
-vfs_file_t* vfs_open(const char* orig_path, task_t* task)
-{
+vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	#ifdef VFS_DEBUG
 	log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s\n",
 		task ? task->pid : 0,
@@ -141,6 +140,11 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 	if(!orig_path || !strcmp(orig_path, "")) {
 		log(LOG_ERR, "vfs: vfs_open called with empty path.\n");
 		sc_errno = ENOENT;
+		return NULL;
+	}
+
+	if((flags & O_EXCL) && !(flags & O_CREAT)) {
+		sc_errno = EINVAL;
 		return NULL;
 	}
 
@@ -180,11 +184,12 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 
 	if(mp_num < 0) {
 		kfree(path);
+		spinlock_release(&file_open_lock);
 		sc_errno = ENOENT;
 		return NULL;
 	}
 
-	uint32_t inode = mp.open_callback(mount_path, mp.instance);
+	uint32_t inode = mp.open_callback(mount_path, flags, mp.instance);
 	if(!inode) {
 		kfree(path);
 		spinlock_release(&file_open_lock);
@@ -195,6 +200,8 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 	uint32_t num = ++last_file;
 
 	if(num >= VFS_MAX_OPENFILES) {
+		kfree(path);
+		spinlock_release(&file_open_lock);
 		sc_errno = ENFILE;
 		return NULL;
 	}
@@ -208,6 +215,7 @@ vfs_file_t* vfs_open(const char* orig_path, task_t* task)
 	files[num].mountpoint = mp_num;
 	files[num].inode = inode;
 	files[num].task = task;
+	files[num].flags = flags;
 
 	spinlock_release(&file_open_lock);
 	return &files[num];
@@ -229,6 +237,12 @@ int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 	debug("size %d\n", size);
+
+	if(fp->flags & O_WRONLY) {
+		sc_errno = EBADF;
+		return -1;
+	}
+
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	size_t read = mp.read_callback(fp, dest, size);
@@ -238,6 +252,11 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 
 size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
 	debug("size %d\n", size);
+
+	if(fp->flags & O_RDONLY) {
+		sc_errno = EBADF;
+		return -1;
+	}
 
 	if(!size) {
 		return 0;
@@ -277,6 +296,7 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 			break;
 		case VFS_SEEK_END:
 			log(LOG_WARN, "vfs_seek with an origin of VFS_SEEK_END is not supported so far!\n");
+			sc_errno = ENOSYS;
 	}
 }
 
@@ -314,7 +334,7 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 }
 
 void vfs_init() {
-	vfs_open("/dev/stdin", NULL);
-	vfs_open("/dev/stdout", NULL);
-	vfs_open("/dev/stderr", NULL);
+	vfs_open("/dev/stdin", O_RDONLY, NULL);
+	vfs_open("/dev/stdout", O_WRONLY, NULL);
+	vfs_open("/dev/stderr", O_WRONLY, NULL);
 }

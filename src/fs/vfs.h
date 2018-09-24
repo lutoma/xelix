@@ -44,6 +44,16 @@
 #define S_IWOTH		0x0002
 #define S_IXOTH		0x0001
 
+// vfs_open flags, Keep in sync with newlib sys/_default_fcntl.h
+#define	O_RDONLY	0
+#define	O_WRONLY	1
+#define	O_RDWR		2
+#define	O_APPEND	0x0008
+#define	O_CREAT		0x0200
+#define	O_TRUNC		0x0400
+#define	O_EXCL		0x0800
+#define O_SYNC		0x2000
+
 #define vfs_mode_to_filetype(mode) (mode & 0xf000)
 
 typedef struct {
@@ -51,6 +61,7 @@ typedef struct {
    char path[512];
    char mount_path[512];
    void* mount_instance;
+   uint32_t flags;
    uint32_t offset;
    uint32_t mountpoint;
    uint32_t inode;
@@ -90,7 +101,7 @@ typedef struct {
 } __attribute__((packed)) vfs_stat_t;
 
 
-typedef uint32_t (*vfs_open_callback_t)(char* path, void* mount_instance);
+typedef uint32_t (*vfs_open_callback_t)(char* path, uint32_t flags, void* mount_instance);
 typedef int (*vfs_stat_callback_t)(vfs_file_t* fp, vfs_stat_t* dest);
 typedef size_t (*vfs_read_callback_t)(vfs_file_t* fp, void* dest, size_t size);
 typedef size_t (*vfs_write_callback_t)(vfs_file_t* fp, void* source, size_t size);
@@ -102,7 +113,7 @@ char vfs_last_read_attempt[512];
 
 char* vfs_normalize_path(const char* orig_path, char* cwd);
 vfs_file_t* vfs_get_from_id(uint32_t id);
-vfs_file_t* vfs_open(const char* path, task_t* task);
+vfs_file_t* vfs_open(const char* path, uint32_t flags, task_t* task);
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 size_t vfs_write(void* source, size_t size, vfs_file_t* fp);
