@@ -1,7 +1,7 @@
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 static const char* humanize(uint64_t bytes) {
 	char *suffix[] = {"B", "KB", "MB", "GB", "TB"};

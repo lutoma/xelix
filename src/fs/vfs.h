@@ -84,10 +84,10 @@ typedef struct {
 	uint16_t st_dev;
 	uint16_t st_ino;
 	uint32_t st_mode;
-	uint32_t st_nlink;
+	uint16_t st_nlink;
 	uint16_t st_uid;
 	uint16_t st_gid;
-	uint32_t st_rdev;
+	uint16_t st_rdev;
 	uint32_t st_size;
 	time_t st_atime;
 	long st_spare1;

@@ -8,11 +8,18 @@ all: $(TARGETS)
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) util.o libutil.a
 
 %: %.asm
 	nasm -g -f elf -o $@.o $<
 	$(CC) -nostdlib -o $@ $@.o
+
+%: %.c libutil.a
+	$(CC) $(CFLAGS) -o $@ $@.c -L. -lutil
+
+libutil.a: util.c
+	$(CC) $(CFLAGS) -c -o util.o $<
+	ar rcs $@ util.o
 
 .PHONY: install
 install:

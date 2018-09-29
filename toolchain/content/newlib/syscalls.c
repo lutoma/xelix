@@ -189,12 +189,26 @@ int getdents(unsigned int fd, struct dirent** dirp, unsigned int count) {
 	return syscall(16, fd, dirp, count);
 }
 
+int gethostname(char *name, size_t namelen) {
+	strncpy(name, "localhost", namelen);
+	FILE* fp = fopen("/etc/hostname", "r");
+	if(fp) {
+		char hostname[300];
+		if(fscanf(fp, "%s\n", &hostname) == 1) {
+			strncpy(name, hostname, namelen);
+		}
+		fclose(fp);
+	}
+
+	return 0;
+}
+
 int uname(struct utsname* name) {
 	strcpy(name->sysname, "Xelix");
-	strcpy(name->nodename, "default");
+	gethostname(name->nodename, 300);
 	strcpy(name->release, "alpha");
 	strcpy(name->version, "0.0.1");
-	strcpy(name->machine, "i686");
+	strcpy(name->machine, "i786");
 	return 0;
 }
 
@@ -205,16 +219,15 @@ int _fstat(int file, struct stat* st) {
 }
 
 int _stat(const char* name, struct stat *st) {
-	int fp = open(name, 0);
+	int fp = open(name, O_RDONLY);
 	if(!fp) {
 		return -1;
 	}
 
-	int r = fstat(fp, st);
-	int stat_errno = errno;
-
+	int r = _fstat(fp, st);
+	//int stat_errno = errno;
 	//close(fp);
-	errno = stat_errno;
+	//errno = stat_errno;
 	return r;
 }
 

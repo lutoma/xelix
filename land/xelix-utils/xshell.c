@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/limits.h>
+#include "util.h"
 
 #ifdef __xelix__
   // Xelix special interface™
@@ -57,7 +58,8 @@ int main(int argc, char* argv[]) {
 	char* cwd = malloc(PATH_MAX);
 	char* cmd = malloc(500);
 	char* user = getenv("USER");
-	char* host = getenv("HOST");
+	char* host = strdup(getenv("HOST"));
+	shortname(host);
 	getcwd(cwd, PATH_MAX);
 
 	while(true) {

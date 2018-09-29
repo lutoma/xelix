@@ -7,11 +7,16 @@
 #include <pwd.h>
 #include <sys/wait.h>
 #include <sys/xelix.h>
+#include "util.h"
 
 int main() {
+	char hostname[300];
+	gethostname(hostname, 300);
+	char* sname = shortname(strdup(hostname));
+
 	while(true) {
 		printf("\nxelix tty1\n\n");
-		printf("localhost login: ");
+		printf("%s login: ", sname);
 		fflush(stdout);
 
 		char* user = malloc(50);
@@ -63,7 +68,10 @@ int main() {
 		char env_pwd[100];
 		snprintf(env_pwd, 100, "PWD=%s", pwd->pw_dir);
 
-		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", env_home, "TERM=vt100", env_pwd, env_user, "HOST=default", NULL };
+		char env_host[306];
+		snprintf(env_pwd, 306, "HOST=%s", hostname);
+
+		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", env_home, "TERM=vt100", env_pwd, env_user, env_host, NULL };
 
 		chdir(pwd->pw_dir);
 		pid_t shell = execnew(pwd->pw_shell, __argv, __env);
@@ -74,4 +82,6 @@ int main() {
 
 		wait(NULL);
 	}
+
+	free(sname);
 }

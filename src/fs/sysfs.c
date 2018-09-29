@@ -84,8 +84,7 @@ int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 
 size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size) {
 	if(fp->offset) {
-		sc_errno = EINVAL;
-		return -1;
+		return 0;
 	}
 
 	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);

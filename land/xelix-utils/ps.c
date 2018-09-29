@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
 
 		if(fscanf(fp, "%d %d %c %s 0x%x 0x%x 0x%x\n", &pid, &ppid, &cstate, name, &entry, &sbrk, &stack) != 7) {
 			fprintf(stderr, "Matching error.\n");
+			exit(EXIT_FAILURE);
 		}
 
 		char* state = "Unknown";

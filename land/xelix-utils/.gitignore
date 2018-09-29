@@ -9,3 +9,5 @@ xshell
 ps
 uptime
 free
+util.o
+libutil.a

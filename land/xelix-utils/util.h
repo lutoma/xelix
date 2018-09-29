@@ -1,0 +1,1 @@
+char* shortname(char* in);
