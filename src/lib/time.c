@@ -151,12 +151,14 @@ static time_t read_rtc() {
 }
 
 uint32_t time_get() {
-	/* Can't use libgcc's 64 bit integer division functions right now.
-	 * The offset shouldn't be larger than a uint32 anyway.
-	 */
-	uint32_t offset = (pit_tick - last_tick);
+	uint32_t stick = pit_tick;
+	if(stick <= last_tick + PIT_RATE) {
+		return last_timestamp;
+	}
+
+	uint32_t offset = (stick - last_tick);
 	last_timestamp += offset / PIT_RATE;
-	last_tick = pit_tick;
+	last_tick = stick;
 	return last_timestamp;
 }
 

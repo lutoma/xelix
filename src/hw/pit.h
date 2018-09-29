@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Lukas Martini
+/* Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,5 +20,7 @@
 
 #include <stdint.h>
 
-uint64_t pit_tick;
+#define pit_tick (pit_get_tick())
+
 void pit_init(uint16_t frequency);
+uint32_t pit_get_tick(void);

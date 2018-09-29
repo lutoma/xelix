@@ -1,5 +1,5 @@
 /* generic.c: Interface to the programmable interrupt timer
- * Copyright © 2010, 2011 Lukas Martini
+ * Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,21 +21,26 @@
 #include <hw/interrupts.h>
 #include <fs/sysfs.h>
 
+static uint32_t tick = 0;
+
 // The timer callback. Gets called every time the PIT fires.
 static void timer_callback(cpu_state_t* regs) {
-	pit_tick++;
+	tick++;
+}
+
+uint32_t pit_get_tick(void) {
+	return tick;
 }
 
 static size_t sfs_read(void* dest, size_t size) {
 	size_t rsize = 0;
-	sysfs_printf("%d %d %d", uptime(), pit_tick, (PIT_RATE));
+	sysfs_printf("%d %d %d", uptime(), tick, (PIT_RATE));
 	return rsize;
 }
 
 // Initialize the PIT
 void pit_init(uint16_t frequency)
 {
-	pit_tick = 0;
 	interrupts_register(IRQ0, &timer_callback);
 
 	// The value we send to the PIT is the value to divide it's input clock
