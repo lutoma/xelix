@@ -193,6 +193,7 @@ task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, ui
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
 	if(vfs_stat(fd, stat) != 0 || !stat->st_size || !(stat->st_mode & S_IXUSR)) {
 		kfree(stat);
+		vfs_close(fd);
 		return NULL;
 	}
 
@@ -202,10 +203,12 @@ task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, ui
 
 	if(!read) {
 		kfree(data);
+		vfs_close(fd);
 		return NULL;
 	}
 
 	task_t* task = elf_load((elf_t*)data, path, environ, envc, argv, argc);
 	kfree(data);
+	vfs_close(fd);
 	return task;
 }

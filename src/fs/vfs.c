@@ -50,7 +50,6 @@ struct mountpoint {
 struct mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
 vfs_file_t files[VFS_MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
-uint32_t last_file = -1;
 uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
 
@@ -119,13 +118,16 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 }
 
 vfs_file_t* vfs_get_from_id(uint32_t id) {
-	if(id < 1 || id > last_file || !spinlock_get(&file_open_lock, 30)) {
+	if(!spinlock_get(&file_open_lock, 30)) {
 		return NULL;
 	}
 
 	vfs_file_t* fd = &files[id];
-	spinlock_release(&file_open_lock);
+	if(!fd->inode) {
+		return NULL;
+	}
 
+	spinlock_release(&file_open_lock);
 	return fd;
 }
 
@@ -197,7 +199,12 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
-	uint32_t num = ++last_file;
+	uint32_t num = 0;
+	for(; num < VFS_MAX_OPENFILES; num++) {
+		if(!files[num].inode) {
+			break;
+		}
+	}
 
 	if(num >= VFS_MAX_OPENFILES) {
 		kfree(path);
@@ -300,6 +307,23 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 	}
 }
 
+int vfs_close(vfs_file_t* fp) {
+	if(fp->num < 3) {
+		return 0;
+	}
+
+	debug("\n", NULL);
+
+	if(!spinlock_get(&file_open_lock, 30)) {
+		sc_errno = EAGAIN;
+		return -1;
+	}
+
+	files[fp->num].inode = 0;
+	spinlock_release(&file_open_lock);
+	return 0;
+}
+
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	vfs_open_callback_t open_callback, vfs_stat_callback_t stat_callback,
 	vfs_read_callback_t read_callback, vfs_write_callback_t write_callback,
@@ -334,6 +358,7 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 }
 
 void vfs_init() {
+	bzero(files, sizeof(files));
 	vfs_open("/dev/stdin", O_RDONLY, NULL);
 	vfs_open("/dev/stdout", O_WRONLY, NULL);
 	vfs_open("/dev/stderr", O_WRONLY, NULL);

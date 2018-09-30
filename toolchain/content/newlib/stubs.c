@@ -41,14 +41,6 @@
 #include <poll.h>
 #include <mntent.h>
 
-
-int _close(int file) {
-	//fprintf(stderr, "Warning: xelix newlib close() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 int _link(char *old, char *new){
 	//fprintf(stderr, "Warning: xelix newlib link() stub called.\n");
 

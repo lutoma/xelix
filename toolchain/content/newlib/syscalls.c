@@ -114,6 +114,10 @@ int _open(const char* name, int flags, ...) {
 	return syscall(13, name, flags, 0);
 }
 
+int _close(int file) {
+	return syscall(5, file, 0, 0);
+}
+
 ssize_t _read(int file, char *buf, int len) {
 	return syscall(2, file, buf, len);
 }
@@ -225,9 +229,9 @@ int _stat(const char* name, struct stat *st) {
 	}
 
 	int r = _fstat(fp, st);
-	//int stat_errno = errno;
-	//close(fp);
-	//errno = stat_errno;
+	int stat_errno = errno;
+	_close(fp);
+	errno = stat_errno;
 	return r;
 }
 

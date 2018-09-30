@@ -1,5 +1,5 @@
-/* cwd.c: Set current working directory
- * Copyright © 2013-2018 Lukas Martini
+/* close.c: Close Syscall
+ * Copyright © 2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,38 +17,16 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tasks/syscall.h>
-#include <tasks/task.h>
-#include <memory/kmalloc.h>
 #include <fs/vfs.h>
-#include <string.h>
 #include <errno.h>
+#include <tasks/syscall.h>
 
-SYSCALL_HANDLER(chdir)
-{
-	SYSCALL_SAFE_RESOLVE_PARAM(0);
-
-	vfs_file_t* fp = vfs_open((char*)syscall.params[0], O_RDONLY, syscall.task);
-	if(!fp) {
+SYSCALL_HANDLER(close) {
+	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
+	if(!fd) {
+		sc_errno = EBADF;
 		return -1;
 	}
 
-	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_stat(fp, stat) != 0) {
-		kfree(stat);
-		vfs_close(fp);
-		sc_errno = ENOENT;
-		return -1;
-	}
-
-	if(vfs_mode_to_filetype(stat->st_mode) != FT_IFDIR) {
-		vfs_close(fp);
-		sc_errno = ENOTDIR;
-		return -1;
-	}
-
-	kfree(stat);
-	strcpy(syscall.task->cwd, fp->path);
-	vfs_close(fp);
-	return 0;
+	return vfs_close(fd);
 }

@@ -42,6 +42,7 @@ DEFINE_SYSCALL(socket_recv);
 DEFINE_SYSCALL(execnew);
 DEFINE_SYSCALL(wait);
 DEFINE_SYSCALL(audio_play);
+DEFINE_SYSCALL(close);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -49,7 +50,7 @@ syscall_t syscall_table[] = {
 	sys_read,			// 2
 	sys_write,			// 3
 	NULL,				// 4
-	NULL,				// 5
+	sys_close,			// 5
 	NULL,				// 6
 	sys_sbrk,			// 7
 	NULL,				// 8
@@ -83,7 +84,7 @@ char* syscall_name_table[] = {
 	"read",			// 2
 	"write",		// 3
 	NULL,			// 4
-	NULL,			// 5
+	"close",		// 5
 	NULL,			// 6
 	"sbrk",			// 7
 	NULL,			// 8

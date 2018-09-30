@@ -119,6 +119,7 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 size_t vfs_write(void* source, size_t size, vfs_file_t* fp);
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
 void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
+int vfs_close(vfs_file_t* fp);
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	vfs_open_callback_t open_callback, vfs_stat_callback_t stat_callback,

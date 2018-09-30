@@ -241,7 +241,8 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 
 	set_sample_rate(card);
 	card->descs = kmalloc_a(sizeof(struct buf_desc)*32);
-	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs); // FIXME This should do mapping to the phys addr, but kernel space is 1:1 mapped atm anyway.
+	// FIXME This should do mapping to the phys addr, but kernel space is 1:1 mapped atm anyway.
+	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs);
 }
 
 void ac97_play(struct ac97_card* card, char* file) {
@@ -250,9 +251,10 @@ void ac97_play(struct ac97_card* card, char* file) {
 
 	size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 
-	// FIXME Use this properly, use return value of vfs_read to choose buffer num
+	// FIXME Use this properly, stat or use return value of vfs_read to choose buffer num
 	data = kmalloc(9999999);
 	size_t read = vfs_read(data, 9999999, fd);
+	vfs_close(fd);
 
 	if(read < 1)
 		return NULL;
