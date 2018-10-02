@@ -25,6 +25,7 @@
 #include <print.h>
 #include <spinlock.h>
 #include <errno.h>
+#include <fs/null.h>
 
 #ifdef VFS_DEBUG
 # define debug(fmt, args...) log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s " fmt, \
@@ -362,4 +363,5 @@ void vfs_init() {
 	vfs_open("/dev/stdin", O_RDONLY, NULL);
 	vfs_open("/dev/stdout", O_WRONLY, NULL);
 	vfs_open("/dev/stderr", O_WRONLY, NULL);
+	vfs_null_init();
 }
