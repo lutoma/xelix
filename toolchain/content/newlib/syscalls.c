@@ -100,14 +100,7 @@ int _kill(int pid, int sig) {
 }
 
 int _lseek(int file, int ptr, int dir) {
-	int ret = syscall(14, file, ptr, dir);
-
-	if(ret == -2)
-		errno = ENOENT;
-	else if(ret < 1)
-		errno = ENOSYS;
-
-	return -1;
+	return syscall(15, file, ptr, dir);
 }
 
 int _open(const char* name, int flags, ...) {
@@ -217,9 +210,7 @@ int uname(struct utsname* name) {
 }
 
 int _fstat(int file, struct stat* st) {
-	int r = syscall(14, file, st, 0);
-	st->st_mode = S_IFDIR;
-	return r;
+	return syscall(14, file, st, 0);
 }
 
 int _stat(const char* name, struct stat *st) {
@@ -239,22 +230,33 @@ int lstat(const char* name, struct stat *st) {
 	return stat(name, st);
 }
 
+FILE* _time_fp = NULL;
 int _gettimeofday(struct timeval* p, void* tz) {
-	FILE* fp = fopen("/sys/time", "r");
-	if(!fp) {
+	if(!_time_fp) {
+		_time_fp = fopen("/sys/time", "r");
+	}
+
+	if(!_time_fp) {
 		errno = EINVAL;
 		return -1;
 	}
 
 	uint32_t tsec;
-	if(fscanf(fp, "%d", &tsec) != 1) {
-		fclose(fp);
+	rewind(_time_fp);
+	if(fscanf(_time_fp, "%d", &tsec) != 1) {
+		fclose(_time_fp);
+		_time_fp = NULL;
 		errno = EINVAL;
 		return -1;
 	}
 
 	p->tv_sec = tsec;
 	p->tv_usec = 0;
-	fclose(fp);
 	return 0;
+}
+
+static void __attribute__((destructor)) _close_time_fp(void) {
+	if(_time_fp) {
+		fclose(_time_fp);
+	}
 }

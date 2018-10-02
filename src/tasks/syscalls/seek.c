@@ -20,8 +20,7 @@
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
 
-SYSCALL_HANDLER(seek)
-{
+SYSCALL_HANDLER(seek) {
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
 	if(fd == NULL)
 		return -2;

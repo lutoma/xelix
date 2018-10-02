@@ -453,12 +453,12 @@ struct group* getgrgid(gid_t gid) {
 	return NULL;
 }
 
-// Should probably be macros
+// Should be macros
 unsigned int major(dev_t dev) {
 	return 0;
 }
 unsigned int minor(dev_t dev) {
-	return 0;
+	return dev;
 }
 
 int usleep(useconds_t useconds) {
