@@ -20,20 +20,28 @@ int main() {
 		fflush(stdout);
 
 		char* user = malloc(50);
+		errno = 0;
 		char* read = fgets(user, 50, stdin);
 		if(!read) {
-			perror("fgets");
-			return 1;
+			if(errno) {
+				perror("fgets");
+				return 1;
+			}
+			continue;
 		}
 
 		printf("Password: ");
 		fflush(stdout);
 
 		char* pass = malloc(500);
+		errno = 0;
 		read = fgets(pass, 500, stdin);
 		if(!read) {
-			perror("fgets");
-			return 1;
+			if(errno) {
+				perror("fgets");
+				return 1;
+			}
+			continue;
 		}
 
 		// Strip the \n
