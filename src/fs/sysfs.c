@@ -23,6 +23,7 @@
 #include <memory/kmalloc.h>
 #include <fs/vfs.h>
 #include <print.h>
+#include <time.h>
 #include "sysfs.h"
 
 struct sysfs_file {
@@ -64,21 +65,33 @@ uint32_t sysfs_open(char* path, uint32_t flags, void* mount_instance) {
 
 int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	bool is_root = !strncmp(fp->mount_path, "/", 2);
-	if(!is_root && !get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance)) {
+	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
+	if(!is_root && !file) {
 		return -1;
 	}
 
 	dest->st_dev = fp->mount_instance == &sys_files ? 2 : 3;
 	dest->st_ino = 1;
-	dest->st_mode = (is_root ? FT_IFDIR | S_IXUSR : FT_IFREG) | S_IRUSR | S_IWUSR;
-	dest->st_nlink = 0;
+	if(is_root) {
+		dest->st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
+	} else {
+		dest->st_mode = FT_IFREG;
+
+		if(file->read_cb)
+			dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+		if(file->write_cb)
+			dest->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+	}
+	dest->st_nlink = 1;
+	dest->st_blocks = 2;
 	dest->st_uid = 0;
 	dest->st_gid = 0;
 	dest->st_rdev = 0;
 	dest->st_size = 0;
-	dest->st_atime = 0;
-	dest->st_mtime = 0;
-	dest->st_ctime = 0;
+	uint32_t t = time_get();
+	dest->st_atime = t;
+	dest->st_mtime = t;
+	dest->st_ctime = t;
 	return 0;
 }
 
