@@ -331,7 +331,7 @@ void rtl8139_init()
 	memset(rtl8139_cards, 0, RTL8139_MAX_CARDS * sizeof(struct rtl8139_card));
 
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*) * RTL8139_MAX_CARDS);
-	uint32_t ndevices = pci_search_by_id(devices, vendor_device_combos, RTL8139_MAX_CARDS);
+	uint32_t ndevices = pci_search(devices, vendor_device_combos, RTL8139_MAX_CARDS);
 
 	log(LOG_INFO, "rtl8139: Discovered %d devices.\n", ndevices);
 

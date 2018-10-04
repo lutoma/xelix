@@ -275,7 +275,7 @@ void ac97_init()
 	memset(ac97_cards, 0, AC97_MAX_CARDS * sizeof(struct ac97_card));
 
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(pci_device_t*) * AC97_MAX_CARDS);
-	uint32_t volatile num_devices = pci_search_by_id(devices, vendor_device_combos, AC97_MAX_CARDS);
+	uint32_t volatile num_devices = pci_search(devices, vendor_device_combos, AC97_MAX_CARDS);
 
 	log(LOG_INFO, "ac97: Discovered %d devices.\n", num_devices);
 
