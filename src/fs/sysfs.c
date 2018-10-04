@@ -76,7 +76,7 @@ int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	if(is_root) {
 		dest->st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
 	} else {
-		dest->st_mode = FT_IFREG;
+		dest->st_mode = fp->mount_instance == &sys_files ? FT_IFREG : FT_IFCHR;
 
 		if(file->read_cb)
 			dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
@@ -85,6 +85,7 @@ int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	}
 	dest->st_nlink = 1;
 	dest->st_blocks = 2;
+	dest->st_blksize = 1024;
 	dest->st_uid = 0;
 	dest->st_gid = 0;
 	dest->st_rdev = 0;

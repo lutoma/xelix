@@ -215,7 +215,7 @@ int _fstat(int file, struct stat* st) {
 
 int _stat(const char* name, struct stat *st) {
 	int fp = open(name, O_RDONLY);
-	if(!fp) {
+	if(fp == -1) {
 		return -1;
 	}
 

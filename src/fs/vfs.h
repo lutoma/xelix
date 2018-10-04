@@ -80,6 +80,7 @@ typedef struct {
 	char name[] __attribute__ ((nonstring));
 } __attribute__((packed)) vfs_dirent_t;
 
+// Keep in sync with newlib
 typedef struct {
 	uint16_t st_dev;
 	uint16_t st_ino;
@@ -89,11 +90,11 @@ typedef struct {
 	uint16_t st_gid;
 	uint16_t st_rdev;
 	uint32_t st_size;
-	time_t st_atime;
+	uint64_t st_atime;
 	long st_spare1;
-	time_t st_mtime;
+	uint64_t st_mtime;
 	long st_spare2;
-	time_t st_ctime;
+	uint64_t st_ctime;
 	long st_spare3;
 	uint32_t st_blksize;
 	uint32_t st_blocks;
@@ -112,7 +113,7 @@ typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t siz
 char vfs_last_read_attempt[512];
 
 char* vfs_normalize_path(const char* orig_path, char* cwd);
-vfs_file_t* vfs_get_from_id(uint32_t id);
+vfs_file_t* vfs_get_from_id(int id);
 vfs_file_t* vfs_open(const char* path, uint32_t flags, task_t* task);
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);

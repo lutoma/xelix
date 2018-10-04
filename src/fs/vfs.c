@@ -118,8 +118,8 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	return new_path;
 }
 
-vfs_file_t* vfs_get_from_id(uint32_t id) {
-	if(!spinlock_get(&file_open_lock, 30)) {
+vfs_file_t* vfs_get_from_id(int id) {
+	if(id < 0 || !spinlock_get(&file_open_lock, 30)) {
 		return NULL;
 	}
 

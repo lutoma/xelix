@@ -55,6 +55,8 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	dest->st_atime = inode->access_time;
 	dest->st_mtime = inode->modification_time;
 	dest->st_ctime = inode->creation_time;
+	dest->st_blksize = bl_off(1);
+	dest->st_blocks = inode->block_count;
 
 	kfree(inode);
 	return 0;
