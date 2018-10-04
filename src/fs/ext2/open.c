@@ -58,7 +58,7 @@ static uint32_t resolve_inode(const char* path) {
 		}
 
 		dirent_block = kmalloc(current_inode->size);
-		if(!ext2_read_inode_blocks(current_inode, current_inode->size / superblock_to_blocksize(superblock), dirent_block)) {
+		if(!ext2_read_inode_blocks(current_inode, 0, current_inode->size / superblock_to_blocksize(superblock), dirent_block)) {
 			goto bye;
 		}
 

@@ -43,7 +43,7 @@ void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_
 	}
 
 	void* dirents = kmalloc(dir->size);
-	if(!ext2_read_inode_blocks(dir, dir->size / superblock_to_blocksize(superblock), dirents)) {
+	if(!ext2_read_inode_blocks(dir, 0, dir->size / superblock_to_blocksize(superblock), dirents)) {
 		return;
 	}
 
@@ -121,7 +121,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
 		size = inode->size;
 	}
 
-	if(!ext2_read_inode_blocks(inode, size / superblock_to_blocksize(superblock), dest)) {
+	if(!ext2_read_inode_blocks(inode, 0, size / superblock_to_blocksize(superblock), dest)) {
 		return 0;
 	}
 

@@ -135,9 +135,9 @@ uint32_t ext2_resolve_inode_blocknum(struct inode* inode, uint32_t block_num) {
 	return real_block_num;
 }
 
-uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf) {
+uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t offset, uint32_t num, uint8_t* buf) {
 	for(int i = 0; i < num; i++) {
-		uint32_t block_num = ext2_resolve_inode_blocknum(inode, i);
+		uint32_t block_num = ext2_resolve_inode_blocknum(inode, i + offset);
 		if(!block_num) {
 			return NULL;
 		}

@@ -62,22 +62,21 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 		return -1;
 	}
 
-	if(inode->size < 1) {
+	if(inode->size < 1 || fp->offset >= inode->size) {
 		kfree(inode);
 		return 0;
 	}
 
-	if(size > inode->size) {
-		debug("ext2_read_file: Attempt to read 0x%x bytes, but file is only 0x%x bytes. Capping.\n", size, inode->size);
-		size = inode->size;
+	if(fp->offset + size > inode->size) {
+		size = inode->size - fp->offset;
+		debug("ext2: Capping read size to 0x%x\n", size);
 	}
 
-	uint32_t num_blocks = (size + fp->offset) / superblock_to_blocksize(superblock);
-	if((size + fp->offset) % superblock_to_blocksize(superblock) != 0) {
+	uint32_t num_blocks = size / bl_off(1);
+	if(size % bl_off(1) != 0) {
 		num_blocks++;
 	}
 
-	debug("Inode has %d blocks:\n", num_blocks);
 	debug("Blocks table:\n");
 	for(uint32_t i = 0; i < 15; i++) {
 		debug("\t%2d: 0x%x\n", i, inode->blocks[i]);
@@ -87,8 +86,8 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 	 * whole blocks right now, which means we could write more than size if size
 	 * is not mod the block size. Should rewrite read_inode_blocks.
 	 */
-	uint8_t* tmp = kmalloc(num_blocks * superblock_to_blocksize(superblock));
-	uint8_t* read = ext2_read_inode_blocks(inode, num_blocks, tmp);
+	uint8_t* tmp = kmalloc(num_blocks * bl_off(1));
+	uint8_t* read = ext2_read_inode_blocks(inode, (fp->offset / bl_off(1)), num_blocks, tmp);
 	kfree(inode);
 
 	if(!read) {
@@ -98,12 +97,6 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 
 	memcpy(dest, tmp, size);
 	kfree(tmp);
-
-	#ifdef EXT2_DEBUG
-		log(LOG_DEBUG, "Read file %s offset %d size %d with resulting md5sum of:\n\t", fp->mount_path, fp->offset, size);
-		MD5_dump(dest, size);
-	#endif
-
 	return size;
 }
 

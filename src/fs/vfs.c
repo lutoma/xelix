@@ -254,7 +254,7 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
 	size_t read = mp.read_callback(fp, dest, size);
-	fp->offset += size;
+	fp->offset += read;
 	return read;
 }
 
@@ -294,17 +294,24 @@ size_t vfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 
 void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 	debug("offset %d origin %d\n", offset, origin);
+	vfs_stat_t* stat;
 
 	switch(origin) {
 		case VFS_SEEK_SET:
 			fp->offset = offset;
 			break;
 		case VFS_SEEK_CUR:
-			fp->offset += offset;
+			if(offset < 0 && (offset * -1) > fp->offset) {
+				fp->offset = 0;
+			} else {
+				fp->offset += offset;
+			}
 			break;
 		case VFS_SEEK_END:
-			log(LOG_WARN, "vfs_seek with an origin of VFS_SEEK_END is not supported so far!\n");
-			sc_errno = ENOSYS;
+			stat = kmalloc(sizeof(vfs_stat_t));
+			vfs_stat(fp, stat);
+			fp->offset = stat->st_size + offset;
+			kfree(stat);
 	}
 }
 

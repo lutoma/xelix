@@ -123,7 +123,7 @@ bool ext2_write_inode(struct inode* buf, uint32_t inode_num);
 bool ext2_read_inode(struct inode* buf, uint32_t inode_num);
 uint32_t ext2_new_inode(struct inode** inodeptr);
 uint32_t ext2_resolve_inode_blocknum(struct inode* inode, uint32_t block_num);
-uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t num, uint8_t* buf);
+uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t offset, uint32_t num, uint8_t* buf);
 int ext2_write_inode_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf);
 
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
