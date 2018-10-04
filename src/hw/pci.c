@@ -1,7 +1,7 @@
 /* pci.c: PCI stack
  * Copyright © 2011 Barbers
  * Copyright © 2011 Fritz Grimpen
- * Copyright © 2011, 2013 Lukas Martini
+ * Copyright © 2011-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,159 +19,128 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* This file follows the following convention:
- *
- * All functions prefixed by an underscore expect a bus, device & function
- * number as argument and should generally only be used internally. All
- * other functions take a pci_device_t* as argument (from which they will
- * extract bus, device & function themselves).
- */
-
 #include "pci.h"
 #include <log.h>
 #include <string.h>
 #include <print.h>
-
-// See src/drivers/bus/pci.c:[223:312] of
-// de2c63d437317cd9d042e1a6e6a93c0cc78859d7 of
-// git://git.etherboot.org/scm/gpxe.git
+#include <fs/sysfs.h>
+#include <memory/kmalloc.h>
 
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8
 
-static pci_device_t devices[65536];
+#define expand_dev(device) device->bus, device->dev, device->func
+#define get_header_type(device) ((uint16_t)config_read(device, 0xe) & 127)
+#define config_read(device, offset) _config_read(expand_dev(device), offset)
 
-static inline int get_address(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
-{
-	return 0x80000000|(bus<<16)|(dev<<11)|(func<<8)|(offset&0xFC);
-}
+#define config_write(device, offset, val) \
+	_config_write(expand_dev(device), offset, val)
 
-uint32_t _pci_config_read(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
-{
-  outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
-	if (offset % 4 == 0)
+#define get_address(bus, dev, func, offset) (0x80000000 | (bus << 16) | \
+	(dev << 11) | (func << 8) | (offset & 0xFC))
+
+static pci_device_t* first_device = NULL;
+
+
+static inline uint32_t _config_read(uint8_t bus, uint8_t dev, uint8_t func,
+	uint8_t offset) {
+
+	outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
+	if(!(offset % 4)) {
 		return inl(PCI_CONFIG_DATA);
+	}
 
 	return (inl(PCI_CONFIG_DATA) >> ((offset % 4) * 8)) & 0xffff;
 }
 
-uint16_t _pci_config_read16(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset)
-{
-	outw(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
-	return inw(PCI_CONFIG_DATA);
-}
+static inline void _config_write(uint8_t bus, uint8_t dev, uint8_t func,
+	uint8_t offset, uint32_t val) {
 
-void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val)
-{
 	outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
 	outl(PCI_CONFIG_DATA, val);
 }
 
-void _pci_config_write16(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint16_t val)
-{
-	outw(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
-	outw(PCI_CONFIG_DATA, val);
-}
-
-// *trollface*
-// bar ∈ { x | x ∈ ℕ ∧ x ∈ [0, 5] }
-uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar)
-{
-	if (bar >= 6)
+static uint32_t get_BAR(pci_device_t* device, uint8_t bar) {
+	if(bar > 5) {
 		return 0;
+	}
 
-	uint8_t headerType = pci_get_header_type(device);
-	if (headerType == 0x2 || (headerType == 0x1 && bar < 2))
+	uint8_t header_type = get_header_type(device);
+	if(header_type == 0x2 || (header_type == 0x1 && bar < 2)) {
 		return 0;
+	}
 
 	uint8_t _register = 0x10 + 0x4 * bar;
-	return pci_config_read(device, _register);
+	return config_read(device, _register);
 }
 
-uint32_t pci_get_IO_base(pci_device_t* device)
-{
-	uint8_t bars = 6 - pci_get_header_type(device) * 4;
-	uint8_t i = 0;
-	uint32_t bar;
+static uint32_t get_IO_base(pci_device_t* device) {
+	uint8_t bars = 6 - get_header_type(device) * 4;
 
-	while (i < bars)
-	{
-		bar = pci_get_BAR(device, i++);
-		if (bar & 0x1)
+	for(int i = 0; i < bars; i++) {
+		uint32_t bar = get_BAR(device, i);
+		if(bar & 0x1) {
 			return bar & 0xfffffffc;
+		}
 	}
 
 	return 0;
 }
 
-// TODO Write correct code (This is not correct ;))
-uint32_t pci_get_mem_base(pci_device_t* device)
-{
-	uint8_t bars = 6 - pci_get_header_type(device) * 4;
-	uint8_t i = 0;
-	uint32_t bar;
+// TODO Make sure this actually works
+static uint32_t get_mem_base(pci_device_t* device) {
+	uint8_t bars = 6 - get_header_type(device) * 4;
 
-	while ( bars > i)
-	{
-		bar = pci_get_BAR(device, i++);
-		if ((bar & 0x1) == 0)
+	for(int i = 0; i < bars; i++) {
+		uint32_t bar = get_BAR(device, i++);
+		if(!(bar & 0x1)) {
 			return bar & 0xfffffff0;
+		}
 	}
 
 	return 0;
 }
 
-void pci_load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func)
-{
+static void load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t func) {
 	device->bus = bus;
 	device->dev = dev;
 	device->func = func;
 
-	device->vendorID = pci_get_vendor_id(device);
-	device->deviceID = pci_get_device_id(device);
-	device->revision = pci_get_revision(device);
-	device->class = pci_get_class(device);
-	device->iobase = pci_get_IO_base(device);
-	device->membase = pci_get_mem_base(device);
-	device->headerType = pci_get_header_type(device);
-	device->interruptPin = pci_get_interrupt_pin(device);
-	device->interruptLine = pci_get_interrupt_line(device);
+	device->vendor = (uint16_t)config_read(device, 0);
+	device->device = (uint16_t)config_read(device, 2);
+	device->revision = (uint16_t)config_read(device, 0x8);
+	device->class = ((uint16_t)config_read(device, 0x8) >> 8);
+	device->iobase = get_IO_base(device);
+	device->membase = get_mem_base(device);
+	device->header_type = get_header_type(device);
+	device->interrupt_pin = (uint16_t)config_read(device, 0x3d);
+	device->interrupt_line = (uint16_t)config_read(device, 0x3c);
 }
 
 /* Searches a PCI device by vendor and device IDs.
- * returnDevices should be an allocated empty array, the size of which should be specified in maxNum.
- * vendor_device_combos should be an array of the format
+ * rdev should be an empty allocated array, the size of which should be specified in max.
+ * vendor_device_combos should be a NULL-terminated array of the format
  *
  * static uint32_t vendor_device_combos[][2] = {
  * 	{vendor_id, device_id},
  * 	{vendor_id, device_id},
  * 	{NULL}
  * };
- *
- * Please don't forget the NULL in the end. Pretty please.
  */
-uint32_t pci_search_by_id(pci_device_t** returnDevices, uint32_t vendor_device_combos[][2], uint32_t maxNum)
-{
-
+uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2], uint32_t max) {
 	if(!vendor_device_combos[0] || !vendor_device_combos[0][0])	{
 		return 0;
 	}
 
-	/* FIXME Should be a binary search or something else more reasonable
-	 * We could probably also sort the devices by ID in the first place
-	 */
-
 	int devices_found = 0;
-
-	for(int i = 0; vendor_device_combos[i][0]; i++)
-	{
-		for(int device = 0; device < 65536 && devices_found < maxNum; device++)
-		{
-			if (devices[device].vendorID != vendor_device_combos[i][0] ||
-				devices[device].deviceID != vendor_device_combos[i][1])
+	for(int i = 0; vendor_device_combos[i][0]; i++) {
+		pci_device_t* dev = first_device;
+		for(; dev && devices_found < max; dev = dev->next) {
+			if (dev->vendor != vendor_device_combos[i][0] ||
+				dev->device != vendor_device_combos[i][1])
 				continue;
 
-			returnDevices[devices_found] = &devices[device];
+			rdev[devices_found] = dev;
 			devices_found++;
 		}
 	}
@@ -179,62 +148,48 @@ uint32_t pci_search_by_id(pci_device_t** returnDevices, uint32_t vendor_device_c
 	return devices_found;
 }
 
-uint32_t pci_search_by_class(pci_device_t** returnDevices, uint32_t class, uint32_t maxNum)
-{
-	int i = 0;
-	int j = 0;
+static size_t sfs_read(void* dest, size_t size) {
+	size_t rsize = 0;
 
-	for(; i < 65536 && j < maxNum; i++)
-	{
-		if (devices[i].class != class)
-			continue;
-
-		returnDevices[j] = &devices[i];
-		j++;
+	pci_device_t* dev = first_device;
+	for(; dev; dev = dev->next) {
+		sysfs_printf("%02d:%02d.%d %x:%x %-2x %-2x %-4x %-2x %-2d %d\n",
+			dev->bus, dev->dev, dev->func, dev->vendor, dev->device,
+			dev->class, dev->revision, dev->iobase,
+			dev->header_type, dev->interrupt_line, dev->interrupt_pin);
 	}
 
-	return j;
+	return rsize;
 }
 
-
-void pci_init()
-{
-	memset(devices, 0xff, 65536 * sizeof(pci_device_t));
-	int i = 0;
-	uint8_t bus, dev, func;
-	uint16_t vendor;
-
+void pci_init() {
 	log(LOG_INFO, "PCI devices:\n");
-	for(bus = 0; bus < PCI_MAX_BUS; bus++)
-	{
-		for(dev = 0; dev < PCI_MAX_DEV; dev++)
-		{
-			for(func = 0; func < PCI_MAX_FUNC; func++)
-			{
-				vendor = _pci_get_vendor_id(bus, dev, func);
+	for(uint8_t bus = 0; bus < PCI_MAX_BUS; bus++) {
+		for(uint8_t dev = 0; dev < PCI_MAX_DEV; dev++) {
+			for(uint8_t func = 0; func < PCI_MAX_FUNC; func++) {
+				uint16_t vendor = (uint16_t)_config_read(bus, dev, func, 0);
 
 				/* Devices which don't exist should have a vendor of 0xffff,
 				 * however, some weird chipsets also wrongly set it to zero.
+				 * XXX: ????
 				 */
 				if (vendor == 0xffff || vendor == 0)
 					continue;
 
-				pci_load_device(devices + i, bus, dev, func);
-				log(LOG_INFO, "  %d:%d.%d: %x:%x %-2x rev %-2x class %-2x iobase %-4x type %-2x int %-2d pin %d\n",
-						devices[i].bus,
-						devices[i].dev,
-						devices[i].func,
-						devices[i].vendorID,
-						devices[i].deviceID,
-						devices[i].class,
-						devices[i].revision,
-						devices[i].class,
-						devices[i].iobase,
-						devices[i].headerType,
-						devices[i].interruptLine,
-						devices[i].interruptPin);
-				i++;
+				pci_device_t* pdev = kmalloc(sizeof(pci_device_t));
+				load_device(pdev, bus, dev, func);
+
+				pdev->next = first_device;
+				first_device = pdev;
+
+				log(LOG_INFO, "  %02d:%02d.%d: %x:%x rev %-2x class %-2x iobase %-4x type %-2x int %-2d pin %d\n",
+						pdev->bus, pdev->dev, pdev->func, pdev->vendor,
+						pdev->device, pdev->revision, pdev->class,
+						pdev->iobase, pdev->header_type, pdev->interrupt_line,
+						pdev->interrupt_pin);
 			}
 		}
 	}
+
+	sysfs_add_file("pci", sfs_read, NULL);
 }
