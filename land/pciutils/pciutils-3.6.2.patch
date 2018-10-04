@@ -1,0 +1,77 @@
+diff --git pciutils-3.6.2/lib/Makefile b/lib/Makefile
+index 12bbe34..618391f 100644
+--- pciutils-3.6.2/lib/Makefile
++++ b/lib/Makefile
+@@ -50,6 +50,10 @@ ifdef PCI_HAVE_PM_SYLIXOS_DEVICE
+ OBJS += sylixos-device
+ endif
+
++ifdef PCI_HAVE_PM_XELIX_DEVICE
++OBJS += xelix-device
++endif
++
+ all: $(PCILIB) $(PCILIBPC)
+
+ ifeq ($(SHARED),no)
+diff --git pciutils-3.6.2/lib/configure b/lib/configure
+index 8718d95..2727d90 100755
+--- pciutils-3.6.2/lib/configure
++++ b/lib/configure
+@@ -148,6 +148,11 @@ case $sys in
+ 		IDSDIR="/etc/pci"
+ 		LIBRESOLV=
+ 		;;
++	xelix)
++		echo >>$c '#define PCI_PATH_XELIX_DEVICE "/sys/pci"'
++		echo >>$c '#define PCI_HAVE_PM_XELIX_DEVICE'
++		LIBRESOLV=
++		;;
+ 	*)
+ 		echo " Unfortunately, your OS is not supported by the PCI Library"
+ 		exit 1
+diff --git pciutils-3.6.2/lib/init.c b/lib/init.c
+index 0e8ef61..7b5d62b 100644
+--- pciutils-3.6.2/lib/init.c
++++ b/lib/init.c
+@@ -67,6 +67,11 @@ static struct pci_methods *pci_methods[PCI_ACCESS_MAX] = {
+ #else
+   NULL,
+ #endif
++#ifdef PCI_HAVE_PM_XELIX_DEVICE
++  &pm_xelix_device,
++#else
++  NULL,
++#endif
+ };
+
+ // If PCI_ACCESS_AUTO is selected, we probe the access methods in this order
+@@ -80,6 +85,7 @@ static int probe_sequence[] = {
+   PCI_ACCESS_OBSD_DEVICE,
+   PCI_ACCESS_DARWIN,
+   PCI_ACCESS_SYLIXOS_DEVICE,
++  PCI_ACCESS_XELIX_DEVICE,
+   // Low-level methods poking the hardware directly
+   PCI_ACCESS_I386_TYPE1,
+   PCI_ACCESS_I386_TYPE2,
+diff --git pciutils-3.6.2/lib/internal.h b/lib/internal.h
+index aaa121a..261a954 100644
+--- pciutils-3.6.2/lib/internal.h
++++ b/lib/internal.h
+@@ -94,4 +94,4 @@ void pci_free_caps(struct pci_dev *);
+
+ extern struct pci_methods pm_intel_conf1, pm_intel_conf2, pm_linux_proc,
+ 	pm_fbsd_device, pm_aix_device, pm_nbsd_libpci, pm_obsd_device,
+-	pm_dump, pm_linux_sysfs, pm_darwin, pm_sylixos_device;
++	pm_dump, pm_linux_sysfs, pm_darwin, pm_sylixos_device, pm_xelix_device;
+diff --git pciutils-3.6.2/lib/pci.h b/lib/pci.h
+index b4ce118..7986d48 100644
+--- pciutils-3.6.2/lib/pci.h
++++ b/lib/pci.h
+@@ -42,6 +42,7 @@ enum pci_access_type {
+   PCI_ACCESS_DUMP,			/* Dump file */
+   PCI_ACCESS_DARWIN,			/* Darwin */
+   PCI_ACCESS_SYLIXOS_DEVICE,   /* SylixOS pci */
++  PCI_ACCESS_XELIX_DEVICE,   /* Xelix devs */
+   PCI_ACCESS_MAX
+ };
+
