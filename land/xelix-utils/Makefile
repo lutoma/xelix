@@ -8,7 +8,7 @@ all: $(TARGETS)
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS) util.o libutil.a
+	rm -f $(TARGETS) util.o libutil.a basictest.o
 
 %: %.asm
 	nasm -g -f elf -o $@.o $<

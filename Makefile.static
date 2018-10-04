@@ -53,9 +53,9 @@ land:
 	make -C util/kconfig $@
 	util/genconfigh.sh
 
-.PHONY: xelix.qcow2
-xelix.qcow2:
-	util/build-image.sh $@
+.PHONY: image
+image:
+	util/build-image.sh xelix.qcow2
 
 mount:
 	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2

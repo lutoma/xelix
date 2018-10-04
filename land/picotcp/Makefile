@@ -16,4 +16,4 @@ $(PACKAGE_NAME).tar.gz:
 
 .PHONY: install
 install:
-	make CROSS_COMPILE=i786-pc-xelix- -C $(PACKAGE_NAME) install
+	true
