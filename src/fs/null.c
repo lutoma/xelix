@@ -21,7 +21,7 @@
 #include <string.h>
 
 static size_t null_read(void* dest, size_t size, void* meta) {
-	if(meta == 1) {
+	if(meta == (void*)1) {
 		bzero(dest, size);
 		return size;
 	} else {
@@ -34,6 +34,6 @@ static size_t null_write(void* source, size_t size, void* mea) {
 }
 
 void vfs_null_init(void) {
-	sysfs_add_dev("null", null_read, null_write, 0);
-	sysfs_add_dev("zero", null_read, null_write, 1);
+	sysfs_add_dev("null", null_read, null_write, (void*)0);
+	sysfs_add_dev("zero", null_read, null_write, (void*)1);
 }
