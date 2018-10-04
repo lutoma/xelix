@@ -148,7 +148,7 @@ uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2
 	return devices_found;
 }
 
-static size_t sfs_read(void* dest, size_t size) {
+static size_t sfs_read(void* dest, size_t size, void* meta) {
 	size_t rsize = 0;
 
 	pci_device_t* dev = first_device;
@@ -191,5 +191,5 @@ void pci_init() {
 		}
 	}
 
-	sysfs_add_file("pci", sfs_read, NULL);
+	sysfs_add_file("pci", sfs_read, NULL, NULL);
 }

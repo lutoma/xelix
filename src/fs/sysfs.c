@@ -30,6 +30,7 @@ struct sysfs_file {
 	char name[40];
 	sysfs_read_callback_t read_cb;
 	sysfs_write_callback_t write_cb;
+	void* meta;
 	struct sysfs_file* next;
 };
 
@@ -106,7 +107,7 @@ size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size) {
 		return -1;
 	}
 
-	return file->read_cb(dest, size);
+	return file->read_cb(dest, size, file->meta);
 }
 
 size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size) {
@@ -121,7 +122,7 @@ size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size) {
 		return -1;
 	}
 
-	return file->write_cb(source, size);
+	return file->write_cb(source, size, file->meta);
 }
 
 size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
@@ -148,21 +149,29 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	return total_length;
 }
 
-static void add_file(struct sysfs_file** table, char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
+static void add_file(struct sysfs_file** table, char* name,
+	sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb,
+	void* meta) {
+
 	struct sysfs_file* fp = kmalloc(sizeof(struct sysfs_file));
 	strcpy(fp->name, name);
 	fp->read_cb = read_cb;
 	fp->write_cb = write_cb;
+	fp->meta = meta;
 	fp->next = *table ? *table : NULL;
 	*table = fp;
 }
 
-void sysfs_add_file(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
-	add_file(&sys_files, name, read_cb, write_cb);
+void sysfs_add_file(char* name, sysfs_read_callback_t read_cb,
+	sysfs_write_callback_t write_cb, void* meta) {
+
+	add_file(&sys_files, name, read_cb, write_cb, meta);
 }
 
-void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
-	add_file(&dev_files, name, read_cb, write_cb);
+void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb,
+	sysfs_write_callback_t write_cb, void* meta) {
+
+	add_file(&dev_files, name, read_cb, write_cb, meta);
 }
 
 void sysfs_init() {

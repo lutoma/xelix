@@ -370,7 +370,7 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 	spinlock_release(&kmalloc_lock);
 }
 
-static size_t sfs_read(void* dest, size_t size) {
+static size_t sfs_read(void* dest, size_t size, void* meta) {
 	size_t rsize = 0;
 	uint32_t free = alloc_max - alloc_end;
 
@@ -402,7 +402,7 @@ void kmalloc_init()
 	alloc_start = alloc_end = (intptr_t)largest_area->addr;
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	initialized = true;
-	sysfs_add_file("memfree", sfs_read, NULL);
+	sysfs_add_file("memfree", sfs_read, NULL, NULL);
 }
 
 void kmalloc_stats() {

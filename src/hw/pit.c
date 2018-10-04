@@ -32,7 +32,7 @@ uint32_t pit_get_tick(void) {
 	return tick;
 }
 
-static size_t sfs_read(void* dest, size_t size) {
+static size_t sfs_read(void* dest, size_t size, void* meta) {
 	size_t rsize = 0;
 	sysfs_printf("%d %d %d", uptime(), tick, (PIT_RATE));
 	return rsize;
@@ -58,5 +58,5 @@ void pit_init(uint16_t frequency)
 	outb(0x40, l);
 	outb(0x40, h);
 
-	sysfs_add_file("tick", sfs_read, NULL);
+	sysfs_add_file("tick", sfs_read, NULL, NULL);
 }

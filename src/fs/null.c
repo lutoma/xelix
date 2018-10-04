@@ -20,20 +20,20 @@
 #include <fs/sysfs.h>
 #include <string.h>
 
-static size_t null_read(void* dest, size_t size) {
-	return 0;
+static size_t null_read(void* dest, size_t size, void* meta) {
+	if(meta == 1) {
+		bzero(dest, size);
+		return size;
+	} else {
+		return 0;
+	}
 }
 
-static size_t zero_read(void* dest, size_t size) {
-	bzero(dest, size);
-	return size;
-}
-
-static size_t null_write(void* source, size_t size) {
+static size_t null_write(void* source, size_t size, void* mea) {
 	return size;
 }
 
 void vfs_null_init(void) {
-	sysfs_add_dev("null", null_read, null_write);
-	sysfs_add_dev("zero", zero_read, null_write);
+	sysfs_add_dev("null", null_read, null_write, 0);
+	sysfs_add_dev("zero", null_read, null_write, 1);
 }

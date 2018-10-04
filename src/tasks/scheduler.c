@@ -123,7 +123,7 @@ task_t* scheduler_select(cpu_state_t* last_regs) {
 	return current_task;
 }
 
-static size_t sfs_read(void* dest, size_t size) {
+static size_t sfs_read(void* dest, size_t size, void* meta) {
 	size_t rsize = 0;
 	sysfs_printf("# pid ppid state name entry sbrk stack\n")
 
@@ -151,5 +151,5 @@ static size_t sfs_read(void* dest, size_t size) {
 
 void scheduler_init() {
 	scheduler_state = SCHEDULER_INITIALIZING;
-	sysfs_add_file("tasks", sfs_read, NULL);
+	sysfs_add_file("tasks", sfs_read, NULL, NULL);
 }

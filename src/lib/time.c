@@ -162,7 +162,7 @@ uint32_t time_get() {
 	return last_timestamp;
 }
 
-static size_t sfs_read(void* dest, size_t size) {
+static size_t sfs_read(void* dest, size_t size, void* meta) {
 	size_t rsize = 0;
 	sysfs_printf("%d", time_get());
 	return rsize;
@@ -171,5 +171,5 @@ static size_t sfs_read(void* dest, size_t size) {
 void time_init() {
 	last_timestamp = read_rtc();
 	last_tick = pit_tick;
-	sysfs_add_file("time", sfs_read, NULL);
+	sysfs_add_file("time", sfs_read, NULL, NULL);
 }
