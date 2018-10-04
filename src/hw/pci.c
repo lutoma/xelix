@@ -109,7 +109,7 @@ static void load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t 
 	device->vendor = (uint16_t)config_read(device, 0);
 	device->device = (uint16_t)config_read(device, 2);
 	device->revision = (uint16_t)config_read(device, 0x8);
-	device->class = ((uint16_t)config_read(device, 0x8) >> 8);
+	device->class = (uint16_t)(config_read(device, 0x8) >> 16);
 	device->iobase = get_IO_base(device);
 	device->membase = get_mem_base(device);
 	device->header_type = get_header_type(device);
@@ -194,7 +194,7 @@ void pci_init() {
 				pdev->next = first_device;
 				first_device = pdev;
 
-				log(LOG_INFO, "  %02d:%02d.%d: %x:%x rev %-2x class %-2x iobase %-4x type %-2x int %-2d pin %d\n",
+				log(LOG_INFO, "  %02d:%02d.%d: %x:%x rev %-2x class %04x iobase %-4x type %-2x int %-2d pin %d\n",
 						pdev->bus, pdev->dev, pdev->func, pdev->vendor,
 						pdev->device, pdev->revision, pdev->class,
 						pdev->iobase, pdev->header_type, pdev->interrupt_line,
