@@ -1,0 +1,11 @@
+--- ncurses-6.1/config.sub	2017-11-25 21:49:31.000000000 +0100
++++ ../../../ncurses-6.1/config.sub	2018-10-05 01:22:49.419433703 +0200
+@@ -1416,7 +1416,7 @@
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox*)
++	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)

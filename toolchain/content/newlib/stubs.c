@@ -139,10 +139,9 @@ int tcsetattr(int fd, int optional_actions, const struct termios* termios_p) {
 	return -1;
 }
 
-char* ttyname(int desc) {
+char* _ttyname(int desc) {
 	//fprintf(stderr, "Warning: xelix newlib ttyname() stub called.\n");
-
-	return "/dev/tty0";
+	return "/dev/tty";
 }
 
 uid_t getuid(void) {
@@ -466,6 +465,11 @@ int usleep(useconds_t useconds) {
 	return -1;
 }
 
+unsigned sleep(unsigned seconds) {
+	errno = ENOSYS;
+	return -1;
+}
+
 int stime(const time_t *t) {
 	errno = ENOSYS;
 	return -1;
@@ -474,4 +478,26 @@ int stime(const time_t *t) {
 struct mntent *getmntent(FILE *stream) {
 	errno = ENOSYS;
 	return NULL;
+}
+
+
+long fpathconf(int fildes, int name) {
+	errno = ENOSYS;
+	return -1;
+}
+long pathconf(const char *path, int name) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int tcflush(int fildes, int queue_selector) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int select(int nfds, fd_set *readfds, fd_set *writefds,
+	fd_set *exceptfds, struct timeval *timeout) {
+
+	errno = ENOSYS;
+	return -1;
 }
