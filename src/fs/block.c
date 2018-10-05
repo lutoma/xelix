@@ -19,7 +19,7 @@
 
 #include <string.h>
 #include <memory/kmalloc.h>
-#include <hw/ide.h>
+#include <fs/part.h>
 
 static uint8_t* do_read(int start_block, int num_blocks) {
 	uint8_t* buf = kmalloc(num_blocks * 512);
@@ -27,7 +27,7 @@ static uint8_t* do_read(int start_block, int num_blocks) {
 		uint32_t bnum = start_block + i;
 
 		//serial_printf("vfs/block: Reading block %d\n", bnum);
-		if(!ide_read_sector(0x1F0, 0, bnum, buf + i * 512)) {
+		if(!part_read(bnum, buf + i * 512)) {
 			kfree(buf);
 			return NULL;
 		}
@@ -78,7 +78,7 @@ bool vfs_block_write(uint32_t offset, size_t size, uint8_t* buf) {
 	for(int i = 0; i < num_blocks; i++) {
 		uint32_t bnum = start_block + i;
 		//serial_printf("vfs/block: Writing block %d\n", bnum);
-		ide_write_sector(0x1F0, 0, bnum, int_buf + i * 512);
+		part_write(bnum, int_buf + i * 512);
 	}
 
 	kfree(int_buf);
