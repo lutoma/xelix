@@ -113,6 +113,8 @@ struct inode {
 // TODO Should use right shift for negative values
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
 #define bl_off(block) ((block) * superblock_to_blocksize(superblock))
+#define bl_size(block) ((block) / superblock_to_blocksize(superblock))
+#define bl_mod(block) ((block) % superblock_to_blocksize(superblock))
 #define write_superblock() vfs_block_write(1024, sizeof(struct superblock), (uint8_t*)superblock)
 
 struct superblock* superblock;

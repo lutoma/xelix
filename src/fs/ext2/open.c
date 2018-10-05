@@ -47,10 +47,9 @@ static uint32_t resolve_inode(const char* path) {
 	uint8_t* dirent_block = NULL;
 	uint32_t result = 0;
 
-	while(pch != NULL)
-	{
+	while(pch != NULL) {
 		if(!ext2_read_inode(current_inode, dirent ? dirent->inode : ROOT_INODE)) {
-			continue;
+			goto bye;
 		}
 
 		if(dirent_block) {
@@ -58,39 +57,32 @@ static uint32_t resolve_inode(const char* path) {
 		}
 
 		dirent_block = kmalloc(current_inode->size);
-		if(!ext2_read_inode_blocks(current_inode, 0, current_inode->size / superblock_to_blocksize(superblock), dirent_block)) {
+		if(!ext2_read_inode_blocks(current_inode, 0, bl_size(current_inode->size), dirent_block)) {
 			goto bye;
 		}
 
 		dirent = (vfs_dirent_t*)dirent_block;
-
-		// Now search the current inode for the searched directory part
-		// TODO Maybe use a binary search or something similar here
-		for(int i = 0;; i++)
-		{
-			// If this dirent is NULL, this means there are no more files
-			// FIXME: This ^ is actually not true, there could be more valid dirents
-			// after a NULL dirent. Should iterate complete dirent block size
-			if(!dirent || !dirent->name_len) {
-				goto bye;
+		while((void*)dirent < dirent_block + current_inode->size) {
+			if(!dirent->inode) {
+				goto next;
 			}
 
 			char* dirent_name = strndup(dirent->name, dirent->name_len);
 
 			// Check if this is what we're searching for
-			if(!strcmp(pch, dirent_name))
-			{
+			if(!strcmp(pch, dirent_name)) {
 				kfree(dirent_name);
 				break;
 			}
 
 			kfree(dirent_name);
+
+			next:
 			dirent = ((vfs_dirent_t*)((intptr_t)dirent + dirent->record_len));
 		}
 
 		pch = strtok_r(NULL, "/", &sp);
 	}
-
 	result = dirent->inode;
 bye:
 	kfree(path_tmp);
