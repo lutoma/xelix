@@ -133,6 +133,8 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 		{
 			if (console->info.nonblocking)
 				i++;
+
+			asm("hlt");
 			continue;
 		}
 
