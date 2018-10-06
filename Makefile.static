@@ -59,7 +59,7 @@ image:
 
 mount:
 	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
-	sudo mount /dev/nbd0 mnt
+	sudo mount /dev/nbd0p1 mnt
 
 umount:
 	sudo umount mnt
