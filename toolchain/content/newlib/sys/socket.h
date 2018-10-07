@@ -21,10 +21,6 @@
 
 #include <stdint.h>
 
-#define AF_UNSPEC 0
-#define AF_UNIX 1
-#define AF_INET 2
-
 #define SOCK_DGRAM 1
 #define SOCK_STREAM 2
 

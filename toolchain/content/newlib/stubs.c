@@ -28,6 +28,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/errno.h>
+#include <sys/stat.h>
 #include <sys/xelix.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -421,15 +422,6 @@ int setrlimit(int resource, const struct rlimit *rlim) {
 	return -1;
 }
 
-int fchmod(int fildes, mode_t mode) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int fchown(int fd, uid_t owner, gid_t group) {
-	errno = ENOSYS;
-	return -1;
-}
 
 pid_t vfork(void) {
 	errno = ENOSYS;
@@ -497,6 +489,84 @@ int tcflush(int fildes, int queue_selector) {
 
 int select(int nfds, fd_set *readfds, fd_set *writefds,
 	fd_set *exceptfds, struct timeval *timeout) {
+
+	errno = ENOSYS;
+	return -1;
+}
+
+int chmod(const char *path, mode_t mode) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int fchmod(int fildes, mode_t mode) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int lchmod(const char *path, mode_t mode) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int chown(const char *path, uid_t owner, gid_t group) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int fchown(int fd, uid_t owner, gid_t group) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int lchown(const char *path, uid_t owner, gid_t group) {
+	errno = ENOSYS;
+	return -1;
+}
+
+struct group *getgrnam(const char *name) {
+	errno = ENOSYS;
+	return NULL;
+}
+
+int mknod(const char *path, mode_t mode, dev_t dev) {
+ 	errno = ENOSYS;
+	return -1;
+}
+
+int utimes(const char *path, const struct timeval times[2]) {
+ 	errno = ENOSYS;
+	return -1;
+}
+
+int lutimes(const char *path, const struct timeval times[2]) {
+ 	errno = ENOSYS;
+	return -1;
+}
+
+int rmdir(const char *path) {
+ 	errno = ENOSYS;
+	return -1;
+}
+
+int sched_yield(void) {
+ 	errno = ENOSYS;
+	return -1;
+}
+
+char *realpath(const char *restrict file_name,
+       char *restrict resolved_name) {
+	errno = ENOSYS;
+	return NULL;
+}
+
+int fsync(int fildes) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int getgrouplist(const char *user, gid_t group,
+                        gid_t *groups, int *ngroups) {
 
 	errno = ENOSYS;
 	return -1;

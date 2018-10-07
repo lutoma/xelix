@@ -61,12 +61,12 @@ struct mntent
 
 /* Prepare to begin reading and/or writing mount table entries from the
    beginning of FILE.  MODE is as for `fopen'.  */
-//extern FILE *setmntent (const char *__file, const char *__mode) __THROW;
+extern FILE *setmntent (const char *__file, const char *__mode) __THROW;
 
 /* Read one mount table entry from STREAM.  Returns a pointer to storage
    reused on the next call, or null for EOF or error (use feof/ferror to
    check).  */
-extern struct mntent *getmntent (FILE *__stream);
+extern struct mntent *getmntent (FILE *__stream) __THROW;
 
 /* Reentrant version of the above function.  */
 /*extern struct mntent *getmntent_r (FILE *__restrict __stream,
@@ -77,11 +77,11 @@ extern struct mntent *getmntent (FILE *__stream);
 
 /* Write the mount table entry described by MNT to STREAM.
    Return zero on success, nonzero on failure.  */
-//extern int addmntent (FILE *__restrict __stream,
-//		      const struct mntent *__restrict __mnt) __THROW;
+extern int addmntent (FILE *__restrict __stream,
+		      const struct mntent *__restrict __mnt) __THROW;
 
 /* Close a stream opened with `setmntent'.  */
-//extern int endmntent (FILE *__stream) __THROW;
+extern int endmntent (FILE *__stream) __THROW;
 
 /* Search MNT->mnt_opts for an option matching OPT.
    Returns the address of the substring, or null if none found.  */

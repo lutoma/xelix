@@ -5,6 +5,7 @@
 *.img
 *.raw
 *.qcow2
+*.vdi
 /Makefile
 xelix.bin
 tags
@@ -12,3 +13,4 @@ tags
 .gdb_history
 src/lib/config.h
 xelix.map
+.bochsrc
