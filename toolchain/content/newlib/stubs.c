@@ -91,7 +91,7 @@ ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
 	return -1;
 }
 
-void rewinddir(DIR* dd) {
+void _rewinddir(DIR* dd) {
 	//fprintf(stderr, "Warning: xelix newlib rewinddir() stub called.\n");
 
 	errno = ENOSYS;
@@ -195,6 +195,24 @@ pid_t getpgrp(void) {
 	return 1;
 }
 
+struct group *getgrent(void) {
+	errno = ENOSYS;
+	return NULL;
+}
+
+void endgrent(void) {}
+void setgrent(void) {}
+
+
+int setreuid(uid_t ruid, uid_t euid) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int setregid(gid_t rgid, gid_t egid) {
+	errno = ENOSYS;
+	return -1;
+}
 int sigprocmask(int how, const sigset_t *set, sigset_t *oset) {
 	//fprintf(stderr, "Warning: xelix newlib sigprocmask() stub called.\n");
 
@@ -539,6 +557,11 @@ int utimes(const char *path, const struct timeval times[2]) {
 	return -1;
 }
 
+int utime(const char *path, const struct utimbuf *times) {
+	errno = ENOSYS;
+	return -1;
+}
+
 int lutimes(const char *path, const struct timeval times[2]) {
  	errno = ENOSYS;
 	return -1;
@@ -571,3 +594,26 @@ int getgrouplist(const char *user, gid_t group,
 	errno = ENOSYS;
 	return -1;
 }
+
+int mkfifo(const char *path, mode_t mode) {
+	errno = ENOSYS;
+	return -1;
+}
+
+unsigned alarm(unsigned seconds) {
+	errno = ENOSYS;
+	return 0;
+}
+
+int tcflow(int fildes, int action) {
+	errno = ENOSYS;
+	return -1;
+}
+
+
+void flockfile(FILE *file) {}
+int ftrylockfile(FILE *file) {
+	return -1;
+	errno = ENOSYS;
+}
+void funlockfile(FILE *file) {}

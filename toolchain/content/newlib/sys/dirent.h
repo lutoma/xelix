@@ -1,5 +1,4 @@
-/* libc/sys/linux/sys/dirent.h - Directory entry as returned by readdir */
-
+/* Adapted from libc/sys/linux/sys/dirent.h - Directory entry as returned by readdir */
 /* Written 2000 by Werner Almesberger */
 
 
@@ -18,6 +17,15 @@
 
 #define MAXNAMLEN 255		/* sizeof(struct dirent.d_name)-1 */
 
+/* xelix - these should be linux specific, but nano wants them. */
+#define DT_BLK 1
+#define DT_CHR 2
+#define DT_DIR 3
+#define DT_FIFO 4
+#define DT_LNK 5
+#define DT_REG 6
+#define DT_SOCK 7
+#define DT_UNKNOWN 0
 
 typedef struct {
     int dd_fd;		/* directory file */
