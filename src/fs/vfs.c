@@ -61,7 +61,7 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 
 	char* path;
 	if(orig_path[0] != '/') {
-		path = kmalloc(strlen(orig_path) + strlen(cwd) + 2);
+		path = kmalloc(strlen(orig_path) + strlen(cwd) + 3);
 		snprintf(path, strlen(orig_path) + strlen(cwd) + 3, "/%s/%s", cwd, orig_path);
 	} else {
 		path = strdup(orig_path);
