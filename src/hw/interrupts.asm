@@ -65,9 +65,8 @@ handle_eoi:
 	jle .return
 
 	; Send EOI to master PIC
-	mov dx, PIT_MASTER
-	mov ax, PIT_CONFIRM
-	out dx, ax
+	mov al, PIT_CONFIRM
+	out PIT_MASTER, al
 
 	; Is this a spurious interrupt on the secondary PIC? If yes, return
 	; (We do this here so the master PIC still receives an EOI as it can't
@@ -80,10 +79,9 @@ handle_eoi:
 	jle .return
 
 	; Send EOI to secondary PIC
-	mov dx, PIT_SLAVE
-	mov ax, PIT_CONFIRM
-	out dx, ax
-.return
+	mov al, PIT_CONFIRM
+	out PIT_SLAVE, al
+.return:
 	mov eax, 0
 	ret
 .spurious:
