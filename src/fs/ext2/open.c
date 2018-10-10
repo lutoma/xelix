@@ -43,7 +43,7 @@ static uint32_t resolve_inode(const char* path) {
 	char* path_tmp = strndup(path, 500);
 	pch = strtok_r(path_tmp, "/", &sp);
 	struct inode* current_inode = kmalloc(superblock->inode_size);
-	vfs_dirent_t* dirent = NULL;
+	struct dirent* dirent = NULL;
 	uint8_t* dirent_block = NULL;
 	uint32_t result = 0;
 
@@ -61,7 +61,7 @@ static uint32_t resolve_inode(const char* path) {
 			goto bye;
 		}
 
-		dirent = (vfs_dirent_t*)dirent_block;
+		dirent = (struct dirent*)dirent_block;
 		while((void*)dirent < dirent_block + current_inode->size) {
 			if(!dirent->inode) {
 				goto next;
@@ -78,7 +78,7 @@ static uint32_t resolve_inode(const char* path) {
 			kfree(dirent_name);
 
 			next:
-			dirent = ((vfs_dirent_t*)((intptr_t)dirent + dirent->record_len));
+			dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
 		}
 
 		pch = strtok_r(NULL, "/", &sp);
