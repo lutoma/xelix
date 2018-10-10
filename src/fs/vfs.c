@@ -280,15 +280,9 @@ size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
 size_t vfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	debug("size %d\n", size);
 
-	if(fp->offset) {
-		sc_errno = ENOSYS;
-		return 0;
-	}
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	size_t read = mp.getdents_callback(fp, dest, size);
-	fp->offset += read;
-	return read;
+	return mp.getdents_callback(fp, dest, size);
 }
 
 

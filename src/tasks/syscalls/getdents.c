@@ -19,63 +19,19 @@
 
 // This syscall is used by the newlib posix handlers for readdir, opendir, etc.
 
+#include <memory/kmalloc.h>
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
-#include <string.h>
-#include <memory/kmalloc.h>
-
-// Needs to be in this format to stay compatible with newlib
-struct newlib_dirent {
-	uint32_t d_ino;
-	uint32_t d_off;
-	uint16_t d_reclen;
-    uint8_t d_type;
-	char d_name[] __attribute__ ((nonstring));
-};
+#include <errno.h>
 
 SYSCALL_HANDLER(getdents)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(1)
-
-	vfs_file_t* dd = vfs_get_from_id(syscall.params[0]);
-	if(!dd) {
-		return 0;
+	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
+	if(!fd) {
+		sc_errno = EBADF;
+		return -1;
 	}
 
-	intptr_t buf = (intptr_t)syscall.params[1];
-	uint32_t size = syscall.params[2];
-
-	void* kbuf = kmalloc(2048);
-	size_t read = vfs_getdents(dd, kbuf, 2048);
-	if(!read) {
-		kfree(kbuf);
-		return 0;
-	}
-
-	uint32_t offset = 0;
-	vfs_dirent_t* kernel_ent = kbuf;
-	while((void*)kernel_ent < kbuf + read) {
-		if(!kernel_ent->inode) {
-			goto next;
-		}
-
-		uint32_t reclen = sizeof(struct newlib_dirent) + kernel_ent->name_len + 1;
-		if(offset + reclen > size) {
-			break;
-		}
-
-		struct newlib_dirent* ent = (struct newlib_dirent*)(buf + offset);
-		ent->d_ino = kernel_ent->inode;
-		ent->d_type = kernel_ent->type;
-		ent->d_reclen = (uint16_t)reclen;
-		memcpy(ent->d_name, kernel_ent->name, kernel_ent->name_len);
-		offset += ent->d_reclen;
-		ent->d_off = offset;
-
-		next:
-		kernel_ent = (vfs_dirent_t*)((intptr_t)kernel_ent + (intptr_t)kernel_ent->record_len);
-	}
-
-	kfree(kbuf);
-	return offset;
+	return vfs_getdents(fd, (void*)syscall.params[1], syscall.params[2]);
 }

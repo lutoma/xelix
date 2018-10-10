@@ -30,8 +30,7 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-// The public read interface to the virtual file system
-size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
+size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
 		sc_errno = EBADF;
@@ -51,7 +50,7 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 		inode->gid, inode->size, vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
 		vfs_get_verbose_permissions(inode->mode));
 
-	if(vfs_mode_to_filetype(inode->mode) != FT_IFREG)
+	if(vfs_mode_to_filetype(inode->mode) != req_type)
 	{
 		debug("ext2_read_file: Attempt to read something weird "
 			"(0x%x: %s)\n", inode->mode,
@@ -72,22 +71,17 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 		debug("ext2: Capping read size to 0x%x\n", size);
 	}
 
-	uint32_t num_blocks = size / bl_off(1);
-	if(size % bl_off(1) != 0) {
+	uint32_t num_blocks = bl_size(size);
+	if(bl_mod(size) != 0) {
 		num_blocks++;
-	}
-
-	debug("Blocks table:\n");
-	for(uint32_t i = 0; i < 15; i++) {
-		debug("\t%2d: 0x%x\n", i, inode->blocks[i]);
 	}
 
 	/* This should copy directly to dest, however read_inode_blocks can only read
 	 * whole blocks right now, which means we could write more than size if size
 	 * is not mod the block size. Should rewrite read_inode_blocks.
 	 */
-	uint8_t* tmp = kmalloc(num_blocks * bl_off(1));
-	uint8_t* read = ext2_read_inode_blocks(inode, (fp->offset / bl_off(1)), num_blocks, tmp);
+	uint8_t* tmp = kmalloc(bl_off(num_blocks));
+	uint8_t* read = ext2_read_inode_blocks(inode, bl_size(fp->offset), num_blocks, tmp);
 	kfree(inode);
 
 	if(!read) {
@@ -95,9 +89,14 @@ size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
 		return 0;
 	}
 
-	memcpy(dest, tmp, size);
+	memcpy(dest, tmp + bl_mod(fp->offset), size);
 	kfree(tmp);
 	return size;
+}
+
+// The public read interface to the virtual file system
+size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
+	return ext2_do_read(fp, dest, size, FT_IFREG);
 }
 
 #endif /* ENABLE_EXT2 */

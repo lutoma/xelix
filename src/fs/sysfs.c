@@ -129,7 +129,7 @@ size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size) {
 size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	struct sysfs_file* file = *(struct sysfs_file**)fp->mount_instance;
 
-	if(!file) {
+	if(!file || fp->offset) {
 		return 0;
 	}
 
@@ -137,13 +137,20 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	size_t total_length = 0;
 
 	for(int i = 2; file; i++) {
-		dir->name_len = strlen(file->name);
-		memcpy(dir->name, file->name, dir->name_len + 1);
-		dir->inode = i;
-		dir->record_len = sizeof(vfs_dirent_t) + dir->name_len;
+		uint32_t name_len = strlen(file->name);
+		uint32_t rec_len = sizeof(vfs_dirent_t) + name_len + 1;
+		if(total_length + rec_len > size) {
+			break;
+		}
 
-		total_length += dir->record_len;
-		dir = (vfs_dirent_t*)((intptr_t)dir + dir->record_len);
+		memcpy(dir->d_name, file->name, name_len);
+		dir->d_name[name_len] = 0;
+		dir->d_ino = i;
+		dir->d_reclen = rec_len;
+
+		total_length += rec_len;
+		fp->offset++;
+		dir = (vfs_dirent_t*)((intptr_t)dir + dir->d_reclen);
 		file = file->next;
 	}
 

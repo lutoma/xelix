@@ -41,7 +41,7 @@ static uint32_t find_inode(uint32_t inode_num) {
 
 	struct blockgroup* blockgroup = blockgroup_table + blockgroup_num;
 	if(!blockgroup || !blockgroup->inode_table) {
-		debug("Could not locate entry %d in blockgroup table\n", blockgroup_num);
+		log(LOG_ERR, "ext2: Could not locate entry %d in blockgroup table\n", blockgroup_num);
 		return 0;
 	}
 

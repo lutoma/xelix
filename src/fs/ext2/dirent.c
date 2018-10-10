@@ -29,6 +29,70 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
+static struct dirent* readdir_r(vfs_file_t* fp, void* kbuf, size_t size, size_t block_offset) {
+	struct dirent* ent = kbuf + block_offset;
+
+	if(block_offset > size || block_offset + sizeof(struct dirent) + ent->name_len > size) {
+		return NULL;
+	}
+
+	fp->offset += ent->record_len;
+	return ent;
+}
+
+size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
+	void* kbuf = kmalloc(size);
+	size_t read = ext2_do_read(fp, kbuf, size, FT_IFDIR);
+	if(!read) {
+		kfree(kbuf);
+		return 0;
+	}
+
+	uint32_t offset = 0;
+	vfs_dirent_t* ent = NULL;
+	struct dirent* ext2_ent = NULL;
+	size_t orig_ofs = fp->offset;
+
+	while(1) {
+		ext2_ent = readdir_r(fp, kbuf, size, (fp->offset - orig_ofs));
+		if(!ext2_ent)  {
+			break;
+		}
+
+		uint16_t reclen = sizeof(vfs_dirent_t) + ext2_ent->name_len + 2;
+		if(offset + reclen > size) {
+			break;
+		}
+
+		//char* dname = strndup(ext2_ent->name, ext2_ent->name_len);
+		//serial_printf("name %s record len %d inode %d\n", dname, ext2_ent->record_len, ext2_ent->inode);
+		if(!ext2_ent->inode) {
+			goto next;
+		}
+
+		ent = (vfs_dirent_t*)(buf + offset);
+		memcpy(ent->d_name, ext2_ent->name, ext2_ent->name_len);
+		ent->d_name[ext2_ent->name_len] = 0;
+		ent->d_ino = ext2_ent->inode;
+		ent->d_type = ext2_ent->type;
+		ent->d_reclen = reclen;
+
+		offset += ent->d_reclen;
+		ent->d_off = offset;
+
+		next:
+		ext2_ent = (struct dirent*)((intptr_t)ext2_ent + (intptr_t)ext2_ent->record_len);
+	}
+
+	if(ext2_ent && offset < size) {
+		ent->d_off += size - offset;
+		ent->d_reclen += size - offset;
+		offset = size;
+	}
+
+	kfree(kbuf);
+	return offset;
+}
 
 void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
 	debug("ext2_new_dirent dir %d ino %d name %s\n", dir_num, inode_num, name);
@@ -48,36 +112,36 @@ void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_
 	}
 
 	// Length/offsets need to be 4-aligned
-	size_t dlen = sizeof(vfs_dirent_t) + strlen(name);
+	size_t dlen = sizeof(struct dirent) + strlen(name);
 	if(dlen % 4) {
 		dlen = (dlen & -4) + 4;
 	}
 
-	vfs_dirent_t* current_ent = dirents;
+	struct dirent* current_ent = dirents;
 	while((void*)current_ent < dirents + dir->size) {
 		if(!current_ent->inode) {
 			goto next;
 		}
 
-		uint32_t free_space = current_ent->record_len - sizeof(vfs_dirent_t) - current_ent->name_len;
+		uint32_t free_space = current_ent->record_len - sizeof(struct dirent) - current_ent->name_len;
 		if(free_space > dlen) {
 			break;
 		}
 
 		next:
-		current_ent = (vfs_dirent_t*)((intptr_t)current_ent + (intptr_t)current_ent->record_len);
+		current_ent = (struct dirent*)((intptr_t)current_ent + (intptr_t)current_ent->record_len);
 	}
 
-	vfs_dirent_t* new_dirent = kmalloc(dlen);
+	struct dirent* new_dirent = kmalloc(dlen);
 	bzero(new_dirent, dlen);
 
 	new_dirent->inode = inode_num;
 	new_dirent->record_len = dlen;
 	new_dirent->name_len = strlen(name);
-	memcpy((void*)new_dirent + sizeof(vfs_dirent_t), name, new_dirent->name_len);
+	memcpy((void*)new_dirent + sizeof(struct dirent), name, new_dirent->name_len);
 
 	uint32_t new_len = current_ent->record_len - dlen;
-	current_ent->record_len = sizeof(vfs_dirent_t) + current_ent->name_len;
+	current_ent->record_len = sizeof(struct dirent) + current_ent->name_len;
 	new_dirent->record_len = new_len;
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	ext2_write_inode_blocks(dir, dir_num, dir->size / superblock_to_blocksize(superblock), dirents);
@@ -86,47 +150,6 @@ void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_
 	kfree(new_dirent);
 	kfree(dirents);
 	kfree(dir);
-}
-
-size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size) {
-	if(size % 1024) {
-		log(LOG_ERR, "ext2: Size argument to ext2_getdents needs to be a multiple of 1024.\n");
-		return 0;
-	}
-
-	if(!fp || !fp->inode) {
-		log(LOG_ERR, "ext2: ext2_read_directory called without fp or fp missing inode.\n");
-		return 0;
-	}
-
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_read_inode(inode, fp->inode)) {
-		kfree(inode);
-		return 0;
-	}
-
-	// Check if this inode is a directory
-	if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR)
-	{
-		debug("ext2_read_directory: This inode isn't a directory "
-			"(Is %s [%d])\n", vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
-				inode->mode);
-
-		kfree(inode);
-		return 0;
-	}
-
-	if(size > inode->size) {
-		debug("ext2_read_file: Attempt to read 0x%x bytes, but file is only 0x%x bytes. Capping.\n", size, inode->size);
-		size = inode->size;
-	}
-
-	if(!ext2_read_inode_blocks(inode, 0, size / superblock_to_blocksize(superblock), dest)) {
-		return 0;
-	}
-
-	kfree(inode);
-	return size;
 }
 
 #endif /* ENABLE_EXT2 */

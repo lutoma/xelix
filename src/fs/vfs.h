@@ -68,17 +68,14 @@ typedef struct {
    task_t* task;
 } vfs_file_t;
 
-
-/* This is currently directly used for ext2 reads. Format should not be changed
- * unless it is removed from there.
- */
+// Keep in sync with newlib
 typedef struct {
-	uint32_t inode;
-	uint16_t record_len;
-	uint8_t name_len;
-	uint8_t type;
-	char name[] __attribute__ ((nonstring));
-} __attribute__((packed)) vfs_dirent_t;
+	uint32_t d_ino;
+	uint32_t d_off;
+	uint16_t d_reclen;
+    uint8_t d_type;
+	char d_name[] __attribute__ ((nonstring));
+} vfs_dirent_t;
 
 // Keep in sync with newlib
 typedef struct {

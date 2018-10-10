@@ -102,6 +102,14 @@ struct inode {
 	uint16_t reserved2[5];
 } __attribute__((packed));
 
+struct dirent {
+	uint32_t inode;
+	uint16_t record_len;
+	uint8_t name_len;
+	uint8_t type;
+	char name[] __attribute__ ((nonstring));
+} __attribute__((packed));
+
 #define SUPERBLOCK_MAGIC 0xEF53
 #define SUPERBLOCK_STATE_CLEAN 1
 #define SUPERBLOCK_STATE_DIRTY 2
@@ -136,6 +144,8 @@ size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
 void ext2_insert_dirent(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
 uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance);
+
+size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type);
 size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size);
 
 static inline void dump_inode(struct inode* buf) {
