@@ -20,7 +20,6 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/times.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/errno.h>
 #include <sys/time.h>
@@ -228,35 +227,4 @@ int _stat(const char* name, struct stat *st) {
 
 int lstat(const char* name, struct stat *st) {
 	return stat(name, st);
-}
-
-FILE* _time_fp = NULL;
-int _gettimeofday(struct timeval* p, void* tz) {
-	if(!_time_fp) {
-		_time_fp = fopen("/sys/time", "r");
-	}
-
-	if(!_time_fp) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	uint32_t tsec;
-	rewind(_time_fp);
-	if(fscanf(_time_fp, "%d", &tsec) != 1) {
-		fclose(_time_fp);
-		_time_fp = NULL;
-		errno = EINVAL;
-		return -1;
-	}
-
-	p->tv_sec = tsec;
-	p->tv_usec = 0;
-	return 0;
-}
-
-static void __attribute__((destructor)) _close_time_fp(void) {
-	if(_time_fp) {
-		fclose(_time_fp);
-	}
 }

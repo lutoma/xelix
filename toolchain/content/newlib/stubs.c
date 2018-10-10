@@ -146,31 +146,19 @@ char* _ttyname(int desc) {
 }
 
 uid_t getuid(void) {
-	//fprintf(stderr, "Warning: xelix newlib getuid() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
+	return 0;
 }
 
 uid_t geteuid(void) {
-	//fprintf(stderr, "Warning: xelix newlib geteuid() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
+	return 0;
 }
 
 uid_t getgid(void) {
-	//fprintf(stderr, "Warning: xelix newlib getgid() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
+	return 0;
 }
 
 uid_t getegid(void) {
-	//fprintf(stderr, "Warning: xelix newlib getegid() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
+	return 0;
 }
 
 int getgroups(int gidsetsize, gid_t grouplist[]) {
@@ -194,15 +182,6 @@ pid_t getpgrp(void) {
 	// error
 	return 1;
 }
-
-struct group *getgrent(void) {
-	errno = ENOSYS;
-	return NULL;
-}
-
-void endgrent(void) {}
-void setgrent(void) {}
-
 
 int setreuid(uid_t ruid, uid_t euid) {
 	errno = ENOSYS;
@@ -457,11 +436,6 @@ ssize_t getline(char **restrict lineptr, size_t *restrict n,
 	return -1;
 }
 
-struct group* getgrgid(gid_t gid) {
-	errno = ENOSYS;
-	return NULL;
-}
-
 // Should be macros
 unsigned int major(dev_t dev) {
 	return 0;
@@ -542,11 +516,6 @@ int lchown(const char *path, uid_t owner, gid_t group) {
 	return -1;
 }
 
-struct group *getgrnam(const char *name) {
-	errno = ENOSYS;
-	return NULL;
-}
-
 int mknod(const char *path, mode_t mode, dev_t dev) {
  	errno = ENOSYS;
 	return -1;
@@ -609,7 +578,6 @@ int tcflow(int fildes, int action) {
 	errno = ENOSYS;
 	return -1;
 }
-
 
 void flockfile(FILE *file) {}
 int ftrylockfile(FILE *file) {
