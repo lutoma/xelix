@@ -27,7 +27,7 @@
 
 #include "syscalls.h"
 
-static void int_handler(cpu_state_t* regs)
+static void int_handler(isf_t* regs)
 {
 	task_t* task = scheduler_get_current();
 	if(!task) {

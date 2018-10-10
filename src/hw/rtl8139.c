@@ -189,7 +189,7 @@ static void receive(struct rtl8139_card *card)
 	}
 }
 
-static void int_handler(cpu_state_t *state)
+static void int_handler(isf_t *state)
 {
 	log(LOG_DEBUG, "rtl8139: Got interrupt \\o/\n");
 	return;

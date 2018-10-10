@@ -39,7 +39,7 @@ static uint8_t* buf;
 static bool in_progress = false;
 static int bufpos = 0;
 
-void slip_receive(cpu_state_t* state)
+void slip_receive(isf_t* state)
 {
 	uint8_t c = serial_recv();
 

@@ -126,7 +126,7 @@ static void fill_buffer(struct ac97_card* card, uint32_t offset, uint32_t bufno)
 	card->descs[bufno].bup = 0;
 }
 
-static void interrupt_handler(cpu_state_t *state) {
+static void interrupt_handler(isf_t *state) {
 	struct ac97_card* card = NULL;
 
 	// Find the card this IRQ is coming from

@@ -19,6 +19,7 @@
  */
 
 #include <tasks/task.h>
+#include <hw/interrupts.h>
 
 enum {
 	SCHEDULER_OFF,
@@ -29,7 +30,7 @@ enum {
 
 void scheduler_add(task_t *task);
 task_t* scheduler_get_current();
-task_t* scheduler_select(cpu_state_t* lastRegs);
+task_t* scheduler_select(isf_t* lastRegs);
 void scheduler_init();
 void scheduler_remove(task_t *t);
 

@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/cpu.h>
+#include <hw/interrupts.h>
 
 #define TASK_MAXNAME 256
 #define TASK_PATH_MAX 256
@@ -32,7 +32,7 @@ typedef struct task {
 	uint32_t pid;
 	char name[TASK_MAXNAME];
 	struct task* parent;
-	cpu_state_t* state;
+	isf_t* state;
 	struct task* next;
 	struct task* previous;
 
@@ -76,5 +76,5 @@ typedef struct task {
 
 task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
-task_t* task_fork(task_t* to_fork, cpu_state_t* state);
+task_t* task_fork(task_t* to_fork, isf_t* state);
 void task_cleanup(task_t* t);

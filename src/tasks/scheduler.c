@@ -20,7 +20,6 @@
 #include "scheduler.h"
 #include <log.h>
 #include <memory/kmalloc.h>
-#include <hw/cpu.h>
 #include <hw/interrupts.h>
 #include <panic.h>
 #include <string.h>
@@ -71,7 +70,7 @@ void scheduler_remove(task_t *t) {
 	//task_cleanup(t);
 }
 
-task_t* scheduler_select(cpu_state_t* last_regs) {
+task_t* scheduler_select(isf_t* last_regs) {
 	if(unlikely(scheduler_state == SCHEDULER_INITIALIZING))
 	{
 		scheduler_state = SCHEDULER_INITIALIZED;
@@ -79,7 +78,9 @@ task_t* scheduler_select(cpu_state_t* last_regs) {
 	}
 
 	// Save CPU register state of previous task
-	memcpy(current_task->state, last_regs, sizeof(cpu_state_t));
+	if(last_regs) {
+		memcpy(current_task->state, last_regs, sizeof(isf_t));
+	}
 
 	/* Cycle through tasks until we find one that isn't killed or terminated,
 	 * while along the way unlinking the killed/terminated ones.

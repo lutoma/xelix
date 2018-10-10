@@ -23,7 +23,6 @@
 #include "print.h"
 #include <console/console.h>
 #include <hw/interrupts.h>
-#include <hw/cpu.h>
 #include <hw/pit.h>
 #include <hw/serial.h>
 #include <fs/vfs.h>

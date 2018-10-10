@@ -19,7 +19,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/cpu.h>
+#include <hw/interrupts.h>
 
 struct vmem_context;
 
@@ -81,7 +81,6 @@ uint32_t vmem_count_pages(struct vmem_context *ctx);
 void vmem_dump_page(struct vmem_page *pg);
 void vmem_dump(struct vmem_context *ctx);
 char* vmem_get_name(struct vmem_context* ctx);
-void vmem_handle_fault(cpu_state_t* regs);
 
 /* Get/Set cached paging context */
 void vmem_set_cache(struct vmem_context *ctx, void *cache);

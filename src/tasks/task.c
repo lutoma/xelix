@@ -23,6 +23,7 @@
 #include <memory/kmalloc.h>
 #include <memory/paging.h>
 #include <memory/gdt.h>
+#include <hw/interrupts.h>
 #include <string.h>
 
 #define STACKSIZE PAGE_SIZE
@@ -42,7 +43,7 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	bzero(task, sizeof(task_t));
 
 	// tmalloc automatically zeros memory.
-	task->state = tmalloc_a(sizeof(cpu_state_t), task);
+	task->state = tmalloc_a(sizeof(isf_t), task);
 	task->stack = tmalloc_a(STACKSIZE, task);
 	task->kernel_stack = tmalloc_a(STACKSIZE, task);
 	task->memory_context = vmem_new();
@@ -103,7 +104,7 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 
 
 // Forks a task. Returns forked task on success, NULL on error.
-task_t* task_fork(task_t* to_fork, cpu_state_t* state)
+task_t* task_fork(task_t* to_fork, isf_t* state)
 {
 	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
 

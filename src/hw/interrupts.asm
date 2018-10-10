@@ -16,6 +16,10 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
+[EXTERN cpu_fault_handler]
+[EXTERN interrupts_callback]
+[EXTERN paging_kernel_cr3]
+
 %define PIT_MASTER	0x20
 %define PIT_SLAVE	0xA0
 %define PIT_CONFIRM	0x20
@@ -26,118 +30,39 @@
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
 		push esp
-
-		; Dummy value for error code
-		push 0
-		push %1
-		; Dummy value for cr2
-		push 0
+		pusha
+		mov ebx, %1
 		jmp interrupts_common_handler
 %endmacro
 
-%macro INTERRUPT_ERRCODE 1
+%macro INTERRUPT_FAULT 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
-		push esp
-
-		push %1
-		; Dummy value for cr2
-		push 0
-		jmp interrupts_common_handler
+		cli
+		mov ebx, %1
+		jmp interrupts_fault_handler
 %endmacro
 
-INTERRUPT 0
-INTERRUPT 1
-INTERRUPT 2
-INTERRUPT 3
-INTERRUPT 4
-INTERRUPT 5
-INTERRUPT 6
-INTERRUPT 7
-INTERRUPT_ERRCODE 8
-INTERRUPT 9
-INTERRUPT_ERRCODE 10
-INTERRUPT_ERRCODE 11
-INTERRUPT_ERRCODE 12
-INTERRUPT_ERRCODE 13
-INTERRUPT 15
-INTERRUPT 16
-INTERRUPT_ERRCODE 17
-INTERRUPT 18
-INTERRUPT 19
-INTERRUPT 20
-INTERRUPT 21
-INTERRUPT 22
-INTERRUPT 23
-INTERRUPT 24
-INTERRUPT 25
-INTERRUPT 26
-INTERRUPT 27
-INTERRUPT 28
-INTERRUPT 29
-INTERRUPT_ERRCODE 30
-
-; Special handler for page faults that pushes cr2
-[GLOBAL interrupts_handler14]
-interrupts_handler14:
-	push esp
-	push 14
-
-	; The cr2 register contains the accessed address in case of page faults.
-	mov eax, cr2
-	push eax
-	jmp interrupts_common_handler
-
-; Assign the rest using a preprocessor loop
-%assign i 31
-%rep 241
-	INTERRUPT i
+%assign i 0
+%rep 256
+	%if i < 32
+		INTERRUPT_FAULT i
+	%else
+		INTERRUPT i
+	%endif
 	%assign i i+1
 %endrep
 
-[EXTERN interrupts_callback]
-[EXTERN paging_kernel_cr3]
-
-; This is our common Interrupt handler. It saves the processor state, sets up
-; for kernel mode segments, handles spurious interrupts, calls the C-level
-; handler, and finally restores the stack frame.
-
-interrupts_common_handler:
-	; We have to push all the stuff in the cpu_state_t (hw/cpu.h) which
-	; interrupts_callback takes in reversed order.
-	;
-	; The cpu automatically pushes eflags, cs, and eip. Our macros above push
-	; the error code (if any, otherwise 0), the interrupt's number, and cr2
-	; (for page faults). The rest is up to us.
-
-	pusha
-	mov eax, cr3
-	push eax
-
-	; push ds
-	xor eax, eax
-	mov ax, ds
-	push eax
-
-	; load the kernel data segment descriptor
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-
-	; Calculate offset to the position of the interrupt number on the
-	; stack and mov it to eax. (11 32-bit registers pushed since
-	; the beginning of this function).
-	mov ebx, [esp + (4 * 11)]
-
+; Handles interrupt hardware handling. Expects interrupt number in ebx. Returns
+; 1 in eax if the interrupt was spurious, 0 otherwise.
+handle_eoi:
 	; Is this a spurious interrupt on the master PIC? If yes, return
 	cmp ebx, IRQ7
-	je .return
+	je .spurious
 
 	; Do we have to send an EOI (End of interrupt)?
 	cmp ebx, 31
-	jle .no_eoi
+	jle .return
 
 	; Send EOI to master PIC
 	mov dx, PIT_MASTER
@@ -148,57 +73,116 @@ interrupts_common_handler:
 	; (We do this here so the master PIC still receives an EOI as it can't
 	; know about the spuriousness of this interrupt).
 	cmp ebx, IRQ15
-	je .return
+	je .spurious
 
 	; Check if we have to send an EOI to the secondary PIC
 	cmp ebx, 39
-	jle .no_eoi
+	jle .return
 
 	; Send EOI to secondary PIC
 	mov dx, PIT_SLAVE
 	mov ax, PIT_CONFIRM
 	out dx, ax
+.return
+	mov eax, 0
+	ret
+.spurious:
+	mov eax, 1
+	ret
 
-.no_eoi:
+
+interrupts_fault_handler:
+	; Disable paging
+	mov eax, cr0
+	and eax, ~(1 << 31)
+	mov cr0, eax
+
+	call handle_eoi
+
+	mov ecx, ebx
+	mov edx, cr2
+	call cpu_fault_handler
+	mov esp, eax
+
+	; reload paging context
+	pop eax
+	cmp eax, [paging_kernel_cr3]
+	je isf_return
+
+	; Re-enable paging
+	mov cr3, eax
+	mov eax, cr0
+	or eax, (1 << 31)
+	mov cr0, eax
+
+	jmp isf_return
+
+
+; This is our common Interrupt handler. It saves the processor state, sets up
+; for kernel mode segments, handles spurious interrupts, calls the C-level
+; handler, and finally restores the stack frame.
+
+interrupts_common_handler:
+	; We have to push all the stuff in isf_t (hw/interrupts.h) which
+	; interrupts_callback takes in reversed order.
+	;
+	; The cpu automatically pushes eflags, cs, and eip. Our macros above push
+	; the error code (if any, otherwise 0), the interrupt's number, and cr2
+	; (for page faults). The rest is up to us.
+
+	; push ds & cr3
+	xor eax, eax
+	mov ax, ds
+	push eax
+
+	mov eax, cr3
+	push eax
+
+	; load the kernel data segment descriptor
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+
+	; ebx still contains the interrupt number from the handlers above
+	call handle_eoi
+	test eax, eax
+	jnz .return
+
 	mov ecx, [paging_kernel_cr3]
 	jecxz .no_paging
 
-	mov ebx, cr3
-	cmp ecx, ebx
+	mov edx, cr3
+	cmp ecx, edx
 	je .no_paging
 	mov cr3, ecx
 .no_paging:
 
 	; fastcall
-	mov ecx, esp
+	mov ecx, ebx
+	mov edx, esp
 	sti
  	call interrupts_callback
 
-	; Use cpu_state_t as stack
+	; interrupts_callback returns an interrupt stack frame
 	mov esp, eax
 
 .return:
-	; reload original paging context & data segment descriptor
-	pop ebx
+	; reload paging context
 	pop eax
-
 	cmp eax, [paging_kernel_cr3]
-	je .no_pgreset
+	je isf_return
 	mov cr3, eax
-	.no_pgreset:
 
-	mov ds, bx
-	mov es, bx
-	mov fs, bx
-	mov gs, bx
+isf_return:
+	; reload segment descriptors
+	pop eax
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
 
-	; Reload the original values of the GP registers
 	popa
-
-	; Restore original stack
-	add esp, 3*4
 	pop esp
-
-	; Now, quit interrupthandler. This automatically pops cs, eip,
-	; eflags.
 	iret

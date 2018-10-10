@@ -64,10 +64,8 @@ struct vmem_context
 /* Initialize kernel context */
 void vmem_init()
 {
-	interrupts_register(14, &vmem_handle_fault);
-
 	struct vmem_context *ctx = vmem_new();
-	vmem_map(ctx, 0, 0, 0xffffe000U, VMEM_SECTION_KERNEL);
+	vmem_map_flat(ctx, 0, 0xffffe000U, VMEM_SECTION_KERNEL);
 	vmem_kernelContext = ctx;
 }
 
@@ -270,26 +268,6 @@ char* vmem_get_name(struct vmem_context* ctx) {
 		return "Unknown context";
 	}
 	return ctx->task->name;
-}
-
-void vmem_handle_fault(cpu_state_t* regs)
-{
-	task_t* running_task = scheduler_get_current();
-
-	char* pgpres = bit_get(regs->errCode, 0) ? " (page present)" : "";
-	char* op = bit_get(regs->errCode, 1) ? "write" : "read";
-	char* mode = bit_get(regs->errCode, 2) ? "user" : "kernel";
-
-	if(running_task)
-	{
-		log(LOG_ERR, "Page fault for %s to 0x%x in process <%s> %s mode%s.\n",
-			op, regs->cr2, running_task->name, mode, pgpres);
-
-		scheduler_terminate_current();
-		return;
-	}
-
-	panic("Page fault for %s to 0x%x in %s mode%s\n", op, regs->cr2, mode, pgpres);
 }
 
 void vmem_set_cache(struct vmem_context *ctx, void *cache)

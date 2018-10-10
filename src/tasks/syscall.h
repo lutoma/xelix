@@ -41,7 +41,7 @@
 struct syscall {
 	int num;
 	int params[3];
-	cpu_state_t* state;
+	isf_t* state;
 	task_t* task;
 };
 

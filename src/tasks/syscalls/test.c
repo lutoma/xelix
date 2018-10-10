@@ -19,13 +19,13 @@
 
 #include <tasks/syscall.h>
 #include <console/console.h>
-#include <hw/cpu.h>
+#include <hw/interrupts.h>
 #include <log.h>
 
 SYSCALL_HANDLER(test)
 {
 	log(LOG_INFO, "syscall: test: Test syscall successful\n");
-	dump_cpu_state(LOG_INFO, syscall.state);
+	dump_isf(LOG_INFO, syscall.state);
 
 	return syscall.params[0] + syscall.params[1] + syscall.params[2];
 }

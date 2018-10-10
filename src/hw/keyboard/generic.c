@@ -154,7 +154,7 @@ static void handleScancode(uint8_t code, uint8_t code2)
 }
 
 // Handles the IRQs we catch
-static void irq_handler(cpu_state_t* regs)
+static void irq_handler(isf_t* regs)
 {
 	// Escape sequences consist of two scancodes: One first that tells us
 	// we're now in an escape sequence, and the second one with the actual

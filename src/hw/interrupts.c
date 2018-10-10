@@ -30,32 +30,30 @@
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
-cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
-	interrupt_handler_t handler = interrupt_handlers[regs->interrupt];
+isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs) {
+	interrupt_handler_t handler = interrupt_handlers[intr];
 	task_t* task = scheduler_get_current();
 
 	#ifdef INTERRUPTS_DEBUG
 	debug("state before:\n");
-	dump_cpu_state(LOG_DEBUG, regs);
+	dump_isf(LOG_DEBUG, regs);
 	#endif
 
 	if(handler != NULL)
 		handler(regs);
 
 	// Timer interrupt
-	if(scheduler_state != SCHEDULER_OFF && (regs->interrupt == IRQ0 || (task && task->interrupt_yield)))
-	{
+	if(scheduler_state != SCHEDULER_OFF && (intr == IRQ0 || (task && task->interrupt_yield))) {
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}
 
 		task_t* new_task = scheduler_select(regs);
 
-		if(new_task && new_task->state && new_task->memory_context)
-		{
+		if(new_task && new_task->state) {
 			#ifdef INTERRUPTS_DEBUG
 			debug("state after (task selection):\n");
-			dump_cpu_state(LOG_DEBUG, new_task->state);
+			dump_isf(LOG_DEBUG, new_task->state);
 			#endif
 
 			gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
@@ -65,7 +63,7 @@ cpu_state_t* __attribute__((fastcall)) interrupts_callback(cpu_state_t* regs) {
 
 	#ifdef INTERRUPTS_DEBUG
 	debug("state after:\n");
-	dump_cpu_state(LOG_DEBUG, regs);
+	dump_isf(LOG_DEBUG, regs);
 	#endif
 	return regs;
 }

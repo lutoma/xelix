@@ -1,5 +1,5 @@
 /* fault.c: Catch and process CPU fault interrupts
- * Copyright © 2010-2016 Lukas Martini
+ * Copyright © 2010-2018 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,14 +17,14 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cpu.h"
-
 #include <log.h>
 #include <panic.h>
 #include <hw/interrupts.h>
 #include <memory/vmem.h>
 #include <memory/paging.h>
 #include <tasks/scheduler.h>
+
+#define has_errcode(i) (i == 8 || i == 17 || i == 30 || (i >= 10 && i <= 14))
 
 static char* exception_names[] = {
 	"Division by zero",
@@ -47,29 +47,40 @@ static char* exception_names[] = {
 	"Machine check exception"
 };
 
-static void handler(cpu_state_t* regs) {
-	task_t* proc = scheduler_get_current();
-	char* error_name = "Unknown CPU error";
-
-	if(regs->interrupt < 19) {
-		error_name = exception_names[regs->interrupt];
+isf_t* __attribute__((fastcall)) cpu_fault_handler(uint32_t intr, intptr_t cr2, uint32_t d1, uint32_t d2) {
+	uint32_t err_code, eip;
+	if(has_errcode(intr)) {
+		err_code = d1;
+		eip = d2;
+	} else {
+		err_code = 0;
+		eip = d1;
 	}
+
+	char* error_name = (intr < 19) ? exception_names[intr] : "Unknown CPU error";
 
 	// Always do a full panic on double faults
-	if(proc && regs->interrupt != 8) {
-
-		log(LOG_ERR, "%s in PID %d <%s>.\n",
-			error_name, proc->pid, proc->name);
-
+	if(bit_get(err_code, 2) && intr != 8) {
 		scheduler_terminate_current();
-		return;
+		log(LOG_ERR, "%s in task %d %s\n", error_name, scheduler_get_current()->pid, scheduler_get_current()->name);
+
+		task_t* new_task = scheduler_select(NULL);
+		if(!new_task || !new_task->state) {
+			panic("cpu_fault: No new task.\n");
+		}
+
+		gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
+		return new_task->state;
 	}
 
-	panic(error_name);
+	if(intr == 14) {
+		panic("Page fault for %s to 0x%x %s\n",
+			bit_get(err_code, 1) ? "write" : "read", cr2,
+			bit_get(err_code, 0) ? " (page present)" : "");
+	} else {
+		panic(error_name);
+	}
 }
 
 void cpu_init_fault_handlers() {
-	// Interrupt 14 (page fault) is handled by memory/vmem.c
-	interrupts_bulk_register(0, 13, &handler);
-	interrupts_bulk_register(15, 0x1F, &handler);
 }
