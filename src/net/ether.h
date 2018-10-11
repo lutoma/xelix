@@ -21,8 +21,8 @@
 #include "net.h"
 
 typedef struct {
-	byte destination[6];
-	byte source[6];
+	uint8_t destination[6];
+	uint8_t source[6];
 	uint16_t type;
 } ether_frame_hdr_t;
 

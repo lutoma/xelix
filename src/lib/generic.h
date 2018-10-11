@@ -30,15 +30,15 @@
 
 #include <config.h>
 #include <stdint.h>
-#include "portio.h"
+#include <portio.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <hw/pit.h>
 
 #define POW2(x) (2 << (x - 1))
 #define max(a,b) \
-	({ __typeof__ (a) _a = (a); \
-	   __typeof__ (b) _b = (b); \
+	({ __typeof__(a) _a = (a); \
+	   __typeof__(b) _b = (b); \
 	 _a > _b ? _a : _b; })
 
 #define bit_set(num, bit) ((num) | 1 << (bit))
@@ -47,17 +47,10 @@
 #define bit_get(num, bit) ((num) & (1 << (bit)))
 
 typedef int32_t time_t;
-typedef uint8_t byte;
 
 #define EOF  -1
-
-#ifdef __GNUC__
-	#define likely(x)       __builtin_expect((x),1)
-	#define unlikely(x)     __builtin_expect((x),0)
-#else
-	#define likely(x) (x)
-	#define unlikely(x) (x)
-#endif
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
 
 #define init(C, args...) \
 	do \
@@ -84,6 +77,3 @@ static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
 static inline uint32_t uptime(void) {
 	return (uint32_t)pit_tick / PIT_RATE;
 }
-
-extern void display_clear();
-#define clear() display_clear()
