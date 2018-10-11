@@ -126,5 +126,3 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 void __stack_chk_fail(void) {
 	panic("Stack protector failure\n");
 }
-
-void panic_init(multiboot_info_t* multiboot_info) {}

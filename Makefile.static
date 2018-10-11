@@ -38,8 +38,10 @@ $(CC):
 	make -C toolchain
 
 .PHONY: run
-run: xelix.bin
-	$(QEMU) -kernel xelix.bin -hda xelix.qcow2 $(MAKE_QEMU_FLAGS)
+run: xelix.bin mount
+	sudo cp xelix.bin mnt/boot
+	make umount
+	$(QEMU) -hda xelix.qcow2 $(MAKE_QEMU_FLAGS)
 
 .PHONY: clean
 clean:

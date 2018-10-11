@@ -16,27 +16,31 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
-MBOOT_PAGE_ALIGN	equ 1
-MBOOT_MEM_INFO		equ 2
-MBOOT_HEADER_MAGIC	equ 0x1BADB002
-MBOOT_HEADER_FLAGS	equ MBOOT_PAGE_ALIGN | MBOOT_MEM_INFO
-MBOOT_CHECKSUM		equ -(MBOOT_HEADER_MAGIC + MBOOT_HEADER_FLAGS)
-
 [section multiboot]
 ALIGN 4
-dd  MBOOT_HEADER_MAGIC
-dd  MBOOT_HEADER_FLAGS
-dd  MBOOT_CHECKSUM
+header_start:
+	dd 0xe85250d6
+	dd 0
+	dd header_end - header_start
+
+	; checksum
+	dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start))
+
+	; required end tag
+	dw 0    ; type
+	dw 0    ; flags
+	dd 8    ; size
+header_end:
 
 ; Reserve 4 KiB stack space
 [section .bss]
 GLOBAL stack_end
 stack_begin:
-resb 4096
+	resb 4096
 stack_end:
 
 [section .text]
-EXTERN main
+EXTERN xelix_main
 GLOBAL _start
 
 _start:
@@ -44,4 +48,4 @@ _start:
 	mov esp, stack_end
 	mov ecx, eax
 	mov edx, ebx
-	call main
+	call xelix_main

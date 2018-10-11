@@ -43,4 +43,4 @@ memory_track_area_t memory_track_areas[MEMORY_TRACK_MAX_AREAS];
 uint32_t memory_track_num_areas;
 
 void memory_track_print_areas();
-void memory_track_init(multiboot_info_t* multiboot_info);
+void memory_track_init();

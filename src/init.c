@@ -45,31 +45,14 @@
 #include <net/udp.h>
 #include <net/echo.h>
 #include <hw/ac97.h>
+#include <multiboot.h>
 
-void __attribute__((fastcall, noreturn)) main(uint32_t multiboot_checksum, multiboot_info_t* multiboot_info)
-{
+void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
+	void* multiboot_info) {
+
 	init(serial);
-	init(panic, multiboot_info);
-
-	// Check if we were actually booted by a multiboot bootloader
-	if(multiboot_checksum != MULTIBOOT_KERNELMAGIC) {
-		panic("Was not booted by a multiboot compliant bootloader.\n");
-	}
-
-	// Find out if we have enough memory to safely operate
-	if(!bit_get(multiboot_info->flags, 1)) {
-		panic("No memory information passed by bootloader.\n");
-	}
-
-	if((multiboot_info->mem_lower + multiboot_info->mem_upper) < (60 * 1024)) {
-		panic("Not enough RAM to safely proceed - should be at least 60 MB.\n");
-	}
-
-	if(!bit_get(multiboot_info->flags, 6)) {
-		panic("No mmap data from bootloader.\n");
-	}
-
-	init(memory_track, multiboot_info);
+	init(multiboot, multiboot_magic, multiboot_info);
+	init(memory_track);
 	init(kmalloc);
 	init(gdt);
 	init(interrupts);

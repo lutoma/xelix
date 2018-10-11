@@ -29,19 +29,20 @@ extern void* __kernel_start;
 extern void* __kernel_end;
 
 // Set up the memory areas marked as free in the multiboot headers
-static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
-	uint32_t i = mmap_addr;
-	while (i < (mmap_addr + mmap_length))
-	{
-		// FIXME This should use struct multiboot_memory_map.
-		uint32_t *size = (uint32_t *) i;
-		uint32_t *base_addr_low = (uint32_t *) (i + 4);
-		uint32_t *length_low = (uint32_t *) (i + 12);
-		uint32_t *type = (uint32_t *) (i + 20);
+static void copy_multiboot_areas() {
+	struct multiboot_tag_mmap* mmap = multiboot_get_mmap();
+	if(!mmap) {
+		panic("Could not get memory map from multiboot info\n");
+	}
+
+	uint32_t offset = 16;
+	for(; offset < mmap->size; offset += mmap->entry_size) {
+		struct multiboot_mmap_entry* entry = (intptr_t)mmap + offset;
 
 		memory_track_type_t area_type;
-		switch(*type) {
+		switch(entry->type) {
 			case 1: area_type = MEMORY_TYPE_FREE; break;
+			case 2: area_type = MEMORY_TYPE_UNKNOWN; break;
 			case 3: area_type = MEMORY_TYPE_ACPI; break;
 			case 4: area_type = MEMORY_TYPE_HIBERNATE; break;
 			case 5: area_type = MEMORY_TYPE_DEFECTIVE; break;
@@ -49,12 +50,12 @@ static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
 		}
 
 		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];
-		area->addr = (void*)*base_addr_low;
-		area->size = *length_low;
+		area->addr = entry->addr;
+		area->size = entry->len;
 		area->type = area_type;
 
 		// Check if this block contains the kernel, and if so create a separate area for that
-		if(*base_addr_low >= (intptr_t)&__kernel_start && *base_addr_low <= (intptr_t)&__kernel_end) {
+		if(entry->addr >= (intptr_t)&__kernel_start && entry->addr <= (intptr_t)&__kernel_end) {
 			uint32_t kernel_size = (intptr_t)&__kernel_end - (intptr_t)&__kernel_start;
 
 			memory_track_area_t* kernel_area;
@@ -74,16 +75,14 @@ static void copy_multiboot_areas(uint32_t mmap_addr, uint32_t mmap_length) {
 			kernel_area->type = MEMORY_TYPE_KERNEL_BINARY;
 
 			// Add remainder of the original block (if any)
-			if(*base_addr_low + *length_low > (intptr_t)&__kernel_end) {
+			if(entry->addr + entry->len > (intptr_t)&__kernel_end) {
 				memory_track_area_t* remainder_area = &memory_track_areas[memory_track_num_areas++];
 				remainder_area->addr = (void*)&__kernel_end;
-				remainder_area->size = *length_low - kernel_size;
+				remainder_area->size = entry->len - kernel_size;
 				remainder_area->type = area_type;
 			}
 
 		}
-
-		i += *size + 4;
 	}
 }
 
@@ -108,25 +107,7 @@ void memory_track_print_areas() {
 	}
 }
 
-void memory_track_init(multiboot_info_t* multiboot_info)
-{
+void memory_track_init() {
 	memset(memory_track_areas, 0, sizeof(memory_track_area_t) * MEMORY_TRACK_MAX_AREAS);
-	copy_multiboot_areas(multiboot_info->mmap_addr, multiboot_info->mmap_length);
-
-	// Add area for initrd(s)
-	for(int i = 0; i < multiboot_info->mods_count; i++) {
-		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];
-		area->addr = (void*)multiboot_info->mods_addr[i].start;
-		area->size = multiboot_info->mods_addr[i].end - multiboot_info->mods_addr[i].start;
-		area->type = MEMORY_TYPE_INITRD;
-	}
-
-	// Zero free areas
-	for(int i = 0; i < memory_track_num_areas; i++) {
-		memory_track_area_t* area = &memory_track_areas[i];
-
-		if(area->type == MEMORY_TYPE_FREE) {
-			memset(area->addr, 0, area->size);
-		}
-	}
+	copy_multiboot_areas();
 }
