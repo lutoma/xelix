@@ -459,12 +459,6 @@ int stime(const time_t *t) {
 	return -1;
 }
 
-struct mntent *getmntent(FILE *stream) {
-	errno = ENOSYS;
-	return NULL;
-}
-
-
 long fpathconf(int fildes, int name) {
 	errno = ENOSYS;
 	return -1;

@@ -69,11 +69,11 @@ extern FILE *setmntent (const char *__file, const char *__mode) __THROW;
 extern struct mntent *getmntent (FILE *__stream) __THROW;
 
 /* Reentrant version of the above function.  */
-/*extern struct mntent *getmntent_r (FILE *__restrict __stream,
+extern struct mntent *getmntent_r (FILE *__restrict __stream,
 				   struct mntent *__restrict __result,
 				   char *__restrict __buffer,
 				   int __bufsize) __THROW;
-*/
+
 
 /* Write the mount table entry described by MNT to STREAM.
    Return zero on success, nonzero on failure.  */
@@ -85,8 +85,8 @@ extern int endmntent (FILE *__stream) __THROW;
 
 /* Search MNT->mnt_opts for an option matching OPT.
    Returns the address of the substring, or null if none found.  */
-//extern char *hasmntopt (const struct mntent *__mnt,
-//			const char *__opt) __THROW;
+extern char *hasmntopt (const struct mntent *__mnt,
+			const char *__opt) __THROW;
 
 
 #endif	/* mntent.h */

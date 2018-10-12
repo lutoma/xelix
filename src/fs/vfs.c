@@ -26,6 +26,7 @@
 #include <spinlock.h>
 #include <errno.h>
 #include <fs/null.h>
+#include <fs/sysfs.h>
 
 #ifdef VFS_DEBUG
 # define debug(fmt, args...) log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s " fmt, \
@@ -348,15 +349,20 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 	mountpoints[num].instance = instance;
 	mountpoints[num].dev = dev;
 	mountpoints[num].type = type;
-	mountpoints[num].open_callback = open_callback;
-	mountpoints[num].stat_callback = stat_callback;
-	mountpoints[num].read_callback = read_callback;
-	mountpoints[num].write_callback = write_callback;
-	mountpoints[num].getdents_callback = getdents_callback;
+	memcpy(&mountpoints[num].callbacks, callbacks, sizeof(struct vfs_callbacks));
 
 	log(LOG_DEBUG, "vfs: Mounted %s (type %s) to %s\n", dev, type, path);
-
 	return 0;
+}
+
+static size_t sfs_mounts_read(void* dest, size_t size, void* meta) {
+	size_t rsize = 0;
+
+	for(int i = 0; i <= last_mountpoint; i++) {
+		struct mountpoint mp = mountpoints[i];
+		sysfs_printf("%s %s %s rw,noatime 0 0\n", mp.dev, mp.path, mp.type);
+	}
+	return rsize;
 }
 
 void vfs_init() {
@@ -365,4 +371,5 @@ void vfs_init() {
 	vfs_open("/dev/stdout", O_WRONLY, NULL);
 	vfs_open("/dev/stderr", O_WRONLY, NULL);
 	vfs_null_init();
+	sysfs_add_file("mounts", sfs_mounts_read, NULL, NULL);
 }

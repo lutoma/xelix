@@ -236,6 +236,15 @@ index d4ba031..ccbd860 100644
  /* versions which cache results (useful for ps, ls etc) */
  const char* get_cached_username(uid_t uid) FAST_FUNC;
  const char* get_cached_groupname(gid_t gid) FAST_FUNC;
+@@ -2012,7 +2015,7 @@
+
+ /* Busybox mount uses either /proc/mounts or /etc/mtab to
+  * get the list of currently mounted filesystems */
+-#define bb_path_mtab_file IF_FEATURE_MTAB_SUPPORT("/etc/mtab")IF_NOT_FEATURE_MTAB_SUPPORT("/proc/mounts")
++#define bb_path_mtab_file IF_FEATURE_MTAB_SUPPORT("/etc/mtab")IF_NOT_FEATURE_MTAB_SUPPORT("/sys/mounts")
+
+ #define bb_path_passwd_file  _PATH_PASSWD
+ #define bb_path_group_file   _PATH_GROUP
 diff --git busybox-1.29.2/include/platform.h busybox-1.29.2/include/platform.h
 index c365d5c..f414e0e 100644
 --- busybox-1.29.2/include/platform.h
@@ -1013,3 +1022,127 @@ index 4b4eeaf..cb283ff 100644
  			signal_mdevs(my_pid);
  		}
  	}
+--- busybox-1.29.2/util-linux/mount.c	2018-07-02 13:23:06.000000000 +0200
++++ busybox-1.29.2/util-linux/mount.c	2018-10-12 22:47:51.001873184 +0200
+@@ -1850,38 +1850,8 @@
+  */
+ static int nfsmount(struct mntent *mp, unsigned long vfsflags, char *filteropts)
+ {
+-	len_and_sockaddr *lsa;
+-	char *opts;
+-	char *end;
+-	char *dotted;
+-	int ret;
+-
+-# if ENABLE_FEATURE_IPV6
+-	end = strchr(mp->mnt_fsname, ']');
+-	if (end && end[1] == ':')
+-		end++;
+-	else
+-# endif
+-		/* mount_main() guarantees that ':' is there */
+-		end = strchr(mp->mnt_fsname, ':');
+-
+-	*end = '\0';
+-	lsa = xhost2sockaddr(mp->mnt_fsname, /*port:*/ 0);
+-	*end = ':';
+-	dotted = xmalloc_sockaddr2dotted_noport(&lsa->u.sa);
+-	if (ENABLE_FEATURE_CLEAN_UP) free(lsa);
+-	opts = xasprintf("%s%saddr=%s",
+-		filteropts ? filteropts : "",
+-		filteropts ? "," : "",
+-		dotted
+-	);
+-	if (ENABLE_FEATURE_CLEAN_UP) free(dotted);
+-	ret = mount_it_now(mp, vfsflags, opts);
+-	if (ENABLE_FEATURE_CLEAN_UP) free(opts);
+-
+-	return ret;
++	return -1;
+ }
+-
+ #endif // !ENABLE_FEATURE_MOUNT_NFS
+ 
+ // Mount one directory.  Handles CIFS, NFS, loopback, autobind, and filesystem
+@@ -1933,81 +1903,6 @@
+ 		goto report_error;
+ 	}
+ 
+-	// Might this be an CIFS filesystem?
+-	if (ENABLE_FEATURE_MOUNT_CIFS
+-	 && (!mp->mnt_type || strcmp(mp->mnt_type, "cifs") == 0)
+-	 && (mp->mnt_fsname[0] == '/' || mp->mnt_fsname[0] == '\\')
+-	 && mp->mnt_fsname[0] == mp->mnt_fsname[1]
+-	) {
+-		int len;
+-		char c;
+-		char *hostname, *share;
+-		len_and_sockaddr *lsa;
+-
+-		// Parse mp->mnt_fsname of the form "//hostname/share[/dir1/dir2]"
+-
+-		hostname = mp->mnt_fsname + 2;
+-		len = strcspn(hostname, "/\\");
+-		share = hostname + len + 1;
+-		if (len == 0          // 3rd char is a [back]slash (IOW: empty hostname)
+-		 || share[-1] == '\0' // no [back]slash after hostname
+-		 || share[0] == '\0'  // empty share name
+-		) {
+-			goto report_error;
+-		}
+-		c = share[-1];
+-		share[-1] = '\0';
+-		len = strcspn(share, "/\\");
+-
+-		// "unc=\\hostname\share" option is mandatory
+-		// after CIFS option parsing was rewritten in Linux 3.4.
+-		// Must use backslashes.
+-		// If /dir1/dir2 is present, also add "prefixpath=dir1/dir2"
+-		{
+-			char *unc = xasprintf(
+-				share[len] != '\0'  /* "/dir1/dir2" exists? */
+-					? "unc=\\\\%s\\%.*s,prefixpath=%s"
+-					: "unc=\\\\%s\\%.*s",
+-				hostname,
+-				len, share,
+-				share + len + 1  /* "dir1/dir2" */
+-			);
+-			parse_mount_options(unc, &filteropts);
+-			if (ENABLE_FEATURE_CLEAN_UP) free(unc);
+-		}
+-
+-		lsa = host2sockaddr(hostname, 0);
+-		share[-1] = c;
+-		if (!lsa)
+-			goto report_error;
+-
+-		// If there is no "ip=..." option yet
+-		if (!is_prefixed_with(filteropts, ",ip="+1)
+-		 && !strstr(filteropts, ",ip=")
+-		) {
+-			char *dotted, *ip;
+-			// Insert "ip=..." option into options
+-			dotted = xmalloc_sockaddr2dotted_noport(&lsa->u.sa);
+-			if (ENABLE_FEATURE_CLEAN_UP) free(lsa);
+-			ip = xasprintf("ip=%s", dotted);
+-			if (ENABLE_FEATURE_CLEAN_UP) free(dotted);
+-// Note: IPv6 scoped addresses ("host%iface", see RFC 4007) should be
+-// handled by libc in getnameinfo() (inside xmalloc_sockaddr2dotted_noport()).
+-// Currently, glibc does not support that (has no NI_NUMERICSCOPE),
+-// musl apparently does. This results in "ip=numericIPv6%iface_name"
+-// (instead of _numeric_ iface_id) with glibc.
+-// This probably should be fixed in glibc, not here.
+-// The workaround is to manually specify correct "ip=ADDR%n" option.
+-			parse_mount_options(ip, &filteropts);
+-			if (ENABLE_FEATURE_CLEAN_UP) free(ip);
+-		}
+-
+-		mp->mnt_type = (char*)"cifs";
+-		rc = mount_it_now(mp, vfsflags, filteropts);
+-
+-		goto report_error;
+-	}
+-
+ 	// Might this be an NFS filesystem?
+ 	if ((!mp->mnt_type || is_prefixed_with(mp->mnt_type, "nfs"))
+ 	 && strchr(mp->mnt_fsname, ':') != NULL
