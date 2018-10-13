@@ -197,11 +197,11 @@ static void int_handler(isf_t *state)
 	struct rtl8139_card* card = NULL;
 
 	// Find the card this IRQ is coming from
-	for(int i = 0; i < cards; i++) {
-		if(likely(state->interrupt == rtl8139_cards[i].device->interruptLine + IRQ0)) {
+	/*for(int i = 0; i < cards; i++) {
+		if(likely(state->interrupt == rtl8139_cards[i].device->interrupt_line + IRQ0)) {
 			card = &rtl8139_cards[i];
 		}
-	}
+	}*/
 
 	if(unlikely(card == NULL)) {
 		log(LOG_ERR, "rtl8139: Could not locate card for interrupt. This shouldn't happen.\n");
@@ -277,11 +277,11 @@ static void enable(struct rtl8139_card *card)
 		card->mac_addr[i] = int_in8(card, i);
 	}
 
-	if(card->device->interruptLine == 0xff) {
+	if(card->device->interrupt_line == 0xff) {
 		log(LOG_ERR, "rtl8139: Error: Card isn't connected to the PIC.");
 		return;
 	}
-	interrupts_register(card->device->interruptLine + IRQ0, int_handler);
+	interrupts_register(card->device->interrupt_line + IRQ0, int_handler);
 
 	// Enable all interrupt events
 	int_out16(card, REG_INTERRUPT_MASK, 0x0005);
@@ -346,7 +346,7 @@ void rtl8139_init()
 				devices[i]->dev,
 				devices[i]->func,
 				devices[i]->iobase,
-				devices[i]->interruptLine,
+				devices[i]->interrupt_line,
 				rtl8139_cards[i].mac_addr[0],
 				rtl8139_cards[i].mac_addr[1],
 				rtl8139_cards[i].mac_addr[2],
