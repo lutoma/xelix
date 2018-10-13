@@ -354,7 +354,7 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 		(intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end ||
 		header->magic != KMALLOC_MAGIC || header->type == TYPE_FREE)) {
 
-		log(LOG_ERR, "kmalloc: Attempt to free invalid block");
+		log(LOG_ERR, "kmalloc: Attempt to free invalid block\n");
 		return;
 	}
 
