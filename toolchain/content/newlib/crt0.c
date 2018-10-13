@@ -28,7 +28,7 @@ extern int main(int argc, char** argv);
 extern void __libc_init_array();
 extern void __libc_fini_array();
 
-void __attribute__((__fastcall__)) _start() {
+void __attribute__((fastcall, noreturn)) _start(void) {
 	__libc_init_array();
 
 	_xelix_execdata = (struct _xelix_execdata*)0x5000;
@@ -37,4 +37,5 @@ void __attribute__((__fastcall__)) _start() {
 	atexit(__libc_fini_array);
 	int ret = main(_xelix_execdata->argc, _xelix_execdata->argv);
 	exit(ret);
+	__builtin_unreachable();
 }

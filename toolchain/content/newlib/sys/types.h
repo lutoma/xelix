@@ -39,6 +39,9 @@ typedef __uint64_t	u_int64_t;
 typedef int register_t;
 #define __BIT_TYPES_DEFINED__ 1
 
+#define major(x) (x)
+#define minor(x) 0
+
 #if defined(__rtems__) || defined(__XMK__)
 /*
  *  The following section is RTEMS specific and is needed to more
