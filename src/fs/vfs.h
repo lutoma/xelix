@@ -106,6 +106,19 @@ typedef size_t (*vfs_write_callback_t)(vfs_file_t* fp, void* source, size_t size
 typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t size);
 
 
+struct vfs_callbacks {
+	uint32_t (*open)(char* path, uint32_t flags, void* mount_instance);
+	size_t (*read)(vfs_file_t* fp, void* dest, size_t size);
+	size_t (*write)(vfs_file_t* fp, void* source, size_t size);
+	size_t (*getdents)(vfs_file_t* fp, void* dest, size_t size);
+	int (*stat)(vfs_file_t* fp, vfs_stat_t* dest);
+	int (*mkdir)(const char* path, uint32_t mode);
+	int (*symlink)(const char* path1, const char* path2);
+	int (*unlink)(char* name);
+	int (*chmod)(const char* path, uint32_t mode);
+	int (*chown)(const char* path, uint16_t owner, uint16_t group);
+};
+
 // Used to always store the last read/write attempt (used for kernel panic debugging)
 char vfs_last_read_attempt[512];
 
@@ -118,11 +131,11 @@ size_t vfs_write(void* source, size_t size, vfs_file_t* fp);
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
 void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
 int vfs_close(vfs_file_t* fp);
+int vfs_unlink(char *name, task_t* task);
+int vfs_chmod(const char* path, uint32_t mode, task_t* task);
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
-	vfs_open_callback_t open_callback, vfs_stat_callback_t stat_callback,
-	vfs_read_callback_t read_callback, vfs_write_callback_t write_callback,
-	vfs_getdents_callback_t getdents_callback);
+	struct vfs_callbacks* callbacks);
 
 void vfs_init();
 

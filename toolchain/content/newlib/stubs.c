@@ -56,12 +56,6 @@ int readlink(const char *path, char *buf, size_t bufsize) {
 	return -1;
 }
 
-int symlink(const char *path1, const char *path2) {
-	//fprintf(stderr, "Warning: xelix newlib symlink() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
 
 clock_t _times(struct tms *buf) {
 	//fprintf(stderr, "Warning: xelix newlib times() stub called.\n");
@@ -70,12 +64,6 @@ clock_t _times(struct tms *buf) {
 	return -1;
 }
 
-int _unlink(char *name) {
-	//fprintf(stderr, "Warning: xelix newlib unlink() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
 
 int wait3(int* status) {
 	//fprintf(stderr, "Warning: xelix newlib wait3() stub called.\n");
@@ -112,12 +100,6 @@ speed_t cfgetospeed(const struct termios *termios_p) {
 	return -1;
 }
 
-int mkdir(const char *dir_path, mode_t mode) {
-	//fprintf(stderr, "Warning: xelix newlib mkdir() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
 
 int access(const char *pathname, int mode) {
 	//fprintf(stderr, "Warning: xelix newlib access() stub called.\n");
@@ -480,22 +462,12 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 	return -1;
 }
 
-int chmod(const char *path, mode_t mode) {
-	errno = ENOSYS;
-	return -1;
-}
-
 int fchmod(int fildes, mode_t mode) {
 	errno = ENOSYS;
 	return -1;
 }
 
 int lchmod(const char *path, mode_t mode) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int chown(const char *path, uid_t owner, gid_t group) {
 	errno = ENOSYS;
 	return -1;
 }

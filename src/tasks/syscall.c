@@ -23,6 +23,7 @@
 #include <tasks/scheduler.h>
 #include <print.h>
 #include <panic.h>
+#include <errno.h>
 #include <memory/vmem.h>
 
 #include "syscalls.h"
@@ -46,10 +47,10 @@ static void int_handler(isf_t* regs)
 	syscall.task = task;
 
 	syscall_t call = syscall_table[syscall.num];
-	if (syscall.num >= sizeof(syscall_table) / sizeof(syscall_t) || call == NULL)
-	{
-		log(LOG_INFO, "syscall: Invalid syscall %d\n", syscall.num);
-		syscall.num = -1;
+	if (syscall.num >= sizeof(syscall_table) / sizeof(syscall_t) || call == NULL) {
+		log(LOG_WARN, "syscall: Invalid syscall %d\n", syscall.num);
+		regs->eax = -1;
+		regs->ebx = EINVAL;
 		return;
 	}
 

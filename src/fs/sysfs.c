@@ -183,6 +183,17 @@ void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb,
 }
 
 void sysfs_init() {
-	vfs_mount("/sys", &sys_files, "sys", "sysfs", sysfs_open, sysfs_stat, sysfs_read_file, sysfs_write_file, sysfs_getdents);
-	vfs_mount("/dev", &dev_files, "dev", "sysfs", sysfs_open, sysfs_stat, sysfs_read_file, sysfs_write_file, sysfs_getdents);
+	struct vfs_callbacks cb = {
+		.open = sysfs_open,
+		.stat = sysfs_stat,
+		.read = sysfs_read_file,
+		.write = sysfs_write_file,
+		.getdents = sysfs_getdents,
+		.symlink = NULL,
+		.unlink = NULL,
+		.chown = NULL,
+		.chmod = NULL,
+	};
+	vfs_mount("/sys", &sys_files, "sys", "sysfs", &cb);
+	vfs_mount("/dev", &dev_files, "dev", "sysfs", &cb);
 }

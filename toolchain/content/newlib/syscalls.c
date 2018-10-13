@@ -228,3 +228,23 @@ int _stat(const char* name, struct stat *st) {
 int lstat(const char* name, struct stat *st) {
 	return stat(name, st);
 }
+
+int mkdir(const char *dir_path, mode_t mode) {
+	return syscall(6, dir_path, mode, 0);
+}
+
+int symlink(const char *path1, const char *path2) {
+	return syscall(8, path1, path2, 0);
+}
+
+int _unlink(char *name) {
+	return syscall(10, name, 0, 0);
+}
+
+int chmod(const char *path, mode_t mode) {
+	return syscall(11, path, mode, 0);
+}
+
+int chown(const char *path, uid_t owner, gid_t group) {
+	return syscall(17, path, owner, group);
+}

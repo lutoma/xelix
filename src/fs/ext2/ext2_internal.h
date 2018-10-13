@@ -141,8 +141,11 @@ uint32_t ext2_new_block();
 size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size);
 
 size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
+struct dirent* ext2_find_dirent(struct inode* inode, const char* search);
+void ext2_remove_dirent(uint32_t inode_num, char* name);
 void ext2_insert_dirent(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
+uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
 uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance);
 
 size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type);

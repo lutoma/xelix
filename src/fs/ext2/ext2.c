@@ -31,6 +31,53 @@
 #include <fs/ext2.h>
 #include <fs/block.h>
 
+int ext2_chmod(const char* path, uint32_t mode) {
+	uint32_t inode_num = ext2_resolve_inode(path, NULL);
+	if(!inode_num) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!ext2_read_inode(inode, inode_num)) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	inode->mode = vfs_mode_to_filetype(inode->mode) + mode;
+	ext2_write_inode(inode, inode_num);
+	return 0;
+}
+
+
+int ext2_unlink(char* path) {
+	serial_printf("ext2: Unlinking %s\n", path);
+
+	uint32_t dir_ino = 0;
+	uint32_t inode_num = ext2_resolve_inode(path, &dir_ino);
+	if(!inode_num || !dir_ino) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(inode_num == ROOT_INODE) {
+		sc_errno = EPERM;
+		return -1;
+	}
+
+	serial_printf("have inode %d, parent inode %d\n", inode_num, dir_ino);
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!ext2_read_inode(inode, inode_num)) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	ext2_remove_dirent(dir_ino, "foo");
+
+	//inode->link_count--;
+	//ext2_write_inode(inode, inode_num);
+	return 0;
+}
 
 int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	if(!fp || !fp->inode) {
@@ -150,8 +197,17 @@ void ext2_init() {
 	superblock->mount_time = time_get();
 	write_superblock();
 
-	vfs_mount("/", NULL, "/dev/ide1", "ext2", ext2_open, ext2_stat,
-		ext2_read_file, ext2_write_file, ext2_getdents);
+	struct vfs_callbacks cb = {
+		.open = ext2_open,
+		.stat = ext2_stat,
+		.read = ext2_read_file,
+		.write = ext2_write_file,
+		.getdents = ext2_getdents,
+		.unlink = ext2_unlink,
+		.chmod = ext2_chmod,
+		.symlink = NULL,
+	};
+	vfs_mount("/", NULL, "/dev/ide1", "ext2", &cb);
 }
 
 #endif /* ENABLE_EXT2 */

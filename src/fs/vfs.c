@@ -42,11 +42,7 @@ struct mountpoint {
 	void* instance;
 	char* dev;
 	char* type;
-	vfs_open_callback_t open_callback;
-	vfs_stat_callback_t stat_callback;
-	vfs_read_callback_t read_callback;
-	vfs_write_callback_t write_callback;
-	vfs_getdents_callback_t getdents_callback;
+	struct vfs_callbacks callbacks;
 };
 
 struct mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
@@ -84,12 +80,8 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 		*ptr = 0;
 		char* seg = ptr + 1;
 
-		// Double slashes
-		if(!*seg) {
-			continue;
-		}
-
-		if(!strcmp(seg, ".")) {
+		// !*seg to check for double slashes and slash at end of path
+		if(!*seg || !strcmp(seg, ".")) {
 			continue;
 		}
 
@@ -133,6 +125,30 @@ vfs_file_t* vfs_get_from_id(int id) {
 	return fd;
 }
 
+static int get_mountpoint(char* path, char** mount_path) {
+	*mount_path = path;
+	size_t longest_match = 0;
+	int mp_num = -1;
+
+	for(int i = 0; i <= last_mountpoint; i++) {
+		struct mountpoint cur_mp = mountpoints[i];
+		size_t plen = strlen(cur_mp.path);
+
+		if(!strncmp(path, cur_mp.path, plen - 1) && plen > longest_match) {
+			longest_match = plen;
+			mp_num = i;
+
+			if(strlen(path) - plen > 0) {
+				*mount_path = path + plen;
+			} else {
+				*mount_path = "/";
+			}
+		}
+	}
+
+	return mp_num;
+}
+
 vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	#ifdef VFS_DEBUG
 	log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s\n",
@@ -157,35 +173,14 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
-	int mp_num = -1;
-	struct mountpoint mp = mountpoints[0];
-	size_t longest_match = 0;
-
 	char* pwd = "/";
 	if(task) {
 		pwd = strndup(task->cwd, 265);
 	}
 
 	char* path = vfs_normalize_path(orig_path, pwd);
-	char* mount_path = path;
-
-	for(int i = 0; i <= last_mountpoint; i++) {
-		struct mountpoint cur_mp = mountpoints[i];
-		size_t plen = strlen(cur_mp.path);
-
-		if(!strncmp(path, cur_mp.path, plen - 1) && plen > longest_match) {
-			longest_match = plen;
-			mp_num = i;
-			mp = cur_mp;
-
-			if(strlen(path) - plen > 0) {
-				mount_path = path + plen;
-			} else {
-				mount_path = "/";
-			}
-		}
-	}
-
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
 	if(mp_num < 0) {
 		kfree(path);
 		spinlock_release(&file_open_lock);
@@ -193,7 +188,13 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
-	uint32_t inode = mp.open_callback(mount_path, flags, mp.instance);
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.open) {
+		sc_errno = ENOSYS;
+		return NULL;
+	}
+
+	uint32_t inode = mp.callbacks.open(mount_path, flags, mp.instance);
 	if(!inode) {
 		kfree(path);
 		spinlock_release(&file_open_lock);
@@ -234,7 +235,12 @@ int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	debug("\n", NULL);
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	int r = mp.stat_callback(fp, dest);
+	if(!mp.callbacks.stat) {
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.stat(fp, dest);
 
 	/*printf("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, dest->st_uid,
 		dest->st_gid, dest->st_size, vfs_filetype_to_verbose(vfs_mode_to_filetype(dest->st_mode)),
@@ -254,7 +260,12 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	size_t read = mp.read_callback(fp, dest, size);
+	if(!mp.callbacks.read) {
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	size_t read = mp.callbacks.read(fp, dest, size);
 	fp->offset += read;
 	return read;
 }
@@ -273,7 +284,12 @@ size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
 
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	size_t written = mp.write_callback(fp, source, size);
+	if(!mp.callbacks.write) {
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	size_t written = mp.callbacks.write(fp, source, size);
 	fp->offset += written;
 	return written;
 }
@@ -283,7 +299,12 @@ size_t vfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 
 	strncpy(vfs_last_read_attempt, fp->path, 512);
 	struct mountpoint mp = mountpoints[fp->mountpoint];
-	return mp.getdents_callback(fp, dest, size);
+	if(!mp.callbacks.getdents) {
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	return mp.callbacks.getdents(fp, dest, size);
 }
 
 
@@ -327,18 +348,72 @@ int vfs_close(vfs_file_t* fp) {
 	return 0;
 }
 
+int vfs_unlink(char* orig_path, task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		sc_errno = ENOENT;
+		return NULL;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.unlink) {
+		kfree(path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.unlink(mount_path);
+	kfree(path);
+	return r;
+}
+
+int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		sc_errno = ENOENT;
+		return NULL;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.chmod) {
+		kfree(path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.chmod(mount_path, mode);
+	kfree(path);
+	return r;
+}
+
 int vfs_mount(char* path, void* instance, char* dev, char* type,
-	vfs_open_callback_t open_callback, vfs_stat_callback_t stat_callback,
-	vfs_read_callback_t read_callback, vfs_write_callback_t write_callback,
-	vfs_getdents_callback_t getdents_callback) {
+	struct vfs_callbacks* callbacks) {
 
 	if(!path || !strncmp(path, "", 1)) {
 		log(LOG_ERR, "vfs: vfs_mount called with empty path.\n");
 		return -1;
 	}
 
-	if(!open_callback || !read_callback || !getdents_callback) {
-		log(LOG_ERR, "vfs: vfs_mount missing callback\n");
+	if(!callbacks) {
+		log(LOG_ERR, "vfs: vfs_mount missing callbacks\n");
 		return -1;
 	}
 

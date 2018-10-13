@@ -27,6 +27,8 @@ DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);
 DEFINE_SYSCALL(read);
 DEFINE_SYSCALL(sbrk);
+DEFINE_SYSCALL(unlink);
+DEFINE_SYSCALL(chmod);
 DEFINE_SYSCALL(test);
 DEFINE_SYSCALL(open);
 DEFINE_SYSCALL(stat);
@@ -55,8 +57,8 @@ syscall_t syscall_table[] = {
 	sys_sbrk,			// 7
 	NULL,				// 8
 	sys_test,			// 9
-	NULL,				// 10
-	NULL,				// 11
+	sys_unlink,			// 10
+	sys_chmod,			// 11
 	NULL,				// 12
 	sys_open,			// 13
 	sys_stat,			// 14
@@ -85,18 +87,18 @@ char* syscall_name_table[] = {
 	"write",		// 3
 	NULL,			// 4
 	"close",		// 5
-	NULL,			// 6
+	"mkdir",		// 6
 	"sbrk",			// 7
-	NULL,			// 8
+	"symlink",		// 8
 	"test",			// 9
-	NULL,			// 10
-	NULL,			// 11
+	"unlink",		// 10
+	"chmod",		// 11
 	"uname",		// 12
 	"open",			// 13
 	"stat",			// 14
 	"seek",			// 15
 	"getdents",		// 16
-	NULL,			// 17
+	"chown",		// 17
 	"kill",			// 18
 	NULL,			// 19
 	"chdir",		// 20

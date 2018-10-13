@@ -28,7 +28,7 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-static uint32_t resolve_inode(const char* path) {
+uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino) {
 	debug("Resolving inode for path %s\n", path);
 
 	// The root directory always has inode 2
@@ -42,52 +42,31 @@ static uint32_t resolve_inode(const char* path) {
 	// Throwaway pointer for strtok_r
 	char* path_tmp = strndup(path, 500);
 	pch = strtok_r(path_tmp, "/", &sp);
-	struct inode* current_inode = kmalloc(superblock->inode_size);
+	struct inode* inode = kmalloc(superblock->inode_size);
 	struct dirent* dirent = NULL;
-	uint8_t* dirent_block = NULL;
 	uint32_t result = 0;
 
 	while(pch != NULL) {
-		if(!ext2_read_inode(current_inode, dirent ? dirent->inode : ROOT_INODE)) {
+		int inode_num = dirent ? dirent->inode : ROOT_INODE;
+		if(!ext2_read_inode(inode, inode_num)) {
 			goto bye;
 		}
 
-		if(dirent_block) {
-			kfree(dirent_block);
+		if(dirent) {
+			kfree(dirent);
 		}
 
-		dirent_block = kmalloc(current_inode->size);
-		if(!ext2_read_inode_blocks(current_inode, 0, bl_size(current_inode->size), dirent_block)) {
-			goto bye;
+		if(parent_ino) {
+			*parent_ino = inode_num;
 		}
 
-		dirent = (struct dirent*)dirent_block;
-		while((void*)dirent < dirent_block + current_inode->size) {
-			if(!dirent->inode) {
-				goto next;
-			}
-
-			char* dirent_name = strndup(dirent->name, dirent->name_len);
-
-			// Check if this is what we're searching for
-			if(!strcmp(pch, dirent_name)) {
-				kfree(dirent_name);
-				break;
-			}
-
-			kfree(dirent_name);
-
-			next:
-			dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
-		}
-
+		dirent = ext2_find_dirent(inode, pch);
 		pch = strtok_r(NULL, "/", &sp);
 	}
 	result = dirent->inode;
 bye:
 	kfree(path_tmp);
-	kfree(dirent_block);
-	kfree(current_inode);
+	kfree(inode);
 	return result;
 }
 
@@ -141,7 +120,8 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 		return 0;
 	}
 
-	uint32_t inode_num = resolve_inode(path);
+	uint32_t dir_inode = 0;
+	uint32_t inode_num = ext2_resolve_inode(path, &dir_inode);
 	struct inode* inode;
 	bool created = false;
 
@@ -159,10 +139,7 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 			return 0;
 		}
 
-		// FIXME Should cache ino from above resolve_inode invocation above.
-		uint32_t dir_inode = resolve_inode(dir_path);
 		inode_num = ext2_new_inode(&inode);
-
 		#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 		ext2_insert_dirent(dir_inode, inode_num, name, (uint8_t)FT_IFREG);
 
