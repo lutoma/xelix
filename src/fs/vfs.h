@@ -19,6 +19,7 @@
  */
 
 #include <tasks/task.h>
+#include <string.h>
 
 #define VFS_SEEK_SET 0
 #define VFS_SEEK_CUR 1
@@ -166,4 +167,10 @@ static inline char* vfs_get_verbose_permissions(uint32_t mode) {
 	permstring[8] = (mode & S_IXOTH) ? 'x' : '-';
 	permstring[9] = 0;
 	return permstring;
+}
+
+static inline char* vfs_basename(char* path) {
+	char* bname = path + strlen(path);
+	while(*(bname - 1) != '/' && bname >= path) { bname--; }
+	return bname;
 }

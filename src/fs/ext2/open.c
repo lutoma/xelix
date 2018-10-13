@@ -48,7 +48,7 @@ uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino) {
 
 	while(pch != NULL) {
 		int inode_num = dirent ? dirent->inode : ROOT_INODE;
-		if(!ext2_read_inode(inode, inode_num)) {
+		if(!ext2_inode_read(inode, inode_num)) {
 			goto bye;
 		}
 
@@ -60,7 +60,7 @@ uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino) {
 			*parent_ino = inode_num;
 		}
 
-		dirent = ext2_find_dirent(inode, pch);
+		dirent = ext2_dirent_find(inode, pch);
 		if(!dirent) {
 			goto bye;
 		}
@@ -135,18 +135,8 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 		}
 
 		debug("ext2_open: Could not find inode, creating one.\n");
-		char* name;
-		char* dir_path = chop_path(path, &name);
-		if(!name) {
-			sc_errno = ENOENT;
-			return 0;
-		}
-
-		inode_num = ext2_new_inode(&inode);
-		#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-		ext2_insert_dirent(dir_inode, inode_num, name, (uint8_t)FT_IFREG);
-
-		kfree(dir_path);
+		inode_num = ext2_inode_new(&inode);
+		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), (uint8_t)FT_IFREG);
 		created = true;
 	} else {
 		if((flags & O_CREAT) && (flags & O_EXCL)) {
@@ -155,7 +145,7 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 		}
 
 		inode = kmalloc(superblock->inode_size);
-		if(!ext2_read_inode(inode, inode_num)) {
+		if(!ext2_inode_read(inode, inode_num)) {
 			return 0;
 		}
 	}

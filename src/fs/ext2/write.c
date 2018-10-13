@@ -30,7 +30,7 @@
 #include <fs/ext2.h>
 #include <print.h>
 
-uint32_t ext2_new_block(uint32_t neighbor) {
+uint32_t ext2_block_new(uint32_t neighbor) {
 	uint32_t pref_blockgroup = inode_to_blockgroup(neighbor);
 
 	struct blockgroup* blockgroup = blockgroup_table + pref_blockgroup;
@@ -50,7 +50,7 @@ uint32_t ext2_new_block(uint32_t neighbor) {
 
 }
 
-size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
+size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_write_file called without fp or fp missing inode.\n");
 		sc_errno = EBADF;
@@ -67,7 +67,7 @@ size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_read_inode(inode, fp->inode)) {
+	if(!ext2_inode_read(inode, fp->inode)) {
 		kfree(inode);
 		sc_errno = EBADF;
 		return -1;
@@ -99,11 +99,11 @@ size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size) {
 
 	// FIXME: Reads across input buffer boundary if size not mod block size
 	printf("write: block num is %d, size is %d\n", block_num, size);
-	ext2_write_inode_blocks(inode, fp->inode, block_num, source);
+	ext2_inode_write_blocks(inode, fp->inode, block_num, source);
 
 	printf("writing new inode, size %d\n", size);
 	inode->size = size;
-	ext2_write_inode(inode, fp->inode);
+	ext2_inode_write(inode, fp->inode);
 	kfree(inode);
 
 	return 1;

@@ -49,7 +49,7 @@ static uint32_t find_inode(uint32_t inode_num) {
 		+ ((inode_num - 1) % superblock->inodes_per_group * superblock->inode_size);
 }
 
-bool ext2_read_inode(struct inode* buf, uint32_t inode_num) {
+bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 	if(inode_num == ROOT_INODE && root_inode) {
 		memcpy(buf, root_inode, superblock->inode_size);
 		return true;
@@ -63,7 +63,7 @@ bool ext2_read_inode(struct inode* buf, uint32_t inode_num) {
 	return vfs_block_read(inode_off, superblock->inode_size, (uint8_t*)buf);
 }
 
-bool ext2_write_inode(struct inode* buf, uint32_t inode_num) {
+bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
 	if(inode_num == ROOT_INODE && root_inode) {
 		memcpy(root_inode, buf, superblock->inode_size);
 	}
@@ -76,7 +76,7 @@ bool ext2_write_inode(struct inode* buf, uint32_t inode_num) {
 	return vfs_block_write(inode_off, superblock->inode_size, (uint8_t*)buf);
 }
 
-uint32_t ext2_new_inode(struct inode** inodeptr) {
+uint32_t ext2_inode_new(struct inode** inodeptr) {
 	struct blockgroup* blockgroup = blockgroup_table;
 	while(!blockgroup->free_inodes) { blockgroup++; }
 	uint32_t inode_num = ext2_bitmap_search_and_claim(blockgroup->inode_bitmap);
@@ -90,7 +90,7 @@ uint32_t ext2_new_inode(struct inode** inodeptr) {
 	(*inodeptr)->creation_time = t;
 	(*inodeptr)->modification_time = t;
 	(*inodeptr)->access_time = t;
-	ext2_write_inode(*inodeptr, inode_num);
+	ext2_inode_write(*inodeptr, inode_num);
 
 	// TODO Also decrement blockgroup->free_inodes
 	superblock->free_inodes--;
@@ -100,11 +100,11 @@ uint32_t ext2_new_inode(struct inode** inodeptr) {
 }
 
 // FIXME This is a mess (and also has no triply-indirect block support).
-uint32_t ext2_resolve_inode_blocknum(struct inode* inode, uint32_t block_num) {
+uint32_t ext2_inode_resolve_blocknum(struct inode* inode, uint32_t block_num) {
 	uint32_t real_block_num = 0;
 
 	if(block_num > superblock->block_count) {
-		debug("resolve_inode_blocknum: Invalid block_num (%d > %d)\n", block_num, superblock->block_count);
+		debug("inode_resolve_blocknum: Invalid block_num (%d > %d)\n", block_num, superblock->block_count);
 		return 0;
 	}
 
@@ -131,13 +131,13 @@ uint32_t ext2_resolve_inode_blocknum(struct inode* inode, uint32_t block_num) {
 		real_block_num = inode->blocks[block_num];
 	}
 
-	debug("resolve_inode_blocknum: Translated inode block %d to real block %d\n", block_num, real_block_num);
+	debug("inode_resolve_blocknum: Translated inode block %d to real block %d\n", block_num, real_block_num);
 	return real_block_num;
 }
 
-uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t offset, uint32_t num, uint8_t* buf) {
+uint8_t* ext2_inode_read_blocks(struct inode* inode, uint32_t offset, uint32_t num, uint8_t* buf) {
 	for(int i = 0; i < num; i++) {
-		uint32_t block_num = ext2_resolve_inode_blocknum(inode, i + offset);
+		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i + offset);
 		if(!block_num) {
 			return NULL;
 		}
@@ -151,12 +151,12 @@ uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t offset, uint32_t n
 	return buf;
 }
 
-int ext2_write_inode_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf) {
+int ext2_inode_write_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf) {
 	for(int i = 0; i < num; i++)
 	{
-		uint32_t block_num = ext2_resolve_inode_blocknum(inode, i);
+		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i);
 		if(!block_num) {
-			block_num = ext2_new_block(inode_num);
+			block_num = ext2_block_new(inode_num);
 			if(!block_num) {
 				return 0;
 			}
@@ -179,7 +179,7 @@ int ext2_write_inode_blocks(struct inode* inode, uint32_t inode_num, uint32_t nu
 		}
 	}
 
-	ext2_write_inode(inode, inode_num);
+	ext2_inode_write(inode, inode_num);
 	return 1;
 }
 

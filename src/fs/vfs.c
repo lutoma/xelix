@@ -361,7 +361,7 @@ int vfs_unlink(char* orig_path, task_t* task) {
 	if(mp_num < 0) {
 		kfree(path);
 		sc_errno = ENOENT;
-		return NULL;
+		return -1;
 	}
 
 	struct mountpoint mp = mountpoints[mp_num];
@@ -389,7 +389,7 @@ int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
 	if(mp_num < 0) {
 		kfree(path);
 		sc_errno = ENOENT;
-		return NULL;
+		return -1;
 	}
 
 	struct mountpoint mp = mountpoints[mp_num];

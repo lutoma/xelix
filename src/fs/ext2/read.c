@@ -40,7 +40,7 @@ size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) 
 	debug("ext2_read_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_read_inode(inode, fp->inode)) {
+	if(!ext2_inode_read(inode, fp->inode)) {
 		kfree(inode);
 		sc_errno = EBADF;
 		return -1;
@@ -81,7 +81,7 @@ size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) 
 	 * is not mod the block size. Should rewrite read_inode_blocks.
 	 */
 	uint8_t* tmp = kmalloc(bl_off(num_blocks));
-	uint8_t* read = ext2_read_inode_blocks(inode, bl_size(fp->offset), num_blocks, tmp);
+	uint8_t* read = ext2_inode_read_blocks(inode, bl_size(fp->offset), num_blocks, tmp);
 	kfree(inode);
 
 	if(!read) {
@@ -95,7 +95,7 @@ size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) 
 }
 
 // The public read interface to the virtual file system
-size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size) {
+size_t ext2_read(vfs_file_t* fp, void* dest, size_t size) {
 	return ext2_do_read(fp, dest, size, FT_IFREG);
 }
 

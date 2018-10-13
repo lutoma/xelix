@@ -94,9 +94,9 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
 	return offset;
 }
 
-struct dirent* ext2_find_dirent(struct inode* inode, const char* search) {
+struct dirent* ext2_dirent_find(struct inode* inode, const char* search) {
 	uint8_t* dirent_block = kmalloc(inode->size);
-	if(!ext2_read_inode_blocks(inode, 0, bl_size(inode->size), dirent_block)) {
+	if(!ext2_inode_read_blocks(inode, 0, bl_size(inode->size), dirent_block)) {
 		return NULL;
 	}
 
@@ -127,15 +127,15 @@ struct dirent* ext2_find_dirent(struct inode* inode, const char* search) {
 	return NULL;
 }
 
-void ext2_remove_dirent(uint32_t inode_num, char* name) {
+void ext2_dirent_rm(uint32_t inode_num, char* name) {
 	struct inode* inode = kmalloc(sizeof(struct inode));
-	if(!ext2_read_inode(inode, inode_num)) {
+	if(!ext2_inode_read(inode, inode_num)) {
 		kfree(inode);
 		return;
 	}
 
 	uint8_t* dirent_block = kmalloc(inode->size);
-	if(!ext2_read_inode_blocks(inode, 0, bl_size(inode->size), dirent_block)) {
+	if(!ext2_inode_read_blocks(inode, 0, bl_size(inode->size), dirent_block)) {
 		return NULL;
 	}
 
@@ -173,27 +173,27 @@ void ext2_remove_dirent(uint32_t inode_num, char* name) {
 		prev->record_len += dirent->record_len;
 	}
 
-	ext2_write_inode_blocks(inode, 0, bl_size(inode->size), dirent_block);
+	ext2_inode_write_blocks(inode, 0, bl_size(inode->size), dirent_block);
 	kfree(dirent_block);
 }
 
-void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
+void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
 	debug("ext2_new_dirent dir %d ino %d name %s\n", dir_num, inode_num, name);
 
 	struct inode* dir = kmalloc(sizeof(struct inode));
-	if(!ext2_read_inode(dir, dir_num)) {
+	if(!ext2_inode_read(dir, dir_num)) {
 		kfree(dir);
 		return;
 	}
 
 	if(dir->flags & EXT2_INDEX_FL) {
-		log(LOG_ERR, "ext2_insert_dirent: No support for writing to indexed dirents.\n");
+		log(LOG_ERR, "ext2_dirent_add: No support for writing to indexed dirents.\n");
 		kfree(dir);
 		return;
 	}
 
 	void* dirents = kmalloc(dir->size);
-	if(!ext2_read_inode_blocks(dir, 0, dir->size / superblock_to_blocksize(superblock), dirents)) {
+	if(!ext2_inode_read_blocks(dir, 0, dir->size / superblock_to_blocksize(superblock), dirents)) {
 		kfree(dir);
 		kfree(dirents);
 		return;
@@ -232,7 +232,7 @@ void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_
 	current_ent->record_len = sizeof(struct dirent) + current_ent->name_len;
 	new_dirent->record_len = new_len;
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
-	ext2_write_inode_blocks(dir, dir_num, dir->size / superblock_to_blocksize(superblock), dirents);
+	ext2_inode_write_blocks(dir, dir_num, dir->size / superblock_to_blocksize(superblock), dirents);
 
 	// FIXME Update parent directory mtime/ctime
 	kfree(new_dirent);

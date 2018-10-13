@@ -118,7 +118,7 @@ struct dirent {
 #define EXT2_INDEX_FL 0x00001000
 
 #define inode_to_blockgroup(inode) ((inode - 1) / superblock->inodes_per_group)
-// TODO Should use right shift for negative values
+// TODO Should use right shift for negative values (XXX: negative ???)
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
 #define bl_off(block) ((block) * superblock_to_blocksize(superblock))
 #define bl_size(block) ((block) / superblock_to_blocksize(superblock))
@@ -129,27 +129,28 @@ struct superblock* superblock;
 struct blockgroup* blockgroup_table;
 struct inode* root_inode;
 
-bool ext2_write_inode(struct inode* buf, uint32_t inode_num);
-bool ext2_read_inode(struct inode* buf, uint32_t inode_num);
-uint32_t ext2_new_inode(struct inode** inodeptr);
-uint32_t ext2_resolve_inode_blocknum(struct inode* inode, uint32_t block_num);
-uint8_t* ext2_read_inode_blocks(struct inode* inode, uint32_t offset, uint32_t num, uint8_t* buf);
-int ext2_write_inode_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf);
+bool ext2_inode_write(struct inode* buf, uint32_t inode_num);
+bool ext2_inode_read(struct inode* buf, uint32_t inode_num);
+uint32_t ext2_inode_new(struct inode** inodeptr);
+uint32_t ext2_inode_resolve_blocknum(struct inode* inode, uint32_t block_num);
+uint8_t* ext2_inode_read_blocks(struct inode* inode, uint32_t offset, uint32_t num, uint8_t* buf);
+int ext2_inode_write_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf);
 
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
-uint32_t ext2_new_block();
-size_t ext2_write_file(vfs_file_t* fp, void* source, size_t size);
 
+uint32_t ext2_block_new();
+
+size_t ext2_write(vfs_file_t* fp, void* source, size_t size);
 size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
-struct dirent* ext2_find_dirent(struct inode* inode, const char* search);
-void ext2_remove_dirent(uint32_t inode_num, char* name);
-void ext2_insert_dirent(uint32_t dir, uint32_t inode, char* name, uint8_t type);
+struct dirent* ext2_dirent_find(struct inode* inode, const char* search);
+void ext2_dirent_rm(uint32_t inode_num, char* name);
+void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
 uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
 uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance);
 
 size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type);
-size_t ext2_read_file(vfs_file_t* fp, void* dest, size_t size);
+size_t ext2_read(vfs_file_t* fp, void* dest, size_t size);
 
 static inline void dump_inode(struct inode* buf) {
 	debug("%-19s: %d\n", "uid", buf->uid);

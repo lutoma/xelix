@@ -39,13 +39,13 @@ int ext2_chmod(const char* path, uint32_t mode) {
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_read_inode(inode, inode_num)) {
+	if(!ext2_inode_read(inode, inode_num)) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	inode->mode = vfs_mode_to_filetype(inode->mode) + mode;
-	ext2_write_inode(inode, inode_num);
+	ext2_inode_write(inode, inode_num);
 	return 0;
 }
 
@@ -64,19 +64,16 @@ int ext2_unlink(char* path) {
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_read_inode(inode, inode_num)) {
+	if(!ext2_inode_read(inode, inode_num)) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
-	char* bname = path + strlen(path);
-	while(*(bname - 1) != '/' && bname >= path) { bname--; }
-
-	ext2_remove_dirent(dir_ino, bname);
+	ext2_dirent_rm(dir_ino, vfs_basename(path));
 
 	inode->link_count--;
 	inode->deletion_time = time_get();
-	ext2_write_inode(inode, inode_num);
+	ext2_inode_write(inode, inode_num);
 
 	// TODO Also adjust blockgroup->free_inodes and bitmaps
 	superblock->free_inodes++;
@@ -86,12 +83,12 @@ int ext2_unlink(char* path) {
 
 int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	if(!fp || !fp->inode) {
-		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
+		log(LOG_ERR, "ext2: ext2_stat called without fp or fp missing inode.\n");
 		return -1;
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_read_inode(inode, fp->inode)) {
+	if(!ext2_inode_read(inode, fp->inode)) {
 		kfree(inode);
 		return -1;
 	}
@@ -138,10 +135,10 @@ void ext2_init() {
 		return;
 	}
 
-	/*if(!superblock_to_blocksize(superblock) != 1024) {
+	if(bl_off(1) != 1024) {
 		log(LOG_ERR, "ext2: Block sizes != 1024 are not supported right now.\n");
 		return;
-	}*/
+	}
 
 	// TODO Compare superblocks to each other?
 
@@ -172,11 +169,11 @@ void ext2_init() {
 	 * to get ext2 blocks. Add 1 since partially used blocks also need to be
 	 * allocated.
 	 */
-	uint32_t num_table_blocks = superblock->block_count
-		/ superblock->blocks_per_group
-		* sizeof(struct blockgroup)
-		/ superblock_to_blocksize(superblock)
-		+ 1;
+	uint32_t num_table_blocks = bl_size(
+			superblock->block_count
+			/ superblock->blocks_per_group
+			* sizeof(struct blockgroup)
+		) + 1;
 
 	blockgroup_table = kmalloc(superblock_to_blocksize(superblock)
 		* num_table_blocks);
@@ -189,7 +186,7 @@ void ext2_init() {
 
 	// Cache root inode
 	struct inode* root_inode_buf = kmalloc(superblock->inode_size);
-	if(!ext2_read_inode(root_inode_buf, ROOT_INODE)) {
+	if(!ext2_inode_read(root_inode_buf, ROOT_INODE)) {
 		log(LOG_ERR, "ext2: Could not read root inode.\n");
 		kfree(superblock);
 		kfree(root_inode_buf);
@@ -205,8 +202,8 @@ void ext2_init() {
 	struct vfs_callbacks cb = {
 		.open = ext2_open,
 		.stat = ext2_stat,
-		.read = ext2_read_file,
-		.write = ext2_write_file,
+		.read = ext2_read,
+		.write = ext2_write,
 		.getdents = ext2_getdents,
 		.unlink = ext2_unlink,
 		.chmod = ext2_chmod,
