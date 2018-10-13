@@ -61,6 +61,9 @@ uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino) {
 		}
 
 		dirent = ext2_find_dirent(inode, pch);
+		if(!dirent) {
+			goto bye;
+		}
 		pch = strtok_r(NULL, "/", &sp);
 	}
 	result = dirent->inode;

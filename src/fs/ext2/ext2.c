@@ -51,8 +51,6 @@ int ext2_chmod(const char* path, uint32_t mode) {
 
 
 int ext2_unlink(char* path) {
-	serial_printf("ext2: Unlinking %s\n", path);
-
 	uint32_t dir_ino = 0;
 	uint32_t inode_num = ext2_resolve_inode(path, &dir_ino);
 	if(!inode_num || !dir_ino) {
@@ -65,17 +63,24 @@ int ext2_unlink(char* path) {
 		return -1;
 	}
 
-	serial_printf("have inode %d, parent inode %d\n", inode_num, dir_ino);
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_read_inode(inode, inode_num)) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
-	ext2_remove_dirent(dir_ino, "foo");
+	char* bname = path + strlen(path);
+	while(*(bname - 1) != '/' && bname >= path) { bname--; }
 
-	//inode->link_count--;
-	//ext2_write_inode(inode, inode_num);
+	ext2_remove_dirent(dir_ino, bname);
+
+	inode->link_count--;
+	inode->deletion_time = time_get();
+	ext2_write_inode(inode, inode_num);
+
+	// TODO Also adjust blockgroup->free_inodes and bitmaps
+	superblock->free_inodes++;
+	write_superblock();
 	return 0;
 }
 
@@ -207,7 +212,7 @@ void ext2_init() {
 		.chmod = ext2_chmod,
 		.symlink = NULL,
 	};
-	vfs_mount("/", NULL, "/dev/ide1", "ext2", &cb);
+	vfs_mount("/", NULL, "/dev/ide1p1", "ext2", &cb);
 }
 
 #endif /* ENABLE_EXT2 */

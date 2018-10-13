@@ -128,14 +128,64 @@ struct dirent* ext2_find_dirent(struct inode* inode, const char* search) {
 }
 
 void ext2_remove_dirent(uint32_t inode_num, char* name) {
-	serial_printf("ext2_remove_dirent\n");
+	struct inode* inode = kmalloc(sizeof(struct inode));
+	if(!ext2_read_inode(inode, inode_num)) {
+		kfree(inode);
+		return;
+	}
+
+	uint8_t* dirent_block = kmalloc(inode->size);
+	if(!ext2_read_inode_blocks(inode, 0, bl_size(inode->size), dirent_block)) {
+		return NULL;
+	}
+
+	struct dirent* dirent = (struct dirent*)dirent_block;
+	struct dirent* prev = NULL;
+	bool found = false;
+
+	while((void*)dirent < dirent_block + inode->size) {
+		if(!dirent->inode) {
+			goto next;
+		}
+
+		// Check if this is what we're searching for
+		char* dirent_name = strndup(dirent->name, dirent->name_len);
+		if(!strcmp(name, dirent_name)) {
+			kfree(dirent_name);
+			found = true;
+			break;
+		}
+
+		kfree(dirent_name);
+
+		next:
+		prev = dirent;
+		dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
+	}
+
+	if(!found) {
+		return;
+	}
+
+	if(!prev) {
+		dirent->inode = 0;
+	} else {
+		prev->record_len += dirent->record_len;
+	}
+
+	ext2_write_inode_blocks(inode, 0, bl_size(inode->size), dirent_block);
+	kfree(dirent_block);
 }
 
 void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
 	debug("ext2_new_dirent dir %d ino %d name %s\n", dir_num, inode_num, name);
 
 	struct inode* dir = kmalloc(sizeof(struct inode));
-	ext2_read_inode(dir, dir_num);
+	if(!ext2_read_inode(dir, dir_num)) {
+		kfree(dir);
+		return;
+	}
+
 	if(dir->flags & EXT2_INDEX_FL) {
 		log(LOG_ERR, "ext2_insert_dirent: No support for writing to indexed dirents.\n");
 		kfree(dir);
@@ -144,6 +194,8 @@ void ext2_insert_dirent(uint32_t dir_num, uint32_t inode_num, char* name, uint8_
 
 	void* dirents = kmalloc(dir->size);
 	if(!ext2_read_inode_blocks(dir, 0, dir->size / superblock_to_blocksize(superblock), dirents)) {
+		kfree(dir);
+		kfree(dirents);
 		return;
 	}
 
