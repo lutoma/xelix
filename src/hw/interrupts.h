@@ -67,16 +67,24 @@ typedef struct {
 } __attribute__((__packed__)) isf_t;
 
 typedef void (*interrupt_handler_t)(isf_t*);
-interrupt_handler_t interrupt_handlers[256];
+struct interrupt_reg {
+	interrupt_handler_t handler;
+	bool can_reent;
+};
 
-static inline void interrupts_register(uint8_t n, interrupt_handler_t handler) {
-	interrupt_handlers[n] = handler;
+struct interrupt_reg interrupt_handlers[256];
+
+static inline void interrupts_register(uint8_t n, interrupt_handler_t handler, bool can_reent) {
+	interrupt_handlers[n].handler = handler;
+	interrupt_handlers[n].can_reent = can_reent;
 	log(LOG_INFO, "interrupts: Registered handler for 0x%x.\n", n);
 }
 
-static inline void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t handler) {
-		for(uint8_t i = start; i <= end; i++)
-			interrupt_handlers[i] = handler;
+static inline void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t handler, bool can_reent) {
+		for(uint8_t i = start; i <= end; i++) {
+			interrupt_handlers[i].handler = handler;
+			interrupt_handlers[i].can_reent = can_reent;
+		}
 
 		log(LOG_INFO, "interrupts: Registered handlers for 0x%x - 0x%x.\n", start, end);
 }

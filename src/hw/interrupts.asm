@@ -160,7 +160,6 @@ interrupts_common_handler:
 	; fastcall
 	mov ecx, ebx
 	mov edx, esp
-	sti
  	call interrupts_callback
 
 	; interrupts_callback returns an interrupt stack frame

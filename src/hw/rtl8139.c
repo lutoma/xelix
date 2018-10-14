@@ -191,10 +191,10 @@ static void receive(struct rtl8139_card *card)
 
 static void int_handler(isf_t *state)
 {
-	log(LOG_DEBUG, "rtl8139: Got interrupt \\o/\n");
-	return;
+	log(LOG_DEBUG, "rtl8139: Got interrupt\n");
 
-	struct rtl8139_card* card = NULL;
+	// FIXME
+	struct rtl8139_card* card = &rtl8139_cards[0];
 
 	// Find the card this IRQ is coming from
 	/*for(int i = 0; i < cards; i++) {
@@ -281,7 +281,7 @@ static void enable(struct rtl8139_card *card)
 		log(LOG_ERR, "rtl8139: Error: Card isn't connected to the PIC.");
 		return;
 	}
-	interrupts_register(card->device->interrupt_line + IRQ0, int_handler);
+	interrupts_register(card->device->interrupt_line + IRQ0, int_handler, false);
 
 	// Enable all interrupt events
 	int_out16(card, REG_INTERRUPT_MASK, 0x0005);

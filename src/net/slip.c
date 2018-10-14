@@ -107,5 +107,5 @@ void slip_init()
 	net_register_device(mydev);
 
 	// Hook up to the serial port #1 interrupt
-	interrupts_register(IRQ4, slip_receive);
+	interrupts_register(IRQ4, slip_receive, true);
 }

@@ -79,5 +79,5 @@ static void int_handler(isf_t* regs)
 }
 
 void syscall_init() {
-	interrupts_register(SYSCALL_INTERRUPT, int_handler);
+	interrupts_register(SYSCALL_INTERRUPT, int_handler, true);
 }

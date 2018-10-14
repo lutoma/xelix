@@ -41,7 +41,7 @@ static size_t sfs_read(void* dest, size_t size, void* meta) {
 // Initialize the PIT
 void pit_init(uint16_t frequency)
 {
-	interrupts_register(IRQ0, &timer_callback);
+	interrupts_register(IRQ0, &timer_callback, true);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is

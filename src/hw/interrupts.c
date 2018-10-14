@@ -31,7 +31,7 @@
  * handlers, which do fiddling like EOIs (i386).
  */
 isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs) {
-	interrupt_handler_t handler = interrupt_handlers[intr];
+	struct interrupt_reg reg = interrupt_handlers[intr];
 	task_t* task = scheduler_get_current();
 
 	#ifdef INTERRUPTS_DEBUG
@@ -39,8 +39,12 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 	dump_isf(LOG_DEBUG, regs);
 	#endif
 
-	if(handler != NULL)
-		handler(regs);
+	if(reg.handler) {
+		if(reg.can_reent) {
+			interrupts_enable();
+		}
+		reg.handler(regs);
+	}
 
 	// Timer interrupt
 	if(scheduler_state != SCHEDULER_OFF && (intr == IRQ0 || (task && task->interrupt_yield))) {
