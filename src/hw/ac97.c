@@ -113,10 +113,10 @@ static void dump_regs(struct ac97_card* card) {
 	uint8_t polvi = portio_in8(card->nabmbar + PORT_NABM_POLVI);
 	log(LOG_DEBUG, "POLVI: %d\n", polvi);
 
-	uint16_t pcicmd = pci_config_read16(card->device, 0x04);
+	/*uint16_t pcicmd = pci_config_read16(card->device, 0x04);
 	log(LOG_DEBUG, "pcicmd MSE: %d\n", bit_get(pcicmd, 1));
 	log(LOG_DEBUG, "pcicmd BME: %d\n", bit_get(pcicmd, 2));
-	log(LOG_DEBUG, "pcicmd ID: %d\n", bit_get(pcicmd, 10));
+	log(LOG_DEBUG, "pcicmd ID: %d\n", bit_get(pcicmd, 10));*/
 }
 
 static void fill_buffer(struct ac97_card* card, uint32_t offset, uint32_t bufno) {
@@ -127,14 +127,14 @@ static void fill_buffer(struct ac97_card* card, uint32_t offset, uint32_t bufno)
 }
 
 static void interrupt_handler(isf_t *state) {
-	struct ac97_card* card = NULL;
+	struct ac97_card* card = &ac97_cards[0];
 
-	// Find the card this IRQ is coming from
+	/*// Find the card this IRQ is coming from
 	for(int i = 0; i < cards; i++) {
-		if(likely(state->interrupt == ac97_cards[i].device->interruptLine + IRQ0)) {
+		if(likely(state->interrupt == ac97_cards[i].device->interrupt_line + IRQ0)) {
 			card = &ac97_cards[i];
 		}
-	}
+	}*/
 
 	if(unlikely(card == NULL)) {
 		log(LOG_ERR, "ac97: Could not locate card for interrupt. This shouldn't happen.\n");
@@ -197,10 +197,10 @@ static void set_sample_rate(struct ac97_card* card) {
  * optimizations on. Seems to be a bug around static functions. Blame GCC.
  */
 static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) {
-	interrupts_register(card->device->interruptLine + IRQ0, interrupt_handler);
+	interrupts_register(card->device->interrupt_line + IRQ0, interrupt_handler, false);
 
 	// Enable bus master, disable MSE
-	pci_config_write(card->device, 4, 5);
+	//pci_config_write(card->device, 4, 5);
 
 	sleep_ticks(30);
 
@@ -245,19 +245,21 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs);
 }
 
-void ac97_play(struct ac97_card* card, char* file) {
-	vfs_file_t* fd = vfs_open(file, NULL);
-
-
-	size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
+void ac97_play(char* file) {
+	struct ac97_card* card = &ac97_cards[0];
+	vfs_file_t* fd = vfs_open(file, O_RDONLY, NULL);
+	if(!fd) {
+		return;
+	}
 
 	// FIXME Use this properly, stat or use return value of vfs_read to choose buffer num
 	data = kmalloc(9999999);
 	size_t read = vfs_read(data, 9999999, fd);
 	vfs_close(fd);
 
-	if(read < 1)
+	if(read < 1) {
 		return NULL;
+	}
 
 	for(int i = 0; i < NUM_BUFFERS; i++) {
 		fill_buffer(card, i, i);
@@ -284,7 +286,7 @@ void ac97_init()
 		ac97_cards[i].device = devices[i];
 		cards++;
 
-		devices[i]->interruptLine = pci_get_interrupt_line(devices[i]);
+		//devices[i]->interrupt_line = pci_get_interrupt_line(devices[i]);
 
 		enable_card(&ac97_cards[i]);
 
@@ -293,7 +295,7 @@ void ac97_init()
 				devices[i]->dev,
 				devices[i]->func,
 				devices[i]->iobase,
-				devices[i]->interruptLine
+				devices[i]->interrupt_line
 			 );
 	}
 }

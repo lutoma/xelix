@@ -34,5 +34,5 @@ struct ac97_card {
 
 struct ac97_card ac97_cards[AC97_MAX_CARDS];
 
-void ac97_play(struct ac97_card* card, char* file);
+void ac97_play(char* file);
 void ac97_init();

@@ -77,5 +77,6 @@ typedef struct pci_device {
 } pci_device_t;
 
 uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2], uint32_t max);
+uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar);
 void pci_init();
 

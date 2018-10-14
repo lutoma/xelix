@@ -60,7 +60,7 @@ static inline void _config_write(uint8_t bus, uint8_t dev, uint8_t func,
 	outl(PCI_CONFIG_DATA, val);
 }
 
-static uint32_t get_BAR(pci_device_t* device, uint8_t bar) {
+uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar) {
 	if(bar > 5) {
 		return 0;
 	}
@@ -78,7 +78,7 @@ static uint32_t get_IO_base(pci_device_t* device) {
 	uint8_t bars = 6 - get_header_type(device) * 4;
 
 	for(int i = 0; i < bars; i++) {
-		uint32_t bar = get_BAR(device, i);
+		uint32_t bar = pci_get_BAR(device, i);
 		if(bar & 0x1) {
 			return bar & 0xfffffffc;
 		}
@@ -92,7 +92,7 @@ static uint32_t get_mem_base(pci_device_t* device) {
 	uint8_t bars = 6 - get_header_type(device) * 4;
 
 	for(int i = 0; i < bars; i++) {
-		uint32_t bar = get_BAR(device, i++);
+		uint32_t bar = pci_get_BAR(device, i++);
 		if(!(bar & 0x1)) {
 			return bar & 0xfffffff0;
 		}
