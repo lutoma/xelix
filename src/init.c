@@ -91,45 +91,6 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	init(ac97);
 	#endif
 
-	//serial_printf("page faulting.\n");
-	//bzero(NULL, 5);
-
-/*
-	vfs_file_t* fd = vfs_open("/usr/bin", O_RDONLY, NULL);
-	void* data = kmalloc(512);
-
-
-	while(1) {
-		size_t read = vfs_getdents(fd, data, 512);
-		if(!read) {
-			break;
-		}
-
-		vfs_dirent_t* ent = data;
-		while((void*)ent < data + read) {
-			char* name = strndup(ent->name, ent->name_len);
-			serial_printf("reading at %d, reclen %d, inode %d, name %s (len %d)\n", (intptr_t)ent - (intptr_t)data, ent->record_len, ent->inode, name, ent->name_len);
-
-			serial_printf("end: %d, read %d\n", (intptr_t)ent - (intptr_t)data + ent->record_len, read);
-			if((intptr_t)ent - (intptr_t)data + sizeof(vfs_dirent_t) + ent->name_len >= read) {
-				serial_printf("rip.\n");
-				break;
-			}
-
-
-			fd->offset += ent->record_len;
-
-			if(!ent->inode) {
-				goto next;
-			}
-
-			next:
-			ent = (vfs_dirent_t*)((intptr_t)ent + (intptr_t)ent->record_len);
-		}
-	}
-
-	freeze();
-*/
 	char* __env[] = { NULL };
 	char* __argv[] = { "init", NULL };
 
