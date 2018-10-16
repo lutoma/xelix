@@ -1,0 +1,23 @@
+diff -ruPN gzip-1.9/build-aux/config.sub /home/lutoma/code/gzip-1.9/build-aux/config.sub
+--- gzip-1.9/build-aux/config.sub	2018-01-04 01:38:53.000000000 +0100
++++ /home/lutoma/code/gzip-1.9/build-aux/config.sub	2018-10-16 16:19:20.077780570 +0200
+@@ -1416,7 +1416,7 @@
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme*)
++	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -ruPN gzip-1.9/lib/getprogname.c /home/lutoma/code/gzip-1.9/lib/getprogname.c
+--- gzip-1.9/lib/getprogname.c	2018-01-07 01:03:28.000000000 +0100
++++ /home/lutoma/code/gzip-1.9/lib/getprogname.c	2018-10-16 16:19:50.351095193 +0200
+@@ -177,7 +177,7 @@
+     }
+   return NULL;
+ # else
+-#  error "getprogname module not ported to this OS"
++return "gzip";
+ # endif
+ }
