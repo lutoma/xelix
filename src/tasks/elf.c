@@ -34,7 +34,7 @@
  #define debug(...)
 #endif
 
-#define fail(args...) do { log(LOG_INFO, args); return NULL; } while(false);
+#define fail(args...) do { log(LOG_ERR, args); return NULL; } while(false);
 
 #define SHF_WRITE 0x1
 #define SHF_ALLOC 0x2
