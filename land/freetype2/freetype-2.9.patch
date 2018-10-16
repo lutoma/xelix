@@ -1,0 +1,11 @@
+--- freetype-2.9/builds/unix/config.sub	2018-01-08 12:30:22.000000000 +0100
++++ freetype-2.9/builds/unix/config.sub	2018-10-16 15:19:09.178695643 +0200
+@@ -1416,7 +1416,7 @@
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme*)
++	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
