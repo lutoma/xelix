@@ -72,13 +72,6 @@ int wait3(int* status) {
 	return -1;
 }
 
-ssize_t pwrite(int fildes, const void *buf, size_t nbyte, off_t offset) {
-	fprintf(stderr, "Warning: xelix newlib pwrite() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 void _rewinddir(DIR* dd) {
 	fprintf(stderr, "Warning: xelix newlib rewinddir() stub called.\n");
 
