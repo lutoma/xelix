@@ -33,6 +33,7 @@
 #include <console/console.h>
 #include <hw/pci.h>
 #include <hw/rtl8139.h>
+#include <hw/ne2k.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
 #include <memory/paging.h>
@@ -78,6 +79,10 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	// Networking
 	init(udp);
 	init(echo);
+
+	#ifdef ENABLE_NE2K
+	init(ne2k);
+	#endif
 
 	#ifdef ENABLE_RTL8139
 	init(rtl8139);

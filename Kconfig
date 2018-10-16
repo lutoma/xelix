@@ -56,7 +56,7 @@ endmenu
 menu "Audio"
 	config ENABLE_AC97
 	bool "AC97 sound chip driver"
-	default y
+	default n
 endmenu
 
 menu "Networking"
@@ -68,9 +68,13 @@ menu "Networking"
 	int "Maximum hostname length"
 	default 64
 
+	config ENABLE_NE2K
+	bool "NE2000 NIC driver"
+	default y
+
 	config ENABLE_RTL8139
 	bool "RTL8139 NIC driver"
-	default y
+	default n
 
 	config RTL8139_MAX_CARDS
 	int "Maximum number of cards supported by RTL8139 driver"
