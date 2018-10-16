@@ -1,0 +1,23 @@
+diff -ruPN diffutils-3.6/build-aux/config.sub /home/lutoma/code/diffutils-3.6/build-aux/config.sub
+--- diffutils-3.6/build-aux/config.sub	2017-05-14 03:09:51.000000000 +0200
++++ /home/lutoma/code/diffutils-3.6/build-aux/config.sub	2018-10-16 15:58:45.981554529 +0200
+@@ -1417,7 +1417,7 @@
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox*)
++	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -ruPN diffutils-3.6/lib/getprogname.c /home/lutoma/code/diffutils-3.6/lib/getprogname.c
+--- diffutils-3.6/lib/getprogname.c	2017-01-16 18:29:13.000000000 +0100
++++ /home/lutoma/code/diffutils-3.6/lib/getprogname.c	2018-10-16 16:00:53.478222244 +0200
+@@ -178,7 +178,7 @@
+     }
+   return NULL;
+ # else
+-#  error "getprogname module not ported to this OS"
++return "grep";
+ # endif
+ }
