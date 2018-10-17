@@ -25,7 +25,7 @@
 SYSCALL_HANDLER(stat)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(1)
-	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
+	vfs_file_t* fd = vfs_get_from_id(syscall.params[0], syscall.task);
 	if(!fd) {
 		return 0;
 	}

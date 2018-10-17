@@ -99,6 +99,9 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	*((uint32_t*)task->state->esp + 4) = GDT_SEG_DATA_PL3;
 
 	task_setup_execdata(task);
+	vfs_open("/dev/stdin", O_RDONLY, task);
+	vfs_open("/dev/stdout", O_WRONLY, task);
+	vfs_open("/dev/stderr", O_WRONLY, task);
 	return task;
 }
 

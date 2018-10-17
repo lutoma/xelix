@@ -21,7 +21,7 @@
 #include <fs/vfs.h>
 
 SYSCALL_HANDLER(seek) {
-	vfs_file_t* fd = vfs_get_from_id(syscall.params[0]);
+	vfs_file_t* fd = vfs_get_from_id(syscall.params[0], syscall.task);
 	if(fd == NULL)
 		return -2;
 

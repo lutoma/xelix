@@ -19,6 +19,7 @@
  */
 
 #include <hw/interrupts.h>
+#include <fs/vfs.h>
 
 #define TASK_MAXNAME 256
 #define TASK_PATH_MAX 256
@@ -61,6 +62,8 @@ typedef struct task {
 	char** argv;
 	uint32_t argc;
 	uint32_t envc;
+
+	vfs_file_t files[VFS_MAX_OPENFILES];
 
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[TASK_PATH_MAX + 1];

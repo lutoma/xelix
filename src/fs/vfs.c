@@ -46,7 +46,7 @@ struct mountpoint {
 };
 
 struct mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
-vfs_file_t files[VFS_MAX_OPENFILES];
+vfs_file_t kernel_files[VFS_MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
 uint32_t last_dir = 0;
 static spinlock_t file_open_lock;
@@ -111,12 +111,12 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	return new_path;
 }
 
-vfs_file_t* vfs_get_from_id(int id) {
+vfs_file_t* vfs_get_from_id(int id, task_t* task) {
 	if(id < 0 || !spinlock_get(&file_open_lock, 30)) {
 		return NULL;
 	}
 
-	vfs_file_t* fd = &files[id];
+	vfs_file_t* fd = task? &task->files[id] : &kernel_files[id];
 	if(!fd->inode) {
 		return NULL;
 	}
@@ -202,9 +202,10 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
+	vfs_file_t* fdir = task ? task->files : kernel_files;
 	uint32_t num = 0;
 	for(; num < VFS_MAX_OPENFILES; num++) {
-		if(!files[num].inode) {
+		if(!fdir[num].inode) {
 			break;
 		}
 	}
@@ -216,19 +217,20 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
-	files[num].num = num;
-	strcpy(files[num].path, path);
-	strcpy(files[num].mount_path, mount_path);
+	vfs_file_t* fp = task ? &fdir[num] : &fdir[num];
+	fp->num = num;
+	strcpy(fp->path, path);
+	strcpy(fp->mount_path, mount_path);
 	kfree(path);
-	files[num].mount_instance = mp.instance;
-	files[num].offset = 0;
-	files[num].mountpoint = mp_num;
-	files[num].inode = inode;
-	files[num].task = task;
-	files[num].flags = flags;
+	fp->mount_instance = mp.instance;
+	fp->offset = 0;
+	fp->mountpoint = mp_num;
+	fp->inode = inode;
+	fp->task = task;
+	fp->flags = flags;
 
 	spinlock_release(&file_open_lock);
-	return &files[num];
+	return fp;
 }
 
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
@@ -332,10 +334,6 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 }
 
 int vfs_close(vfs_file_t* fp) {
-	if(fp->num < 3) {
-		return 0;
-	}
-
 	debug("\n", NULL);
 
 	if(!spinlock_get(&file_open_lock, 30)) {
@@ -343,7 +341,8 @@ int vfs_close(vfs_file_t* fp) {
 		return -1;
 	}
 
-	files[fp->num].inode = 0;
+	vfs_file_t* fdir = fp->task ? fp->task->files : kernel_files;
+	fdir[fp->num].inode = 0;
 	spinlock_release(&file_open_lock);
 	return 0;
 }
@@ -474,10 +473,7 @@ static size_t sfs_mounts_read(void* dest, size_t size, void* meta) {
 }
 
 void vfs_init() {
-	bzero(files, sizeof(files));
-	vfs_open("/dev/stdin", O_RDONLY, NULL);
-	vfs_open("/dev/stdout", O_WRONLY, NULL);
-	vfs_open("/dev/stderr", O_WRONLY, NULL);
+	bzero(kernel_files, sizeof(kernel_files));
 	vfs_null_init();
 	sysfs_add_file("mounts", sfs_mounts_read, NULL, NULL);
 }

@@ -18,7 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tasks/task.h>
 #include <string.h>
 
 #define VFS_SEEK_SET 0
@@ -57,6 +56,9 @@
 
 #define vfs_mode_to_filetype(mode) (mode & 0xf000)
 
+// Can't include <tasks/task.h> as that includes us, so use stub struct def.
+struct task;
+
 typedef struct {
    uint32_t num;
    char path[512];
@@ -66,7 +68,7 @@ typedef struct {
    uint32_t offset;
    uint32_t mountpoint;
    uint32_t inode;
-   task_t* task;
+   struct task* task;
 } vfs_file_t;
 
 // Keep in sync with newlib
@@ -124,17 +126,17 @@ struct vfs_callbacks {
 char vfs_last_read_attempt[512];
 
 char* vfs_normalize_path(const char* orig_path, char* cwd);
-vfs_file_t* vfs_get_from_id(int id);
-vfs_file_t* vfs_open(const char* path, uint32_t flags, task_t* task);
+vfs_file_t* vfs_get_from_id(int id, struct task* task);
+vfs_file_t* vfs_open(const char* path, uint32_t flags, struct task* task);
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
 size_t vfs_write(void* source, size_t size, vfs_file_t* fp);
 size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
 void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
 int vfs_close(vfs_file_t* fp);
-int vfs_unlink(char *name, task_t* task);
-int vfs_chmod(const char* path, uint32_t mode, task_t* task);
-int vfs_access(const char *path, uint32_t amode, task_t* task);
+int vfs_unlink(char *name, struct task* task);
+int vfs_chmod(const char* path, uint32_t mode, struct task* task);
+int vfs_access(const char *path, uint32_t amode, struct task* task);
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	struct vfs_callbacks* callbacks);
