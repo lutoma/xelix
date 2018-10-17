@@ -562,3 +562,9 @@ int ftrylockfile(FILE *file) {
 	errno = ENOSYS;
 }
 void funlockfile(FILE *file) {}
+
+
+int fdatasync(int fildes) {
+	errno = ENOSYS;
+	return -1;
+}
