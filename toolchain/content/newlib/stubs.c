@@ -23,7 +23,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/errno.h>
-#include <sys/time.h>
 #include <sys/dirent.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -565,6 +564,18 @@ void funlockfile(FILE *file) {}
 
 
 int fdatasync(int fildes) {
+	fprintf(stderr, "Warning: xelix newlib fdatasync() stub called.\n");
+	errno = ENOSYS;
+	return -1;
+}
+
+void err(int eval, const char *fmt, ...) {
+	fprintf(stderr, "Warning: xelix newlib err() stub called.\n");
+	return 0;
+}
+
+int nanosleep(const struct timespec *rqtp, struct timespec *rmtp) {
+	fprintf(stderr, "Warning: xelix newlib nanosleep() stub called.\n");
 	errno = ENOSYS;
 	return -1;
 }
