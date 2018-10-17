@@ -25,6 +25,7 @@
 
 DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);
+DEFINE_SYSCALL(access);
 DEFINE_SYSCALL(read);
 DEFINE_SYSCALL(sbrk);
 DEFINE_SYSCALL(unlink);
@@ -51,7 +52,7 @@ syscall_t syscall_table[] = {
 	sys_exit,			// 1
 	sys_read,			// 2
 	sys_write,			// 3
-	NULL,				// 4
+	sys_access,			// 4
 	sys_close,			// 5
 	NULL,				// 6
 	sys_sbrk,			// 7
@@ -85,7 +86,7 @@ char* syscall_name_table[] = {
 	"exit",			// 1
 	"read",			// 2
 	"write",		// 3
-	NULL,			// 4
+	"access",		// 4
 	"close",		// 5
 	"mkdir",		// 6
 	"sbrk",			// 7

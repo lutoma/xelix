@@ -92,14 +92,6 @@ speed_t cfgetospeed(const struct termios *termios_p) {
 	return -1;
 }
 
-
-int access(const char *pathname, int mode) {
-	fprintf(stderr, "Warning: xelix newlib access() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 int tcgetattr(int fd, struct termios *termios_p) {
 	fprintf(stderr, "Warning: xelix newlib tcgetattr() stub called.\n");
 

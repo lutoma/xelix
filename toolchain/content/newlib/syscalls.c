@@ -248,3 +248,7 @@ int chmod(const char *path, mode_t mode) {
 int chown(const char *path, uid_t owner, gid_t group) {
 	return syscall(17, path, owner, group);
 }
+
+int access(const char *pathname, int mode) {
+	return syscall(4, pathname, mode, 0);
+}
