@@ -67,7 +67,7 @@ void scheduler_remove(task_t *t) {
 		t->parent->task_state = TASK_STATE_RUNNING;
 	}
 
-	//task_cleanup(t);
+	task_cleanup(t);
 }
 
 task_t* scheduler_select(isf_t* last_regs) {

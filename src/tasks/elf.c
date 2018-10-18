@@ -207,7 +207,7 @@ task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, ui
 		return NULL;
 	}
 
-	task_t* task = elf_load((elf_t*)data, path, environ, envc, argv, argc);
+	task_t* task = elf_load((elf_t*)data, vfs_basename(path), environ, envc, argv, argc);
 	kfree(data);
 	vfs_close(fd);
 	return task;

@@ -24,6 +24,7 @@
 #include <memory/paging.h>
 #include <memory/gdt.h>
 #include <hw/interrupts.h>
+#include <fs/sysfs.h>
 #include <string.h>
 
 #define STACKSIZE PAGE_SIZE
@@ -31,6 +32,44 @@
 uint32_t highest_pid = 0;
 extern void* __kernel_start;
 extern void* __kernel_end;
+
+static size_t sfs_read(void* dest, size_t size, void* meta) {
+	size_t rsize = 0;
+	task_t* task = (task_t*)meta;
+
+	sysfs_printf("%-10s: %d\n", "pid", task->pid);
+	sysfs_printf("%-10s: %s\n", "name", task->name);
+	sysfs_printf("%-10s: 0x%x\n", "stack", task->stack);
+	sysfs_printf("%-10s: 0x%x\n", "entry", task->entry);
+	sysfs_printf("%-10s: 0x%x\n", "sbrk", task->sbrk);
+	sysfs_printf("%-10s: %d\n", "state", task->task_state);
+	sysfs_printf("%-10s: %s\n", "cwd", task->cwd);
+	sysfs_printf("%-10s: %d\n", "argc", task->argc);
+
+	sysfs_printf("%-10s: ", "argv");
+	for(int i = 0; i < task->argc; i++) {
+		sysfs_printf("%s ", task->argv[i]);
+	}
+	sysfs_printf("\n");
+
+	sysfs_printf("%-10s: %d\n", "envc", task->argc);
+	sysfs_printf("%-10s: ", "environ");
+	for(int i = 0; i < task->envc; i++) {
+		sysfs_printf("%s ", task->environ[i]);
+	}
+	sysfs_printf("\n");
+
+
+	sysfs_printf("\nOpen files:\n");
+	for(int i = 0; i < VFS_MAX_OPENFILES; i++) {
+		if(!task->files[i].inode) {
+			continue;
+		}
+
+		sysfs_printf("%3d %s\n", i, task->files[i].path);
+	}
+	return rsize;
+}
 
 /* Sets up a new task, including the necessary paging context, stacks,
  * interrupt stack frame etc. The binary still has to be mapped into the paging
@@ -102,6 +141,10 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	vfs_open("/dev/stdin", O_RDONLY, task);
 	vfs_open("/dev/stdout", O_WRONLY, task);
 	vfs_open("/dev/stderr", O_WRONLY, task);
+
+	char tname[10];
+	snprintf(tname, 10, "task%d", task->pid);
+	sysfs_add_file(tname, sfs_read, NULL, (void*)task);
 	return task;
 }
 
@@ -136,6 +179,11 @@ task_t* task_fork(task_t* to_fork, isf_t* state)
 }
 
 void task_cleanup(task_t* t) {
+	char tname[10];
+	snprintf(tname, 10, "task%d", t->pid);
+	sysfs_rm_file(tname);
+
+/*
 	vmem_rm_context(t->memory_context);
 
 	task_memory_allocation_t* ta = t->memory_allocations;
@@ -149,4 +197,5 @@ void task_cleanup(task_t* t) {
 	kfree_array(t->environ);
 	kfree_array(t->argv);
 	kfree(t);
+*/
 }
