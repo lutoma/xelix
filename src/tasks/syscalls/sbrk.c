@@ -48,21 +48,5 @@ SYSCALL_HANDLER(sbrk)
 	task->sbrk += length;
 
 	vmem_map(task->memory_context, virt_addr, phys_addr, length, VMEM_SECTION_HEAP);
-
-	for(intptr_t i = 0; i < length; i += PAGE_SIZE) {
-		struct vmem_page* opage = vmem_get_page_virt(task->memory_context, (void*)((intptr_t)virt_addr + i));
-		if(opage) {
-			vmem_rm_page_virt(task->memory_context, (void*)((intptr_t)virt_addr + i));
-		}
-
-		struct vmem_page* page = vmem_new_page();
-		page->section = VMEM_SECTION_HEAP;
-		page->cow = 0;
-		page->allocated = 1;
-		page->virt_addr = (void*)((intptr_t)virt_addr + i);
-		page->phys_addr = (void*)((intptr_t)phys_addr + i);
-		vmem_add_page(task->memory_context, page);
-	}
-
 	return (intptr_t)virt_addr;
 }
