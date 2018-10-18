@@ -27,4 +27,6 @@ typedef size_t (*sysfs_write_callback_t)(void* data, size_t size, void* meta);
 
 void sysfs_add_file(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb, void* meta);
 void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb, void* meta);
+void sysfs_rm_file(char* name);
+void sysfs_rm_dev(char* name);
 void sysfs_init();

@@ -32,6 +32,7 @@ struct sysfs_file {
 	sysfs_write_callback_t write_cb;
 	void* meta;
 	struct sysfs_file* next;
+	struct sysfs_file* prev;
 };
 
 struct sysfs_file* sys_files;
@@ -42,8 +43,9 @@ static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
 		return NULL;
 	}
 
-	// Chop off leading /
-	path++;
+	if(*path == '/') {
+		path++;
+	}
 
 	struct sysfs_file* file = first;
 	while(file) {
@@ -166,8 +168,34 @@ static void add_file(struct sysfs_file** table, char* name,
 	fp->read_cb = read_cb;
 	fp->write_cb = write_cb;
 	fp->meta = meta;
-	fp->next = *table ? *table : NULL;
+	fp->next = NULL;
+	fp->prev = NULL;
+	if(*table) {
+		fp->next = *table;
+		(*table)->prev = fp;
+	}
 	*table = fp;
+}
+
+static void remove_file(struct sysfs_file** table, char* name) {
+	struct sysfs_file* fp = get_file(name, *table);
+	if(!fp) {
+		return;
+	}
+
+	if(fp->prev) {
+		fp->prev->next = fp->next;
+	}
+
+	if(fp->next) {
+		fp->next->prev = fp->prev;
+	}
+
+	if(*table == fp) {
+		*table = fp->next;
+	}
+
+	kfree(fp);
 }
 
 void sysfs_add_file(char* name, sysfs_read_callback_t read_cb,
@@ -180,6 +208,14 @@ void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb,
 	sysfs_write_callback_t write_cb, void* meta) {
 
 	add_file(&dev_files, name, read_cb, write_cb, meta);
+}
+
+void sysfs_rm_file(char* name) {
+	remove_file(&sys_files, name);
+}
+
+void sysfs_rm_dev(char* name) {
+	remove_file(&dev_files, name);
 }
 
 void sysfs_init() {
