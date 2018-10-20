@@ -22,11 +22,9 @@
 #include <tasks/task.h>
 #include <tasks/scheduler.h>
 
-SYSCALL_HANDLER(fork)
-{
+SYSCALL_HANDLER(fork) {
 	task_t* fork_task = task_fork(syscall.task, syscall.state);
-
-	if(fork_task == NULL) {
+	if(!fork_task) {
 		return -1;
 	}
 

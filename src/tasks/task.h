@@ -20,14 +20,22 @@
 
 #include <hw/interrupts.h>
 #include <fs/vfs.h>
+#include <memory/vmem.h>
 
 #define TASK_MAXNAME 256
 #define TASK_PATH_MAX 256
 
-typedef struct task_memory_allocation {
-	void* addr;
-	struct task_memory_allocation* next;
-} task_memory_allocation_t;
+#define TASK_MEM_FORK	0x1
+#define TASK_MEM_FREE	0x2
+
+struct task_mem {
+	struct task_mem* next;
+	void* virt_addr;
+	void* phys_addr;
+	uint32_t len;
+	enum vmem_section section;
+	int flags;
+};
 
 typedef struct task {
 	uint32_t pid;
@@ -45,7 +53,7 @@ typedef struct task {
 	void* kernel_stack;
 
 	struct vmem_context* memory_context;
-	task_memory_allocation_t* memory_allocations;
+	struct task_mem* memory_allocations;
 
 	// Current task state
 	enum {
@@ -81,3 +89,9 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
 task_t* task_fork(task_t* to_fork, isf_t* state);
 void task_cleanup(task_t* t);
+
+#define task_add_mem_flat(task, start, size, section, flags) \
+	task_add_mem(task, start, start, size, section, flags)
+
+void task_add_mem(task_t* task, void* virt_start, void* phys_start,
+	uint32_t size, enum vmem_section section, int flags);

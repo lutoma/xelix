@@ -134,8 +134,10 @@ uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
 
 	memsize = VMEM_ALIGN(memsize) + PAGE_SIZE;
 	task->sbrk = pages_start + memsize;
-	*binary_start = tmalloc_a(memsize, task);
-	vmem_map(task->memory_context, pages_start, *binary_start, memsize, VMEM_SECTION_CODE);
+	*binary_start = zmalloc_a(memsize);
+
+	task_add_mem(task, pages_start, *binary_start, memsize, VMEM_SECTION_CODE,
+		TASK_MEM_FORK | TASK_MEM_FREE);
 
 	debug("elf: Allocated physical memory region from 0x%x to 0x%x\n", *binary_start, (intptr_t)*binary_start + memsize);
 	return memsize;

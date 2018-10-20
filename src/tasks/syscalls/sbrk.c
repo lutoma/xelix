@@ -23,13 +23,14 @@
 #include <tasks/scheduler.h>
 #include <log.h>
 #include <string.h>
+#include <errno.h>
 
-SYSCALL_HANDLER(sbrk)
-{
+SYSCALL_HANDLER(sbrk) {
 	size_t length = VMEM_ALIGN(syscall.params[1]);
 	task_t* task = syscall.task;
 
 	if(length < 0 || length > 0x500000) {
+		sc_errno = ENOMEM;
 		return -1;
 	}
 
@@ -37,16 +38,18 @@ SYSCALL_HANDLER(sbrk)
 		return (intptr_t)task->sbrk;
 	}
 
-	void* phys_addr = tmalloc_a(length, task);
+	void* phys_addr = zmalloc_a(length);
 	if(!phys_addr) {
+		sc_errno = EAGAIN;
 		return -1;
 	}
 
-	bzero(phys_addr, length);
-
+	// FIXME sbrk is not set properly in elf.c (?)
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	vmem_map(task->memory_context, virt_addr, phys_addr, length, VMEM_SECTION_HEAP);
+	task_add_mem(task, virt_addr, phys_addr, length, VMEM_SECTION_HEAP,
+		TASK_MEM_FORK | TASK_MEM_FREE);
+
 	return (intptr_t)virt_addr;
 }

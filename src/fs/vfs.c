@@ -334,6 +334,10 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 }
 
 int vfs_close(vfs_file_t* fp) {
+	// FIXME, this seems to be buggy and causes triple faults
+	// Maybe related to access after the task has ended or something
+	return 0;
+
 	debug("\n", NULL);
 
 	if(!spinlock_get(&file_open_lock, 30)) {

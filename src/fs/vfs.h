@@ -19,6 +19,7 @@
  */
 
 #include <string.h>
+#include <print.h>
 
 #define VFS_SEEK_SET 0
 #define VFS_SEEK_CUR 1
@@ -170,6 +171,18 @@ static inline char* vfs_get_verbose_permissions(uint32_t mode) {
 	permstring[8] = (mode & S_IXOTH) ? 'x' : '-';
 	permstring[9] = 0;
 	return permstring;
+}
+
+static inline char* vfs_flags_verbose(uint32_t flags) {
+	char* mode = "O_RDONLY";
+
+	if(flags & O_WRONLY) {
+		mode = "O_WRONLY";
+	} else if(flags & O_RDWR) {
+		mode ="O_RDWR";
+	}
+
+	return mode;
 }
 
 static inline char* vfs_basename(char* path) {

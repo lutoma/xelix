@@ -44,7 +44,7 @@ struct execdata {
  * - environ strings / free space for new environment variables
  */
 void task_setup_execdata(task_t* task) {
-	void* page = tmalloc_a(PAGE_SIZE, task);
+	void* page = zmalloc_a(PAGE_SIZE);
 	vmem_map(task->memory_context, (void*)EXECDATA_LOCATION, page, PAGE_SIZE, VMEM_SECTION_DATA);
 
 	struct execdata* exc = (struct execdata*)page;

@@ -53,8 +53,7 @@ struct mem_block {
 	uint32_t size;
 
 	enum {
-		TYPE_KERNEL,
-		TYPE_TASK,
+		TYPE_USED,
 		TYPE_FREE
 	} type;
 };
@@ -246,7 +245,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 
 			if(new) {
 				// Already set this to prevent free_block from merging
-				fblock->type = TYPE_KERNEL;
+				fblock->type = TYPE_USED;
 				free_block(new, true);
 			}
 
@@ -257,10 +256,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 	return NULL;
 }
 
-/* Use the macros instead of directly calling this function.
- * For details on the attributes, see the GCC documentation at http://is.gd/6gmEqk.
- */
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, task_t* task,
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
 
 	#ifdef KMALLOC_DEBUG
@@ -318,22 +314,16 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, task_t* tas
 
 		struct mem_block* new = split_block(header, alignment_offset - sizeof(struct mem_block) - sizeof(uint32_t));
 
-		new->type = TYPE_KERNEL;
+		new->type = TYPE_USED;
 		free_block(header, true);
 		header = new;
 	}
 
-	header->type = task ? TYPE_TASK : TYPE_KERNEL;
+	header->type = TYPE_USED;
 	check_header(header);
 	spinlock_release(&kmalloc_lock);
 
-	if(task) {
-		task_memory_allocation_t* ta = kmalloc(sizeof(task_memory_allocation_t));
-		ta->addr = (void*)GET_CONTENT(header);
-		ta->next = task->memory_allocations;
-		task->memory_allocations = ta;
-
-		// Always zero task memory to prevent data leaks
+	if(zero) {
 		bzero((void*)GET_CONTENT(header), sz);
 	}
 
@@ -341,8 +331,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, task_t* tas
 	return (void*)GET_CONTENT(header);
 }
 
-void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func)
-{
+void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
 	#ifdef KMALLOC_DEBUG
 	_g_debug_file = _debug_file;
 	#endif
@@ -423,10 +412,8 @@ void kmalloc_stats() {
 			struct free_block* fb = GET_FB(header);
 
 			log(LOG_DEBUG, "free\tprev free: 0x%x next: 0x%x", fb->prev, fb->next);
-		} else if(header->type == TYPE_TASK) {
-			log(LOG_DEBUG, "task");
 		} else {
-			log(LOG_DEBUG, "kernel");
+			log(LOG_DEBUG, "used");
 		}
 
 		log(LOG_DEBUG, "\n");
