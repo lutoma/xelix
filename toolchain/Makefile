@@ -1,7 +1,7 @@
 TARGET=i786-pc-xelix
 PREFIX=$(CURDIR)/local
 
-BINUTILS_VERSION=2.31
+BINUTILS_VERSION=2.31.1
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
 BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 

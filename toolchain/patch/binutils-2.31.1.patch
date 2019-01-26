@@ -1,6 +1,6 @@
-diff --git download/binutils-2.31/bfd/config.bfd b/bfd/config.bfd
+diff --git download/binutils-2.31.1/bfd/config.bfd b/bfd/config.bfd
 index 6391f356..66909ec0 100644
---- download/binutils-2.31/bfd/config.bfd
+--- download/binutils-2.31.1/bfd/config.bfd
 +++ b/bfd/config.bfd
 @@ -646,6 +646,10 @@ case "${targ}" in
      targ_selvecs=
@@ -13,9 +13,9 @@ index 6391f356..66909ec0 100644
  #ifdef BFD64
    x86_64-*-cloudabi*)
      targ_defvec=x86_64_elf64_cloudabi_vec
-diff --git download/binutils-2.31/config.sub b/config.sub
+diff --git download/binutils-2.31.1/config.sub b/config.sub
 index c95acc68..f4ddc6a5 100755
---- download/binutils-2.31/config.sub
+--- download/binutils-2.31.1/config.sub
 +++ b/config.sub
 @@ -1376,7 +1376,7 @@ case $os in
  	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
@@ -26,9 +26,9 @@ index c95acc68..f4ddc6a5 100755
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	qnx*)
-diff --git download/binutils-2.31/gas/configure.tgt b/gas/configure.tgt
+diff --git download/binutils-2.31.1/gas/configure.tgt b/gas/configure.tgt
 index 3d0415c1..ee37d874 100644
---- download/binutils-2.31/gas/configure.tgt
+--- download/binutils-2.31.1/gas/configure.tgt
 +++ b/gas/configure.tgt
 @@ -255,6 +255,7 @@ case ${generic_target} in
    i386-*-chaos)				fmt=elf ;;
@@ -38,9 +38,9 @@ index 3d0415c1..ee37d874 100644
 
    ia16-*-elf*)				fmt=elf ;;
 
-diff --git download/binutils-2.31/ld/Makefile.in b/ld/Makefile.in
+diff --git download/binutils-2.31.1/ld/Makefile.in b/ld/Makefile.in
 index 4792b2b0..d3fbcd65 100644
---- download/binutils-2.31/ld/Makefile.in
+--- download/binutils-2.31.1/ld/Makefile.in
 +++ b/ld/Makefile.in
 @@ -773,6 +773,7 @@ ALL_EMULATION_SOURCES = \
  	eelf_i386_ldso.c \
@@ -60,9 +60,9 @@ index 4792b2b0..d3fbcd65 100644
  eelf_iamcu.c: $(srcdir)/emulparams/elf_iamcu.sh \
    $(ELF_X86_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-diff --git download/binutils-2.31/ld/configure.tgt b/ld/configure.tgt
+diff --git download/binutils-2.31.1/ld/configure.tgt b/ld/configure.tgt
 index fad8b2e5..811fd5eb 100644
---- download/binutils-2.31/ld/configure.tgt
+--- download/binutils-2.31.1/ld/configure.tgt
 +++ b/ld/configure.tgt
 @@ -365,6 +365,7 @@ i[3-7]86-*-nacl*)	targ_emul=elf_i386_nacl
  			targ64_extra_emuls="elf32_x86_64_nacl elf_x86_64_nacl"
