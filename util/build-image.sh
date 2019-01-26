@@ -1,5 +1,6 @@
 #!/bin/env bash
 set -e
+set -x
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <destname>"
@@ -13,12 +14,13 @@ sudo modprobe nbd max_part=8
 if [ -f "$dest" ]; then
 	sudo qemu-nbd --connect=/dev/nbd0 "$dest"
 else
-	qemu-img create -f qcow2 "$dest" 100M
+	qemu-img create -f qcow2 "$dest" 300M
 	sudo qemu-nbd --connect=/dev/nbd0 "$dest"
-	sudo mkfs.ext2 /dev/nbd0
+	echo "/dev/nbd0p1 : start=2048, type=83" | sudo sfdisk /dev/nbd0
+	sudo mkfs.ext2 /dev/nbd0p1
 fi
 
-sudo mount /dev/nbd0 mnt
+sudo mount /dev/nbd0p1 mnt
 
 for i in land/*; do
 	echo "Building $i"
