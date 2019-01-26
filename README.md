@@ -14,6 +14,15 @@ stack.
 
 [📷 Xelix running in QEMU](https://fnord.cloud/s/ATe9C96YC75wG5J/preview)
 
+Running Xelix
+-------------
+
+An qcow2 disk image containing Xelix and a number of utilities is available [on
+the releases page](https://github.com/lutoma/xelix/releases/download/v20190126/xelix-2019-01-26.qcow2).
+It can be run using
+
+	qemu-system-i386 -hda xelix-2019-01-26.qcow2 -m 350 -cpu SandyBridge -serial mon:stdio -soundhw ac97
+
 Compiling
 ---------
 
@@ -35,3 +44,10 @@ Afterwards you should be able to compile xelix using:
     make
 
 You should now see a binary called `xelix.bin`. 🎉
+
+Building an image
+-----------------
+
+You can build a Xelix system image using `make image`. This requires an
+existing Xelix binary and toolchain. Since this compiles all userland
+libraries and binaries, this will also take a long time.
