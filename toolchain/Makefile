@@ -9,7 +9,7 @@ GCC_VERSION=8.2.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 
-NEWLIB_VERSION=3.0.0.20180802
+NEWLIB_VERSION=3.1.0.20181231
 NEWLIB_URL=ftp://sources.redhat.com/pub/newlib
 NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
