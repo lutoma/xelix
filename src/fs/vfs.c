@@ -112,7 +112,7 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 }
 
 vfs_file_t* vfs_get_from_id(int id, task_t* task) {
-	if(id < 0 || !spinlock_get(&file_open_lock, 30)) {
+	if(id < 0 || !spinlock_get(&file_open_lock, 200)) {
 		return NULL;
 	}
 
@@ -168,7 +168,7 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
-	if(!spinlock_get(&file_open_lock, 30)) {
+	if(!spinlock_get(&file_open_lock, 200)) {
 		sc_errno = EAGAIN;
 		return NULL;
 	}
@@ -340,7 +340,7 @@ int vfs_close(vfs_file_t* fp) {
 
 	debug("\n", NULL);
 
-	if(!spinlock_get(&file_open_lock, 30)) {
+	if(!spinlock_get(&file_open_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
