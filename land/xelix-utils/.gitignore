@@ -11,3 +11,5 @@ uptime
 free
 util.o
 libutil.a
+networkd
+login
