@@ -89,7 +89,7 @@ task_t* scheduler_select(isf_t* last_regs) {
 	current_task = current_task->next;
 
 	for(;; current_task = current_task->next) {
-		if (unlikely(current_task == NULL)) {
+		if(unlikely(current_task == NULL)) {
 			panic("scheduler: Task list corrupted (current_task->next was NULL).\n");
 		}
 
@@ -100,21 +100,7 @@ task_t* scheduler_select(isf_t* last_regs) {
 		}
 
 		if(current_task->task_state == TASK_STATE_STOPPED ||
-			current_task->task_state == TASK_STATE_WAITING ||
-			current_task->task_state == TASK_STATE_SYSCALL) {
-
-			/* We're back at the original task, which is stopped or waiting.
-			 * This means that every task currently in the task list is waiting,
-			 * which is an unresolvable deadlock.
-			 */
-			if(current_task == orig_task) {
-				if(current_task->task_state == TASK_STATE_SYSCALL) {
-					break;
-				}
-
-				panic("scheduler: All tasks are waiting or stopped.\n");
-			}
-
+			current_task->task_state == TASK_STATE_WAITING) {
 			continue;
 		}
 
