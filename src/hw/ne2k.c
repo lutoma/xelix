@@ -30,6 +30,8 @@
 #include <memory/kmalloc.h>
 #include <memory/vmem.h>
 
+#define RECV_BUFFER_SIZE 2048
+
 // Page 0 registers
 #define R_CR		0x00
 #define R_PSTART	0x01
@@ -87,7 +89,7 @@ struct recv_frame_header {
 };
 
 static pci_device_t* dev = NULL;
-static uint8_t recv_buffer[256];
+static uint8_t* recv_buffer;
 static uint8_t next_receive_page = 0;
 static uint32_t data_len = 0;
 
@@ -151,12 +153,19 @@ static void receive() {
 	while(next_receive_page != curr) {
 		uint32_t index = next_receive_page * 0x100;
 
+
 		// Get packet header
 		struct recv_frame_header hdr;
 		pdma_read(index, &hdr, sizeof(hdr));
-		pdma_read(index + 4, recv_buffer, hdr.len);
 
-		data_len = hdr.len;
+		if(data_len + hdr.len > RECV_BUFFER_SIZE) {
+			log(LOG_WARN, "ne2k: Receive buffer overflow, discarding incoming packets\n");
+			break;
+		}
+
+		pdma_read(index + 4, recv_buffer + data_len, hdr.len);
+
+		data_len += hdr.len;
 		next_receive_page = hdr.next;
 	}
 
@@ -208,6 +217,7 @@ size_t ne2k_write(void* data, size_t len, void* meta) {
 }
 
 size_t ne2k_read(void* data, size_t len, void* meta) {
+	// FIXME Doesn't support partial reads of buffer
 	if(data_len) {
 		if(len > data_len) {
 			len = data_len;
@@ -235,7 +245,6 @@ void enable() {
 
 	// We want broadcast, multicast, and loopback mode.
 	ioutb(R_RCR, (1 << 2) | (1 << 3));
-	//ioutb(R_RCR, 0); // disable *cast for now
 	ioutb(R_TCR, 0x02);
 
 	ioutb(R_PSTART, PAGE_RECEIVE);
@@ -262,6 +271,7 @@ void enable() {
 	// Do this here since we're in page 1 anyway
 	ioutb(R_CURR, PAGE_RECEIVE + 1);
 
+	recv_buffer = zmalloc(RECV_BUFFER_SIZE);
 	interrupts_register(dev->interrupt_line + IRQ0, int_handler, false);
 
 	ioutb(R_CR, CR_STOP);	// Reset page
