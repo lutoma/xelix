@@ -46,6 +46,7 @@ DEFINE_SYSCALL(execnew);
 DEFINE_SYSCALL(wait);
 DEFINE_SYSCALL(audio_play);
 DEFINE_SYSCALL(close);
+DEFINE_SYSCALL(gettimeofday);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -67,7 +68,7 @@ syscall_t syscall_table[] = {
 	sys_getdents,		// 16
 	NULL,				// 17
 	sys_kill,			// 18
-	NULL,				// 19
+	sys_gettimeofday,	// 19
 	sys_chdir,			// 20
 	NULL,				// 21
 	sys_fork,			// 22
@@ -101,7 +102,7 @@ char* syscall_name_table[] = {
 	"getdents",		// 16
 	"chown",		// 17
 	"kill",			// 18
-	NULL,			// 19
+	"gettimeofday",	// 19
 	"chdir",		// 20
 	NULL,			// 21
 	"fork",			// 22

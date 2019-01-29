@@ -252,3 +252,7 @@ int chown(const char *path, uid_t owner, gid_t group) {
 int access(const char *pathname, int mode) {
 	return syscall(4, pathname, mode, 0);
 }
+
+int _gettimeofday(struct timeval* p, void* tz) {
+	return syscall(19, p, tz, 0);
+}

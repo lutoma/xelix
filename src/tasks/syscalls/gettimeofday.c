@@ -1,4 +1,5 @@
-/* Copyright © 2018 Lukas Martini
+/* gettimeofday.c: Get time
+ * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -16,37 +17,18 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <sys/time.h>
-#include <errno.h>
+#include <tasks/syscall.h>
+#include <lib/time.h>
 
-FILE* _time_fp = NULL;
-int _gettimeofday(struct timeval* p, void* tz) {
-	if(!_time_fp) {
-		_time_fp = fopen("/sys/time", "r");
-	}
+struct timeval {
+	uint32_t tv_sec;
+	uint32_t tv_usec;
+};
 
-	if(!_time_fp) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	uint32_t tsec;
-	rewind(_time_fp);
-	if(fscanf(_time_fp, "%d", &tsec) != 1) {
-		fclose(_time_fp);
-		_time_fp = NULL;
-		errno = EINVAL;
-		return -1;
-	}
-
-	p->tv_sec = tsec;
-	p->tv_usec = 0;
+SYSCALL_HANDLER(gettimeofday) {
+	SYSCALL_SAFE_RESOLVE_PARAM(0);
+	struct timeval* tv = (struct timeval*)syscall.params[0];
+	tv->tv_sec = time_get();
+	tv->tv_usec = 0;
 	return 0;
-}
-
-static void __attribute__((destructor)) _close_time_fp(void) {
-	if(_time_fp) {
-		fclose(_time_fp);
-	}
 }
