@@ -112,7 +112,7 @@ task_t* scheduler_select(isf_t* last_regs) {
 
 static size_t sfs_read(void* dest, size_t size, void* meta) {
 	size_t rsize = 0;
-	sysfs_printf("# pid ppid state name entry sbrk stack\n")
+	sysfs_printf("# pid ppid state name memory entry sbrk stack\n")
 
 	task_t* task = current_task;
 	do {
@@ -129,7 +129,15 @@ static size_t sfs_read(void* dest, size_t size, void* meta) {
 			case TASK_STATE_SYSCALL: state = 'C'; break;
 		}
 
-		sysfs_printf("%d %d %c %s 0x%x 0x%x 0x%x\n", task->pid, ppid, state, task->name, task->entry, task->sbrk, task->stack);
+		struct task_mem* mem = task->memory_allocations;
+		uint32_t mem_alloc = 0;
+		for(; mem; mem = mem->next) {
+			if(mem->section != VMEM_SECTION_KERNEL) {
+				mem_alloc += mem->len;
+			}
+		}
+
+		sysfs_printf("%d %d %c %s %d 0x%x 0x%x 0x%x\n", task->pid, ppid, state, task->name, mem_alloc, task->entry, task->sbrk, task->stack);
 		task = task->next;
 	} while(task != current_task);
 
