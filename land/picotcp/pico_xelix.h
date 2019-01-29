@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#define dbg printf
+//#define dbg printf
+#define dbg(...)
 
 #define stack_fill_pattern(...) do {} while(0)
 #define stack_count_free_words(...) do {} while(0)
