@@ -167,9 +167,8 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 		return;
 	}
 
-	if(!prev) {
-		dirent->inode = 0;
-	} else {
+	dirent->inode = 0;
+	if(prev) {
 		prev->record_len += dirent->record_len;
 	}
 
@@ -220,9 +219,7 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 		current_ent = (struct dirent*)((intptr_t)current_ent + (intptr_t)current_ent->record_len);
 	}
 
-	struct dirent* new_dirent = kmalloc(dlen);
-	bzero(new_dirent, dlen);
-
+	struct dirent* new_dirent = zmalloc(dlen);
 	new_dirent->inode = inode_num;
 	new_dirent->record_len = dlen;
 	new_dirent->name_len = strlen(name);

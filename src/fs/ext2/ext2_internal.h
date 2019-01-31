@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2013-2018 Lukas Martini
+/* Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -123,7 +123,18 @@ struct dirent {
 #define bl_off(block) ((block) * superblock_to_blocksize(superblock))
 #define bl_size(block) ((block) / superblock_to_blocksize(superblock))
 #define bl_mod(block) ((block) % superblock_to_blocksize(superblock))
+
+/* The number of blocks occupied by the blockgroup table
+ * There doesn't seem to be a way to directly get the number of blockgroups,
+ * so figure it out by dividing block count with blocks per group. Multiply
+ * with struct size to get total space required, then divide by block size
+ * to get ext2 blocks. Add 1 since partially used blocks also need to be
+ * allocated.
+ */
+#define blockgroup_table_size (bl_size(superblock->block_count / superblock->blocks_per_group * sizeof(struct blockgroup)) + 1)
+
 #define write_superblock() vfs_block_write(1024, sizeof(struct superblock), (uint8_t*)superblock)
+#define write_blockgroup_table() vfs_block_write(bl_off(2), bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)
 
 struct superblock* superblock;
 struct blockgroup* blockgroup_table;

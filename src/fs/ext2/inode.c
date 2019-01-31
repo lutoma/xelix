@@ -95,6 +95,7 @@ uint32_t ext2_inode_new(struct inode** inodeptr) {
 	// TODO Also decrement blockgroup->free_inodes
 	superblock->free_inodes--;
 	write_superblock();
+	write_blockgroup_table();
 
 	return inode_num;
 }

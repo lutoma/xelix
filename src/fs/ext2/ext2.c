@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended file system, version 2
- * Copyright © 2013-2018 Lukas Martini
+ * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -40,12 +40,14 @@ int ext2_chmod(const char* path, uint32_t mode) {
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, inode_num)) {
+		kfree(inode);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	inode->mode = vfs_mode_to_filetype(inode->mode) + mode;
 	ext2_inode_write(inode, inode_num);
+	kfree(inode);
 	return 0;
 }
 
@@ -65,19 +67,27 @@ int ext2_unlink(char* path) {
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, inode_num)) {
+		kfree(inode);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	ext2_dirent_rm(dir_ino, vfs_basename(path));
-
 	inode->link_count--;
-	inode->deletion_time = time_get();
-	ext2_inode_write(inode, inode_num);
 
-	// TODO Also adjust blockgroup->free_inodes and bitmaps
-	superblock->free_inodes++;
-	write_superblock();
+	if(inode->link_count < 1) {
+		inode->deletion_time = time_get();
+
+		// TODO Also adjust bitmaps
+		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
+		superblock->free_inodes++;
+		blockgroup->free_inodes++;
+		write_superblock();
+		write_blockgroup_table();
+	}
+
+	ext2_inode_write(inode, inode_num);
+	kfree(inode);
 	return 0;
 }
 
@@ -162,23 +172,10 @@ void ext2_init() {
 		superblock->inode_count, superblock->block_count,
 		superblock_to_blocksize(superblock));
 
-	/* The number of blocks occupied by the blockgroup table
-	 * There doesn't seem to be a way to directly get the number of blockgroups,
-	 * so figure it out by dividing block count with blocks per group. Multiply
-	 * with struct size to get total space required, then divide by block size
-	 * to get ext2 blocks. Add 1 since partially used blocks also need to be
-	 * allocated.
-	 */
-	uint32_t num_table_blocks = bl_size(
-			superblock->block_count
-			/ superblock->blocks_per_group
-			* sizeof(struct blockgroup)
-		) + 1;
-
 	blockgroup_table = kmalloc(superblock_to_blocksize(superblock)
-		* num_table_blocks);
+		* blockgroup_table_size);
 
-	if(!vfs_block_read(bl_off(2), bl_off(num_table_blocks), (uint8_t*)blockgroup_table)) {
+	if(!vfs_block_read(bl_off(2), bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)) {
 		kfree(superblock);
 		kfree(blockgroup_table);
 		return;
