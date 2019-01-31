@@ -176,6 +176,16 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 	kfree(dirent_block);
 }
 
+static inline uint32_t align_dirent_len(uint32_t dlen) {
+	if(dlen <= 12) {
+		return 12;
+	}
+	if(dlen % 4) {
+		return (dlen & -4) + 4;
+	}
+	return dlen;
+}
+
 void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
 	debug("ext2_new_dirent dir %d ino %d name %s\n", dir_num, inode_num, name);
 
@@ -199,19 +209,20 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	}
 
 	// Length/offsets need to be 4-aligned
-	size_t dlen = sizeof(struct dirent) + strlen(name);
-	if(dlen % 4) {
-		dlen = (dlen & -4) + 4;
-	}
+	size_t dlen = align_dirent_len(sizeof(struct dirent) + strlen(name));
 
+	// Cycle through dirents until we find one with enough space to insert ours.
 	struct dirent* current_ent = dirents;
 	while((void*)current_ent < dirents + dir->size) {
+		// XXX Don't think checking that makes sense in this context
 		if(!current_ent->inode) {
 			goto next;
 		}
 
-		uint32_t free_space = current_ent->record_len - sizeof(struct dirent) - current_ent->name_len;
+		debug("Checking %s, rec len %d\n", current_ent->name, current_ent->record_len);
+		uint32_t free_space = current_ent->record_len - align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
 		if(free_space > dlen) {
+			debug("Match, free space %d.\n", free_space);
 			break;
 		}
 
@@ -225,9 +236,9 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	new_dirent->name_len = strlen(name);
 	memcpy((void*)new_dirent + sizeof(struct dirent), name, new_dirent->name_len);
 
-	uint32_t new_len = current_ent->record_len - dlen;
-	current_ent->record_len = sizeof(struct dirent) + current_ent->name_len;
-	new_dirent->record_len = new_len;
+	uint32_t old_len = current_ent->record_len;
+	current_ent->record_len = align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
+	new_dirent->record_len = old_len - current_ent->record_len;
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	ext2_inode_write_blocks(dir, dir_num, dir->size / superblock_to_blocksize(superblock), dirents);
 
