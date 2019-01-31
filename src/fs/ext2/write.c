@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended file system, version 2
- * Copyright © 2013-2018 Lukas Martini
+ * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -41,12 +41,15 @@ uint32_t ext2_block_new(uint32_t neighbor) {
 	}
 
 	uint32_t block_num = ext2_bitmap_search_and_claim(blockgroup->block_bitmap);
+	if(!block_num) {
+		log(LOG_ERR, "ext2: Could not find free block in preferred blockgroup %d.\n", pref_blockgroup);
+		return 0;
+	}
 
-	// TODO Decrement blockgroup->free_blocks
 	superblock->free_blocks--;
+	blockgroup->free_blocks--;
 	write_superblock();
-
-	printf("Found free block %d\n", block_num);
+	write_blockgroup_table();
 	return block_num;
 
 }
