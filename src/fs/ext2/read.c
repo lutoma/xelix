@@ -71,26 +71,12 @@ size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) 
 		debug("ext2: Capping read size to 0x%x\n", size);
 	}
 
-	uint32_t num_blocks = bl_size(size);
-	if(bl_mod(size) != 0) {
-		num_blocks++;
-	}
-
-	/* This should copy directly to dest, however read_inode_blocks can only read
-	 * whole blocks right now, which means we could write more than size if size
-	 * is not mod the block size. Should rewrite read_inode_blocks.
-	 */
-	uint8_t* tmp = kmalloc(bl_off(num_blocks));
-	uint8_t* read = ext2_inode_read_blocks(inode, bl_size(fp->offset), num_blocks, tmp);
+	uint8_t* read = ext2_inode_read_data(inode, fp->offset, size, dest);
 	kfree(inode);
 
 	if(!read) {
-		kfree(tmp);
 		return 0;
 	}
-
-	memcpy(dest, tmp + bl_mod(fp->offset), size);
-	kfree(tmp);
 	return size;
 }
 

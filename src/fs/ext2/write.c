@@ -64,12 +64,6 @@ size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
 	debug("ext2_write_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
 	log(LOG_DEBUG, "ext2_write_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
 
-	if(fp->offset) {
-		log(LOG_ERR, "ext2: Writes with offset not supported atm.\n");
-		sc_errno = ENOSYS;
-		return -1;
-	}
-
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, fp->inode)) {
 		kfree(inode);
@@ -91,27 +85,15 @@ size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
 		return -1;
 	}
 
-	uint32_t block_num = (size + fp->offset) / superblock_to_blocksize(superblock);
-	if((size + fp->offset) % superblock_to_blocksize(superblock) != 0) {
-		block_num++;
+	if(!ext2_inode_write_data(inode, fp->inode, fp->offset, size, source)) {
+		return -1;
 	}
 
-	serial_printf("Blocks table:\n");
-	for(uint32_t i = 0; i < 15; i++) {
-		serial_printf("\t%2d: 0x%x\n", i, inode->blocks[i]);
-	}
-
-	// FIXME: Reads across input buffer boundary if size not mod block size
-	printf("write: block num is %d, size is %d\n", block_num, size);
-	ext2_inode_write_blocks(inode, fp->inode, block_num, source);
-
-	printf("writing new inode, size %d\n", size);
-	inode->size = size;
+	inode->size = fp->offset + size;
 	inode->modification_time = time_get();
 	ext2_inode_write(inode, fp->inode);
 	kfree(inode);
-
-	return 1;
+	return size;
 }
 
 #endif /* ENABLE_EXT2 */

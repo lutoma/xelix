@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended file system, version 2
- * Copyright © 2013-2018 Lukas Martini
+ * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -134,26 +134,43 @@ uint32_t ext2_inode_resolve_blocknum(struct inode* inode, uint32_t block_num) {
 	return real_block_num;
 }
 
-uint8_t* ext2_inode_read_blocks(struct inode* inode, uint32_t offset, uint32_t num, uint8_t* buf) {
-	for(int i = 0; i < num; i++) {
-		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i + offset);
+uint8_t* ext2_inode_read_data(struct inode* inode, uint32_t offset, size_t length, uint8_t* buf) {
+	uint32_t num_blocks = bl_size(length);
+	if(bl_mod(length) != 0) {
+		num_blocks++;
+	}
+
+	// TODO Reuse offset handling from below.
+	uint8_t* tmp = kmalloc(bl_off(num_blocks));
+
+	for(int i = 0; i < num_blocks; i++) {
+		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i + bl_size(offset));
 		if(!block_num) {
+			kfree(tmp);
 			return NULL;
 		}
 
-		if(!vfs_block_read(bl_off(block_num), bl_off(1), buf + bl_off(i))) {
+		if(!vfs_block_read(bl_off(block_num), bl_off(1), tmp + bl_off(i))) {
 			debug("read_inode_blocks: read for block %d failed\n", i);
+			kfree(tmp);
 			return NULL;
 		}
 	}
 
+	memcpy(buf, tmp + bl_mod(offset), length);
+	kfree(tmp);
 	return buf;
 }
 
-int ext2_inode_write_blocks(struct inode* inode, uint32_t inode_num, uint32_t num, uint8_t* buf) {
-	for(int i = 0; i < num; i++)
-	{
-		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i);
+uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t offset, size_t length, uint8_t* buf) {
+	uint32_t num_blocks = bl_size(length + offset);
+	if(bl_mod(length + offset) != 0) {
+		num_blocks++;
+	}
+
+	uint32_t buf_offset = 0;
+	for(int i = 0; i < num_blocks; i++) {
+		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i + bl_size(offset));
 		if(!block_num) {
 			block_num = ext2_block_new(inode_num);
 			if(!block_num) {
@@ -162,24 +179,40 @@ int ext2_inode_write_blocks(struct inode* inode, uint32_t inode_num, uint32_t nu
 
 			// Counts 512-byte ide blocks, not ext2 blocks, so 2.
 			inode->block_count += 2;
+
+			if(i < 12) {
+				inode->blocks[i] = block_num;
+			} else {
+				// TODO
+				log(LOG_ERR, "ext2: Indirect block writes not supported atm.\n");
+				return 0;
+			}
+
+			ext2_inode_write(inode, inode_num);
 		}
 
-		if(!vfs_block_write(bl_off(block_num), bl_off(1), buf + bl_off(i))) {
-			debug("write_inode_blocks: write for block %d failed\n", i);
-			return 0;
+		uint32_t wr_offset = bl_off(block_num);
+		uint32_t wr_size = bl_off(1);
+
+		// Handle remainder of offset if first block
+		if(i == 0) {
+			wr_offset += bl_mod(offset);
+			wr_size -= bl_mod(offset);
 		}
 
-		if(i < 12) {
-			inode->blocks[i] = block_num;
-		} else {
-			// TODO
-			log(LOG_ERR, "ext2: Indirect block writes not supported atm.\n");
-			return 0;
+		if(wr_size > length - buf_offset) {
+			wr_size = length - buf_offset;
 		}
+
+		if(!vfs_block_write(wr_offset, wr_size, buf + buf_offset)) {
+			debug("read_inode_blocks: write for block %d failed\n", i);
+			return NULL;
+		}
+
+		buf_offset += wr_size;
 	}
 
-	ext2_inode_write(inode, inode_num);
-	return 1;
+	return buf;
 }
 
 #endif /* ENABLE_EXT2 */

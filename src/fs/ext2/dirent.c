@@ -96,7 +96,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
 
 struct dirent* ext2_dirent_find(struct inode* inode, const char* search) {
 	uint8_t* dirent_block = kmalloc(inode->size);
-	if(!ext2_inode_read_blocks(inode, 0, bl_size(inode->size), dirent_block)) {
+	if(!ext2_inode_read_data(inode, 0, inode->size, dirent_block)) {
 		return NULL;
 	}
 
@@ -135,8 +135,8 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 	}
 
 	uint8_t* dirent_block = kmalloc(inode->size);
-	if(!ext2_inode_read_blocks(inode, 0, bl_size(inode->size), dirent_block)) {
-		return NULL;
+	if(!ext2_inode_read_data(inode, 0, inode->size, dirent_block)) {
+		return;
 	}
 
 	struct dirent* dirent = (struct dirent*)dirent_block;
@@ -172,7 +172,7 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 		prev->record_len += dirent->record_len;
 	}
 
-	ext2_inode_write_blocks(inode, 0, bl_size(inode->size), dirent_block);
+	ext2_inode_write_data(inode, inode_num, 0, inode->size, dirent_block);
 	kfree(dirent_block);
 }
 
@@ -202,7 +202,7 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	}
 
 	void* dirents = kmalloc(dir->size);
-	if(!ext2_inode_read_blocks(dir, 0, dir->size / superblock_to_blocksize(superblock), dirents)) {
+	if(!ext2_inode_read_data(dir, 0, dir->size, dirents)) {
 		kfree(dir);
 		kfree(dirents);
 		return;
@@ -240,7 +240,7 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	current_ent->record_len = align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
 	new_dirent->record_len = old_len - current_ent->record_len;
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
-	ext2_inode_write_blocks(dir, dir_num, dir->size / superblock_to_blocksize(superblock), dirents);
+	ext2_inode_write_data(dir, dir_num, 0, dir->size, dirents);
 
 	// FIXME Update parent directory mtime/ctime
 	kfree(new_dirent);

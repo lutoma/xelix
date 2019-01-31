@@ -78,7 +78,7 @@ int ext2_unlink(char* path) {
 	if(inode->link_count < 1) {
 		inode->deletion_time = time_get();
 
-		// TODO Also adjust bitmaps
+		// TODO Also adjust bitmaps and delete blocks
 		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
 		superblock->free_inodes++;
 		blockgroup->free_inodes++;
