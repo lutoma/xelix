@@ -76,21 +76,20 @@ bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
 	return vfs_block_write(inode_off, superblock->inode_size, (uint8_t*)buf);
 }
 
-uint32_t ext2_inode_new(struct inode** inodeptr) {
+uint32_t ext2_inode_new(struct inode* inode) {
 	struct blockgroup* blockgroup = blockgroup_table;
 	while(!blockgroup->free_inodes) { blockgroup++; }
 	uint32_t inode_num = ext2_bitmap_search_and_claim(blockgroup->inode_bitmap);
 
-	*inodeptr = kmalloc(superblock->inode_size);
-	bzero(*inodeptr, sizeof(struct inode));
-	(*inodeptr)->link_count = 1;
-	(*inodeptr)->mode = FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+	bzero(inode, sizeof(struct inode));
+	inode->link_count = 1;
+	inode->mode = FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
 	uint32_t t = time_get();
-	(*inodeptr)->creation_time = t;
-	(*inodeptr)->modification_time = t;
-	(*inodeptr)->access_time = t;
-	ext2_inode_write(*inodeptr, inode_num);
+	inode->creation_time = t;
+	inode->modification_time = t;
+	inode->access_time = t;
+	ext2_inode_write(inode, inode_num);
 
 	superblock->free_inodes--;
 	blockgroup->free_inodes--;

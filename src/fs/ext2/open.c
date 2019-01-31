@@ -125,27 +125,30 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 
 	uint32_t dir_inode = 0;
 	uint32_t inode_num = ext2_resolve_inode(path, &dir_inode);
-	struct inode* inode;
+	struct inode* inode = kmalloc(superblock->inode_size);
 	bool created = false;
 
 	if(!inode_num) {
 		if(!(flags & O_CREAT)) {
+			kfree(inode);
 			sc_errno = ENOENT;
 			return 0;
 		}
 
 		debug("ext2_open: Could not find inode, creating one.\n");
-		inode_num = ext2_inode_new(&inode);
+		inode_num = ext2_inode_new(inode);
 		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), (uint8_t)FT_IFREG);
 		created = true;
 	} else {
 		if((flags & O_CREAT) && (flags & O_EXCL)) {
+			kfree(inode);
 			sc_errno = EEXIST;
 			return 0;
 		}
 
-		inode = kmalloc(superblock->inode_size);
 		if(!ext2_inode_read(inode, inode_num)) {
+			kfree(inode);
+			sc_errno = ENOENT;
 			return 0;
 		}
 	}
