@@ -23,12 +23,13 @@
 #include <log.h>
 #include <string.h>
 #include <errno.h>
+#include <print.h>
+#include <time.h>
 #include <memory/kmalloc.h>
 #include <hw/ide.h>
 #include <hw/serial.h>
 #include <fs/vfs.h>
 #include <fs/ext2.h>
-#include <print.h>
 
 uint32_t ext2_block_new(uint32_t neighbor) {
 	uint32_t pref_blockgroup = inode_to_blockgroup(neighbor);
@@ -103,6 +104,7 @@ size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
 
 	printf("writing new inode, size %d\n", size);
 	inode->size = size;
+	inode->modification_time = time_get();
 	ext2_inode_write(inode, fp->inode);
 	kfree(inode);
 
