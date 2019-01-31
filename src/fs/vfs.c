@@ -1,5 +1,5 @@
 /* vfs.c: Virtual file system
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -406,6 +406,35 @@ int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
 	kfree(path);
 	return r;
 }
+
+int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.mkdir) {
+		kfree(path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.mkdir(mount_path, mode);
+	kfree(path);
+	return r;
+}
+
 
 int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 	char* pwd = "/";

@@ -54,4 +54,20 @@ uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block) {
 	return result;
 }
 
+char* ext2_chop_path(const char* path, char** ent) {
+	char* base_path = strdup(path);
+	char* c = base_path + strlen(path);
+	for(; c > base_path; c--) {
+		if(*c == '/') {
+			*c = 0;
+
+			if(ent) {
+				*ent = c+1;
+			}
+			break;
+		}
+	}
+	return base_path;
+}
+
 #endif /* ENABLE_EXT2 */

@@ -46,6 +46,7 @@ DEFINE_SYSCALL(execnew);
 DEFINE_SYSCALL(wait);
 DEFINE_SYSCALL(audio_play);
 DEFINE_SYSCALL(close);
+DEFINE_SYSCALL(mkdir);
 DEFINE_SYSCALL(gettimeofday);
 
 syscall_t syscall_table[] = {
@@ -55,7 +56,7 @@ syscall_t syscall_table[] = {
 	sys_write,			// 3
 	sys_access,			// 4
 	sys_close,			// 5
-	NULL,				// 6
+	sys_mkdir,			// 6
 	sys_sbrk,			// 7
 	NULL,				// 8
 	sys_test,			// 9

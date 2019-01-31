@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010-2018 Lukas Martini
+/* Copyright © 2010-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -137,6 +137,7 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
 int vfs_close(vfs_file_t* fp);
 int vfs_unlink(char *name, struct task* task);
 int vfs_chmod(const char* path, uint32_t mode, struct task* task);
+int vfs_mkdir(const char* orig_path, uint32_t mode, struct task* task);
 int vfs_access(const char *path, uint32_t amode, struct task* task);
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,

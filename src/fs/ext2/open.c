@@ -73,22 +73,6 @@ bye:
 	return result;
 }
 
-static inline char* chop_path(const char* path, char** ent) {
-	char* base_path = strdup(path);
-	char* c = base_path + strlen(path);
-	for(; c > path; c--) {
-		if(*c == '/') {
-			*c = 0;
-
-			if(ent) {
-				*ent = c+1;
-			}
-			break;
-		}
-	}
-	return base_path;
-}
-
 static uint32_t handle_symlink(struct inode* inode, const char* path, uint32_t flags, void* mount_instance) {
 	/* For symlinks with up to 60 chars length, the path is stored in the
 	 * inode in the area where normally the block pointers would be.
@@ -103,7 +87,7 @@ static uint32_t handle_symlink(struct inode* inode, const char* path, uint32_t f
 	char* sym_path = (char*)inode->blocks;
 	char* new_path;
 	if(sym_path[0] != '/') {
-		char* base_path = chop_path(path, NULL);
+		char* base_path = ext2_chop_path(path, NULL);
 		new_path = vfs_normalize_path(sym_path, base_path);
 		kfree(base_path);
 	} else {
@@ -136,7 +120,7 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 		}
 
 		debug("ext2_open: Could not find inode, creating one.\n");
-		inode_num = ext2_inode_new(inode);
+		inode_num = ext2_inode_new(inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), (uint8_t)FT_IFREG);
 		created = true;
 	} else {

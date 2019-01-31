@@ -214,15 +214,8 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	// Cycle through dirents until we find one with enough space to insert ours.
 	struct dirent* current_ent = dirents;
 	while((void*)current_ent < dirents + dir->size) {
-		// XXX Don't think checking that makes sense in this context
-		if(!current_ent->inode) {
-			goto next;
-		}
-
-		debug("Checking %s, rec len %d\n", current_ent->name, current_ent->record_len);
 		uint32_t free_space = current_ent->record_len - align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
 		if(free_space > dlen) {
-			debug("Match, free space %d.\n", free_space);
 			break;
 		}
 
@@ -234,6 +227,7 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	new_dirent->inode = inode_num;
 	new_dirent->record_len = dlen;
 	new_dirent->name_len = strlen(name);
+	new_dirent->type = type;
 	memcpy((void*)new_dirent + sizeof(struct dirent), name, new_dirent->name_len);
 
 	uint32_t old_len = current_ent->record_len;

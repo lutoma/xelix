@@ -121,6 +121,45 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	return 0;
 }
 
+int ext2_mkdir(const char* path, uint32_t mode) {
+	char* name;
+	char* base_path = ext2_chop_path(path, &name);
+
+	uint32_t parent_inode = ext2_resolve_inode(base_path, NULL);
+	if(!parent_inode) {
+		kfree(base_path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(superblock->inode_size);
+	uint32_t inode_num = ext2_inode_new(inode, FT_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+	ext2_dirent_add(parent_inode, inode_num, name, (uint8_t)FT_IFDIR);
+
+	// Create empty dirent block
+	struct dirent* buf = (struct dirent*)zmalloc(bl_off(1));
+	buf->inode = 0;
+	buf->name_len = 0;
+	buf->record_len = bl_off(1);
+
+	if(!ext2_inode_write_data(inode, inode_num, 0, sizeof(struct dirent), (uint8_t*)buf)) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	inode->size = bl_off(1);
+	ext2_inode_write(inode, inode_num);
+
+	// Add . and .. dirents
+	ext2_dirent_add(inode_num, inode_num, ".", (uint8_t)FT_IFDIR);
+	ext2_dirent_add(inode_num, parent_inode, "..", (uint8_t)FT_IFDIR);
+
+	kfree(inode);
+	kfree(base_path);
+	return 0;
+}
+
+
 void ext2_init() {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
 	superblock = (struct superblock*)kmalloc(1024);
@@ -205,6 +244,7 @@ void ext2_init() {
 		.unlink = ext2_unlink,
 		.chmod = ext2_chmod,
 		.symlink = NULL,
+		.mkdir = ext2_mkdir,
 	};
 	vfs_mount("/", NULL, "/dev/ide1p1", "ext2", &cb);
 }

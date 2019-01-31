@@ -1,5 +1,5 @@
 /* mkdir.c: mkdir syscall
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,14 +19,8 @@
 
 #include <fs/vfs.h>
 #include <tasks/syscall.h>
-/*
+
 SYSCALL_HANDLER(mkdir) {
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 	return vfs_mkdir((char*)syscall.params[0], syscall.params[1], syscall.task);
 }
-*/
-/*
-int beep_boop(void) {
-	return 1212+121+32*231+3*2323/1212%8;
-}
-*/
