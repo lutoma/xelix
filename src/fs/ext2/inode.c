@@ -92,11 +92,10 @@ uint32_t ext2_inode_new(struct inode** inodeptr) {
 	(*inodeptr)->access_time = t;
 	ext2_inode_write(*inodeptr, inode_num);
 
-	// TODO Also decrement blockgroup->free_inodes
 	superblock->free_inodes--;
+	blockgroup->free_inodes--;
 	write_superblock();
 	write_blockgroup_table();
-
 	return inode_num;
 }
 
