@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended file system, version 2
- * Copyright © 2013-2018 Lukas Martini
+ * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -213,8 +213,19 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 
 	// Cycle through dirents until we find one with enough space to insert ours.
 	struct dirent* current_ent = dirents;
+	bool recycled_dirent = false;
+
 	while(current_ent < (struct dirent*)(dirents + dir->size)) {
-		uint32_t free_space = current_ent->record_len - align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
+		uint32_t free_space;
+		if(current_ent->inode) {
+			free_space = current_ent->record_len - align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
+			recycled_dirent = false;
+		} else {
+			// Dirents with inode 0 are unused, we can recycle the whole of it
+			free_space = current_ent->record_len;
+			recycled_dirent = true;
+		}
+
 		if(free_space > dlen) {
 			break;
 		}
@@ -222,21 +233,27 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 		current_ent = (struct dirent*)((intptr_t)current_ent + (intptr_t)current_ent->record_len);
 	}
 
-	struct dirent* new_dirent = zmalloc(dlen);
+	struct dirent* new_dirent = recycled_dirent ? current_ent : zmalloc(dlen);
 	new_dirent->inode = inode_num;
-	new_dirent->record_len = dlen;
 	new_dirent->name_len = strlen(name);
 	new_dirent->type = type;
 	memcpy((void*)new_dirent + sizeof(struct dirent), name, new_dirent->name_len);
 
-	uint32_t old_len = current_ent->record_len;
-	current_ent->record_len = align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
-	new_dirent->record_len = old_len - current_ent->record_len;
+	if(!recycled_dirent) {
+		uint32_t old_len = current_ent->record_len;
+		current_ent->record_len = align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
+		new_dirent->record_len = old_len - current_ent->record_len;
+	}
+
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	ext2_inode_write_data(dir, dir_num, 0, dir->size, dirents);
 
 	// FIXME Update parent directory mtime/ctime
-	kfree(new_dirent);
+	// FIXME Increase inode ref count
+	if(!recycled_dirent) {
+		kfree(new_dirent);
+	}
+
 	kfree(dirents);
 	kfree(dir);
 }
