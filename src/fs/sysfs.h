@@ -22,8 +22,8 @@
 
 #define sysfs_printf(args...) rsize += snprintf(dest + rsize, size - rsize, args);
 
-typedef size_t (*sysfs_read_callback_t)(void* dest, size_t size, void* meta);
-typedef size_t (*sysfs_write_callback_t)(void* data, size_t size, void* meta);
+typedef size_t (*sysfs_read_callback_t)(void* dest, size_t size, size_t offset, void* meta);
+typedef size_t (*sysfs_write_callback_t)(void* data, size_t size, size_t offset, void* meta);
 
 void sysfs_add_file(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb, void* meta);
 void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb, void* meta);

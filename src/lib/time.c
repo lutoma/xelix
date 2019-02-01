@@ -162,7 +162,11 @@ uint32_t time_get() {
 	return last_timestamp;
 }
 
-static size_t sfs_read(void* dest, size_t size, void* meta) {
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset) {
+		return 0;
+	}
+
 	size_t rsize = 0;
 	sysfs_printf("%d", time_get());
 	return rsize;

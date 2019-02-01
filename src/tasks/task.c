@@ -33,7 +33,7 @@ uint32_t highest_pid = 0;
 extern void* __kernel_start;
 extern void* __kernel_end;
 
-static size_t sfs_read(void* dest, size_t size, void* meta);
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta);
 
 void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	uint32_t size, enum vmem_section section, int flags) {
@@ -177,7 +177,11 @@ void task_cleanup(task_t* t) {
 	kfree(t);
 }
 
-static size_t sfs_read(void* dest, size_t size, void* meta) {
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset) {
+		return 0;
+	}
+
 	size_t rsize = 0;
 	task_t* task = (task_t*)meta;
 

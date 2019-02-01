@@ -110,7 +110,11 @@ task_t* scheduler_select(isf_t* last_regs) {
 	return current_task;
 }
 
-static size_t sfs_read(void* dest, size_t size, void* meta) {
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset) {
+		return 0;
+	}
+
 	size_t rsize = 0;
 	sysfs_printf("# pid ppid state name memory entry sbrk stack\n")
 

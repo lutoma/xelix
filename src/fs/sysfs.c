@@ -100,32 +100,23 @@ int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 }
 
 size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size) {
-	if(fp->offset && fp->mount_instance == &sys_files) {
-		return 0;
-	}
-
 	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
 	if(!file || !file->read_cb) {
 		sc_errno = file ? ENXIO : ENOENT;
 		return -1;
 	}
 
-	return file->read_cb(dest, size, file->meta);
+	return file->read_cb(dest, size, fp->offset, file->meta);
 }
 
 size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size) {
-	if(fp->offset && fp->mount_instance == &sys_files) {
-		sc_errno = EINVAL;
-		return -1;
-	}
-
 	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
 	if(!file || !file->write_cb) {
 		sc_errno = file ? ENXIO : ENOENT;
 		return -1;
 	}
 
-	return file->write_cb(source, size, file->meta);
+	return file->write_cb(source, size, fp->offset, file->meta);
 }
 
 size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {

@@ -199,7 +199,7 @@ static void int_handler(isf_t* state) {
 	ioutb(R_ISR, isr &~ 1);
 }
 
-size_t ne2k_write(void* data, size_t len, void* meta) {
+size_t ne2k_write(void* data, size_t len, size_t offset, void* meta) {
 	// FIXME
 	if(len < 64) {
 		void* old_data = data;
@@ -216,7 +216,7 @@ size_t ne2k_write(void* data, size_t len, void* meta) {
 	return len;
 }
 
-size_t ne2k_read(void* data, size_t len, void* meta) {
+size_t ne2k_read(void* data, size_t len, size_t offset, void* meta) {
 	// FIXME Doesn't support partial reads of buffer
 	if(data_len) {
 		if(len > data_len) {

@@ -495,9 +495,12 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 	return 0;
 }
 
-static size_t sfs_mounts_read(void* dest, size_t size, void* meta) {
-	size_t rsize = 0;
+static size_t sfs_mounts_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset) {
+		return 0;
+	}
 
+	size_t rsize = 0;
 	for(int i = 0; i <= last_mountpoint; i++) {
 		struct mountpoint mp = mountpoints[i];
 		sysfs_printf("%s %s %s rw,noatime 0 0\n", mp.dev, mp.path, mp.type);

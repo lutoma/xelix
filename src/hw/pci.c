@@ -148,9 +148,12 @@ uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2
 	return devices_found;
 }
 
-static size_t sfs_read(void* dest, size_t size, void* meta) {
-	size_t rsize = 0;
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset) {
+		return 0;
+	}
 
+	size_t rsize = 0;
 	pci_device_t* dev = first_device;
 	for(; dev; dev = dev->next) {
 		sysfs_printf("%02d:%02d.%d %x:%x %-2x %-2x %-4x %-2x %-2d %d\n",
@@ -161,7 +164,7 @@ static size_t sfs_read(void* dest, size_t size, void* meta) {
 
 	return rsize;
 }
-static size_t sfs_dev_read(void* dest, size_t size, void* meta) {
+static size_t sfs_dev_read(void* dest, size_t size, size_t offset, void* meta) {
 	size_t rsize = 0;
 	pci_device_t* dev = (pci_device_t*)meta;
 	sysfs_printf("hello from sfs_dev_read, device bus %d, dev %d func %d\n", dev->bus, dev->dev, dev->func);

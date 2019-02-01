@@ -359,7 +359,11 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 	spinlock_release(&kmalloc_lock);
 }
 
-static size_t sfs_read(void* dest, size_t size, void* meta) {
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset) {
+		return 0;
+	}
+
 	size_t rsize = 0;
 	uint32_t free = alloc_max - alloc_end;
 
