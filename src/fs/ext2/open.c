@@ -121,7 +121,7 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 
 		debug("ext2_open: Could not find inode, creating one.\n");
 		inode_num = ext2_inode_new(inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), (uint8_t)FT_IFREG);
+		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), EXT2_DIRENT_FT_REG_FILE);
 		created = true;
 	} else {
 		if((flags & O_CREAT) && (flags & O_EXCL)) {

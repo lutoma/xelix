@@ -124,6 +124,15 @@ struct dirent {
 #define bl_size(block) ((block) / superblock_to_blocksize(superblock))
 #define bl_mod(block) ((block) % superblock_to_blocksize(superblock))
 
+#define EXT2_DIRENT_FT_UNKNOWN 0
+#define EXT2_DIRENT_FT_REG_FILE 1
+#define EXT2_DIRENT_FT_DIR 2
+#define EXT2_DIRENT_FT_CHRDEV 3
+#define EXT2_DIRENT_FT_BLKDEV 4
+#define EXT2_DIRENT_FT_FIFO 5
+#define EXT2_DIRENT_FT_SOCk 6
+#define EXT2_DIRENT_FT_SYMLINK 7
+
 /* The number of blocks occupied by the blockgroup table
  * There doesn't seem to be a way to directly get the number of blockgroups,
  * so figure it out by dividing block count with blocks per group. Multiply

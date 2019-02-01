@@ -134,7 +134,7 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	uint32_t inode_num = ext2_inode_new(inode, FT_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-	ext2_dirent_add(parent_inode, inode_num, name, (uint8_t)FT_IFDIR);
+	ext2_dirent_add(parent_inode, inode_num, name, EXT2_DIRENT_FT_DIR);
 
 	// Create empty dirent block
 	struct dirent* buf = (struct dirent*)zmalloc(bl_off(1));
@@ -151,8 +151,8 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 	ext2_inode_write(inode, inode_num);
 
 	// Add . and .. dirents
-	ext2_dirent_add(inode_num, inode_num, ".", (uint8_t)FT_IFDIR);
-	ext2_dirent_add(inode_num, parent_inode, "..", (uint8_t)FT_IFDIR);
+	ext2_dirent_add(inode_num, inode_num, ".", EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(inode_num, parent_inode, "..", EXT2_DIRENT_FT_DIR);
 
 	kfree(inode);
 	kfree(base_path);
