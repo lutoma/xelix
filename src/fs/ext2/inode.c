@@ -30,6 +30,13 @@
 #include <fs/block.h>
 #include <fs/ext2.h>
 
+struct blocknum_resolver_cache {
+	uint32_t* indirect_table;
+	uint32_t* double_table;
+	uint32_t double_second_block;
+	uint32_t* double_second_table;
+};
+
 
 static uint32_t find_inode(uint32_t inode_num) {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
@@ -98,8 +105,24 @@ uint32_t ext2_inode_new(struct inode* inode, uint16_t mode) {
 	return inode_num;
 }
 
+static inline void free_blocknum_resolver_cache(struct blocknum_resolver_cache* cache) {
+	if(cache->indirect_table) {
+		kfree(cache->indirect_table);
+	}
+
+	if(cache->double_table) {
+		kfree(cache->double_table);
+	}
+
+	if(cache->double_second_table) {
+		kfree(cache->double_second_table);
+	}
+
+	kfree(cache);
+}
+
 // FIXME This is a mess (and also has no triply-indirect block support).
-uint32_t ext2_inode_resolve_blocknum(struct inode* inode, uint32_t block_num) {
+static uint32_t resolve_blocknum(struct inode* inode, uint32_t block_num, struct blocknum_resolver_cache* cache) {
 	uint32_t real_block_num = 0;
 
 	if(block_num > superblock->block_count) {
@@ -109,23 +132,30 @@ uint32_t ext2_inode_resolve_blocknum(struct inode* inode, uint32_t block_num) {
 
 	// FIXME This value (268) actually depends on block size. This expects a 1024 block size
 	if(block_num >= 12 && block_num < 268) {
-		debug("reading indirect block at 0x%x\n", inode->blocks[12]);
+		if(!cache->indirect_table) {
+			cache->indirect_table = (uint32_t*)kmalloc(bl_off(1));
+			vfs_block_read(bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)cache->indirect_table);
+		}
 
-		// Indirect block
-		uint32_t* blocks_table = (uint32_t*)kmalloc(bl_off(1));
-		vfs_block_read(bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)blocks_table);
-		real_block_num = blocks_table[block_num - 12];
-		kfree(blocks_table);
+		real_block_num = cache->indirect_table[block_num - 12];
 	} else if(block_num >= 268 && block_num < 12 + 256*256) {
-		uint32_t* blocks_table = (uint32_t*)kmalloc(bl_off(1));
-		vfs_block_read(bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)blocks_table);
-		uint32_t indir_block_num = blocks_table[(block_num - 268) / 256];
+		if(!cache->double_table) {
+			cache->double_table = (uint32_t*)kmalloc(bl_off(1));
+			vfs_block_read(bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)cache->double_table);
+		}
 
-		uint32_t* indir_blocks_table = (uint32_t*)kmalloc(bl_off(1));
-		vfs_block_read(bl_off(indir_block_num), bl_off(1), (uint8_t*)indir_blocks_table);
-		real_block_num = indir_blocks_table[(block_num - 268) % 256];
-		kfree(blocks_table);
-		kfree(indir_blocks_table);
+		uint32_t indir_block_num = cache->double_table[(block_num - 268) / 256];
+
+		if(!cache->double_second_table) {
+			cache->double_second_table = (uint32_t*)kmalloc(bl_off(1));
+		}
+
+		if(cache->double_second_block != indir_block_num) {
+			vfs_block_read(bl_off(indir_block_num), bl_off(1), (uint8_t*)cache->double_second_table);
+			cache->double_second_block = indir_block_num;
+		}
+
+		real_block_num = cache->double_second_table[(block_num - 268) % 256];
 	} else {
 		real_block_num = inode->blocks[block_num];
 	}
@@ -142,22 +172,27 @@ uint8_t* ext2_inode_read_data(struct inode* inode, uint32_t offset, size_t lengt
 
 	// TODO Reuse offset handling from below.
 	uint8_t* tmp = kmalloc(bl_off(num_blocks));
+	struct blocknum_resolver_cache* res_cache = zmalloc(sizeof(struct blocknum_resolver_cache));
 
 	for(int i = 0; i < num_blocks; i++) {
-		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i + bl_size(offset));
+		uint32_t block_num = resolve_blocknum(inode, i + bl_size(offset), res_cache);
+
 		if(!block_num) {
-			kfree(tmp);
-			return NULL;
+			buf = NULL;
+			goto bye;
 		}
 
 		if(!vfs_block_read(bl_off(block_num), bl_off(1), tmp + bl_off(i))) {
 			debug("read_inode_blocks: read for block %d failed\n", i);
-			kfree(tmp);
-			return NULL;
+			buf = NULL;
+			goto bye;
 		}
 	}
 
 	memcpy(buf, tmp + bl_mod(offset), length);
+
+bye:
+	free_blocknum_resolver_cache(res_cache);
 	kfree(tmp);
 	return buf;
 }
@@ -169,12 +204,15 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 	}
 
 	uint32_t buf_offset = 0;
+	struct blocknum_resolver_cache* res_cache = zmalloc(sizeof(struct blocknum_resolver_cache));
 	for(int i = 0; i < num_blocks; i++) {
-		uint32_t block_num = ext2_inode_resolve_blocknum(inode, i + bl_size(offset));
+		uint32_t block_num = resolve_blocknum(inode, i + bl_size(offset), res_cache);
+
 		if(!block_num) {
 			block_num = ext2_block_new(inode_num);
 			if(!block_num) {
-				return 0;
+				free_blocknum_resolver_cache(res_cache);
+				return NULL;
 			}
 
 			// Counts 512-byte ide blocks, not ext2 blocks, so 2.
@@ -185,7 +223,8 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 			} else {
 				// TODO
 				log(LOG_ERR, "ext2: Indirect block writes not supported atm.\n");
-				return 0;
+				free_blocknum_resolver_cache(res_cache);
+				return NULL;
 			}
 
 			ext2_inode_write(inode, inode_num);
@@ -206,12 +245,14 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 
 		if(!vfs_block_write(wr_offset, wr_size, buf + buf_offset)) {
 			debug("read_inode_blocks: write for block %d failed\n", i);
+			free_blocknum_resolver_cache(res_cache);
 			return NULL;
 		}
 
 		buf_offset += wr_size;
 	}
 
+	free_blocknum_resolver_cache(res_cache);
 	return buf;
 }
 

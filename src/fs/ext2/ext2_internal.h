@@ -143,7 +143,6 @@ struct inode* root_inode;
 bool ext2_inode_write(struct inode* buf, uint32_t inode_num);
 bool ext2_inode_read(struct inode* buf, uint32_t inode_num);
 uint32_t ext2_inode_new(struct inode* inode, uint16_t mode);
-uint32_t ext2_inode_resolve_blocknum(struct inode* inode, uint32_t block_num);
 uint8_t* ext2_inode_read_data(struct inode* inode, uint32_t offset, size_t length, uint8_t* buf);
 uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t offset, size_t length, uint8_t* buf);
 
