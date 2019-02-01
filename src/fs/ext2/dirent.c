@@ -248,8 +248,15 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	ext2_inode_write_data(dir, dir_num, 0, dir->size, dirents);
 
+	// Increase inode link count
+	struct inode* inode = kmalloc(sizeof(struct inode));
+	if(ext2_inode_read(inode, inode_num)) {
+		inode->link_count++;
+		ext2_inode_write(inode, inode_num);
+	}
+
 	// FIXME Update parent directory mtime/ctime
-	// FIXME Increase inode ref count
+
 	if(!recycled_dirent) {
 		kfree(new_dirent);
 	}

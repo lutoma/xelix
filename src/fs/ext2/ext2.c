@@ -154,6 +154,10 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 	ext2_dirent_add(inode_num, inode_num, ".", EXT2_DIRENT_FT_DIR);
 	ext2_dirent_add(inode_num, parent_inode, "..", EXT2_DIRENT_FT_DIR);
 
+	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
+	blockgroup_table[blockgroup_num].used_directories++;
+	write_blockgroup_table();
+
 	kfree(inode);
 	kfree(base_path);
 	return 0;
