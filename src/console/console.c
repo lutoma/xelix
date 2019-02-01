@@ -183,11 +183,11 @@ size_t console_read(console_t* console, char* buffer, size_t length)
 	return read;
 }
 
-static size_t sfs_stdin_read(void* dest, size_t size, void* meta) {
+static size_t sfs_stdin_read(void* dest, size_t size, size_t offset, void* meta) {
 	return console_read(NULL, dest, size);
 }
 
-static size_t sfs_stdout_write(void* source, size_t size, void* meta) {
+static size_t sfs_stdout_write(void* source, size_t size, size_t offset, void* meta) {
 	return console_write(NULL, source, size);
 }
 

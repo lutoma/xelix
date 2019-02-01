@@ -43,9 +43,9 @@ void part_init() {
 	uint8_t* buf = kmalloc(512);
 	if(!ide_read_sector(0x1F0, 0, 0, buf)) {
 		kfree(buf);
-		return NULL;
+		return;
 	}
 
-	struct mbr_partition* part = buf + 0x01BE;
+	struct mbr_partition* part = (struct mbr_partition*)(buf + 0x01BE);
 	start = part->start;
 }

@@ -225,8 +225,8 @@ static void int_handler(isf_t *state)
 
 	int_out16(card, REG_INTERRUPT_STATUS, new_isr);
 }
-
-static size_t sfs_write(void* data, size_t len) {
+/*
+static size_t sfs_write(void* data, size_t len, size_t offset, void* meta) {
 	serial_printf("sfs_write 1\n");
 	return len;
 
@@ -234,7 +234,7 @@ static size_t sfs_write(void* data, size_t len) {
 	if (len > 1500)
 	{
 //		++dev->stats.tx_errors;
-		return;
+		return 0;
 	}
 	serial_printf("sfs_write 2\n");
 
@@ -260,7 +260,7 @@ static size_t sfs_write(void* data, size_t len) {
 	printf("rtl8139 sent.\n");
 	return len;
 }
-
+*/
 
 static void enable(struct rtl8139_card *card)
 {

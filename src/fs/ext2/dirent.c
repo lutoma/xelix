@@ -101,7 +101,7 @@ struct dirent* ext2_dirent_find(struct inode* inode, const char* search) {
 	}
 
 	struct dirent* dirent = (struct dirent*)dirent_block;
-	while((void*)dirent < dirent_block + inode->size) {
+	while(dirent < (struct dirent*)(dirent_block + inode->size)) {
 		if(!dirent->inode) {
 			goto next;
 		}
@@ -143,7 +143,7 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 	struct dirent* prev = NULL;
 	bool found = false;
 
-	while((void*)dirent < dirent_block + inode->size) {
+	while(dirent < (struct dirent*)(dirent_block + inode->size)) {
 		if(!dirent->inode) {
 			goto next;
 		}
@@ -213,13 +213,12 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 
 	// Cycle through dirents until we find one with enough space to insert ours.
 	struct dirent* current_ent = dirents;
-	while((void*)current_ent < dirents + dir->size) {
+	while(current_ent < (struct dirent*)(dirents + dir->size)) {
 		uint32_t free_space = current_ent->record_len - align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
 		if(free_space > dlen) {
 			break;
 		}
 
-		next:
 		current_ent = (struct dirent*)((intptr_t)current_ent + (intptr_t)current_ent->record_len);
 	}
 

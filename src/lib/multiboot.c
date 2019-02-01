@@ -63,10 +63,10 @@ void multiboot_init(uint32_t magic, void* header) {
 	intptr_t offset = 8;
 
 	struct multiboot_tag* tag = header + offset;
-	while(tag < header + total_size) {
+	while(tag < (struct multiboot_tag*)(header + total_size)) {
 		// Tags are always padded to be 8-aligned
 		if((intptr_t)tag % 8) {
-			tag =  ((intptr_t)tag &~ 7) + 8;
+			tag = (struct multiboot_tag*)(((intptr_t)tag &~ 7) + 8);
 		}
 
 		if(!tag->type || !tag->size) {
@@ -78,10 +78,10 @@ void multiboot_init(uint32_t magic, void* header) {
 
 		switch(tag->type) {
 			case 6:
-				mmap_info = tag;
+				mmap_info = (struct multiboot_tag_mmap*)tag;
 				break;
 		}
 
-		tag = (intptr_t)tag + tag->size;
+		tag = (struct multiboot_tag*)((intptr_t)tag + tag->size);
 	}
 }

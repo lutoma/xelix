@@ -26,6 +26,7 @@
 #include <hw/interrupts.h>
 #include <fs/sysfs.h>
 #include <string.h>
+#include <errno.h>
 
 #define STACKSIZE PAGE_SIZE
 
@@ -130,30 +131,31 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 
 task_t* task_fork(task_t* to_fork, isf_t* state) {
 	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
-
+/*
 	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
 	char* __argv[] = { "dash", "-liV", NULL };
 
 	// FIXME Make copy of memory context instead of just using the same
-	//task_t* new_task = task_new(to_fork->entry, to_fork, "fork", __env, 6, __argv, 2);
+	task_t* new_task = task_new(to_fork->entry, to_fork, "fork", __env, 6, __argv, 2);
 
 	// Copy registers
-/*	new_task->state->ebx = state->ebx;
+	new_task->state->ebx = state->ebx;
 	new_task->state->ecx = state->ecx;
 	new_task->state->edx = state->edx;
 	new_task->state->ds = state->ds;
 	new_task->state->edi = state->edi;
-	new_task->state->esi = state->esi;*/
-//	new_task->state->cs = state->cs;
-//	new_task->state->eflags = state->eflags;
+	new_task->state->esi = state->esi;
+	new_task->state->cs = state->cs;
+	new_task->state->eflags = state->eflags;
 
 	// Copy stack & calculate correct stack offset for fork's ESP
-	//memcpy(new_task->stack, to_fork->stack, STACKSIZE);
-	//new_task->state->esp = new_task->stack + (state->esp - to_fork->stack);
+	memcpy(new_task->stack, to_fork->stack, STACKSIZE);
+	new_task->state->esp = new_task->stack + (state->esp - to_fork->stack);
 
-	//strncpy(new_task->name, to_fork->name, TASK_MAXNAME);
-	task_t* new_task = elf_load_file("/usr/bin/clear", __env, 0, __argv, 1);
-	return new_task;
+	strncpy(new_task->name, to_fork->name, TASK_MAXNAME);
+*/
+	sc_errno = ENOSYS;
+	return NULL;
 }
 
 void task_cleanup(task_t* t) {

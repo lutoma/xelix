@@ -20,7 +20,7 @@
 #include <fs/sysfs.h>
 #include <string.h>
 
-static size_t null_read(void* dest, size_t size, void* meta) {
+static size_t null_read(void* dest, size_t size, size_t offset, void* meta) {
 	if(meta == (void*)1) {
 		bzero(dest, size);
 		return size;
@@ -29,7 +29,7 @@ static size_t null_read(void* dest, size_t size, void* meta) {
 	}
 }
 
-static size_t null_write(void* source, size_t size, void* mea) {
+static size_t null_write(void* source, size_t size, size_t offset, void* mea) {
 	return size;
 }
 

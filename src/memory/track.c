@@ -20,6 +20,7 @@
 #include <memory/track.h>
 #include <log.h>
 #include <print.h>
+#include <panic.h>
 #include <string.h>
 #include <multiboot.h>
 #include <hw/serial.h>
@@ -37,7 +38,7 @@ static void copy_multiboot_areas() {
 
 	uint32_t offset = 16;
 	for(; offset < mmap->size; offset += mmap->entry_size) {
-		struct multiboot_mmap_entry* entry = (intptr_t)mmap + offset;
+		struct multiboot_mmap_entry* entry = (struct multiboot_mmap_entry*)((intptr_t)mmap + offset);
 
 		memory_track_type_t area_type;
 		switch(entry->type) {
@@ -50,7 +51,7 @@ static void copy_multiboot_areas() {
 		}
 
 		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];
-		area->addr = entry->addr;
+		area->addr = (void*)(uint32_t)entry->addr;
 		area->size = entry->len;
 		area->type = area_type;
 

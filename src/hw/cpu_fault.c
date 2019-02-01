@@ -22,6 +22,7 @@
 #include <hw/interrupts.h>
 #include <memory/vmem.h>
 #include <memory/paging.h>
+#include <memory/gdt.h>
 #include <tasks/scheduler.h>
 
 #define has_errcode(i) (i == 8 || i == 17 || i == 30 || (i >= 10 && i <= 14))
@@ -48,13 +49,14 @@ static char* exception_names[] = {
 };
 
 isf_t* __attribute__((fastcall)) cpu_fault_handler(uint32_t intr, intptr_t cr2, uint32_t d1, uint32_t d2) {
-	uint32_t err_code, eip;
+	uint32_t err_code;
+	//uint32_t eip;
 	if(has_errcode(intr)) {
 		err_code = d1;
-		eip = d2;
+		//eip = d2;
 	} else {
 		err_code = 0;
-		eip = d1;
+		//eip = d1;
 	}
 
 	char* error_name = (intr < 19) ? exception_names[intr] : "Unknown CPU error";
@@ -80,6 +82,7 @@ isf_t* __attribute__((fastcall)) cpu_fault_handler(uint32_t intr, intptr_t cr2, 
 	} else {
 		panic(error_name);
 	}
+	__builtin_unreachable();
 }
 
 void cpu_init_fault_handlers() {
