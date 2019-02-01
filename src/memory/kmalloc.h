@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2018 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+extern bool kmalloc_ready;
 
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	char* _debug_file, uint32_t _debug_line, const char* _debug_func);

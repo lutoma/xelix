@@ -71,6 +71,10 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	init(ide);
 	init(part);
 	init(sysfs);
+
+	// Only initializes the sysfs integration
+	init(log);
+
 	#ifdef ENABLE_EXT2
 	init(ext2);
 	#endif

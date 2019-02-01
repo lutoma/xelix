@@ -26,3 +26,4 @@
 #define LOG_ERR			4
 
 void log(uint32_t level, const char *fmt, ...);
+void log_init();

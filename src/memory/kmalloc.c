@@ -1,5 +1,5 @@
 /* kmalloc.c: Kernel memory allocator
- * Copyright © 2016-2018 Lukas Martini
+ * Copyright © 2016-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -68,7 +68,7 @@ struct free_block {
 	struct free_block* next;
 };
 
-static bool initialized = false;
+bool kmalloc_ready = false;
 static spinlock_t kmalloc_lock;
 static struct free_block* last_free = (struct free_block*)NULL;
 static intptr_t alloc_start;
@@ -263,8 +263,8 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	_g_debug_file = _debug_file;
 	#endif
 
-	if(unlikely(!initialized)) {
-		panic("Attempt to kmalloc before allocator is initialized.\n");
+	if(unlikely(!kmalloc_ready)) {
+		panic("Attempt to kmalloc before allocator is kmalloc_ready.\n");
 	}
 
 	debug("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
@@ -394,7 +394,7 @@ void kmalloc_init()
 	largest_area->type = MEMORY_TYPE_KMALLOC;
 	alloc_start = alloc_end = (intptr_t)largest_area->addr;
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
-	initialized = true;
+	kmalloc_ready = true;
 	sysfs_add_file("memfree", sfs_read, NULL, NULL);
 }
 

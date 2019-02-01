@@ -2,7 +2,7 @@ PATH += :../../toolchain/local/bin/
 CC := i786-pc-xelix-gcc
 CFLAGS += -std=gnu18 -O3 -g -D_GNU_SOURCE
 
-TARGETS=basictest xinit xshell ps uptime free networkd login
+TARGETS=basictest xinit xshell ps uptime free networkd login dmesg
 
 all: $(TARGETS)
 

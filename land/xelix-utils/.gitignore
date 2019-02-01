@@ -13,3 +13,4 @@ util.o
 libutil.a
 networkd
 login
+dmesg
