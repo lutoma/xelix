@@ -12,14 +12,6 @@ config PIT_RATE
 	the task switching frequency, and the maximum time resolution.
 
 menu "Debugging"
-	config KMALLOC_DEBUG
-		bool "kmalloc debugging"
-		---help---
-		Print out information for each allocation/free to serial. Makes
-		everything pretty slow. Since vmem allocates lots of small blocks,
-		vmem allocations are not printed by default to make load time
-		bearable.
-
 	config ELF_DEBUG
 		bool "ELF loader debugging"
 
@@ -58,6 +50,23 @@ menu "Debugging"
 		2 Info
 		3 Warn
 		4 Error
+endmenu
+
+menu "Memory"
+	config KMALLOC_DEBUG
+		bool "kmalloc: Enable debugging"
+		---help---
+		Print out information for each allocation/free to serial. Makes
+		everything pretty slow. Since vmem allocates lots of small blocks,
+		vmem allocations are not printed by default to make load time
+		bearable.
+
+	config KMALLOC_CHECK
+		bool "kmalloc: Check all headers"
+		---help---
+		This will check the memory allocation headers and footers during all
+		kmalloc/kfree operations. Useful to track down buffer overflows, but
+		slows things down.
 endmenu
 
 menu "Audio"

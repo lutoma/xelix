@@ -78,7 +78,7 @@ static intptr_t alloc_max;
 /* Do various checks on a header to make sure we're in a safe state
  * before changing anything.
  */
-#ifdef KMALLOC_DEBUG
+#ifdef KMALLOC_CHECK
 #define block_panic(fmt) panic("kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
 static void check_header(struct mem_block* header) {
 	if(header->magic != KMALLOC_MAGIC) {
@@ -347,7 +347,6 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 		return;
 	}
 
-	// Only runs in debug
 	check_header(header);
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
