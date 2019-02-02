@@ -52,45 +52,6 @@ int ext2_chmod(const char* path, uint32_t mode) {
 }
 
 
-int ext2_unlink(char* path) {
-	uint32_t dir_ino = 0;
-	uint32_t inode_num = ext2_resolve_inode(path, &dir_ino);
-	if(!inode_num || !dir_ino) {
-		sc_errno = ENOENT;
-		return -1;
-	}
-
-	if(inode_num == ROOT_INODE) {
-		sc_errno = EPERM;
-		return -1;
-	}
-
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, inode_num)) {
-		kfree(inode);
-		sc_errno = ENOENT;
-		return -1;
-	}
-
-	ext2_dirent_rm(dir_ino, vfs_basename(path));
-	inode->link_count--;
-
-	if(inode->link_count < 1) {
-		inode->dtime = time_get();
-
-		// TODO Also adjust bitmaps and delete blocks
-		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
-		superblock->free_inodes++;
-		blockgroup->free_inodes++;
-		write_superblock();
-		write_blockgroup_table();
-	}
-
-	ext2_inode_write(inode, inode_num);
-	kfree(inode);
-	return 0;
-}
-
 int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_stat called without fp or fp missing inode.\n");
@@ -191,32 +152,67 @@ int ext2_utimes(const char* path, struct timeval times[2]) {
 	return 0;
 }
 
-int ext2_rmdir(const char* path) {
+static int do_unlink(const char* path, bool is_dir) {
 	uint32_t dir_ino = 0;
 	uint32_t inode_num = ext2_resolve_inode(path, &dir_ino);
-	if(!inode_num) {
+	if(!inode_num || !dir_ino) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
-	struct inode* inode = kmalloc(bl_off(1));
+	if(inode_num == ROOT_INODE) {
+		sc_errno = EPERM;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, inode_num)) {
+		kfree(inode);
 		sc_errno = ENOENT;
 		return -1;
+	}
+
+	/* link_count on inodes is a uint16_t, which could underflow
+	 * with our substractions below if it is set incorrectly, and
+	 * then wouldn't match the `if(inode->link_count < 1) {` below.
+	 * Transfer to signed int32 to avoid.
+	 */
+	int32_t link_count = (int32_t)inode->link_count;
+
+	if(is_dir) {
+		if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR) {
+			sc_errno = ENOTDIR;
+			return -1;
+		}
+
+		// FIXME Should probably check more throroughly it only contains ./..
+		// and has no hard links
+		if(link_count > 2) {
+			sc_errno = ENOTEMPTY;
+			return -1;
+		}
+
+		// . and .. inside directory
+		link_count -= 2;
+	} else {
+		if(vfs_mode_to_filetype(inode->mode) == FT_IFDIR) {
+			sc_errno = EISDIR;
+			return -1;
+		}
 	}
 
 	ext2_dirent_rm(dir_ino, vfs_basename(path));
-	inode->link_count--;
+	link_count--;
 
-	// FIXME deduplicate with unlink
-	if(inode->link_count < 1) {
+	if(link_count < 1) {
+		debug("do_unlink: inode %d link count < 1, purging.\n", inode_num);
 		inode->dtime = time_get();
 
 		// TODO Also adjust bitmaps and delete blocks
 		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
 		superblock->free_inodes++;
 		blockgroup->free_inodes++;
-		blockgroup->used_directories--;
+		blockgroup->free_blocks += inode->block_count;
 		write_superblock();
 		write_blockgroup_table();
 	}
@@ -224,6 +220,14 @@ int ext2_rmdir(const char* path) {
 	ext2_inode_write(inode, inode_num);
 	kfree(inode);
 	return 0;
+}
+
+int ext2_unlink(char* path) {
+	return do_unlink(path, false);
+}
+
+int ext2_rmdir(const char* path) {
+	return do_unlink(path, true);
 }
 
 void ext2_init() {
