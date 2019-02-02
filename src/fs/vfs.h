@@ -102,14 +102,6 @@ typedef struct {
 	long st_spare4[2];
 } __attribute__((packed)) vfs_stat_t;
 
-
-typedef uint32_t (*vfs_open_callback_t)(char* path, uint32_t flags, void* mount_instance);
-typedef int (*vfs_stat_callback_t)(vfs_file_t* fp, vfs_stat_t* dest);
-typedef size_t (*vfs_read_callback_t)(vfs_file_t* fp, void* dest, size_t size);
-typedef size_t (*vfs_write_callback_t)(vfs_file_t* fp, void* source, size_t size);
-typedef size_t (*vfs_getdents_callback_t)(vfs_file_t* fp, void* dest, size_t size);
-
-
 struct vfs_callbacks {
 	uint32_t (*open)(char* path, uint32_t flags, void* mount_instance);
 	size_t (*read)(vfs_file_t* fp, void* dest, size_t size);
