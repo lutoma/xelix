@@ -243,9 +243,9 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 		uint32_t old_len = current_ent->record_len;
 		current_ent->record_len = align_dirent_len(sizeof(struct dirent) + current_ent->name_len);
 		new_dirent->record_len = old_len - current_ent->record_len;
+		memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	}
 
-	memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	ext2_inode_write_data(dir, dir_num, 0, dir->size, dirents);
 
 	// Increase inode link count
