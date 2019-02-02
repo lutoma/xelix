@@ -51,6 +51,30 @@ int ext2_chmod(const char* path, uint32_t mode) {
 	return 0;
 }
 
+int ext2_chown(const char* path, uint16_t uid, uint16_t gid) {
+	uint32_t inode_num = ext2_resolve_inode(path, NULL);
+	if(!inode_num) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!ext2_inode_read(inode, inode_num)) {
+		kfree(inode);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(uid != -1) {
+		inode->uid = uid;
+	}
+	if(gid != -1) {
+		inode->gid = gid;
+	}
+	ext2_inode_write(inode, inode_num);
+	kfree(inode);
+	return 0;
+}
 
 int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	if(!fp || !fp->inode) {
@@ -347,6 +371,7 @@ void ext2_init() {
 		.getdents = ext2_getdents,
 		.unlink = ext2_unlink,
 		.chmod = ext2_chmod,
+		.chown = ext2_chown,
 		.symlink = NULL,
 		.mkdir = ext2_mkdir,
 		.utimes = ext2_utimes,

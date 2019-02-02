@@ -408,6 +408,35 @@ int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
 	return r;
 }
 
+
+int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.chown) {
+		kfree(path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.chown(mount_path, uid, gid);
+	kfree(path);
+	return r;
+}
+
 int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
 	char* pwd = "/";
 	if(task) {

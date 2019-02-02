@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2014-2018 Lukas Martini
+/* Copyright © 2014-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -35,6 +35,7 @@ DEFINE_SYSCALL(open);
 DEFINE_SYSCALL(stat);
 DEFINE_SYSCALL(seek);
 DEFINE_SYSCALL(getdents);
+DEFINE_SYSCALL(chown);
 DEFINE_SYSCALL(kill);
 DEFINE_SYSCALL(chdir);
 DEFINE_SYSCALL(utimes);
@@ -69,7 +70,7 @@ syscall_t syscall_table[] = {
 	sys_stat,			// 14
 	sys_seek,			// 15
 	sys_getdents,		// 16
-	NULL,				// 17
+	sys_chown,			// 17
 	sys_kill,			// 18
 	sys_gettimeofday,	// 19
 	sys_chdir,			// 20

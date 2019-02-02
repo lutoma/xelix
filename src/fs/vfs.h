@@ -132,6 +132,7 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
 int vfs_close(vfs_file_t* fp);
 int vfs_unlink(char *name, struct task* task);
 int vfs_chmod(const char* path, uint32_t mode, struct task* task);
+int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, struct task* task);
 int vfs_mkdir(const char* orig_path, uint32_t mode, struct task* task);
 int vfs_access(const char *path, uint32_t amode, struct task* task);
 int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task);
