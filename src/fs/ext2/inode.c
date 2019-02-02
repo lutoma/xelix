@@ -89,7 +89,6 @@ uint32_t ext2_inode_new(struct inode* inode, uint16_t mode) {
 	uint32_t inode_num = ext2_bitmap_search_and_claim(blockgroup->inode_bitmap);
 
 	bzero(inode, sizeof(struct inode));
-	inode->link_count = 1;
 	inode->mode = mode;
 
 	uint32_t t = time_get();
