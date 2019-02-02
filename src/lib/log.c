@@ -25,6 +25,7 @@
 #include <fs/sysfs.h>
 #include <memory/kmalloc.h>
 
+#ifdef LOG_STORE
 /* Since the log is also used before kmalloc is initialized, first use a static
  * buffer, then switch as soon as kmalloc is ready.
  */
@@ -54,6 +55,20 @@ static void store(char* string, size_t len) {
 	log_size += len;
 }
 
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset >= log_size) {
+		return 0;
+	}
+
+	if(offset + size > log_size) {
+		size = log_size - offset;
+	}
+
+	memcpy(dest, buffer + offset, size);
+	return size;
+}
+#endif
+
 void log(uint32_t level, const char *fmt, ...) {
 	va_list va;
 	va_start(va, fmt);
@@ -67,10 +82,12 @@ void log(uint32_t level, const char *fmt, ...) {
 	 * not very helpful, consumes a lot of memory and can cause deadlocks
 	 * (kmalloc debug could end up calling kmalloc in store and lock).
 	 */
+	#ifdef LOG_STORE
 	if(level > LOG_DEBUG) {
 		store(prefix, prefix_len);
 		store(fmt_string, fmt_len);
 	}
+	#endif
 
 	#if LOG_SERIAL_LEVEL != 0
 	if(level >= LOG_SERIAL_LEVEL) {
@@ -89,19 +106,8 @@ void log(uint32_t level, const char *fmt, ...) {
 	va_end(va);
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset >= log_size) {
-		return 0;
-	}
-
-	if(offset + size > log_size) {
-		size = log_size - offset;
-	}
-
-	memcpy(dest, buffer + offset, size);
-	return size;
-}
-
 void log_init() {
+	#ifdef LOG_STORE
 	sysfs_add_file("log", sfs_read, NULL, NULL);
+	#endif
 }

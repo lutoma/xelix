@@ -32,6 +32,13 @@ menu "Debugging"
 	config VFS_DEBUG
 		bool "File system debugging"
 
+	config LOG_STORE
+		bool "Store kernel logs"
+		default y
+		---help---
+		Store kernel log in memory and make them available as /sys/log, where
+		it can be read by utilities like dmesg. Doesn't log debug messages.
+
 	config LOG_PRINT_LEVEL
 		int "TTY log level"
 		default 2
