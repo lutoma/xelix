@@ -63,8 +63,14 @@ void log(uint32_t level, const char *fmt, ...) {
 	size_t fmt_len = vsnprintf(fmt_string, 500, fmt, va);
 	size_t prefix_len = snprintf(prefix, 30, "[%d:%03d] ", uptime(), pit_tick);
 
-	store(prefix, prefix_len);
-	store(fmt_string, fmt_len);
+	/* Only store for log levels > debug. Storing all debug messages is usually
+	 * not very helpful, consumes a lot of memory and can cause deadlocks
+	 * (kmalloc debug could end up calling kmalloc in store and lock).
+	 */
+	if(level > LOG_DEBUG) {
+		store(prefix, prefix_len);
+		store(fmt_string, fmt_len);
+	}
 
 	#if LOG_SERIAL_LEVEL != 0
 	if(level >= LOG_SERIAL_LEVEL) {
