@@ -188,9 +188,11 @@ static inline void dump_inode(struct inode* buf) {
 	debug("%-19s: %d\n", "gid", buf->gid);
 	debug("%-19s: %d\n", "size", buf->size);
 	debug("%-19s: %d\n", "block_count", buf->block_count);
-	debug("%-19s: %d\n", "access_time", buf->access_time);
-	debug("%-19s: %d\n", "creation_time", buf->creation_time);
-	debug("%-19s: %d\n", "modification_time", buf->modification_time);
+	debug("%-19s: %d\n", "link_count", buf->link_count);
+	debug("%-19s: %d\n", "atime", buf->atime);
+	debug("%-19s: %d\n", "ctime", buf->ctime);
+	debug("%-19s: %d\n", "mtime", buf->mtime);
+	debug("%-19s: %d\n", "dtime", buf->dtime);
 
 	debug("Blocks table:\n");
 	for(uint32_t i = 0; i < 15; i++) {
