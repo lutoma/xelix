@@ -16,27 +16,6 @@ diff --git dash-0.5.10.2/config.h dash-0.5.10.2/config.h
  #define stat64 stat
 +
 +#endif
-diff --git dash-0.5.10.2/src/jobs.c dash-0.5.10.2/src/jobs.c
---- dash-0.5.10.2/src/jobs.c
-+++ dash-0.5.10.2/src/jobs.c
-@@ -210,7 +210,7 @@ out:
- 			}
- 			if (pgrp == getpgrp())
- 				break;
--			killpg(0, SIGTTIN);
-+			//killpg(0, SIGTTIN);
- 		} while (1);
- 		initialpgrp = pgrp;
-
-@@ -391,7 +391,7 @@ restartjob(struct job *jp, int mode)
- 	pgid = jp->ps->pid;
- 	if (mode == FORK_FG)
- 		xtcsetpgrp(ttyfd, pgid);
--	killpg(pgid, SIGCONT);
-+	//killpg(pgid, SIGCONT);
- 	ps = jp->ps;
- 	i = jp->nprocs;
- 	do {
 diff --git dash-0.5.10.2/src/system.h dash-0.5.10.2/src/system.h
 --- dash-0.5.10.2/src/system.h
 +++ dash-0.5.10.2/src/system.h
@@ -49,6 +28,38 @@ diff --git dash-0.5.10.2/src/system.h dash-0.5.10.2/src/system.h
  #ifndef SSIZE_MAX
  #define SSIZE_MAX ((ssize_t)((size_t)-1 >> 1))
  #endif
+--- dash-0.5.10.2/src/jobs.c	2019-02-03 00:03:11.273865717 +0100
++++ dash-0.5.10.2/src/jobs.c	2019-02-03 00:03:59.261263041 +0100
+@@ -196,8 +196,8 @@
+ 		ofd = fd = open(_PATH_TTY, O_RDWR);
+ 		if (fd < 0) {
+ 			fd += 3;
+-			while (!isatty(fd))
+-				if (--fd < 0)
++			//while (!isatty(fd))
++			//	if (--fd < 0)
+ 					goto out;
+ 		}
+ 		fd = savefd(fd, ofd);
+@@ -210,7 +210,7 @@
+ 			}
+ 			if (pgrp == getpgrp())
+ 				break;
+-			killpg(0, SIGTTIN);
++			//killpg(0, SIGTTIN);
+ 		} while (1);
+ 		initialpgrp = pgrp;
+
+@@ -391,7 +391,7 @@
+ 	pgid = jp->ps->pid;
+ 	if (mode == FORK_FG)
+ 		xtcsetpgrp(ttyfd, pgid);
+-	killpg(pgid, SIGCONT);
++	//killpg(pgid, SIGCONT);
+ 	ps = jp->ps;
+ 	i = jp->nprocs;
+ 	do {
+
 --- dash-0.5.10.2/src/trap.c	2018-05-17 13:10:58.000000000 +0200
 +++ dash-0.5.10.2/src/trap.c	2018-09-14 21:18:43.796032578 +0200
 @@ -363,9 +363,9 @@
