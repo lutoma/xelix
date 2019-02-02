@@ -37,7 +37,9 @@ DEFINE_SYSCALL(seek);
 DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(kill);
 DEFINE_SYSCALL(chdir);
+DEFINE_SYSCALL(utimes);
 DEFINE_SYSCALL(fork);
+DEFINE_SYSCALL(rmdir);
 DEFINE_SYSCALL(socket);
 DEFINE_SYSCALL(bind);
 DEFINE_SYSCALL(socket_send);
@@ -71,9 +73,9 @@ syscall_t syscall_table[] = {
 	sys_kill,			// 18
 	sys_gettimeofday,	// 19
 	sys_chdir,			// 20
-	NULL,				// 21
+	sys_utimes,			// 21
 	sys_fork,			// 22
-	NULL,				// 23
+	sys_rmdir,			// 23
 	sys_socket,			// 24
 	sys_bind,			// 25
 	sys_socket_send,	// 26
@@ -105,9 +107,9 @@ char* syscall_name_table[] = {
 	"kill",			// 18
 	"gettimeofday",	// 19
 	"chdir",		// 20
-	NULL,			// 21
+	"utimes",		// 21
 	"fork",			// 22
-	NULL,			// 23
+	"rmdir",		// 23
 	"socket",		// 24
 	"bind",			// 25
 	"socket_send",	// 26

@@ -76,7 +76,7 @@ int ext2_unlink(char* path) {
 	inode->link_count--;
 
 	if(inode->link_count < 1) {
-		inode->deletion_time = time_get();
+		inode->dtime = time_get();
 
 		// TODO Also adjust bitmaps and delete blocks
 		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
@@ -111,9 +111,9 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	dest->st_gid = inode->gid;
 	dest->st_rdev = 0;
 	dest->st_size = inode->size;
-	dest->st_atime = inode->access_time;
-	dest->st_mtime = inode->modification_time;
-	dest->st_ctime = inode->creation_time;
+	dest->st_atime = inode->atime;
+	dest->st_mtime = inode->mtime;
+	dest->st_ctime = inode->ctime;
 	dest->st_blksize = bl_off(1);
 	dest->st_blocks = inode->block_count;
 
@@ -163,6 +163,68 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 	return 0;
 }
 
+int ext2_utimes(const char* path, struct timeval times[2]) {
+	uint32_t inode_num = ext2_resolve_inode(path, NULL);
+	if(!inode_num) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(bl_off(1));
+	if(!ext2_inode_read(inode, inode_num)) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(times) {
+		inode->atime = times[0].tv_sec;
+		inode->mtime = times[1].tv_sec;
+		inode->ctime = times[1].tv_sec;
+	} else {
+		uint32_t t = time_get();
+		inode->atime = t;
+		inode->mtime = t;
+		inode->ctime = t;
+	}
+
+	ext2_inode_write(inode, inode_num);
+	return 0;
+}
+
+int ext2_rmdir(const char* path) {
+	uint32_t dir_ino = 0;
+	uint32_t inode_num = ext2_resolve_inode(path, &dir_ino);
+	if(!inode_num) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(bl_off(1));
+	if(!ext2_inode_read(inode, inode_num)) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	ext2_dirent_rm(dir_ino, vfs_basename(path));
+	inode->link_count--;
+
+	// FIXME deduplicate with unlink
+	if(inode->link_count < 1) {
+		inode->dtime = time_get();
+
+		// TODO Also adjust bitmaps and delete blocks
+		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
+		superblock->free_inodes++;
+		blockgroup->free_inodes++;
+		blockgroup->used_directories--;
+		write_superblock();
+		write_blockgroup_table();
+	}
+
+	ext2_inode_write(inode, inode_num);
+	kfree(inode);
+	return 0;
+}
 
 void ext2_init() {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
@@ -249,6 +311,8 @@ void ext2_init() {
 		.chmod = ext2_chmod,
 		.symlink = NULL,
 		.mkdir = ext2_mkdir,
+		.utimes = ext2_utimes,
+		.rmdir = ext2_rmdir,
 	};
 	vfs_mount("/", NULL, "/dev/ide1p1", "ext2", &cb);
 }

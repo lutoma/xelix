@@ -90,7 +90,7 @@ size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
 	}
 
 	inode->size = fp->offset + size;
-	inode->modification_time = time_get();
+	inode->mtime = time_get();
 	ext2_inode_write(inode, fp->inode);
 	kfree(inode);
 	return size;

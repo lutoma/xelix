@@ -18,5 +18,10 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+struct timeval {
+	uint64_t tv_sec;
+	uint64_t tv_usec;
+};
+
 uint32_t time_get();
 void time_init();

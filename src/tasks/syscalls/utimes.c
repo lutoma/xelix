@@ -1,4 +1,4 @@
-/* gettimeofday.c: Get time
+/* utimes.c: utimes syscall
  * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
@@ -18,12 +18,10 @@
  */
 
 #include <tasks/syscall.h>
-#include <lib/time.h>
+#include <fs/vfs.h>
+#include <time.h>
 
-SYSCALL_HANDLER(gettimeofday) {
+SYSCALL_HANDLER(utimes) {
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
-	struct timeval* tv = (struct timeval*)syscall.params[0];
-	tv->tv_sec = time_get();
-	tv->tv_usec = 0;
-	return 0;
+	return vfs_utimes((char*)syscall.params[0], (struct timeval*)syscall.params[1], syscall.task);
 }

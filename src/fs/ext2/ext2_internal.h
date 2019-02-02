@@ -83,10 +83,10 @@ struct inode {
 	uint16_t mode;
 	uint16_t uid;
 	uint32_t size;
-	uint32_t access_time;
-	uint32_t creation_time;
-	uint32_t modification_time;
-	uint32_t deletion_time;
+	uint32_t atime;
+	uint32_t ctime;
+	uint32_t mtime;
+	uint32_t dtime;
 	uint16_t gid;
 	uint16_t link_count;
 	uint32_t block_count;

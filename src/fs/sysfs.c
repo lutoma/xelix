@@ -220,6 +220,9 @@ void sysfs_init() {
 		.unlink = NULL,
 		.chown = NULL,
 		.chmod = NULL,
+		.mkdir = NULL,
+		.utimes = NULL,
+		.rmdir = NULL,
 	};
 	vfs_mount("/sys", &sys_files, "sys", "sysfs", &cb);
 	vfs_mount("/dev", &dev_files, "dev", "sysfs", &cb);

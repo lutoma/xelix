@@ -92,9 +92,9 @@ uint32_t ext2_inode_new(struct inode* inode, uint16_t mode) {
 	inode->mode = mode;
 
 	uint32_t t = time_get();
-	inode->creation_time = t;
-	inode->modification_time = t;
-	inode->access_time = t;
+	inode->ctime = t;
+	inode->mtime = t;
+	inode->atime = t;
 	ext2_inode_write(inode, inode_num);
 
 	superblock->free_inodes--;

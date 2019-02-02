@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <print.h>
+#include <time.h>
 
 #define VFS_SEEK_SET 0
 #define VFS_SEEK_CUR 1
@@ -113,6 +114,8 @@ struct vfs_callbacks {
 	int (*unlink)(char* name);
 	int (*chmod)(const char* path, uint32_t mode);
 	int (*chown)(const char* path, uint16_t owner, uint16_t group);
+	int (*utimes)(const char* path, struct timeval times[2]);
+	int (*rmdir)(const char* path);
 };
 
 // Used to always store the last read/write attempt (used for kernel panic debugging)
@@ -131,6 +134,8 @@ int vfs_unlink(char *name, struct task* task);
 int vfs_chmod(const char* path, uint32_t mode, struct task* task);
 int vfs_mkdir(const char* orig_path, uint32_t mode, struct task* task);
 int vfs_access(const char *path, uint32_t amode, struct task* task);
+int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task);
+int vfs_rmdir(const char* orig_path, struct task* task);
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	struct vfs_callbacks* callbacks);

@@ -39,6 +39,7 @@
 #include <sgtty.h>
 #include <limits.h>
 #include <poll.h>
+#include <utime.h>
 
 /* Normally errno is defined as a macro that does reentrancy magic. Our
  * syscalls only get called from the reentrant mappings in reent/ and syscall/,
@@ -255,4 +256,33 @@ int access(const char *pathname, int mode) {
 
 int _gettimeofday(struct timeval* p, void* tz) {
 	return syscall(19, p, tz, 0);
+}
+
+int utimes(const char *path, const struct timeval times[2]) {
+	return syscall(21, path, times, 0);
+}
+
+int utime(const char *path, const struct utimbuf *times) {
+	struct timeval* times_arr = NULL;
+	if(times) {
+		times_arr = (struct timeval*)calloc(2, sizeof(struct timeval));
+		if(!times_arr) {
+			return -1;
+		}
+
+		times_arr[0].tv_sec = times->actime;
+		times_arr[1].tv_sec = times->modtime;
+	}
+
+	int r = utimes(path, times_arr);
+	int utimes_errno = errno;
+	if(times_arr) {
+		free(times_arr);
+	}
+	errno = utimes_errno;
+	return r;
+}
+
+int rmdir(const char *path) {
+	return syscall(23, path, 0, 0);
 }

@@ -477,26 +477,8 @@ int mknod(const char *path, mode_t mode, dev_t dev) {
 	return -1;
 }
 
-int utimes(const char *path, const struct timeval times[2]) {
-	fprintf(stderr, "Warning: xelix newlib utimes() stub called.\n");
- 	errno = ENOSYS;
-	return -1;
-}
-
-int utime(const char *path, const struct utimbuf *times) {
-	fprintf(stderr, "Warning: xelix newlib utime() stub called.\n");
-	errno = ENOSYS;
-	return -1;
-}
-
 int lutimes(const char *path, const struct timeval times[2]) {
 	fprintf(stderr, "Warning: xelix newlib lutimes() stub called.\n");
- 	errno = ENOSYS;
-	return -1;
-}
-
-int rmdir(const char *path) {
-	fprintf(stderr, "Warning: xelix newlib rmdir() stub called.\n");
  	errno = ENOSYS;
 	return -1;
 }

@@ -25,6 +25,7 @@
 #include <print.h>
 #include <spinlock.h>
 #include <errno.h>
+#include <time.h>
 #include <fs/null.h>
 #include <fs/sysfs.h>
 
@@ -467,6 +468,63 @@ int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 
 	kfree(path);
 	return inode ? 0 : -1;
+}
+
+
+int vfs_utimes(const char* orig_path, struct timeval times[2], task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.utimes) {
+		kfree(path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.utimes(mount_path, times);
+	kfree(path);
+	return r;
+}
+
+int vfs_rmdir(const char* orig_path, task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.rmdir) {
+		kfree(path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.rmdir(mount_path);
+	kfree(path);
+	return r;
 }
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,
