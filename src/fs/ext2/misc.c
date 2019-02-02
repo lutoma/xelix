@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended file system, version 2
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -52,6 +52,15 @@ uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block) {
 
 	kfree(bitmap);
 	return result;
+}
+
+void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit) {
+	uint8_t* bitmap = kmalloc(bl_off(1));
+	vfs_block_read(bl_off(bitmap_block), bl_off(1), bitmap);
+	bit--;
+	bitmap[bit / 8] = bit_clear(bitmap[bit / 8], bit % 8);
+	vfs_block_write(bl_off(bitmap_block), bl_off(1), bitmap);
+	kfree(bitmap);
 }
 
 char* ext2_chop_path(const char* path, char** ent) {

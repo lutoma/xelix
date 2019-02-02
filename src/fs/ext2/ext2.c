@@ -207,12 +207,46 @@ static int do_unlink(const char* path, bool is_dir) {
 	if(link_count < 1) {
 		debug("do_unlink: inode %d link count < 1, purging.\n", inode_num);
 		inode->dtime = time_get();
+		inode->link_count = 0;
 
-		// TODO Also adjust bitmaps and delete blocks
+		// Free data blocks
 		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
+		struct ext2_blocknum_resolver_cache* res_cache = zmalloc(sizeof(struct ext2_blocknum_resolver_cache));
+
+		for(int i = 0; true; i++) {
+			uint32_t num = ext2_resolve_blocknum(inode, i, res_cache);
+			if(!num) {
+				break;
+			}
+
+			ext2_bitmap_free(blockgroup->block_bitmap, num % superblock->blocks_per_group);
+		}
+
+		ext2_free_blocknum_resolver_cache(res_cache);
+		ext2_bitmap_free(blockgroup->inode_bitmap, inode_num % superblock->inodes_per_group);
 		superblock->free_inodes++;
 		blockgroup->free_inodes++;
-		blockgroup->free_blocks += inode->block_count;
+
+		// inode->block_count counts IDE blocks, free_blocks counts ext2 blocks.
+		superblock->free_blocks += inode->block_count / 2;
+		blockgroup->free_blocks += inode->block_count / 2;
+
+		if(is_dir) {
+			blockgroup->used_directories--;
+
+			// Decrease parent directory link count (removed .. entry)
+			struct inode* dir_inode = kmalloc(superblock->inode_size);
+			if(!ext2_inode_read(dir_inode, dir_ino)) {
+				kfree(dir_inode);
+				kfree(inode);
+				sc_errno = ENOENT;
+				return -1;
+			}
+
+			dir_inode->link_count--;
+			ext2_inode_write(dir_inode, dir_ino);
+		}
+
 		write_superblock();
 		write_blockgroup_table();
 	}

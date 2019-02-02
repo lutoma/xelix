@@ -110,6 +110,14 @@ struct dirent {
 	char name[] __attribute__ ((nonstring));
 } __attribute__((packed));
 
+
+struct ext2_blocknum_resolver_cache {
+	uint32_t* indirect_table;
+	uint32_t* double_table;
+	uint32_t double_second_block;
+	uint32_t* double_second_table;
+};
+
 #define SUPERBLOCK_MAGIC 0xEF53
 #define SUPERBLOCK_STATE_CLEAN 1
 #define SUPERBLOCK_STATE_DIRTY 2
@@ -152,10 +160,13 @@ struct inode* root_inode;
 bool ext2_inode_write(struct inode* buf, uint32_t inode_num);
 bool ext2_inode_read(struct inode* buf, uint32_t inode_num);
 uint32_t ext2_inode_new(struct inode* inode, uint16_t mode);
+uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct ext2_blocknum_resolver_cache* cache);
+void ext2_free_blocknum_resolver_cache(struct ext2_blocknum_resolver_cache* cache);
 uint8_t* ext2_inode_read_data(struct inode* inode, uint32_t offset, size_t length, uint8_t* buf);
 uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t offset, size_t length, uint8_t* buf);
 
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
+void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit);
 char* ext2_chop_path(const char* path, char** ent);
 
 uint32_t ext2_block_new();
