@@ -30,6 +30,7 @@ DEFINE_SYSCALL(read);
 DEFINE_SYSCALL(sbrk);
 DEFINE_SYSCALL(unlink);
 DEFINE_SYSCALL(chmod);
+DEFINE_SYSCALL(link);
 DEFINE_SYSCALL(test);
 DEFINE_SYSCALL(open);
 DEFINE_SYSCALL(stat);
@@ -51,6 +52,7 @@ DEFINE_SYSCALL(audio_play);
 DEFINE_SYSCALL(close);
 DEFINE_SYSCALL(mkdir);
 DEFINE_SYSCALL(gettimeofday);
+DEFINE_SYSCALL(readlink);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -65,7 +67,7 @@ syscall_t syscall_table[] = {
 	sys_test,			// 9
 	sys_unlink,			// 10
 	sys_chmod,			// 11
-	NULL,				// 12
+	sys_link,			// 12
 	sys_open,			// 13
 	sys_stat,			// 14
 	sys_seek,			// 15
@@ -83,7 +85,8 @@ syscall_t syscall_table[] = {
 	sys_socket_recv,	// 27
 	sys_execnew,		// 28
 	sys_wait,			// 29
-	sys_audio_play		// 30
+	sys_audio_play,		// 30
+	sys_readlink			// 31
 };
 
 char* syscall_name_table[] = {
@@ -99,7 +102,7 @@ char* syscall_name_table[] = {
 	"test",			// 9
 	"unlink",		// 10
 	"chmod",		// 11
-	"uname",		// 12
+	"link",			// 12
 	"open",			// 13
 	"stat",			// 14
 	"seek",			// 15
@@ -117,5 +120,6 @@ char* syscall_name_table[] = {
 	"socket_recv",	// 27
 	"execnew",		// 28
 	"wait",			// 29
-	"audio_play"	// 30
+	"audio_play",	// 30
+	"readlink"		// 31
 };

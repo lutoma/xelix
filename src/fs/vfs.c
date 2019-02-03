@@ -528,6 +528,76 @@ int vfs_utimes(const char* orig_path, struct timeval times[2], task_t* task) {
 	return r;
 }
 
+int vfs_link(const char* orig_path, const char* orig_new_path, task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* new_path = vfs_normalize_path(orig_new_path, pwd);
+
+	char* mount_path = NULL;
+	char* new_mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+	int new_mp_num = get_mountpoint(new_path, &new_mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		kfree(new_path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(mp_num != new_mp_num) {
+		kfree(path);
+		kfree(new_path);
+		sc_errno = EXDEV;
+		return -1;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.link) {
+		kfree(path);
+		kfree(new_path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.link(mount_path, new_mount_path);
+	kfree(path);
+	kfree(new_path);
+	return r;
+}
+
+int vfs_readlink(const char* orig_path, char* buf, size_t size, task_t* task) {
+	char* pwd = "/";
+	if(task) {
+		pwd = strndup(task->cwd, 265);
+	}
+
+	char* path = vfs_normalize_path(orig_path, pwd);
+	char* mount_path = NULL;
+	int mp_num = get_mountpoint(path, &mount_path);
+
+	if(mp_num < 0) {
+		kfree(path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct mountpoint mp = mountpoints[mp_num];
+	if(!mp.callbacks.readlink) {
+		kfree(path);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = mp.callbacks.readlink(mount_path, buf, size);
+	kfree(path);
+	return r;
+}
+
 int vfs_rmdir(const char* orig_path, task_t* task) {
 	char* pwd = "/";
 	if(task) {

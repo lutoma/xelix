@@ -227,6 +227,7 @@ static int do_unlink(const char* path, bool is_dir) {
 
 	ext2_dirent_rm(dir_ino, vfs_basename(path));
 	link_count--;
+	inode->link_count--;
 
 	if(link_count < 1) {
 		debug("do_unlink: inode %d link count < 1, purging.\n", inode_num);
@@ -287,6 +288,48 @@ int ext2_unlink(char* path) {
 int ext2_rmdir(const char* path) {
 	return do_unlink(path, true);
 }
+
+int ext2_link(const char* path, const char* new_path) {
+	char* new_name;
+	char* new_dir_path = ext2_chop_path(new_path, &new_name);
+	uint32_t inode_num = ext2_resolve_inode(path, NULL);
+	uint32_t dir_inode = ext2_resolve_inode(new_dir_path, NULL);
+
+	if(!inode_num || !dir_inode) {
+		kfree(new_dir_path);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	ext2_dirent_add(dir_inode, inode_num, new_name, EXT2_DIRENT_FT_REG_FILE);
+	kfree(new_dir_path);
+	return 0;
+}
+
+int ext2_readlink(const char* path, char* buf, size_t size) {
+	uint32_t inode_num = ext2_resolve_inode(path, NULL);
+	if(!inode_num) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(bl_off(1));
+	if(!ext2_inode_read(inode, inode_num)) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(vfs_mode_to_filetype(inode->mode) != FT_IFLNK) {
+		kfree(inode);
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	strncpy(buf, (char*)inode->blocks, size);
+	kfree(inode);
+	return strlen(buf);
+}
+
 
 void ext2_init() {
 	// The superblock always has an offset of 1024, so is in sector 2 & 3
@@ -376,6 +419,8 @@ void ext2_init() {
 		.mkdir = ext2_mkdir,
 		.utimes = ext2_utimes,
 		.rmdir = ext2_rmdir,
+		.link = ext2_link,
+		.readlink = ext2_readlink,
 	};
 	vfs_mount("/", NULL, "/dev/ide1p1", "ext2", &cb);
 }

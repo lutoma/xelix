@@ -1,4 +1,4 @@
-/* Copyright © 2013-2018 Lukas Martini
+/* Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -285,4 +285,12 @@ int utime(const char *path, const struct utimbuf *times) {
 
 int rmdir(const char *path) {
 	return syscall(23, path, 0, 0);
+}
+
+int _link(char *old, char *new){
+	return syscall(12, old, new, 0);
+}
+
+int readlink(const char *path, char *buf, size_t bufsize) {
+	return syscall(31, path, buf, bufsize);
 }

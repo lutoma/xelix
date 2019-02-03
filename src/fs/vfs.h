@@ -115,6 +115,8 @@ struct vfs_callbacks {
 	int (*chmod)(const char* path, uint32_t mode);
 	int (*chown)(const char* path, uint16_t owner, uint16_t group);
 	int (*utimes)(const char* path, struct timeval times[2]);
+	int (*link)(const char* path, const char* new_path);
+	int (*readlink)(const char* orig_path, char* buf, size_t size);
 	int (*rmdir)(const char* path);
 };
 
@@ -136,6 +138,8 @@ int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, struct task* ta
 int vfs_mkdir(const char* orig_path, uint32_t mode, struct task* task);
 int vfs_access(const char *path, uint32_t amode, struct task* task);
 int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task);
+int vfs_link(const char* orig_path, const char* orig_new_path, struct task* task);
+int vfs_readlink(const char* orig_path, char* buf, size_t size, struct task* task);
 int vfs_rmdir(const char* orig_path, struct task* task);
 
 int vfs_mount(char* path, void* instance, char* dev, char* type,

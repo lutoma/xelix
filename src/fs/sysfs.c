@@ -223,6 +223,8 @@ void sysfs_init() {
 		.mkdir = NULL,
 		.utimes = NULL,
 		.rmdir = NULL,
+		.link = NULL,
+		.readlink = NULL,
 	};
 	vfs_mount("/sys", &sys_files, "sys", "sysfs", &cb);
 	vfs_mount("/dev", &dev_files, "dev", "sysfs", &cb);

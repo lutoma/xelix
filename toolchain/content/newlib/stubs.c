@@ -41,20 +41,6 @@
 #include <poll.h>
 #include <mntent.h>
 
-int _link(char *old, char *new){
-	fprintf(stderr, "Warning: xelix newlib link() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int readlink(const char *path, char *buf, size_t bufsize) {
-	fprintf(stderr, "Warning: xelix newlib readlink() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 
 clock_t _times(struct tms *buf) {
 	fprintf(stderr, "Warning: xelix newlib times() stub called.\n");
