@@ -45,7 +45,7 @@ int ext2_chmod(const char* path, uint32_t mode) {
 		return -1;
 	}
 
-	inode->mode = vfs_mode_to_filetype(inode->mode) + mode;
+	inode->mode = vfs_mode_to_filetype(inode->mode) & mode;
 	ext2_inode_write(inode, inode_num);
 	kfree(inode);
 	return 0;
