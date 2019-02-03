@@ -168,7 +168,6 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
 void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit);
 char* ext2_chop_path(const char* path, char** ent);
-uint8_t ext2_ft_inode_to_dirent(const uint16_t ft);
 void ext2_dump_inode(struct inode* buf);
 
 uint32_t ext2_block_new();

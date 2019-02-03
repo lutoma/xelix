@@ -308,8 +308,13 @@ int ext2_link(const char* path, const char* new_path) {
 		return -1;
 	}
 
-	//uint8_t dirent_type = ext2_ft_inode_to_dirent(vfs_mode_to_filetype(inode->mode));
-	ext2_dirent_add(dir_dirent->inode, dirent->inode, new_name, EXT2_DIRENT_FT_REG_FILE);
+	// Directory hard links are not allowed in ext2
+	if(dirent->type == EXT2_DIRENT_FT_DIR) {
+		sc_errno = EPERM;
+		return -1;
+	}
+
+	ext2_dirent_add(dir_dirent->inode, dirent->inode, new_name, dirent->type);
 	kfree(new_dir_path);
 	kfree(dirent);
 	return 0;
