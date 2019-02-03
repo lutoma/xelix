@@ -1062,12 +1062,12 @@ index 4b4eeaf..cb283ff 100644
  }
 -
  #endif // !ENABLE_FEATURE_MOUNT_NFS
- 
+
  // Mount one directory.  Handles CIFS, NFS, loopback, autobind, and filesystem
 @@ -1933,81 +1903,6 @@
  		goto report_error;
  	}
- 
+
 -	// Might this be an CIFS filesystem?
 -	if (ENABLE_FEATURE_MOUNT_CIFS
 -	 && (!mp->mnt_type || strcmp(mp->mnt_type, "cifs") == 0)
@@ -1146,3 +1146,15 @@ index 4b4eeaf..cb283ff 100644
  	// Might this be an NFS filesystem?
  	if ((!mp->mnt_type || is_prefixed_with(mp->mnt_type, "nfs"))
  	 && strchr(mp->mnt_fsname, ':') != NULL
+--- busybox-1.29.2/archival/libarchive/get_header_tar.c	2019-02-03 04:06:07.849115214 +0100
++++ busybox-1.29.2/archival/libarchive/get_header_tar.c	2019-02-03 04:06:22.289164932 +0100
+@@ -292,7 +292,8 @@
+ 		/* we trash prefix[0] here, but we DO need it later! */
+ 		unsigned minor = GET_OCTAL(tar.devminor);
+ 		unsigned major = GET_OCTAL(tar.devmajor);
+-		file_header->device = makedev(major, minor);
++		//file_header->device = makedev(major, minor);
++		file_header->device = 0;
+ 		tar.prefix[0] = t;
+ 	}
+
