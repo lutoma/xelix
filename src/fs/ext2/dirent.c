@@ -94,7 +94,8 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
 	return offset;
 }
 
-struct dirent* ext2_dirent_find(struct inode* inode, const char* search) {
+// Looks for a directory entry with name `sarch` in a directory inode
+static struct dirent* search_dir(struct inode* inode, const char* search) {
 	uint8_t* dirent_block = kmalloc(inode->size);
 	if(!ext2_inode_read_data(inode, 0, inode->size, dirent_block)) {
 		return NULL;
@@ -125,6 +126,50 @@ struct dirent* ext2_dirent_find(struct inode* inode, const char* search) {
 
 	kfree(dirent_block);
 	return NULL;
+}
+
+struct dirent* ext2_dirent_find(char* path, uint32_t* parent_ino) {
+	debug("Resolving inode for path %s\n", path);
+
+	if(unlikely(!strcmp("/", path)))
+		path = "/.";
+
+	// Split path and iterate trough the single parts, going from / upwards.
+	char* pch;
+	char* sp;
+
+	// Throwaway pointer for strtok_r
+	char* path_tmp = strndup(path, 500);
+	pch = strtok_r(path_tmp, "/", &sp);
+	struct inode* inode = kmalloc(superblock->inode_size);
+	struct dirent* dirent = NULL;
+	struct dirent* result = NULL;
+
+	while(pch != NULL) {
+		int inode_num = dirent ? dirent->inode : ROOT_INODE;
+		if(!ext2_inode_read(inode, inode_num)) {
+			goto bye;
+		}
+
+		if(dirent) {
+			kfree(dirent);
+		}
+
+		if(parent_ino) {
+			*parent_ino = inode_num;
+		}
+
+		dirent = search_dir(inode, pch);
+		if(!dirent) {
+			goto bye;
+		}
+		pch = strtok_r(NULL, "/", &sp);
+	}
+	result = dirent;
+bye:
+	kfree(path_tmp);
+	kfree(inode);
+	return result;
 }
 
 void ext2_dirent_rm(uint32_t inode_num, char* name) {

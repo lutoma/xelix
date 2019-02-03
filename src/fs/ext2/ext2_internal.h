@@ -168,12 +168,14 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
 void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit);
 char* ext2_chop_path(const char* path, char** ent);
+uint8_t ext2_ft_inode_to_dirent(const uint16_t ft);
+void ext2_dump_inode(struct inode* buf);
 
 uint32_t ext2_block_new();
 
 size_t ext2_write(vfs_file_t* fp, void* source, size_t size);
 size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
-struct dirent* ext2_dirent_find(struct inode* inode, const char* search);
+struct dirent* ext2_dirent_find(char* path, uint32_t* parent_ino);
 void ext2_dirent_rm(uint32_t inode_num, char* name);
 void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
@@ -182,20 +184,3 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance);
 
 size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type);
 size_t ext2_read(vfs_file_t* fp, void* dest, size_t size);
-
-static inline void dump_inode(struct inode* buf) {
-	debug("%-19s: %d\n", "uid", buf->uid);
-	debug("%-19s: %d\n", "gid", buf->gid);
-	debug("%-19s: %d\n", "size", buf->size);
-	debug("%-19s: %d\n", "block_count", buf->block_count);
-	debug("%-19s: %d\n", "link_count", buf->link_count);
-	debug("%-19s: %d\n", "atime", buf->atime);
-	debug("%-19s: %d\n", "ctime", buf->ctime);
-	debug("%-19s: %d\n", "mtime", buf->mtime);
-	debug("%-19s: %d\n", "dtime", buf->dtime);
-
-	debug("Blocks table:\n");
-	for(uint32_t i = 0; i < 15; i++) {
-		debug("\t%2d: 0x%x\n", i, buf->blocks[i]);
-	}
-}

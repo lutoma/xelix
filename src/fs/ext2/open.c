@@ -28,51 +28,6 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino) {
-	debug("Resolving inode for path %s\n", path);
-
-	// The root directory always has inode 2
-	if(unlikely(!strcmp("/", path)))
-		return ROOT_INODE;
-
-	// Split path and iterate trough the single parts, going from / upwards.
-	char* pch;
-	char* sp;
-
-	// Throwaway pointer for strtok_r
-	char* path_tmp = strndup(path, 500);
-	pch = strtok_r(path_tmp, "/", &sp);
-	struct inode* inode = kmalloc(superblock->inode_size);
-	struct dirent* dirent = NULL;
-	uint32_t result = 0;
-
-	while(pch != NULL) {
-		int inode_num = dirent ? dirent->inode : ROOT_INODE;
-		if(!ext2_inode_read(inode, inode_num)) {
-			goto bye;
-		}
-
-		if(dirent) {
-			kfree(dirent);
-		}
-
-		if(parent_ino) {
-			*parent_ino = inode_num;
-		}
-
-		dirent = ext2_dirent_find(inode, pch);
-		if(!dirent) {
-			goto bye;
-		}
-		pch = strtok_r(NULL, "/", &sp);
-	}
-	result = dirent->inode;
-bye:
-	kfree(path_tmp);
-	kfree(inode);
-	return result;
-}
-
 static uint32_t handle_symlink(struct inode* inode, const char* path, uint32_t flags, void* mount_instance) {
 	/* For symlinks with up to 60 chars length, the path is stored in the
 	 * inode in the area where normally the block pointers would be.
@@ -108,11 +63,12 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 	}
 
 	uint32_t dir_inode = 0;
-	uint32_t inode_num = ext2_resolve_inode(path, &dir_inode);
+	struct dirent* dirent = ext2_dirent_find(path, &dir_inode);
 	struct inode* inode = kmalloc(superblock->inode_size);
+	uint32_t inode_num = 0;
 	bool created = false;
 
-	if(!inode_num) {
+	if(!dirent) {
 		if(!(flags & O_CREAT)) {
 			kfree(inode);
 			sc_errno = ENOENT;
@@ -126,12 +82,15 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 	} else {
 		if((flags & O_CREAT) && (flags & O_EXCL)) {
 			kfree(inode);
+			kfree(dirent);
 			sc_errno = EEXIST;
 			return 0;
 		}
 
+		inode_num = dirent->inode;
 		if(!ext2_inode_read(inode, inode_num)) {
 			kfree(inode);
+			kfree(dirent);
 			sc_errno = ENOENT;
 			return 0;
 		}
@@ -148,6 +107,7 @@ uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance) {
 	}
 
 	kfree(inode);
+	kfree(dirent);
 	return inode_num;
 }
 

@@ -32,34 +32,37 @@
 #include <fs/block.h>
 
 int ext2_chmod(const char* path, uint32_t mode) {
-	uint32_t inode_num = ext2_resolve_inode(path, NULL);
-	if(!inode_num) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL);
+	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, inode_num)) {
+	if(!ext2_inode_read(inode, dirent->inode)) {
+		kfree(dirent);
 		kfree(inode);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	inode->mode = vfs_mode_to_filetype(inode->mode) & mode;
-	ext2_inode_write(inode, inode_num);
+	ext2_inode_write(inode, dirent->inode);
+	kfree(dirent);
 	kfree(inode);
 	return 0;
 }
 
 int ext2_chown(const char* path, uint16_t uid, uint16_t gid) {
-	uint32_t inode_num = ext2_resolve_inode(path, NULL);
-	if(!inode_num) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL);
+	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, inode_num)) {
+	if(!ext2_inode_read(inode, dirent->inode)) {
+		kfree(dirent);
 		kfree(inode);
 		sc_errno = ENOENT;
 		return -1;
@@ -71,7 +74,8 @@ int ext2_chown(const char* path, uint16_t uid, uint16_t gid) {
 	if(gid != -1) {
 		inode->gid = gid;
 	}
-	ext2_inode_write(inode, inode_num);
+	ext2_inode_write(inode, dirent->inode);
+	kfree(dirent);
 	kfree(inode);
 	return 0;
 }
@@ -110,8 +114,8 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 	char* name;
 	char* base_path = ext2_chop_path(path, &name);
 
-	uint32_t parent_inode = ext2_resolve_inode(base_path, NULL);
-	if(!parent_inode) {
+	struct dirent* parent_dirent = ext2_dirent_find(base_path, NULL);
+	if(!parent_dirent) {
 		kfree(base_path);
 		sc_errno = ENOENT;
 		return -1;
@@ -133,30 +137,31 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 
 	inode->size = bl_off(1);
 	ext2_inode_write(inode, inode_num);
-	ext2_dirent_add(parent_inode, inode_num, name, EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(parent_dirent->inode, inode_num, name, EXT2_DIRENT_FT_DIR);
 
 	// Add . and .. dirents
 	ext2_dirent_add(inode_num, inode_num, ".", EXT2_DIRENT_FT_DIR);
-	ext2_dirent_add(inode_num, parent_inode, "..", EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(inode_num, parent_dirent->inode, "..", EXT2_DIRENT_FT_DIR);
 
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 	blockgroup_table[blockgroup_num].used_directories++;
 	write_blockgroup_table();
 
+	kfree(parent_dirent);
 	kfree(inode);
 	kfree(base_path);
 	return 0;
 }
 
 int ext2_utimes(const char* path, struct timeval times[2]) {
-	uint32_t inode_num = ext2_resolve_inode(path, NULL);
-	if(!inode_num) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL);
+	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	struct inode* inode = kmalloc(bl_off(1));
-	if(!ext2_inode_read(inode, inode_num)) {
+	if(!ext2_inode_read(inode, dirent->inode)) {
 		sc_errno = ENOENT;
 		return -1;
 	}
@@ -172,25 +177,25 @@ int ext2_utimes(const char* path, struct timeval times[2]) {
 		inode->ctime = t;
 	}
 
-	ext2_inode_write(inode, inode_num);
+	ext2_inode_write(inode, dirent->inode);
 	return 0;
 }
 
 static int do_unlink(const char* path, bool is_dir) {
 	uint32_t dir_ino = 0;
-	uint32_t inode_num = ext2_resolve_inode(path, &dir_ino);
-	if(!inode_num || !dir_ino) {
+	struct dirent* dirent = ext2_dirent_find(path, &dir_ino);
+	if(!dirent || !dir_ino) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
-	if(inode_num == ROOT_INODE) {
+	if(dirent->inode == ROOT_INODE) {
 		sc_errno = EPERM;
 		return -1;
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, inode_num)) {
+	if(!ext2_inode_read(inode, dirent->inode)) {
 		kfree(inode);
 		sc_errno = ENOENT;
 		return -1;
@@ -230,12 +235,12 @@ static int do_unlink(const char* path, bool is_dir) {
 	inode->link_count--;
 
 	if(link_count < 1) {
-		debug("do_unlink: inode %d link count < 1, purging.\n", inode_num);
+		debug("do_unlink: inode %d link count < 1, purging.\n", dirent->inode);
 		inode->dtime = time_get();
 		inode->link_count = 0;
 
 		// Free data blocks
-		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(inode_num);
+		struct blockgroup* blockgroup = blockgroup_table + inode_to_blockgroup(dirent->inode);
 		struct ext2_blocknum_resolver_cache* res_cache = zmalloc(sizeof(struct ext2_blocknum_resolver_cache));
 
 		for(int i = 0; true; i++) {
@@ -248,7 +253,7 @@ static int do_unlink(const char* path, bool is_dir) {
 		}
 
 		ext2_free_blocknum_resolver_cache(res_cache);
-		ext2_bitmap_free(blockgroup->inode_bitmap, inode_num % superblock->inodes_per_group);
+		ext2_bitmap_free(blockgroup->inode_bitmap, dirent->inode % superblock->inodes_per_group);
 		superblock->free_inodes++;
 		blockgroup->free_inodes++;
 
@@ -276,8 +281,9 @@ static int do_unlink(const char* path, bool is_dir) {
 		write_blockgroup_table();
 	}
 
-	ext2_inode_write(inode, inode_num);
+	ext2_inode_write(inode, dirent->inode);
 	kfree(inode);
+	kfree(dirent);
 	return 0;
 }
 
@@ -292,41 +298,48 @@ int ext2_rmdir(const char* path) {
 int ext2_link(const char* path, const char* new_path) {
 	char* new_name;
 	char* new_dir_path = ext2_chop_path(new_path, &new_name);
-	uint32_t inode_num = ext2_resolve_inode(path, NULL);
-	uint32_t dir_inode = ext2_resolve_inode(new_dir_path, NULL);
+	struct dirent* dirent = ext2_dirent_find(path, NULL);
+	struct dirent* dir_dirent = ext2_dirent_find(new_dir_path, NULL);
 
-	if(!inode_num || !dir_inode) {
+	if(!dirent || !dir_dirent) {
 		kfree(new_dir_path);
+		kfree(dirent);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
-	ext2_dirent_add(dir_inode, inode_num, new_name, EXT2_DIRENT_FT_REG_FILE);
+	//uint8_t dirent_type = ext2_ft_inode_to_dirent(vfs_mode_to_filetype(inode->mode));
+	ext2_dirent_add(dir_dirent->inode, dirent->inode, new_name, EXT2_DIRENT_FT_REG_FILE);
 	kfree(new_dir_path);
+	kfree(dirent);
 	return 0;
 }
 
 int ext2_readlink(const char* path, char* buf, size_t size) {
-	uint32_t inode_num = ext2_resolve_inode(path, NULL);
-	if(!inode_num) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL);
+	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	struct inode* inode = kmalloc(bl_off(1));
-	if(!ext2_inode_read(inode, inode_num)) {
+	if(!ext2_inode_read(inode, dirent->inode)) {
+		kfree(inode);
+		kfree(dirent);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	if(vfs_mode_to_filetype(inode->mode) != FT_IFLNK) {
 		kfree(inode);
+		kfree(dirent);
 		sc_errno = EINVAL;
 		return -1;
 	}
 
 	strncpy(buf, (char*)inode->blocks, size);
 	kfree(inode);
+	kfree(dirent);
 	return strlen(buf);
 }
 
