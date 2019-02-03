@@ -232,20 +232,13 @@ struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr)
 }
 
 void vmem_rm_context(struct vmem_context* ctx) {
+	if(ctx == vmem_kernelContext) {
+		return;
+	}
+
 	struct vmem_context_node *node = ctx->node;
-
-	/* For some reason, freeing pages after an offset of about ~30000 causes
-	 * kmalloc to become corrupted, so use this giant hack to avoid that –
-	 * freeing a lot of memory is still better than freeing no memory.
-	 * FIXME Should be properly debugged.
-	 */
-	for (int i = 0; node != NULL; node = node->next, i++)
-	{
-		if(i >= 30000) {
-			break;
-		}
-
-		struct vmem_context_node* old_node = (void*)node;
+	for (uint32_t i = 0; node && i < ctx->nodes; i++) {
+		struct vmem_context_node* old_node = node;
 		node = node->next;
 		kfree(old_node->page);
 		kfree(old_node);

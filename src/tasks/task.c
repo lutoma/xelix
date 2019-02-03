@@ -170,7 +170,7 @@ void task_cleanup(task_t* t) {
 		}
 	}
 
-	//vmem_rm_context(t->memory_context);
+	vmem_rm_context(t->memory_context);
 
 	// FIXME No good since we pass those in as static strings occasionally
 	//kfree_array(t->environ);
