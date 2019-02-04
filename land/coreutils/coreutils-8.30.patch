@@ -1,0 +1,399 @@
+--- coreutils-8.30/build-aux/config.sub	2018-06-24 06:52:06.000000000 +0200
++++ coreutils-8.30/build-aux/config.sub	2018-09-19 03:48:03.896912948 +0200
+@@ -1376,7 +1376,7 @@
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd*)
++	     | midnightbsd* | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/copy.c coreutils-8.30-patched/src/copy.c
+--- coreutils-8.30/src/copy.c	2018-07-01 04:32:02.000000000 +0200
++++ coreutils-8.30-patched/src/copy.c	2019-02-04 03:03:11.537695627 +0100
+@@ -1370,9 +1370,9 @@
+
+   if (x->preserve_mode || x->move_mode)
+     {
+-      if (copy_acl (src_name, source_desc, dst_name, dest_desc, src_mode) != 0
+-          && x->require_preserve)
+-        return_val = false;
++      //if (copy_acl (src_name, source_desc, dst_name, dest_desc, src_mode) != 0
++      //    && x->require_preserve)
++      return_val = false;
+     }
+   else if (x->set_mode)
+     {
+@@ -2860,9 +2860,9 @@
+
+   if (x->preserve_mode || x->move_mode)
+     {
+-      if (copy_acl (src_name, -1, dst_name, -1, src_mode) != 0
+-          && x->require_preserve)
+-        return false;
++      //if (copy_acl (src_name, -1, dst_name, -1, src_mode) != 0
++      //    && x->require_preserve)
++      return false;
+     }
+   else if (x->set_mode)
+     {
+Binary files coreutils-8.30/src/copy.o and coreutils-8.30-patched/src/copy.o differ
+Binary files coreutils-8.30/src/cp and coreutils-8.30-patched/src/cp differ
+diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/cp.c coreutils-8.30-patched/src/cp.c
+--- coreutils-8.30/src/cp.c	2018-06-24 04:12:51.000000000 +0200
++++ coreutils-8.30-patched/src/cp.c	2019-02-04 03:02:49.004411264 +0100
+@@ -327,8 +327,8 @@
+
+       if (x->preserve_mode)
+         {
+-          if (copy_acl (src_name, -1, dst_name, -1, p->st.st_mode) != 0)
+-            return false;
++          //if (copy_acl (src_name, -1, dst_name, -1, p->st.st_mode) != 0)
++          return false;
+         }
+       else if (p->restore_mode)
+         {
+diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mknod.c coreutils-8.30-patched/src/mknod.c
+--- coreutils-8.30/src/mknod.c	2018-05-14 06:20:24.000000000 +0200
++++ coreutils-8.30-patched/src/mknod.c	2019-02-04 03:03:39.980966121 +0100
+@@ -240,7 +240,7 @@
+           die (EXIT_FAILURE, 0,
+                _("invalid minor device number %s"), quote (s_minor));
+
+-        device = makedev (i_major, i_minor);
++        //device = makedev (i_major, i_minor);
+ #ifdef NODEV
+         if (device == NODEV)
+           die (EXIT_FAILURE, 0, _("invalid device %s %s"),
+diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/sort.c coreutils-8.30-patched/src/sort.c
+--- coreutils-8.30/src/sort.c	2018-05-14 06:20:24.000000000 +0200
++++ coreutils-8.30-patched/src/sort.c	2019-02-04 03:06:23.907295021 +0100
+@@ -645,7 +645,8 @@
+ static void
+ cs_enter (struct cs_status *status)
+ {
+-  int ret = pthread_sigmask (SIG_BLOCK, &caught_signals, &status->sigs);
++  //int ret = pthread_sigmask (SIG_BLOCK, &caught_signals, &status->sigs);
++  int ret = 0;
+   status->valid = ret == 0;
+ }
+
+@@ -656,7 +657,7 @@
+   if (status->valid)
+     {
+       /* Ignore failure when restoring the signal mask. */
+-      pthread_sigmask (SIG_SETMASK, &status->sigs, NULL);
++      //pthread_sigmask (SIG_SETMASK, &status->sigs, NULL);
+     }
+ }
+
+@@ -3256,7 +3257,7 @@
+   root->parent = NULL;
+   root->level = MERGE_END;
+   root->queued = false;
+-  pthread_mutex_init (&root->lock, NULL);
++  //pthread_mutex_init (&root->lock, NULL);
+
+   init_node (root, root + 1, dest, nthreads, nlines, false);
+   return merge_tree;
+@@ -3271,7 +3272,7 @@
+
+   while (n_nodes--)
+     {
+-      pthread_mutex_destroy (&node->lock);
++      //pthread_mutex_destroy (&node->lock);
+       node++;
+     }
+
+@@ -3307,7 +3308,7 @@
+   node->parent = parent;
+   node->level = parent->level + 1;
+   node->queued = false;
+-  pthread_mutex_init (&node->lock, NULL);
++  //pthread_mutex_init (&node->lock, NULL);
+
+   if (nthreads > 1)
+     {
+@@ -3346,7 +3347,7 @@
+ static inline void
+ lock_node (struct merge_node *node)
+ {
+-  pthread_mutex_lock (&node->lock);
++  //pthread_mutex_lock (&node->lock);
+ }
+
+ /* Unlock a merge tree NODE. */
+@@ -3354,7 +3355,7 @@
+ static inline void
+ unlock_node (struct merge_node *node)
+ {
+-  pthread_mutex_unlock (&node->lock);
++  //pthread_mutex_unlock (&node->lock);
+ }
+
+ /* Destroy merge QUEUE. */
+@@ -3363,7 +3364,7 @@
+ queue_destroy (struct merge_node_queue *queue)
+ {
+   heap_free (queue->priority_queue);
+-  pthread_cond_destroy (&queue->cond);
++  //pthread_cond_destroy (&queue->cond);
+   pthread_mutex_destroy (&queue->mutex);
+ }
+
+@@ -3377,8 +3378,8 @@
+      time, the heap should accommodate all of them.  Counting a NULL
+      dummy head for the heap, reserve 2 * NTHREADS nodes.  */
+   queue->priority_queue = heap_alloc (compare_nodes, 2 * nthreads);
+-  pthread_mutex_init (&queue->mutex, NULL);
+-  pthread_cond_init (&queue->cond, NULL);
++  //pthread_mutex_init (&queue->mutex, NULL);
++  //pthread_cond_init (&queue->cond, NULL);
+ }
+
+ /* Insert NODE into QUEUE.  The caller either holds a lock on NODE, or
+@@ -3387,11 +3388,11 @@
+ static void
+ queue_insert (struct merge_node_queue *queue, struct merge_node *node)
+ {
+-  pthread_mutex_lock (&queue->mutex);
++  //pthread_mutex_lock (&queue->mutex);
+   heap_insert (queue->priority_queue, node);
+   node->queued = true;
+-  pthread_cond_signal (&queue->cond);
+-  pthread_mutex_unlock (&queue->mutex);
++  //pthread_cond_signal (&queue->cond);
++  //pthread_mutex_unlock (&queue->mutex);
+ }
+
+ /* Pop the top node off the priority QUEUE, lock the node, return it.  */
+@@ -3400,10 +3401,10 @@
+ queue_pop (struct merge_node_queue *queue)
+ {
+   struct merge_node *node;
+-  pthread_mutex_lock (&queue->mutex);
++  //pthread_mutex_lock (&queue->mutex);
+   while (! (node = heap_remove_top (queue->priority_queue)))
+-    pthread_cond_wait (&queue->cond, &queue->mutex);
+-  pthread_mutex_unlock (&queue->mutex);
++    //pthread_cond_wait (&queue->cond, &queue->mutex);
++  //pthread_mutex_unlock (&queue->mutex);
+   lock_node (node);
+   node->queued = false;
+   return node;
+@@ -3649,11 +3650,11 @@
+                              node->lo_child, queue, tfp, temp_output};
+
+   if (nthreads > 1 && SUBTHREAD_LINES_HEURISTIC <= nlines
+-      && pthread_create (&thread, NULL, sortlines_thread, &args) == 0)
++      && false)
+     {
+       sortlines (lines - node->nlo, hi_threads, total_lines,
+                  node->hi_child, queue, tfp, temp_output);
+-      pthread_join (thread, NULL);
++      //pthread_join (thread, NULL);
+     }
+   else
+     {
+diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/stty.c coreutils-8.30-patched/src/stty.c
+--- coreutils-8.30/src/stty.c	2018-05-14 06:20:24.000000000 +0200
++++ coreutils-8.30-patched/src/stty.c	2019-02-04 03:00:45.801332532 +0100
+@@ -1698,13 +1698,14 @@
+ static void
+ set_speed (enum speed_setting type, const char *arg, struct termios *mode)
+ {
+-  speed_t baud;
++  /*speed_t baud;
+
+   baud = string_to_baud (arg);
+   if (type == input_speed || type == both_speeds)
+     cfsetispeed (mode, baud);
+   if (type == output_speed || type == both_speeds)
+     cfsetospeed (mode, baud);
++  */
+ }
+
+ #ifdef TIOCGWINSZ
+@@ -2048,7 +2049,7 @@
+ static void
+ display_speed (struct termios *mode, bool fancy)
+ {
+-  if (cfgetispeed (mode) == 0 || cfgetispeed (mode) == cfgetospeed (mode))
++  /*if (cfgetispeed (mode) == 0 || cfgetispeed (mode) == cfgetospeed (mode))
+     wrapf (fancy ? "speed %lu baud;" : "%lu\n",
+            baud_to_value (cfgetospeed (mode)));
+   else
+@@ -2057,6 +2058,7 @@
+            baud_to_value (cfgetospeed (mode)));
+   if (!fancy)
+     current_col = 0;
++  */
+ }
+
+ static void
+--- coreutils-8.30/lib/getprogname.c  2018-05-14 06:22:33.000000000 +0200
++++ coreutils-8.30-patched/lib/getprogname.c  2019-02-04 20:51:53.078315578 +0100
+@@ -177,7 +177,7 @@
+     }
+   return NULL;
+ # else
+-#  error "getprogname module not ported to this OS"
++  return "coreutils";
+ # endif
+ }
+
+--- coreutils-8.30/lib/getaddrinfo.c  2018-05-14 06:22:33.000000000 +0200
++++ coreutils-8.30-patched/lib/getaddrinfo.c  2019-02-04 02:58:02.381634107 +0100
+@@ -189,7 +189,7 @@
+
+       if (hints == NULL || !(hints->ai_flags & AI_NUMERICSERV))
+         /* FIXME: Use getservbyname_r if available. */
+-        se = getservbyname (servname, proto);
++        //se = getservbyname (servname, proto);
+
+       if (!se)
+         {
+@@ -199,14 +199,14 @@
+           port = strtoul (servname, &c, 10);
+           if (*c || port > 0xffff)
+             return EAI_NONAME;
+-          port = htons (port);
++          //port = htons (port);
+         }
+       else
+         port = se->s_port;
+     }
+
+   /* FIXME: Use gethostbyname_r if available. */
+-  he = gethostbyname (nodename);
++  //he = gethostbyname (nodename);
+   if (!he || he->h_addr_list[0] == NULL)
+     return EAI_NONAME;
+
+@@ -354,90 +354,3 @@
+       free (cur);
+     }
+ }
+-
+-int
+-getnameinfo (const struct sockaddr *restrict sa, socklen_t salen,
+-             char *restrict node, socklen_t nodelen,
+-             char *restrict service, socklen_t servicelen,
+-             int flags)
+-{
+-#ifdef WINDOWS_NATIVE
+-  if (use_win32_p ())
+-    return getnameinfo_ptr (sa, salen, node, nodelen,
+-                            service, servicelen, flags);
+-#endif
+-
+-  /* FIXME: Support other flags. */
+-  if ((node && nodelen > 0 && !(flags & NI_NUMERICHOST)) ||
+-      (service && servicelen > 0 && !(flags & NI_NUMERICHOST)) ||
+-      (flags & ~(NI_NUMERICHOST|NI_NUMERICSERV)))
+-    return EAI_BADFLAGS;
+-
+-  if (sa == NULL || salen < sizeof (sa->sa_family))
+-    return EAI_FAMILY;
+-
+-  switch (sa->sa_family)
+-    {
+-#if HAVE_IPV4
+-    case AF_INET:
+-      if (salen < sizeof (struct sockaddr_in))
+-        return EAI_FAMILY;
+-      break;
+-#endif
+-#if HAVE_IPV6
+-    case AF_INET6:
+-      if (salen < sizeof (struct sockaddr_in6))
+-        return EAI_FAMILY;
+-      break;
+-#endif
+-    default:
+-      return EAI_FAMILY;
+-    }
+-
+-  if (node && nodelen > 0 && flags & NI_NUMERICHOST)
+-    {
+-      switch (sa->sa_family)
+-        {
+-#if HAVE_IPV4
+-        case AF_INET:
+-          if (!inet_ntop (AF_INET,
+-                          &(((const struct sockaddr_in *) sa)->sin_addr),
+-                          node, nodelen))
+-            return EAI_SYSTEM;
+-          break;
+-#endif
+-
+-#if HAVE_IPV6
+-        case AF_INET6:
+-          if (!inet_ntop (AF_INET6,
+-                          &(((const struct sockaddr_in6 *) sa)->sin6_addr),
+-                          node, nodelen))
+-            return EAI_SYSTEM;
+-          break;
+-#endif
+-
+-        default:
+-          return EAI_FAMILY;
+-        }
+-    }
+-
+-  if (service && servicelen > 0 && flags & NI_NUMERICSERV)
+-    switch (sa->sa_family)
+-      {
+-#if HAVE_IPV4
+-      case AF_INET:
+-#endif
+-#if HAVE_IPV6
+-      case AF_INET6:
+-#endif
+-        {
+-          unsigned short int port
+-            = ntohs (((const struct sockaddr_in *) sa)->sin_port);
+-          if (servicelen <= snprintf (service, servicelen, "%u", port))
+-            return EAI_OVERFLOW;
+-        }
+-        break;
+-      }
+-
+-  return 0;
+-}
+--- coreutils-8.30/lib/readutmp.h 2018-05-14 06:20:31.000000000 +0200
++++ coreutils-8.30-patched/lib/readutmp.h 2019-02-04 02:56:48.868422193 +0100
+@@ -78,7 +78,7 @@
+     struct utmp *getutent (void);
+ #  endif
+ #  define UTMP_STRUCT_NAME utmp
+-#  define UT_TIME_MEMBER(UT_PTR) ((UT_PTR)->ut_time)
++#  define UT_TIME_MEMBER(UT_PTR) ((UT_PTR))
+ #  define SET_UTMP_ENT setutent
+ #  define GET_UTMP_ENT getutent
+ #  define END_UTMP_ENT endutent
+--- coreutils-8.30/lib/gai_strerror.c 2018-05-14 06:22:33.000000000 +0200
++++ coreutils-8.30-patched/lib/gai_strerror.c 2019-02-04 02:57:33.421683045 +0100
+@@ -42,7 +42,8 @@
+ const char *
+ rpl_gai_strerror (int code)
+ {
+-  return gai_strerror (code);
++  return NULL;
++  //return gai_strerror (code);
+ }
+
+ #else /* !HAVE_DECL_GAI_STRERROR */
+--- coreutils-8.30/lib/opendir.c  2018-05-14 06:20:31.000000000 +0200
++++ coreutils-8.30-patched/lib/opendir.c  2019-02-04 21:01:30.771424111 +0100
+@@ -152,7 +152,8 @@
+
+ #endif
+
+-#if REPLACE_FCHDIR
++//#if REPLACE_FCHDIR
++#if 0
+   {
+     int fd = dirfd (dirp);
+     if (0 <= fd && _gl_register_fd (fd, dir_name) != fd)
