@@ -103,8 +103,8 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	char* __env[] = { NULL };
 	char* __argv[] = { "init", NULL };
 
-	task_t* init = elf_load_file(INIT_PATH, __env, 0, __argv, 1);
-	if(!init) {
+	task_t* init = task_new(NULL, "init", __env, 0, __argv, 1);
+	if(elf_load_file(init, INIT_PATH) == -1) {
 		panic("Could not start init (Tried " INIT_PATH ").\n");
 	}
 	scheduler_add(init);

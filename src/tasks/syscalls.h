@@ -53,6 +53,7 @@ DEFINE_SYSCALL(close);
 DEFINE_SYSCALL(mkdir);
 DEFINE_SYSCALL(gettimeofday);
 DEFINE_SYSCALL(readlink);
+DEFINE_SYSCALL(execve);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -86,7 +87,8 @@ syscall_t syscall_table[] = {
 	sys_execnew,		// 28
 	sys_wait,			// 29
 	sys_audio_play,		// 30
-	sys_readlink			// 31
+	sys_readlink,		// 31
+	sys_execve,			// 32
 };
 
 char* syscall_name_table[] = {
@@ -121,5 +123,6 @@ char* syscall_name_table[] = {
 	"execnew",		// 28
 	"wait",			// 29
 	"audio_play",	// 30
-	"readlink"		// 31
+	"readlink",		// 31
+	"execve"		// 32
 };

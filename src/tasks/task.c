@@ -29,12 +29,42 @@
 #include <errno.h>
 
 #define STACKSIZE PAGE_SIZE
+#define STACK_LOCATION 0x8000
 
 uint32_t highest_pid = 0;
 extern void* __kernel_start;
 extern void* __kernel_end;
 
 static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta);
+
+static task_t* alloc_task(task_t* parent, char name[TASK_MAXNAME], char** environ,
+	uint32_t envc, char** argv, uint32_t argc) {
+
+	task_t* task = (task_t*)zmalloc(sizeof(task_t));
+	task->pid = ++highest_pid;
+	task->task_state = TASK_STATE_RUNNING;
+	task->interrupt_yield = false;
+
+	// State gets mapped into user memory, so needs to be one full page.
+	task->state = zmalloc_a(PAGE_SIZE);
+	task->stack = zmalloc_a(STACKSIZE);
+	task->kernel_stack = zmalloc_a(STACKSIZE);
+	task->memory_context = vmem_new();
+	vmem_set_task(task->memory_context, task);
+
+	strcpy(task->name, name);
+	memcpy(task->cwd, parent ? parent->cwd : "/", TASK_PATH_MAX);
+	task->parent = parent;
+	task->environ = environ;
+	task->envc = envc;
+	task->argv = argv;
+	task->argc = argc;
+
+	char tname[10];
+	snprintf(tname, 10, "task%d", task->pid);
+	sysfs_add_file(tname, sfs_read, NULL, (void*)task);
+	return task;
+}
 
 void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	uint32_t size, enum vmem_section section, int flags) {
@@ -53,42 +83,7 @@ void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	task->memory_allocations = alloc;
 }
 
-static task_t* alloc_task() {
-	task_t* task = (task_t*)zmalloc(sizeof(task_t));
-	task->pid = ++highest_pid;
-	task->task_state = TASK_STATE_RUNNING;
-	task->interrupt_yield = false;
-
-	// State gets mapped into user memory, so needs to be one full page.
-	task->state = zmalloc_a(PAGE_SIZE);
-	task->stack = zmalloc_a(STACKSIZE);
-	task->kernel_stack = zmalloc_a(STACKSIZE);
-	task->memory_context = vmem_new();
-	vmem_set_task(task->memory_context, task);
-	return task;
-}
-
-/* Sets up a new task, including the necessary paging context, stacks,
- * interrupt stack frame etc. The binary still has to be mapped into the paging
- * context separately (usually in the ELF loader).
- */
-task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
-	char** environ, uint32_t envc, char** argv, uint32_t argc) {
-
-	task_t* task = alloc_task();
-	strcpy(task->name, name);
-	task->entry = entry;
-	task->parent = parent;
-	task->environ = environ;
-	task->envc = envc;
-	task->argv = argv;
-	task->argc = argc;
-
-	if(parent)
-		memcpy(task->cwd, parent->cwd, TASK_PATH_MAX);
-	else
-		strcpy(task->cwd, "/");
-
+static void map_memory(task_t* task) {
 	/* 1:1 map required memory regions:
 	 *  - Task stack
 	 *  - Kernel task stack (for TSS).
@@ -99,69 +94,45 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	 * the paging context switch in a separate ELF section and maybe only map
 	 * that.
 	 */
-	task_add_mem_flat(task, task->stack, STACKSIZE, VMEM_SECTION_DATA, TASK_MEM_FREE);
-	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, VMEM_SECTION_KERNEL, TASK_MEM_FREE);
-	task_add_mem_flat(task, task->state, PAGE_SIZE, VMEM_SECTION_DATA, TASK_MEM_FREE);
+	task_add_mem(task, (void*)STACK_LOCATION, task->stack, STACKSIZE, VMEM_SECTION_DATA, 0);
+	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, VMEM_SECTION_KERNEL, 0);
+	task_add_mem_flat(task, task->state, PAGE_SIZE, VMEM_SECTION_DATA, 0);
 
 	void* kernel_start = VMEM_ALIGN_DOWN(&__kernel_start);
 	uint32_t kernel_size = (uint32_t)&__kernel_end - (uint32_t)kernel_start;
 	task_add_mem_flat(task, kernel_start, kernel_size, VMEM_SECTION_KERNEL, 0);
 
-	//*(task->state->ebp + 1) = (intptr_t)scheduler_terminate_current;
-	//*(task->state->ebp + 2) = (intptr_t)NULL; // base pointer
-
-	task->state->ds = GDT_SEG_DATA_PL3;
-	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
-	task->state->ebp = task->stack + STACKSIZE;
-	task->state->esp = task->state->ebp - (5 * sizeof(uint32_t));
-
-	// Return stack for iret. eip, cs, eflags, esp, ss.
-	*(void**)task->state->esp = entry;
-	*((uint32_t*)task->state->esp + 1) = GDT_SEG_CODE_PL3;
-	*((uint32_t*)task->state->esp + 2) = EFLAGS_IF;
-	*((uint32_t*)task->state->esp + 3) = (uint32_t)task->state->ebp;
-	*((uint32_t*)task->state->esp + 4) = GDT_SEG_DATA_PL3;
-
 	task_setup_execdata(task);
+}
+
+/* Sets up a new task, including the necessary paging context, stacks,
+ * interrupt stack frame etc. The binary still has to be mapped into the paging
+ * context separately (usually in the ELF loader).
+ */
+task_t* task_new(task_t* parent, char name[TASK_MAXNAME],
+	char** environ, uint32_t envc, char** argv, uint32_t argc) {
+
+	task_t* task = alloc_task(parent, name, environ, envc, argv, argc);
+	map_memory(task);
 	vfs_open("/dev/stdin", O_RDONLY, task);
 	vfs_open("/dev/stdout", O_WRONLY, task);
 	vfs_open("/dev/stderr", O_WRONLY, task);
-
-	char tname[10];
-	snprintf(tname, 10, "task%d", task->pid);
-	sysfs_add_file(tname, sfs_read, NULL, (void*)task);
 	return task;
 }
 
 task_t* task_fork(task_t* to_fork, isf_t* state) {
-	interrupts_disable();
+	task_t* task = alloc_task(to_fork, to_fork->name, to_fork->environ,
+		to_fork->envc, to_fork->argv, to_fork->argc);
 
-	task_t* task = alloc_task();
-	strcpy(task->name, to_fork->name);
-	task->entry = to_fork->entry;
-	task->parent = to_fork;
-	task->environ = to_fork->environ;
-	task->envc = to_fork->envc;
-	task->argv = to_fork->argv;
-	task->argc = to_fork->argc;
 	memcpy(task->cwd, to_fork->cwd, TASK_PATH_MAX);
-
-	task_add_mem(task, to_fork->stack, task->stack, STACKSIZE, VMEM_SECTION_DATA, TASK_MEM_FREE);
 	memcpy(task->stack, to_fork->stack, STACKSIZE);
-
-	task_add_mem_flat(task, task->state, PAGE_SIZE, VMEM_SECTION_DATA, TASK_MEM_FREE);
 	memcpy(task->state, state, sizeof(isf_t));
-
-	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, VMEM_SECTION_KERNEL, TASK_MEM_FREE);
 	memcpy(task->kernel_stack, to_fork->kernel_stack, STACKSIZE);
+	map_memory(task);
 
-	// Adjust esp
+	// Adjust kernel esp
 	intptr_t diff = state->esp - to_fork->kernel_stack;
 	task->state->esp = task->kernel_stack + diff;
-
-	void* kernel_start = VMEM_ALIGN_DOWN(&__kernel_start);
-	uint32_t kernel_size = (uint32_t)&__kernel_end - (uint32_t)kernel_start;
-	task_add_mem_flat(task, kernel_start, kernel_size, VMEM_SECTION_KERNEL, 0);
 
 	struct task_mem* alloc = to_fork->memory_allocations;
 	for(; alloc; alloc = alloc->next) {
@@ -172,8 +143,6 @@ task_t* task_fork(task_t* to_fork, isf_t* state) {
 		}
 	}
 
-	task_setup_execdata(task);
-
 	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
 	for(uint32_t num = 0; num < VFS_MAX_OPENFILES; num++) {
 		if(task->files[num].inode) {
@@ -182,28 +151,97 @@ task_t* task_fork(task_t* to_fork, isf_t* state) {
 	}
 
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+
+	/* return values for fork syscall – need to set here since the regular sc
+	 * handling returns to the main process.
+	 */
 	task->state->eax = 0;
 	task->state->ebx = 0;
-
-	char tname[10];
-	snprintf(tname, 10, "task%d", task->pid);
-	sysfs_add_file(tname, sfs_read, NULL, (void*)task);
 	return task;
 }
+
+static void  __attribute__((optimize("O0"))) clean_memory(task_t* t) {
+	struct task_mem* alloc = t->memory_allocations;
+	while(alloc) {
+		if(alloc->flags & TASK_MEM_FREE) {
+			kfree(alloc->phys_addr);
+		}
+
+		struct task_mem* old_alloc = alloc;
+		alloc = alloc->next;
+		kfree(old_alloc);
+	}
+
+	t->memory_allocations = NULL;
+	vmem_rm_context(t->memory_context);
+}
+
+void task_set_initial_state(task_t* task, void* entry) {
+	task->state->ds = GDT_SEG_DATA_PL3;
+	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
+	task->state->esp = task->state->ebp - (5 * sizeof(uint32_t));
+
+	// Return stack for iret. eip, cs, eflags, esp, ss.
+	uint32_t* iret = task->stack + STACKSIZE - (5 * sizeof(uint32_t));
+	*iret = (intptr_t)entry;
+	*(iret + 1) = GDT_SEG_CODE_PL3;
+	*(iret + 2) = EFLAGS_IF;
+	*(iret + 3) = (uint32_t)task->state->ebp;
+	*(iret + 4) = GDT_SEG_DATA_PL3;
+}
+
+/*
+void task_reset(task_t* task, task_t* parent, char name[TASK_MAXNAME],
+	char** environ, uint32_t envc, char** argv, uint32_t argc) {
+
+	task->pid = ++highest_pid;
+	task->task_state = TASK_STATE_RUNNING;
+	task->interrupt_yield = false;
+
+	// State gets mapped into user memory, so needs to be one full page.
+	task->state = zmalloc_a(PAGE_SIZE);
+	task->stack = zmalloc_a(STACKSIZE);
+	task->kernel_stack = zmalloc_a(STACKSIZE);
+	task->memory_allocations = NULL;
+	task->memory_context = vmem_new();
+	vmem_set_task(task->memory_context, task);
+
+	memcpy(task->cwd, parent ? parent->cwd : "/", TASK_PATH_MAX);
+
+	//clean_memory(task);
+	//bzero(task->stack, STACKSIZE);
+	//bzero(task->kernel_stack, STACKSIZE);
+	//bzero(task->state, PAGE_SIZE);
+
+	strcpy(task->name, name);
+	task->parent = parent;
+	task->environ = environ;
+	task->envc = envc;
+	task->argv = argv;
+	task->argc = argc;
+
+	bzero(task->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
+	vfs_open("/dev/stdin", O_RDONLY, task);
+	vfs_open("/dev/stdout", O_WRONLY, task);
+	vfs_open("/dev/stderr", O_WRONLY, task);
+
+	map_memory(task);
+	//vmem_rm_context(task->memory_context);
+	//task->memory_context = vmem_new();
+	return;
+}
+*/
 
 void task_cleanup(task_t* t) {
 	char tname[10];
 	snprintf(tname, 10, "task%d", t->pid);
 	sysfs_rm_file(tname);
 
-	struct task_mem* alloc = t->memory_allocations;
-	for(; alloc; alloc = alloc->next) {
-		if(alloc->flags & TASK_MEM_FREE) {
-			kfree(alloc->phys_addr);
-		}
-	}
-
-	vmem_rm_context(t->memory_context);
+	clean_memory(t);
+	kfree(t->state);
+	kfree(t->stack);
+	kfree(t->kernel_stack);
 
 	// FIXME No good since we pass those in as static strings occasionally
 	//kfree_array(t->environ);

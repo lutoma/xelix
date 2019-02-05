@@ -49,14 +49,6 @@ clock_t _times(struct tms *buf) {
 	return -1;
 }
 
-
-int wait3(int* status) {
-	fprintf(stderr, "Warning: xelix newlib wait3() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 void _rewinddir(DIR* dd) {
 	fprintf(stderr, "Warning: xelix newlib rewinddir() stub called.\n");
 

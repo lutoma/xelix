@@ -127,6 +127,10 @@ pid_t waitpid(pid_t pid, int* stat_loc, int options) {
 	return syscall(29, stat_loc, 0, 0); // FIXME Just the wait syscall
 }
 
+int wait3(int* status) {
+	return wait(status);
+}
+
 int _write(int file, char *buf, int len) {
 	return syscall(3, file, buf, len);
 }
@@ -178,7 +182,7 @@ pid_t execnew(const char* path, char* __argv[], char* __env[]) {
 }
 
 int _execve(char *name, char **argv, char **env) {
-	return syscall(23, name, argv, env);
+	return syscall(32, name, argv, env);
 }
 
 // Gets called by the newlib readdir handler, see libc/posix/readdir.c

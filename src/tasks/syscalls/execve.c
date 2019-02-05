@@ -1,5 +1,5 @@
-/* execnew.c: Execnew syscall
- * Copyright © 2016-2018 Lukas Martini
+/* execve.c: execve syscall
+ * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -25,6 +25,7 @@
 #include <string.h>
 #include <memory/kmalloc.h>
 #include <memory/vmem.h>
+#include <errno.h>
 
 // Check an array to make sure it's NULL-terminated, then copy to kernel space
 static char** copy_array(task_t* task, char** array, uint32_t* count) {
@@ -55,7 +56,7 @@ static char** copy_array(task_t* task, char** array, uint32_t* count) {
 	return new_array;
 }
 
-SYSCALL_HANDLER(execnew)
+SYSCALL_HANDLER(execve)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(0);
 	SYSCALL_SAFE_RESOLVE_PARAM(1);
@@ -67,18 +68,22 @@ SYSCALL_HANDLER(execnew)
 	char** __env = copy_array(syscall.task, (char**)syscall.params[2], &__envc);
 
 	if(!__argv || !__env) {
-		log(LOG_WARN, "execnew: array check fail\n");
+		log(LOG_WARN, "execve: array check fail\n");
 		return 0;
 	}
 
+	//task_reset(syscall.task, syscall.task->parent, syscall.task->name, __env, __envc, __argv, __argc);
 	task_t* new_task = task_new(syscall.task->parent, syscall.task->name, __env, __envc, __argv, __argc);
 	if(elf_load_file(new_task, (void*)syscall.params[0]) == -1) {
-		return 0;
+		sc_errno = ENOENT;
+		return -1;
 	}
 
-	new_task->parent = syscall.task;
+	new_task->pid = syscall.task->pid;
 	strcpy(new_task->cwd, syscall.task->cwd);
 	scheduler_add(new_task);
 
-	return new_task->pid;
+	syscall.task->task_state = TASK_STATE_TERMINATED;
+	syscall.task->interrupt_yield = true;
+	return 0;
 }

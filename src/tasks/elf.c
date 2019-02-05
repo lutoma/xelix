@@ -34,7 +34,7 @@
  #define debug(...)
 #endif
 
-#define fail(args...) do { log(LOG_ERR, args); return NULL; } while(false);
+#define fail(args...) do { log(LOG_ERR, args); return -1; } while(false);
 
 #define SHF_WRITE 0x1
 #define SHF_ALLOC 0x2
@@ -143,10 +143,9 @@ uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
 	return memsize;
 }
 
-task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** argv, uint32_t argc)
-{
+int elf_load(task_t* task, elf_t* bin) {
 	if(bin <= (elf_t*)NULL)
-		return NULL;
+		return -1;
 
 	if(bin->ident.magic[0] != header[0]
 	|| bin->ident.magic[1] != header[1]
@@ -173,7 +172,7 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 	if(!bin->phnum)
 		fail("elf: No program headers\n");
 
-	task_t* task = task_new(bin->entry, NULL, name, environ, envc, argv, argc);
+	task_set_initial_state(task, bin->entry);
 
 	void* binary_start = NULL;
 	uint32_t memsize = alloc_memory(bin, &binary_start, task);
@@ -182,21 +181,20 @@ task_t* elf_load(elf_t* bin, char* name, char** environ, uint32_t envc, char** a
 	}
 
 	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
-	return task;
+	return 0;
 }
 
-task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, uint32_t argc)
-{
+int elf_load_file(task_t* task, char* path) {
 	vfs_file_t* fd = vfs_open(path, O_RDONLY, NULL);
 	if(!fd) {
-		return NULL;
+		return -1;
 	}
 
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
 	if(vfs_stat(fd, stat) != 0 || !stat->st_size || !(stat->st_mode & S_IXUSR)) {
 		kfree(stat);
 		vfs_close(fd);
-		return NULL;
+		return -1;
 	}
 
 	void* data = kmalloc(stat->st_size);
@@ -206,11 +204,11 @@ task_t* elf_load_file(char* path, char** environ, uint32_t envc, char** argv, ui
 	if(!read) {
 		kfree(data);
 		vfs_close(fd);
-		return NULL;
+		return -1;
 	}
 
-	task_t* task = elf_load((elf_t*)data, vfs_basename(path), environ, envc, argv, argc);
+	int r = elf_load(task, (elf_t*)data);
 	kfree(data);
 	vfs_close(fd);
-	return task;
+	return r;
 }
