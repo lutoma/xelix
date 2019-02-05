@@ -1,5 +1,5 @@
 /* task.c: Userland tasks
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -53,14 +53,11 @@ void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	task->memory_allocations = alloc;
 }
 
-/* Sets up a new task, including the necessary paging context, stacks,
- * interrupt stack frame etc. The binary still has to be mapped into the paging
- * context separately (usually in the ELF loader).
- */
-task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
-	char** environ, uint32_t envc, char** argv, uint32_t argc) {
-
+static task_t* alloc_task() {
 	task_t* task = (task_t*)zmalloc(sizeof(task_t));
+	task->pid = ++highest_pid;
+	task->task_state = TASK_STATE_RUNNING;
+	task->interrupt_yield = false;
 
 	// State gets mapped into user memory, so needs to be one full page.
 	task->state = zmalloc_a(PAGE_SIZE);
@@ -68,17 +65,24 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 	task->kernel_stack = zmalloc_a(STACKSIZE);
 	task->memory_context = vmem_new();
 	vmem_set_task(task->memory_context, task);
+	return task;
+}
 
+/* Sets up a new task, including the necessary paging context, stacks,
+ * interrupt stack frame etc. The binary still has to be mapped into the paging
+ * context separately (usually in the ELF loader).
+ */
+task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
+	char** environ, uint32_t envc, char** argv, uint32_t argc) {
+
+	task_t* task = alloc_task();
 	strcpy(task->name, name);
 	task->entry = entry;
-	task->pid = ++highest_pid;
 	task->parent = parent;
-	task->task_state = TASK_STATE_RUNNING;
 	task->environ = environ;
 	task->envc = envc;
 	task->argv = argv;
 	task->argc = argc;
-	task->interrupt_yield = false;
 
 	if(parent)
 		memcpy(task->cwd, parent->cwd, TASK_PATH_MAX);
@@ -130,32 +134,61 @@ task_t* task_new(void* entry, task_t* parent, char name[TASK_MAXNAME],
 }
 
 task_t* task_fork(task_t* to_fork, isf_t* state) {
-	log(LOG_INFO, "scheduler: Received fork request for %d <%s>\n", to_fork->pid, to_fork->name);
-/*
-	char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", "HOME=/root", "TERM=dash", "PWD=/", "USER=root", "HOST=default", NULL };
-	char* __argv[] = { "dash", "-liV", NULL };
+	interrupts_disable();
 
-	// FIXME Make copy of memory context instead of just using the same
-	task_t* new_task = task_new(to_fork->entry, to_fork, "fork", __env, 6, __argv, 2);
+	task_t* task = alloc_task();
+	strcpy(task->name, to_fork->name);
+	task->entry = to_fork->entry;
+	task->parent = to_fork;
+	task->environ = to_fork->environ;
+	task->envc = to_fork->envc;
+	task->argv = to_fork->argv;
+	task->argc = to_fork->argc;
+	memcpy(task->cwd, to_fork->cwd, TASK_PATH_MAX);
 
-	// Copy registers
-	new_task->state->ebx = state->ebx;
-	new_task->state->ecx = state->ecx;
-	new_task->state->edx = state->edx;
-	new_task->state->ds = state->ds;
-	new_task->state->edi = state->edi;
-	new_task->state->esi = state->esi;
-	new_task->state->cs = state->cs;
-	new_task->state->eflags = state->eflags;
+	task_add_mem(task, to_fork->stack, task->stack, STACKSIZE, VMEM_SECTION_DATA, TASK_MEM_FREE);
+	memcpy(task->stack, to_fork->stack, STACKSIZE);
 
-	// Copy stack & calculate correct stack offset for fork's ESP
-	memcpy(new_task->stack, to_fork->stack, STACKSIZE);
-	new_task->state->esp = new_task->stack + (state->esp - to_fork->stack);
+	task_add_mem_flat(task, task->state, PAGE_SIZE, VMEM_SECTION_DATA, TASK_MEM_FREE);
+	memcpy(task->state, state, sizeof(isf_t));
 
-	strncpy(new_task->name, to_fork->name, TASK_MAXNAME);
-*/
-	sc_errno = ENOSYS;
-	return NULL;
+	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, VMEM_SECTION_KERNEL, TASK_MEM_FREE);
+	memcpy(task->kernel_stack, to_fork->kernel_stack, STACKSIZE);
+
+	// Adjust esp
+	intptr_t diff = state->esp - to_fork->kernel_stack;
+	task->state->esp = task->kernel_stack + diff;
+
+	void* kernel_start = VMEM_ALIGN_DOWN(&__kernel_start);
+	uint32_t kernel_size = (uint32_t)&__kernel_end - (uint32_t)kernel_start;
+	task_add_mem_flat(task, kernel_start, kernel_size, VMEM_SECTION_KERNEL, 0);
+
+	struct task_mem* alloc = to_fork->memory_allocations;
+	for(; alloc; alloc = alloc->next) {
+		if(alloc->flags & TASK_MEM_FORK) {
+			void* phys_addr = zmalloc_a(alloc->len);
+			memcpy(phys_addr, alloc->phys_addr, alloc->len);
+			task_add_mem(task, alloc->virt_addr, phys_addr, alloc->len, alloc->section, alloc->flags);
+		}
+	}
+
+	task_setup_execdata(task);
+
+	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
+	for(uint32_t num = 0; num < VFS_MAX_OPENFILES; num++) {
+		if(task->files[num].inode) {
+			task->files[num].task = task;
+		}
+	}
+
+	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+	task->state->eax = 0;
+	task->state->ebx = 0;
+
+	char tname[10];
+	snprintf(tname, 10, "task%d", task->pid);
+	sysfs_add_file(tname, sfs_read, NULL, (void*)task);
+	return task;
 }
 
 void task_cleanup(task_t* t) {
