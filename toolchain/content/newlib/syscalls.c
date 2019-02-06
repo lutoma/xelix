@@ -288,3 +288,7 @@ int readlink(const char *path, char *buf, size_t bufsize) {
 int sigaction(int sig, const struct sigaction* act, struct sigaction* oact) {
 	return syscall(33, sig, act, oact);
 }
+
+int	getpagesize(void) {
+	return 0x1000;
+}
