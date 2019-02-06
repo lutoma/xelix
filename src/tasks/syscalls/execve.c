@@ -83,7 +83,7 @@ SYSCALL_HANDLER(execve)
 	strcpy(new_task->cwd, syscall.task->cwd);
 	scheduler_add(new_task);
 
-	syscall.task->task_state = TASK_STATE_TERMINATED;
+	syscall.task->task_state = TASK_STATE_REPLACED;
 	syscall.task->interrupt_yield = true;
 	return 0;
 }

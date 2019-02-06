@@ -1,5 +1,5 @@
 /* scheduler.c: Userland task scheduling
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -48,7 +48,7 @@ void scheduler_add(task_t *task) {
 	}
 }
 
-void scheduler_remove(task_t *t) {
+static void unlink(task_t *t, bool replaced) {
 	if(t->next == t || t->previous == t) {
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
@@ -56,15 +56,17 @@ void scheduler_remove(task_t *t) {
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
 
-	// Stop child tasks
-	for(task_t* i = t->next; i->next != t->next; i = i->next) {
-		if(i->parent == t) {
-			scheduler_remove(i);
+	if(!replaced) {
+		// Stop child tasks
+		for(task_t* i = t->next; i->next != t->next; i = i->next) {
+			if(i->parent == t) {
+				unlink(i, false);
+			}
 		}
-	}
 
-	if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
-		t->parent->task_state = TASK_STATE_RUNNING;
+		if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
+			t->parent->task_state = TASK_STATE_RUNNING;
+		}
 	}
 
 	task_cleanup(t);
@@ -83,7 +85,7 @@ task_t* scheduler_select(isf_t* last_regs) {
 		memcpy(current_task->state, last_regs, sizeof(isf_t));
 	}
 
-	/* Cycle through tasks until we find one that isn't killed or terminated,
+	/* Cycle through tasks until we find one that isn't terminated,
 	 * while along the way unlinking the killed/terminated ones.
 	*/
 	current_task = current_task->next;
@@ -93,9 +95,13 @@ task_t* scheduler_select(isf_t* last_regs) {
 			panic("scheduler: Task list corrupted (current_task->next was NULL).\n");
 		}
 
-		if(current_task->task_state == TASK_STATE_KILLED ||
-			current_task->task_state == TASK_STATE_TERMINATED) {
-			scheduler_remove(current_task);
+		if(current_task->task_state == TASK_STATE_TERMINATED) {
+			unlink(current_task, false);
+			continue;
+		}
+
+		if(current_task->task_state == TASK_STATE_REPLACED) {
+			unlink(current_task, true);
 			continue;
 		}
 
@@ -124,9 +130,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 		char state = '?';
 		switch(task->task_state) {
-			case TASK_STATE_KILLED: state = 'K'; break;
 			case TASK_STATE_TERMINATED: state = 'T'; break;
-			case TASK_STATE_BLOCKING: state = 'B'; break;
 			case TASK_STATE_STOPPED: state = 'S'; break;
 			case TASK_STATE_RUNNING: state = 'R'; break;
 			case TASK_STATE_WAITING: state = 'W'; break;

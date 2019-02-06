@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2018 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -32,7 +32,6 @@ void scheduler_add(task_t *task);
 task_t* scheduler_get_current();
 task_t* scheduler_select(isf_t* lastRegs);
 void scheduler_init();
-void scheduler_remove(task_t *t);
 
 static inline void scheduler_terminate_current() {
 	task_t* task = scheduler_get_current();
