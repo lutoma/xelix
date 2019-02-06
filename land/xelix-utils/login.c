@@ -65,7 +65,7 @@ int main() {
 			free(motd);
 		}
 
-		char* __argv[] = { pwd->pw_shell, "-il", NULL };
+		char* __argv[] = { pwd->pw_shell, "-l", NULL };
 
 		char env_user[50];
 		snprintf(env_user, 50, "USER=%s", pwd->pw_name);
@@ -77,7 +77,7 @@ int main() {
 		snprintf(env_pwd, 100, "PWD=%s", pwd->pw_dir);
 
 		char env_host[306];
-		snprintf(env_pwd, 306, "HOST=%s", hostname);
+		snprintf(env_pwd, 306, "HOST=%s", sname);
 
 		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", env_home, "TERM=vt100", env_pwd, env_user, env_host, NULL };
 

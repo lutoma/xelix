@@ -2,7 +2,7 @@
 #include "util.h"
 
 char* shortname(char* in) {
-	for(char* i = in; i; i++) {
+	for(char* i = in; *i; i++) {
 		if(*i == '.') {
 			*i = 0;
 			break;
