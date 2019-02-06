@@ -67,4 +67,4 @@ struct sigaction {
 
 // Can't include <tasks/task.h> as that includes us, so use stub struct def.
 struct task;
-int task_signal(struct task* task, int sig, isf_t* state);
+int __attribute__((optimize("O0"))) task_signal(struct task* task, struct task* source, int sig, isf_t* state);

@@ -183,17 +183,3 @@ isf_return:
 	popa
 	pop esp
 	iret
-
-
-[GLOBAL task_sigjmp_crt0]
-task_sigjmp_crt0:
-	pop eax
-	call eax
-	add esp,4
-.ret:
-	popa
-	add esp,4
-	jmp [esp-4]
-
-.il:
-	jmp .il

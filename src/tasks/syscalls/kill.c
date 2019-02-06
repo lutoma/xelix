@@ -37,5 +37,5 @@ SYSCALL_HANDLER(kill) {
 		return 0;
 	}
 
-	return task_signal(task, syscall.params[1], syscall.state);
+	return task_signal(task, syscall.task, syscall.params[1], syscall.state);
 }

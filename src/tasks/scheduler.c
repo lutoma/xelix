@@ -75,7 +75,7 @@ static void unlink(task_t *t, bool replaced) {
 		}
 
 		if(t->parent) {
-			task_signal(t->parent, SIGCHLD, t->parent->state);
+			task_signal(t->parent, t, SIGCHLD, t->parent->state);
 		}
 	}
 

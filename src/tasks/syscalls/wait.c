@@ -25,5 +25,7 @@ SYSCALL_HANDLER(wait)
 {
 	syscall.task->task_state = TASK_STATE_WAITING;
 	syscall.task->interrupt_yield = true;
-	return 1;
+
+	// Will be overriden to the returned task pid in tasks/signal.c
+	return 0;
 }

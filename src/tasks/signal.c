@@ -21,9 +21,10 @@
 #include <tasks/task.h>
 #include <errno.h>
 
-extern void __attribute__((fastcall)) task_sigjmp_crt0(void* addr);
+// signal.asm
+extern void task_sigjmp_crt0(void);
 
-int __attribute__((optimize("O0"))) task_signal(task_t* task, int sig, isf_t* state) {
+int __attribute__((optimize("O0"))) task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 	if(sig > 32) {
 		sc_errno = EINVAL;
 		return -1;
@@ -40,15 +41,23 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, int sig, isf_t* st
 		return 0;
 	}
 
-	if(sa.sa_handler && (uint32_t)sa.sa_handler != SIG_DFL) {
-		iret_t* iret = task->kernel_stack + PAGE_SIZE - sizeof(iret_t);
+	if(sig == SIGCHLD && source && task->task_state == TASK_STATE_WAITING) {
+		// Set the return value of the wait() syscall to the pid of the returned child
+		state->eax = source->pid;
+	}
 
+	if(sa.sa_handler && (uint32_t)sa.sa_handler != SIG_DFL) {
+
+		iret_t* iret = task->kernel_stack + PAGE_SIZE - sizeof(iret_t);
 		iret->user_esp -= 11 * sizeof(uint32_t);
+
 		uint32_t* user_stack = vmem_translate(task->memory_context, iret->user_esp, false);
+
+		// Address of signal handler and signal number as argument to it
 		*user_stack = sa.sa_handler;
 		*(user_stack + 1) = sig;
 
-		// popa registers
+		// GP registers, will be restored by task_sigjmp_crt0 using popa
 		*(user_stack + 2) = state->edi;
 		*(user_stack + 3) = state->esi;
 		*(user_stack + 4) = state->ebp;
@@ -57,9 +66,11 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, int sig, isf_t* st
 		*(user_stack + 7) = state->edx;
 		*(user_stack + 8) = state->ecx;
 		*(user_stack + 9) = state->eax;
-		*(user_stack + 10) = iret->entry;
 
+		// Current EIP, will be jumped back to after handler returns
+		*(user_stack + 10) = iret->entry;
 		iret->entry = task_sigjmp_crt0;
+
 		task->task_state = TASK_STATE_RUNNING;
 		return 0;
 	}
