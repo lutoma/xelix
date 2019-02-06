@@ -32,6 +32,4 @@ struct _xelix_execdata {
 
 struct _xelix_execdata* _xelix_execdata;
 
-pid_t execnew(const char* path, char* __argv[], char* __env[]);
-
 #endif /* _SYS_XELIX_H */

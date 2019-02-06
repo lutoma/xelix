@@ -46,7 +46,6 @@ DEFINE_SYSCALL(socket);
 DEFINE_SYSCALL(bind);
 DEFINE_SYSCALL(socket_send);
 DEFINE_SYSCALL(socket_recv);
-DEFINE_SYSCALL(execnew);
 DEFINE_SYSCALL(wait);
 DEFINE_SYSCALL(audio_play);
 DEFINE_SYSCALL(close);
@@ -84,7 +83,7 @@ syscall_t syscall_table[] = {
 	sys_bind,			// 25
 	sys_socket_send,	// 26
 	sys_socket_recv,	// 27
-	sys_execnew,		// 28
+	NULL,				// 28
 	sys_wait,			// 29
 	sys_audio_play,		// 30
 	sys_readlink,		// 31
@@ -120,7 +119,7 @@ char* syscall_name_table[] = {
 	"bind",			// 25
 	"socket_send",	// 26
 	"socket_recv",	// 27
-	"execnew",		// 28
+	NULL,			// 28
 	"wait",			// 29
 	"audio_play",	// 30
 	"readlink",		// 31

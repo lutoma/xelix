@@ -82,12 +82,18 @@ int main() {
 		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", env_home, "TERM=vt100", env_pwd, env_user, env_host, NULL };
 
 		chdir(pwd->pw_dir);
-		pid_t shell = execnew(pwd->pw_shell, __argv, __env);
-		if(shell < 1) {
-			printf("xinit: Could not launch shell. Exiting.\n");
-			exit(EXIT_FAILURE);
+
+		int pid = fork();
+		if(pid == -1) {
+			perror("Could not fork");
+			exit(-1);
 		}
 
+		if(!pid) {
+			execve(pwd->pw_shell, __argv, __env);
+			perror("Could not launch shell");
+			exit(EXIT_FAILURE);
+		}
 		wait(NULL);
 	}
 

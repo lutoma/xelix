@@ -8,11 +8,6 @@
 #include <sys/limits.h>
 #include "util.h"
 
-#ifdef __xelix__
-  // Xelix special interface™
-  #include <sys/xelix.h>
-#endif
-
 static char** parse_arguments(char* args) {
 	char* sp;
 	int argc = 0;
@@ -35,23 +30,22 @@ static char** parse_arguments(char* args) {
 }
 
 static inline bool run_command(char* cmd, char* _argv[], char* _env[]) {
-	#ifdef __xelix__
-		char* full_path = malloc(500);
-		snprintf(full_path, 500, "/usr/bin/%s", cmd);
-		return execnew(full_path, _argv, _env);
-		free(full_path);
-	#else
 		pid_t pid = fork();
+		if(pid == -1) {
+			perror("Could not fork");
+			return false;
+		}
 
 		if(pid) {
 			return true;
 		}
 
-		execvpe(cmd, _argv, _env);
-		perror("Error");
+		char* full_path = malloc(500);
+		snprintf(full_path, 500, "/usr/bin/%s", cmd);
+		execve(full_path, _argv, _env);
+		perror("Could not run command");
 		exit(EXIT_FAILURE);
 		return false;
-	#endif
 }
 
 int main(int argc, char* argv[]) {

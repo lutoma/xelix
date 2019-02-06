@@ -177,10 +177,6 @@ ssize_t send(int socket, const void *buffer, size_t length, int flags) {
 	return syscall(26, socket, buffer, length);
 }
 
-pid_t execnew(const char* path, char* __argv[], char* __env[]) {
-	return syscall(28, (uint32_t)path, (uint32_t)__argv, (uint32_t)__env);
-}
-
 int _execve(char *name, char **argv, char **env) {
 	return syscall(32, name, argv, env);
 }
