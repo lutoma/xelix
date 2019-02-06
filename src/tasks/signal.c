@@ -29,7 +29,6 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, int sig, isf_t* st
 		return -1;
 	}
 
-	serial_printf("task_signal pid %d %s sig %d\n", task->pid, task->name, sig);
 	if(sig == SIGKILL || sig == SIGSTOP) {
 		task->task_state = (sig == SIGKILL) ? TASK_STATE_TERMINATED : TASK_STATE_STOPPED;
 		task->interrupt_yield = true;
@@ -42,16 +41,12 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, int sig, isf_t* st
 	}
 
 	if(sa.sa_handler && (uint32_t)sa.sa_handler != SIG_DFL) {
-		task->task_state = TASK_STATE_RUNNING;
-		task->interrupt_yield = true;
-
 		iret_t* iret = task->kernel_stack + PAGE_SIZE - sizeof(iret_t);
 
 		iret->user_esp -= 11 * sizeof(uint32_t);
 		uint32_t* user_stack = vmem_translate(task->memory_context, iret->user_esp, false);
-
 		*user_stack = sa.sa_handler;
-		*(user_stack + 1) = 12345;
+		*(user_stack + 1) = sig;
 
 		// popa registers
 		*(user_stack + 2) = state->edi;
@@ -65,6 +60,7 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, int sig, isf_t* st
 		*(user_stack + 10) = iret->entry;
 
 		iret->entry = task_sigjmp_crt0;
+		task->task_state = TASK_STATE_RUNNING;
 		return 0;
 	}
 
