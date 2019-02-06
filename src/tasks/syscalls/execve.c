@@ -72,8 +72,8 @@ SYSCALL_HANDLER(execve)
 		return 0;
 	}
 
-	//task_reset(syscall.task, syscall.task->parent, syscall.task->name, __env, __envc, __argv, __argc);
-	task_t* new_task = task_new(syscall.task->parent, syscall.task->name, __env, __envc, __argv, __argc);
+	//task_reset(syscall.task, syscall.task->parent, (char*)syscall.params[0], __env, __envc, __argv, __argc);
+	task_t* new_task = task_new(syscall.task->parent, (char*)syscall.params[0], __env, __envc, __argv, __argc);
 	if(elf_load_file(new_task, (void*)syscall.params[0]) == -1) {
 		sc_errno = ENOENT;
 		return -1;

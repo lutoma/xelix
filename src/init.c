@@ -101,9 +101,9 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	#endif
 
 	char* __env[] = { NULL };
-	char* __argv[] = { "init", NULL };
+	char* __argv[] = { vfs_basename(INIT_PATH), NULL };
 
-	task_t* init = task_new(NULL, "init", __env, 0, __argv, 1);
+	task_t* init = task_new(NULL, INIT_PATH, __env, 0, __argv, 1);
 	if(elf_load_file(init, INIT_PATH) == -1) {
 		panic("Could not start init (Tried " INIT_PATH ").\n");
 	}

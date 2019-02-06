@@ -126,6 +126,10 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 	task_t* task = current_task;
 	do {
+		if(task->task_state == TASK_STATE_REPLACED) {
+			goto next;
+		}
+
 		uint32_t ppid = task->parent ? task->parent->pid : 0;
 
 		char state = '?';
@@ -135,6 +139,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 			case TASK_STATE_RUNNING: state = 'R'; break;
 			case TASK_STATE_WAITING: state = 'W'; break;
 			case TASK_STATE_SYSCALL: state = 'C'; break;
+			default: state = 'U'; break;
 		}
 
 		struct task_mem* mem = task->memory_allocations;
@@ -146,6 +151,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 		}
 
 		sysfs_printf("%d %d %c %s %d 0x%x 0x%x 0x%x\n", task->pid, ppid, state, task->name, mem_alloc, task->entry, task->sbrk, task->stack);
+	next:
 		task = task->next;
 	} while(task != current_task);
 
