@@ -1,5 +1,5 @@
-/* open.c: Kill Syscall
- * Copyright © 2013-2015 Lukas Martini
+/* kill.c: Kill Syscall
+ * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,51 +18,24 @@
  */
 
 #include <tasks/syscall.h>
-#include <fs/vfs.h>
-#include <log.h>
+#include <errno.h>
 #include <tasks/scheduler.h>
+#include <tasks/signal.h>
 
-// Only supports killing the current task so far
-
-char* signal_names[] = {
-	"SIGHUP",	/* hangup */
-	"SIGINT",	/* interrupt */
-	"SIGQUIT",	/* quit */
-	"SIGKILL",	/* illegal instruction (not reset when caught) */
-	"SIGTRAP",	/* trace trap (not reset when caught) */
-	"SIGIOT",	/* IOT instruction */
-	"SIGABRT",	/* used by abort, replace SIGIOT in the future */
-	"SIGEMT",	/* EMT instruction */
-	"SIGFPE",	/* floating point exception */
-	"SIGKILL",	/* kill (cannot be caught or ignored) */
-	"SIGBUS",	/* bus error */
-	"SIGSEGV",	/* segmentation violation */
-	"SIGSYS",	/* bad argument to system call */
-	"SIGPIPE",	/* write on a pipe with no one to read it */
-	"SIGALRM",	/* alarm clock */
-	"SIGTERM",	/* software termination signal from kill */
-};
-
-/* Return codes:
- * -1 == ENOSYS
- * -2 == EINVAL (Invalid sig)
- * -3 == EPERM (Permission denied)
- * -4 == ESRCH (No such proc)
- */
-SYSCALL_HANDLER(kill)
-{
-	int pid = syscall.params[0];
-	int sig = syscall.params[1];
-
-	if(pid != syscall.task->pid)
+SYSCALL_HANDLER(kill) {
+	task_t* task = scheduler_find(syscall.params[0]);
+	if(!task) {
+		sc_errno = ESRCH;
 		return -1;
+	}
 
-	char* sig_name = signal_names[sig];
-	if(!sig_name)
-		sig_name = "Unknown";
+	/* POSIX: "If sig is 0 (the null signal), error checking is performed but
+	 * no signal is actually sent. The null signal can be used to check the
+	 * validity of pid."
+	 */
+	if(!syscall.params[1]) {
+		return 0;
+	}
 
-	log(LOG_INFO, "tasks: PID %d was killed by %s from PID %d\n", pid, sig_name, syscall.task->pid);
-
-	scheduler_terminate_current();
-	return 0;
+	return task_signal(task, syscall.params[1], syscall.state);
 }

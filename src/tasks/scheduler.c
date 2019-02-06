@@ -48,6 +48,16 @@ void scheduler_add(task_t *task) {
 	}
 }
 
+task_t* scheduler_find(uint32_t pid) {
+	task_t* start = current_task;
+	for(task_t* t = start; t->next != start; t = t->next) {
+		if(t->pid == pid) {
+			return t;
+		}
+	}
+	return NULL;
+}
+
 static void unlink(task_t *t, bool replaced) {
 	if(t->next == t || t->previous == t) {
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
@@ -65,7 +75,7 @@ static void unlink(task_t *t, bool replaced) {
 		}
 
 		if(t->parent && t->parent->task_state == TASK_STATE_WAITING) {
-			t->parent->task_state = TASK_STATE_RUNNING;
+			task_signal(t->parent, SIGCHLD, t->parent->state);
 		}
 	}
 

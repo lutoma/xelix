@@ -29,6 +29,7 @@ enum {
 
 
 void scheduler_add(task_t *task);
+task_t* scheduler_find(uint32_t pid);
 task_t* scheduler_get_current();
 task_t* scheduler_select(isf_t* lastRegs);
 void scheduler_init();

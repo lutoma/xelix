@@ -164,11 +164,6 @@ int pipe(int fildes[2]) {
 	return -1;
 }
 
-int sigaction(int sig, const struct sigaction* act, struct sigaction* oact) {
-	fprintf(stderr, "Warning: xelix newlib sigaction() stub called.\n");
-	return 0;
-}
-
 pid_t tcgetpgrp(int fildes) {
 	fprintf(stderr, "Warning: xelix newlib tcgetpgrp() stub called.\n");
 

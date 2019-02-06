@@ -57,14 +57,18 @@ typedef struct {
 	uint32_t ecx;
 	uint32_t eax;
 	void* esp;
-
-	/* Pushed by the processor automatically. This is what the processor
-	 * expects to be in the stack when doing an iret.
-	 */
-/*	void* eip;
-	uint32_t cs;
-	uint32_t eflags;*/
 } __attribute__((__packed__)) isf_t;
+
+typedef struct {
+	/* Pushed by the processor automatically. This is what the processor
+	 * expects to be in the kernel stack when doing an iret to ring 3.
+	 */
+	void* entry;
+	uint32_t cs;
+	uint32_t eflags;
+	uint32_t user_esp;
+	uint32_t ss;
+} __attribute__((__packed__)) iret_t;
 
 typedef void (*interrupt_handler_t)(isf_t*);
 struct interrupt_reg {

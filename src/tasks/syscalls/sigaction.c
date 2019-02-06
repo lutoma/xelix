@@ -1,5 +1,5 @@
-/* wait.c: Wait & waitpid syscalls
- * Copyright © 2016 Lukas Martini
+/* sigaction.c: sigaction Syscall
+ * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,12 +18,27 @@
  */
 
 #include <tasks/syscall.h>
+#include <errno.h>
 #include <tasks/scheduler.h>
-#include <log.h>
+#include <tasks/signal.h>
 
-SYSCALL_HANDLER(wait)
-{
-	syscall.task->task_state = TASK_STATE_WAITING;
-	syscall.task->interrupt_yield = true;
-	return 1;
+SYSCALL_HANDLER(sigaction) {
+	int sig = syscall.params[0];
+	if(sig > 32) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	struct sigaction* tbl_entry = &syscall.task->signal_handlers[sig];
+	if(syscall.params[2]) {
+		SYSCALL_SAFE_RESOLVE_PARAM(2);
+		memcpy((struct sigaction*)syscall.params[2], tbl_entry, sizeof(struct sigaction));
+
+	}
+
+	if(syscall.params[1]) {
+		SYSCALL_SAFE_RESOLVE_PARAM(1);
+		memcpy(tbl_entry, (struct sigaction*)syscall.params[1], sizeof(struct sigaction));
+	}
+	return 0;
 }

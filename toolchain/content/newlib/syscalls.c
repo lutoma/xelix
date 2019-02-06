@@ -86,17 +86,7 @@ pid_t getppid(void) {
 }
 
 int _kill(int pid, int sig) {
-	int ret = syscall(18, pid, sig, 0);
-
-	switch(ret)
-	{
-		case -1: errno = ENOSYS;;
-		case -2: errno = EINVAL;;
-		case -3: errno = EPERM;;
-		case -4: errno = ESRCH;;
-	}
-
-	return ret;
+	return syscall(18, pid, sig, 0);
 }
 
 int _lseek(int file, int ptr, int dir) {
@@ -293,4 +283,8 @@ int _link(char *old, char *new){
 
 int readlink(const char *path, char *buf, size_t bufsize) {
 	return syscall(31, path, buf, bufsize);
+}
+
+int sigaction(int sig, const struct sigaction* act, struct sigaction* oact) {
+	return syscall(33, sig, act, oact);
 }

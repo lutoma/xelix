@@ -100,7 +100,8 @@ static void map_memory(task_t* task) {
 
 	void* kernel_start = VMEM_ALIGN_DOWN(&__kernel_start);
 	uint32_t kernel_size = (uint32_t)&__kernel_end - (uint32_t)kernel_start;
-	task_add_mem_flat(task, kernel_start, kernel_size, VMEM_SECTION_KERNEL, 0);
+	// FIXME Should have VMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
+	task_add_mem_flat(task, kernel_start, kernel_size, VMEM_SECTION_CODE, 0);
 
 	task_setup_execdata(task);
 }
@@ -182,13 +183,13 @@ void task_set_initial_state(task_t* task, void* entry) {
 	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
 	task->state->esp = task->state->ebp - (5 * sizeof(uint32_t));
 
-	// Return stack for iret. eip, cs, eflags, esp, ss.
-	uint32_t* iret = task->stack + STACKSIZE - (5 * sizeof(uint32_t));
-	*iret = (intptr_t)entry;
-	*(iret + 1) = GDT_SEG_CODE_PL3;
-	*(iret + 2) = EFLAGS_IF;
-	*(iret + 3) = (uint32_t)task->state->ebp;
-	*(iret + 4) = GDT_SEG_DATA_PL3;
+	// Return stack for iret
+	iret_t* iret = task->stack + STACKSIZE - sizeof(iret_t);
+	iret->entry = (intptr_t)entry;
+	iret->cs = GDT_SEG_CODE_PL3;
+	iret->eflags = EFLAGS_IF;
+	iret->user_esp = (uint32_t)task->state->ebp;
+	iret->ss = GDT_SEG_DATA_PL3;
 }
 
 /*

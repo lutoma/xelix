@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2018 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,6 +21,7 @@
 #include <hw/interrupts.h>
 #include <fs/vfs.h>
 #include <memory/vmem.h>
+#include <tasks/signal.h>
 
 #define TASK_MAXNAME 256
 #define TASK_PATH_MAX 256
@@ -71,6 +72,7 @@ typedef struct task {
 	uint32_t envc;
 
 	vfs_file_t files[VFS_MAX_OPENFILES];
+	struct sigaction signal_handlers[32];
 
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[TASK_PATH_MAX + 1];
