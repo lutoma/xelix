@@ -84,7 +84,7 @@ typedef struct task {
 	bool interrupt_yield;
 } task_t;
 
-task_t* task_new(task_t* parent, char name[TASK_MAXNAME],
+task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
 void task_set_initial_state(task_t* task, void* entry);
 task_t* task_fork(task_t* to_fork, isf_t* state);

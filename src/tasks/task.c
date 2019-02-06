@@ -37,11 +37,11 @@ extern void* __kernel_end;
 
 static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta);
 
-static task_t* alloc_task(task_t* parent, char name[TASK_MAXNAME], char** environ,
-	uint32_t envc, char** argv, uint32_t argc) {
+static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
+	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = (task_t*)zmalloc(sizeof(task_t));
-	task->pid = ++highest_pid;
+	task->pid = pid ? pid : ++highest_pid;
 	task->task_state = TASK_STATE_RUNNING;
 	task->interrupt_yield = false;
 
@@ -109,10 +109,10 @@ static void map_memory(task_t* task) {
  * interrupt stack frame etc. The binary still has to be mapped into the paging
  * context separately (usually in the ELF loader).
  */
-task_t* task_new(task_t* parent, char name[TASK_MAXNAME],
+task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
-	task_t* task = alloc_task(parent, name, environ, envc, argv, argc);
+	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
 	map_memory(task);
 	vfs_open("/dev/stdin", O_RDONLY, task);
 	vfs_open("/dev/stdout", O_WRONLY, task);
@@ -121,7 +121,7 @@ task_t* task_new(task_t* parent, char name[TASK_MAXNAME],
 }
 
 task_t* task_fork(task_t* to_fork, isf_t* state) {
-	task_t* task = alloc_task(to_fork, to_fork->name, to_fork->environ,
+	task_t* task = alloc_task(to_fork, 0, to_fork->name, to_fork->environ,
 		to_fork->envc, to_fork->argv, to_fork->argc);
 
 	memcpy(task->cwd, to_fork->cwd, TASK_PATH_MAX);

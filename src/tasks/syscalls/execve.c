@@ -73,16 +73,13 @@ SYSCALL_HANDLER(execve)
 	}
 
 	//task_reset(syscall.task, syscall.task->parent, (char*)syscall.params[0], __env, __envc, __argv, __argc);
-	task_t* new_task = task_new(syscall.task->parent, (char*)syscall.params[0], __env, __envc, __argv, __argc);
+	task_t* new_task = task_new(syscall.task->parent, syscall.task->pid, (char*)syscall.params[0], __env, __envc, __argv, __argc);
 	if(elf_load_file(new_task, (void*)syscall.params[0]) == -1) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 
-	new_task->pid = syscall.task->pid;
-	strcpy(new_task->cwd, syscall.task->cwd);
 	scheduler_add(new_task);
-
 	syscall.task->task_state = TASK_STATE_REPLACED;
 	syscall.task->interrupt_yield = true;
 	return 0;
