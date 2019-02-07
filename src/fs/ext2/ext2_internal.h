@@ -153,6 +153,9 @@ struct ext2_blocknum_resolver_cache {
 #define write_superblock() vfs_block_write(1024, sizeof(struct superblock), (uint8_t*)superblock)
 #define write_blockgroup_table() vfs_block_write(bl_off(2), bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)
 
+#define ext2_inode_read_data(inode, offset, length, buf) ext2_inode_data_rw(inode, 0, offset, length, buf)
+#define ext2_inode_write_data ext2_inode_data_rw
+
 struct superblock* superblock;
 struct blockgroup* blockgroup_table;
 struct inode* root_inode;
@@ -162,8 +165,8 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num);
 uint32_t ext2_inode_new(struct inode* inode, uint16_t mode);
 uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct ext2_blocknum_resolver_cache* cache);
 void ext2_free_blocknum_resolver_cache(struct ext2_blocknum_resolver_cache* cache);
-uint8_t* ext2_inode_read_data(struct inode* inode, uint32_t offset, size_t length, uint8_t* buf);
-uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t offset, size_t length, uint8_t* buf);
+uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
+	uint32_t offset, size_t length, uint8_t* buf);
 
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
 void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit);

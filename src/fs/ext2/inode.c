@@ -203,40 +203,12 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 	return real_block_num;
 }
 
-uint8_t* ext2_inode_read_data(struct inode* inode, uint32_t offset, size_t length, uint8_t* buf) {
-	uint32_t num_blocks = bl_size(length);
-	if(bl_mod(length) != 0) {
-		num_blocks++;
-	}
+/* Will write if write_inode_num is set, otherwise read. Use
+ * exta_inode_read_data/exta_inode_write_data macros instead.
+ */
+uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
+	uint32_t offset, size_t length, uint8_t* buf) {
 
-	// TODO Reuse offset handling from below.
-	uint8_t* tmp = kmalloc(bl_off(num_blocks));
-	struct ext2_blocknum_resolver_cache* res_cache = zmalloc(sizeof(struct ext2_blocknum_resolver_cache));
-
-	for(int i = 0; i < num_blocks; i++) {
-		uint32_t block_num = ext2_resolve_blocknum(inode, i + bl_size(offset), res_cache);
-
-		if(!block_num) {
-			buf = NULL;
-			goto bye;
-		}
-
-		if(!vfs_block_read(bl_off(block_num), bl_off(1), tmp + bl_off(i))) {
-			debug("read_inode_blocks: read for block %d failed\n", i);
-			buf = NULL;
-			goto bye;
-		}
-	}
-
-	memcpy(buf, tmp + bl_mod(offset), length);
-
-bye:
-	ext2_free_blocknum_resolver_cache(res_cache);
-	kfree(tmp);
-	return buf;
-}
-
-uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t offset, size_t length, uint8_t* buf) {
 	uint32_t num_blocks = bl_size(length + offset);
 	if(bl_mod(length + offset) != 0) {
 		num_blocks++;
@@ -248,7 +220,11 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 		uint32_t block_num = ext2_resolve_blocknum(inode, i + bl_size(offset), res_cache);
 
 		if(!block_num) {
-			block_num = ext2_block_new(inode_num);
+			if(!write_inode_num) {
+				return NULL;
+			}
+
+			block_num = ext2_block_new(write_inode_num);
 			if(!block_num) {
 				ext2_free_blocknum_resolver_cache(res_cache);
 				return NULL;
@@ -266,7 +242,7 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 				return NULL;
 			}
 
-			ext2_inode_write(inode, inode_num);
+			ext2_inode_write(inode, write_inode_num);
 		}
 
 		uint32_t wr_offset = bl_off(block_num);
@@ -282,8 +258,14 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 			wr_size = length - buf_offset;
 		}
 
-		if(!vfs_block_write(wr_offset, wr_size, buf + buf_offset)) {
-			debug("read_inode_blocks: write for block %d failed\n", i);
+		bool res = false;
+		if(write_inode_num) {
+			res = vfs_block_write(wr_offset, wr_size, buf + buf_offset);
+		} else {
+			res = vfs_block_read(wr_offset, wr_size, buf + buf_offset);
+		}
+
+		if(!res) {
 			ext2_free_blocknum_resolver_cache(res_cache);
 			return NULL;
 		}
@@ -294,5 +276,4 @@ uint8_t* ext2_inode_write_data(struct inode* inode, uint32_t inode_num, uint32_t
 	ext2_free_blocknum_resolver_cache(res_cache);
 	return buf;
 }
-
 #endif /* ENABLE_EXT2 */
