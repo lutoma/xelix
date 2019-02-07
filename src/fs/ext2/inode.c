@@ -30,6 +30,13 @@
 #include <fs/block.h>
 #include <fs/ext2.h>
 
+#define INODE_CACHE_MAX 50
+struct inode_cache_entry {
+	uint32_t num;
+	struct inode inode;
+};
+static struct inode_cache_entry inode_cache[INODE_CACHE_MAX];
+static uint32_t inode_cache_end = 0;
 
 static uint32_t find_inode(uint32_t inode_num) {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
@@ -49,9 +56,26 @@ static uint32_t find_inode(uint32_t inode_num) {
 		+ ((inode_num - 1) % superblock->inodes_per_group * superblock->inode_size);
 }
 
+static struct inode* check_cache(uint32_t inode_num) {
+	struct inode_cache_entry* entry = NULL;
+	for(int i = 0; i < INODE_CACHE_MAX; i++) {
+		entry = &inode_cache[i];
+		if(!entry->num || entry->num == inode_num) {
+			break;
+		}
+	}
+	return entry->num ? &entry->inode : NULL;
+}
+
 bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 	if(inode_num == ROOT_INODE && root_inode) {
 		memcpy(buf, root_inode, superblock->inode_size);
+		return true;
+	}
+
+	struct inode* cache_in = check_cache(inode_num);
+	if(cache_in) {
+		memcpy(buf, cache_in, sizeof(struct inode));
 		return true;
 	}
 
@@ -60,7 +84,15 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 		return false;
 	}
 
-	return vfs_block_read(inode_off, superblock->inode_size, (uint8_t*)buf);
+	uint8_t* ret = vfs_block_read(inode_off, superblock->inode_size, (uint8_t*)buf);
+	if(!ret) {
+		return false;
+	}
+
+	struct inode_cache_entry* cache = &inode_cache[inode_cache_end++ % INODE_CACHE_MAX];
+	cache->num = inode_num;
+	memcpy(&cache->inode, buf, sizeof(struct inode));
+	return true;
 }
 
 bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
@@ -71,6 +103,11 @@ bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
 	uint32_t inode_off = find_inode(inode_num);
 	if(!inode_off) {
 		return false;
+	}
+
+	struct inode* cache_in = check_cache(inode_num);
+	if(cache_in) {
+		memcpy(cache_in, buf, sizeof(struct inode));
 	}
 
 	return vfs_block_write(inode_off, superblock->inode_size, (uint8_t*)buf);
@@ -163,7 +200,6 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		real_block_num = inode->blocks[block_num];
 	}
 
-	debug("inode_resolve_blocknum: Translated inode block %d to real block %d\n", block_num, real_block_num);
 	return real_block_num;
 }
 
