@@ -155,7 +155,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 		struct task_mem* mem = task->memory_allocations;
 		uint32_t mem_alloc = 0;
 		for(; mem; mem = mem->next) {
-			if(mem->section != VMEM_SECTION_KERNEL) {
+			if(mem->flags & TASK_MEM_FORK) {
 				mem_alloc += mem->len;
 			}
 		}
