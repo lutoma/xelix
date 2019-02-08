@@ -54,6 +54,7 @@ DEFINE_SYSCALL(gettimeofday);
 DEFINE_SYSCALL(readlink);
 DEFINE_SYSCALL(execve);
 DEFINE_SYSCALL(sigaction);
+DEFINE_SYSCALL(sigprocmask);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -90,6 +91,7 @@ syscall_t syscall_table[] = {
 	sys_readlink,		// 31
 	sys_execve,			// 32
 	sys_sigaction,		// 33
+	sys_sigprocmask,	// 34
 };
 
 char* syscall_name_table[] = {
@@ -127,4 +129,5 @@ char* syscall_name_table[] = {
 	"readlink",		// 31
 	"execve",		// 32
 	"sigaction",	// 33
+	"sigprocmask",	// 34
 };

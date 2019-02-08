@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <sys/wait.h>
-#include <sys/xelix.h>
 #include "util.h"
 
 static void launch(const char* path, char** argv, char** env) {
@@ -17,6 +17,10 @@ static void launch(const char* path, char** argv, char** env) {
 }
 
 int main() {
+	sigset_t set;
+	sigfillset(&set);
+	sigprocmask(SIG_SETMASK, &set, NULL);
+
 	char* net_argv[] = { "networkd", NULL };
 	char* net_env[] = { "USER=root", NULL };
 	//launch("/usr/bin/networkd", net_argv, net_env);

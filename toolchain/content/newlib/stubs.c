@@ -136,13 +136,6 @@ int setregid(gid_t rgid, gid_t egid) {
 	errno = ENOSYS;
 	return -1;
 }
-int sigprocmask(int how, const sigset_t *set, sigset_t *oset) {
-	fprintf(stderr, "Warning: xelix newlib sigprocmask() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 int dup(int fildes) {
 	fprintf(stderr, "Warning: xelix newlib dup() stub called.\n");
 

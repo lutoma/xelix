@@ -36,6 +36,11 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, task_t* source, in
 		return 0;
 	}
 
+	// Check task signal mask
+	if(bit_get(task->signal_mask, sig)) {
+		return 0;
+	}
+
 	struct sigaction sa = task->signal_handlers[sig];
 	if((uint32_t)sa.sa_handler == SIG_IGN) {
 		return 0;

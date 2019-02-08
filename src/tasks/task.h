@@ -73,6 +73,7 @@ typedef struct task {
 
 	vfs_file_t files[VFS_MAX_OPENFILES];
 	struct sigaction signal_handlers[32];
+	uint32_t signal_mask;
 
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[TASK_PATH_MAX + 1];

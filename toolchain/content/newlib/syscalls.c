@@ -33,6 +33,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <termios.h>
 #include <signal.h>
 #include <string.h>
@@ -287,6 +288,10 @@ int readlink(const char *path, char *buf, size_t bufsize) {
 
 int sigaction(int sig, const struct sigaction* act, struct sigaction* oact) {
 	return syscall(33, sig, act, oact);
+}
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *oset) {
+	return syscall(34, how, set, oset);
 }
 
 int	getpagesize(void) {
