@@ -222,8 +222,8 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	strcpy(fp->path, path);
 	strcpy(fp->mount_path, mount_path);
 	kfree(path);
+	memcpy(&fp->callbacks, &mp.callbacks, sizeof(struct vfs_callbacks));
 	fp->mount_instance = mp.instance;
-	fp->mountpoint = mp_num;
 	fp->inode = inode;
 	fp->task = task;
 	fp->flags = flags;
@@ -233,13 +233,12 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	debug("\n", NULL);
 	strncpy(vfs_last_read_attempt, fp->path, 512);
-	struct mountpoint mp = mountpoints[fp->mountpoint];
-	if(!mp.callbacks.stat) {
+	if(!fp->callbacks.stat) {
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
-	return mp.callbacks.stat(fp, dest);
+	return fp->callbacks.stat(fp, dest);
 }
 
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
@@ -251,13 +250,12 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 	}
 
 	strncpy(vfs_last_read_attempt, fp->path, 512);
-	struct mountpoint mp = mountpoints[fp->mountpoint];
-	if(!mp.callbacks.read) {
+	if(!fp->callbacks.read) {
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
-	size_t read = mp.callbacks.read(fp, dest, size);
+	size_t read = fp->callbacks.read(fp, dest, size);
 	fp->offset += read;
 	return read;
 }
@@ -275,13 +273,12 @@ size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
 	}
 
 	strncpy(vfs_last_read_attempt, fp->path, 512);
-	struct mountpoint mp = mountpoints[fp->mountpoint];
-	if(!mp.callbacks.write) {
+	if(!fp->callbacks.write) {
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
-	size_t written = mp.callbacks.write(fp, source, size);
+	size_t written = fp->callbacks.write(fp, source, size);
 	fp->offset += written;
 	return written;
 }
@@ -290,13 +287,12 @@ size_t vfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	debug("size %d\n", size);
 
 	strncpy(vfs_last_read_attempt, fp->path, 512);
-	struct mountpoint mp = mountpoints[fp->mountpoint];
-	if(!mp.callbacks.getdents) {
+	if(!fp->callbacks.getdents) {
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
-	return mp.callbacks.getdents(fp, dest, size);
+	return fp->callbacks.getdents(fp, dest, size);
 }
 
 

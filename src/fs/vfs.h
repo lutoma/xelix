@@ -60,27 +60,7 @@
 
 // Can't include <tasks/task.h> as that includes us, so use stub struct def.
 struct task;
-
-typedef struct {
-   uint32_t num;
-   char path[512];
-   char mount_path[512];
-   void* mount_instance;
-   uint32_t flags;
-   uint32_t offset;
-   uint32_t mountpoint;
-   uint32_t inode;
-   struct task* task;
-} vfs_file_t;
-
-// Keep in sync with newlib
-typedef struct {
-	uint32_t d_ino;
-	uint32_t d_off;
-	uint16_t d_reclen;
-    uint8_t d_type;
-	char d_name[] __attribute__ ((nonstring));
-} vfs_dirent_t;
+struct vfs_file;
 
 // Keep in sync with newlib
 typedef struct {
@@ -105,10 +85,10 @@ typedef struct {
 
 struct vfs_callbacks {
 	uint32_t (*open)(char* path, uint32_t flags, void* mount_instance);
-	size_t (*read)(vfs_file_t* fp, void* dest, size_t size);
-	size_t (*write)(vfs_file_t* fp, void* source, size_t size);
-	size_t (*getdents)(vfs_file_t* fp, void* dest, size_t size);
-	int (*stat)(vfs_file_t* fp, vfs_stat_t* dest);
+	size_t (*read)(struct vfs_file* fp, void* dest, size_t size);
+	size_t (*write)(struct vfs_file* fp, void* source, size_t size);
+	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size);
+	int (*stat)(struct vfs_file* fp, vfs_stat_t* dest);
 	int (*mkdir)(const char* path, uint32_t mode);
 	int (*symlink)(const char* path1, const char* path2);
 	int (*unlink)(char* name);
@@ -119,6 +99,27 @@ struct vfs_callbacks {
 	int (*readlink)(const char* orig_path, char* buf, size_t size);
 	int (*rmdir)(const char* path);
 };
+
+typedef struct vfs_file {
+   uint32_t num;
+   char path[512];
+   char mount_path[512];
+   void* mount_instance;
+   struct vfs_callbacks callbacks;
+   uint32_t flags;
+   uint32_t offset;
+   uint32_t inode;
+   struct task* task;
+} vfs_file_t;
+
+// Keep in sync with newlib
+typedef struct {
+	uint32_t d_ino;
+	uint32_t d_off;
+	uint16_t d_reclen;
+    uint8_t d_type;
+	char d_name[] __attribute__ ((nonstring));
+} vfs_dirent_t;
 
 // Used to always store the last read/write attempt (used for kernel panic debugging)
 char vfs_last_read_attempt[512];
