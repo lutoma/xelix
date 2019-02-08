@@ -297,3 +297,8 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oset) {
 int	getpagesize(void) {
 	return 0x1000;
 }
+
+int pipe(int fildes[2]) {
+	return syscall(28, fildes, 0, 0);
+}
+

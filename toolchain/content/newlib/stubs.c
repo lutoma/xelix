@@ -150,12 +150,6 @@ int dup2(int fildes, int fildes2) {
 	return -1;
 }
 
-int pipe(int fildes[2]) {
-	fprintf(stderr, "Warning: xelix newlib pipe() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
 
 pid_t tcgetpgrp(int fildes) {
 	fprintf(stderr, "Warning: xelix newlib tcgetpgrp() stub called.\n");

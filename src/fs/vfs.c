@@ -144,7 +144,7 @@ static int get_mountpoint(char* path, char** mount_path) {
 	return mp_num;
 }
 
-static vfs_file_t* alloc_fileno(task_t* task) {
+vfs_file_t* vfs_alloc_fileno(task_t* task) {
 	vfs_file_t* fdir = task ? task->files : kernel_files;
 	spinlock_t* lock = task ? &task->file_open_lock : &kernel_file_open_lock;
 	uint32_t num = 0;
@@ -169,6 +169,11 @@ static vfs_file_t* alloc_fileno(task_t* task) {
 
 	fdir[num].num = num;
 	fdir[num].offset = 0;
+
+	/* Set to a dummy inode so two subsequent calls of this function don't
+	 * return the same file.
+	 */
+	fdir[num].inode = 1;
 	return &fdir[num];
 }
 
@@ -218,7 +223,7 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
-	vfs_file_t* fp = alloc_fileno(task);
+	vfs_file_t* fp = vfs_alloc_fileno(task);
 	strcpy(fp->path, path);
 	strcpy(fp->mount_path, mount_path);
 	kfree(path);
@@ -318,7 +323,7 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 int vfs_close(vfs_file_t* fp) {
 	debug("\n", NULL);
 	vfs_file_t* fdir = fp->task ? fp->task->files : kernel_files;
-	fdir[fp->num].inode = 0;
+	bzero(&fdir[fp->num], sizeof(vfs_file_t));
 	return 0;
 }
 
