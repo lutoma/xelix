@@ -232,7 +232,6 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 
 int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	debug("\n", NULL);
-	strncpy(vfs_last_read_attempt, fp->path, 512);
 	if(!fp->callbacks.stat) {
 		sc_errno = ENOSYS;
 		return -1;
@@ -249,7 +248,6 @@ size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
 		return -1;
 	}
 
-	strncpy(vfs_last_read_attempt, fp->path, 512);
 	if(!fp->callbacks.read) {
 		sc_errno = ENOSYS;
 		return -1;
@@ -272,7 +270,6 @@ size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
 		return 0;
 	}
 
-	strncpy(vfs_last_read_attempt, fp->path, 512);
 	if(!fp->callbacks.write) {
 		sc_errno = ENOSYS;
 		return -1;
@@ -286,7 +283,6 @@ size_t vfs_write(void* source, size_t size, vfs_file_t* fp) {
 size_t vfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	debug("size %d\n", size);
 
-	strncpy(vfs_last_read_attempt, fp->path, 512);
 	if(!fp->callbacks.getdents) {
 		sc_errno = ENOSYS;
 		return -1;

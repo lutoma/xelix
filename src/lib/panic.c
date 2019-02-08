@@ -25,7 +25,6 @@
 #include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <hw/serial.h>
-#include <fs/vfs.h>
 #include <string.h>
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
@@ -111,11 +110,6 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 		panic_printf("Running task:    [No task running]\n");
 	}
 
-	if(!vfs_last_read_attempt[0]) {
-		strcpy(vfs_last_read_attempt, "No file system read attempts.");
-	}
-
-	panic_printf("Last VFS read:   %s\n", vfs_last_read_attempt);
 	panic_printf("Paging context:  %s\n\n", vmem_get_name(vmem_currentContext));
 
 	panic_printf("Call trace:\n");

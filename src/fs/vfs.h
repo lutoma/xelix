@@ -121,9 +121,6 @@ typedef struct {
 	char d_name[] __attribute__ ((nonstring));
 } vfs_dirent_t;
 
-// Used to always store the last read/write attempt (used for kernel panic debugging)
-char vfs_last_read_attempt[512];
-
 char* vfs_normalize_path(const char* orig_path, char* cwd);
 vfs_file_t* vfs_get_from_id(int id, struct task* task);
 vfs_file_t* vfs_open(const char* path, uint32_t flags, struct task* task);
