@@ -323,7 +323,10 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 int vfs_close(vfs_file_t* fp) {
 	debug("\n", NULL);
 	vfs_file_t* fdir = fp->task ? fp->task->files : kernel_files;
-	bzero(&fdir[fp->num], sizeof(vfs_file_t));
+
+	if(fp->num > 2) {
+		bzero(&fdir[fp->num], sizeof(vfs_file_t));
+	}
 	return 0;
 }
 

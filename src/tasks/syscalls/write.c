@@ -26,10 +26,6 @@
 SYSCALL_HANDLER(write)
 {
 	SYSCALL_SAFE_RESOLVE_PARAM(1);
-
-	if (syscall.params[0] == 1 || syscall.params[0] == 2)
-		return console_write(NULL, (char*)syscall.params[1], syscall.params[2]);
-
 	vfs_file_t* fd = vfs_get_from_id(syscall.params[0], syscall.task);
 	if(!fd) {
 		sc_errno = EBADF;

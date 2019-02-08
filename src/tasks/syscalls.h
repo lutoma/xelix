@@ -56,6 +56,7 @@ DEFINE_SYSCALL(readlink);
 DEFINE_SYSCALL(execve);
 DEFINE_SYSCALL(sigaction);
 DEFINE_SYSCALL(sigprocmask);
+DEFINE_SYSCALL(fcntl);
 
 syscall_t syscall_table[] = {
 	NULL,
@@ -93,6 +94,8 @@ syscall_t syscall_table[] = {
 	sys_execve,			// 32
 	sys_sigaction,		// 33
 	sys_sigprocmask,	// 34
+	NULL,				// 35
+	sys_fcntl,			// 36
 };
 
 char* syscall_name_table[] = {
@@ -131,4 +134,6 @@ char* syscall_name_table[] = {
 	"execve",		// 32
 	"sigaction",	// 33
 	"sigprocmask",	// 34
+	"sigsuspend",	// 35
+	"fcntl",		// 36
 };

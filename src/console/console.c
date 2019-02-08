@@ -191,6 +191,14 @@ static size_t sfs_stdout_write(void* source, size_t size, size_t offset, void* m
 	return console_write(NULL, source, size);
 }
 
+size_t console_vfs_read(struct vfs_file* fp, void* dest, size_t size) {
+	return console_read(NULL, dest, size);
+}
+
+size_t console_vfs_write(struct vfs_file* fp, void* source, size_t size) {
+	return console_write(NULL, source, size);
+}
+
 void console_init()
 {
 	if (default_console == NULL)

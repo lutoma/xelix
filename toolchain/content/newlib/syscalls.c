@@ -294,6 +294,10 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oset) {
 	return syscall(34, how, set, oset);
 }
 
+int sigsuspend(const sigset_t *sigmask) {
+	return syscall(35, sigmask, 0, 0);
+}
+
 int	getpagesize(void) {
 	return 0x1000;
 }
@@ -302,3 +306,29 @@ int pipe(int fildes[2]) {
 	return syscall(28, fildes, 0, 0);
 }
 
+int _fcntl(int fildes, int cmd, ...) {
+	va_list va;
+	va_start(va, cmd);
+	int r = syscall(36, fildes, cmd, va_arg(va, int));
+	va_end(va);
+	return r;
+}
+
+int dup(int fildes) {
+	return fcntl(fildes, F_DUPFD, 0);
+}
+
+int dup2(int fildes, int fildes2) {
+	if(fildes2 < 0 || fildes2 >= OPEN_MAX) {
+		errno = EBADF;
+		return -1;
+	}
+
+	// FIXME Should check validity of fildes here
+	if(fildes == fildes2) {
+		return fildes2;
+	}
+
+	close(fildes2);
+	return fcntl(fildes, F_DUPFD, fildes2);
+}

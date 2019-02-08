@@ -136,20 +136,6 @@ int setregid(gid_t rgid, gid_t egid) {
 	errno = ENOSYS;
 	return -1;
 }
-int dup(int fildes) {
-	fprintf(stderr, "Warning: xelix newlib dup() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int dup2(int fildes, int fildes2) {
-	fprintf(stderr, "Warning: xelix newlib dup2() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 
 pid_t tcgetpgrp(int fildes) {
 	fprintf(stderr, "Warning: xelix newlib tcgetpgrp() stub called.\n");
@@ -160,20 +146,6 @@ pid_t tcgetpgrp(int fildes) {
 
 int setpgid(pid_t pid, pid_t pgid) {
 	fprintf(stderr, "Warning: xelix newlib setpgid() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int _fcntl(int fildes, int cmd, ...) {
-	fprintf(stderr, "Warning: xelix newlib fcntl() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int sigsuspend(const sigset_t *sigmask) {
-	fprintf(stderr, "Warning: xelix newlib sigsuspend() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
