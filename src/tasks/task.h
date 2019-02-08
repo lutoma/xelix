@@ -22,6 +22,7 @@
 #include <fs/vfs.h>
 #include <memory/vmem.h>
 #include <tasks/signal.h>
+#include <spinlock.h>
 
 #define TASK_MAXNAME 256
 #define TASK_PATH_MAX 256
@@ -72,6 +73,8 @@ typedef struct task {
 	uint32_t envc;
 
 	vfs_file_t files[VFS_MAX_OPENFILES];
+	spinlock_t file_open_lock;
+
 	struct sigaction signal_handlers[32];
 	uint32_t signal_mask;
 

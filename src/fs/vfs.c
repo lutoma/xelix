@@ -48,9 +48,9 @@ struct mountpoint {
 
 struct mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
 vfs_file_t kernel_files[VFS_MAX_OPENFILES];
+static spinlock_t kernel_file_open_lock;
 uint32_t last_mountpoint = -1;
 uint32_t last_dir = 0;
-static spinlock_t file_open_lock;
 
 char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	if(!strcmp(orig_path, ".")) {
@@ -113,16 +113,10 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 }
 
 vfs_file_t* vfs_get_from_id(int id, task_t* task) {
-	if(id < 0 || !spinlock_get(&file_open_lock, 200)) {
-		return NULL;
-	}
-
 	vfs_file_t* fd = task? &task->files[id] : &kernel_files[id];
 	if(!fd->inode) {
 		return NULL;
 	}
-
-	spinlock_release(&file_open_lock);
 	return fd;
 }
 
@@ -150,6 +144,34 @@ static int get_mountpoint(char* path, char** mount_path) {
 	return mp_num;
 }
 
+static vfs_file_t* alloc_fileno(task_t* task) {
+	vfs_file_t* fdir = task ? task->files : kernel_files;
+	spinlock_t* lock = task ? &task->file_open_lock : &kernel_file_open_lock;
+	uint32_t num = 0;
+
+	if(!spinlock_get(lock, 200)) {
+		sc_errno = EAGAIN;
+		return NULL;
+	}
+
+	for(; num < VFS_MAX_OPENFILES; num++) {
+		if(!fdir[num].inode) {
+			break;
+		}
+	}
+
+	spinlock_release(lock);
+
+	if(num >= VFS_MAX_OPENFILES) {
+		sc_errno = ENFILE;
+		return NULL;
+	}
+
+	fdir[num].num = num;
+	fdir[num].offset = 0;
+	return &fdir[num];
+}
+
 vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	#ifdef VFS_DEBUG
 	log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s\n",
@@ -169,11 +191,6 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return NULL;
 	}
 
-	if(!spinlock_get(&file_open_lock, 200)) {
-		sc_errno = EAGAIN;
-		return NULL;
-	}
-
 	char* pwd = "/";
 	if(task) {
 		pwd = strndup(task->cwd, 265);
@@ -184,7 +201,6 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	int mp_num = get_mountpoint(path, &mount_path);
 	if(mp_num < 0) {
 		kfree(path);
-		spinlock_release(&file_open_lock);
 		sc_errno = ENOENT;
 		return NULL;
 	}
@@ -198,39 +214,19 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	uint32_t inode = mp.callbacks.open(mount_path, flags, mp.instance);
 	if(!inode) {
 		kfree(path);
-		spinlock_release(&file_open_lock);
 		sc_errno = ENOENT;
 		return NULL;
 	}
 
-	vfs_file_t* fdir = task ? task->files : kernel_files;
-	uint32_t num = 0;
-	for(; num < VFS_MAX_OPENFILES; num++) {
-		if(!fdir[num].inode) {
-			break;
-		}
-	}
-
-	if(num >= VFS_MAX_OPENFILES) {
-		kfree(path);
-		spinlock_release(&file_open_lock);
-		sc_errno = ENFILE;
-		return NULL;
-	}
-
-	vfs_file_t* fp = task ? &fdir[num] : &fdir[num];
-	fp->num = num;
+	vfs_file_t* fp = alloc_fileno(task);
 	strcpy(fp->path, path);
 	strcpy(fp->mount_path, mount_path);
 	kfree(path);
 	fp->mount_instance = mp.instance;
-	fp->offset = 0;
 	fp->mountpoint = mp_num;
 	fp->inode = inode;
 	fp->task = task;
 	fp->flags = flags;
-
-	spinlock_release(&file_open_lock);
 	return fp;
 }
 
@@ -243,14 +239,7 @@ int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 		return -1;
 	}
 
-	int r = mp.callbacks.stat(fp, dest);
-
-	/*printf("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", fp->mount_path, dest->st_uid,
-		dest->st_gid, dest->st_size, vfs_filetype_to_verbose(vfs_mode_to_filetype(dest->st_mode)),
-		vfs_get_verbose_permissions(dest->st_mode));
-	*/
-
-	return r;
+	return mp.callbacks.stat(fp, dest);
 }
 
 size_t vfs_read(void* dest, size_t size, vfs_file_t* fp) {
@@ -335,20 +324,9 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 }
 
 int vfs_close(vfs_file_t* fp) {
-	// FIXME, this seems to be buggy and causes triple faults
-	// Maybe related to access after the task has ended or something
-	return 0;
-
 	debug("\n", NULL);
-
-	if(!spinlock_get(&file_open_lock, 200)) {
-		sc_errno = EAGAIN;
-		return -1;
-	}
-
 	vfs_file_t* fdir = fp->task ? fp->task->files : kernel_files;
 	fdir[fp->num].inode = 0;
-	spinlock_release(&file_open_lock);
 	return 0;
 }
 
