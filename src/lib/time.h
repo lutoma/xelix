@@ -24,4 +24,5 @@ struct timeval {
 };
 
 uint32_t time_get();
+int time_get_timeval(struct timeval* tv);
 void time_init();

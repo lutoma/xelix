@@ -1,9 +1,17 @@
 ; The most basic xelix executable possible.
 
-GLOBAL _start
+section .data
+	hello:	db 'Hello World.',10
+	hellol:	equ $-hello
+
+section .text
+global _start
 _start:
-	; Call the test syscall
-	mov eax, 9
+	; Call the write syscall
+	mov eax, 3
+	mov ebx, 1
+	mov ecx, hello
+	mov edx, hellol
 	int 80h
 
 	; Call the exit syscall

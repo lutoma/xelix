@@ -25,7 +25,6 @@
 
 SYSCALL_HANDLER(open)
 {
-	SYSCALL_SAFE_RESOLVE_PARAM(0);
 	vfs_file_t* fd = vfs_open((char*)syscall.params[0], syscall.params[1], syscall.task);
 	if(!fd) {
 		return -1;

@@ -21,6 +21,11 @@
 #include <tasks/task.h>
 #include <errno.h>
 
+// From newlib
+#define SIG_SETMASK 0	/* set mask with sigprocmask() */
+#define SIG_BLOCK 1	/* set of signals to block */
+#define SIG_UNBLOCK 2	/* set of signals to, well, unblock */
+
 // signal.asm
 extern void task_sigjmp_crt0(void);
 
@@ -98,4 +103,58 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, task_t* source, in
 	task->task_state = TASK_STATE_TERMINATED;
 	task->interrupt_yield = true;
 	return 0;
+}
+
+// Syscall API
+int task_signal_syscall(int target_pid, task_t* source, int sig, isf_t* state) {
+	task_t* target_task = scheduler_find(target_pid);
+	if(!target_task) {
+		sc_errno = ESRCH;
+		return -1;
+	}
+
+	/* POSIX: "If sig is 0 (the null signal), error checking is performed but
+	 * no signal is actually sent. The null signal can be used to check the
+	 * validity of pid."
+	 */
+	if(!sig) {
+		return 0;
+	}
+
+	return task_signal(target_task, source, sig, state);
+}
+
+int task_sigprocmask(task_t* task, int how, uint32_t* set, uint32_t* oset) {
+	if(oset) {
+		memcpy(oset, task->signal_mask, sizeof(uint32_t));
+	}
+
+	if(set) {
+		if(how == SIG_SETMASK) {
+			task->signal_mask = *set;
+		} else if(how == SIG_BLOCK) {
+			task->signal_mask |= *set;
+		} else if(how == SIG_UNBLOCK) {
+			task->signal_mask &= ~*set;
+		}
+	}
+	return 0;
+}
+
+int task_sigaction(task_t* task, int sig, const struct sigaction* act,
+	struct sigaction* oact) {
+
+	if(sig > 32) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	struct sigaction* tbl_entry = &task->signal_handlers[sig];
+	if(oact) {
+		memcpy(oact, tbl_entry, sizeof(struct sigaction));
+	}
+
+	if(act) {
+		memcpy(tbl_entry, (struct sigaction*)act, sizeof(struct sigaction));
+	}
 }

@@ -28,6 +28,23 @@
 
 #include "syscalls.h"
 
+static inline int handle_arg_flags(struct syscall* syscall, int num, uint8_t flags) {
+	if(flags & SYSCALL_ARG_RESOLVE) {
+		if(flags & SYSCALL_ARG_RESOLVE_NULL_OK && !syscall->params[num]) {
+			return 0;
+		}
+
+		syscall->params[num] = vmem_translate(syscall->task->memory_context,
+			syscall->params[num], false);
+
+		if(!syscall->params[num]) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 static void int_handler(isf_t* regs)
 {
 	task_t* task = scheduler_get_current();
@@ -46,8 +63,8 @@ static void int_handler(isf_t* regs)
 	syscall.state = regs;
 	syscall.task = task;
 
-	syscall_t call = syscall_table[syscall.num];
-	if (syscall.num >= sizeof(syscall_table) / sizeof(syscall_t) || call == NULL) {
+	struct syscall_definition def = syscall_table[syscall.num];
+	if (syscall.num >= sizeof(syscall_table) / sizeof(struct syscall_definition) || def.handler == NULL) {
 		log(LOG_WARN, "syscall: Invalid syscall %d\n", syscall.num);
 		regs->eax = -1;
 		regs->ebx = EINVAL;
@@ -58,14 +75,23 @@ static void int_handler(isf_t* regs)
 	task_t* cur = scheduler_get_current();
 	log(LOG_DEBUG, "PID %d <%s>: %s(0x%x 0x%x 0x%x)\n",
 		cur->pid, cur->name,
-		syscall_name_table[syscall.num],
+		def.name,
 		regs->ebx,
 		regs->ecx,
 		regs->edx);
 #endif
 
+	if(handle_arg_flags(&syscall, 0, def.arg0) == -1 ||
+		handle_arg_flags(&syscall, 1, def.arg1) == -1 ||
+		handle_arg_flags(&syscall, 2, def.arg2) == -1) {
+
+		regs->eax = -1;
+		regs->ebx = EINVAL;
+		return;
+	}
+
 	task->syscall_errno = 0;
-	regs->eax = call(syscall);
+	regs->eax = def.handler(syscall);
 	regs->ebx = task->syscall_errno;
 
 	// Only change state back if it hasn't alreay been modified

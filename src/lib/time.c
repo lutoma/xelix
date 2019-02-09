@@ -162,6 +162,12 @@ uint32_t time_get() {
 	return last_timestamp;
 }
 
+int time_get_timeval(struct timeval* tv) {
+	tv->tv_sec = time_get();
+	tv->tv_usec = 0;
+	return 0;
+}
+
 static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 	if(offset) {
 		return 0;

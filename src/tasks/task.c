@@ -25,6 +25,7 @@
 #include <memory/gdt.h>
 #include <hw/interrupts.h>
 #include <console/console.h>
+#include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <string.h>
 #include <errno.h>
@@ -258,6 +259,60 @@ void task_cleanup(task_t* t) {
 	//kfree_array(t->argv);
 
 	kfree(t);
+}
+
+int task_chdir(task_t* task, const char* dir) {
+	vfs_file_t* fp = vfs_open(dir, O_RDONLY, NULL);
+	if(!fp) {
+		return -1;
+	}
+
+	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
+	if(vfs_stat(fp, stat) != 0) {
+		kfree(stat);
+		vfs_close(fp);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(vfs_mode_to_filetype(stat->st_mode) != FT_IFDIR) {
+		vfs_close(fp);
+		sc_errno = ENOTDIR;
+		return -1;
+	}
+
+	kfree(stat);
+	strcpy(task->cwd, fp->path);
+	vfs_close(fp);
+	return 0;
+}
+
+void* task_sbrk(task_t* task, size_t length) {
+	length = VMEM_ALIGN(length);
+
+	if(length < 0 || length > 0x500000) {
+		sc_errno = ENOMEM;
+		return -1;
+	}
+
+	if(!length) {
+		return task->sbrk;
+	}
+
+	void* phys_addr = zmalloc_a(length);
+	if(!phys_addr) {
+		sc_errno = EAGAIN;
+		return -1;
+	}
+
+	// FIXME sbrk is not set properly in elf.c (?)
+	void* virt_addr = task->sbrk;
+	task->sbrk += length;
+
+	task_add_mem(task, virt_addr, phys_addr, length, VMEM_SECTION_HEAP,
+		TASK_MEM_FORK | TASK_MEM_FREE);
+
+	return virt_addr;
 }
 
 static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {

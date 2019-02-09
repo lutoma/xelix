@@ -58,10 +58,6 @@ static char** copy_array(task_t* task, char** array, uint32_t* count) {
 
 SYSCALL_HANDLER(execve)
 {
-	SYSCALL_SAFE_RESOLVE_PARAM(0);
-	SYSCALL_SAFE_RESOLVE_PARAM(1);
-	SYSCALL_SAFE_RESOLVE_PARAM(2);
-
 	uint32_t __argc = 0;
 	uint32_t __envc = 0;
 	char** __argv = copy_array(syscall.task, (char**)syscall.params[1], &__argc);

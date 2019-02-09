@@ -97,6 +97,8 @@ task_t* task_fork(task_t* to_fork, isf_t* state);
 void task_reset(task_t* task, task_t* parent, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
 void task_cleanup(task_t* t);
+int task_chdir(task_t* task, const char* dir);
+void* task_sbrk(task_t* task, size_t length);
 
 #define task_add_mem_flat(task, start, size, section, flags) \
 	task_add_mem(task, start, start, size, section, flags)
