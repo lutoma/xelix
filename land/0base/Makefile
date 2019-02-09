@@ -14,7 +14,7 @@ install:
 	install -d ../../mnt/usr/bin
 	install -d ../../mnt/usr/share
 
-	echo 'root:x:0:0:root:/home/root:/usr/bin/xshell' > ../../mnt/etc/passwd
+	echo 'root:x:0:0:root:/home/root:/usr/bin/dash' > ../../mnt/etc/passwd
 	echo 'root:x:0:root' > ../../mnt/etc/group
 	echo 'localhost.localdomain' > ../../mnt/etc/hostname
 	cp motd ../../mnt/etc/

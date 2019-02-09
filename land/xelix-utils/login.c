@@ -77,7 +77,7 @@ int main() {
 		snprintf(env_pwd, 100, "PWD=%s", pwd->pw_dir);
 
 		char env_host[306];
-		snprintf(env_pwd, 306, "HOST=%s", sname);
+		snprintf(env_host, 306, "HOST=%s", sname);
 
 		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", env_home, "TERM=vt100", env_pwd, env_user, env_host, NULL };
 
