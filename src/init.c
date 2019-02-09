@@ -38,13 +38,10 @@
 #include <tasks/syscall.h>
 #include <memory/paging.h>
 #include <memory/vmem.h>
-#include <net/slip.h>
 #include <hw/ide.h>
 #include <fs/part.h>
 #include <fs/sysfs.h>
 #include <fs/ext2.h>
-#include <net/udp.h>
-#include <net/echo.h>
 #include <hw/ac97.h>
 #include <multiboot.h>
 
@@ -80,20 +77,12 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	#endif
 	init(vfs);
 
-	// Networking
-	init(udp);
-	init(echo);
-
 	#ifdef ENABLE_NE2K
 	init(ne2k);
 	#endif
 
 	#ifdef ENABLE_RTL8139
 	init(rtl8139);
-	#endif
-
-	#ifdef XELIX_WITH_SLIP
-	init(slip);
 	#endif
 
 	#ifdef ENABLE_AC97
