@@ -24,6 +24,7 @@
 #include <memory/vmem.h>
 #include <memory/paging.h>
 #include <memory/gdt.h>
+#include <net/net.h>
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
@@ -44,6 +45,10 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 			interrupts_enable();
 		}
 		reg.handler(regs);
+	}
+
+	if(intr == IRQ0) {
+		net_tick();
 	}
 
 	// Timer interrupt

@@ -1,0 +1,57 @@
+diff -ruPN -x docs picotcp-1.7.0/include/pico_config.h ../../../picotcp-1.7.0/include/pico_config.h
+--- picotcp-1.7.0/include/pico_config.h	2017-02-08 11:37:51.000000000 +0100
++++ ../../../picotcp-1.7.0/include/pico_config.h	2018-09-20 18:48:47.729294662 +0200
+@@ -227,6 +227,8 @@
+ # include "arch/pico_generic_gcc.h"
+ #elif defined __KERNEL__
+ # include "arch/pico_linux.h"
++#elif defined __xelix__
++# include "arch/pico_xelix.h"
+ /* #elif defined ... */
+ #else
+ # include "arch/pico_posix.h"
+--- picotcp-1.7.0/Makefile	2017-02-08 11:37:51.000000000 +0100
++++ picotcp-1.7.0/Makefile	2019-02-09 12:50:13.795152613 +0100
+@@ -22,7 +22,7 @@
+ RTOS?=0
+ GENERIC?=0
+ PTHREAD?=0
+-ADDRESS_SANITIZER?=1
++ADDRESS_SANITIZER?=0
+ GCOV?=0
+
+ # Default compiled-in protocols
+@@ -39,23 +39,23 @@
+ DEVLOOP?=1
+ PING?=1
+ DHCP_CLIENT?=1
+-DHCP_SERVER?=1
+-DNS_CLIENT?=1
+-MDNS?=1
+-DNS_SD?=1
+-SNTP_CLIENT?=1
+-IPFILTER?=1
++DHCP_SERVER?=0
++DNS_CLIENT?=0
++MDNS?=0
++DNS_SD?=0
++SNTP_CLIENT?=0
++IPFILTER?=0
+ CRC?=1
+ OLSR?=0
+-SLAACV4?=1
+-TFTP?=1
+-AODV?=1
++SLAACV4?=0
++TFTP?=0
++AODV?=0
+ MEMORY_MANAGER?=0
+ MEMORY_MANAGER_PROFILING?=0
+ TUN?=0
+ TAP?=0
+ PCAP?=0
+-PPP?=1
++PPP?=0
+ 6LOWPAN?=0
+ IEEE802154?=0
+ IPC?=0

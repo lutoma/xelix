@@ -43,6 +43,7 @@
 #include <fs/sysfs.h>
 #include <fs/ext2.h>
 #include <hw/ac97.h>
+#include <net/net.h>
 #include <multiboot.h>
 
 void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
@@ -88,6 +89,8 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	#ifdef ENABLE_AC97
 	init(ac97);
 	#endif
+
+	init(net);
 
 	char* __env[] = { NULL };
 	char* __argv[] = { vfs_basename(INIT_PATH), NULL };

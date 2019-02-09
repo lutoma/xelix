@@ -11,7 +11,7 @@ ifeq ($(BUILD),)
 	BUILD := 0
 endif
 
-MAKE_CFLAGS = -std=gnu18 -ffreestanding -g -O3 -pipe -masm=intel -mtune=sandybridge -mgeneral-regs-only -mhard-float -fstack-protector-strong -Wall -I src -I src/lib -include src/lib/generic.h
+MAKE_CFLAGS = -std=gnu18 -ffreestanding -g -O3 -pipe -masm=intel -mtune=sandybridge -mgeneral-regs-only -mhard-float -fstack-protector-strong -Wall -I src -I src/lib -I ext/picotcp/build/include -include src/lib/generic.h
 MAKE_LDFLAGS = -T linker.ld -nostdlib -lgcc
 MAKE_ASFLAGS = -g -f elf
 
@@ -23,6 +23,9 @@ MAKE_CFLAGS += $(CFLAGS)
 MAKE_QEMU_FLAGS = -netdev bridge,id=mnet0,br=br-vms,helper=/usr/lib/qemu/qemu-bridge-helper -device ne2k_pci,netdev=mnet0 -m 250 -no-kvm -cpu SandyBridge -serial mon:stdio -no-reboot -soundhw ac97 -d cpu_reset,guest_errors,unimp,page
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
+
+ext/picotcp/build/lib/libpicotcp.a:
+	make -C ext/picotcp
 
 # Work around missing stringbuffer include
 src/lib/strbuffer/%.o: src/lib/strbuffer/%.c src/lib/generic.h src/lib/config.h

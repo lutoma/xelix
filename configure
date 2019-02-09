@@ -48,7 +48,7 @@ do
 	echo -n ".o" >> Makefile
 done
 
-echo >> Makefile
+echo " ext/picotcp/build/lib/libpicotcp.a" >> Makefile
 echo "	\$(LD) $^ -o xelix.bin \$(MAKE_LDFLAGS) \$(LDFLAGS)" >> Makefile
 
 
