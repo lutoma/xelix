@@ -79,6 +79,7 @@ SYSCALL_HANDLER(execve)
 		return -1;
 	}
 
+	memcpy(new_task->files, syscall.task->files, sizeof(new_task->files));
 	scheduler_add(new_task);
 	syscall.task->task_state = TASK_STATE_REPLACED;
 	syscall.task->interrupt_yield = true;
