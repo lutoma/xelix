@@ -52,12 +52,12 @@ SYSCALL_HANDLER(fcntl) {
 
 	uint32_t fileno2 = syscall.params[2];
 	vfs_file_t* nfile;
-	if(fileno2) {
+	//if(fileno2) {
 		nfile = &syscall.task->files[fileno2];
-	} else {
-		nfile = vfs_alloc_fileno(syscall.task);
-		fileno2 = nfile->num;
-	}
+	//} else {
+	//	nfile = vfs_alloc_fileno(syscall.task);
+	//	fileno2 = nfile->num;
+	//}
 
 	memcpy(nfile, fp, sizeof(vfs_file_t));
 	nfile->num = fileno2;
