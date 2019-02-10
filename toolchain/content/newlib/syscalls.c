@@ -42,16 +42,17 @@
 #include <poll.h>
 #include <utime.h>
 
-/* Normally errno is defined as a macro that does reentrancy magic. Our
- * syscalls only get called from the reentrant mappings in reent/ and syscall/,
- * so we need to use the system-dependent plain errno.
+/* Normally errno is defined as a macro that does reentrancy magic. However,
+ * some of our syscalls (those prefixed with an underscore) get called from the
+ * reentrant mappings in reent/ and syscall/, and those expect a plain errno.
+ * For non-prefixed syscalls, we need to use the dynamic errno pointer.
  */
 #undef errno
 extern int errno;
+#define syscall_pf(call, a1, a2, a3) __syscall(&errno, call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
+#define syscall(call, a1, a2, a3) __syscall(__errno(), call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
 
-#define syscall(call, a1, a2, a3) __syscall(call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
-
-static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
+static inline uint32_t __syscall(int* errp, uint32_t call, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
 	register uint32_t _call asm("eax") = call;
 	register uint32_t _arg1 asm("ebx") = arg1;
 	register uint32_t _arg2 asm("ecx") = arg2;
@@ -66,16 +67,16 @@ static inline uint32_t __syscall(uint32_t call, uint32_t arg1, uint32_t arg2, ui
 		: "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3)
 		: "memory");
 
-	errno = sce;
+	*errp = sce;
 	return result;
 }
 
 void _exit(int return_code) {
-	syscall(1, return_code, 0, 0);
+	syscall_pf(1, return_code, 0, 0);
 }
 
 int _fork() {
-	return syscall(22, 0, 0, 0);
+	return syscall_pf(22, 0, 0, 0);
 }
 
 pid_t _getpid() {
@@ -87,31 +88,31 @@ pid_t getppid(void) {
 }
 
 int _kill(int pid, int sig) {
-	return syscall(18, pid, sig, 0);
+	return syscall_pf(18, pid, sig, 0);
 }
 
 int _lseek(int file, int ptr, int dir) {
-	return syscall(15, file, ptr, dir);
+	return syscall_pf(15, file, ptr, dir);
 }
 
 int _open(const char* name, int flags, ...) {
-	return syscall(13, name, flags, 0);
+	return syscall_pf(13, name, flags, 0);
 }
 
 int _close(int file) {
-	return syscall(5, file, 0, 0);
+	return syscall_pf(5, file, 0, 0);
 }
 
 ssize_t _read(int file, char *buf, int len) {
-	return syscall(2, file, buf, len);
+	return syscall_pf(2, file, buf, len);
 }
 
 void* _sbrk(int incr) {
-	return (void*)syscall(7, 0, incr, 0);
+	return (void*)syscall_pf(7, 0, incr, 0);
 }
 
 int _wait(int* status) {
-	return syscall(29, status, 0, 0);
+	return syscall_pf(29, status, 0, 0);
 }
 
 pid_t waitpid(pid_t pid, int* stat_loc, int options) {
@@ -123,26 +124,14 @@ int wait3(int* status) {
 }
 
 int _write(int file, char *buf, int len) {
-	return syscall(3, file, buf, len);
+	return syscall_pf(3, file, buf, len);
 }
 
 int chdir(const char *path) {
-	int r = syscall(20, path, 0, 0);
-	*__errno() = errno;
-	return r;
+	return syscall(20, path, 0, 0);
 }
 
 int socket(int domain, int type, int protocol) {
-	if(domain != AF_INET) {
-		errno = EAFNOSUPPORT;
-		return -1;
-	}
-
-	if(type != SOCK_DGRAM) {
-		errno = EPROTOTYPE;
-		return -1;
-	}
-
 	return syscall(24, domain, type, protocol);
 }
 
@@ -169,7 +158,7 @@ ssize_t send(int socket, const void *buffer, size_t length, int flags) {
 }
 
 int _execve(char *name, char **argv, char **env) {
-	return syscall(32, name, argv, env);
+	return syscall_pf(32, name, argv, env);
 }
 
 // Gets called by the newlib readdir handler, see libc/posix/readdir.c
@@ -201,7 +190,7 @@ int uname(struct utsname* name) {
 }
 
 int _fstat(int file, struct stat* st) {
-	return syscall(14, file, st, 0);
+	return syscall_pf(14, file, st, 0);
 }
 
 int _stat(const char* name, struct stat *st) {
@@ -230,7 +219,7 @@ int symlink(const char *path1, const char *path2) {
 }
 
 int _unlink(char *name) {
-	return syscall(10, name, 0, 0);
+	return syscall_pf(10, name, 0, 0);
 }
 
 int chmod(const char *path, mode_t mode) {
@@ -246,7 +235,7 @@ int access(const char *pathname, int mode) {
 }
 
 int _gettimeofday(struct timeval* p, void* tz) {
-	return syscall(19, p, tz, 0);
+	return syscall_pf(19, p, tz, 0);
 }
 
 int utimes(const char *path, const struct timeval times[2]) {
@@ -279,7 +268,7 @@ int rmdir(const char *path) {
 }
 
 int _link(char *old, char *new){
-	return syscall(12, old, new, 0);
+	return syscall_pf(12, old, new, 0);
 }
 
 int readlink(const char *path, char *buf, size_t bufsize) {
@@ -309,7 +298,7 @@ int pipe(int fildes[2]) {
 int _fcntl(int fildes, int cmd, ...) {
 	va_list va;
 	va_start(va, cmd);
-	int r = syscall(36, fildes, cmd, va_arg(va, int));
+	int r = syscall_pf(36, fildes, cmd, va_arg(va, int));
 	va_end(va);
 	return r;
 }
