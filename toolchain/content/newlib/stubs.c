@@ -244,13 +244,6 @@ int ftruncate(int fildes, off_t length) {
 	return -1;
 }
 
-int accept(int socket, struct sockaddr* __restrict__ address, socklen_t* __restrict__ address_len) {
-	fprintf(stderr, "Warning: xelix newlib accept() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 int getsockname(int socket, struct sockaddr* __restrict__ address,
        socklen_t* __restrict__ address_len) {
 	fprintf(stderr, "Warning: xelix newlib accept() stub called.\n");
@@ -265,12 +258,6 @@ int setsockopt(int socket, int level, int option_name,
 
 	errno = ENOSYS;
 	return -1;
-}
-
-int listen(int socket, int backlog) {
-	fprintf(stderr, "Warning: xelix newlib listen() stub called.\n");
-
-	return 0;
 }
 
 int issetugid(void) {
@@ -367,14 +354,6 @@ long pathconf(const char *path, int name) {
 
 int tcflush(int fildes, int queue_selector) {
 	fprintf(stderr, "Warning: xelix newlib tcflush() stub called.\n");
-	errno = ENOSYS;
-	return -1;
-}
-
-int select(int nfds, fd_set *readfds, fd_set *writefds,
-	fd_set *exceptfds, struct timeval *timeout) {
-	fprintf(stderr, "Warning: xelix newlib select() stub called.\n");
-
 	errno = ENOSYS;
 	return -1;
 }

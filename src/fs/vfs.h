@@ -101,15 +101,21 @@ struct vfs_callbacks {
 };
 
 typedef struct vfs_file {
-   uint32_t num;
-   char path[512];
-   char mount_path[512];
-   void* mount_instance;
-   struct vfs_callbacks callbacks;
-   uint32_t flags;
-   uint32_t offset;
-   uint32_t inode;
-   struct task* task;
+	enum {
+		VFS_FILE_TYPE_REG,
+		VFS_FILE_TYPE_PIPE,
+		VFS_FILE_TYPE_SOCKET,
+	} type;
+
+	uint32_t num;
+	char path[512];
+	char mount_path[512];
+	void* mount_instance;
+	struct vfs_callbacks callbacks;
+	uint32_t flags;
+	uint32_t offset;
+	uint32_t inode;
+	struct task* task;
 } vfs_file_t;
 
 // Keep in sync with newlib

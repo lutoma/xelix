@@ -22,6 +22,7 @@
 #include <tasks/scheduler.h>
 #include <tasks/signal.h>
 #include <tasks/task.h>
+#include <net/net.h>
 #include <fs/vfs.h>
 #include <fs/pipe.h>
 #include <time.h>
@@ -40,8 +41,6 @@ DEFINE_SYSCALL(stat);
 DEFINE_SYSCALL(seek);
 DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(fork);
-DEFINE_SYSCALL(socket);
-DEFINE_SYSCALL(bind);
 DEFINE_SYSCALL(socket_send);
 DEFINE_SYSCALL(socket_recv);
 DEFINE_SYSCALL(wait);
@@ -66,6 +65,11 @@ SYS_REDIR(gettimeofday, time_get_timeval((struct timeval*)syscall.params[0]));
 SYS_REDIR(chdir, task_chdir(syscall.task, (char*)syscall.params[0]));
 SYS_REDIR(signal, task_signal_syscall(syscall.params[0], syscall.task, syscall.params[1], syscall.state));
 SYS_REDIR(sbrk, (uint32_t)task_sbrk(syscall.task, syscall.params[1]));
+SYS_REDIR(socket, net_socket(syscall.task, syscall.params[0], syscall.params[1], syscall.params[2]));
+SYS_REDIR(bind, net_bind(syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]));
+SYS_REDIR(listen, net_listen(syscall.task, syscall.params[0], syscall.params[1]));
+SYS_REDIR(accept, net_accept(syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]));
+SYS_REDIR(select, net_select(syscall.task, syscall.params[0], (fd_set*)syscall.params[1], (fd_set*)syscall.params[2]));
 
 #define SYSCALL_ARG_RESOLVE 1
 #define SYSCALL_ARG_RESOLVE_NULL_OK 2
@@ -259,7 +263,7 @@ struct syscall_definition syscall_table[] = {
 		.handler = sys_bind,
 		.name = "bind",
 		.arg0 = 0,
-		.arg1 = 0,
+		.arg1 = SYSCALL_ARG_RESOLVE,
 		.arg2 = 0
 	},
 	{ // 26
@@ -338,5 +342,26 @@ struct syscall_definition syscall_table[] = {
 		.arg0 = 0,
 		.arg1 = 0,
 		.arg2 = 0,
+	},
+	{ // 37
+		.handler = sys_listen,
+		.name = "listen",
+		.arg0 = 0,
+		.arg1 = 0,
+		.arg2 = 0,
+	},
+	{ // 38
+		.handler = sys_accept,
+		.name = "accept",
+		.arg0 = 0,
+		.arg1 = SYSCALL_ARG_RESOLVE,
+		.arg2 = 0,
+	},
+	{ // 39
+		.handler = sys_select,
+		.name = "select",
+		.arg0 = 0,
+		.arg1 = SYSCALL_ARG_RESOLVE,
+		.arg2 = SYSCALL_ARG_RESOLVE,
 	}
 };

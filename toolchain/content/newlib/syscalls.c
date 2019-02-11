@@ -321,3 +321,18 @@ int dup2(int fildes, int fildes2) {
 	close(fildes2);
 	return fcntl(fildes, F_DUPFD, fildes2);
 }
+
+
+int listen(int socket, int backlog) {
+	return syscall(37, socket, backlog, 0);
+}
+
+int accept(int socket, struct sockaddr* __restrict__ address, socklen_t* __restrict__ address_len) {
+	return syscall(38, socket, address, address_len);
+}
+
+int select(int nfds, fd_set *readfds, fd_set *writefds,
+	fd_set *exceptfds, struct timeval *timeout) {
+
+	return syscall(39, nfds, readfds, writefds);
+}

@@ -80,6 +80,8 @@ int vfs_pipe(int fildes[2], task_t* task) {
 	fd2->flags = O_WRONLY;
 	fd1->mount_instance = (void*)pipe;
 	fd2->mount_instance = (void*)pipe;
+	fd1->type = VFS_FILE_TYPE_PIPE;
+	fd2->type = VFS_FILE_TYPE_PIPE;
 
 	fildes[0] = fd1->num;
 	fildes[1] = fd2->num;

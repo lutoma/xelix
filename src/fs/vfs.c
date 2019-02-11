@@ -224,6 +224,7 @@ vfs_file_t* vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	}
 
 	vfs_file_t* fp = vfs_alloc_fileno(task);
+	fp->type = VFS_FILE_TYPE_REG;
 	strcpy(fp->path, path);
 	strcpy(fp->mount_path, mount_path);
 	kfree(path);
