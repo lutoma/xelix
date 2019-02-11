@@ -321,6 +321,33 @@ void vfs_seek(vfs_file_t* fp, size_t offset, int origin) {
 	}
 }
 
+int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
+	vfs_file_t* fp = vfs_get_from_id(fd, task);
+	if(!fp) {
+		sc_errno = EBADF;
+		return -1;
+	}
+
+	if(cmd == F_DUPFD) {
+		vfs_file_t* nfile = &task->files[arg3];
+		memcpy(nfile, fp, sizeof(vfs_file_t));
+		nfile->num = arg3;
+		return 0;
+	} else if(cmd == F_GETFL) {
+		return fp->flags;
+	} else if(cmd == F_SETFL) {
+		if(arg3 & O_NONBLOCK) {
+			fp->flags |= O_NONBLOCK;
+		} else {
+			fp->flags &= ~O_NONBLOCK;
+		}
+		return 0;
+	}
+
+	sc_errno = ENOSYS;
+	return -1;
+}
+
 int vfs_close(vfs_file_t* fp) {
 	debug("\n", NULL);
 	vfs_file_t* fdir = fp->task ? fp->task->files : kernel_files;

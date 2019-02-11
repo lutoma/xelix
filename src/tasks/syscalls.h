@@ -47,7 +47,6 @@ DEFINE_SYSCALL(wait);
 DEFINE_SYSCALL(audio_play);
 DEFINE_SYSCALL(close);
 DEFINE_SYSCALL(execve);
-DEFINE_SYSCALL(fcntl);
 
 SYS_REDIR(chmod, vfs_chmod((char*)syscall.params[0], syscall.params[1], syscall.task));
 SYS_REDIR(chown, vfs_chown((char*)syscall.params[0], syscall.params[1], syscall.params[2], syscall.task));
@@ -70,6 +69,7 @@ SYS_REDIR(bind, net_bind(syscall.task, syscall.params[0], (struct sockaddr*)sysc
 SYS_REDIR(listen, net_listen(syscall.task, syscall.params[0], syscall.params[1]));
 SYS_REDIR(accept, net_accept(syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]));
 SYS_REDIR(select, net_select(syscall.task, syscall.params[0], (fd_set*)syscall.params[1], (fd_set*)syscall.params[2]));
+SYS_REDIR(fcntl, vfs_fcntl(syscall.params[0], syscall.params[1], syscall.params[2], syscall.task));
 
 #define SYSCALL_ARG_RESOLVE 1
 #define SYSCALL_ARG_RESOLVE_NULL_OK 2

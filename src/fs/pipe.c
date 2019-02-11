@@ -34,6 +34,12 @@ struct pipe {
 
 size_t pipe_read(vfs_file_t* fp, void* dest, size_t size) {
 	struct pipe* pipe = (struct pipe*)fp->mount_instance;
+
+	if(!pipe->data_size && fp->flags & O_NONBLOCK) {
+		sc_errno = EAGAIN;
+		return -1;
+	}
+
 	while(!pipe->data_size) {
 		asm("hlt");
 	}

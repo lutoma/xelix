@@ -46,7 +46,7 @@
 #define S_IWOTH		0x0002
 #define S_IXOTH		0x0001
 
-// vfs_open flags, Keep in sync with newlib sys/_default_fcntl.h
+// file flags, keep in sync with newlib sys/_default_fcntl.h
 #define	O_RDONLY	0
 #define	O_WRONLY	1
 #define	O_RDWR		2
@@ -55,6 +55,24 @@
 #define	O_TRUNC		0x0400
 #define	O_EXCL		0x0800
 #define O_SYNC		0x2000
+#define O_NONBLOCK	0x4000
+
+// fcntl operations
+#define	F_DUPFD		0	/* Duplicate fildes */
+#define	F_GETFD		1	/* Get fildes flags (close on exec) */
+#define	F_SETFD		2	/* Set fildes flags (close on exec) */
+#define	F_GETFL		3	/* Get file flags */
+#define	F_SETFL		4	/* Set file flags */
+#define	F_GETOWN 	5	/* Get owner - for ASYNC */
+#define	F_SETOWN 	6	/* Set owner - for ASYNC */
+#define	F_GETLK  	7	/* Get record-locking information */
+#define	F_SETLK  	8	/* Set or Clear a record-lock (Non-Blocking) */
+#define	F_SETLKW 	9	/* Set or Clear a record-lock (Blocking) */
+#define	F_RGETLK 	10	/* Test a remote lock to see if it is blocked */
+#define	F_RSETLK 	11	/* Set or unlock a remote lock */
+#define	F_CNVT 		12	/* Convert a fhandle to an open fd */
+#define	F_RSETLKW 	13	/* Set or Clear remote record-lock(Blocking) */
+#define	F_DUPFD_CLOEXEC	14	/* As F_DUPFD, but set close-on-exec flag */
 
 #define vfs_mode_to_filetype(mode) (mode & 0xf000)
 
@@ -146,7 +164,7 @@ int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task
 int vfs_link(const char* orig_path, const char* orig_new_path, struct task* task);
 int vfs_readlink(const char* orig_path, char* buf, size_t size, struct task* task);
 int vfs_rmdir(const char* orig_path, struct task* task);
-
+int vfs_fcntl(int fd, int cmd, int arg3, struct task* task);
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	struct vfs_callbacks* callbacks);
 
