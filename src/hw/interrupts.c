@@ -1,5 +1,5 @@
 /* interrupts.c: Initialization of and interface to interrupts.
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -51,14 +51,13 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 		net_tick();
 	}
 
-	// Timer interrupt
-	if(scheduler_state != SCHEDULER_OFF && (intr == IRQ0 || (task && task->interrupt_yield))) {
+	// Run scheduler every 100th tick, or when task yields
+	if((intr == IRQ0 && !(pit_get_tick() % 100)) || (task && task->interrupt_yield)) {
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}
 
 		task_t* new_task = scheduler_select(regs);
-
 		if(new_task && new_task->state) {
 			#ifdef INTERRUPTS_DEBUG
 			debug("state after (task selection):\n");

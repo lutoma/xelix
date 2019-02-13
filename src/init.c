@@ -77,6 +77,7 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	init(ext2);
 	#endif
 	init(vfs);
+	init(net);
 
 	#ifdef ENABLE_NE2K
 	init(ne2k);
@@ -89,8 +90,6 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	#ifdef ENABLE_AC97
 	init(ac97);
 	#endif
-
-	init(net);
 
 	char* __env[] = { NULL };
 	char* __argv[] = { vfs_basename(INIT_PATH), NULL };

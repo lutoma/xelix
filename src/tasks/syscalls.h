@@ -22,7 +22,7 @@
 #include <tasks/scheduler.h>
 #include <tasks/signal.h>
 #include <tasks/task.h>
-#include <net/net.h>
+#include <net/socket.h>
 #include <fs/vfs.h>
 #include <fs/pipe.h>
 #include <time.h>

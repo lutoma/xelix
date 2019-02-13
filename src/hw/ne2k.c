@@ -1,5 +1,5 @@
 /* ne2k.c: Driver for Ne2000 class NICs
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,7 +19,8 @@
 
 #ifdef ENABLE_NE2K
 
-#include <hw/rtl8139.h>
+#include <hw/ne2k.h>
+#include <net/net.h>
 #include <hw/pci.h>
 #include <log.h>
 #include <portio.h>
@@ -89,9 +90,8 @@ struct recv_frame_header {
 };
 
 static pci_device_t* dev = NULL;
-static uint8_t* recv_buffer;
+static struct net_device* net_dev;
 static uint8_t next_receive_page = 0;
-static uint32_t data_len = 0;
 
 // Driver has only been tested with QEMU's emulation of the RTL8029AS so far
 static const uint32_t vendor_device_combos[][2] = {
@@ -153,24 +153,28 @@ static void receive() {
 	while(next_receive_page != curr) {
 		uint32_t index = next_receive_page * 0x100;
 
-
 		// Get packet header
 		struct recv_frame_header hdr;
 		pdma_read(index, &hdr, sizeof(hdr));
 
-		if(data_len + hdr.len > RECV_BUFFER_SIZE) {
-			log(LOG_WARN, "ne2k: Receive buffer overflow, discarding incoming packets\n");
-			break;
-		}
+		void* buf = kmalloc(hdr.len);
+		pdma_read(index + 4, buf, hdr.len);
+		net_receive(net_dev, buf, hdr.len);
+		kfree(buf);
 
-		pdma_read(index + 4, recv_buffer + data_len, hdr.len);
-
-		data_len += hdr.len;
 		next_receive_page = hdr.next;
 	}
 
 	ioutb(R_BNRY, curr - 1);
 	ioutb(R_IMR, 0x3f);
+}
+
+static size_t send(void* pdev, void* data, size_t len) {
+	pdma_write(MEM_TRANSMIT, data, len);
+	ioutb(R_TBCR0, len & 0xff);
+	ioutb(R_TBCR1, len >> 8);
+	ioutb(R_CR, CR_START | CR_DMA_ABORT | CR_TRANSMIT);
+	return len;
 }
 
 static void int_handler(isf_t* state) {
@@ -199,37 +203,7 @@ static void int_handler(isf_t* state) {
 	ioutb(R_ISR, isr &~ 1);
 }
 
-size_t ne2k_write(void* data, size_t len, size_t offset, void* meta) {
-	// FIXME
-	if(len < 64) {
-		void* old_data = data;
-		data = kmalloc(64);
-		bzero(data, 64);
-		memcpy(data, old_data, len);
-		len = 64;
-	}
-
-	pdma_write(MEM_TRANSMIT, data, len);
-	ioutb(R_TBCR0, len & 0xff);
-	ioutb(R_TBCR1, len >> 8);
-	ioutb(R_CR, CR_START | CR_DMA_ABORT | CR_TRANSMIT);
-	return len;
-}
-
-size_t ne2k_read(void* data, size_t len, size_t offset, void* meta) {
-	// FIXME Doesn't support partial reads of buffer
-	if(data_len) {
-		if(len > data_len) {
-			len = data_len;
-		}
-		data_len = 0;
-		memcpy(data, recv_buffer, len);
-		return len;
-	}
-	return 0;
-}
-
-void enable() {
+static void enable() {
 	// Reset
 	ioutb(0x1F, iinb(0x1F));
 	while ((iinb(R_ISR) & 0x80) == 0);
@@ -257,28 +231,24 @@ void enable() {
 	uint8_t mac[13];
 	pdma_read(0, mac, 13);
 
-	log(LOG_INFO, "ne2k: MAC Address %02x:%02x:%02x:%02x:%02x:%02x\n",
-		mac[0], mac[2], mac[4], mac[6],
-		mac[8], mac[10], mac[12]);
-
-	// Set destination filter to our MAC address
+	// Remove dup fields from mac - should fix pdma_read
+	// Also set destination filter to our MAC address
 	ioutb(R_CR, CR_STOP | CR_PAGE1);
-	// FIXME Should be correct by default? - verify
+	uint8_t nmac[6];
 	for(int i = 0; i < 6; i++) {
-		ioutb(0x01 + i, mac[i*2]);
+		nmac[i] = mac[i*2];
+		ioutb(0x01 + i, nmac[i]);
 	}
 
 	// Do this here since we're in page 1 anyway
 	ioutb(R_CURR, PAGE_RECEIVE + 1);
-
-	recv_buffer = zmalloc(RECV_BUFFER_SIZE);
 	interrupts_register(dev->interrupt_line + IRQ0, int_handler, false);
 
 	ioutb(R_CR, CR_STOP);	// Reset page
 	ioutb(R_IMR, 0xff);		// Unmask all interrupts
 	ioutb(R_CR, CR_START);
 
-	sysfs_add_dev("ne2k1", ne2k_read, ne2k_write, NULL);
+	net_dev = net_add_device("ne2k", nmac, send);
 }
 
 void ne2k_init()

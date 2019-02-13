@@ -84,10 +84,14 @@ static void unlink(task_t *t, bool replaced) {
 
 task_t* scheduler_select(isf_t* last_regs) {
 	interrupts_disable();
-	if(unlikely(scheduler_state == SCHEDULER_INITIALIZING))
-	{
-		scheduler_state = SCHEDULER_INITIALIZED;
-		return current_task;
+	if(unlikely(scheduler_state != SCHEDULER_INITIALIZED)) {
+		if(scheduler_state == SCHEDULER_INITIALIZING) {
+			scheduler_state = SCHEDULER_INITIALIZED;
+			return current_task;
+		}
+
+		// SCHEDULER_OFF
+		return NULL;
 	}
 
 	// Save CPU register state of previous task

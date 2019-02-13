@@ -25,7 +25,7 @@
 #include <memory/kmalloc.h>
 
 // FIXME Should dynamically grow
-#define PIPE_BUFFER_SIZE 0x800
+#define PIPE_BUFFER_SIZE 0x5000
 
 struct pipe {
 	void* buffer;
