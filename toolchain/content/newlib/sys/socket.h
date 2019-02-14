@@ -1,4 +1,4 @@
-/* Copyright © 2015-2018 Lukas Martini
+/* Copyright © 2015-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,6 +20,7 @@
 #define _SYS_SOCKET_H
 
 #include <stdint.h>
+#include <sys/uio.h>
 
 #define SOCK_DGRAM 1
 #define SOCK_STREAM 2
@@ -32,7 +33,7 @@
 
 #define SOCK_SEQPACKET 5
 
-#define SOL_SOCKET 0
+#define SOL_SOCKET 1
 
 #define SO_DEBUG 1
 #define SO_BROADCAST 2
@@ -47,11 +48,34 @@
 #define SO_SNDLOWAT 11
 #define SO_SNDTIMEO 12
 #define SO_REUSEADDR 13
+#define SO_ACCEPTCONN 14
+#define SO_ERROR 15
+#define SO_TYPE 16
 
 #define AF_UNSPEC 0
 #define AF_INET 1
 #define AF_INET6 2
 #define AF_UNIX 3
+#define PF_UNSPEC AF_UNSPEC
+#define PF_INET AF_INET
+#define PF_INET6 AF_INET6
+#define PF_UNIX AF_UNIX
+
+#define MSG_CTRUNC 0
+#define MSG_DONTROUTE 0
+#define MSG_EOR 0
+#define MSG_OOB 0
+#define MSG_NOSIGNAL 0
+#define MSG_PEEK 0
+#define MSG_TRUNC 0
+#define MSG_WAITALL 0
+
+#define SHUT_RD 1
+#define SHUT_RDWR 2
+#define SHUT_WR 3
+
+#define SOMAXCONN 128
+#define SCM_RIGHTS -1
 
 typedef uint32_t socklen_t;
 typedef uint32_t sa_family_t;
@@ -61,15 +85,43 @@ struct sockaddr {
 	char sa_data[];
 };
 
-int getsockname(int socket, struct sockaddr *restrict address,
-	socklen_t *restrict address_len);
+struct msghdr {
+	void *msg_name;
+	socklen_t msg_namelen;
+	struct iovec *msg_iov;
+	int msg_iovlen;
+	void *msg_control;
+	socklen_t msg_controllen;
+	int msg_flags;
+};
 
-int getpeername(int socket, struct sockaddr *restrict address,
-	socklen_t *restrict address_len);
+struct cmsghdr {
+	socklen_t cmsg_len;
+	int cmsg_level;
+	int cmsg_type;
+};
 
-int getsockopt(int socket, int level, int option_name,
-       void *restrict option_value, socklen_t *restrict option_len);
+struct linger {
+	int l_onoff;
+	int l_linger;
+};
 
-int setsockopt(int socket, int level, int option_name,
-	const void *option_value, socklen_t option_len);
+int accept(int, struct sockaddr *restrict, socklen_t *restrict);
+int bind(int, const struct sockaddr *, socklen_t);
+int connect(int, const struct sockaddr *, socklen_t);
+int getpeername(int, struct sockaddr *restrict, socklen_t *restrict);
+int getsockname(int, struct sockaddr *restrict, socklen_t *restrict);
+int getsockopt(int, int, int, void *restrict, socklen_t *restrict);
+int listen(int, int);
+ssize_t recv(int, void *, size_t, int);
+ssize_t recvfrom(int, void *restrict, size_t, int, struct sockaddr *restrict, socklen_t *restrict);
+ssize_t recvmsg(int, struct msghdr *, int);
+ssize_t send(int, const void *, size_t, int);
+ssize_t sendmsg(int, const struct msghdr *, int);
+ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
+int setsockopt(int, int, int, const void *, socklen_t);
+int shutdown(int, int);
+int sockatmark(int);
+int socket(int, int, int);
+int socketpair(int, int, int, int [2]);
 #endif /* _SYS_SOCKET_H */

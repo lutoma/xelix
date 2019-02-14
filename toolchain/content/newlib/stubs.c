@@ -464,3 +464,31 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp) {
 	errno = ENOSYS;
 	return -1;
 }
+
+int connect(int socket, const struct sockaddr *address,
+	socklen_t address_len) {
+
+	fprintf(stderr, "Warning: xelix newlib connect() stub called.\n");
+	errno = ENOSYS;
+	return -1;
+}
+
+int getpeername(int socket, struct sockaddr *restrict address,
+       socklen_t *restrict address_len) {
+
+	fprintf(stderr, "Warning: xelix newlib getpeername() stub called.\n");
+	errno = ENOSYS;
+	return -1;
+}
+
+struct servent *getservbyname(const char *name, const char *proto) {
+	fprintf(stderr, "Warning: xelix newlib getservbyname() stub called.\n");
+	errno = ENOSYS;
+	return NULL;
+}
+
+struct hostent *gethostbyname(const char *name) {
+	fprintf(stderr, "Warning: xelix newlib gethostbyname() stub called.\n");
+	errno = ENOSYS;
+	return NULL;
+}

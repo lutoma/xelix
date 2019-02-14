@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <poll.h>
 #include <utime.h>
+#include <netdb.h>
 
 /* Normally errno is defined as a macro that does reentrancy magic. However,
  * some of our syscalls (those prefixed with an underscore) get called from the
@@ -335,4 +336,19 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 	fd_set *exceptfds, struct timeval *timeout) {
 
 	return syscall(39, nfds, readfds, writefds);
+}
+
+const char *gai_strerror(int ecode) {
+	switch(ecode) {
+		case EAI_AGAIN: return "temporary failure in name resolution";
+		case EAI_BADFLAGS: return "invalid value for ai_flags";
+		case EAI_FAIL: return "non-recoverable failure in name resolution";
+		case EAI_FAMILY: return "ai_family not supported.";
+		case EAI_MEMORY: return "memory allocation failure";
+		case EAI_NONAME: return "hostname or servname not provided,	or not known";
+		case EAI_SERVICE: return "servname not supported for ai_socktype";
+		case EAI_SOCKTYPE: return "ai_socktype not supported";
+		case EAI_SYSTEM: return "system error returned in errno";
+		default: return "unknown error";
+	}
 }

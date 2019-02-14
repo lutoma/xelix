@@ -32,7 +32,6 @@
 #define SOCKSIZE6 sizeof(struct sockaddr_in6)
 
 struct socket {
-	struct socket* next;
 	struct pico_socket* pico_socket;
 	int conn_requests;
 	bool can_read;
@@ -102,7 +101,6 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 	struct socket* sock = (struct socket*)pico_sock->priv;
 
 	if(!sock) {
-		serial_printf("socket_cb: No matching socket found.\n");
 		return;
 	}
 
@@ -128,7 +126,6 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 	sock->can_read = (ev & PICO_SOCK_EV_RD);
 	sock->can_write = (ev & PICO_SOCK_EV_WR);
 
-
 	if(sock->can_read && spinlock_get(&net_pico_lock, 200)) {
 		sock->read_buffer_length += pico_socket_read(sock->pico_socket,
 			(void*)sock->read_buffer + sock->read_buffer_length, 0x5000);
@@ -136,11 +133,19 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 		spinlock_release(&net_pico_lock);
 		sock->can_write = true;
 	}
-	serial_printf("socket cb, can_read: %d, can_write: %d\n", sock->can_read, sock->can_write);
 }
 
 static size_t vfs_read_cb(vfs_file_t* fp, void* dest, size_t size) {
 	struct socket* sock = (struct socket*)(fp->mount_instance);
+
+	if(sock->state == SOCK_CLOSED) {
+		sc_errno = ENOTCONN;
+		return -1;
+	}
+	if(sock->state == SOCK_RESET_BY_PEER) {
+		sc_errno = ECONNRESET;
+		return -1;
+	}
 
 	if(!sock->read_buffer_length && fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
@@ -149,10 +154,11 @@ static size_t vfs_read_cb(vfs_file_t* fp, void* dest, size_t size) {
 
 	while(!sock->read_buffer_length) {
 		if(sock->state == SOCK_CLOSED) {
-			return 0;
+			sc_errno = ENOTCONN;
+			return -1;
 		}
 		if(sock->state == SOCK_RESET_BY_PEER) {
-			sc_errno = ENOTCONN;
+			sc_errno = ECONNRESET;
 			return -1;
 		}
 
@@ -167,22 +173,7 @@ static size_t vfs_read_cb(vfs_file_t* fp, void* dest, size_t size) {
 	if(sock->read_buffer_length) {
 		memmove(sock->read_buffer, sock->read_buffer + size, sock->read_buffer_length);
 	}
-	serial_printf("vfs_read_cb, data length was %d\n", size);
 	return size;
-/*
-	size_t read = pico_socket_read(sock->pico_socket, dest, size);
-	spinlock_release(&net_pico_lock);
-	if(read < 0) {
-		if(pico_err == PICO_ERR_ESHUTDOWN) {
-			return 0;
-		}
-
-		sc_errno = pico_err;
-		return -1;
-	}
-
-	return read;
-*/
 }
 
 static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
@@ -191,10 +182,11 @@ static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
 
 	while(!sock->can_write) {
 		if(sock->state == SOCK_CLOSED) {
-			return 0;
+			sc_errno = ENOTCONN;
+			return -1;
 		}
 		if(sock->state == SOCK_RESET_BY_PEER) {
-			sc_errno = ENOTCONN;
+			sc_errno = ECONNRESET;
 			return -1;
 		}
 
@@ -247,8 +239,6 @@ int net_socket(task_t* task, int domain, int type, int protocol) {
 			return -1;
 	}
 
-	serial_printf("net_socket domain %d type %d protocol %d\n", domain, type, protocol);
-
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
@@ -273,28 +263,24 @@ int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 	}
 
 	union pico_address pico_addr = { .ip4 = { 0 } };
-/*	if(bsd_to_pico_addr(&pico_addr, addr, addrlen) < 0) {
+	uint16_t port = bsd_to_pico_port(addr, addrlen);
+
+	if(bsd_to_pico_addr(&pico_addr, addr, addrlen) < 0) {
 		sc_errno = EINVAL;
 		return -1;
 	}
-*/
-	uint16_t port = bsd_to_pico_port(addr, addrlen);
-
 
 	char ipbuf[15];
 	pico_ipv4_to_string(ipbuf, pico_addr.ip4.addr);
 	serial_printf("net_bind sockfd %d %s port %d\n", sockfd, ipbuf, endian_swap16(port));
 
 	struct socket* sock = (struct socket*)fd->mount_instance;
-	serial_printf("pico_socket at 0x%x, proto at 0x%x\n", fd->mount_instance, sock->pico_socket->proto);
-
-	struct pico_ip4 inaddr_any = {0};
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
 
-	if(pico_socket_bind(sock->pico_socket, &inaddr_any, &port) < 0) {
+	if(pico_socket_bind(sock->pico_socket, &pico_addr, &port) < 0) {
 		spinlock_release(&net_pico_lock);
 		sc_errno = pico_err;
 		return -1;
@@ -311,13 +297,11 @@ int net_listen(task_t* task, int sockfd, int backlog) {
 		return -1;
 	}
 
-	// FIXME Check proper handling for this
-	if(backlog == -1) {
-		backlog = 40;
+	if(backlog < 4) {
+		backlog = 4;
 	}
 
 	struct socket* sock = (struct socket*)fd->mount_instance;
-
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
@@ -331,7 +315,6 @@ int net_listen(task_t* task, int sockfd, int backlog) {
 
 	spinlock_release(&net_pico_lock);
 	sock->state = SOCK_LISTEN;
-	serial_printf("net_listen %d backlog %d\n", sockfd, backlog);
 	return 0;
 }
 
@@ -364,7 +347,6 @@ int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 		return -1;
 	}
 
-
 	struct socket* sock = (struct socket*)fd->mount_instance;
 	if(sock->state == SOCK_CONNECTED) {
 		sc_errno = EBADF;
@@ -388,13 +370,11 @@ int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 
 	spinlock_release(&net_pico_lock);
 	if(!pico_sock) {
-		serial_printf("net_accept pico error.\n");
 		sc_errno = pico_err;
 		return -1;
 	}
 
 	vfs_file_t* new_fd = new_socket_fd(task, pico_sock);
 	sock->conn_requests--;
-	serial_printf("net_accept %d, new %d\n", sockfd, new_fd->num);
 	return new_fd->num;
 }

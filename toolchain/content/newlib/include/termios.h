@@ -19,6 +19,8 @@
 #ifndef _SYS_TERMIOS_H
 #define _SYS_TERMIOS_H
 
+#include <sys/types.h>
+
 /* Technically part of ioctl */
 struct winsize {
 	unsigned short ws_row;

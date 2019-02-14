@@ -19,7 +19,7 @@
 #ifndef _SYS_TERMIOS_H
 #define _SYS_TERMIOS_H
 
-#define HAVE_TERMIOS_H
+#include <sys/types.h>
 
 /* Technically part of ioctl */
 struct winsize {
@@ -204,7 +204,7 @@ int     tcflush(int, int);
 int     tcgetattr(int, struct termios *);
 pid_t   tcgetsid(int);
 int     tcsendbreak(int, int);
-int     tcsetattr(int, int, struct termios *);
+int tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
 int     ioctl(int, int, void*);
 #endif /* ndef _KERNEL_ */
 
