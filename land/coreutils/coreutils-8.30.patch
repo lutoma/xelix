@@ -373,18 +373,6 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/stt
  #  define SET_UTMP_ENT setutent
  #  define GET_UTMP_ENT getutent
  #  define END_UTMP_ENT endutent
---- coreutils-8.30/lib/gai_strerror.c 2018-05-14 06:22:33.000000000 +0200
-+++ coreutils-8.30-patched/lib/gai_strerror.c 2019-02-04 02:57:33.421683045 +0100
-@@ -42,7 +42,8 @@
- const char *
- rpl_gai_strerror (int code)
- {
--  return gai_strerror (code);
-+  return NULL;
-+  //return gai_strerror (code);
- }
-
- #else /* !HAVE_DECL_GAI_STRERROR */
 --- coreutils-8.30/lib/opendir.c  2018-05-14 06:20:31.000000000 +0200
 +++ coreutils-8.30-patched/lib/opendir.c  2019-02-04 21:01:30.771424111 +0100
 @@ -152,7 +152,8 @@
@@ -397,3 +385,14 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/stt
    {
      int fd = dirfd (dirp);
      if (0 <= fd && _gl_register_fd (fd, dir_name) != fd)
+--- coreutils-8.30/lib/error.c  2019-02-14 20:03:46.362595447 +0100
++++ coreutils-8.30/lib/error.c  2019-02-14 20:04:00.432644924 +0100
+@@ -54,6 +54,8 @@
+ # define _(String) String
+ #endif
+
++#undef vfprintf
++
+ /* If NULL, error will flush stdout, then print on stderr the program
+    name, a colon and a space.  Otherwise, error will call this
+    function without parameters instead.  */
