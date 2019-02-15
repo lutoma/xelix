@@ -190,7 +190,7 @@ static int do_unlink(const char* path, bool is_dir) {
 	}
 
 	if(dirent->inode == ROOT_INODE) {
-		sc_errno = EPERM;
+		sc_errno = EACCES;
 		return -1;
 	}
 
@@ -310,7 +310,7 @@ int ext2_link(const char* path, const char* new_path) {
 
 	// Directory hard links are not allowed in ext2
 	if(dirent->type == EXT2_DIRENT_FT_DIR) {
-		sc_errno = EPERM;
+		sc_errno = EACCES;
 		return -1;
 	}
 
