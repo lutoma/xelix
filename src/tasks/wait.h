@@ -1,5 +1,6 @@
-/* wait.c: Wait & waitpid syscalls
- * Copyright © 2016 Lukas Martini
+#pragma once
+
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,15 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tasks/syscall.h>
-#include <tasks/scheduler.h>
-#include <log.h>
+#include <tasks/task.h>
 
-SYSCALL_HANDLER(wait)
-{
-	syscall.task->task_state = TASK_STATE_WAITING;
-	syscall.task->interrupt_yield = true;
-
-	// Will be overriden to the returned task pid in tasks/signal.c
-	return 0;
-}
+int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options);
+void wait_finish(task_t* task, task_t* child);

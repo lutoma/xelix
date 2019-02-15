@@ -112,12 +112,13 @@ void* _sbrk(int incr) {
 	return (void*)syscall_pf(7, 0, incr, 0);
 }
 
-int _wait(int* status) {
-	return syscall_pf(29, status, 0, 0);
+pid_t waitpid(pid_t pid, int* stat_loc, int options) {
+	return syscall(29, pid, stat_loc, options);
 }
 
-pid_t waitpid(pid_t pid, int* stat_loc, int options) {
-	return syscall(29, stat_loc, 0, 0); // FIXME Just the wait syscall
+int _wait(int* status) {
+	// Call waitpid with pid -1, but redefine syscall as we need syscall_pf here.
+	return syscall_pf(29, -1, status, 0);
 }
 
 int wait3(int* status) {

@@ -51,11 +51,6 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, task_t* source, in
 		return 0;
 	}
 
-	if(sig == SIGCHLD && source && task->task_state == TASK_STATE_WAITING) {
-		// Set the return value of the wait() syscall to the pid of the returned child
-		state->eax = source->pid;
-	}
-
 	if(sa.sa_handler && (uint32_t)sa.sa_handler != SIG_DFL) {
 
 		iret_t* iret = task->kernel_stack + PAGE_SIZE - sizeof(iret_t);

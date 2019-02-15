@@ -23,14 +23,9 @@
 #include <sys/signal.h>
 #include <sys/types.h>
 
-#define WNOHANG 0
-#define WUNTRACED 1
-#define WEXITSTATUS 2
-#define WEXITED 9
-#define WSTOPPED 10
-#define WCONTINUED 11
-#define WNOHANG 12
-#define WNOWAIT 13
+#define WCONTINUED 1
+#define WNOHANG 2
+#define WUNTRACED 4
 
 // FIXME
 #define WEXITSTATUS(args...) (args)

@@ -75,6 +75,9 @@ static void unlink(task_t *t, bool replaced) {
 		}
 
 		if(t->parent) {
+			if(t->parent->task_state == TASK_STATE_WAITING) {
+				wait_finish(t->parent, t);
+			}
 			task_signal(t->parent, t, SIGCHLD, t->parent->state);
 		}
 	}

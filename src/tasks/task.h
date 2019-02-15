@@ -51,7 +51,7 @@ typedef struct task {
 	void* entry;
 	void* sbrk;
 
-	// Kernel stack used for interrupts. This will be loaded into the TSS
+	// Kernel stack used for interrupts. This will be loaded into the TSS.
 	void* kernel_stack;
 
 	struct vmem_context* memory_context;
@@ -59,11 +59,22 @@ typedef struct task {
 
 	// Current task state
 	enum {
+		// Killed, used regardless of specific signal (SIGKILL vs SIGTERM).
 		TASK_STATE_TERMINATED,
+
+		// SIGSTOP
 		TASK_STATE_STOPPED,
+
+		/* Task has been replaced by a different task with an identical PID.
+		 * This is used by our implementation of execve.
+		 */
 		TASK_STATE_REPLACED,
 		TASK_STATE_RUNNING,
+
+		// Task has called waitpid syscall
 		TASK_STATE_WAITING,
+
+		// Task is currently in a syscall
 		TASK_STATE_SYSCALL
 	} task_state;
 
@@ -78,8 +89,21 @@ typedef struct task {
 	struct sigaction signal_handlers[32];
 	uint32_t signal_mask;
 
+	/* If task_state is TASK_STATE_WAITING, this specifies the task we are
+	 * waiting for, or any child if 0.
+	 */
+	uint32_t wait_for;
+
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[TASK_PATH_MAX + 1];
+
+	/* A task-specific errno variable. After a syscall return, this will be put
+	 * into the ebx register, from where the userland syscall handler will
+	 * assign it to errno.
+	 *
+	 * Usually, this should be written to using the sc_errno macro from
+	 * lib/errno.h.
+	 */
 	uint32_t syscall_errno;
 
 	/* If set, this will cause the interrupt handler to not return this task's
@@ -102,6 +126,5 @@ void* task_sbrk(task_t* task, size_t length);
 
 #define task_add_mem_flat(task, start, size, section, flags) \
 	task_add_mem(task, start, start, size, section, flags)
-
 void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	uint32_t size, enum vmem_section section, int flags);

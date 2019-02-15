@@ -22,6 +22,7 @@
 #include <tasks/scheduler.h>
 #include <tasks/signal.h>
 #include <tasks/task.h>
+#include <tasks/wait.h>
 #include <net/socket.h>
 #include <fs/vfs.h>
 #include <fs/pipe.h>
@@ -43,7 +44,6 @@ DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(fork);
 DEFINE_SYSCALL(socket_send);
 DEFINE_SYSCALL(socket_recv);
-DEFINE_SYSCALL(wait);
 DEFINE_SYSCALL(audio_play);
 DEFINE_SYSCALL(close);
 DEFINE_SYSCALL(execve);
@@ -70,6 +70,7 @@ SYS_REDIR(listen, net_listen(syscall.task, syscall.params[0], syscall.params[1])
 SYS_REDIR(accept, net_accept(syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]));
 SYS_REDIR(select, net_select(syscall.task, syscall.params[0], (fd_set*)syscall.params[1], (fd_set*)syscall.params[2]));
 SYS_REDIR(fcntl, vfs_fcntl(syscall.params[0], syscall.params[1], syscall.params[2], syscall.task));
+SYS_REDIR(waitpid, task_waitpid(syscall.task, (int32_t)syscall.params[0], (int*)syscall.params[1], syscall.params[2]));
 
 #define SYSCALL_ARG_RESOLVE 1
 #define SYSCALL_ARG_RESOLVE_NULL_OK 2
@@ -288,10 +289,10 @@ struct syscall_definition syscall_table[] = {
 		.arg2 = 0,
 	},
 	{ // 29
-		.handler = sys_wait,
-		.name = "wait",
+		.handler = sys_waitpid,
+		.name = "waitpid",
 		.arg0 = 0,
-		.arg1 = 0,
+		.arg1 = SYSCALL_ARG_RESOLVE | SYSCALL_ARG_RESOLVE_NULL_OK,
 		.arg2 = 0,
 	},
 	{ // 30
