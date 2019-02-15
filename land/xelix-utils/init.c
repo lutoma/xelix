@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
+#include <stdio.h>
 #include <sys/wait.h>
 #include "util.h"
 
@@ -21,15 +23,11 @@ int main() {
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
 
-	char* net_argv[] = { "networkd", NULL };
-	char* net_env[] = { "USER=root", NULL };
-	//launch("/usr/bin/networkd", net_argv, net_env);
-
 	char* login_argv[] = { "login", NULL };
 	char* login_env[] = { "USER=root", NULL };
-	launch("/usr/bin/login", login_argv, login_env);
 
 	while(true) {
+		launch("/usr/bin/login", login_argv, login_env);
 		wait(NULL);
 	}
 }
