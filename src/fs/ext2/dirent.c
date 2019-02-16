@@ -41,18 +41,41 @@ static struct dirent* readdir_r(vfs_file_t* fp, void* kbuf, size_t size, size_t 
 }
 
 size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
-	void* kbuf = kmalloc(size);
-	size_t read = ext2_do_read(fp, kbuf, size, FT_IFDIR);
-	if(!read) {
-		kfree(kbuf);
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!ext2_inode_read(inode, fp->inode)) {
+		kfree(inode);
+		sc_errno = EBADF;
+		return -1;
+	}
+
+	if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR) {
+		kfree(inode);
+		sc_errno = ENOTDIR;
+		return -1;
+	}
+
+	// FIXME
+	if(inode->size < 1 || fp->offset >= inode->size) {
+		kfree(inode);
 		return 0;
 	}
+
+	// FIXME
+	if(fp->offset + size > inode->size) {
+		size = inode->size - fp->offset;
+	}
+
+	void* kbuf = kmalloc(size);
+	uint8_t* read = ext2_inode_read_data(inode, fp->offset, size, kbuf);
 
 	uint32_t offset = 0;
 	vfs_dirent_t* ent = NULL;
 	struct dirent* ext2_ent = NULL;
 	size_t orig_ofs = fp->offset;
 
+	/* The on-disk dirent format of ext2 differs from the dirent format newlib
+	 * expects from the getdents syscall. This loops converts between the two.
+	 */
 	while(1) {
 		ext2_ent = readdir_r(fp, kbuf, size, (fp->offset - orig_ofs));
 		if(!ext2_ent)  {
@@ -64,8 +87,6 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
 			break;
 		}
 
-		//char* dname = strndup(ext2_ent->name, ext2_ent->name_len);
-		//serial_printf("name %s record len %d inode %d\n", dname, ext2_ent->record_len, ext2_ent->inode);
 		if(!ext2_ent->inode) {
 			goto next;
 		}
@@ -94,7 +115,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
 	return offset;
 }
 
-// Looks for a directory entry with name `sarch` in a directory inode
+// Looks for a directory entry with name `search` in a directory inode
 static struct dirent* search_dir(struct inode* inode, const char* search) {
 	uint8_t* dirent_block = kmalloc(inode->size);
 	if(!ext2_inode_read_data(inode, 0, inode->size, dirent_block)) {

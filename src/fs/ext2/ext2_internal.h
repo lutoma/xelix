@@ -184,5 +184,4 @@ void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
 uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance);
 
-size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type);
 size_t ext2_read(vfs_file_t* fp, void* dest, size_t size);

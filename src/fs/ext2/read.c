@@ -30,7 +30,7 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) {
+size_t ext2_read(vfs_file_t* fp, void* dest, size_t size) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
 		sc_errno = EBADF;
@@ -50,7 +50,7 @@ size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) 
 		inode->gid, inode->size, vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
 		vfs_get_verbose_permissions(inode->mode));
 
-	if(vfs_mode_to_filetype(inode->mode) != req_type)
+	if(vfs_mode_to_filetype(inode->mode) != FT_IFREG)
 	{
 		debug("ext2_read_file: Attempt to read something weird "
 			"(0x%x: %s)\n", inode->mode,
@@ -78,11 +78,6 @@ size_t ext2_do_read(vfs_file_t* fp, void* dest, size_t size, uint32_t req_type) 
 		return 0;
 	}
 	return size;
-}
-
-// The public read interface to the virtual file system
-size_t ext2_read(vfs_file_t* fp, void* dest, size_t size) {
-	return ext2_do_read(fp, dest, size, FT_IFREG);
 }
 
 #endif /* ENABLE_EXT2 */
