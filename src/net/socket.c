@@ -28,6 +28,8 @@
 #include <endian.h>
 #include <spinlock.h>
 
+#ifdef ENABLE_PICOTCP
+
 #define SOCKSIZE sizeof(struct sockaddr_in)
 #define SOCKSIZE6 sizeof(struct sockaddr_in6)
 
@@ -378,3 +380,5 @@ int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 	sock->conn_requests--;
 	return new_fd->num;
 }
+
+#endif /* ENABLE_PICOTCP */

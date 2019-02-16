@@ -77,25 +77,24 @@ menu "Audio"
 endmenu
 
 menu "Networking"
-	config NET_MAX_DEVICES
-	int "Maximum number of networking devices"
-	default 10
-
-	config NET_MAX_HOSTNAME_LEN
-	int "Maximum hostname length"
-	default 64
+	config ENABLE_PICOTCP
+	bool "Enable PicoTCP integration"
+	default y
 
 	config ENABLE_NE2K
 	bool "NE2000 NIC driver"
 	default y
+	depends on ENABLE_PICOTCP
 
 	config ENABLE_RTL8139
 	bool "RTL8139 NIC driver"
 	default n
+	depends on ENABLE_PICOTCP
 
 	config RTL8139_MAX_CARDS
 	int "Maximum number of cards supported by RTL8139 driver"
 	default 4
+	depends on ENABLE_RTL8139
 endmenu
 
 

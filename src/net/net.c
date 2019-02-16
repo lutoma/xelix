@@ -24,6 +24,8 @@
 #include <pico_dhcp_client.h>
 #include <spinlock.h>
 
+#ifdef ENABLE_PICOTCP
+
 #define RECV_BUFFER_SIZE 2048
 
 static bool initialized = false;
@@ -111,3 +113,5 @@ void net_init() {
 	pico_stack_init();
 	initialized = true;
 }
+
+#endif /* ENABLE_PICOTCP */

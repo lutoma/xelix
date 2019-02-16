@@ -47,9 +47,11 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 		reg.handler(regs);
 	}
 
+	#ifdef ENABLE_PICOTCP
 	if(intr == IRQ0) {
 		net_tick();
 	}
+	#endif
 
 	// Run scheduler every 100th tick, or when task yields
 	if((intr == IRQ0 && !(pit_get_tick() % 100)) || (task && task->interrupt_yield)) {

@@ -77,7 +77,10 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	init(ext2);
 	#endif
 	init(vfs);
+
+	#ifdef ENABLE_PICOTCP
 	init(net);
+	#endif
 
 	#ifdef ENABLE_NE2K
 	init(ne2k);

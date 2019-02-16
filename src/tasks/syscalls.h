@@ -33,6 +33,11 @@
 	static inline uint32_t sys_ ## name (struct syscall syscall) { \
 		return args; \
 	}
+#define SYS_DISABLED(name) \
+	static inline uint32_t sys_ ## name (struct syscall syscall) { \
+		sc_errno = ENOSYS; \
+		return -1; \
+	}
 
 DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);
@@ -64,13 +69,22 @@ SYS_REDIR(gettimeofday, time_get_timeval((struct timeval*)syscall.params[0]));
 SYS_REDIR(chdir, task_chdir(syscall.task, (char*)syscall.params[0]));
 SYS_REDIR(signal, task_signal_syscall(syscall.params[0], syscall.task, syscall.params[1], syscall.state));
 SYS_REDIR(sbrk, (uint32_t)task_sbrk(syscall.task, syscall.params[1]));
+SYS_REDIR(fcntl, vfs_fcntl(syscall.params[0], syscall.params[1], syscall.params[2], syscall.task));
+SYS_REDIR(waitpid, task_waitpid(syscall.task, (int32_t)syscall.params[0], (int*)syscall.params[1], syscall.params[2]));
+
+#ifdef ENABLE_PICOTCP
 SYS_REDIR(socket, net_socket(syscall.task, syscall.params[0], syscall.params[1], syscall.params[2]));
 SYS_REDIR(bind, net_bind(syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]));
 SYS_REDIR(listen, net_listen(syscall.task, syscall.params[0], syscall.params[1]));
 SYS_REDIR(accept, net_accept(syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]));
 SYS_REDIR(select, net_select(syscall.task, syscall.params[0], (fd_set*)syscall.params[1], (fd_set*)syscall.params[2]));
-SYS_REDIR(fcntl, vfs_fcntl(syscall.params[0], syscall.params[1], syscall.params[2], syscall.task));
-SYS_REDIR(waitpid, task_waitpid(syscall.task, (int32_t)syscall.params[0], (int*)syscall.params[1], syscall.params[2]));
+#else
+SYS_DISABLED(socket);
+SYS_DISABLED(bind);
+SYS_DISABLED(listen);
+SYS_DISABLED(accept);
+SYS_DISABLED(select);
+#endif
 
 #define SYSCALL_ARG_RESOLVE 1
 #define SYSCALL_ARG_RESOLVE_NULL_OK 2
