@@ -24,19 +24,27 @@
 #include <print.h>
 
 #define SYSCALL_INTERRUPT 0x80
-
 #define SYSCALL_HANDLER(name) uint32_t sys_ ## name (struct syscall syscall)
+#define SYSCALL_ARG_RESOLVE 1
+#define SYSCALL_ARG_RESOLVE_NULL_OK 2
 
-#define _SYSC_RESOLVE(par, reverse) {									\
-	par = (typeof(par))vmem_translate(syscall.task->memory_context, (intptr_t)par, reverse);	\
-	if(!par) {															\
-		return -1;														\
-	}																	\
-}
+#define DEFINE_SYSCALL(name) extern uint32_t sys_ ## name (struct syscall syscall);
+#define SYS_REDIR(name, fname, args...) \
+	static inline uint32_t sys_ ## name (struct syscall syscall) { \
+		return fname ( args ); \
+	}
 
-#define SYSCALL_SAFE_RESOLVE_PARAM(par) _SYSC_RESOLVE(syscall.params[par], false)
-#define SYSCALL_SAFE_RESOLVE(par) _SYSC_RESOLVE(par, false)
-#define SYSCALL_SAFE_REVERSE_RESOLVE(par) _SYSC_RESOLVE(par, true)
+#define SYS_DISABLED(name) \
+	static inline uint32_t sys_ ## name (struct syscall syscall) {sc_errno = ENOSYS; return -1;}
+
+#define SYSCALL_ENTRY_OG(name, arg0, arg1, arg2) \
+	{ \
+		.handler = sys_exit, \
+		.name = "exit", \
+		.arg0 = arg0, \
+		.arg1 = arg1, \
+		.arg2 = arg2, \
+	}
 
 struct syscall {
 	int num;
@@ -46,4 +54,14 @@ struct syscall {
 };
 
 typedef uint32_t (*syscall_t)(struct syscall);
+
+struct syscall_definition {
+	syscall_t handler;
+	char name[50];
+
+	uint8_t arg0;
+	uint8_t arg1;
+	uint8_t arg2;
+};
+
 void syscall_init();
