@@ -37,23 +37,6 @@ index bafc9ba..b954b9f 100644
  	setvar_u(v, s);
  }
 
-diff --git busybox-1.29.2/include/inet_common.h busybox-1.29.2/include/inet_common.h
-index 4638aa9..3bf5201 100644
---- busybox-1.29.2/include/inet_common.h
-+++ busybox-1.29.2/include/inet_common.h
-@@ -6,6 +6,7 @@
-  * Heavily modified by Manuel Novoa III       Mar 12, 2001
-  *
-  */
-+#if 0
- #ifndef INET_COMMON_H
- #define INET_COMMON_H 1
-
-@@ -30,3 +31,4 @@ char *INET6_rresolve(struct sockaddr_in6 *sin6, int numeric) FAST_FUNC;
- POP_SAVED_FUNCTION_VISIBILITY
-
- #endif
-+#endif
 diff --git busybox-1.29.2/include/libbb.h busybox-1.29.2/include/libbb.h
 index d4ba031..ccbd860 100644
 --- busybox-1.29.2/include/libbb.h
@@ -75,140 +58,6 @@ index d4ba031..ccbd860 100644
  #endif
  #include <sys/wait.h>
  #include <termios.h>
-@@ -140,7 +140,7 @@
- #elif defined __APPLE__
- # include <netinet/in.h>
- #else
--# include <arpa/inet.h>
-+//# include <arpa/inet.h>
- //This breaks on bionic:
- //# if !defined(__socklen_t_defined) && !defined(_SOCKLEN_T_DECLARED)
- ///* We #define socklen_t *after* includes, otherwise we get
-@@ -617,6 +617,7 @@ time_t validate_tm_time(const char *date_str, struct tm *ptm) FAST_FUNC;
- char *strftime_HHMMSS(char *buf, unsigned len, time_t *tp) FAST_FUNC;
- char *strftime_YYYYMMDDHHMMSS(char *buf, unsigned len, time_t *tp) FAST_FUNC;
-
-+/*
- int xsocket(int domain, int type, int protocol) FAST_FUNC;
- void xbind(int sockfd, struct sockaddr *my_addr, socklen_t addrlen) FAST_FUNC;
- void xlisten(int s, int backlog) FAST_FUNC;
-@@ -627,20 +628,21 @@ ssize_t xsendto(int s, const void *buf, size_t len, const struct sockaddr *to,
- int setsockopt_int(int fd, int level, int optname, int optval) FAST_FUNC;
- int setsockopt_1(int fd, int level, int optname) FAST_FUNC;
- int setsockopt_SOL_SOCKET_int(int fd, int optname, int optval) FAST_FUNC;
--int setsockopt_SOL_SOCKET_1(int fd, int optname) FAST_FUNC;
-+int setsockopt_SOL_SOCKET_1(int fd, int optname) FAST_FUNC;*/
-+
- /* SO_REUSEADDR allows a server to rebind to an address that is already
-  * "in use" by old connections to e.g. previous server instance which is
-  * killed or crashed. Without it bind will fail until all such connections
-  * time out. Linux does not allow multiple live binds on same ip:port
-  * regardless of SO_REUSEADDR (unlike some other flavors of Unix).
-  * Turn it on before you call bind(). */
--void setsockopt_reuseaddr(int fd) FAST_FUNC; /* On Linux this never fails. */
--int setsockopt_keepalive(int fd) FAST_FUNC;
-+//void setsockopt_reuseaddr(int fd) FAST_FUNC; /* On Linux this never fails. */
-+/*int setsockopt_keepalive(int fd) FAST_FUNC;
- int setsockopt_broadcast(int fd) FAST_FUNC;
- int setsockopt_bindtodevice(int fd, const char *iface) FAST_FUNC;
--int bb_getsockname(int sockfd, void *addr, socklen_t addrlen) FAST_FUNC;
-+int bb_getsockname(int sockfd, void *addr, socklen_t addrlen) FAST_FUNC;*/
- /* NB: returns port in host byte order */
--unsigned bb_lookup_port(const char *port, const char *protocol, unsigned default_port) FAST_FUNC;
-+/*unsigned bb_lookup_port(const char *port, const char *protocol, unsigned default_port) FAST_FUNC;
- #if ENABLE_FEATURE_ETC_SERVICES
- # define bb_lookup_std_port(portstr, protocol, portnum) bb_lookup_port(portstr, protocol, portnum)
- #else
-@@ -668,67 +670,68 @@ enum {
- 		}
- 	)
- };
-+*/
- /* Create stream socket, and allocate suitable lsa.
-  * (lsa of correct size and lsa->sa.sa_family (AF_INET/AF_INET6))
-  * af == AF_UNSPEC will result in trying to create IPv6 socket,
-  * and if kernel doesn't support it, fall back to IPv4.
-  * This is useful if you plan to bind to resulting local lsa.
-  */
--int xsocket_type(len_and_sockaddr **lsap, int af, int sock_type) FAST_FUNC;
--int xsocket_stream(len_and_sockaddr **lsap) FAST_FUNC;
-+//int xsocket_type(len_and_sockaddr **lsap, int af, int sock_type) FAST_FUNC;
-+//int xsocket_stream(len_and_sockaddr **lsap) FAST_FUNC;
- /* Create server socket bound to bindaddr:port. bindaddr can be NULL,
-  * numeric IP ("N.N.N.N") or numeric IPv6 address,
-  * and can have ":PORT" suffix (for IPv6 use "[X:X:...:X]:PORT").
-  * Only if there is no suffix, port argument is used */
- /* NB: these set SO_REUSEADDR before bind */
--int create_and_bind_stream_or_die(const char *bindaddr, int port) FAST_FUNC;
--int create_and_bind_dgram_or_die(const char *bindaddr, int port) FAST_FUNC;
-+//int create_and_bind_stream_or_die(const char *bindaddr, int port) FAST_FUNC;
-+//int create_and_bind_dgram_or_die(const char *bindaddr, int port) FAST_FUNC;
- /* Create client TCP socket connected to peer:port. Peer cannot be NULL.
-  * Peer can be numeric IP ("N.N.N.N"), numeric IPv6 address or hostname,
-  * and can have ":PORT" suffix (for IPv6 use "[X:X:...:X]:PORT").
-  * If there is no suffix, port argument is used */
--int create_and_connect_stream_or_die(const char *peer, int port) FAST_FUNC;
-+//int create_and_connect_stream_or_die(const char *peer, int port) FAST_FUNC;
- /* Connect to peer identified by lsa */
--int xconnect_stream(const len_and_sockaddr *lsa) FAST_FUNC;
-+//int xconnect_stream(const len_and_sockaddr *lsa) FAST_FUNC;
- /* Get local address of bound or accepted socket */
--len_and_sockaddr *get_sock_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
-+//len_and_sockaddr *get_sock_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
- /* Get remote address of connected or accepted socket */
--len_and_sockaddr *get_peer_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
-+//len_and_sockaddr *get_peer_lsa(int fd) FAST_FUNC RETURNS_MALLOC;
- /* Return malloc'ed len_and_sockaddr with socket address of host:port
-  * Currently will return IPv4 or IPv6 sockaddrs only
-  * (depending on host), but in theory nothing prevents e.g.
-  * UNIX socket address being returned, IPX sockaddr etc...
-  * On error does bb_error_msg and returns NULL */
--len_and_sockaddr* host2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
-+//len_and_sockaddr* host2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
- /* Version which dies on error */
--len_and_sockaddr* xhost2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
--len_and_sockaddr* xdotted2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
-+//len_and_sockaddr* xhost2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
-+//len_and_sockaddr* xdotted2sockaddr(const char *host, int port) FAST_FUNC RETURNS_MALLOC;
- /* Same, useful if you want to force family (e.g. IPv6) */
--#if !ENABLE_FEATURE_IPV6
-+/*#if !ENABLE_FEATURE_IPV6
- #define host_and_af2sockaddr(host, port, af) host2sockaddr((host), (port))
- #define xhost_and_af2sockaddr(host, port, af) xhost2sockaddr((host), (port))
- #else
- len_and_sockaddr* host_and_af2sockaddr(const char *host, int port, sa_family_t af) FAST_FUNC RETURNS_MALLOC;
- len_and_sockaddr* xhost_and_af2sockaddr(const char *host, int port, sa_family_t af) FAST_FUNC RETURNS_MALLOC;
--#endif
-+#endif*/
- /* Assign sin[6]_port member if the socket is an AF_INET[6] one,
-  * otherwise no-op. Useful for ftp.
-  * NB: does NOT do htons() internally, just direct assignment. */
--void set_nport(struct sockaddr *sa, unsigned port) FAST_FUNC;
-+//void set_nport(struct sockaddr *sa, unsigned port) FAST_FUNC;
- /* Retrieve sin[6]_port or return -1 for non-INET[6] lsa's */
--int get_nport(const struct sockaddr *sa) FAST_FUNC;
-+//int get_nport(const struct sockaddr *sa) FAST_FUNC;
- /* Reverse DNS. Returns NULL on failure. */
--char* xmalloc_sockaddr2host(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
-+//char* xmalloc_sockaddr2host(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
- /* This one doesn't append :PORTNUM */
--char* xmalloc_sockaddr2host_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
-+//char* xmalloc_sockaddr2host_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
- /* This one also doesn't fall back to dotted IP (returns NULL) */
--char* xmalloc_sockaddr2hostonly_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
-+//char* xmalloc_sockaddr2hostonly_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
- /* inet_[ap]ton on steroids */
--char* xmalloc_sockaddr2dotted(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
--char* xmalloc_sockaddr2dotted_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
-+//char* xmalloc_sockaddr2dotted(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
-+//char* xmalloc_sockaddr2dotted_noport(const struct sockaddr *sa) FAST_FUNC RETURNS_MALLOC;
- // "old" (ipv4 only) API
- // users: traceroute.c hostname.c - use _list_ of all IPs
--struct hostent *xgethostbyname(const char *name) FAST_FUNC;
-+//struct hostent *xgethostbyname(const char *name) FAST_FUNC;
- // Also mount.c and inetd.c are using gethostbyname(),
- // + inet_common.c has additional IPv4-only stuff
-
 @@ -964,11 +967,11 @@ char *safe_gethostname(void) FAST_FUNC;
  /* Convert each alpha char in str to lower-case */
  char* str_tolower(char *str) FAST_FUNC;
@@ -295,25 +144,6 @@ index 32ff83a..8d4cc14 100644
  }
 
  long FAST_FUNC xuname2uid(const char *name)
-diff --git busybox-1.29.2/libbb/inet_common.c busybox-1.29.2/libbb/inet_common.c
-index e9fbde7..0e96949 100644
---- busybox-1.29.2/libbb/inet_common.c
-+++ busybox-1.29.2/libbb/inet_common.c
-@@ -10,6 +10,8 @@
- #include "libbb.h"
- #include "inet_common.h"
-
-+#if 0
-+
- #if 0
- # define dbg(...) bb_error_msg(__VA_ARGS__)
- #else
-@@ -194,3 +196,5 @@ char* FAST_FUNC INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
- }
-
- #endif  /* CONFIG_FEATURE_IPV6 */
-+
-+#endif
 diff --git busybox-1.29.2/libbb/makedev.c busybox-1.29.2/libbb/makedev.c
 index 06c4039..b6a4ca5 100644
 --- busybox-1.29.2/libbb/makedev.c
@@ -375,21 +205,6 @@ index 9d8a921..c99f0e1 100644
  }
 
 
-diff --git busybox-1.29.2/libbb/signals.c busybox-1.29.2/libbb/signals.c
-index 3f58932..3881f98 100644
---- busybox-1.29.2/libbb/signals.c
-+++ busybox-1.29.2/libbb/signals.c
-@@ -104,8 +104,8 @@ void FAST_FUNC signal_SA_RESTART_empty_mask(int sig, void (*handler)(int))
- 	struct sigaction sa;
- 	memset(&sa, 0, sizeof(sa));
- 	/*sigemptyset(&sa.sa_mask);*/
--	sa.sa_flags = SA_RESTART;
--	sa.sa_handler = handler;
-+	//sa.sa_flags = SA_RESTART;
-+	//sa.sa_handler = handler;
- 	sigaction_set(sig, &sa);
- }
-
 diff --git busybox-1.29.2/libbb/u_signal_names.c busybox-1.29.2/libbb/u_signal_names.c
 index b3038e3..88f6d78 100644
 --- busybox-1.29.2/libbb/u_signal_names.c
@@ -403,23 +218,6 @@ index b3038e3..88f6d78 100644
  }
 
 
-diff --git busybox-1.29.2/libbb/xconnect.c busybox-1.29.2/libbb/xconnect.c
-index 39e56b2..66701a5 100644
---- busybox-1.29.2/libbb/xconnect.c
-+++ busybox-1.29.2/libbb/xconnect.c
-@@ -6,6 +6,7 @@
-  *
-  * Licensed under GPLv2, see file LICENSE in this source tree.
-  */
-+#if 0
- #include <sys/types.h>
- #include <sys/socket.h> /* netinet/in.h needs it */
- #include <netinet/in.h>
-@@ -507,3 +508,4 @@ char* FAST_FUNC xmalloc_sockaddr2dotted_noport(const struct sockaddr *sa)
- {
- 	return sockaddr2str(sa, NI_NUMERICHOST | NI_NUMERICSCOPE | IGNORE_PORT);
- }
-+#endif
 diff --git busybox-1.29.2/libbb/xfuncs.c busybox-1.29.2/libbb/xfuncs.c
 index b4d512b..0a84b00 100644
 --- busybox-1.29.2/libbb/xfuncs.c
@@ -1022,130 +820,6 @@ index 4b4eeaf..cb283ff 100644
  			signal_mdevs(my_pid);
  		}
  	}
---- busybox-1.29.2/util-linux/mount.c	2018-07-02 13:23:06.000000000 +0200
-+++ busybox-1.29.2/util-linux/mount.c	2018-10-12 22:47:51.001873184 +0200
-@@ -1850,38 +1850,8 @@
-  */
- static int nfsmount(struct mntent *mp, unsigned long vfsflags, char *filteropts)
- {
--	len_and_sockaddr *lsa;
--	char *opts;
--	char *end;
--	char *dotted;
--	int ret;
--
--# if ENABLE_FEATURE_IPV6
--	end = strchr(mp->mnt_fsname, ']');
--	if (end && end[1] == ':')
--		end++;
--	else
--# endif
--		/* mount_main() guarantees that ':' is there */
--		end = strchr(mp->mnt_fsname, ':');
--
--	*end = '\0';
--	lsa = xhost2sockaddr(mp->mnt_fsname, /*port:*/ 0);
--	*end = ':';
--	dotted = xmalloc_sockaddr2dotted_noport(&lsa->u.sa);
--	if (ENABLE_FEATURE_CLEAN_UP) free(lsa);
--	opts = xasprintf("%s%saddr=%s",
--		filteropts ? filteropts : "",
--		filteropts ? "," : "",
--		dotted
--	);
--	if (ENABLE_FEATURE_CLEAN_UP) free(dotted);
--	ret = mount_it_now(mp, vfsflags, opts);
--	if (ENABLE_FEATURE_CLEAN_UP) free(opts);
--
--	return ret;
-+	return -1;
- }
--
- #endif // !ENABLE_FEATURE_MOUNT_NFS
-
- // Mount one directory.  Handles CIFS, NFS, loopback, autobind, and filesystem
-@@ -1933,81 +1903,6 @@
- 		goto report_error;
- 	}
-
--	// Might this be an CIFS filesystem?
--	if (ENABLE_FEATURE_MOUNT_CIFS
--	 && (!mp->mnt_type || strcmp(mp->mnt_type, "cifs") == 0)
--	 && (mp->mnt_fsname[0] == '/' || mp->mnt_fsname[0] == '\\')
--	 && mp->mnt_fsname[0] == mp->mnt_fsname[1]
--	) {
--		int len;
--		char c;
--		char *hostname, *share;
--		len_and_sockaddr *lsa;
--
--		// Parse mp->mnt_fsname of the form "//hostname/share[/dir1/dir2]"
--
--		hostname = mp->mnt_fsname + 2;
--		len = strcspn(hostname, "/\\");
--		share = hostname + len + 1;
--		if (len == 0          // 3rd char is a [back]slash (IOW: empty hostname)
--		 || share[-1] == '\0' // no [back]slash after hostname
--		 || share[0] == '\0'  // empty share name
--		) {
--			goto report_error;
--		}
--		c = share[-1];
--		share[-1] = '\0';
--		len = strcspn(share, "/\\");
--
--		// "unc=\\hostname\share" option is mandatory
--		// after CIFS option parsing was rewritten in Linux 3.4.
--		// Must use backslashes.
--		// If /dir1/dir2 is present, also add "prefixpath=dir1/dir2"
--		{
--			char *unc = xasprintf(
--				share[len] != '\0'  /* "/dir1/dir2" exists? */
--					? "unc=\\\\%s\\%.*s,prefixpath=%s"
--					: "unc=\\\\%s\\%.*s",
--				hostname,
--				len, share,
--				share + len + 1  /* "dir1/dir2" */
--			);
--			parse_mount_options(unc, &filteropts);
--			if (ENABLE_FEATURE_CLEAN_UP) free(unc);
--		}
--
--		lsa = host2sockaddr(hostname, 0);
--		share[-1] = c;
--		if (!lsa)
--			goto report_error;
--
--		// If there is no "ip=..." option yet
--		if (!is_prefixed_with(filteropts, ",ip="+1)
--		 && !strstr(filteropts, ",ip=")
--		) {
--			char *dotted, *ip;
--			// Insert "ip=..." option into options
--			dotted = xmalloc_sockaddr2dotted_noport(&lsa->u.sa);
--			if (ENABLE_FEATURE_CLEAN_UP) free(lsa);
--			ip = xasprintf("ip=%s", dotted);
--			if (ENABLE_FEATURE_CLEAN_UP) free(dotted);
--// Note: IPv6 scoped addresses ("host%iface", see RFC 4007) should be
--// handled by libc in getnameinfo() (inside xmalloc_sockaddr2dotted_noport()).
--// Currently, glibc does not support that (has no NI_NUMERICSCOPE),
--// musl apparently does. This results in "ip=numericIPv6%iface_name"
--// (instead of _numeric_ iface_id) with glibc.
--// This probably should be fixed in glibc, not here.
--// The workaround is to manually specify correct "ip=ADDR%n" option.
--			parse_mount_options(ip, &filteropts);
--			if (ENABLE_FEATURE_CLEAN_UP) free(ip);
--		}
--
--		mp->mnt_type = (char*)"cifs";
--		rc = mount_it_now(mp, vfsflags, filteropts);
--
--		goto report_error;
--	}
--
- 	// Might this be an NFS filesystem?
- 	if ((!mp->mnt_type || is_prefixed_with(mp->mnt_type, "nfs"))
- 	 && strchr(mp->mnt_fsname, ':') != NULL
 --- busybox-1.29.2/archival/libarchive/get_header_tar.c	2019-02-03 04:06:07.849115214 +0100
 +++ busybox-1.29.2/archival/libarchive/get_header_tar.c	2019-02-03 04:06:22.289164932 +0100
 @@ -292,7 +292,8 @@
