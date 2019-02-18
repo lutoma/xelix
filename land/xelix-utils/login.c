@@ -65,7 +65,7 @@ int main() {
 			free(motd);
 		}
 
-		char* __argv[] = { pwd->pw_shell, "-i", NULL };
+		char* __argv[] = { pwd->pw_shell, "-l", NULL };
 
 		char env_user[50];
 		snprintf(env_user, 50, "USER=%s", pwd->pw_name);
