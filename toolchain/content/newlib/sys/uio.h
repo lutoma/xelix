@@ -16,7 +16,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SYS_UI_H
+#ifndef _SYS_UIO_H
 #define _SYS_UIO_H
 
 #include <sys/types.h>
