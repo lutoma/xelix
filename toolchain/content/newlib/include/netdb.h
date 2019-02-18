@@ -61,6 +61,9 @@ struct hostent {
 	int h_addrtype;
 	int h_length;
 	char **h_addr_list;
+
+	// Backward compatibility - same as h_addr_list[0]
+	char *h_addr;
 };
 
 struct netent {
