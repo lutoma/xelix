@@ -246,7 +246,7 @@ int ftruncate(int fildes, off_t length) {
 
 int getsockname(int socket, struct sockaddr* __restrict__ address,
        socklen_t* __restrict__ address_len) {
-	fprintf(stderr, "Warning: xelix newlib accept() stub called.\n");
+	fprintf(stderr, "Warning: xelix newlib getsockname() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
@@ -254,7 +254,7 @@ int getsockname(int socket, struct sockaddr* __restrict__ address,
 
 int setsockopt(int socket, int level, int option_name,
        const void *option_value, socklen_t option_len) {
-	fprintf(stderr, "Warning: xelix newlib accept() stub called.\n");
+	fprintf(stderr, "Warning: xelix newlib setsockopt() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
@@ -301,8 +301,6 @@ int setrlimit(int resource, const struct rlimit *rlim) {
 	errno = ENOSYS;
 	return -1;
 }
-
-
 
 pid_t vfork(void) {
 	fprintf(stderr, "Warning: xelix newlib vfork() stub called.\n");
@@ -491,4 +489,31 @@ struct hostent *gethostbyname(const char *name) {
 	fprintf(stderr, "Warning: xelix newlib gethostbyname() stub called.\n");
 	errno = ENOSYS;
 	return NULL;
+}
+
+int shutdown(int socket, int how) {
+	fprintf(stderr, "Warning: xelix newlib shutdown() stub called.\n");
+	errno = ENOSYS;
+	return -1;
+}
+
+void freeaddrinfo(struct addrinfo *ai) {
+	fprintf(stderr, "Warning: xelix newlib freeaddrinfo() stub called.\n");
+}
+
+int getaddrinfo(const char *restrict nodename,
+       const char *restrict servname,
+       const struct addrinfo *restrict hints,
+       struct addrinfo **restrict res) {
+	fprintf(stderr, "Warning: xelix newlib getaddrinfo() stub called.\n");
+	errno = ENOSYS;
+	return -1;
+}
+
+int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
+       char *restrict node, socklen_t nodelen, char *restrict service,
+       socklen_t servicelen, int flags) {
+	fprintf(stderr, "Warning: xelix newlib getnameinfo() stub called.\n");
+	errno = ENOSYS;
+	return -1;
 }

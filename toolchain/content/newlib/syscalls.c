@@ -353,3 +353,17 @@ const char *gai_strerror(int ecode) {
 		default: return "unknown error";
 	}
 }
+
+const char *hstrerror(int ecode) {
+	switch(ecode) {
+		case HOST_NOT_FOUND:
+			return "The specified host is unknown.";
+		case NO_DATA: /* Also matches NO_ADDRESS */
+			return "The requested name is valid but does not have an IP address.";
+		case NO_RECOVERY:
+			return "A nonrecoverable name server error occurred.";
+		case TRY_AGAIN:
+			return "A temporary error occurred on an authoritative name server. Try again later.";
+		default: return "unknown error";
+	}
+}

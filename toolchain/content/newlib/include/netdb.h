@@ -50,10 +50,17 @@
 #define EAI_SYSTEM 8
 #define EAI_OVERFLOW 9
 
-#define HOST_NOT_FOUND 1
-#define NO_DATA 2
-#define NO_RECOVERY 3
-#define TRY_AGAIN 4
+/* Possible values left in `h_errno'.  */
+# define HOST_NOT_FOUND	1	/* Authoritative Answer Host not found.  */
+# define TRY_AGAIN	2	/* Non-Authoritative Host not found,
+				   or SERVERFAIL.  */
+# define NO_RECOVERY	3	/* Non recoverable errors, FORMERR, REFUSED,
+				   NOTIMP.  */
+# define NO_DATA	4	/* Valid name, no data record of requested
+				   type.  */
+# define NETDB_INTERNAL	-1	/* See errno.  */
+# define NETDB_SUCCESS	0	/* No problem.  */
+# define NO_ADDRESS	NO_DATA	/* No address, look for MX record.  */
 
 struct hostent {
 	char *h_name;
@@ -97,12 +104,15 @@ struct addrinfo {
 	struct addrinfo *ai_next;
 };
 
+extern int h_errno;
+
 void endhostent(void);
 void endnetent(void);
 void endprotoent(void);
 void endservent(void);
 void freeaddrinfo(struct addrinfo *);
 const char *gai_strerror(int);
+const char *hstrerror(int err);
 
 int getaddrinfo(const char *restrict, const char *restrict,
 	const struct addrinfo *restrict, struct addrinfo **restrict);

@@ -1,5 +1,5 @@
 /* crt0.c: crt0 for userland tasks
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <sys/xelix.h>
 
+int h_errno;
 extern int main(int argc, char** argv);
 extern void __libc_init_array();
 extern void __libc_fini_array();
