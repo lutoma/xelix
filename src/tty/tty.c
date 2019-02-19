@@ -57,9 +57,8 @@ static inline void put_char(char chr) {
 		return;
 	}
 
-	// FIXME
 	if(chr == '\t') {
-		cur_col += cur_col % 4 ? cur_col % 4 : 4;
+		cur_col += 8 - (cur_col % 8);
 		return;
 	}
 
