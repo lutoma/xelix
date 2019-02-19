@@ -17,7 +17,7 @@
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
 [section multiboot]
-ALIGN 4
+ALIGN 4,db 0
 header_start:
 	dd 0xe85250d6
 	dd 0
@@ -25,6 +25,15 @@ header_start:
 
 	; checksum
 	dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start))
+
+	; framebuffer request
+	dw 5	; type
+	dw 1	; flags - optional tag
+	dd 24	; size
+	dd 1024	; width
+	dd 768	; height
+	dd 32	; depth
+	dd 0	; alignment filler
 
 	; required end tag
 	dw 0    ; type

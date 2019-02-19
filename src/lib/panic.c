@@ -21,7 +21,7 @@
 
 #include "generic.h"
 #include "print.h"
-#include <console/console.h>
+#include <tty/tty.h>
 #include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <hw/serial.h>
@@ -43,8 +43,8 @@ static void panic_printf(const char *fmt, ...) {
 	va_end(va);
 }
 
-/* Write to display/serial, completely circumventing the console framework and
- * device drivers. Writes directly to video memory / serial ioports.
+/* Write to display/serial, completely circumventing the tty framework and
+ * device drivers. Writes directly to text video memory / serial ioports.
  *
  * Ideally, the output of this will later then be overwritten by the full
  * output routed via the console framework.
@@ -86,7 +86,6 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 		"failed or the kernel panic occured in early startup before the "
 		"initialization of the needed drivers.");
 
-	console_clear(NULL);
 	panic_printf("\nKernel Panic: ");
 	vprintf(error, va);
 	serial_vprintf(error, va);

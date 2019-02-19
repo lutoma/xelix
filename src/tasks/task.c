@@ -24,7 +24,7 @@
 #include <memory/paging.h>
 #include <memory/gdt.h>
 #include <hw/interrupts.h>
-#include <console/console.h>
+#include <tty/tty.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <string.h>
@@ -125,9 +125,9 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	 * /dev/stdout etc will also resolve through the vfs (to sysfs), but this
 	 * avoids the lookup overhead.
 	 */
-	task->files[0].callbacks.read = console_vfs_read;
-	task->files[1].callbacks.write = console_vfs_write;
-	task->files[2].callbacks.write = console_vfs_write;
+	task->files[0].callbacks.read = tty_vfs_read;
+	task->files[1].callbacks.write = tty_vfs_write;
+	task->files[2].callbacks.write = tty_vfs_write;
 	return task;
 }
 

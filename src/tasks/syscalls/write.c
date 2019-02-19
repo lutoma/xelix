@@ -18,7 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <console/console.h>
 #include <fs/vfs.h>
 #include <errno.h>
 #include <tasks/syscall.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Fritz Grimpen
+/* Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,7 +18,24 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <console/driver.h>
+#include <fs/vfs.h>
 
-console_driver_t* console_driver_serial_init(console_driver_t* driver);
+struct tty_driver {
+	uint32_t cols;
+	uint32_t rows;
+	void (*write)(uint32_t x, uint32_t y, char chr);
+	void (*scroll_line)();
+};
 
+size_t tty_write(char* source, size_t size);
+size_t tty_read(char* source, size_t size);
+void tty_input_cb(uint8_t code, uint8_t code2);
+void tty_init();
+
+/* VFS callbacks */
+static inline size_t tty_vfs_write(vfs_file_t* fp, void* source, size_t size) {
+	return tty_write((char*)source, size);
+}
+static inline size_t tty_vfs_read(vfs_file_t* fp, void* dest, size_t size) {
+	return tty_read((char*)dest, size);
+}

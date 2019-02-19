@@ -34,7 +34,7 @@
 #include <stdint.h>
 #include <print.h>
 #include <hw/serial.h>
-#include <console/console.h>
+#include <tty/tty.h>
 
 
 // ntoa conversion buffer size, this must be big enough to hold
@@ -110,7 +110,7 @@ static inline void _out_char(char character, void* buffer, size_t idx, size_t ma
     char s[2];
     s[0] = character;
     s[1] = 0;
-    console_write(NULL, s, 1);
+    tty_write(s, 1);
   }
 }
 

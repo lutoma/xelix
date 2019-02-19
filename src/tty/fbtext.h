@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Fritz Grimpen
+/* Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,7 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <console/driver.h>
+#include <tty/tty.h>
 
-console_driver_t *console_driver_display_init(console_driver_t *mem);
-
+struct tty_driver* tty_fbtext_init();

@@ -22,6 +22,7 @@
 #include <panic.h>
 
 struct multiboot_tag_mmap* mmap_info = NULL;
+struct multiboot_tag_framebuffer framebuffer_info;
 
 static char* tag_type_names[] = {
 	NULL,
@@ -52,6 +53,10 @@ struct multiboot_tag_mmap* multiboot_get_mmap() {
 	return mmap_info;
 }
 
+struct multiboot_tag_framebuffer* multiboot_get_framebuffer() {
+	return &framebuffer_info;
+}
+
 void multiboot_init(uint32_t magic, void* header) {
 	if(magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
 		panic("Bootloader is not multiboot2 compliant (eax 0x%x != 0x%x).\n",
@@ -77,8 +82,11 @@ void multiboot_init(uint32_t magic, void* header) {
 			tag->type, tag->size);
 
 		switch(tag->type) {
-			case 6:
+			case MULTIBOOT_TAG_TYPE_MMAP:
 				mmap_info = (struct multiboot_tag_mmap*)tag;
+				break;
+			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
+				memcpy(&framebuffer_info, (struct multiboot_tag_framebuffer*)tag, sizeof(framebuffer_info));
 				break;
 		}
 

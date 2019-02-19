@@ -3,6 +3,7 @@ all: xelix.bin
 
 PATH += :toolchain/local/bin
 CC := i786-pc-xelix-gcc
+OBJCOPY := i786-pc-xelix-objcopy
 LD := $(CC)
 AS := nasm
 QEMU := qemu-system-i386
@@ -37,6 +38,9 @@ src/lib/strbuffer/%.o: src/lib/strbuffer/%.c src/lib/generic.h src/lib/config.h
 %-asm.o: %.asm
 	$(AS) $(MAKE_ASFLAGS) -o $@ $<
 
+%-psf.o: %.psf
+	$(OBJCOPY) -O i786-pc-xelix -B i386 -I binary $< $@
+
 $(CC):
 	make -C toolchain
 
@@ -48,7 +52,7 @@ run: xelix.bin mount
 
 .PHONY: clean
 clean:
-	find -L src -type f -iregex "^.*\.o" | xargs rm -f
+	find -L src -type f -iname "*.o" -delete
 
 .PHONY: land
 land:

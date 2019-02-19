@@ -30,7 +30,7 @@
 #include <hw/speaker.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
-#include <console/console.h>
+#include <tty/tty.h>
 #include <hw/pci.h>
 #include <hw/rtl8139.h>
 #include <hw/ne2k.h>
@@ -56,7 +56,7 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	init(gdt);
 	init(interrupts);
 	init(pit, PIT_RATE);
-	init(console);
+	init(tty);
 
 	memory_track_print_areas();
 

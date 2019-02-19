@@ -330,6 +330,7 @@ struct multiboot_tag_load_base_addr
 
 void multiboot_init(uint32_t magic, void* header);
 struct multiboot_tag_mmap* multiboot_get_mmap();
+struct multiboot_tag_framebuffer* multiboot_get_framebuffer();
 
 #endif /* ! MULTIBOOT_HEADER */
 
