@@ -1,5 +1,5 @@
 ; header.asm: Multiboot header and init
-; Copyright © 2010-2018 Lukas Martini
+; Copyright © 2010-2019 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -41,11 +41,11 @@ header_start:
 	dd 8    ; size
 header_end:
 
-; Reserve 4 KiB stack space
+; Reserve 16 KiB stack space
 [section .bss]
 GLOBAL stack_end
 stack_begin:
-	resb 4096
+	resb 1024 * 16
 stack_end:
 
 [section .text]
