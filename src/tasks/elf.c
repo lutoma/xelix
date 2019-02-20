@@ -185,30 +185,30 @@ int elf_load(task_t* task, elf_t* bin) {
 }
 
 int elf_load_file(task_t* task, char* path) {
-	vfs_file_t* fd = vfs_open(path, O_RDONLY, NULL);
-	if(!fd) {
+	int fd = vfs_open(path, O_RDONLY, NULL);
+	if(fd == -1) {
 		return -1;
 	}
 
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_stat(fd, stat) != 0 || !stat->st_size || !(stat->st_mode & S_IXUSR)) {
+	if(vfs_stat(fd, stat, NULL) != 0 || !stat->st_size || !(stat->st_mode & S_IXUSR)) {
 		kfree(stat);
-		vfs_close(fd);
+		vfs_close(fd, task);
 		return -1;
 	}
 
 	void* data = kmalloc(stat->st_size);
-	size_t read = vfs_read(data, stat->st_size, fd);
+	size_t read = vfs_read(fd, data, stat->st_size, NULL);
 	kfree(stat);
 
 	if(!read) {
 		kfree(data);
-		vfs_close(fd);
+		vfs_close(fd, task);
 		return -1;
 	}
 
 	int r = elf_load(task, (elf_t*)data);
 	kfree(data);
-	vfs_close(fd);
+	vfs_close(fd, task);
 	return r;
 }

@@ -247,14 +247,14 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 
 void ac97_play(char* file) {
 	struct ac97_card* card = &ac97_cards[0];
-	vfs_file_t* fd = vfs_open(file, O_RDONLY, NULL);
-	if(!fd) {
+	int fd = vfs_open(file, O_RDONLY, NULL);
+	if(fd == -1) {
 		return;
 	}
 
 	// FIXME Use this properly, stat or use return value of vfs_read to choose buffer num
 	data = kmalloc(9999999);
-	size_t read = vfs_read(data, 9999999, fd);
+	size_t read = vfs_read(fd, data, 9999999, NULL);
 	vfs_close(fd);
 
 	if(read < 1) {

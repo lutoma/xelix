@@ -29,19 +29,19 @@
 #include <time.h>
 
 DEFINE_SYSCALL(exit);
-DEFINE_SYSCALL(write);
-DEFINE_SYSCALL(read);
-DEFINE_SYSCALL(open);
-DEFINE_SYSCALL(stat);
-DEFINE_SYSCALL(seek);
-DEFINE_SYSCALL(getdents);
 DEFINE_SYSCALL(fork);
 DEFINE_SYSCALL(socket_send);
 DEFINE_SYSCALL(socket_recv);
 DEFINE_SYSCALL(audio_play);
-DEFINE_SYSCALL(close);
 DEFINE_SYSCALL(execve);
 
+SYS_REDIR(open,			vfs_open,				(char*)syscall.params[0], syscall.params[1], syscall.task);
+SYS_REDIR(read,			vfs_read,				syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
+SYS_REDIR(write,		vfs_write,				syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
+SYS_REDIR(stat,			vfs_stat,				syscall.params[0], (vfs_stat_t*)syscall.params[1], syscall.task);
+SYS_REDIR(seek,			vfs_seek,				syscall.params[0], syscall.params[1], syscall.params[2], syscall.task);
+SYS_REDIR(getdents,		vfs_getdents,			syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
+SYS_REDIR(close,		vfs_close,				syscall.params[0], syscall.task);
 SYS_REDIR(chmod,		vfs_chmod,				(char*)syscall.params[0], syscall.params[1], syscall.task);
 SYS_REDIR(chown,		vfs_chown,				(char*)syscall.params[0], syscall.params[1], syscall.params[2], syscall.task);
 SYS_REDIR(readlink,		vfs_readlink,			(const char*)syscall.params[0], (char*)syscall.params[1], syscall.params[2], syscall.task);

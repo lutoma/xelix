@@ -148,28 +148,29 @@ typedef struct {
 char* vfs_normalize_path(const char* orig_path, char* cwd);
 vfs_file_t* vfs_get_from_id(int id, struct task* task);
 vfs_file_t* vfs_alloc_fileno(struct task* task);
-vfs_file_t* vfs_open(const char* path, uint32_t flags, struct task* task);
-int vfs_stat(vfs_file_t* fp, vfs_stat_t* dest);
-size_t vfs_read(void* dest, size_t size, vfs_file_t* fp);
-size_t vfs_write(void* source, size_t size, vfs_file_t* fp);
-size_t vfs_getdents(vfs_file_t* dir, void* dest, size_t size);
-void vfs_seek(vfs_file_t* fp, size_t offset, int origin);
-int vfs_close(vfs_file_t* fp);
-int vfs_unlink(char *name, struct task* task);
-int vfs_chmod(const char* path, uint32_t mode, struct task* task);
+int vfs_open(const char* orig_path, uint32_t flags, struct task* task);
+size_t vfs_read(int fd, void* dest, size_t size, struct task* task);
+size_t vfs_write(int fd, void* source, size_t size, struct task* task);
+size_t vfs_getdents(int fd, void* dest, size_t size, struct task* task);
+int vfs_seek(int fd, size_t offset, int origin, struct task* task);
+int vfs_close(int fd, struct task* task);
+int vfs_fcntl(int fd, int cmd, int arg3, struct task* task);
+int vfs_unlink(char* orig_path, struct task* task);
+int vfs_chmod(const char* orig_path, uint32_t mode, struct task* task);
 int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, struct task* task);
 int vfs_mkdir(const char* orig_path, uint32_t mode, struct task* task);
-int vfs_access(const char *path, uint32_t amode, struct task* task);
+int vfs_access(const char* orig_path, uint32_t amode, struct task* task);
 int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task);
 int vfs_link(const char* orig_path, const char* orig_new_path, struct task* task);
 int vfs_readlink(const char* orig_path, char* buf, size_t size, struct task* task);
 int vfs_rmdir(const char* orig_path, struct task* task);
-int vfs_fcntl(int fd, int cmd, int arg3, struct task* task);
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	struct vfs_callbacks* callbacks);
 
-void vfs_init();
+// FIXME Should operate on paths, not open files
+int vfs_stat(int fd, vfs_stat_t* dest, struct task* task);
 
+void vfs_init();
 
 static inline char* vfs_filetype_to_verbose(int filetype) {
 	switch(filetype) {

@@ -262,28 +262,28 @@ void task_cleanup(task_t* t) {
 }
 
 int task_chdir(task_t* task, const char* dir) {
-	vfs_file_t* fp = vfs_open(dir, O_RDONLY, NULL);
-	if(!fp) {
+	int fd = vfs_open(dir, O_RDONLY, task);
+	if(fd == -1) {
 		return -1;
 	}
 
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_stat(fp, stat) != 0) {
+	if(vfs_stat(fd, stat, task) != 0) {
 		kfree(stat);
-		vfs_close(fp);
+		vfs_close(fd, task);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	if(vfs_mode_to_filetype(stat->st_mode) != FT_IFDIR) {
-		vfs_close(fp);
+		vfs_close(fd, task);
 		sc_errno = ENOTDIR;
 		return -1;
 	}
 
 	kfree(stat);
-	strcpy(task->cwd, fp->path);
-	vfs_close(fp);
+	strcpy(task->cwd, vfs_get_from_id(fd, task)->path);
+	vfs_close(fd, task);
 	return 0;
 }
 
