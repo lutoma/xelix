@@ -24,6 +24,7 @@
 #include <memory/paging.h>
 #include <memory/gdt.h>
 #include <tasks/scheduler.h>
+#include <tasks/task.h>
 
 #define has_errcode(i) (i == 8 || i == 17 || i == 30 || (i >= 10 && i <= 14))
 
@@ -63,7 +64,12 @@ isf_t* __attribute__((fastcall)) cpu_fault_handler(uint32_t intr, intptr_t cr2, 
 
 	// Always do a full panic on double faults
 	if(bit_get(err_code, 2) && intr != 8) {
-		scheduler_terminate_current();
+		task_t* task = scheduler_get_current();
+		if(task) {
+			// FIXME Should signal SIGSEGV etc.
+			task_exit(task);
+		}
+
 		log(LOG_ERR, "%s in task %d %s\n", error_name, scheduler_get_current()->pid, scheduler_get_current()->name);
 
 		task_t* new_task = scheduler_select(NULL);

@@ -33,11 +33,3 @@ task_t* scheduler_find(uint32_t pid);
 task_t* scheduler_get_current();
 task_t* scheduler_select(isf_t* lastRegs);
 void scheduler_init();
-
-static inline void scheduler_terminate_current() {
-	task_t* task = scheduler_get_current();
-	if(task) {
-		task->task_state = TASK_STATE_TERMINATED;
-		task->interrupt_yield = true;
-	}
-}

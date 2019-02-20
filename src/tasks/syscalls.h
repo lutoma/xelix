@@ -28,13 +28,6 @@
 #include <fs/pipe.h>
 #include <time.h>
 
-DEFINE_SYSCALL(exit);
-DEFINE_SYSCALL(fork);
-DEFINE_SYSCALL(socket_send);
-DEFINE_SYSCALL(socket_recv);
-DEFINE_SYSCALL(audio_play);
-DEFINE_SYSCALL(execve);
-
 SYS_REDIR(open,			vfs_open,				(char*)syscall.params[0], syscall.params[1], syscall.task);
 SYS_REDIR(read,			vfs_read,				syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
 SYS_REDIR(write,		vfs_write,				syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
@@ -60,6 +53,9 @@ SYS_REDIR(signal,		task_signal_syscall,	syscall.params[0], syscall.task, syscall
 SYS_REDIR(sbrk,			(uint32_t)task_sbrk,	syscall.task, syscall.params[1]);
 SYS_REDIR(fcntl,		vfs_fcntl,				syscall.params[0], syscall.params[1], syscall.params[2], syscall.task);
 SYS_REDIR(waitpid,		task_waitpid,			syscall.task, (int32_t)syscall.params[0], (int*)syscall.params[1], syscall.params[2]);
+SYS_REDIR(fork,			task_fork,				syscall.task, syscall.state);
+SYS_REDIR(exit,			task_exit,				syscall.task);
+SYS_REDIR(execve,		task_execve,			syscall.task, (char*)syscall.params[0], (char**)syscall.params[1], (char**)syscall.params[2]);
 
 #ifdef ENABLE_PICOTCP
 SYS_REDIR(socket,		net_socket,				syscall.task, syscall.params[0], syscall.params[1], syscall.params[2]);
@@ -103,12 +99,12 @@ struct syscall_definition syscall_table[] = {
 	{sys_rmdir, "rmdir", SYSCALL_ARG_RESOLVE, 0, 0},
 	{sys_socket, "socket", 0, 0, 0},
 	{sys_bind, "bind", 0, SYSCALL_ARG_RESOLVE, 0},
-	{sys_socket_send, "socket_send", 0, 0, 0},
-	{sys_socket_recv, "socket_recv", 0, 0, 0},
+	{NULL, "", 0, 0, 0},
+	{NULL, "", 0, 0, 0},
 	{sys_pipe, "pipe", SYSCALL_ARG_RESOLVE, 0, 0},
 	{sys_waitpid, "waitpid",
 		0, SYSCALL_ARG_RESOLVE | SYSCALL_ARG_RESOLVE_NULL_OK, 0},
-	{sys_audio_play, "audio_play", SYSCALL_ARG_RESOLVE, 0, 0},
+	{NULL, "", 0, 0, 0},
 	{sys_readlink, "readlink", SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE, 0},
 	{sys_execve, "execve",
 		SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},

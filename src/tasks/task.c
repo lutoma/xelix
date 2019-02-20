@@ -131,7 +131,7 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	return task;
 }
 
-task_t* task_fork(task_t* to_fork, isf_t* state) {
+int task_fork(task_t* to_fork, isf_t* state) {
 	task_t* task = alloc_task(to_fork, 0, to_fork->name, to_fork->environ,
 		to_fork->envc, to_fork->argv, to_fork->argc);
 
@@ -163,12 +163,43 @@ task_t* task_fork(task_t* to_fork, isf_t* state) {
 
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
 
-	/* return values for fork syscall – need to set here since the regular sc
-	 * handling returns to the main process.
+	/* Set syscall return values for the forked task – need to set here since
+	 * the regular syscall return handling only affects the main process.
 	 */
 	task->state->eax = 0;
 	task->state->ebx = 0;
-	return task;
+
+	scheduler_add(task);
+	return task->pid;
+}
+
+int task_exit(task_t* task) {
+	task->task_state = TASK_STATE_TERMINATED;
+	task->interrupt_yield = true;
+	return 0;
+}
+
+int task_execve(task_t* task, char* path, char** argv, char** env) {
+	uint32_t __argc = 0;
+	uint32_t __envc = 0;
+	char** __argv = syscall_copy_array(task, argv, &__argc);
+	char** __env = syscall_copy_array(task, env, &__envc);
+	if(!__argv || !__env) {
+		log(LOG_WARN, "execve: array check fail\n");
+		return 0;
+	}
+
+	task_t* new_task = task_new(task->parent, task->pid, path, __env, __envc, __argv, __argc);
+	if(elf_load_file(new_task, path) == -1) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	memcpy(new_task->files, task->files, sizeof(new_task->files));
+	scheduler_add(new_task);
+	task->task_state = TASK_STATE_REPLACED;
+	task->interrupt_yield = true;
+	return 0;
 }
 
 static void  __attribute__((optimize("O0"))) clean_memory(task_t* t) {
@@ -201,48 +232,6 @@ void task_set_initial_state(task_t* task, void* entry) {
 	iret->user_esp = (uint32_t)task->state->ebp;
 	iret->ss = GDT_SEG_DATA_PL3;
 }
-
-/*
-void task_reset(task_t* task, task_t* parent, char name[TASK_MAXNAME],
-	char** environ, uint32_t envc, char** argv, uint32_t argc) {
-
-	task->pid = ++highest_pid;
-	task->task_state = TASK_STATE_RUNNING;
-	task->interrupt_yield = false;
-
-	// State gets mapped into user memory, so needs to be one full page.
-	task->state = zmalloc_a(PAGE_SIZE);
-	task->stack = zmalloc_a(STACKSIZE);
-	task->kernel_stack = zmalloc_a(STACKSIZE);
-	task->memory_allocations = NULL;
-	task->memory_context = vmem_new();
-	vmem_set_task(task->memory_context, task);
-
-	memcpy(task->cwd, parent ? parent->cwd : "/", TASK_PATH_MAX);
-
-	//clean_memory(task);
-	//bzero(task->stack, STACKSIZE);
-	//bzero(task->kernel_stack, STACKSIZE);
-	//bzero(task->state, PAGE_SIZE);
-
-	strcpy(task->name, name);
-	task->parent = parent;
-	task->environ = environ;
-	task->envc = envc;
-	task->argv = argv;
-	task->argc = argc;
-
-	bzero(task->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
-	vfs_open("/dev/stdin", O_RDONLY, task);
-	vfs_open("/dev/stdout", O_WRONLY, task);
-	vfs_open("/dev/stderr", O_WRONLY, task);
-
-	map_memory(task);
-	//vmem_rm_context(task->memory_context);
-	//task->memory_context = vmem_new();
-	return;
-}
-*/
 
 void task_cleanup(task_t* t) {
 	char tname[10];

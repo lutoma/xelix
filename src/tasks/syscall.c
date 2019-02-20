@@ -25,6 +25,7 @@
 #include <panic.h>
 #include <errno.h>
 #include <memory/vmem.h>
+#include <memory/kmalloc.h>
 
 #include "syscalls.h"
 
@@ -102,6 +103,35 @@ static void int_handler(isf_t* regs)
 #ifdef SYSCALL_DEBUG
 	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", regs->eax, regs->ebx);
 #endif
+}
+
+// Check an array to make sure it's NULL-terminated, then copy to kernel space
+char** syscall_copy_array(task_t* task, char** array, uint32_t* count) {
+	int size = 0;
+
+	for(; size < 200; size++) {
+		if(!array[size]) {
+			break;
+		}
+	}
+
+	if(size < 1 || size >= 200) {
+		return NULL;
+	}
+
+	char** new_array = kmalloc(sizeof(char*) * (size + 1));
+	int i = 0;
+	for(; i < size; i++) {
+		new_array[i] = strndup((char*)vmem_translate(task->memory_context, (intptr_t)array[i], false), 200);
+	}
+
+	new_array[i] = NULL;
+
+	if(count) {
+		*count = size;
+	}
+
+	return new_array;
 }
 
 void syscall_init() {
