@@ -181,7 +181,7 @@ int ext2_utimes(const char* path, struct timeval times[2]) {
 	return 0;
 }
 
-static int do_unlink(const char* path, bool is_dir) {
+static int do_unlink(char* path, bool is_dir) {
 	uint32_t dir_ino = 0;
 	struct dirent* dirent = ext2_dirent_find(path, &dir_ino);
 	if(!dirent || !dir_ino) {
@@ -291,7 +291,7 @@ int ext2_unlink(char* path) {
 	return do_unlink(path, false);
 }
 
-int ext2_rmdir(const char* path) {
+int ext2_rmdir(char* path) {
 	return do_unlink(path, true);
 }
 

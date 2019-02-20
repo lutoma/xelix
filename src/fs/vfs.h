@@ -115,7 +115,7 @@ struct vfs_callbacks {
 	int (*utimes)(const char* path, struct timeval times[2]);
 	int (*link)(const char* path, const char* new_path);
 	int (*readlink)(const char* orig_path, char* buf, size_t size);
-	int (*rmdir)(const char* path);
+	int (*rmdir)(char* path);
 };
 
 typedef struct vfs_file {

@@ -66,7 +66,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
 	}
 
 	void* kbuf = kmalloc(size);
-	uint8_t* read = ext2_inode_read_data(inode, fp->offset, size, kbuf);
+	ext2_inode_read_data(inode, fp->offset, size, kbuf);
 
 	uint32_t offset = 0;
 	vfs_dirent_t* ent = NULL;
@@ -149,7 +149,7 @@ static struct dirent* search_dir(struct inode* inode, const char* search) {
 	return NULL;
 }
 
-struct dirent* ext2_dirent_find(char* path, uint32_t* parent_ino) {
+struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino) {
 	debug("Resolving inode for path %s\n", path);
 
 	if(unlikely(!strcmp("/", path)))

@@ -177,7 +177,7 @@ uint32_t ext2_block_new();
 
 size_t ext2_write(vfs_file_t* fp, void* source, size_t size);
 size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
-struct dirent* ext2_dirent_find(char* path, uint32_t* parent_ino);
+struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino);
 void ext2_dirent_rm(uint32_t inode_num, char* name);
 void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 

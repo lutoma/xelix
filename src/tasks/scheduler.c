@@ -27,6 +27,7 @@
 #include <memory/paging.h>
 #include <multiboot.h>
 #include <tasks/elf.h>
+#include <tasks/wait.h>
 #include <fs/sysfs.h>
 
 static task_t* current_task = NULL;

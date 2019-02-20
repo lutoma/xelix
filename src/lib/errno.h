@@ -21,10 +21,10 @@
 #include <tasks/scheduler.h>
 
 #define sc_errno (*__syscall_errno())
+uint32_t __dummy_errno;
 static inline uint32_t* __syscall_errno(void) {
 	task_t* task = scheduler_get_current();
-	uint32_t dummy_errno;
-	return task ? &task->syscall_errno : &dummy_errno;
+	return task ? &task->syscall_errno : &__dummy_errno;
 }
 
 // Keep in sync with newlib sys/errno.h

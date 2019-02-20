@@ -75,8 +75,10 @@ static void scroll_line() {
 		- fb_desc->common.framebuffer_pitch;
 
 	size_t offset = fb_desc->common.framebuffer_pitch * font->height;
-	memmove(fb_desc->common.framebuffer_addr, fb_desc->common.framebuffer_addr + offset, size);
-	bzero(fb_desc->common.framebuffer_addr + size, offset);
+	memmove((void*)(intptr_t)fb_desc->common.framebuffer_addr,
+		(void*)((intptr_t)fb_desc->common.framebuffer_addr + offset), size);
+
+	bzero((void*)((uint32_t)fb_desc->common.framebuffer_addr + size), offset);
 }
 
 struct tty_driver* tty_fbtext_init() {

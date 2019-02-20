@@ -56,16 +56,16 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, task_t* source, in
 		iret_t* iret = task->kernel_stack + PAGE_SIZE - sizeof(iret_t);
 		iret->user_esp -= 11 * sizeof(uint32_t);
 
-		uint32_t* user_stack = vmem_translate(task->memory_context, iret->user_esp, false);
+		uint32_t* user_stack = (uint32_t*)vmem_translate(task->memory_context, iret->user_esp, false);
 
 		// Address of signal handler and signal number as argument to it
-		*user_stack = sa.sa_handler;
+		*user_stack = (uint32_t)sa.sa_handler;
 		*(user_stack + 1) = sig;
 
 		// GP registers, will be restored by task_sigjmp_crt0 using popa
 		*(user_stack + 2) = state->edi;
 		*(user_stack + 3) = state->esi;
-		*(user_stack + 4) = state->ebp;
+		*(user_stack + 4) = (uint32_t)state->ebp;
 		*(user_stack + 5) = 0;
 		*(user_stack + 6) = state->ebx;
 		*(user_stack + 7) = state->edx;
@@ -73,7 +73,7 @@ int __attribute__((optimize("O0"))) task_signal(task_t* task, task_t* source, in
 		*(user_stack + 9) = state->eax;
 
 		// Current EIP, will be jumped back to after handler returns
-		*(user_stack + 10) = iret->entry;
+		*(user_stack + 10) = (uint32_t)iret->entry;
 		iret->entry = task_sigjmp_crt0;
 
 		task->task_state = TASK_STATE_RUNNING;
@@ -121,7 +121,7 @@ int task_signal_syscall(int target_pid, task_t* source, int sig, isf_t* state) {
 
 int task_sigprocmask(task_t* task, int how, uint32_t* set, uint32_t* oset) {
 	if(oset) {
-		memcpy(oset, task->signal_mask, sizeof(uint32_t));
+		memcpy(oset, &task->signal_mask, sizeof(uint32_t));
 	}
 
 	if(set) {
@@ -152,4 +152,6 @@ int task_sigaction(task_t* task, int sig, const struct sigaction* act,
 	if(act) {
 		memcpy(tbl_entry, (struct sigaction*)act, sizeof(struct sigaction));
 	}
+
+	return 0;
 }

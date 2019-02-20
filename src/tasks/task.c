@@ -19,6 +19,8 @@
 
 #include <tasks/task.h>
 #include <tasks/execdata.h>
+#include <tasks/syscall.h>
+#include <tasks/elf.h>
 #include <memory/vmem.h>
 #include <memory/kmalloc.h>
 #include <memory/paging.h>
@@ -226,7 +228,7 @@ void task_set_initial_state(task_t* task, void* entry) {
 
 	// Return stack for iret
 	iret_t* iret = task->stack + STACKSIZE - sizeof(iret_t);
-	iret->entry = (intptr_t)entry;
+	iret->entry = entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
 	iret->user_esp = (uint32_t)task->state->ebp;
@@ -281,7 +283,7 @@ void* task_sbrk(task_t* task, size_t length) {
 
 	if(length < 0 || length > 0x500000) {
 		sc_errno = ENOMEM;
-		return -1;
+		return (void*)-1;
 	}
 
 	if(!length) {
@@ -291,7 +293,7 @@ void* task_sbrk(task_t* task, size_t length) {
 	void* phys_addr = zmalloc_a(length);
 	if(!phys_addr) {
 		sc_errno = EAGAIN;
-		return -1;
+		return (void*)-1;
 	}
 
 	// FIXME sbrk is not set properly in elf.c (?)
