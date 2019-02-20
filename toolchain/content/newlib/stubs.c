@@ -308,12 +308,6 @@ pid_t vfork(void) {
 	return -1;
 }
 
-int ioctl(int fildes, int request, void* rest) {
-	fprintf(stderr, "Warning: xelix newlib ioctl(%d %d) stub called.\n", fildes, request);
-	errno = ENOSYS;
-	return -1;
-}
-
 ssize_t getline(char **restrict lineptr, size_t *restrict n,
        FILE *restrict stream) {
 	fprintf(stderr, "Warning: xelix newlib getline() stub called.\n");
@@ -519,7 +513,6 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
 }
 
 int _isatty (int fd) {
-	printf("isatty %d\n", fd);
 	if(fd < 3) {
 		return 1;
 	}

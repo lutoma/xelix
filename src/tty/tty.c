@@ -25,9 +25,18 @@
 #include <fs/sysfs.h>
 #include <memory/kmalloc.h>
 #include <panic.h>
+#include <errno.h>
 #include <log.h>
 
+#define TIOCGWINSZ   0x400E
 #define SCROLLBACK_PAGES 15
+
+struct winsize {
+	unsigned short ws_row;
+	unsigned short ws_col;
+	unsigned short ws_xpixel;
+	unsigned short ws_ypixel;
+};
 
 static struct tty_driver* drv;
 
@@ -91,6 +100,27 @@ size_t tty_read(char* dest, size_t size) {
 	read_done = false;
 	return read_len;
 }
+
+int tty_ioctl(const char* path, int request, void* arg) {
+	serial_printf("tty_ioctl\n");
+	if(request != TIOCGWINSZ) {
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	if(!arg) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	struct winsize* ws = (struct winsize*)arg;
+	ws->ws_row = drv->rows;
+	ws->ws_col = drv->cols;
+	ws->ws_xpixel = drv->xpixel;
+	ws->ws_ypixel = drv->ypixel;
+	return 0;
+}
+
 
 static char keycode_to_char(uint8_t code, uint8_t code2) {
 	static bool shift = false;

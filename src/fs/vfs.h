@@ -116,6 +116,7 @@ struct vfs_callbacks {
 	int (*link)(const char* path, const char* new_path);
 	int (*readlink)(const char* orig_path, char* buf, size_t size);
 	int (*rmdir)(char* path);
+	int (*ioctl)(const char* path, int request, void* arg);
 };
 
 typedef struct vfs_file {
@@ -155,6 +156,7 @@ size_t vfs_getdents(int fd, void* dest, size_t size, struct task* task);
 int vfs_seek(int fd, size_t offset, int origin, struct task* task);
 int vfs_close(int fd, struct task* task);
 int vfs_fcntl(int fd, int cmd, int arg3, struct task* task);
+int vfs_ioctl(int fd, int request, void* arg, struct task* task);
 int vfs_unlink(char* orig_path, struct task* task);
 int vfs_chmod(const char* orig_path, uint32_t mode, struct task* task);
 int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, struct task* task);

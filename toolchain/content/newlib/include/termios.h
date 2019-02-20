@@ -205,7 +205,7 @@ int     tcgetattr(int, struct termios *);
 pid_t   tcgetsid(int);
 int     tcsendbreak(int, int);
 int tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
-int     ioctl(int, int, void*);
+int     ioctl(int, int, ...);
 #endif /* ndef _KERNEL_ */
 
 #endif /* ndef _SYS_TERMIOS_H */

@@ -382,6 +382,23 @@ int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
 	return -1;
 }
 
+int vfs_ioctl(int fd, int request, void* arg, task_t* task) {
+	debug("\n", NULL);
+
+	vfs_file_t* fp = vfs_get_from_id(fd, task);
+	if(!fp) {
+		sc_errno = EBADF;
+		return -1;
+	}
+
+	if(!fp->callbacks.ioctl) {
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	return fp->callbacks.ioctl(fp->mount_path, request, arg);
+}
+
 int vfs_stat(int fd, vfs_stat_t* dest, task_t* task) {
 	debug("\n", NULL);
 

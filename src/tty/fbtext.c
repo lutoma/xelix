@@ -97,6 +97,8 @@ struct tty_driver* tty_fbtext_init() {
 	struct tty_driver* drv = kmalloc(sizeof(struct tty_driver));
 	drv->cols = fb_desc->common.framebuffer_width / font->width;
 	drv->rows = fb_desc->common.framebuffer_height / font->height;
+	drv->xpixel = fb_desc->common.framebuffer_width;
+	drv->ypixel = fb_desc->common.framebuffer_height;
 	drv->write = write_char;
 	drv->scroll_line = scroll_line;
 	return drv;

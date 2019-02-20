@@ -23,12 +23,15 @@
 struct tty_driver {
 	uint32_t cols;
 	uint32_t rows;
+	uint32_t xpixel;
+	uint32_t ypixel;
 	void (*write)(uint32_t x, uint32_t y, char chr);
 	void (*scroll_line)();
 };
 
 size_t tty_write(char* source, size_t size);
 size_t tty_read(char* source, size_t size);
+int tty_ioctl(const char* path, int request, void* arg);
 void tty_input_cb(uint8_t code, uint8_t code2);
 void tty_init();
 

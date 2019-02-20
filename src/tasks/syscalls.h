@@ -45,6 +45,7 @@ SYS_REDIR(pipe,			vfs_pipe,				(int*)syscall.params[0], syscall.task);
 SYS_REDIR(access,		vfs_access,				(char*)syscall.params[0], syscall.params[1], syscall.task);
 SYS_REDIR(link,			vfs_link,				(char*)syscall.params[0], (char*)syscall.params[1], syscall.task);
 SYS_REDIR(utimes,		vfs_utimes,				(char*)syscall.params[0], (struct timeval*)syscall.params[1], syscall.task);
+SYS_REDIR(ioctl,		vfs_ioctl,				syscall.params[0], syscall.params[1], (void*)syscall.params[2], syscall.task);
 SYS_REDIR(sigprocmask,	task_sigprocmask,		syscall.task, syscall.params[0], (uint32_t*)syscall.params[1], (uint32_t*)syscall.params[2]);
 SYS_REDIR(sigaction,	task_sigaction,			syscall.task, syscall.params[0], (struct sigaction*)syscall.params[1], (struct sigaction*)syscall.params[2]);
 SYS_REDIR(gettimeofday,	time_get_timeval,		(struct timeval*)syscall.params[0]);
@@ -99,7 +100,7 @@ struct syscall_definition syscall_table[] = {
 	{sys_rmdir, "rmdir", SYSCALL_ARG_RESOLVE, 0, 0},
 	{sys_socket, "socket", 0, 0, 0},
 	{sys_bind, "bind", 0, SYSCALL_ARG_RESOLVE, 0},
-	{NULL, "", 0, 0, 0},
+	{sys_ioctl, "ioctl", 0, 0, SYSCALL_ARG_RESOLVE | SYSCALL_ARG_RESOLVE_NULL_OK},
 	{NULL, "", 0, 0, 0},
 	{sys_pipe, "pipe", SYSCALL_ARG_RESOLVE, 0, 0},
 	{sys_waitpid, "waitpid",

@@ -339,6 +339,14 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 	return syscall(39, nfds, readfds, writefds);
 }
 
+int ioctl(int fildes, int request, ...) {
+	va_list va;
+	va_start(va, request);
+	int r = syscall(26, fildes, request, va_arg(va, uint32_t));
+	va_end(va);
+	return r;
+}
+
 const char *gai_strerror(int ecode) {
 	switch(ecode) {
 		case EAI_AGAIN: return "temporary failure in name resolution";

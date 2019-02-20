@@ -130,6 +130,9 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	task->files[0].callbacks.read = tty_vfs_read;
 	task->files[1].callbacks.write = tty_vfs_write;
 	task->files[2].callbacks.write = tty_vfs_write;
+	task->files[0].callbacks.ioctl = tty_ioctl;
+	task->files[1].callbacks.ioctl = tty_ioctl;
+	task->files[2].callbacks.ioctl = tty_ioctl;
 	return task;
 }
 
