@@ -1,9 +1,3 @@
-[submodule "ext/strbuffer"]
-	path = ext/strbuffer
-	url = git://github.com/fritz0705/strbuffer.git
-[submodule "ext/kdict"]
-	path = ext/kdict
-	url = git://github.com/lutoma/libkdict.git
 [submodule "util/kconfig"]
 	path = util/kconfig
 	url = https://github.com/guillon/kconfig.git
