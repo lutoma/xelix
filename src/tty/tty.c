@@ -95,10 +95,6 @@ size_t tty_read(char* dest, size_t size) {
 static char keycode_to_char(uint8_t code, uint8_t code2) {
 	static bool shift = false;
 
-	if(!read_buf || read_len >= read_buf_size) {
-		return 0;
-	}
-
 	switch(code) {
 		case 0x2a:
 		case 0x36:
@@ -134,6 +130,10 @@ static char keycode_to_char(uint8_t code, uint8_t code2) {
 
 // Input callback – Called by keyboard.c
 void tty_input_cb(uint8_t code, uint8_t code2) {
+	if(!read_buf || read_len >= read_buf_size) {
+		return;
+	}
+
 	char c = keycode_to_char(code, code2);
 	if(!c) {
 		return;
