@@ -55,7 +55,7 @@ static bool read_done = false;
 static inline void put_char(char chr) {
 	*(scrollback + (++scrollback_end % scrollback_size)) = chr;
 
-	if(chr == '\n' || cur_col > drv->cols) {
+	if(chr == '\n' || cur_col >= drv->cols) {
 		cur_row++;
 		cur_col = 0;
 
@@ -63,7 +63,10 @@ static inline void put_char(char chr) {
 			drv->scroll_line();
 			cur_row--;
 		}
-		return;
+
+		if(chr == '\n') {
+			return;
+		}
 	}
 
 	if(chr == '\t') {
@@ -102,7 +105,6 @@ size_t tty_read(char* dest, size_t size) {
 }
 
 int tty_ioctl(const char* path, int request, void* arg) {
-	serial_printf("tty_ioctl\n");
 	if(request != TIOCGWINSZ) {
 		sc_errno = ENOSYS;
 		return -1;
