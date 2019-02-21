@@ -25,7 +25,7 @@ struct tty_driver {
 	uint32_t rows;
 	uint32_t xpixel;
 	uint32_t ypixel;
-	void (*write)(uint32_t x, uint32_t y, char chr);
+	void (*write)(uint32_t x, uint32_t y, char chr, uint32_t fg_col, uint32_t bg_col);
 	void (*scroll_line)();
 };
 

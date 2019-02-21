@@ -54,15 +54,15 @@ static inline void set_pixel(uint32_t x, uint32_t y, uint32_t value) {
 	*pixel = value;
 }
 
-static void write_char(uint32_t x, uint32_t y, char chr) {
+static void write_char(uint32_t x, uint32_t y, char chr, uint32_t fg_col, uint32_t bg_col) {
 	uint8_t* bitmap = (uint8_t*)font + font->header_size + (int)chr * font->bytes_per_glyph;
 	for(int i = 0; i < font->height; i++) {
 		uint8_t line = bitmap[i];
 		for(int j = 0; j < font->width; j++) {
 			if(bit_get(line, font->width - j)) {
-				set_pixel(x * font->width + j, y * font->height + i, 0xdddddd);
+				set_pixel(x * font->width + j, y * font->height + i, fg_col);
 			} else {
-				set_pixel(x * font->width + j, y * font->height + i, 0);
+				set_pixel(x * font->width + j, y * font->height + i, bg_col);
 			}
 		}
 	}

@@ -26,7 +26,11 @@
 #include <memory/kmalloc.h>
 #include <panic.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <log.h>
+
+#define FG_COLOR_DEFAULT 0xe9e9e9
+#define BG_COLOR_DEFAULT 0x000000
 
 #define TIOCGWINSZ   0x400E
 #define SCROLLBACK_PAGES 15
@@ -52,9 +56,10 @@ static size_t read_buf_size;
 static size_t read_len;
 static bool read_done = false;
 
-static inline void put_char(char chr) {
-	*(scrollback + (++scrollback_end % scrollback_size)) = chr;
+static uint32_t fg_col = FG_COLOR_DEFAULT;
+static uint32_t bg_col = BG_COLOR_DEFAULT;
 
+static inline void put_char(char chr) {
 	if(chr == '\n' || cur_col >= drv->cols) {
 		cur_row++;
 		cur_col = 0;
@@ -74,8 +79,98 @@ static inline void put_char(char chr) {
 		return;
 	}
 
-	drv->write(cur_col, cur_row, chr);
+	drv->write(cur_col, cur_row, chr, fg_col, bg_col);
 	cur_col++;
+}
+
+#define ESC_ADVANCE(x) { cur_str += x; spos += x; }
+static size_t handle_escape_seq(char* str, size_t str_len) {
+	size_t spos = 0;
+
+	// Check if string contains enough space for an escape sequence
+	if(str_len < 3) {
+		return 0;
+	}
+
+	char* cur_str = str;
+	ESC_ADVANCE(1);
+
+	if(*cur_str != '[') {
+		return 0;
+	}
+	ESC_ADVANCE(1);
+
+	// An escape code may have a number of intermediate bytes
+	int intermediate_start = 0;
+	while(spos <= str_len && (*cur_str == ';' || ('0' <= *cur_str && '9' >= *cur_str))) {
+		if(!intermediate_start) {
+			intermediate_start = spos;
+		}
+		ESC_ADVANCE(1);
+	}
+	if(spos == str_len) {
+		return 0;
+	}
+
+	char* intermediate = NULL;
+	if(intermediate_start) {
+		intermediate = strndup(str + intermediate_start, spos - intermediate_start);
+	}
+
+	switch(*cur_str) {
+		case 'm':
+			if(!intermediate) {
+				return 0;
+			}
+			if(!strcmp(intermediate, "0")) {
+				fg_col = FG_COLOR_DEFAULT;
+				bg_col = BG_COLOR_DEFAULT;
+				break;
+			}
+
+			int color = 0;
+			if(!strncmp(intermediate, "01;", 3)) {
+				color = atoi(intermediate + 3);
+			} else {
+				color = atoi(intermediate);
+			}
+
+			switch(color) {
+				case 30: // black
+					fg_col = BG_COLOR_DEFAULT; break;
+				case 31: // red
+					fg_col = 0xF92672; break;
+				case 32: // green
+					fg_col = 0xA6E22E; break;
+				case 33: // yellow
+					fg_col = 0xE6DB74; break;
+				case 34: // blue
+					fg_col = 0x66D9EF; break;
+				case 35: // magenta
+					fg_col = 0xFD5FF0; break;
+				case 36: // cyan
+					fg_col = 0xA1EFE4; break;
+				case 37: // white
+					fg_col = FG_COLOR_DEFAULT; break;
+				default:
+					fg_col = FG_COLOR_DEFAULT;
+			}
+
+			break;
+		case 'J':
+			break;
+		case 'H':
+			break;
+		default:
+			spos = 0;
+			break;
+	}
+
+	if(intermediate) {
+		kfree(intermediate);
+	}
+
+	return spos;
 }
 
 size_t tty_write(char* source, size_t size) {
@@ -84,7 +179,20 @@ size_t tty_write(char* source, size_t size) {
 	}
 
 	for(int i = 0; i < size; i++) {
-		put_char(source[i]);
+		char chr = source[i];
+
+		// FIXME Should just memcopy whole string
+		//*(scrollback + (++scrollback_end % scrollback_size)) = chr;
+
+		if(chr == 033) {
+			size_t skip = handle_escape_seq(source + i, size - i);
+			if(skip) {
+				i += skip;
+				continue;
+			}
+		}
+
+		put_char(chr);
 	}
 	return size;
 }
@@ -176,7 +284,7 @@ void tty_input_cb(uint8_t code, uint8_t code2) {
 		if(read_len) {
 			read_len--;
 			scrollback_end--;
-			drv->write(--cur_col, cur_row, ' ');
+			drv->write(--cur_col, cur_row, ' ', bg_col, bg_col);
 		}
 		return;
 	}
