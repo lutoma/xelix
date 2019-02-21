@@ -1,5 +1,5 @@
 /* elf.c: Loader for ELF binaries
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -34,8 +34,6 @@
  #define debug(...)
 #endif
 
-#define fail(args...) do { log(LOG_ERR, args); return -1; } while(false);
-
 #define SHF_WRITE 0x1
 #define SHF_ALLOC 0x2
 #define SHF_EXECINSTR 0x4
@@ -69,14 +67,21 @@
 
 #define ELF_VERSION_CURRENT 1
 
-static char header[4] = {0x7f, 'E', 'L', 'F'};
+static char elf_magic[4] = {0x7f, 'E', 'L', 'F'};
 
-// Returns the last allocated section's end address so we can set sbrk
-int elf_read_sections(elf_t* bin, void* binary_start, uint32_t memsize, task_t* task) {
-	elf_section_t* shead = (elf_section_t*)((uint32_t)bin + bin->shoff);
+int elf_read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsize, task_t* task) {
+	elf_section_t* section_headers = kmalloc(header->shnum * header->shentsize);
+	vfs_seek(fd, header->shoff, VFS_SEEK_SET, NULL);
 
-	int i = 0;
-	for(; i < bin->shnum; i++) {
+	size_t read = vfs_read(fd, section_headers, header->shnum * header->shentsize, NULL);
+	if(read != header->shnum * header->shentsize) {
+		kfree(section_headers);
+		return -1;
+	}
+
+	elf_section_t* shead = section_headers;
+	int loaded_sections = 0;
+	for(int i = 0; i < header->shnum; i++) {
 
 		/* Sections without a type are unused/empty. This is usually the case
 		 * for the first section.
@@ -85,52 +90,69 @@ int elf_read_sections(elf_t* bin, void* binary_start, uint32_t memsize, task_t* 
 			goto section_cont;
 		}
 
-		#ifdef ELF_DEBUG
-			elf_section_t* strings = (elf_section_t*)((uint32_t)bin + bin->shoff + (bin->shentsize * bin->shstrndx));
-			char* name = (char*)(uint32_t)bin + strings->offset + shead->name;
-			debug("elf: Section %s, type 0x%x, size 0x%x, offset 0x%x\n", name, shead->type, shead->size, shead->offset);
-		#endif
+		debug("elf: Section %d, type 0x%x, size 0x%x, offset 0x%x\n",
+			i, shead->type, shead->size, shead->offset);
 
-		if(shead->flags & SHF_ALLOC) {
-			void* dest = (void*)vmem_translate(task->memory_context, (intptr_t)shead->addr, false);
-			if(!dest) {
-				return -1;
-			}
-
-			debug("elf: - Physical addr. 0x%x - 0x%x, virtual 0x%x - 0x%x\n",
-				dest, dest + shead->size,
-				shead->addr, shead->addr + shead->size);
-
-			if(shead->type != SHT_NOBITS) {
-				if(shead->offset + shead->size > memsize) {
-					return -1;
-				}
-
-				memcpy(dest, (void*)((intptr_t)bin + shead->offset), shead->size);
-			}
+		// We only care about sections we have to load here
+		if(shead->type == SHT_NOBITS || !(shead->flags & SHF_ALLOC)) {
+			goto section_cont;
 		}
 
+		void* dest = (void*)vmem_translate(task->memory_context, (intptr_t)shead->addr, false);
+		if(!dest) {
+			kfree(section_headers);
+			return -1;
+		}
+
+		debug("elf: - Physical addr. 0x%x - 0x%x, virtual 0x%x - 0x%x\n",
+			dest, dest + shead->size,
+			shead->addr, shead->addr + shead->size);
+
+		if(shead->offset + shead->size > memsize) {
+			kfree(section_headers);
+			return -1;
+		}
+
+		vfs_seek(fd, shead->offset, VFS_SEEK_SET, NULL);
+		size_t read = vfs_read(fd, dest, shead->size, NULL);
+		if(read != shead->size) {
+			kfree(section_headers);
+			return -1;
+		}
+
+		loaded_sections++;
+
 		section_cont:
-		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)bin->shentsize);
+		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)header->shentsize);
 	}
 
-	return i;
+	kfree(section_headers);
+	return loaded_sections;
 }
 
-uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
+uint32_t alloc_memory(int fd, elf_t* header, void** binary_start, task_t* task) {
 	/* Allocates a physical memory region for this binary based on the memory
 	 * requirements in the program headers. The binary will then get copied
 	 * to that region based on the sections.
 	 */
 
+	void* program_headers = kmalloc(header->phnum * header->phentsize);
+	vfs_seek(fd, header->phoff, VFS_SEEK_SET, NULL);
+	size_t read = vfs_read(fd, program_headers, header->phnum * header->phentsize, NULL);
+	if(read != header->phnum * header->phentsize) {
+		kfree(program_headers);
+		return 0;
+	}
+
 	uint32_t memsize = 0;
-	intptr_t phead = (intptr_t)bin + bin->phoff;
+	intptr_t phead = (intptr_t)program_headers;
 	void* pages_start = ((elf_program_header_t*)phead)->vaddr;
 
-	for(int i = 0; i < bin->phnum; i++) {
+	for(int i = 0; i < header->phnum; i++) {
 		memsize += ((elf_program_header_t*)phead)->memsz;
-		phead = phead + bin->phentsize;
+		phead = phead + header->phentsize;
 	}
+	kfree(program_headers);
 
 	memsize = VMEM_ALIGN(memsize) + PAGE_SIZE;
 	task->sbrk = pages_start + memsize;
@@ -139,49 +161,17 @@ uint32_t alloc_memory(elf_t* bin, void** binary_start, task_t* task) {
 	task_add_mem(task, pages_start, *binary_start, memsize, VMEM_SECTION_CODE,
 		TASK_MEM_FORK | TASK_MEM_FREE);
 
-	debug("elf: Allocated physical memory region from 0x%x to 0x%x\n", *binary_start, (intptr_t)*binary_start + memsize);
+	debug("elf: Allocated physical memory region from 0x%x to 0x%x\n",
+		*binary_start, (intptr_t)*binary_start + memsize);
+
 	return memsize;
 }
 
-int elf_load(task_t* task, elf_t* bin) {
-	if(bin <= (elf_t*)NULL)
-		return -1;
-
-	if(bin->ident.magic[0] != header[0]
-	|| bin->ident.magic[1] != header[1]
-	|| bin->ident.magic[2] != header[2]
-	|| bin->ident.magic[3] != header[3])
-		fail("elf: elf_load: Invalid elf header: 0x%x %c%c%c\n",
-			bin->ident.magic[0],
-			bin->ident.magic[1],
-			bin->ident.magic[2],
-			bin->ident.magic[3]);
-
-	if(bin->type != ELF_TYPE_EXEC)
-		fail("elf: elf_load: Attempt to load an inexecutable elf file\n");
-
-	if(bin->machine != ELF_ARCH_386)
-		fail("elf: elf_load: Attempt to load an elf file for an other architecture\n");
-
-	if(bin->version != ELF_VERSION_CURRENT)
-		fail("elf: elf_load: Attempt to load an elf of an unsupported version\n");
-
-	if(bin->entry == NULL)
-		fail("elf: elf_load: This elf file doesn't have an entry point\n");
-
-	if(!bin->phnum)
-		fail("elf: No program headers\n");
-
-	task_set_initial_state(task, bin->entry);
-
-	void* binary_start = NULL;
-	uint32_t memsize = alloc_memory(bin, &binary_start, task);
-	if(elf_read_sections(bin, binary_start, memsize, task) < 1) {
-		fail("elf: Loading sections failed.\n");
-	}
-
-	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", bin->entry, task->sbrk);
-	return 0;
+#define LF_ASSERT(cmp, args...) if(!(cmp)) { \
+	log(LOG_ERR, "elf: elf_load: " args);    \
+	vfs_close(fd, task);                     \
+	kfree(header);                           \
+	return -1;                               \
 }
 
 int elf_load_file(task_t* task, char* path) {
@@ -190,25 +180,33 @@ int elf_load_file(task_t* task, char* path) {
 		return -1;
 	}
 
-	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_stat(fd, stat, NULL) != 0 || !stat->st_size || !(stat->st_mode & S_IXUSR)) {
-		kfree(stat);
+	elf_t* header = kmalloc(sizeof(elf_t));
+	size_t read = vfs_read(fd, (void*)header, sizeof(elf_t), NULL);
+	if(read != sizeof(elf_t)) {
+		kfree(header);
 		vfs_close(fd, task);
 		return -1;
 	}
 
-	void* data = kmalloc(stat->st_size);
-	size_t read = vfs_read(fd, data, stat->st_size, NULL);
-	kfree(stat);
+	LF_ASSERT(!memcmp(header->ident.magic, elf_magic, sizeof(elf_magic)),
+		"Invalid magic\n");
 
-	if(!read) {
-		kfree(data);
-		vfs_close(fd, task);
-		return -1;
-	}
+	LF_ASSERT(header->type == ELF_TYPE_EXEC, "Binary is inexecutable\n");
+	LF_ASSERT(header->machine == ELF_ARCH_386, "Invalid architecture\n");
+	LF_ASSERT(header->version == ELF_VERSION_CURRENT, "Unsupported ELF version\n");
+	LF_ASSERT(header->entry, "Binary has no entry point\n");
+	LF_ASSERT(header->phnum, "elf: No program headers\n");
+	task_set_initial_state(task, header->entry);
 
-	int r = elf_load(task, (elf_t*)data);
-	kfree(data);
+	void* binary_start = NULL;
+	uint32_t memsize = alloc_memory(fd, header, &binary_start, task);
+	LF_ASSERT(memsize && binary_start, "Loading program headers failed.\n");
+
+	int loaded = elf_read_sections(fd, header, binary_start, memsize, task);
+	LF_ASSERT(loaded, "Loading sections failed.\n");
+
+	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", header->entry, task->sbrk);
+	kfree(header);
 	vfs_close(fd, task);
-	return r;
+	return 0;
 }
