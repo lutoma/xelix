@@ -36,8 +36,6 @@
 #define STACK_LOCATION 0x8000
 
 uint32_t highest_pid = 0;
-extern void* __kernel_start;
-extern void* __kernel_end;
 
 static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta);
 
@@ -102,10 +100,8 @@ static void map_memory(task_t* task) {
 	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, VMEM_SECTION_KERNEL, 0);
 	task_add_mem_flat(task, task->state, PAGE_SIZE, VMEM_SECTION_DATA, 0);
 
-	void* kernel_start = VMEM_ALIGN_DOWN(&__kernel_start);
-	uint32_t kernel_size = (uint32_t)&__kernel_end - (uint32_t)kernel_start;
 	// FIXME Should have VMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
-	task_add_mem_flat(task, kernel_start, kernel_size, VMEM_SECTION_CODE, 0);
+	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000, VMEM_SECTION_CODE, 0);
 
 	task_setup_execdata(task);
 }

@@ -25,10 +25,6 @@
 #include <multiboot.h>
 #include <hw/serial.h>
 
-// Symbols defined by LD in linker.ld
-extern void* __kernel_start;
-extern void* __kernel_end;
-
 // Set up the memory areas marked as free in the multiboot headers
 static void copy_multiboot_areas() {
 	struct multiboot_tag_mmap* mmap = multiboot_get_mmap();
@@ -56,30 +52,28 @@ static void copy_multiboot_areas() {
 		area->type = area_type;
 
 		// Check if this block contains the kernel, and if so create a separate area for that
-		if(entry->addr >= (intptr_t)&__kernel_start && entry->addr <= (intptr_t)&__kernel_end) {
-			uint32_t kernel_size = (intptr_t)&__kernel_end - (intptr_t)&__kernel_start;
-
+		if(entry->addr >= (intptr_t)KERNEL_START && entry->addr <= (intptr_t)KERNEL_END) {
 			memory_track_area_t* kernel_area;
 
 			// Check if the kernel starts at the same block as this area. If so, just recycle it,
 			// otherwise create a new kernel area and set the end of this one accordingly.
-			if(area->addr == &__kernel_start) {
+			if(area->addr == KERNEL_START) {
 				kernel_area = area;
 			} else {
 				kernel_area = &memory_track_areas[memory_track_num_areas++];
-				area->size = (intptr_t)&__kernel_start - (intptr_t)area->addr;
+				area->size = (intptr_t)KERNEL_START - (intptr_t)area->addr;
 			}
 
 			// Add kernel area
-			kernel_area->addr = (void*)&__kernel_start;
-			kernel_area->size = kernel_size;
+			kernel_area->addr = KERNEL_START;
+			kernel_area->size = KERNEL_SIZE;
 			kernel_area->type = MEMORY_TYPE_KERNEL_BINARY;
 
 			// Add remainder of the original block (if any)
-			if(entry->addr + entry->len > (intptr_t)&__kernel_end) {
+			if(entry->addr + entry->len > (intptr_t)KERNEL_END) {
 				memory_track_area_t* remainder_area = &memory_track_areas[memory_track_num_areas++];
-				remainder_area->addr = (void*)&__kernel_end;
-				remainder_area->size = entry->len - kernel_size;
+				remainder_area->addr = KERNEL_END;
+				remainder_area->size = entry->len - KERNEL_SIZE;
 				remainder_area->type = area_type;
 			}
 

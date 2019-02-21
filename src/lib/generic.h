@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010-2018 Lukas Martini
+/* Copyright © 2010-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -61,6 +61,13 @@ typedef int32_t time_t;
 	} while(0);
 
 #define sleep(t) sleep_ticks((t) * PIT_RATE)
+
+// Symbols provided by LD in linker.ld
+extern void* __kernel_start;
+extern void* __kernel_end;
+#define KERNEL_START VMEM_ALIGN_DOWN((void*)&__kernel_start)
+#define KERNEL_END ((void*)&__kernel_end)
+#define KERNEL_SIZE (KERNEL_END - KERNEL_START)
 
 static inline void __attribute__((noreturn)) freeze(void) {
 	asm volatile("cli; hlt");
