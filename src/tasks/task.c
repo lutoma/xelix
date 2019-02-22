@@ -222,7 +222,7 @@ void task_set_initial_state(task_t* task, void* entry) {
 	task->state->ds = GDT_SEG_DATA_PL3;
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
 	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
-	task->state->esp = task->state->ebp - (5 * sizeof(uint32_t));
+	task->state->esp = task->state->ebp - sizeof(iret_t);
 
 	// Return stack for iret
 	iret_t* iret = task->stack + STACKSIZE - sizeof(iret_t);
