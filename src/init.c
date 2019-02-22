@@ -27,7 +27,6 @@
 #include <hw/interrupts.h>
 #include <hw/pit.h>
 #include <memory/kmalloc.h>
-#include <hw/speaker.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
 #include <tty/tty.h>
