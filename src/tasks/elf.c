@@ -22,6 +22,7 @@
 #include <log.h>
 #include <print.h>
 #include <string.h>
+#include <errno.h>
 #include <tasks/task.h>
 #include <fs/vfs.h>
 #include <memory/kmalloc.h>
@@ -141,7 +142,7 @@ uint32_t alloc_memory(int fd, elf_t* header, void** binary_start, task_t* task) 
 	size_t read = vfs_read(fd, program_headers, header->phnum * header->phentsize, NULL);
 	if(read != header->phnum * header->phentsize) {
 		kfree(program_headers);
-		return 0;
+		return -1;
 	}
 
 	uint32_t memsize = 0;
@@ -167,11 +168,13 @@ uint32_t alloc_memory(int fd, elf_t* header, void** binary_start, task_t* task) 
 	return memsize;
 }
 
-#define LF_ASSERT(cmp, args...) if(!(cmp)) { \
-	log(LOG_ERR, "elf: elf_load: " args);    \
-	vfs_close(fd, task);                     \
-	kfree(header);                           \
-	return -1;                               \
+#define LF_ASSERT(cmp, msg)                    \
+if(unlikely(!(cmp))) {                         \
+	log(LOG_INFO, "elf: elf_load: " msg "\n"); \
+	vfs_close(fd, task);                       \
+	kfree(header);                             \
+	sc_errno = ENOEXEC;						   \
+	return -1;                                 \
 }
 
 int elf_load_file(task_t* task, char* path) {
@@ -182,28 +185,24 @@ int elf_load_file(task_t* task, char* path) {
 
 	elf_t* header = kmalloc(sizeof(elf_t));
 	size_t read = vfs_read(fd, (void*)header, sizeof(elf_t), NULL);
-	if(read != sizeof(elf_t)) {
-		kfree(header);
-		vfs_close(fd, task);
-		return -1;
-	}
-
+	LF_ASSERT(read == sizeof(elf_t), "Could not read ELF header");
 	LF_ASSERT(!memcmp(header->ident.magic, elf_magic, sizeof(elf_magic)),
-		"Invalid magic\n");
+		"Invalid magic");
 
-	LF_ASSERT(header->type == ELF_TYPE_EXEC, "Binary is inexecutable\n");
-	LF_ASSERT(header->machine == ELF_ARCH_386, "Invalid architecture\n");
-	LF_ASSERT(header->version == ELF_VERSION_CURRENT, "Unsupported ELF version\n");
-	LF_ASSERT(header->entry, "Binary has no entry point\n");
-	LF_ASSERT(header->phnum, "elf: No program headers\n");
+	LF_ASSERT(header->type == ELF_TYPE_EXEC, "Binary is inexecutable");
+	LF_ASSERT(header->machine == ELF_ARCH_386, "Invalid architecture");
+	LF_ASSERT(header->version == ELF_VERSION_CURRENT, "Unsupported ELF version");
+	LF_ASSERT(header->entry, "Binary has no entry point");
+	LF_ASSERT(header->phnum, "No program headers");
+	LF_ASSERT(header->shnum, "No section headers");
 	task_set_initial_state(task, header->entry);
 
 	void* binary_start = NULL;
 	uint32_t memsize = alloc_memory(fd, header, &binary_start, task);
-	LF_ASSERT(memsize && binary_start, "Loading program headers failed.\n");
+	LF_ASSERT(memsize > 0 && binary_start, "Loading program headers failed.");
 
 	int loaded = elf_read_sections(fd, header, binary_start, memsize, task);
-	LF_ASSERT(loaded, "Loading sections failed.\n");
+	LF_ASSERT(loaded > 0, "Loading sections failed.");
 
 	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", header->entry, task->sbrk);
 	kfree(header);

@@ -192,7 +192,6 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 
 	task_t* new_task = task_new(task->parent, task->pid, path, __env, __envc, __argv, __argc);
 	if(elf_load_file(new_task, path) == -1) {
-		sc_errno = ENOENT;
 		return -1;
 	}
 
