@@ -213,7 +213,7 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 	if(bl_mod(length) != 0) {
 		num_blocks++;
 	}
-	if(bl_mod(offset) != 0) {
+	if(bl_mod(offset) != 0 && bl_mod(offset) + length > bl_off(1)) {
 		num_blocks++;
 	}
 
