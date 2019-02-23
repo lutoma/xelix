@@ -339,12 +339,54 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 	return syscall(39, nfds, readfds, writefds);
 }
 
-int ioctl(int fildes, int request, ...) {
+int ioctl(int fd, int request, ...) {
 	va_list va;
 	va_start(va, request);
-	int r = syscall(26, fildes, request, va_arg(va, uint32_t));
+	int r = syscall(26, fd, request, va_arg(va, uint32_t));
 	va_end(va);
 	return r;
+}
+
+int tcgetattr(int fd, struct termios *termios_p) {
+	return ioctl(fd, TCGETS, termios_p);
+}
+
+int tcsetattr(int fd, int optional_actions, const struct termios* termios_p) {
+	switch(optional_actions) {
+		case TCSANOW:
+			return ioctl(fd, TCSETS, termios_p);
+		case TCSADRAIN:
+			return ioctl(fd, TCSETSW, termios_p);
+		case TCSAFLUSH:
+			return ioctl(fd, TCSETSF, termios_p);
+		default:
+			errno = EINVAL;
+			return -1;
+	}
+}
+
+pid_t tcgetpgrp(int fd) {
+	pid_t res;
+	if(ioctl(fd, TIOCGPGRP, &res) < 0) {
+		return -1;
+	}
+	return res;
+}
+
+int tcsetpgrp(int fd, pid_t pgid_id) {
+	return ioctl(fd, TIOCSPGRP, &pgid_id);
+}
+
+int tcflush(int fd, int queue_selector) {
+	return ioctl(fd, TCFLSH, queue_selector);
+}
+
+int tcsendbreak(int fd, int duration) {
+	return ioctl(fd, TCSBRK, duration);
+}
+
+int tcflow(int fd, int action) {
+	return ioctl(fd, TCXONC, action);
 }
 
 const char *gai_strerror(int ecode) {

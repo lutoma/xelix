@@ -70,20 +70,6 @@ speed_t cfgetospeed(const struct termios *termios_p) {
 	return -1;
 }
 
-int tcgetattr(int fd, struct termios *termios_p) {
-	fprintf(stderr, "Warning: xelix newlib tcgetattr() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int tcsetattr(int fd, int optional_actions, const struct termios* termios_p) {
-	fprintf(stderr, "Warning: xelix newlib tcsetattr() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 char* _ttyname(int desc) {
 	fprintf(stderr, "Warning: xelix newlib ttyname() stub called.\n");
 	return "/dev/tty";
@@ -137,13 +123,6 @@ int setregid(gid_t rgid, gid_t egid) {
 	return -1;
 }
 
-pid_t tcgetpgrp(int fildes) {
-	fprintf(stderr, "Warning: xelix newlib tcgetpgrp() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
 int setpgid(pid_t pid, pid_t pgid) {
 	fprintf(stderr, "Warning: xelix newlib setpgid() stub called.\n");
 
@@ -153,13 +132,6 @@ int setpgid(pid_t pid, pid_t pgid) {
 
 mode_t umask(mode_t cmask) {
 	fprintf(stderr, "Warning: xelix newlib umask() stub called.\n");
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int tcsetpgrp(int fildes, pid_t pgid_id) {
-	fprintf(stderr, "Warning: xelix newlib tcsetpgrp() stub called.\n");
 
 	errno = ENOSYS;
 	return -1;
@@ -344,12 +316,6 @@ long pathconf(const char *path, int name) {
 	return -1;
 }
 
-int tcflush(int fildes, int queue_selector) {
-	fprintf(stderr, "Warning: xelix newlib tcflush() stub called.\n");
-	errno = ENOSYS;
-	return -1;
-}
-
 int fchmod(int fildes, mode_t mode) {
 	fprintf(stderr, "Warning: xelix newlib fchmod() stub called.\n");
 	errno = ENOSYS;
@@ -423,12 +389,6 @@ unsigned alarm(unsigned seconds) {
 	fprintf(stderr, "Warning: xelix newlib alarm() stub called.\n");
 	errno = ENOSYS;
 	return 0;
-}
-
-int tcflow(int fildes, int action) {
-	fprintf(stderr, "Warning: xelix newlib tcflow() stub called.\n");
-	errno = ENOSYS;
-	return -1;
 }
 
 void flockfile(FILE *file) {}
