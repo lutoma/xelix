@@ -1,4 +1,5 @@
-/* Copyright © 2018 Lukas Martini
+/* version.c: uname / version information
+ * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -16,17 +17,18 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SYS_UTSNAME_H
-#define _SYS_UTSNAME_H
+#include <fs/sysfs.h>
 
-struct utsname {
-	char sysname[50];
-	char nodename[300];
-	char release[50];
-	char version[300];
-	char machine[50];
-};
+static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+	if(offset) {
+		return 0;
+	}
 
-int uname(struct utsname *);
+	size_t rsize = 0;
+	sysfs_printf("Xelix 0.0.1 \"PREEMPT " __DATE__ " " __TIME__ "\" i786\n");
+	return rsize;
+}
 
-#endif SYS_UTSNAME_H
+void version_init() {
+	sysfs_add_file("version", sfs_read, NULL, NULL);
+}

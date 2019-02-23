@@ -183,11 +183,26 @@ int gethostname(char *name, size_t namelen) {
 }
 
 int uname(struct utsname* name) {
-	strcpy(name->sysname, "Xelix");
+	FILE* fp = fopen("/sys/version", "r");
+	if(!fp) {
+		return -1;
+	}
+
+	char sysname[50];
+	char release[50];
+	char version[300];
+	char machine[50];
+	int res = fscanf(fp, "%s %s \"%[^\"]\" %s\n", &sysname, &release, &version, &machine);
+	fclose(fp);
+	if(res != 4) {
+		return -1;
+	}
+
+	strcpy(name->sysname, sysname);
+	strcpy(name->release, release);
+	strcpy(name->version, version);
+	strcpy(name->machine, machine);
 	gethostname(name->nodename, 300);
-	strcpy(name->release, "alpha");
-	strcpy(name->version, "0.0.1");
-	strcpy(name->machine, "i786");
 	return 0;
 }
 

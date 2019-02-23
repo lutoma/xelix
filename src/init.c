@@ -21,6 +21,7 @@
 #include <string.h>
 #include <panic.h>
 #include <time.h>
+#include <version.h>
 #include <hw/serial.h>
 #include <memory/track.h>
 #include <memory/gdt.h>
@@ -71,6 +72,7 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 
 	// Only initializes the sysfs integration
 	init(log);
+	init(version);
 
 	#ifdef ENABLE_EXT2
 	init(ext2);

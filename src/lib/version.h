@@ -1,4 +1,6 @@
-/* Copyright © 2018 Lukas Martini
+#pragma once
+
+/* Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -16,17 +18,4 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SYS_UTSNAME_H
-#define _SYS_UTSNAME_H
-
-struct utsname {
-	char sysname[50];
-	char nodename[300];
-	char release[50];
-	char version[300];
-	char machine[50];
-};
-
-int uname(struct utsname *);
-
-#endif SYS_UTSNAME_H
+void version_init();

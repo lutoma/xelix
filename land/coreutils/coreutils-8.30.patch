@@ -385,3 +385,13 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/stt
    {
      int fd = dirfd (dirp);
      if (0 <= fd && _gl_register_fd (fd, dir_name) != fd)
+--- coreutils-8.30/m4/host-os.m4  2018-05-14 06:20:31.000000000 +0200
++++ coreutils-8.30/m4/host-os.m4  2019-02-23 20:37:06.099700821 +0100
+@@ -61,6 +61,7 @@
+        atheos*)         os='AtheOS';;
+        amigaos*)        os='Amiga OS';;
+        aix*)            os='AIX';;
++       xelix*)          os='GNU/Xelix';;
+
+        # The default heuristic takes the initial alphabetic string
+        # from $host_os, but capitalizes its first letter.
