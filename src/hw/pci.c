@@ -24,7 +24,7 @@
 #include <string.h>
 #include <print.h>
 #include <fs/sysfs.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8

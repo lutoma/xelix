@@ -20,7 +20,7 @@
 #include <log.h>
 #include <string.h>
 #include <errno.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <print.h>
 #include <time.h>

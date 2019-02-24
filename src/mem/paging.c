@@ -19,11 +19,11 @@
  */
 
 #include "paging.h"
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <log.h>
 #include <print.h>
 #include <string.h>
-#include <memory/vmem.h>
+#include <mem/vmem.h>
 #include <hw/interrupts.h>
 
 typedef struct {

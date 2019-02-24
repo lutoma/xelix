@@ -18,7 +18,7 @@
  */
 
 #include <string.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <fs/part.h>
 
 static uint8_t* do_read(int start_block, int num_blocks) {

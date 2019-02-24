@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory/vmem.h>
+#include <mem/vmem.h>
 
 struct paging_context;
 struct paging_context* paging_kernel_cr3;

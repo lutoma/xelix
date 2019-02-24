@@ -20,7 +20,7 @@
 
 #include <hw/interrupts.h>
 #include <fs/vfs.h>
-#include <memory/vmem.h>
+#include <mem/vmem.h>
 #include <tasks/signal.h>
 #include <spinlock.h>
 

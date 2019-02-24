@@ -25,7 +25,7 @@
 #include <log.h>
 #include <portio.h>
 #include <hw/interrupts.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <string.h>
 #include <multiboot.h>
 #include <fs/vfs.h>

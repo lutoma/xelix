@@ -20,7 +20,7 @@
 
 #include "bitmap.h"
 
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <log.h>
 #include <string.h>
 

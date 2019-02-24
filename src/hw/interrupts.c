@@ -21,9 +21,9 @@
 #include <string.h>
 #include <hw/idt.h>
 #include <tasks/scheduler.h>
-#include <memory/vmem.h>
-#include <memory/paging.h>
-#include <memory/gdt.h>
+#include <mem/vmem.h>
+#include <mem/paging.h>
+#include <mem/gdt.h>
 #include <net/net.h>
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)

@@ -20,7 +20,7 @@
 #ifdef ENABLE_EXT2
 
 #include "ext2_internal.h"
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <fs/ext2.h>
 #include <fs/block.h>
 

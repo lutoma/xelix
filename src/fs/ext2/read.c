@@ -24,7 +24,7 @@
 #include <string.h>
 #include <errno.h>
 #include <md5.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <hw/ide.h>
 #include <hw/serial.h>
 #include <fs/vfs.h>

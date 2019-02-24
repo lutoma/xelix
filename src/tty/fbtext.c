@@ -19,7 +19,7 @@
 
 #include <tty/fbtext.h>
 #include <tty/tty.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <multiboot.h>
 #include <string.h>
 #include <print.h>

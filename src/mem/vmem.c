@@ -20,7 +20,7 @@
 
 #include "vmem.h"
 #include <log.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <print.h>
 #include <panic.h>
 #include <string.h>

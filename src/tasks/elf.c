@@ -25,9 +25,9 @@
 #include <errno.h>
 #include <tasks/task.h>
 #include <fs/vfs.h>
-#include <memory/kmalloc.h>
-#include <memory/track.h>
-#include <memory/vmem.h>
+#include <mem/kmalloc.h>
+#include <mem/track.h>
+#include <mem/vmem.h>
 
 #ifdef ELF_DEBUG
  #define debug(args...) log(LOG_DEBUG, args);

@@ -37,7 +37,7 @@
 
 #include <print.h>
 #include <string.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <md5.h>
 
 /*

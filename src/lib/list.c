@@ -18,7 +18,7 @@
  */
 
 #include "list.h"
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 
 struct list
 {

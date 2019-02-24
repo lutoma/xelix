@@ -19,12 +19,12 @@
 
 #include "scheduler.h"
 #include <log.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <hw/interrupts.h>
 #include <panic.h>
 #include <string.h>
-#include <memory/vmem.h>
-#include <memory/paging.h>
+#include <mem/vmem.h>
+#include <mem/paging.h>
 #include <multiboot.h>
 #include <tasks/elf.h>
 #include <tasks/wait.h>

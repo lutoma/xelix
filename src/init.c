@@ -23,11 +23,11 @@
 #include <time.h>
 #include <version.h>
 #include <hw/serial.h>
-#include <memory/track.h>
-#include <memory/gdt.h>
+#include <mem/track.h>
+#include <mem/gdt.h>
 #include <hw/interrupts.h>
 #include <hw/pit.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
 #include <tty/tty.h>
@@ -36,8 +36,8 @@
 #include <hw/ne2k.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
-#include <memory/paging.h>
-#include <memory/vmem.h>
+#include <mem/paging.h>
+#include <mem/vmem.h>
 #include <hw/ide.h>
 #include <fs/part.h>
 #include <fs/sysfs.h>

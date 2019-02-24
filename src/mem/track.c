@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory/track.h>
+#include <mem/track.h>
 #include <log.h>
 #include <print.h>
 #include <panic.h>

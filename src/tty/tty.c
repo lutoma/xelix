@@ -23,7 +23,7 @@
 #include <tty/keymap.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <panic.h>
 #include <errno.h>
 #include <stdlib.h>

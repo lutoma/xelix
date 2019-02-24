@@ -28,7 +28,7 @@
 #include <string.h>
 #include <print.h>
 #include <hw/interrupts.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <net/ether.h>
 #include <net/net.h>
 #include <fs/sysfs.h>

@@ -3,7 +3,7 @@
 
 #include <time.h>
 #include <log.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 
 #define dbg(args...) log(LOG_INFO, "picotcp: " args);
 //#define dbg(...)

@@ -18,8 +18,8 @@
  */
 
 #include <tasks/task.h>
-#include <memory/vmem.h>
-#include <memory/kmalloc.h>
+#include <mem/vmem.h>
+#include <mem/kmalloc.h>
 #include <string.h>
 
 #define EXECDATA_LOCATION 0x5000

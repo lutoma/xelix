@@ -19,7 +19,7 @@
 
 #include "vfs.h"
 #include <log.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <string.h>
 #include <list.h>
 #include <print.h>

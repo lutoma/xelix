@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <string.h>
 #include <log.h>
 

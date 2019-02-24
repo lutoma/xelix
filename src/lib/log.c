@@ -23,7 +23,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <fs/sysfs.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 
 #ifdef LOG_STORE
 /* Since the log is also used before kmalloc is initialized, first use a static

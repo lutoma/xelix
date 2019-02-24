@@ -26,8 +26,8 @@
 #include <hw/pit.h>
 #include <hw/serial.h>
 #include <string.h>
-#include <memory/vmem.h>
-#include <memory/kmalloc.h>
+#include <mem/vmem.h>
+#include <mem/kmalloc.h>
 #include <spinlock.h>
 #include <stdarg.h>
 

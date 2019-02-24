@@ -24,8 +24,8 @@
 #include <print.h>
 #include <panic.h>
 #include <errno.h>
-#include <memory/vmem.h>
-#include <memory/kmalloc.h>
+#include <mem/vmem.h>
+#include <mem/kmalloc.h>
 
 #include "syscalls.h"
 

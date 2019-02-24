@@ -18,7 +18,7 @@
  */
 
 #include <string.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <hw/ide.h>
 
 uint32_t start = 0;

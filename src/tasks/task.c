@@ -21,10 +21,10 @@
 #include <tasks/execdata.h>
 #include <tasks/syscall.h>
 #include <tasks/elf.h>
-#include <memory/vmem.h>
-#include <memory/kmalloc.h>
-#include <memory/paging.h>
-#include <memory/gdt.h>
+#include <mem/vmem.h>
+#include <mem/kmalloc.h>
+#include <mem/paging.h>
+#include <mem/gdt.h>
 #include <hw/interrupts.h>
 #include <tty/tty.h>
 #include <fs/vfs.h>

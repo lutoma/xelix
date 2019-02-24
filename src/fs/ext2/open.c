@@ -23,7 +23,7 @@
 #include <log.h>
 #include <string.h>
 #include <errno.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <hw/ide.h>
 #include <fs/vfs.h>
 #include <fs/ext2.h>

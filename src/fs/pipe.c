@@ -22,7 +22,7 @@
 #include <print.h>
 #include <errno.h>
 #include <tasks/task.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 
 // FIXME Should dynamically grow
 #define PIPE_BUFFER_SIZE 0x5000

@@ -22,7 +22,7 @@
  */
 
 #include <log.h>
-#include <memory/kmalloc.h>
+#include <mem/kmalloc.h>
 #include <hw/interrupts.h>
 #include "ide.h"
 
