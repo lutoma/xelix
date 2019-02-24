@@ -27,17 +27,6 @@
 #include <spinlock.h>
 #include <fs/sysfs.h>
 
-#define KMALLOC_MAGIC 0xCAFE
-
-/* Enable debugging. This will send out cryptic debug codes to the serial line
- * during kmalloc()/free()'s. Also makes everything horribly slow. */
-#ifdef KMALLOC_DEBUG
-	char* _g_debug_file = "";
-	#define debug(args...) { if(vmem_kernelContext && strcmp(_g_debug_file, "src/memory/vmem.c")) log(LOG_DEBUG, args); }
-#else
-	#define debug(args...)
-#endif
-
 #define GET_FOOTER(x) ((uint32_t*)((intptr_t)x + x->size + sizeof(struct mem_block)))
 #define GET_CONTENT(x) ((void*)((intptr_t)x + sizeof(struct mem_block)))
 #define GET_FB(x) ((struct free_block*)GET_CONTENT(x))
@@ -48,8 +37,17 @@
 #define NEXT_BLOCK(x) ((struct mem_block*)((intptr_t)GET_FOOTER(x) + sizeof(uint32_t)))
 #define FULL_SIZE(x) (x->size + sizeof(uint32_t) + sizeof(struct mem_block))
 
+/* This is the block header struct. It is always located directly before the
+ * start of the allocated area. Following the allocated area, there is a single
+ * uint32_t containing the length of the block. As a result, any block header
+ * except the first should always have the length of the previous block
+ * directly before it. This makes it possible to use these blocks as a doubly
+ * linked list.
+ */
 struct mem_block {
+	#ifdef KMALLOC_CHECK
 	uint16_t magic;
+	#endif
 	uint32_t size;
 
 	enum {
@@ -63,10 +61,34 @@ struct mem_block {
  * struct.
  */
 struct free_block {
+	#ifdef KMALLOC_CHECK
 	uint16_t magic;
+	#endif
 	struct free_block* prev;
 	struct free_block* next;
 };
+
+/* If enabled, all block headers will begin with a magic which will be checked
+ * during any modifications. Very useful to track down buffer overflows, but
+ * comes with a performance penalty and wastes a bit of memory.
+ */
+#ifdef KMALLOC_CHECK
+	#define KMALLOC_MAGIC 0xCAFE
+	#define block_panic(fmt) \
+		panic("kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
+	static void check_header(struct mem_block* header);
+#endif
+
+/* Enable debugging. This will send out cryptic debug codes to the serial line
+ * during kmalloc()/free()'s. Also makes everything horribly slow. */
+#ifdef KMALLOC_DEBUG
+	char* _g_debug_file = "";
+	#define debug(args...) { if(vmem_kernelContext \
+		&& strcmp(_g_debug_file, "src/memory/vmem.c")) log(LOG_DEBUG, args); }
+#else
+	#define debug(args...)
+#endif
+
 
 bool kmalloc_ready = false;
 static spinlock_t kmalloc_lock;
@@ -74,44 +96,6 @@ static struct free_block* last_free = (struct free_block*)NULL;
 static intptr_t alloc_start;
 static intptr_t alloc_end;
 static intptr_t alloc_max;
-
-/* Do various checks on a header to make sure we're in a safe state
- * before changing anything.
- */
-#ifdef KMALLOC_CHECK
-#define block_panic(fmt) panic("kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
-static void check_header(struct mem_block* header) {
-	if(header->magic != KMALLOC_MAGIC) {
-		block_panic("Invalid magic");
-	}
-
-	if(header->size < sizeof(struct free_block)) {
-		block_panic("Smaller than free_block struct");
-	}
-
-	if(*GET_FOOTER(header) != header->size) {
-		block_panic("Invalid footer");
-	}
-
-	if((intptr_t)header != alloc_start && PREV_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		block_panic("Invalid prev magic");
-	}
-
-	if(alloc_end > (intptr_t)header + FULL_SIZE(header) && NEXT_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		block_panic("Invalid next magic");
-	}
-
-	if(header->type == TYPE_FREE) {
-		struct free_block* fb = GET_FB(header);
-
-		if(unlikely(fb->magic != KMALLOC_MAGIC)) {
-			panic("kmalloc: Metadata corruption (Free block without fb metadata)\n");
-		}
-	}
-}
-#else
-#define check_header(h)
-#endif
 
 static inline void unlink_free_block(struct free_block* fb) {
 	if(fb->next) {
@@ -129,7 +113,9 @@ static inline void unlink_free_block(struct free_block* fb) {
 
 static inline struct mem_block* set_block(size_t sz, struct mem_block* header) {
 	header->size = sz;
+	#ifdef KMALLOC_CHECK
 	header->magic = KMALLOC_MAGIC;
+	#endif
 
 	// Add uint32_t footer with size so we can find the header
 	*GET_FOOTER(header) = header->size;
@@ -144,14 +130,19 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 	 * cover this area. Otherwise write free block metadata and add block.
 	 */
 	if((intptr_t)header > alloc_start && prev->type == TYPE_FREE) {
+		#ifdef KMALLOC_CHECK
 		header->magic = 0;
+		#endif
+
 		header = set_block(prev->size + FULL_SIZE(header), prev);
 	} else {
 		header->type = TYPE_FREE;
 
 		fb->prev = last_free;
 		fb->next = (struct free_block*)NULL;
+		#ifdef KMALLOC_CHECK
 		fb->magic = KMALLOC_MAGIC;
+		#endif
 
 		if(last_free) {
 			last_free->next = fb;
@@ -165,7 +156,9 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 	if(check_next && alloc_end > (intptr_t)next && next->type == TYPE_FREE) {
 		set_block(header->size + FULL_SIZE(next), header);
 		unlink_free_block(GET_FB(next));
+		#ifdef KMALLOC_CHECK
 		next->magic = 0;
+		#endif
 	}
 
 	return header;
@@ -173,13 +166,14 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 
 static inline struct mem_block* split_block(struct mem_block* header, size_t sz) {
 	// Make sure the block is big enough to get split first
-	if(header->size < sz + sizeof(struct mem_block) + sizeof(uint32_t) + sizeof(struct free_block)) {
+	if(header->size < sz + sizeof(struct mem_block)
+		+ sizeof(uint32_t) + sizeof(struct free_block)) {
+
 		return NULL;
 	}
 
 	size_t orig_size = header->size;
 	set_block(sz, header);
-
 	size_t new_size = orig_size - sz - sizeof(struct mem_block) - sizeof(uint32_t);
 	return set_block(new_size, NEXT_BLOCK(header));
 }
@@ -209,7 +203,10 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 
 	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
 		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
+
+		#ifdef KMALLOC_CHECK
 		check_header(fblock);
+		#endif
 
 		if(unlikely(fblock->type != TYPE_FREE)) {
 			log(LOG_ERR, "kmalloc: Non-free block in free blocks linked list?\n");
@@ -269,7 +266,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 
 	debug("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
 
-	if(sz < sizeof(struct free_block)) {
+	if(unlikely(sz < sizeof(struct free_block))) {
 		sz = sizeof(struct free_block);
 	}
 
@@ -312,7 +309,8 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	if(align && alignment_offset) {
 		debug("ALIGN off 0x%x ", alignment_offset);
 
-		struct mem_block* new = split_block(header, alignment_offset - sizeof(struct mem_block) - sizeof(uint32_t));
+		struct mem_block* new = split_block(header, alignment_offset
+			- sizeof(struct mem_block) - sizeof(uint32_t));
 
 		new->type = TYPE_USED;
 		free_block(header, true);
@@ -320,12 +318,19 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	}
 
 	header->type = TYPE_USED;
-	check_header(header);
 	spinlock_release(&kmalloc_lock);
 
 	if(zero) {
 		bzero((void*)GET_CONTENT(header), sz);
 	}
+
+	#ifdef KMALLOC_CHECK
+	check_header(header);
+	#endif
+
+	#ifdef KMALLOC_CHECK
+	check_header(header);
+	#endif
 
 	debug("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
 	return (void*)GET_CONTENT(header);
@@ -336,18 +341,21 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 	_g_debug_file = _debug_file;
 	#endif
 
-	struct mem_block* header = (struct mem_block*)((intptr_t)ptr - sizeof(struct mem_block));
-	debug("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line, _debug_func, ptr, header->size);
+	struct mem_block* header = (struct mem_block*)((intptr_t)ptr
+		- sizeof(struct mem_block));
 
-	if(unlikely(
-		(intptr_t)header < alloc_start || (intptr_t)ptr >= alloc_end ||
-		header->magic != KMALLOC_MAGIC || header->type == TYPE_FREE)) {
+	debug("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line,
+		_debug_func, ptr, header->size);
+	if(unlikely((intptr_t)header < alloc_start ||
+		(intptr_t)ptr >= alloc_end ||header->type == TYPE_FREE)) {
 
 		log(LOG_ERR, "kmalloc: Attempt to free invalid block\n");
 		return;
 	}
 
+	#ifdef KMALLOC_CHECK
 	check_header(header);
+	#endif
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
 		debug("Could not get spinlock\n");
@@ -365,7 +373,6 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 	size_t rsize = 0;
 	uint32_t free = alloc_max - alloc_end;
-
 	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
 		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
 		free += fblock->size;
@@ -375,13 +382,14 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 	return rsize;
 }
 
-void kmalloc_init()
-{
+void kmalloc_init() {
 	memory_track_area_t* largest_area = NULL;
 	for(int i = 0; i < memory_track_num_areas; i++) {
 		memory_track_area_t* area = &memory_track_areas[i];
 
-		if(area->type == MEMORY_TYPE_FREE && (!largest_area || largest_area->size < area->size)) {
+		if(area->type == MEMORY_TYPE_FREE &&
+			(!largest_area || largest_area->size < area->size)) {
+
 			largest_area = area;
 		}
 	}
@@ -397,23 +405,60 @@ void kmalloc_init()
 	sysfs_add_file("memfree", sfs_read, NULL, NULL);
 }
 
-void kmalloc_stats() {
-	// Walk allocations
-	struct mem_block* header = (struct mem_block*)alloc_start;
+#ifdef KMALLOC_CHECK
+static void check_header(struct mem_block* header) {
+	if(header->magic != KMALLOC_MAGIC) {
+		block_panic("Invalid magic");
+	}
 
+	if(header->size < sizeof(struct free_block)) {
+		block_panic("Block is smaller than minimum size");
+	}
+
+	if(*GET_FOOTER(header) != header->size) {
+		block_panic("Invalid footer");
+	}
+
+	if((intptr_t)header != alloc_start &&
+		PREV_BLOCK(header)->magic != KMALLOC_MAGIC) {
+		block_panic("Previous block has invalid magic");
+	}
+
+	if(alloc_end > (intptr_t)header + FULL_SIZE(header) &&
+		NEXT_BLOCK(header)->magic != KMALLOC_MAGIC) {
+		block_panic("Next block has invalid magic");
+	}
+
+	if(header->type == TYPE_FREE) {
+		struct free_block* fb = GET_FB(header);
+		if(unlikely(fb->magic != KMALLOC_MAGIC)) {
+			block_panic("Free block without free block metadata");
+		}
+	}
+}
+#endif
+
+#ifdef KMALLOC_DEBUG
+void kmalloc_stats() {
+	struct mem_block* header = (struct mem_block*)alloc_start;
 	log(LOG_DEBUG, "\nkmalloc_stats():\n");
 	for(; (intptr_t)header < alloc_end; header = NEXT_BLOCK(header)) {
+
+		#ifdef KMALLOC_CHECK
 		check_header(header);
 		if(header->magic != KMALLOC_MAGIC) {
 			log(LOG_DEBUG, "0x%x\tcorrupted header\n", header);
 			continue;
 		}
-		log(LOG_DEBUG, "0x%x\tsize 0x%x\tres 0x%x\t", header, header->size, (intptr_t)header + sizeof(struct mem_block));
-		log(LOG_DEBUG, "fsz 0x%x\tend 0x%x\t ", FULL_SIZE(header), (intptr_t)header + FULL_SIZE(header));
+		#endif
+
+		log(LOG_DEBUG, "0x%x\tsize 0x%x\tres 0x%x\t", header, header->size,
+				(intptr_t)header + sizeof(struct mem_block));
+		log(LOG_DEBUG, "fsz 0x%x\tend 0x%x\t ", FULL_SIZE(header),
+			(intptr_t)header + FULL_SIZE(header));
 
 		if(header->type == TYPE_FREE) {
 			struct free_block* fb = GET_FB(header);
-
 			log(LOG_DEBUG, "free\tprev free: 0x%x next: 0x%x", fb->prev, fb->next);
 		} else {
 			log(LOG_DEBUG, "used");
@@ -422,8 +467,7 @@ void kmalloc_stats() {
 		log(LOG_DEBUG, "\n");
 	}
 
-	log(LOG_DEBUG, "\n");
-	log(LOG_DEBUG, "alloc end:\t0x%x\n", alloc_end);
-	log(LOG_DEBUG, "last free:\t0x%x\n", last_free);
-	log(LOG_DEBUG, "\n");
+	log(LOG_DEBUG, "\nalloc end:\t0x%x\n", alloc_end);
+	log(LOG_DEBUG, "last free:\t0x%x\n\n", last_free);
 }
+#endif
