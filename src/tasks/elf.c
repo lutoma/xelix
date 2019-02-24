@@ -72,9 +72,9 @@ static char elf_magic[4] = {0x7f, 'E', 'L', 'F'};
 
 int elf_read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsize, task_t* task) {
 	elf_section_t* section_headers = kmalloc(header->shnum * header->shentsize);
-	vfs_seek(fd, header->shoff, VFS_SEEK_SET, NULL);
+	vfs_seek(fd, header->shoff, VFS_SEEK_SET, task->parent);
 
-	size_t read = vfs_read(fd, section_headers, header->shnum * header->shentsize, NULL);
+	size_t read = vfs_read(fd, section_headers, header->shnum * header->shentsize, task->parent);
 	if(read != header->shnum * header->shentsize) {
 		kfree(section_headers);
 		return -1;
@@ -114,8 +114,8 @@ int elf_read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsiz
 			return -1;
 		}
 
-		vfs_seek(fd, shead->offset, VFS_SEEK_SET, NULL);
-		size_t read = vfs_read(fd, dest, shead->size, NULL);
+		vfs_seek(fd, shead->offset, VFS_SEEK_SET, task->parent);
+		size_t read = vfs_read(fd, dest, shead->size, task->parent);
 		if(read != shead->size) {
 			kfree(section_headers);
 			return -1;
@@ -138,8 +138,8 @@ uint32_t alloc_memory(int fd, elf_t* header, void** binary_start, task_t* task) 
 	 */
 
 	void* program_headers = kmalloc(header->phnum * header->phentsize);
-	vfs_seek(fd, header->phoff, VFS_SEEK_SET, NULL);
-	size_t read = vfs_read(fd, program_headers, header->phnum * header->phentsize, NULL);
+	vfs_seek(fd, header->phoff, VFS_SEEK_SET, task->parent);
+	size_t read = vfs_read(fd, program_headers, header->phnum * header->phentsize, task->parent);
 	if(read != header->phnum * header->phentsize) {
 		kfree(program_headers);
 		return -1;
@@ -171,20 +171,21 @@ uint32_t alloc_memory(int fd, elf_t* header, void** binary_start, task_t* task) 
 #define LF_ASSERT(cmp, msg)                    \
 if(unlikely(!(cmp))) {                         \
 	log(LOG_INFO, "elf: elf_load: " msg "\n"); \
-	vfs_close(fd, task);                       \
+	vfs_close(fd, task->parent);               \
 	kfree(header);                             \
 	sc_errno = ENOEXEC;						   \
 	return -1;                                 \
 }
 
 int elf_load_file(task_t* task, char* path) {
-	int fd = vfs_open(path, O_RDONLY, NULL);
+	// Need to use task->parent to resolve relative paths from excecve
+	int fd = vfs_open(path, O_RDONLY, task->parent);
 	if(fd == -1) {
 		return -1;
 	}
 
 	elf_t* header = kmalloc(sizeof(elf_t));
-	size_t read = vfs_read(fd, (void*)header, sizeof(elf_t), NULL);
+	size_t read = vfs_read(fd, (void*)header, sizeof(elf_t), task->parent);
 	LF_ASSERT(read == sizeof(elf_t), "Could not read ELF header");
 	LF_ASSERT(!memcmp(header->ident.magic, elf_magic, sizeof(elf_magic)),
 		"Invalid magic");
@@ -206,6 +207,6 @@ int elf_load_file(task_t* task, char* path) {
 
 	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", header->entry, task->sbrk);
 	kfree(header);
-	vfs_close(fd, task);
+	vfs_close(fd, task->parent);
 	return 0;
 }
