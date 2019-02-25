@@ -388,7 +388,6 @@ void ext2_init() {
 	}
 
 	blockgroup_table = kmalloc(bl_off(blockgroup_table_size));
-	serial_printf("Allocated 0x%x bytes for bl table\n", bl_off(blockgroup_table_size));
 	if(!vfs_block_read(bl_off(blockgroup_table_start),
 		bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)) {
 
