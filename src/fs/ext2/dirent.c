@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <mem/kmalloc.h>
 #include <hw/ide.h>
-#include <hw/serial.h>
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
@@ -150,7 +149,6 @@ static struct dirent* search_dir(struct inode* inode, const char* search) {
 }
 
 struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino) {
-	debug("Resolving inode for path %s\n", path);
 
 	if(unlikely(!strcmp("/", path)))
 		path = "/.";

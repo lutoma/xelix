@@ -350,31 +350,24 @@ int ext2_readlink(const char* path, char* buf, size_t size) {
 
 
 void ext2_init() {
-	// The superblock always has an offset of 1024, so is in sector 2 & 3
+	// Main superblock always has an offset of 1024
 	superblock = (struct superblock*)kmalloc(1024);
 	vfs_block_read(1024, sizeof(struct superblock), (uint8_t*)superblock);
-
-	if(superblock->magic != SUPERBLOCK_MAGIC)
-	{
+	if(superblock->magic != SUPERBLOCK_MAGIC) {
 		log(LOG_ERR, "ext2: Invalid magic\n");
 		return;
 	}
 
-	log(LOG_INFO, "ext2: Have ext2 revision %d. %d free / %d blocks.\n",
-			superblock->revision, superblock->free_blocks,
-			superblock->block_count);
+	log(LOG_INFO, "ext2: Revision %d, block size %d, %d blockgroups\n",
+			superblock->revision, bl_off(1), superblock->blockgroup_num);
+	log(LOG_INFO, "ext2: Blocks: %d free / %d total\n",
+		superblock->free_blocks, superblock->block_count);
+	log(LOG_INFO, "ext2: Inodes: %d free / %d total\n",
+		superblock->free_inodes, superblock->inode_count);
 
-
-	// Check if the file system is marked as clean
-	if(superblock->state != SUPERBLOCK_STATE_CLEAN)
-	{
+	if(superblock->state != SUPERBLOCK_STATE_CLEAN) {
 		log(LOG_ERR, "ext2: File system is not marked as clean.\n"
 			"Please run fsck.ext2 on it.\n");
-		return;
-	}
-
-	if(bl_off(1) != 1024) {
-		log(LOG_ERR, "ext2: Block sizes != 1024 are not supported right now.\n");
 		return;
 	}
 
@@ -382,28 +375,23 @@ void ext2_init() {
 
 	// RO is irrelevant for now since we're read-only anyways.
 	//if(superblock->features_incompat || superblock->features_ro)
-	if(superblock->features_incompat)
-	{
+	if(superblock->features_incompat) {
 		log(LOG_WARN, "ext2: This filesystem uses some extensions "
 			"which we don't support (incompat: 0x%x, ro: 0x%x)\n",
 			superblock->features_incompat, superblock->features_ro);
 		//return;
 	}
 
-	if(superblock->features_compat)
-	{
+	if(superblock->features_compat) {
 		log(LOG_INFO, "ext2: This file system supports additional special "
 			"features. We'll ignore them (0x%x).\n", superblock->features_compat);
 	}
 
-	debug("Loaded ext2 superblock. inode_count=%d, block_count=%d, block_size=%d\n",
-		superblock->inode_count, superblock->block_count,
-		superblock_to_blocksize(superblock));
+	blockgroup_table = kmalloc(bl_off(blockgroup_table_size));
+	serial_printf("Allocated 0x%x bytes for bl table\n", bl_off(blockgroup_table_size));
+	if(!vfs_block_read(bl_off(blockgroup_table_start),
+		bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)) {
 
-	blockgroup_table = kmalloc(superblock_to_blocksize(superblock)
-		* blockgroup_table_size);
-
-	if(!vfs_block_read(bl_off(2), bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)) {
 		kfree(superblock);
 		kfree(blockgroup_table);
 		return;

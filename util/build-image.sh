@@ -15,7 +15,7 @@ if [ -f "$dest" ]; then
 	sudo qemu-nbd --connect=/dev/nbd0 "$dest"
 	sudo mount /dev/nbd0p1 mnt
 else
-	qemu-img create -f qcow2 "$dest" 300M
+	qemu-img create -f qcow2 "$dest" 3G
 	sudo qemu-nbd --connect=/dev/nbd0 "$dest"
 
 	echo "/dev/nbd0p1 : start=2048, type=83" | sudo sfdisk /dev/nbd0

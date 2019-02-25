@@ -25,7 +25,6 @@
 #include <time.h>
 #include <mem/kmalloc.h>
 #include <hw/ide.h>
-#include <hw/serial.h>
 #include <fs/vfs.h>
 #include <fs/block.h>
 #include <fs/ext2.h>
@@ -88,6 +87,7 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 	if(!ret) {
 		return false;
 	}
+
 
 	struct inode_cache_entry* cache = &inode_cache[inode_cache_end++ % INODE_CACHE_MAX];
 	cache->num = inode_num;
@@ -159,8 +159,11 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		return 0;
 	}
 
-	// FIXME This value (268) actually depends on block size. This expects a 1024 block size
-	if(block_num >= 12 && block_num < 268) {
+	const uint32_t entries_per_block = bl_off(1) / sizeof(uint32_t);
+
+	if(block_num < 12) {
+		real_block_num = inode->blocks[block_num];
+	} else if(block_num < entries_per_block + 12) {
 		if(!inode->blocks[12]) {
 			return 0;
 		}
@@ -171,7 +174,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		}
 
 		real_block_num = cache->indirect_table[block_num - 12];
-	} else if(block_num >= 268 && block_num < 12 + 256*256) {
+	} else if(block_num < entries_per_block * entries_per_block + 12) {
 		if(!inode->blocks[13]) {
 			return 0;
 		}
@@ -181,7 +184,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 			vfs_block_read(bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)cache->double_table);
 		}
 
-		uint32_t indir_block_num = cache->double_table[(block_num - 268) / 256];
+		uint32_t indir_block_num = cache->double_table[(block_num - entries_per_block - 12) / entries_per_block];
 		if(!indir_block_num) {
 			return 0;
 		}
@@ -195,9 +198,9 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 			cache->double_second_block = indir_block_num;
 		}
 
-		real_block_num = cache->double_second_table[(block_num - 268) % 256];
+		real_block_num = cache->double_second_table[(block_num - entries_per_block - 12) % entries_per_block];
 	} else {
-		real_block_num = inode->blocks[block_num];
+		return 0;
 	}
 
 	return real_block_num;

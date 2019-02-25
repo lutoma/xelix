@@ -141,6 +141,13 @@ struct ext2_blocknum_resolver_cache {
 #define EXT2_DIRENT_FT_SOCk 6
 #define EXT2_DIRENT_FT_SYMLINK 7
 
+
+/* Blockgroup table is located in the block following the superblock. This
+ * is usually the second block, but with a 1k block size, the superblock
+ * takes up two blocks and the blockgroup table thus starts in block 3.
+ */
+#define blockgroup_table_start (bl_off(1) == 1024 ? 2 : 1)
+
 /* The number of blocks occupied by the blockgroup table
  * There doesn't seem to be a way to directly get the number of blockgroups,
  * so figure it out by dividing block count with blocks per group. Multiply
@@ -151,7 +158,8 @@ struct ext2_blocknum_resolver_cache {
 #define blockgroup_table_size (bl_size(superblock->block_count / superblock->blocks_per_group * sizeof(struct blockgroup)) + 1)
 
 #define write_superblock() vfs_block_write(1024, sizeof(struct superblock), (uint8_t*)superblock)
-#define write_blockgroup_table() vfs_block_write(bl_off(2), bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)
+#define write_blockgroup_table() vfs_block_write(bl_off(blockgroup_table_start), \
+	bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)
 
 #define ext2_inode_read_data(inode, offset, length, buf) ext2_inode_data_rw(inode, 0, offset, length, buf)
 #define ext2_inode_write_data ext2_inode_data_rw
