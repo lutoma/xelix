@@ -160,7 +160,7 @@ ssize_t send(int socket, const void *buffer, size_t length, int flags) {
 }
 
 int _execve(char *name, char **argv, char **env) {
-	return syscall_pf(32, name, argv, env);
+	return syscall(32, name, argv, env);
 }
 
 // Gets called by the newlib readdir handler, see libc/posix/readdir.c
