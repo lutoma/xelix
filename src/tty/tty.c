@@ -117,6 +117,7 @@ static size_t handle_escape_seq(char* str, size_t str_len) {
 		intermediate = strndup(str + intermediate_start, spos - intermediate_start);
 	}
 
+	int arg;
 	switch(*cur_str) {
 		case 'm':
 			if(!intermediate) {
@@ -158,8 +159,27 @@ static size_t handle_escape_seq(char* str, size_t str_len) {
 
 			break;
 		case 'J':
+			arg = 0;
+			if(intermediate) {
+				arg = atoi(intermediate);
+			}
+
+			switch(arg) {
+				case 0:
+					drv->clear(cur_col, cur_row, drv->cols, drv->rows); break;
+				case 1:
+					drv->clear(0, 0, cur_col, cur_row); break;
+				case 2:
+					drv->clear(0, 0, drv->cols, drv->rows); break;
+			}
 			break;
 		case 'H':
+			if(!intermediate) {
+				cur_col = 0;
+				cur_row = 0;
+			} else {
+				printf("rip rup\n");
+			}
 			break;
 		default:
 			spos = 0;

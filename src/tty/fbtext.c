@@ -68,6 +68,17 @@ static void write_char(uint32_t x, uint32_t y, char chr, uint32_t fg_col, uint32
 	}
 }
 
+static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
+	intptr_t offset = start_y * fb_desc->common.framebuffer_pitch * font->height
+		+ start_x * (fb_desc->common.framebuffer_bpp / 8) * font->width;
+
+	intptr_t size = end_y * fb_desc->common.framebuffer_pitch * font->height
+		+ end_x * (fb_desc->common.framebuffer_bpp / 8) * font->width
+		- offset;
+
+	bzero((void*)(fb_desc->common.framebuffer_addr + offset), size);
+}
+
 static void scroll_line() {
 	size_t size = fb_desc->common.framebuffer_width
 		* fb_desc->common.framebuffer_height
@@ -101,5 +112,6 @@ struct tty_driver* tty_fbtext_init() {
 	drv->ypixel = fb_desc->common.framebuffer_height;
 	drv->write = write_char;
 	drv->scroll_line = scroll_line;
+	drv->clear = clear;
 	return drv;
 }
