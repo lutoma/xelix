@@ -56,5 +56,5 @@ void tty_keyboard_init() {
 
 	send(0xF4);
 	flush();
-	interrupts_register(IRQ1, &intr_handler, true);
+	interrupts_register(IRQ1, &intr_handler, false);
 }

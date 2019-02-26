@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <sys/wait.h>
-#include <sys/xelix.h>
+#include <sys/termios.h>
 #include "util.h"
 
 int main() {
@@ -33,9 +33,18 @@ int main() {
 		printf("Password: ");
 		fflush(stdout);
 
+		struct termios termios;
+		tcgetattr(0, &termios);
+		termios.c_lflag &= ~ECHO;
+		tcsetattr(0, TCSANOW, &termios);
+
 		char* pass = malloc(500);
 		errno = 0;
 		read = fgets(pass, 500, stdin);
+
+		termios.c_lflag |= ECHO;
+		tcsetattr(0, TCSANOW, &termios);
+
 		if(!read) {
 			if(errno) {
 				perror("fgets");
@@ -57,6 +66,7 @@ int main() {
 			continue;
 		}
 
+		printf("\033[H\033[J");
 		FILE* motd_fp = fopen("/etc/motd", "r");
 		if(motd_fp) {
 			char* motd = (char*)malloc(1024);

@@ -32,8 +32,8 @@
 
 #define SCROLLBACK_PAGES 15
 
-static inline void put_char(char chr) {
-	if(chr == '\n' || term->cur_col >= term->drv->cols) {
+static inline void handle_nonprintable(char chr) {
+	if(chr == term->termios.c_cc[VEOL]) {
 		term->cur_row++;
 		term->cur_col = 0;
 
@@ -41,19 +41,29 @@ static inline void put_char(char chr) {
 			term->drv->scroll_line();
 			term->cur_row--;
 		}
+		return;
+	}
 
-		if(chr == '\n') {
-			return;
-		}
+	if(chr == term->termios.c_cc[VERASE] || chr == 0x7f) {
+		//term->scrollback_end--;
+		// FIXME limit checking
+		term->drv->write(--term->cur_col, term->cur_row, ' ', term->bg_color, term->bg_color);
+		return;
 	}
 
 	if(chr == '\t') {
 		term->cur_col += 8 - (term->cur_col % 8);
 		return;
 	}
+}
 
-	term->drv->write(term->cur_col, term->cur_row, chr, term->fg_color, term->bg_color);
-	term->cur_col++;
+static inline void put_char(char chr) {
+	if(chr > 31 && chr < 127) {
+		term->drv->write(term->cur_col, term->cur_row, chr, term->fg_color, term->bg_color);
+		term->cur_col++;
+	} else {
+		handle_nonprintable(chr);
+	}
 }
 
 size_t tty_write(char* source, size_t size) {
@@ -75,6 +85,9 @@ size_t tty_write(char* source, size_t size) {
 			}
 		}
 
+		if(term->cur_col >= term->drv->cols) {
+			put_char(term->termios.c_cc[VEOL]);
+		}
 		put_char(chr);
 	}
 	return size;
@@ -142,20 +155,29 @@ void tty_input_cb(uint8_t code, uint8_t code2) {
 		return;
 	}
 
-	// Backspace
-	if(c == 0x8 || c == 0x7f) {
-		if(term->read_len) {
-			term->read_len--;
-			term->scrollback_end--;
-			term->drv->write(--term->cur_col, term->cur_row, ' ', term->bg_color, term->bg_color);
-		}
-		return;
+	switch(c) {
+		case 0x8:
+		case 0x7f:
+			c = term->termios.c_cc[VERASE]; break;
+		case '\n':
+			c = term->termios.c_cc[VEOL]; break;
 	}
 
-	term->read_buf[term->read_len++] = c;
-	put_char(c);
+	if(c == term->termios.c_cc[VERASE] && term->termios.c_lflag & ICANON) {
+		if(!term->read_len) {
+			return;
+		}
 
-	if(c == '\n' || term->read_len >= term->read_buf_size) {
+		term->read_len--;
+	} else {
+		term->read_buf[term->read_len++] = c;
+	}
+
+	if(term->termios.c_lflag & ECHO) {
+		put_char(c);
+	}
+
+	if(c == term->termios.c_cc[VEOL] || term->read_len >= term->read_buf_size) {
 		term->read_done = true;
 	}
 }
@@ -172,6 +194,19 @@ void tty_init() {
 	term = zmalloc(sizeof(struct terminal));
 	term->fg_color = FG_COLOR_DEFAULT;
 	term->bg_color = BG_COLOR_DEFAULT;
+
+	term->termios.c_lflag = ECHO | ICANON;
+	term->termios.c_cc[VEOF] = 0;
+	term->termios.c_cc[VEOL] = '\n';
+	term->termios.c_cc[VERASE] = 8;
+	term->termios.c_cc[VINTR] = 3;
+	term->termios.c_cc[VKILL] = 21;
+	//term->termios.c_cc[VMIN] = 'minimum';
+	term->termios.c_cc[VQUIT] = 28;
+	term->termios.c_cc[VSTART] = 17;
+	term->termios.c_cc[VSTOP] = 19;
+	term->termios.c_cc[VSUSP] = 26;
+	//term->termios.c_cc[VTIME] = 'Timeout';
 
 	tty_keyboard_init();
 	term->drv = tty_fbtext_init();
