@@ -29,14 +29,12 @@ static int set_char_attrs(char* intermediate) {
 		return 0;
 	}
 
-	char* pos = strchr(intermediate, ';');
 	char* last = intermediate;
-	while(1) {
-		if(pos) {
-			*pos = 0;
-		}
-
+	char* pos = NULL;
+	do {
+		pos = strchr(last, ';');
 		int attr = atoi(last);
+
 		if(attr == 0) {
 			term->fg_color = FG_COLOR_DEFAULT;
 			term->bg_color = BG_COLOR_DEFAULT;
@@ -46,13 +44,8 @@ static int set_char_attrs(char* intermediate) {
 			term->bg_color = attr - 40;
 		}
 
-		if(!pos) {
-			break;
-		}
-
 		last = pos + 1;
-		pos = strchr(last, ';');
-	}
+	} while(pos);
 	return 0;
 }
 
