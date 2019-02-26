@@ -61,5 +61,4 @@ typedef struct {
 	uint16_t	shstrndx;	/* Section header string table index */
 } __attribute__((packed)) elf_t;
 
-int elf_load(task_t* task, elf_t* bin);
 int elf_load_file(task_t* task, char* path);

@@ -70,7 +70,7 @@
 
 static char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-int elf_read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsize, task_t* task) {
+static int read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsize, task_t* task) {
 	elf_section_t* section_headers = kmalloc(header->shnum * header->shentsize);
 	vfs_seek(fd, header->shoff, VFS_SEEK_SET, task->parent);
 
@@ -131,7 +131,7 @@ int elf_read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsiz
 	return loaded_sections;
 }
 
-uint32_t alloc_memory(int fd, elf_t* header, void** binary_start, task_t* task) {
+static uint32_t alloc_memory(int fd, elf_t* header, void** binary_start, task_t* task) {
 	/* Allocates a physical memory region for this binary based on the memory
 	 * requirements in the program headers. The binary will then get copied
 	 * to that region based on the sections.
@@ -202,7 +202,7 @@ int elf_load_file(task_t* task, char* path) {
 	uint32_t memsize = alloc_memory(fd, header, &binary_start, task);
 	LF_ASSERT(memsize > 0 && binary_start, "Loading program headers failed.");
 
-	int loaded = elf_read_sections(fd, header, binary_start, memsize, task);
+	int loaded = read_sections(fd, header, binary_start, memsize, task);
 	LF_ASSERT(loaded > 0, "Loading sections failed.");
 
 	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", header->entry, task->sbrk);
