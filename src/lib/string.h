@@ -34,7 +34,9 @@
 #define memcpy __builtin_memcpy
 #define memcmp __builtin_memcmp
 #define memmove __builtin_memmove
+#define strchr __builtin_strchr
 
+void memset32(void* ptr, uint32_t fill, uint32_t size);
 char* strtok_r(char* s, const char* delim, char** last);
 char* substr(char* src, size_t start, size_t len);
 int find_substr(char* list, char* item);

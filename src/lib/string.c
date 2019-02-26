@@ -270,3 +270,16 @@ void* memmove(void *dst, const void *src, size_t len) {
 
 		return dst;
 }
+
+#undef strchr
+char *strchr(const char *p, int ch) {
+	char c;
+
+	c = ch;
+	for (;; ++p) {
+		if (*p == c)
+			return ((char *)p);
+		if (*p == '\0')
+			return (NULL);
+	}
+}

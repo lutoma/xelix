@@ -19,6 +19,10 @@
  */
 
 #include <fs/vfs.h>
+#include <tty/ioctl.h>
+
+#define FG_COLOR_DEFAULT 7
+#define BG_COLOR_DEFAULT 0
 
 struct tty_driver {
 	uint32_t cols;
@@ -30,9 +34,30 @@ struct tty_driver {
 	void (*clear)(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
 };
 
+struct terminal {
+	struct tty_driver* drv;
+	struct termios termios;
+
+	size_t scrollback_size;
+	size_t scrollback_end;
+	char* scrollback;
+
+	uint32_t cur_col;
+	uint32_t cur_row;
+
+	char* read_buf;
+	size_t read_buf_size;
+	size_t read_len;
+	bool read_done;
+
+	uint32_t fg_color;
+	uint32_t bg_color;
+};
+
+struct terminal* term;
+
 size_t tty_write(char* source, size_t size);
 size_t tty_read(char* source, size_t size);
-int tty_ioctl(const char* path, int request, void* arg);
 void tty_input_cb(uint8_t code, uint8_t code2);
 void tty_init();
 

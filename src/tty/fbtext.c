@@ -27,6 +27,13 @@
 
 #define PSF_FONT_MAGIC 0x864ab572
 
+#define PIXEL_PTR(x, y) 										\
+	((uint32_t*)((uint32_t)fb_desc->common.framebuffer_addr		\
+		+ (y)*fb_desc->common.framebuffer_pitch					\
+		+ (x)*(fb_desc->common.framebuffer_bpp / 8)))
+
+#define CHAR_PTR(x, y) PIXEL_PTR(x * font->width, y * font->height)
+
 struct psf_font {
 	uint32_t magic;
 	uint32_t version;
@@ -46,37 +53,55 @@ extern char _binary_src_tty_ter_u16n_psf_end;
 static struct multiboot_tag_framebuffer* fb_desc;
 static struct psf_font* font = &_binary_src_tty_ter_u16n_psf_start;
 
-static inline void set_pixel(uint32_t x, uint32_t y, uint32_t value) {
-	uint32_t* pixel = (uint32_t*)((uint32_t)fb_desc->common.framebuffer_addr
-		+ y*fb_desc->common.framebuffer_pitch
-		+ x*(fb_desc->common.framebuffer_bpp / 8));
+static struct tty_driver* drv;
 
-	*pixel = value;
+static uint32_t convert_color(int color) {
+	switch(color) {
+		case 0: // black
+			return 0x272822;
+		case 1: // red
+			return 0xF92672;
+		case 2: // green
+			return 0xA6E22E;
+		case 3: // yellow
+			return 0xE6DB74;
+		case 4: // blue
+			return 0x66D9EF;
+		case 5: // magenta
+			return 0xFD5FF0;
+		case 6: // cyan
+			return 0xA1EFE4;
+		case 7: // white
+		case 9: // default
+		default:
+			return 0xe9e9e9;
+	}
 }
 
 static void write_char(uint32_t x, uint32_t y, char chr, uint32_t fg_col, uint32_t bg_col) {
+	x *= font->width;
+	y *= font->height;
+
 	uint8_t* bitmap = (uint8_t*)font + font->header_size + (int)chr * font->bytes_per_glyph;
+	uint32_t fg_color = convert_color(fg_col);
+	uint32_t bg_color = convert_color(bg_col);
+
 	for(int i = 0; i < font->height; i++) {
-		uint8_t line = bitmap[i];
 		for(int j = 0; j < font->width; j++) {
-			if(bit_get(line, font->width - j)) {
-				set_pixel(x * font->width + j, y * font->height + i, fg_col);
-			} else {
-				set_pixel(x * font->width + j, y * font->height + i, bg_col);
-			}
+			int fg = bit_get(bitmap[i], font->width - j);
+			*PIXEL_PTR(x + j, y + i) = fg ? fg_color : bg_color;
 		}
 	}
 }
 
 static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
-	intptr_t offset = start_y * fb_desc->common.framebuffer_pitch * font->height
-		+ start_x * (fb_desc->common.framebuffer_bpp / 8) * font->width;
+	uint32_t* start = CHAR_PTR(start_x, start_x);
+	uint32_t* end = CHAR_PTR(end_x, end_y);
+	uint32_t color = convert_color(term->bg_color);
 
-	intptr_t size = end_y * fb_desc->common.framebuffer_pitch * font->height
-		+ end_x * (fb_desc->common.framebuffer_bpp / 8) * font->width
-		- offset;
-
-	bzero((void*)(fb_desc->common.framebuffer_addr + offset), size);
+	for(; start < end; start++) {
+		*start = color;
+	}
 }
 
 static void scroll_line() {
@@ -89,7 +114,7 @@ static void scroll_line() {
 	memmove((void*)(intptr_t)fb_desc->common.framebuffer_addr,
 		(void*)((intptr_t)fb_desc->common.framebuffer_addr + offset), size);
 
-	bzero((void*)((uint32_t)fb_desc->common.framebuffer_addr + size), offset);
+	clear(drv->rows - 1, 0, drv->rows, drv->cols);
 }
 
 struct tty_driver* tty_fbtext_init() {
@@ -105,7 +130,8 @@ struct tty_driver* tty_fbtext_init() {
 		fb_desc->common.framebuffer_pitch,
 		(uint32_t)fb_desc->common.framebuffer_addr);
 
-	struct tty_driver* drv = kmalloc(sizeof(struct tty_driver));
+
+	drv = kmalloc(sizeof(struct tty_driver));
 	drv->cols = fb_desc->common.framebuffer_width / font->width;
 	drv->rows = fb_desc->common.framebuffer_height / font->height;
 	drv->xpixel = fb_desc->common.framebuffer_width;
@@ -113,5 +139,7 @@ struct tty_driver* tty_fbtext_init() {
 	drv->write = write_char;
 	drv->scroll_line = scroll_line;
 	drv->clear = clear;
+
+	clear(0, 0, drv->cols, drv->rows);
 	return drv;
 }

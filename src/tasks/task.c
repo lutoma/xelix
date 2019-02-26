@@ -27,6 +27,7 @@
 #include <mem/gdt.h>
 #include <hw/interrupts.h>
 #include <tty/tty.h>
+#include <tty/ioctl.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <string.h>
