@@ -4,7 +4,7 @@ cd
 checkregs
 ls
 malloctest
-xinit
+init
 xshell
 ps
 uptime

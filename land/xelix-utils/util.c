@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <stdio.h>
 #include "util.h"
 
 char* shortname(char* in) {
