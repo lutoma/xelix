@@ -7,6 +7,8 @@
 #define	RUSAGE_CHILDREN	-1		/* terminated child processes */
 
 #define RLIM_INFINITY 0
+#define RLIM_NLIMITS 0
+
 #define RLIMIT_CORE 1
 #define RLIMIT_CPU 2
 #define RLIMIT_DATA 3
@@ -18,6 +20,7 @@
 struct rusage {
   	struct timeval ru_utime;	/* user time used */
 	struct timeval ru_stime;	/* system time used */
+	long ru_maxrss;
 };
 
 typedef uint32_t rlim_t;
