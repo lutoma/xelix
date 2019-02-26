@@ -68,7 +68,7 @@
 
 #define ELF_VERSION_CURRENT 1
 
-static char elf_magic[4] = {0x7f, 'E', 'L', 'F'};
+static char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 int elf_read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsize, task_t* task) {
 	elf_section_t* section_headers = kmalloc(header->shnum * header->shentsize);
@@ -187,7 +187,7 @@ int elf_load_file(task_t* task, char* path) {
 	elf_t* header = kmalloc(sizeof(elf_t));
 	size_t read = vfs_read(fd, (void*)header, sizeof(elf_t), task->parent);
 	LF_ASSERT(read == sizeof(elf_t), "Could not read ELF header");
-	LF_ASSERT(!memcmp(header->ident.magic, elf_magic, sizeof(elf_magic)),
+	LF_ASSERT(!memcmp(header->ident, elf_magic, sizeof(elf_magic)),
 		"Invalid magic");
 
 	LF_ASSERT(header->type == ELF_TYPE_EXEC, "Binary is inexecutable");

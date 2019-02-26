@@ -21,12 +21,6 @@
 #include <tasks/scheduler.h>
 
 typedef struct {
-	unsigned char magic[4];
-	/* Note: There _is_ other stuff in here, but we don't need it */
-	unsigned char pad[12];
-} __attribute__((packed)) elf_ident_t;
-
-typedef struct {
 	uint32_t name;
 	uint32_t type;
 	uint32_t flags;
@@ -51,7 +45,7 @@ typedef struct {
 } __attribute__((packed)) elf_program_header_t;
 
 typedef struct {
-	elf_ident_t ident;
+	uint8_t		ident[16];
 	uint16_t	type;		/* Object file type */
 	uint16_t	machine;	/* Architecture */
 	uint32_t	version;	/* Object file version */
