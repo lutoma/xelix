@@ -119,3 +119,6 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 void __stack_chk_fail(void) {
 	panic("Stack protector failure\n");
 }
+void __stack_chk_guard(void) {
+	panic("Stack protector guard failure\n");
+}

@@ -5,7 +5,7 @@ BINUTILS_VERSION=2.31.1
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
 BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 
-GCC_VERSION=8.2.0
+GCC_VERSION=8.3.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 
@@ -82,16 +82,17 @@ gcc-install:
 	@echo "Installing gcc"
 	@make -C build/gcc install-gcc
 	@make -C build/gcc install-target-libgcc
+	@make -C build/gcc install-target-libstdc++-v3
 	@ln -s i586-pc-xelix-gcc local/bin/i586-pc-xelix-cc
 
 gcc-make:
 	@echo "Building gcc"
+	@rm -r build/gcc
 	@mkdir -p build/gcc
-	-@find build/gcc -name config.cache -delete
-	-@make -C build/gcc distclean
-	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-shared --enable-languages=c --without-headers --with-newlib --without-docdir
+	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --enable-languages=c,c++ --with-newlib --without-docdir
 	@make -C build/gcc all-gcc
 	@make -C build/gcc all-target-libgcc
+	@make -C build/gcc all-target-libstdc++-v3
 
 gcc-patch:
 	@echo "Patching gcc"
