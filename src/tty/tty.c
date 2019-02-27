@@ -20,7 +20,6 @@
 #include <tty/tty.h>
 #include <tty/fbtext.h>
 #include <tty/keyboard.h>
-#include <tty/keymap.h>
 #include <tty/ecma48.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
@@ -57,7 +56,7 @@ static inline void handle_nonprintable(char chr) {
 	}
 }
 
-static inline void put_char(char chr) {
+void tty_put_char(char chr) {
 	if(chr > 31 && chr < 127) {
 		term->drv->write(term->cur_col, term->cur_row, chr, term->fg_color, term->bg_color);
 		term->cur_col++;
@@ -86,100 +85,11 @@ size_t tty_write(char* source, size_t size) {
 		}
 
 		if(term->cur_col >= term->drv->cols) {
-			put_char(term->termios.c_cc[VEOL]);
+			tty_put_char(term->termios.c_cc[VEOL]);
 		}
-		put_char(chr);
+		tty_put_char(chr);
 	}
 	return size;
-}
-
-size_t tty_read(char* dest, size_t size) {
-	term->read_len = 0;
-	term->read_buf = dest;
-	term->read_buf_size = size;
-
-	while(!term->read_done) {
-		asm("hlt");
-	}
-
-	term->read_buf = NULL;
-	term->read_buf_size = 0;
-	term->read_done = false;
-	return term->read_len;
-}
-
-static char keycode_to_char(uint8_t code, uint8_t code2) {
-	static bool shift = false;
-
-	switch(code) {
-		case 0x2a:
-		case 0x36:
-			shift = true;
-			return 0;
-		case 0xaa:
-		case 0xb6:
-			shift = false;
-			return 0;
-	}
-
-	if(code == 0x2a || code == 0x36) {
-		shift = true;
-		return 0;
-	}
-
-	if(code == 0xaa || code == 0xb6) {
-		shift = false;
-		return 0;
-	}
-
-	uint32_t rcode = code;
-	if(shift) {
-		rcode += 256;
-	}
-	if(rcode > 512) {
-		return 0;
-	}
-
-	return tty_keymap_en[rcode];
-}
-
-
-// Input callback – Called by keyboard.c
-void tty_input_cb(uint8_t code, uint8_t code2) {
-	if(!term || !term->read_buf || term->read_len >= term->read_buf_size) {
-		return;
-	}
-
-	char c = keycode_to_char(code, code2);
-	if(!c) {
-		return;
-	}
-
-	switch(c) {
-		case 0x8:
-		case 0x7f:
-			c = term->termios.c_cc[VERASE]; break;
-		case '\n':
-			c = term->termios.c_cc[VEOL]; break;
-	}
-
-	if(c == term->termios.c_cc[VERASE] && term->termios.c_lflag & ICANON) {
-		if(!term->read_len) {
-			return;
-		}
-
-		term->read_len--;
-	} else {
-		term->read_buf[term->read_len++] = c;
-	}
-
-	if(term->termios.c_lflag & ECHO) {
-		put_char(c);
-	}
-
-	if(c == term->termios.c_cc[VEOL] || term->read_len >= term->read_buf_size) {
-		term->read_done = true;
-	}
 }
 
 /* Sysfs callbacks */
@@ -196,7 +106,7 @@ void tty_init() {
 	term->bg_color = BG_COLOR_DEFAULT;
 
 	term->termios.c_lflag = ECHO | ICANON;
-	term->termios.c_cc[VEOF] = 0;
+	term->termios.c_cc[VEOF] = 4;
 	term->termios.c_cc[VEOL] = '\n';
 	term->termios.c_cc[VERASE] = 8;
 	term->termios.c_cc[VINTR] = 3;

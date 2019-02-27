@@ -58,8 +58,8 @@ struct terminal* term;
 
 size_t tty_write(char* source, size_t size);
 size_t tty_read(char* source, size_t size);
-void tty_input_cb(uint8_t code, uint8_t code2);
 void tty_init();
+void tty_put_char(char chr);
 
 /* VFS callbacks */
 static inline size_t tty_vfs_write(vfs_file_t* fp, void* source, size_t size) {

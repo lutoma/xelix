@@ -20,9 +20,71 @@
 
 #include <hw/interrupts.h>
 #include <tty/tty.h>
+#include <tty/input.h>
+#include <tty/keymap.h>
 
 #define flush() { while(inb(0x64) & 1) { inb(0x60); }}
 #define send(c) { while((inb(0x64) & 0x2)); outb(0x60, (c)); }
+
+static struct tty_input_state state;
+
+static struct tty_input_state* keycode_to_input(uint8_t code, bool esc) {
+	switch(code) {
+		case 0x2a:
+			state.shift_left = true; return NULL;
+		case 0x36:
+			state.shift_right = true; return NULL;
+		case 0xaa:
+			state.shift_left = false; return NULL;
+		case 0xb6:
+			state.shift_right = false; return NULL;
+		case 0x1d:
+			if(esc) {
+				state.control_right = true;
+			} else {
+				state.control_left = true;
+			}
+			return NULL;
+		case 0x9d:
+			if(esc) {
+				state.control_right = false;
+			} else {
+				state.control_left = false;
+			}
+			return NULL;
+		case 0x38:
+			if(esc) {
+				state.alt_right = true;
+			} else {
+				state.alt_left = true;
+			}
+			return NULL;
+		case 0xb8:
+			if(esc) {
+				state.alt_right = false;
+			} else {
+				state.alt_left = false;
+			}
+			return NULL;
+	}
+
+	if(esc) {
+		serial_printf("unknown escaped code 0x%x\n", code);
+		return NULL;
+	}
+
+	uint32_t rcode = code;
+	if(state.shift_left || state.shift_right) {
+		rcode += 256;
+	}
+	if(rcode > 512) {
+		return NULL;
+	}
+
+	state.chr = tty_keymap_en[rcode];
+	return &state;
+}
+
 
 static void intr_handler(isf_t* regs) {
 	// Escape sequences consist of two scancodes: One first that tells us
@@ -36,11 +98,15 @@ static void intr_handler(isf_t* regs) {
 		return;
 	}
 
+	struct tty_input_state* input;
 	if(unlikely(escape_wait)) {
 		escape_wait = false;
-		tty_input_cb(0xe0, code);
+		input = keycode_to_input(code, true);
 	} else {
-		tty_input_cb(code, 0);
+		input = keycode_to_input(code, false);
+	}
+	if(input && input->chr) {
+		tty_input_cb(input);
 	}
 }
 
