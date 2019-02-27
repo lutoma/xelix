@@ -24,6 +24,7 @@
 #include <log.h>
 #include <mem/kmalloc.h>
 #include <hw/interrupts.h>
+#include <portio.h>
 #include "ide.h"
 
 ide_channel_regs_t ide_channels[2];

@@ -22,6 +22,7 @@
 #include <tty/tty.h>
 #include <tty/input.h>
 #include <tty/keymap.h>
+#include <portio.h>
 
 #define flush() { while(inb(0x64) & 1) { inb(0x60); }}
 #define send(c) { while((inb(0x64) & 0x2)); outb(0x60, (c)); }

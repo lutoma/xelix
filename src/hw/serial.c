@@ -18,8 +18,7 @@
  */
 
 #include "serial.h"
-
-#include <log.h>
+#include <portio.h>
 
 #define PORT 0x3f8
 #define CAN_RECV (inb(PORT+5) & 1)

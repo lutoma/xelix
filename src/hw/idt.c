@@ -22,6 +22,7 @@
 #include <hw/interrupts.h>
 #include <log.h>
 #include <string.h>
+#include <portio.h>
 
 struct idt_entry {
 	uint16_t base_lo;	// The lower 16 bits of the address to jump to when this interrupt fires.

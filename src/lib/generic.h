@@ -30,7 +30,6 @@
 
 #include <config.h>
 #include <stdint.h>
-#include <portio.h>
 #include <stddef.h>
 #include <hw/pit.h>
 
