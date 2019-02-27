@@ -587,5 +587,6 @@ void idt_init() {
 	set_gate(254, &interrupts_handler254, 0x8E);
 	set_gate(255, &interrupts_handler255, 0x8E);
 
+	log(LOG_INFO, "interrupts: Loading idt\n");
 	asm volatile("lidt (%0);":: "m" (lidt_pointer));
 }

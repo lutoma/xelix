@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2015 Lukas Martini
+/* Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,28 +18,14 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <multiboot.h>
+#include <mem/track.h>
+#include <mem/kmalloc.h>
+#include <mem/vmem.h>
+#include <mem/paging.h>
 
-#define MEMORY_TRACK_MAX_AREAS 256
-
-typedef enum {
-	MEMORY_TYPE_FREE,
-	MEMORY_TYPE_KERNEL_BINARY,
-	MEMORY_TYPE_INITRD,
-	MEMORY_TYPE_ACPI,
-	MEMORY_TYPE_HIBERNATE,
-	MEMORY_TYPE_DEFECTIVE,
-	MEMORY_TYPE_KMALLOC,
-	MEMORY_TYPE_UNKNOWN
-} memory_track_type_t;
-
-typedef struct {
-	void* addr;
-	size_t size;
-	memory_track_type_t type;
-} memory_track_area_t;
-
-memory_track_area_t memory_track_areas[MEMORY_TRACK_MAX_AREAS];
-uint32_t memory_track_num_areas;
-
-void memory_track_init();
+static inline void mem_init() {
+	memory_track_init();
+	kmalloc_init();
+	vmem_init();
+	paging_init();
+}

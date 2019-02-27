@@ -1,6 +1,6 @@
 /* gdt.c: Disable segmentation by defining one large segment
  * Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -66,14 +66,15 @@
 
 extern void gdt_flush(void*);
 extern void* stack_end;
-static uint32_t* tss;
+static uint8_t initial_tss[0x60];
+static uint32_t* tss = (uint32_t*)&initial_tss;
 
 static struct pointer {
 	// The upper 16 bits of all selector limits.
 	uint16_t limit;
 	void* base;
 } __attribute__((packed)) pointer;
-static uint64_t* descs;
+static uint64_t descs[6];
 
 static void create_descriptor(uint32_t num, uint32_t base, uint32_t limit, uint16_t flag) {
     // Create the high 32 bit segment
@@ -100,7 +101,6 @@ void gdt_set_tss(void* addr) {
 }
 
 void gdt_init() {
-	descs = kmalloc(sizeof(uint64_t) * 6);
 	pointer.limit = (sizeof(uint64_t) * 6) - 1;
 	pointer.base = descs;
 
@@ -110,6 +110,5 @@ void gdt_init() {
 	create_descriptor(3, 0, 0xffffffff, GDT_CODE_PL3); // 0x1b
 	create_descriptor(4, 0, 0xffffffff, GDT_DATA_PL3); // 0x23
 
- 	tss = kmalloc(0x60);
 	gdt_set_tss(&stack_end);
 }

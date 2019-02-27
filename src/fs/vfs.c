@@ -28,6 +28,9 @@
 #include <time.h>
 #include <fs/null.h>
 #include <fs/sysfs.h>
+#include <fs/part.h>
+#include <fs/ext2.h>
+#include <hw/ide.h>
 
 #ifdef VFS_DEBUG
 # define debug(fmt, args...) log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s " fmt, \
@@ -575,6 +578,14 @@ static size_t sfs_mounts_read(void* dest, size_t size, size_t offset, void* meta
 }
 
 void vfs_init() {
+	ide_init();
+	part_init();
+	sysfs_init();
+
+	#ifdef ENABLE_EXT2
+	ext2_init();
+	#endif
+
 	bzero(kernel_files, sizeof(kernel_files));
 	vfs_null_init();
 	sysfs_add_file("mounts", sfs_mounts_read, NULL, NULL);

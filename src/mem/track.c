@@ -81,7 +81,10 @@ static void copy_multiboot_areas() {
 	}
 }
 
-void memory_track_print_areas() {
+void memory_track_init() {
+	memset(memory_track_areas, 0, sizeof(memory_track_area_t) * MEMORY_TRACK_MAX_AREAS);
+	copy_multiboot_areas();
+
 	log(LOG_INFO, "memory_track: Areas:\n");
 
 	char* type_names[] = {
@@ -100,9 +103,4 @@ void memory_track_print_areas() {
 		log(LOG_INFO, "  #%-2d %-9s at 0x%-9x end 0x%-9x size 0x%-9x\n",
 			i, type_names[area->type], area->addr, area->addr + area->size - 1, area->size);
 	}
-}
-
-void memory_track_init() {
-	memset(memory_track_areas, 0, sizeof(memory_track_area_t) * MEMORY_TRACK_MAX_AREAS);
-	copy_multiboot_areas();
 }

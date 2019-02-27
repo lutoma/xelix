@@ -23,6 +23,7 @@
 #include <portio.h>
 #include <hw/pit.h>
 #include <fs/sysfs.h>
+#include <log.h>
 #include "time.h"
 
 #define CURRENT_YEAR        2018
@@ -181,5 +182,6 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 void time_init() {
 	last_timestamp = read_rtc();
 	last_tick = pit_tick;
+	log(LOG_INFO, "time: Initial last_timestamp is %u at tick %llu\n", last_timestamp, last_tick);
 	sysfs_add_file("time", sfs_read, NULL, NULL);
 }

@@ -115,14 +115,14 @@ struct paging_context* paging_get_context(struct vmem_context* ctx) {
 	return pgCtx;
 }
 
-void paging_init()
-{
+void paging_init() {
 	paging_initialized = true;
 	vmem_applyPage = paging_applyPage;
 
 	vmem_currentContext = vmem_kernelContext;
 	paging_kernel_cr3 = paging_get_context(vmem_kernelContext);
 
+	log(LOG_INFO, "vmem: Enabling paging bit, cr3=0x%x\n", paging_kernel_cr3);
 	asm volatile(
 		"cli;"
 		"mov cr3, %0;"

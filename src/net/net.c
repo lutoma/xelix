@@ -23,6 +23,8 @@
 #include <pico_device.h>
 #include <pico_dhcp_client.h>
 #include <spinlock.h>
+#include <hw/rtl8139.h>
+#include <hw/ne2k.h>
 
 #ifdef ENABLE_PICOTCP
 
@@ -110,8 +112,18 @@ struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_
 }
 
 void net_init() {
+	log(LOG_INFO, "net: Initializing PicoTCP\n");
 	pico_stack_init();
 	initialized = true;
+
+	log(LOG_INFO, "net: Loading device drivers\n");
+	#ifdef ENABLE_NE2K
+	ne2k_init();
+	#endif
+
+	#ifdef ENABLE_RTL8139
+	rtl8139_init();
+	#endif
 }
 
 #endif /* ENABLE_PICOTCP */

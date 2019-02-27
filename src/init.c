@@ -1,5 +1,5 @@
 /* init.c: Initialization code of the kernel
- * Copyright © 2010-2018 Lukas Martini
+ * Copyright © 2010-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,30 +18,20 @@
  */
 
 #include <log.h>
-#include <string.h>
 #include <panic.h>
 #include <time.h>
 #include <version.h>
 #include <hw/serial.h>
-#include <mem/track.h>
-#include <mem/gdt.h>
 #include <hw/interrupts.h>
 #include <hw/pit.h>
-#include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
 #include <tty/tty.h>
 #include <hw/pci.h>
-#include <hw/rtl8139.h>
-#include <hw/ne2k.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
-#include <mem/paging.h>
-#include <mem/vmem.h>
-#include <hw/ide.h>
-#include <fs/part.h>
-#include <fs/sysfs.h>
-#include <fs/ext2.h>
+#include <mem/mem.h>
+#include <mem/gdt.h>
 #include <hw/ac97.h>
 #include <net/net.h>
 #include <multiboot.h>
@@ -49,51 +39,29 @@
 void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	void* multiboot_info) {
 
-	init(serial);
-	init(multiboot, multiboot_magic, multiboot_info);
-	init(memory_track);
-	init(kmalloc);
-	init(gdt);
-	init(interrupts);
-	init(pit, PIT_RATE);
-	init(tty);
-
-	memory_track_print_areas();
-
-	init(vmem);
-	init(paging);
-	init(time);
-	init(pci);
-	init(syscall);
-
-	init(ide);
-	init(part);
-	init(sysfs);
-
-	// Only initializes the sysfs integration
-	init(log);
-	init(version);
-
-	#ifdef ENABLE_EXT2
-	init(ext2);
-	#endif
-	init(vfs);
+	serial_init();
+	gdt_init();
+	interrupts_init();
+	pit_init(PIT_RATE);
+	multiboot_init(multiboot_magic, multiboot_info);
+	mem_init();
+	tty_init();
+	time_init();
+	pci_init();
+	vfs_init();
 
 	#ifdef ENABLE_PICOTCP
-	init(net);
-	#endif
-
-	#ifdef ENABLE_NE2K
-	init(ne2k);
-	#endif
-
-	#ifdef ENABLE_RTL8139
-	init(rtl8139);
+	net_init();
 	#endif
 
 	#ifdef ENABLE_AC97
-	init(ac97);
+	ac97_init();
 	#endif
+
+	// These only register interrupts or initialize sysfs integration
+	syscall_init();
+	log_init();
+	version_init();
 
 	char* __env[] = { NULL };
 	char* __argv[] = { vfs_basename(INIT_PATH), NULL };

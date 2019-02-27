@@ -50,14 +50,6 @@ typedef int32_t time_t;
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
-#define init(C, args...) \
-	do \
-	{ \
-		log(LOG_INFO, "Starting to initialize " #C "\n"); \
-		C ## _init(args); \
-		log(LOG_INFO, "Initialized " #C "\n"); \
-	} while(0);
-
 #define sleep(t) sleep_ticks((t) * PIT_RATE)
 
 // Symbols provided by LD in linker.ld
