@@ -32,7 +32,6 @@
 #include <stdint.h>
 #include <portio.h>
 #include <stddef.h>
-#include <stdbool.h>
 #include <hw/pit.h>
 
 #define POW2(x) (2 << (x - 1))

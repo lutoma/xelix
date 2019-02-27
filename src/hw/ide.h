@@ -22,6 +22,8 @@
  * See https://github.com/klange/osdev/blob/strawberry-dev/kernel/include/ata.h
  */
 
+#include <stdbool.h>
+
 #define ATA_SR_BSY     0x80
 #define ATA_SR_DRDY    0x40
 #define ATA_SR_DF      0x20

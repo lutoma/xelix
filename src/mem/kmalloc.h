@@ -18,6 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
+
 extern bool kmalloc_ready;
 
 void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,

@@ -20,6 +20,7 @@
 
 #include <fs/vfs.h>
 #include <tty/ioctl.h>
+#include <stdbool.h>
 
 #define FG_COLOR_DEFAULT 7
 #define BG_COLOR_DEFAULT 0

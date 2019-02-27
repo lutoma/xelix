@@ -20,6 +20,7 @@
  */
 
 #include <log.h>
+#include <stdbool.h>
 
 #define IRQ0 32
 #define IRQ1 33
