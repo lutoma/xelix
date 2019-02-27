@@ -19,6 +19,7 @@
 
 #include <log.h>
 #include <panic.h>
+#include <bitmap.h>
 #include <hw/interrupts.h>
 #include <mem/vmem.h>
 #include <mem/paging.h>

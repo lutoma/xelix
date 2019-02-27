@@ -25,9 +25,9 @@
 #undef strlen
 size_t strlen(const char* str)
 {
-	 const char *s;
-	 for (s = str; *s != 0 && *s != EOF; ++s);
-	 return(s - str);
+	const char *s;
+	for (s = str; *s != 0 && *s != -1; ++s);
+	return(s - str);
 }
 
 #undef strcpy

@@ -24,6 +24,7 @@
 #include <hw/pci.h>
 #include <log.h>
 #include <portio.h>
+#include <bitmap.h>
 #include <string.h>
 #include <print.h>
 #include <fs/sysfs.h>

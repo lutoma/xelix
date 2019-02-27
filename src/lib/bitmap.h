@@ -20,9 +20,14 @@
 
 #include "generic.h"
 
+#define bit_set(num, bit) ((num) | 1 << (bit))
+#define bit_clear(num, bit) ((num) & ~(1 << (bit)))
+#define bit_toggle(num, bit) ((num) ^ 1 << (bit))
+#define bit_get(num, bit) ((num) & (1 << (bit)))
+
 typedef struct {
 	uint32_t numbits;
-	/* an array large enough for numbits to fit in. Might 
+	/* an array large enough for numbits to fit in. Might
 	 * (if numbits%8!=0) have some spare bits at the end
 	 */
 	uint32_t* bits;

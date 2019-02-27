@@ -22,6 +22,7 @@
 #include <hw/pit.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
 

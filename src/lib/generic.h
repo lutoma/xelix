@@ -31,26 +31,9 @@
 #include <config.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <hw/pit.h>
 
-#define POW2(x) (2 << (x - 1))
-#define max(a,b) \
-	({ __typeof__(a) _a = (a); \
-	   __typeof__(b) _b = (b); \
-	 _a > _b ? _a : _b; })
-
-#define bit_set(num, bit) ((num) | 1 << (bit))
-#define bit_clear(num, bit) ((num) & ~(1 << (bit)))
-#define bit_toggle(num, bit) ((num) ^ 1 << (bit))
-#define bit_get(num, bit) ((num) & (1 << (bit)))
-
-typedef int32_t time_t;
-
-#define EOF  -1
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
-
-#define sleep(t) sleep_ticks((t) * PIT_RATE)
 
 // Symbols provided by LD in linker.ld
 extern void* __kernel_start;
@@ -62,15 +45,4 @@ extern void* __kernel_end;
 static inline void __attribute__((noreturn)) freeze(void) {
 	asm volatile("cli; hlt");
 	__builtin_unreachable();
-}
-
-static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
-	const uint32_t until = pit_tick + timeout;
-	while(pit_tick <= until) {
-		asm volatile("hlt");
-	}
-}
-
-static inline uint32_t uptime(void) {
-	return (uint32_t)pit_tick / PIT_RATE;
 }

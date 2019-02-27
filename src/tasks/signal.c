@@ -20,6 +20,7 @@
 #include <tasks/signal.h>
 #include <tasks/task.h>
 #include <errno.h>
+#include <bitmap.h>
 
 // From newlib
 #define SIG_SETMASK 0	/* set mask with sigprocmask() */

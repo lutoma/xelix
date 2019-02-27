@@ -21,6 +21,7 @@
 #include <hw/interrupts.h>
 #include <fs/sysfs.h>
 #include <portio.h>
+#include <time.h>
 
 static uint32_t tick = 0;
 

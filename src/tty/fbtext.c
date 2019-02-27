@@ -24,6 +24,7 @@
 #include <string.h>
 #include <print.h>
 #include <log.h>
+#include <bitmap.h>
 
 #define PSF_FONT_MAGIC 0x864ab572
 

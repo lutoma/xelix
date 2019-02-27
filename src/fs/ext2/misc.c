@@ -23,6 +23,7 @@
 #include <mem/kmalloc.h>
 #include <fs/ext2.h>
 #include <fs/block.h>
+#include <bitmap.h>
 
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block) {
 	// Todo check blockgroup->free_blocks to see if any blocks are free and otherwise switch block group
