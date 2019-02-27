@@ -1,6 +1,6 @@
 /* idt.c: Initialization of the IDT
  * Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -292,7 +292,6 @@ extern void interrupts_handler252(void);
 extern void interrupts_handler253(void);
 extern void interrupts_handler254(void);
 extern void interrupts_handler255(void);
-extern void __attribute__((fastcall)) idt_load(void*);
 
 struct idt_entry idt_entries[256];
 
@@ -587,5 +586,5 @@ void idt_init() {
 	set_gate(254, &interrupts_handler254, 0x8E);
 	set_gate(255, &interrupts_handler255, 0x8E);
 
-	idt_load(&lidt_pointer);
+	asm volatile("lidt (%0);":: "m" (lidt_pointer));
 }
