@@ -31,6 +31,7 @@ struct execdata {
 	uint32_t envc;
 	void** argv;
 	void** env;
+	char binary_path[TASK_PATH_MAX];
 };
 
 /* Sets up a single page of runtime data for the program, including PID, argv,
@@ -74,4 +75,5 @@ void task_setup_execdata(task_t* task) {
 	exc->envc = task->envc;
 	exc->argv = (void*)vmem_translate(task->memory_context, (intptr_t)argv, true);
 	exc->env = (void*)vmem_translate(task->memory_context, (intptr_t)environ, true);
+	strncpy(exc->binary_path, task->binary_path, TASK_PATH_MAX);
 }

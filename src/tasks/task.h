@@ -96,6 +96,7 @@ typedef struct task {
 
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[TASK_PATH_MAX + 1];
+	char binary_path[TASK_PATH_MAX + 1];
 
 	/* A task-specific errno variable. After a syscall return, this will be put
 	 * into the ebx register, from where the userland syscall handler will

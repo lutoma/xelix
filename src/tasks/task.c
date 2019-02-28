@@ -103,8 +103,6 @@ static void map_memory(task_t* task) {
 
 	// FIXME Should have VMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
 	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000, VMEM_SECTION_CODE, 0);
-
-	task_setup_execdata(task);
 }
 
 /* Sets up a new task, including the necessary paging context, stacks,
@@ -220,6 +218,8 @@ static void  __attribute__((optimize("O0"))) clean_memory(task_t* t) {
 }
 
 void task_set_initial_state(task_t* task, void* entry) {
+	task_setup_execdata(task);
+
 	task->state->ds = GDT_SEG_DATA_PL3;
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
 	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;

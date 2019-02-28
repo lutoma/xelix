@@ -28,6 +28,7 @@ struct _xelix_execdata {
 	uint32_t envc;
 	void** argv;
 	void** env;
+	char binary_path[256];
 };
 
 struct _xelix_execdata* _xelix_execdata;

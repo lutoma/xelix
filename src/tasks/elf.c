@@ -81,10 +81,10 @@
 
 static char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-static inline void* bin_read(int fd, task_t* task, size_t offset, size_t size, void* inbuf) {
+static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf) {
 	void* buf = inbuf ? inbuf : kmalloc(size);
-	vfs_seek(fd, offset, VFS_SEEK_SET, task->parent);
-	size_t read = vfs_read(fd, buf, size, task->parent);
+	vfs_seek(fd, offset, VFS_SEEK_SET, NULL);
+	size_t read = vfs_read(fd, buf, size, NULL);
 	if(likely(read == size)) {
 		return buf;
 	}
@@ -95,8 +95,7 @@ static inline void* bin_read(int fd, task_t* task, size_t offset, size_t size, v
 }
 
 static int read_sections(int fd, elf_t* header, void* binary_start, uint32_t memsize, task_t* task) {
-	elf_section_t* shead_start = bin_read(fd, task, header->shoff,
-		header->shnum * header->shentsize, NULL);
+	elf_section_t* shead_start = bin_read(fd, header->shoff, header->shnum * header->shentsize, NULL);
 	if(!shead_start) {
 		return -1;
 	}
@@ -116,7 +115,7 @@ static int read_sections(int fd, elf_t* header, void* binary_start, uint32_t mem
 
 		void* dest = (void*)vmem_translate(task->memory_context, (intptr_t)shead->addr, false);
 		if(unlikely(!dest || shead->offset + shead->size > memsize ||
-			!bin_read(fd, task, shead->offset, shead->size, dest))) {
+			!bin_read(fd, shead->offset, shead->size, dest))) {
 
 			kfree(shead_start);
 			return -1;
@@ -140,7 +139,7 @@ static uint32_t read_pheads(int fd, elf_t* header, void** binary_start, char** i
 	 * to that region based on the sections.
 	 */
 
-	elf_program_header_t* phead_start = bin_read(fd, task, header->phoff,
+	elf_program_header_t* phead_start = bin_read(fd, header->phoff,
 		header->phnum * header->phentsize, NULL);
 	if(unlikely(!phead_start)) {
 		return -1;
@@ -155,7 +154,7 @@ static uint32_t read_pheads(int fd, elf_t* header, void** binary_start, char** i
 			case PT_LOAD:
 				memsize += phead->memsz; break;
 			case PT_INTERP:;
-				*interp = bin_read(fd, task, phead->offset, phead->filesz, NULL);
+				*interp = bin_read(fd, phead->offset, phead->filesz, NULL);
 				return 0;
 		}
 
@@ -179,20 +178,25 @@ static uint32_t read_pheads(int fd, elf_t* header, void** binary_start, char** i
 #define LF_ASSERT(cmp, msg)                    \
 if(unlikely(!(cmp))) {                         \
 	log(LOG_INFO, "elf: elf_load: " msg "\n"); \
-	vfs_close(fd, task->parent);               \
+	vfs_close(fd, NULL);               \
 	kfree(header);                             \
 	sc_errno = ENOEXEC;						   \
 	return -1;                                 \
 }
 
 int elf_load_file(task_t* task, char* path) {
-	// Need to use task->parent to resolve relative paths from excecve
-	int fd = vfs_open(path, O_RDONLY, task->parent);
+	char* abs_path = vfs_normalize_path(path, task->cwd);
+	if(!*task->binary_path) {
+		strncpy(task->binary_path, abs_path, TASK_PATH_MAX);
+	}
+
+	int fd = vfs_open(abs_path, O_RDONLY, NULL);
+	kfree(abs_path);
 	if(unlikely(fd == -1)) {
 		return -1;
 	}
 
-	elf_t* header = bin_read(fd, task, 0, sizeof(elf_t), NULL);
+	elf_t* header = bin_read(fd, 0, sizeof(elf_t), NULL);
 	LF_ASSERT(header, "Could not read ELF header");
 	LF_ASSERT(!memcmp(header->ident, elf_magic, sizeof(elf_magic)),
 		"Invalid magic");
@@ -213,7 +217,7 @@ int elf_load_file(task_t* task, char* path) {
 	// If we the binary has an interpreter/linker set, run it.
 	if(interp) {
 		kfree(header);
-		vfs_close(fd, task->parent);
+		vfs_close(fd, NULL);
 		int r = elf_load_file(task, interp);
 		kfree(interp);
 		return r;
@@ -224,6 +228,7 @@ int elf_load_file(task_t* task, char* path) {
 
 	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", header->entry, task->sbrk);
 	kfree(header);
-	vfs_close(fd, task->parent);
+	vfs_close(fd, NULL);
+
 	return 0;
 }
