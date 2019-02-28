@@ -25,13 +25,16 @@ else
 	sudo grub-install /dev/nbd0 --boot-directory=mnt/boot --modules="normal part_msdos ext2 multiboot" --no-floppy --target=i386-pc
 	cat <<EOF | sudo sponge mnt/boot/grub/grub.cfg
 set root='hd0,msdos1'
-set timeout=1
+
+if [ "x\${timeout}" != "x-1" ]; then
+	if keystatus --shift; then
+		set timeout=-1
+	else
+		set timeout=0
+	fi
+fi
 
 menuentry 'Xelix' {
-	set gfxmode=720x480x24
-	set gfxpayload=keep
-	insmod vbe
-	insmod gfxterm
 	multiboot2 "(\$root)/boot/xelix.bin"
 }
 EOF
