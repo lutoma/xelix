@@ -83,13 +83,20 @@ gcc-install:
 	@make -C build/gcc install-gcc
 	@make -C build/gcc install-target-libgcc
 	@make -C build/gcc install-target-libstdc++-v3
-	@ln -s i586-pc-xelix-gcc local/bin/i586-pc-xelix-cc
+	@ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc
 
 gcc-make:
 	@echo "Building gcc"
 	@rm -r build/gcc
 	@mkdir -p build/gcc
-	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --enable-languages=c,c++ --with-newlib --without-docdir
+	@cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure \
+		--target=${TARGET} \
+		--prefix=${PREFIX} \
+		--disable-nls \
+		--enable-languages=c,c++ \
+		--with-headers=../../download/newlib-3.1.0.20181231/newlib/libc/include \
+		--without-docdir
+
 	@make -C build/gcc all-gcc
 	@make -C build/gcc all-target-libgcc
 	@make -C build/gcc all-target-libstdc++-v3

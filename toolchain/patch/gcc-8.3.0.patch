@@ -61,9 +61,24 @@ index 11b4acaff..6a12c2f8b 100644
  	tmake_file="${tmake_file} ${tmake_eh_file} ${tmake_dlldir_file} i386/t-slibgcc-cygming i386/t-cygming i386/t-mingw32 t-crtfm i386/t-chkstk t-dfprules"
  	;;
 +i[34567]86-*-xelix*)
-+	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o crtbeginS.o crtendS.o"
 +	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
 +	;;
  x86_64-*-mingw*)
  	case ${target_thread_file} in
  	  win32)
+--- download/gcc-8.3.0/libstdc++-v3/crossconfig.m4	2019-02-28 00:22:34.907419609 +0100
++++ download/gcc-8.3.0/libstdc++-v3/crossconfig.m4	2019-02-28 00:23:40.386423732 +0100
+@@ -291,6 +291,12 @@
+     AC_DEFINE(HAVE_TANF)
+     AC_DEFINE(HAVE_TANHF)
+     ;;
++  *-xelix)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES
++    GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
+   *)
+     AC_MSG_ERROR([No support for this host/target combination.])
+    ;;
