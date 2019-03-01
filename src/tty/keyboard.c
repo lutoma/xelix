@@ -70,7 +70,6 @@ static struct tty_input_state* keycode_to_input(uint8_t code, bool esc) {
 	}
 
 	if(esc) {
-		serial_printf("unknown escaped code 0x%x\n", code);
 		return NULL;
 	}
 

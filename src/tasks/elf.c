@@ -35,12 +35,14 @@
  #define debug(...)
 #endif
 
+#define MAXDEPS 50
+
 struct elf_load_ctx {
 	int fd;
 	task_t* task;
 	char* interp;
-	char* strtab;
-	uint32_t dyndeps[50];
+	void* dynstr_virt;
+	uint32_t dyndeps[MAXDEPS];
 	uint32_t ndyndeps;
 };
 
@@ -53,70 +55,15 @@ static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf) {
 	if(likely(read == size)) {
 		return buf;
 	}
+
+	debug("elf: bin_read: Read size %#x at offset %#x smaller than expected %#x\n", read, offset, size);
 	if(!inbuf) {
 		kfree(buf);
 	}
 	return NULL;
 }
 
-static int load_section(struct elf_load_ctx* ctx, elf_section_t* shead) {
-	void* dest = (void*)vmem_translate(ctx->task->memory_context, (intptr_t)shead->addr, false);
-
-	// FIXME: Check for buffer overflow here using size from struct task_mem
-	if(unlikely(!dest || !bin_read(ctx->fd, shead->offset, shead->size, dest))) {
-		return -1;
-	}
-
-	debug("  -> Loaded to phys 0x%x - 0x%x virt 0x%x - 0x%x\n",
-		dest, dest + shead->size, shead->addr, shead->addr + shead->size);
-	return 0;
-}
-
-static int read_sections(elf_t* header, struct elf_load_ctx* ctx) {
-	elf_section_t* shead_start = bin_read(ctx->fd, header->shoff, header->shnum * header->shentsize, NULL);
-	if(unlikely(!shead_start)) {
-		return -1;
-	}
-
-	elf_section_t* shead = shead_start;
-	int loaded_sections = 0;
-	for(int i = 0; i < header->shnum; i++) {
-		debug("elf: Section %d, type 0x%x, size 0x%x, offset 0x%x\n",
-			i, shead->type, shead->size, shead->offset);
-
-		/* Sections without a type are unused/empty. This is usually the case
-		 * for the first section.
-		 */
-		if(!shead->type) {
-			goto section_cont;
-		}
-
-		// Load strtab if we need it to resolve dynamic library names
-		if(ctx->ndyndeps && shead->type == SHT_STRTAB) {
-			ctx->strtab = bin_read(ctx->fd, shead->offset, shead->size, NULL);
-			if(!ctx->strtab) {
-				return -1;
-			}
-		}
-
-		if(shead->flags & SHF_ALLOC && shead->type != SHT_NOBITS) {
-			if(unlikely(load_section(ctx, shead) < 0)) {
-				kfree(shead_start);
-				return -1;
-			}
-
-			loaded_sections++;
-		}
-
-		section_cont:
-		shead = (elf_section_t*)((intptr_t)shead + (intptr_t)header->shentsize);
-	}
-
-	kfree(shead_start);
-	return loaded_sections;
-}
-
-static int alloc_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
+static int load_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
 	int section = TMEM_SECTION_DATA;
 	if(phead->flags & PF_X) {
 		// Can't be both executable and writable
@@ -129,7 +76,13 @@ static int alloc_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
 	size_t size = VMEM_ALIGN(phead->memsz);
 	void* virt = VMEM_ALIGN_DOWN(phead->vaddr);
 	void* phys = zmalloc_a(size);
+	size_t phys_offset = phead->vaddr - virt;
 	if(unlikely(!phys)) {
+		return -1;
+	}
+
+	if(unlikely(!bin_read(ctx->fd, phead->offset, phead->filesz, phys + phys_offset))) {
+		kfree(phys);
 		return -1;
 	}
 
@@ -138,9 +91,33 @@ static int alloc_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
 		ctx->task->sbrk = virt + size;
 	}
 
-	debug("  -> Allocated memory region phys 0x%x-0x%x to virt 0x%x-0x%x\n",
+	debug("  phys %#-8x-%#-8x virt %#-8x-%#-8x\n",
 		phys, (intptr_t)phys + size, virt, (intptr_t)virt + size);
 	return 0;
+}
+
+static int read_dyn_table(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
+	void* dyn = bin_read(ctx->fd, phead->offset, phead->filesz, NULL);
+	if(!dyn) {
+		return -1;
+	}
+
+	elf_dyn_tag_t* tag = (elf_dyn_tag_t*)dyn;
+	while((void*)(tag + 1) < dyn + phead->filesz && tag->tag) {
+		if(tag->tag == DT_NEEDED) {
+			if(ctx->ndyndeps >= MAXDEPS) {
+				return -1;
+			}
+
+			ctx->dyndeps[ctx->ndyndeps++] = tag->val;
+		}
+		if(tag->tag == DT_STRTAB) {
+			ctx->dynstr_virt = tag->val;
+		}
+		tag++;
+	}
+
+	kfree(dyn);
 }
 
 static uint32_t read_pheads(elf_t* header, struct elf_load_ctx* ctx) {
@@ -152,13 +129,14 @@ static uint32_t read_pheads(elf_t* header, struct elf_load_ctx* ctx) {
 
 	elf_program_header_t* phead = phead_start;
 
+	debug("elf: Program headers:\n");
 	for(int i = 0; i < header->phnum; i++) {
-		debug("elf: Program header %d, type 0x%x, vaddr 0x%x, memsz 0x%x\n",
-			i, phead->type, phead->vaddr, phead->memsz);
+		debug("  %-2d type %-2d offset %#-6x vaddr %#-8x memsz %#-8x filesz %#-8x\n",
+			i, phead->type, phead->offset, phead->vaddr, phead->memsz, phead->filesz);
 
 		switch(phead->type) {
 			case PT_LOAD:
-				if(alloc_phead(ctx, phead) < 0) {
+				if(load_phead(ctx, phead) < 0) {
 					return -1;
 				}
 				break;
@@ -168,15 +146,8 @@ static uint32_t read_pheads(elf_t* header, struct elf_load_ctx* ctx) {
 					return -1;
 				}
 				break;
-			case PT_DYNAMIC:;
-				elf_dyn_tag_t* dyn = bin_read(ctx->fd, phead->offset, phead->filesz, NULL);
-				for(; dyn->tag; dyn++) {
-					if(dyn->tag == DT_NEEDED) {
-						ctx->dyndeps[ctx->ndyndeps++] = dyn->val;
-					}
-				}
-
-				kfree(dyn);
+			case PT_DYNAMIC:
+				read_dyn_table(ctx, phead);
 				break;
 		}
 
@@ -226,18 +197,15 @@ int elf_load_file(task_t* task, char* path) {
 
 	LF_ASSERT(read_pheads(header, ctx) != -1, "Loading program headers failed");
 
-	// If the binary has an interpreter/linker set, run it.
-	if(ctx->interp) {
-		kfree(header);
-		vfs_close(ctx->fd, NULL);
-		int r = elf_load_file(task, ctx->interp);
-		kfree(ctx->interp);
-		kfree(ctx);
-		return r;
-	}
+	if(ctx->ndyndeps) {
+		serial_printf("Gathered %d dynamic dependencies\n", ctx->ndyndeps);
+		char* dynstr = vmem_translate(task->memory_context, ctx->dynstr_virt, false);
 
-	int loaded = read_sections(header, ctx);
-	LF_ASSERT(loaded > 0, "Loading sections failed.");
+		for(int i = 0; i < ctx->ndyndeps; i++) {
+			char* libname = dynstr + ctx->dyndeps[i];
+			serial_printf("%d offset %d, lib %s\n", i, ctx->dyndeps[i], libname);
+		}
+	}
 
 	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", header->entry, task->sbrk);
 	kfree(header);
