@@ -141,7 +141,9 @@ int task_fork(task_t* to_fork, isf_t* state) {
 	memcpy(task->stack, to_fork->stack, STACKSIZE);
 	memcpy(task->state, state, sizeof(isf_t));
 	memcpy(task->kernel_stack, to_fork->kernel_stack, STACKSIZE);
+	memcpy(task->binary_path, to_fork->binary_path, sizeof(task->binary_path));
 	map_memory(task);
+	task_setup_execdata(task);
 
 	// Adjust kernel esp
 	intptr_t diff = state->esp - to_fork->kernel_stack;
