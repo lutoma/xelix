@@ -38,12 +38,19 @@
 #define MAXDEPS 50
 
 struct elf_load_ctx {
-	int fd;
+	bool main_loaded;
 	task_t* task;
+	void* entry;
+	void* virt_end;
+
+	// Interpreter for dynamic linking
 	char* interp;
-	void* dynstr_virt;
+	// Dynamic library string table (virt address)
+	void* dynstrtab;
+	// Required dependencies, as offsets to dynstrtab
 	uint32_t dyndeps[MAXDEPS];
 	uint32_t ndyndeps;
+	size_t entry_offset;
 };
 
 static char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -56,14 +63,14 @@ static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf) {
 		return buf;
 	}
 
-	debug("elf: bin_read: Read size %#x at offset %#x smaller than expected %#x\n", read, offset, size);
+	debug("elf: bin_read: Read size %#x at offset %#x fd %d smaller than expected %#x\n", read, offset, fd, size);
 	if(!inbuf) {
 		kfree(buf);
 	}
 	return NULL;
 }
 
-static int load_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
+static int load_phead(struct elf_load_ctx* ctx, int fd, elf_program_header_t* phead) {
 	int section = TMEM_SECTION_DATA;
 	if(phead->flags & PF_X) {
 		// Can't be both executable and writable
@@ -74,21 +81,31 @@ static int load_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
 	}
 
 	size_t size = VMEM_ALIGN(phead->memsz);
-	void* virt = VMEM_ALIGN_DOWN(phead->vaddr);
+	void* virt;
+	if(ctx->main_loaded) {
+		virt = ctx->virt_end;
+
+		if(!ctx->entry_offset) {
+			ctx->entry_offset = virt - phead->vaddr;
+		}
+	} else {
+		virt = VMEM_ALIGN_DOWN(phead->vaddr);
+	}
+
 	void* phys = zmalloc_a(size);
 	size_t phys_offset = phead->vaddr - virt;
 	if(unlikely(!phys)) {
 		return -1;
 	}
 
-	if(unlikely(!bin_read(ctx->fd, phead->offset, phead->filesz, phys + phys_offset))) {
+	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, phys + phys_offset))) {
 		kfree(phys);
 		return -1;
 	}
 
 	task_add_mem(ctx->task, virt, phys, size, section, TASK_MEM_FORK | TASK_MEM_FREE);
-	if(virt + size > ctx->task->sbrk) {
-		ctx->task->sbrk = virt + size;
+	if(virt + size > ctx->virt_end) {
+		ctx->virt_end = virt + size;
 	}
 
 	debug("  phys %#-8x-%#-8x virt %#-8x-%#-8x\n",
@@ -96,32 +113,35 @@ static int load_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
 	return 0;
 }
 
-static int read_dyn_table(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
-	void* dyn = bin_read(ctx->fd, phead->offset, phead->filesz, NULL);
+static int read_dyn_table(struct elf_load_ctx* ctx, int fd, elf_program_header_t* phead) {
+	void* dyn = bin_read(fd, phead->offset, phead->filesz, NULL);
 	if(!dyn) {
 		return -1;
 	}
 
 	elf_dyn_tag_t* tag = (elf_dyn_tag_t*)dyn;
 	while((void*)(tag + 1) < dyn + phead->filesz && tag->tag) {
-		if(tag->tag == DT_NEEDED) {
-			if(ctx->ndyndeps >= MAXDEPS) {
-				return -1;
-			}
+		switch(tag->tag) {
+			case DT_NEEDED:
+				if(ctx->ndyndeps >= MAXDEPS) {
+					return -1;
+				}
 
-			ctx->dyndeps[ctx->ndyndeps++] = tag->val;
-		}
-		if(tag->tag == DT_STRTAB) {
-			ctx->dynstr_virt = tag->val;
+				ctx->dyndeps[ctx->ndyndeps++] = tag->val;
+				break;
+			case DT_STRTAB:
+				ctx->dynstrtab = (void*)tag->val;
+				break;
 		}
 		tag++;
 	}
 
 	kfree(dyn);
+	return 0;
 }
 
-static uint32_t read_pheads(elf_t* header, struct elf_load_ctx* ctx) {
-	elf_program_header_t* phead_start = bin_read(ctx->fd, header->phoff,
+static uint32_t read_pheads(struct elf_load_ctx* ctx, int fd, elf_t* header) {
+	elf_program_header_t* phead_start = bin_read(fd, header->phoff,
 		header->phnum * header->phentsize, NULL);
 	if(unlikely(!phead_start)) {
 		return -1;
@@ -136,18 +156,24 @@ static uint32_t read_pheads(elf_t* header, struct elf_load_ctx* ctx) {
 
 		switch(phead->type) {
 			case PT_LOAD:
-				if(load_phead(ctx, phead) < 0) {
+				if(load_phead(ctx, fd, phead) < 0) {
 					return -1;
 				}
 				break;
 			case PT_INTERP:
-				ctx->interp = bin_read(ctx->fd, phead->offset, phead->filesz, NULL);
-				if(!ctx->interp) {
-					return -1;
+				if(!ctx->main_loaded) {
+					ctx->interp = bin_read(fd, phead->offset, phead->filesz, NULL);
+					if(!ctx->interp) {
+						return -1;
+					}
 				}
 				break;
 			case PT_DYNAMIC:
-				read_dyn_table(ctx, phead);
+				if(!ctx->main_loaded) {
+					if(read_dyn_table(ctx, fd, phead) < 0) {
+						return -1;
+					}
+				}
 				break;
 		}
 
@@ -160,57 +186,95 @@ static uint32_t read_pheads(elf_t* header, struct elf_load_ctx* ctx) {
 #define LF_ASSERT(cmp, msg)                    \
 if(unlikely(!(cmp))) {                         \
 	log(LOG_INFO, "elf: elf_load: " msg "\n"); \
-	vfs_close(ctx->fd, NULL);                  \
+	vfs_close(fd, NULL);                       \
 	kfree(header);                             \
-	sc_errno = ENOEXEC;                        \
 	return -1;                                 \
 }
 
-int elf_load_file(task_t* task, char* path) {
-	char* abs_path = vfs_normalize_path(path, task->cwd);
-	struct elf_load_ctx* ctx = zmalloc(sizeof(struct elf_load_ctx));
-	ctx->task = task;
-
-	if(!*task->binary_path) {
-		strncpy(task->binary_path, abs_path, TASK_PATH_MAX);
-	}
-
-	ctx->fd = vfs_open(abs_path, O_RDONLY, NULL);
-	kfree(abs_path);
-	if(unlikely(ctx->fd < 0)) {
+static int load_file(struct elf_load_ctx* ctx, task_t* task, char* path) {
+	debug("elf: Loading %s\n", path);
+	int fd = vfs_open(path, O_RDONLY, NULL);
+	if(unlikely(fd < 0)) {
 		kfree(ctx);
 		return -1;
 	}
 
-	elf_t* header = bin_read(ctx->fd, 0, sizeof(elf_t), NULL);
+	elf_t* header = bin_read(fd, 0, sizeof(elf_t), NULL);
 	LF_ASSERT(header, "Could not read ELF header");
 	LF_ASSERT(!memcmp(header->ident, elf_magic, sizeof(elf_magic)),
 		"Invalid magic");
 
-	LF_ASSERT(header->type == ELF_TYPE_EXEC, "Binary is inexecutable");
+	if(!ctx->main_loaded) {
+		LF_ASSERT(header->type == ELF_TYPE_EXEC, "Binary is inexecutable");
+	}
+
 	LF_ASSERT(header->machine == ELF_ARCH_386, "Invalid architecture");
 	LF_ASSERT(header->version == ELF_VERSION_CURRENT, "Unsupported ELF version");
 	LF_ASSERT(header->entry, "Binary has no entry point");
 	LF_ASSERT(header->phnum, "No program headers");
 	LF_ASSERT(header->shnum, "No section headers");
-	task_set_initial_state(task, header->entry);
 
-	LF_ASSERT(read_pheads(header, ctx) != -1, "Loading program headers failed");
+	LF_ASSERT(read_pheads(ctx, fd, header) != -1, "Loading program headers failed");
+
+	ctx->entry = header->entry;
+	kfree(header);
+	vfs_close(fd, NULL);
+	return 0;
+}
+
+int elf_load_file(task_t* task, char* path) {
+	char* abs_path = vfs_normalize_path(path, task->cwd);
+	struct elf_load_ctx* ctx = zmalloc(sizeof(struct elf_load_ctx));
+
+	if(!*ctx->task->binary_path) {
+		strncpy(task->binary_path, abs_path, TASK_PATH_MAX);
+	}
+
+	ctx->task = task;
+	if(load_file(ctx, task, abs_path) < 0) {
+		kfree(abs_path);
+		kfree(ctx);
+		sc_errno = ENOEXEC;
+		return -1;
+	}
+	kfree(abs_path);
+	ctx->main_loaded = true;
+	void* entry = ctx->entry;
 
 	if(ctx->ndyndeps) {
-		serial_printf("Gathered %d dynamic dependencies\n", ctx->ndyndeps);
-		char* dynstr = vmem_translate(task->memory_context, ctx->dynstr_virt, false);
+		if(!ctx->interp) {
+			kfree(ctx);
+			sc_errno = ENOEXEC;
+			return -1;
+		}
 
+		if(load_file(ctx, task, ctx->interp) < 0) {
+			kfree(ctx);
+			sc_errno = ENOEXEC;
+			return -1;
+		}
+
+		entry = ctx->entry + ctx->entry_offset;
+
+		char* dynstr = (void*)vmem_translate(task->memory_context, (intptr_t)ctx->dynstrtab, false);
 		for(int i = 0; i < ctx->ndyndeps; i++) {
-			char* libname = dynstr + ctx->dyndeps[i];
-			serial_printf("%d offset %d, lib %s\n", i, ctx->dyndeps[i], libname);
+			char* lib_path = kmalloc(strlen(dynstr + ctx->dyndeps[i]) + 10);
+			sprintf(lib_path, "/usr/lib/%s", dynstr + ctx->dyndeps[i]);
+
+			if(load_file(ctx, task, lib_path) < 0) {
+				kfree(lib_path);
+				kfree(ctx);
+				sc_errno = ENOEXEC;
+				return -1;
+			}
+			kfree(lib_path);
 		}
 	}
 
-	debug("elf: Entry point is 0x%x, sbrk 0x%x\n", header->entry, task->sbrk);
-	kfree(header);
-	kfree(ctx);
-	vfs_close(ctx->fd, NULL);
+	task->sbrk = ctx->virt_end;
+	task_set_initial_state(task, ctx->entry);
 
+	debug("elf: Entry point 0x%x, sbrk 0x%x\n", entry, task->sbrk);
+	kfree(ctx);
 	return 0;
 }

@@ -25,7 +25,7 @@
 #define strdup(string) strndup(string, strlen(string))
 #define strcmp __builtin_strcmp
 #define strncmp __builtin_strncmp
-#define strcat __builtin_strncat
+#define strcat __builtin_strcat
 #define strcpy __builtin_strcpy
 #define strncpy __builtin_strncpy
 #define strlen __builtin_strlen
