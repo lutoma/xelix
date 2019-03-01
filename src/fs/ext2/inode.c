@@ -153,12 +153,6 @@ void ext2_free_blocknum_resolver_cache(struct ext2_blocknum_resolver_cache* cach
 // FIXME This is a mess (and also has no triply-indirect block support).
 uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct ext2_blocknum_resolver_cache* cache) {
 	uint32_t real_block_num = 0;
-
-	if(block_num > superblock->block_count) {
-		debug("inode_resolve_blocknum: Invalid block_num (%d > %d)\n", block_num, superblock->block_count);
-		return 0;
-	}
-
 	const uint32_t entries_per_block = bl_off(1) / sizeof(uint32_t);
 
 	if(block_num < 12) {
