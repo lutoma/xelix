@@ -21,8 +21,8 @@
 #include <log.h>
 #include <panic.h>
 
-struct multiboot_tag_mmap* mmap_info = NULL;
-struct multiboot_tag_framebuffer framebuffer_info;
+static struct multiboot_tag_mmap* mmap_info = NULL;
+static struct multiboot_tag_framebuffer framebuffer_info;
 
 static char* tag_type_names[] = {
 	NULL,
@@ -67,6 +67,7 @@ void multiboot_init(uint32_t magic, void* header) {
 	uint32_t total_size = *(uint32_t*)header;
 	intptr_t offset = 8;
 
+	log(LOG_INFO, "multiboot2 tags:\n");
 	struct multiboot_tag* tag = header + offset;
 	while(tag < (struct multiboot_tag*)(header + total_size)) {
 		// Tags are always padded to be 8-aligned
@@ -78,8 +79,11 @@ void multiboot_init(uint32_t magic, void* header) {
 			break;
 		}
 
-		log(LOG_DEBUG, "multiboot: %s (%d) size %d.\n", tag_type_names[tag->type],
-			tag->type, tag->size);
+		char* strrep = "";
+		if(tag->type == MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME || tag->type == MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME) {
+			strrep = (char*)(tag + 1);
+		}
+		log(LOG_INFO, "  %#-10x size %-4d %-18s %s\n", tag, tag->size, tag_type_names[tag->type], strrep);
 
 		switch(tag->type) {
 			case MULTIBOOT_TAG_TYPE_MMAP:
