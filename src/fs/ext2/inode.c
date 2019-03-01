@@ -212,11 +212,12 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 	uint32_t offset, size_t length, uint8_t* buf) {
 
+
 	uint32_t num_blocks = bl_size(length);
-	if(bl_mod(length) != 0) {
+	if(bl_mod(length)) {
 		num_blocks++;
 	}
-	if(bl_mod(offset) != 0 && bl_mod(offset) + length > bl_off(1)) {
+	if(bl_mod(offset) && bl_mod(offset) + bl_mod(length) > bl_off(1)) {
 		num_blocks++;
 	}
 
