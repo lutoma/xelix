@@ -117,6 +117,15 @@ static int read_sections(elf_t* header, struct elf_load_ctx* ctx) {
 }
 
 static int alloc_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
+	int section = TMEM_SECTION_DATA;
+	if(phead->flags & PF_X) {
+		// Can't be both executable and writable
+		if(phead->flags & PF_W) {
+			return -1;
+		}
+		section = TMEM_SECTION_CODE;
+	}
+
 	size_t size = VMEM_ALIGN(phead->memsz);
 	void* virt = VMEM_ALIGN_DOWN(phead->vaddr);
 	void* phys = zmalloc_a(size);
@@ -124,9 +133,7 @@ static int alloc_phead(struct elf_load_ctx* ctx, elf_program_header_t* phead) {
 		return -1;
 	}
 
-	task_add_mem(ctx->task, virt, phys, size, VMEM_SECTION_CODE,
-		TASK_MEM_FORK | TASK_MEM_FREE);
-
+	task_add_mem(ctx->task, virt, phys, size, section, TASK_MEM_FORK | TASK_MEM_FREE);
 	if(virt + size > ctx->task->sbrk) {
 		ctx->task->sbrk = virt + size;
 	}
@@ -151,7 +158,10 @@ static uint32_t read_pheads(elf_t* header, struct elf_load_ctx* ctx) {
 
 		switch(phead->type) {
 			case PT_LOAD:
-				alloc_phead(ctx, phead); break;
+				if(alloc_phead(ctx, phead) < 0) {
+					return -1;
+				}
+				break;
 			case PT_INTERP:
 				ctx->interp = bin_read(ctx->fd, phead->offset, phead->filesz, NULL);
 				if(!ctx->interp) {

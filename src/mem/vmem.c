@@ -65,7 +65,7 @@ struct vmem_context
 void vmem_init()
 {
 	struct vmem_context *ctx = vmem_new();
-	vmem_map_flat(ctx, 0, 0xffffe000U, VMEM_SECTION_KERNEL);
+	vmem_map_flat(ctx, 0, 0xffffe000U, 0, 0);
 	vmem_kernelContext = ctx;
 }
 
@@ -273,14 +273,14 @@ void *vmem_get_cache(struct vmem_context *ctx)
 	return ctx->cache;
 }
 
-void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, int section) {
+void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, bool user, bool ro) {
 	for(uint32_t i = 0; i < VMEM_ALIGN(size); i += PAGE_SIZE)
 	{
 		struct vmem_page *page = vmem_new_page();
-		page->section = section;
-		page->readonly = 0;
+		page->readonly = ro;
 		page->cow = 0;
 		page->allocated = 1;
+		page->user = user;
 		page->virt_addr = virt_start + i;
 		page->phys_addr = phys_start + i;
 		vmem_add_page(ctx, page);
@@ -303,36 +303,8 @@ intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool revers
 	return v + diff;
 }
 
-static void vmem_dump_page_internal(struct vmem_context *ctx, struct vmem_page *pg, uint32_t i)
-{
-	char *typeString = "UNKNOWN";
-	switch (pg->section)
-	{
-		case VMEM_SECTION_STACK:
-			typeString = "STACK";
-			break;
-		case VMEM_SECTION_CODE:
-			typeString = "CODE";
-			break;
-		case VMEM_SECTION_DATA:
-			typeString = "DATA";
-			break;
-		case VMEM_SECTION_HEAP:
-			typeString = "HEAP";
-			break;
-		case VMEM_SECTION_MMAP:
-			typeString = "MMAP";
-			break;
-		case VMEM_SECTION_KERNEL:
-			typeString = "KERNEL";
-			break;
-		case VMEM_SECTION_UNMAPPED:
-			typeString = "UNMAPPED";
-			break;
-	}
-
-	printf("[%s] Virt 0x%x Phys 0x%x Cow 0x%x ro:%d alloc:%d cow:%d\n",
-			typeString,
+static void vmem_dump_page_internal(struct vmem_context *ctx, struct vmem_page *pg, uint32_t i) {
+	printf("Virt 0x%x Phys 0x%x Cow 0x%x ro:%d alloc:%d cow:%d\n",
 			pg->virt_addr,
 			pg->phys_addr,
 			pg->cow_src_addr,

@@ -81,15 +81,7 @@ static int paging_assign(struct paging_context *ctx, uint32_t virtual, uint32_t 
 void paging_applyPage(struct vmem_context *ctx, struct vmem_page *pg)
 {
 	struct paging_context *pgCtx = vmem_get_cache(ctx);
-	bool user = true;
-	bool write = !pg->readonly;
-
-	if (pg->section == VMEM_SECTION_KERNEL && write == true)
-		user = false;
-	else if (pg->section == VMEM_SECTION_STACK && pg->allocated == 0)
-		return;
-
-	paging_assign(pgCtx, (uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, write, user, (pg->section != VMEM_SECTION_UNMAPPED));
+	paging_assign(pgCtx, (uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, !pg->readonly, pg->user, pg->allocated);
 }
 
 static void paging_vmIterator(struct vmem_context *ctx, struct vmem_page *pg, uint32_t offset)

@@ -70,9 +70,11 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 }
 
 void task_add_mem(task_t* task, void* virt_start, void* phys_start,
-	uint32_t size, enum vmem_section section, int flags) {
-	if(section && section != VMEM_SECTION_UNMAPPED) {
-		vmem_map(task->memory_context, virt_start, phys_start, size, section);
+	uint32_t size, enum task_mem_section section, int flags) {
+	bool user = section != TMEM_SECTION_KERNEL;
+	bool ro = section == TMEM_SECTION_CODE;
+	if(section) {
+		vmem_map(task->memory_context, virt_start, phys_start, size, user, ro);
 	}
 
 	struct task_mem* alloc = zmalloc(sizeof(struct task_mem));
@@ -97,12 +99,12 @@ static void map_memory(task_t* task) {
 	 * the paging context switch in a separate ELF section and maybe only map
 	 * that.
 	 */
-	task_add_mem(task, (void*)STACK_LOCATION, task->stack, STACKSIZE, VMEM_SECTION_DATA, 0);
-	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, VMEM_SECTION_KERNEL, 0);
-	task_add_mem_flat(task, task->state, PAGE_SIZE, VMEM_SECTION_DATA, 0);
+	task_add_mem(task, (void*)STACK_LOCATION, task->stack, STACKSIZE, TMEM_SECTION_DATA, 0);
+	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, TMEM_SECTION_KERNEL, 0);
+	task_add_mem_flat(task, task->state, PAGE_SIZE, TMEM_SECTION_DATA, 0);
 
-	// FIXME Should have VMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
-	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000, VMEM_SECTION_CODE, 0);
+	// FIXME Should have TMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
+	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000, TMEM_SECTION_CODE, 0);
 }
 
 /* Sets up a new task, including the necessary paging context, stacks,
@@ -299,7 +301,7 @@ void* task_sbrk(task_t* task, size_t length) {
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	task_add_mem(task, virt_addr, phys_addr, length, VMEM_SECTION_HEAP,
+	task_add_mem(task, virt_addr, phys_addr, length, TMEM_SECTION_HEAP,
 		TASK_MEM_FORK | TASK_MEM_FREE);
 
 	return virt_addr;
@@ -349,7 +351,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 	for(; alloc; alloc = alloc->next) {
 		sysfs_printf("0x%-8x -> 0x%-8x length 0x%-6x %-10s\n",
 			alloc->phys_addr, alloc->virt_addr, alloc->len,
-			vmem_section_verbose(alloc->section));
+			task_mem_section_verbose(alloc->section));
 	}
 
 

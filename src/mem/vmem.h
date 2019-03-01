@@ -23,22 +23,11 @@
 
 struct vmem_context;
 
-enum vmem_section {
-	VMEM_SECTION_STACK,   /* Initial stack */
-	VMEM_SECTION_CODE,    /* Contains program code and is read-only */
-	VMEM_SECTION_DATA,    /* Contains static data */
-	VMEM_SECTION_HEAP,    /* Allocated by brk(2) at runtime */
-	VMEM_SECTION_MMAP,    /* Allocated by mmap(2) at runtime */
-	VMEM_SECTION_KERNEL,  /* Contains kernel-internal data */
-	VMEM_SECTION_UNMAPPED /* Unmapped */
-};
-
 struct vmem_page {
-	enum vmem_section section;
-
 	bool readonly:1;
 	bool cow:1; /* Copy-on-Write mechanism */
 	bool allocated:1;
+	bool user:1;
 
 	void *cow_src_addr;
 	void *virt_addr;
@@ -86,8 +75,8 @@ char* vmem_get_name(struct vmem_context* ctx);
 void vmem_set_cache(struct vmem_context *ctx, void *cache);
 void *vmem_get_cache(struct vmem_context *ctx);
 
-void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, int section);
-#define vmem_map_flat(ctx, start, size, section) vmem_map(ctx, start, start, size, section)
+void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, bool user, bool ro);
+#define vmem_map_flat(ctx, start, size, user, ro) vmem_map(ctx, start, start, size, user, ro)
 
 intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool reverse);
 
@@ -100,20 +89,3 @@ intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool revers
 	#define PAGE_SIZE 0
 	#define VMEM_ALIGN(x) (x)
 #endif
-
-static inline char* vmem_section_verbose(enum vmem_section section) {
-	char* names[] = {
-		"Stack",   /* Initial stack */
-		"Code",    /* Contains program code and is read-only */
-		"Data",    /* Contains static data */
-		"Heap",    /* Allocated by brk(2) at runtime */
-		"MMAP",    /* Allocated by mmap(2) at runtime */
-		"Kernel",  /* Contains kernel-internal data */
-		"Unmapped" /* Unmapped */
-	};
-
-	if(section <= sizeof(names) / sizeof(char*)) {
-		return names[section];
-	}
-	return NULL;
-}

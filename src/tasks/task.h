@@ -30,12 +30,20 @@
 #define TASK_MEM_FORK	0x1
 #define TASK_MEM_FREE	0x2
 
+enum task_mem_section {
+	TMEM_SECTION_STACK,   /* Initial stack */
+	TMEM_SECTION_CODE,    /* Contains program code and is read-only */
+	TMEM_SECTION_DATA,    /* Contains static data */
+	TMEM_SECTION_HEAP,    /* Allocated by brk(2) at runtime */
+	TMEM_SECTION_KERNEL,  /* Contains kernel-internal data */
+} section;
+
 struct task_mem {
 	struct task_mem* next;
 	void* virt_addr;
 	void* phys_addr;
 	uint32_t len;
-	enum vmem_section section;
+	enum task_mem_section section;
 	int flags;
 };
 
@@ -128,4 +136,22 @@ void* task_sbrk(task_t* task, size_t length);
 #define task_add_mem_flat(task, start, size, section, flags) \
 	task_add_mem(task, start, start, size, section, flags)
 void task_add_mem(task_t* task, void* virt_start, void* phys_start,
-	uint32_t size, enum vmem_section section, int flags);
+	uint32_t size, enum task_mem_section section, int flags);
+
+
+static inline char* task_mem_section_verbose(enum task_mem_section section) {
+	char* names[] = {
+		"Stack",   /* Initial stack */
+		"Code",    /* Contains program code and is read-only */
+		"Data",    /* Contains static data */
+		"Heap",    /* Allocated by brk(2) at runtime */
+		"MMAP",    /* Allocated by mmap(2) at runtime */
+		"Kernel",  /* Contains kernel-internal data */
+		"Unmapped" /* Unmapped */
+	};
+
+	if(section <= sizeof(names) / sizeof(char*)) {
+		return names[section];
+	}
+	return NULL;
+}

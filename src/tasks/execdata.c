@@ -46,7 +46,7 @@ struct execdata {
  */
 void task_setup_execdata(task_t* task) {
 	void* page = zmalloc_a(PAGE_SIZE);
-	task_add_mem(task, (void*)EXECDATA_LOCATION, page, PAGE_SIZE, VMEM_SECTION_DATA, TASK_MEM_FREE);
+	task_add_mem(task, (void*)EXECDATA_LOCATION, page, PAGE_SIZE, TMEM_SECTION_DATA, TASK_MEM_FREE);
 
 	struct execdata* exc = (struct execdata*)page;
 	char** argv = (char**)exc + sizeof(struct execdata);

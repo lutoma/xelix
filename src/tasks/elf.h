@@ -75,6 +75,10 @@
 #define DT_RELENT 19
 #define DT_PLTREL 20
 
+#define PF_X		(1 << 0)
+#define PF_W		(1 << 1)
+#define PF_R		(1 << 2)
+
 #define ELF_TYPE_NONE 0
 #define ELF_TYPE_REL 1
 #define ELF_TYPE_EXEC 2
