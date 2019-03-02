@@ -82,18 +82,21 @@ static int load_phead(struct elf_load_ctx* ctx, int fd, elf_program_header_t* ph
 
 	size_t size = VMEM_ALIGN(phead->memsz);
 	void* virt;
+	size_t phys_offset;
+
 	if(ctx->main_loaded) {
 		virt = ctx->virt_end;
 
 		if(!ctx->entry_offset) {
 			ctx->entry_offset = virt - phead->vaddr;
+			phys_offset = 0;
 		}
 	} else {
 		virt = VMEM_ALIGN_DOWN(phead->vaddr);
+		phys_offset = phead->vaddr - virt;
 	}
 
 	void* phys = zmalloc_a(size);
-	size_t phys_offset = phead->vaddr - virt;
 	if(unlikely(!phys)) {
 		return -1;
 	}
@@ -253,7 +256,6 @@ int elf_load_file(task_t* task, char* path) {
 			sc_errno = ENOEXEC;
 			return -1;
 		}
-
 		entry = ctx->entry + ctx->entry_offset;
 
 		char* dynstr = (void*)vmem_translate(task->memory_context, (intptr_t)ctx->dynstrtab, false);
@@ -272,7 +274,7 @@ int elf_load_file(task_t* task, char* path) {
 	}
 
 	task->sbrk = ctx->virt_end;
-	task_set_initial_state(task, ctx->entry);
+	task_set_initial_state(task, entry);
 
 	debug("elf: Entry point 0x%x, sbrk 0x%x\n", entry, task->sbrk);
 	kfree(ctx);
