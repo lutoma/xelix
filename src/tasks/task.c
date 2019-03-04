@@ -205,7 +205,7 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	return 0;
 }
 
-static void  __attribute__((optimize("O0"))) clean_memory(task_t* t) {
+static void clean_memory(task_t* t) {
 	struct task_mem* alloc = t->memory_allocations;
 	while(alloc) {
 		if(alloc->flags & TASK_MEM_FREE) {

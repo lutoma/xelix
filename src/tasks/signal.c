@@ -30,7 +30,7 @@
 // signal.asm
 extern void task_sigjmp_crt0(void);
 
-int __attribute__((optimize("O0"))) task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
+int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 	if(sig > 32) {
 		sc_errno = EINVAL;
 		return -1;
