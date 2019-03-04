@@ -7,7 +7,7 @@ purposes. It aims to conform to the POSIX specification.
 
 ## ✨ Features
 
-  * Preemptive multi-tasking with privilege and memory separation
+  * Preemptive multitasking with privilege and memory separation
   * POSIX process API with fork/execve/wait and signal handling
   * Read/write ext2 implementation
   * TCP/IP support using the [PicoTCP](https://github.com/tass-belgium/picotcp) network stack
@@ -18,7 +18,7 @@ nano, darkhttpd, [and more](https://github.com/lutoma/xelix/tree/master/land).
 
 ## 🏃 Running Xelix
 
-An disk image containing Xelix and a number of utilities is available [on the
+A disk image containing Xelix and a number of utilities is available [on the
 releases page](https://github.com/lutoma/xelix/releases/download/v20190126/xelix-2019-01-26.qcow2).
 
 You should be able to run it using any common x86 emulator/hypervisor.
@@ -32,8 +32,8 @@ Sample QEMU invocation:
 ## ⚙ Compiling
 
 Compiling Xelix requires a Xelix toolchain with versions of GCC, binutils
-and newlib that accept the `i786-pc-xelix` architecture and have the correct
-syscall implementations.
+and newlib that accept the `i786-pc-xelix` target and have the correct
+syscall bindings.
 
 You can build the toolchain using
 
