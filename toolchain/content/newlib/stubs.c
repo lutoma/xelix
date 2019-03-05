@@ -39,6 +39,7 @@
 #include <limits.h>
 #include <poll.h>
 #include <mntent.h>
+#include <pthread.h>
 
 
 clock_t _times(struct tms *buf) {
@@ -56,7 +57,22 @@ void seekdir(DIR* dd, long int sd) {
 	return;
 }
 
+speed_t cfgetispeed(const struct termios *termios_p) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int cfsetispeed(struct termios *termios_p, speed_t speed) {
+	errno = ENOSYS;
+	return -1;
+}
+
 speed_t cfgetospeed(const struct termios *termios_p) {
+	errno = ENOSYS;
+	return -1;
+}
+
+int cfsetospeed(struct termios *termios_p, speed_t speed) {
 	errno = ENOSYS;
 	return -1;
 }
@@ -86,7 +102,7 @@ int getgroups(int gidsetsize, gid_t grouplist[]) {
 	return -1;
 }
 
-int setgroups(size_t size, const gid_t *list) {
+int setgroups (int ngroups, const gid_t *grouplist) {
 	errno = ENOSYS;
 	return -1;
 }
@@ -386,4 +402,65 @@ int _isatty (int fd) {
 	}
 	errno = ENOTTY;
 	return 0;
+}
+
+int pthread_mutex_destroy(pthread_mutex_t *mutex) {
+	return ENOSYS;
+}
+
+int pthread_mutex_init(pthread_mutex_t *restrict mutex,
+       const pthread_mutexattr_t *restrict attr) {
+	return ENOSYS;
+}
+
+int pthread_sigmask(int how, const sigset_t *restrict set,
+       sigset_t *restrict oset) {
+	return ENOSYS;
+}
+
+int pthread_mutex_lock(pthread_mutex_t *mutex) {
+	return ENOSYS;
+}
+
+int pthread_mutex_trylock(pthread_mutex_t *mutex) {
+	return ENOSYS;
+}
+
+int pthread_mutex_unlock(pthread_mutex_t *mutex) {
+	return ENOSYS;
+}
+
+int pthread_cond_init(pthread_cond_t *cond,
+    const pthread_condattr_t *attr) {
+	return ENOSYS;
+}
+
+int pthread_cond_destroy(pthread_cond_t *cond) {
+	return ENOSYS;
+}
+
+int pthread_cond_signal(pthread_cond_t *cond) {
+	return ENOSYS;
+}
+
+int pthread_cond_broadcast(pthread_cond_t *cond) {
+	return ENOSYS;
+}
+
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex) {
+	return ENOSYS;
+}
+
+int pthread_cond_timedwait(pthread_cond_t *cond,
+    pthread_mutex_t *mutex, const struct timespec *abstime) {
+	return ENOSYS;
+}
+
+int pthread_join(pthread_t thread, void **value_ptr) {
+	return ENOSYS;
+}
+
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+	void *(*start_routine) (void *), void *arg) {
+	return ENOSYS;
 }

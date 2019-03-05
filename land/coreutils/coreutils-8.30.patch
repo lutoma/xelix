@@ -9,6 +9,16 @@
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	qnx*)
+--- coreutils-8.30/m4/host-os.m4  2018-05-14 06:20:31.000000000 +0200
++++ coreutils-8.30/m4/host-os.m4  2019-02-23 20:37:06.099700821 +0100
+@@ -61,6 +61,7 @@
+        atheos*)         os='AtheOS';;
+        amigaos*)        os='Amiga OS';;
+        aix*)            os='AIX';;
++       xelix*)          os='GNU/Xelix';;
+
+        # The default heuristic takes the initial alphabetic string
+        # from $host_os, but capitalizes its first letter.
 diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/copy.c coreutils-8.30-patched/src/copy.c
 --- coreutils-8.30/src/copy.c	2018-07-01 04:32:02.000000000 +0200
 +++ coreutils-8.30-patched/src/copy.c	2019-02-04 03:03:11.537695627 +0100
@@ -38,8 +48,6 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/cop
      }
    else if (x->set_mode)
      {
-Binary files coreutils-8.30/src/copy.o and coreutils-8.30-patched/src/copy.o differ
-Binary files coreutils-8.30/src/cp and coreutils-8.30-patched/src/cp differ
 diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/cp.c coreutils-8.30-patched/src/cp.c
 --- coreutils-8.30/src/cp.c	2018-06-24 04:12:51.000000000 +0200
 +++ coreutils-8.30-patched/src/cp.c	2019-02-04 03:02:49.004411264 +0100
@@ -66,172 +74,7 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
  #ifdef NODEV
          if (device == NODEV)
            die (EXIT_FAILURE, 0, _("invalid device %s %s"),
-diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/sort.c coreutils-8.30-patched/src/sort.c
---- coreutils-8.30/src/sort.c	2018-05-14 06:20:24.000000000 +0200
-+++ coreutils-8.30-patched/src/sort.c	2019-02-04 03:06:23.907295021 +0100
-@@ -645,7 +645,8 @@
- static void
- cs_enter (struct cs_status *status)
- {
--  int ret = pthread_sigmask (SIG_BLOCK, &caught_signals, &status->sigs);
-+  //int ret = pthread_sigmask (SIG_BLOCK, &caught_signals, &status->sigs);
-+  int ret = 0;
-   status->valid = ret == 0;
- }
-
-@@ -656,7 +657,7 @@
-   if (status->valid)
-     {
-       /* Ignore failure when restoring the signal mask. */
--      pthread_sigmask (SIG_SETMASK, &status->sigs, NULL);
-+      //pthread_sigmask (SIG_SETMASK, &status->sigs, NULL);
-     }
- }
-
-@@ -3256,7 +3257,7 @@
-   root->parent = NULL;
-   root->level = MERGE_END;
-   root->queued = false;
--  pthread_mutex_init (&root->lock, NULL);
-+  //pthread_mutex_init (&root->lock, NULL);
-
-   init_node (root, root + 1, dest, nthreads, nlines, false);
-   return merge_tree;
-@@ -3271,7 +3272,7 @@
-
-   while (n_nodes--)
-     {
--      pthread_mutex_destroy (&node->lock);
-+      //pthread_mutex_destroy (&node->lock);
-       node++;
-     }
-
-@@ -3307,7 +3308,7 @@
-   node->parent = parent;
-   node->level = parent->level + 1;
-   node->queued = false;
--  pthread_mutex_init (&node->lock, NULL);
-+  //pthread_mutex_init (&node->lock, NULL);
-
-   if (nthreads > 1)
-     {
-@@ -3346,7 +3347,7 @@
- static inline void
- lock_node (struct merge_node *node)
- {
--  pthread_mutex_lock (&node->lock);
-+  //pthread_mutex_lock (&node->lock);
- }
-
- /* Unlock a merge tree NODE. */
-@@ -3354,7 +3355,7 @@
- static inline void
- unlock_node (struct merge_node *node)
- {
--  pthread_mutex_unlock (&node->lock);
-+  //pthread_mutex_unlock (&node->lock);
- }
-
- /* Destroy merge QUEUE. */
-@@ -3363,7 +3364,7 @@
- queue_destroy (struct merge_node_queue *queue)
- {
-   heap_free (queue->priority_queue);
--  pthread_cond_destroy (&queue->cond);
-+  //pthread_cond_destroy (&queue->cond);
-   pthread_mutex_destroy (&queue->mutex);
- }
-
-@@ -3377,8 +3378,8 @@
-      time, the heap should accommodate all of them.  Counting a NULL
-      dummy head for the heap, reserve 2 * NTHREADS nodes.  */
-   queue->priority_queue = heap_alloc (compare_nodes, 2 * nthreads);
--  pthread_mutex_init (&queue->mutex, NULL);
--  pthread_cond_init (&queue->cond, NULL);
-+  //pthread_mutex_init (&queue->mutex, NULL);
-+  //pthread_cond_init (&queue->cond, NULL);
- }
-
- /* Insert NODE into QUEUE.  The caller either holds a lock on NODE, or
-@@ -3387,11 +3388,11 @@
- static void
- queue_insert (struct merge_node_queue *queue, struct merge_node *node)
- {
--  pthread_mutex_lock (&queue->mutex);
-+  //pthread_mutex_lock (&queue->mutex);
-   heap_insert (queue->priority_queue, node);
-   node->queued = true;
--  pthread_cond_signal (&queue->cond);
--  pthread_mutex_unlock (&queue->mutex);
-+  //pthread_cond_signal (&queue->cond);
-+  //pthread_mutex_unlock (&queue->mutex);
- }
-
- /* Pop the top node off the priority QUEUE, lock the node, return it.  */
-@@ -3400,10 +3401,10 @@
- queue_pop (struct merge_node_queue *queue)
- {
-   struct merge_node *node;
--  pthread_mutex_lock (&queue->mutex);
-+  //pthread_mutex_lock (&queue->mutex);
-   while (! (node = heap_remove_top (queue->priority_queue)))
--    pthread_cond_wait (&queue->cond, &queue->mutex);
--  pthread_mutex_unlock (&queue->mutex);
-+    //pthread_cond_wait (&queue->cond, &queue->mutex);
-+  //pthread_mutex_unlock (&queue->mutex);
-   lock_node (node);
-   node->queued = false;
-   return node;
-@@ -3649,11 +3650,11 @@
-                              node->lo_child, queue, tfp, temp_output};
-
-   if (nthreads > 1 && SUBTHREAD_LINES_HEURISTIC <= nlines
--      && pthread_create (&thread, NULL, sortlines_thread, &args) == 0)
-+      && false)
-     {
-       sortlines (lines - node->nlo, hi_threads, total_lines,
-                  node->hi_child, queue, tfp, temp_output);
--      pthread_join (thread, NULL);
-+      //pthread_join (thread, NULL);
-     }
-   else
-     {
 diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/stty.c coreutils-8.30-patched/src/stty.c
---- coreutils-8.30/src/stty.c	2018-05-14 06:20:24.000000000 +0200
-+++ coreutils-8.30-patched/src/stty.c	2019-02-04 03:00:45.801332532 +0100
-@@ -1698,13 +1698,14 @@
- static void
- set_speed (enum speed_setting type, const char *arg, struct termios *mode)
- {
--  speed_t baud;
-+  /*speed_t baud;
-
-   baud = string_to_baud (arg);
-   if (type == input_speed || type == both_speeds)
-     cfsetispeed (mode, baud);
-   if (type == output_speed || type == both_speeds)
-     cfsetospeed (mode, baud);
-+  */
- }
-
- #ifdef TIOCGWINSZ
-@@ -2048,7 +2049,7 @@
- static void
- display_speed (struct termios *mode, bool fancy)
- {
--  if (cfgetispeed (mode) == 0 || cfgetispeed (mode) == cfgetospeed (mode))
-+  /*if (cfgetispeed (mode) == 0 || cfgetispeed (mode) == cfgetospeed (mode))
-     wrapf (fancy ? "speed %lu baud;" : "%lu\n",
-            baud_to_value (cfgetospeed (mode)));
-   else
-@@ -2057,6 +2058,7 @@
-            baud_to_value (cfgetospeed (mode)));
-   if (!fancy)
-     current_col = 0;
-+  */
- }
-
- static void
 --- coreutils-8.30/lib/getprogname.c  2018-05-14 06:22:33.000000000 +0200
 +++ coreutils-8.30-patched/lib/getprogname.c  2019-02-04 20:51:53.078315578 +0100
 @@ -177,7 +177,7 @@
@@ -385,13 +228,3 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/stt
    {
      int fd = dirfd (dirp);
      if (0 <= fd && _gl_register_fd (fd, dir_name) != fd)
---- coreutils-8.30/m4/host-os.m4  2018-05-14 06:20:31.000000000 +0200
-+++ coreutils-8.30/m4/host-os.m4  2019-02-23 20:37:06.099700821 +0100
-@@ -61,6 +61,7 @@
-        atheos*)         os='AtheOS';;
-        amigaos*)        os='Amiga OS';;
-        aix*)            os='AIX';;
-+       xelix*)          os='GNU/Xelix';;
-
-        # The default heuristic takes the initial alphabetic string
-        # from $host_os, but capitalizes its first letter.
