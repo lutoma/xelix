@@ -47,6 +47,21 @@ struct task_mem {
 	int flags;
 };
 
+struct elf_load_ctx {
+	void* virt_end;
+
+	// Interpreter for dynamic linking
+	char* interp;
+	// Dynamic library string table (virt address)
+	void* dynstrtab;
+
+	#if 0
+	// Required dependencies, as offsets to dynstrtab
+	uint32_t dyndeps[MAXDEPS];
+	uint32_t ndyndeps;
+	#endif
+};
+
 typedef struct task {
 	uint32_t pid;
 	char name[TASK_MAXNAME];
@@ -121,11 +136,14 @@ typedef struct task {
 	 * that called exit() don't get called again.
 	 */
 	bool interrupt_yield;
+
+	// ELF loader context, needed for dlopen/dlsym.
+	struct elf_load_ctx elf_ctx;
 } task_t;
 
 task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
-void task_set_initial_state(task_t* task, void* entry);
+void task_set_initial_state(task_t* task);
 int task_fork(task_t* to_fork, isf_t* state);
 int task_execve(task_t* task, char* path, char** argv, char** env);
 int task_exit(task_t* task);

@@ -221,7 +221,7 @@ static void clean_memory(task_t* t) {
 	vmem_rm_context(t->memory_context);
 }
 
-void task_set_initial_state(task_t* task, void* entry) {
+void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
@@ -231,7 +231,7 @@ void task_set_initial_state(task_t* task, void* entry) {
 
 	// Return stack for iret
 	iret_t* iret = task->stack + STACKSIZE - sizeof(iret_t);
-	iret->entry = entry;
+	iret->entry = task->entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
 	iret->user_esp = (uint32_t)task->state->ebp;

@@ -108,19 +108,6 @@ typedef struct {
 } __attribute__((packed)) elf_t;
 
 typedef struct {
-	uint32_t name;
-	uint32_t type;
-	uint32_t flags;
-	void* addr;
-	uint32_t offset;
-	uint32_t size;
-	uint32_t link;
-	uint32_t info;
-	uint32_t addralign;
-	uint32_t entsize;
-} __attribute__((packed)) elf_section_t;
-
-typedef struct {
 	uint32_t type;
 	uint32_t offset;
 	void* vaddr;
