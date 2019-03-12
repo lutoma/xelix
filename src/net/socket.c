@@ -36,7 +36,6 @@
 struct socket {
 	struct pico_socket* pico_socket;
 	int conn_requests;
-	bool can_read;
 	bool can_write;
 	char read_buffer[0x5000];
 	size_t read_buffer_length;
@@ -101,13 +100,11 @@ static inline vfs_file_t* get_socket_fp(task_t* task, int sockfd) {
 
 static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 	struct socket* sock = (struct socket*)pico_sock->priv;
-
 	if(!sock) {
 		return;
 	}
 
 	if(ev & PICO_SOCK_EV_CONN) {
-		serial_printf("New state SOCK_CONNECTED\n");
 		if(sock->state == SOCK_LISTEN) {
 			sock->conn_requests++;
 		} else {
@@ -116,19 +113,16 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 	}
 
 	if(ev & PICO_SOCK_EV_ERR) {
-		serial_printf("New state SOCK_RESET_BY_PEER\n");
 		sock->state = SOCK_RESET_BY_PEER;
 	}
 
 	if(ev & PICO_SOCK_EV_FIN || ev & PICO_SOCK_EV_CLOSE) {
-		serial_printf("New state SOCK_CLOSED\n");
 		sock->state = SOCK_CLOSED;
 	}
 
-	sock->can_read = (ev & PICO_SOCK_EV_RD);
 	sock->can_write = (ev & PICO_SOCK_EV_WR);
 
-	if(sock->can_read && spinlock_get(&net_pico_lock, 200)) {
+	if((ev & PICO_SOCK_EV_RD) && spinlock_get(&net_pico_lock, 200)) {
 		sock->read_buffer_length += pico_socket_read(sock->pico_socket,
 			(void*)sock->read_buffer + sock->read_buffer_length, 0x5000);
 
@@ -266,15 +260,10 @@ int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 
 	union pico_address pico_addr = { .ip4 = { 0 } };
 	uint16_t port = bsd_to_pico_port(addr, addrlen);
-
 	if(bsd_to_pico_addr(&pico_addr, addr, addrlen) < 0) {
 		sc_errno = EINVAL;
 		return -1;
 	}
-
-	char ipbuf[15];
-	pico_ipv4_to_string(ipbuf, pico_addr.ip4.addr);
-	serial_printf("net_bind sockfd %d %s port %d\n", sockfd, ipbuf, endian_swap16(port));
 
 	struct socket* sock = (struct socket*)fd->mount_instance;
 	if(!spinlock_get(&net_pico_lock, 200)) {
@@ -321,24 +310,31 @@ int net_listen(task_t* task, int sockfd, int backlog) {
 }
 
 int net_select(task_t* task, int nfds, fd_set *readfds, fd_set *writefds) {
-	serial_printf("net_select nfds %d\n", nfds);
-	for(int num = 0;; num = ++num % VFS_MAX_OPENFILES) {
-		if(!task->files[num].inode || task->files[num].type != VFS_FILE_TYPE_SOCKET) {
-			continue;
+	int events = 0;
+	FD_ZERO(readfds);
+	FD_ZERO(writefds);
+
+	while(!events) {
+		for(int num = 0; num < VFS_MAX_OPENFILES; num++) {
+			if(!task->files[num].inode || task->files[num].type != VFS_FILE_TYPE_SOCKET) {
+				continue;
+			}
+
+			struct socket* sock = (struct socket*)task->files[num].mount_instance;
+			if(sock->conn_requests || sock->read_buffer_length) {
+				FD_SET(num, readfds);
+				events++;
+			}
+
+			if(sock->can_write) {
+				FD_SET(num, writefds);
+				events++;
+			}
 		}
-
-		struct socket* sock = (struct socket*)task->files[num].mount_instance;
-		if(sock->conn_requests) {
-			serial_printf("something happened.\n");
-
-			// FIXME set readfds/writefds
-			return 1;
-		}
-
 		asm("hlt");
 	}
 
-	return -1;
+	return events;
 }
 
 int net_accept(task_t* task, int sockfd, struct sockaddr *addr,

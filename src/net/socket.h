@@ -92,8 +92,25 @@ struct sockaddr_in6 {
 	uint32_t sin6_scope_id;
 };
 
+
+/* fd_set handling from newlib */
+typedef	unsigned long	fd_mask;
+
+#define	FD_SETSIZE	64
+#define	NFDBITS	(sizeof (fd_mask) * 8)	/* bits per mask */
+#define	FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1L << ((n) % NFDBITS)))
+#define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1L << ((n) % NFDBITS)))
+#define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1L << ((n) % NFDBITS)))
+#define	FD_ZERO(p)	(__extension__ (void)({ \
+     size_t __i; \
+     char *__tmp = (char *)p; \
+     for (__i = 0; __i < sizeof (*(p)); ++__i) \
+       *__tmp++ = 0; \
+}))
+#define	_howmany(x,y)	(((x)+((y)-1))/(y))
+
 typedef	struct {
-	uint32_t fds_bits[100];
+	fd_mask	fds_bits[_howmany(FD_SETSIZE, NFDBITS)];
 } fd_set;
 
 int net_socket(task_t* task, int domain, int type, int protocol);
