@@ -62,14 +62,18 @@ SYS_REDIR(execve,		task_execve,			syscall.task, (char*)syscall.params[0], (char*
 SYS_REDIR(socket,		net_socket,				syscall.task, syscall.params[0], syscall.params[1], syscall.params[2]);
 SYS_REDIR(bind,			net_bind,				syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]);
 SYS_REDIR(listen,		net_listen,				syscall.task, syscall.params[0], syscall.params[1]);
-SYS_REDIR(accept,		net_accept,				syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], syscall.params[2]);
+SYS_REDIR(accept,		net_accept,				syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], (socklen_t*)syscall.params[2]);
 SYS_REDIR(select,		net_select,				syscall.task, syscall.params[0], (fd_set*)syscall.params[1], (fd_set*)syscall.params[2]);
+SYS_REDIR(getpeername,	net_getpeername,		syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], (socklen_t*)syscall.params[2]);
+SYS_REDIR(getsockname,	net_getsockname,		syscall.task, syscall.params[0], (struct sockaddr*)syscall.params[1], (socklen_t*)syscall.params[2]);
 #else
 SYS_DISABLED(socket);
 SYS_DISABLED(bind);
 SYS_DISABLED(listen);
 SYS_DISABLED(accept);
 SYS_DISABLED(select);
+SYS_DISABLED(getpeername);
+SYS_DISABLED(getsockname);
 #endif
 
 
@@ -119,5 +123,7 @@ struct syscall_definition syscall_table[] = {
 	{sys_fcntl, "fcntl", 0, 0, 0},
 	{sys_listen, "listen", 0, 0, 0},
 	{sys_accept, "accept", 0, SYSCALL_ARG_RESOLVE, 0},
-	{sys_select, "select", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE}
+	{sys_select, "select", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
+	{sys_getpeername, "getpeername", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
+	{sys_getsockname, "getsockname", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
 };

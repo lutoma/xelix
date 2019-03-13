@@ -113,6 +113,11 @@ typedef	struct {
 	fd_mask	fds_bits[_howmany(FD_SETSIZE, NFDBITS)];
 } fd_set;
 
+
+#define SOCKSIZE sizeof(struct sockaddr_in)
+#define SOCKSIZE6 sizeof(struct sockaddr_in6)
+
+int net_vfs_close_cb(vfs_file_t* fp);
 int net_socket(task_t* task, int domain, int type, int protocol);
 int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 	socklen_t addrlen);
@@ -120,3 +125,7 @@ int net_listen(task_t* task, int sockfd, int backlog);
 int net_select(task_t* task, int nfds, fd_set *readfds, fd_set *writefds);
 int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 	socklen_t *addrlen);
+int net_getpeername(task_t* task, int sockfd, struct sockaddr* addr,
+	socklen_t* addrlen);
+int net_getsockname(task_t* task, int sockfd, struct sockaddr* addr,
+	socklen_t* addrlen);

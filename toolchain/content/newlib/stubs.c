@@ -192,12 +192,6 @@ int ftruncate(int fildes, off_t length) {
 	return -1;
 }
 
-int getsockname(int socket, struct sockaddr* __restrict__ address,
-       socklen_t* __restrict__ address_len) {
-	errno = ENOSYS;
-	return -1;
-}
-
 int setsockopt(int socket, int level, int option_name,
        const void *option_value, socklen_t option_len) {
 	errno = ENOSYS;
@@ -234,7 +228,8 @@ int setrlimit(int resource, const struct rlimit *rlim) {
 	return -1;
 }
 
-pid_t vfork(void) {	errno = ENOSYS;
+pid_t vfork(void) {
+	errno = ENOSYS;
 	return -1;
 }
 
@@ -354,12 +349,6 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp) {
 
 int connect(int socket, const struct sockaddr *address,
 	socklen_t address_len) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int getpeername(int socket, struct sockaddr *restrict address,
-       socklen_t *restrict address_len) {
 	errno = ENOSYS;
 	return -1;
 }

@@ -31,6 +31,7 @@
 #include <fs/part.h>
 #include <fs/ext2.h>
 #include <hw/ide.h>
+#include <net/socket.h>
 
 #ifdef VFS_DEBUG
 # define debug(fmt, args...) log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s " fmt, \
@@ -427,6 +428,15 @@ int vfs_close(int fd, task_t* task) {
 		sc_errno = EBADF;
 		return -1;
 	}
+
+	#ifdef ENABLE_PICOTCP
+	if(fp->type == VFS_FILE_TYPE_SOCKET) {
+		int r = net_vfs_close_cb(fp);
+		if(r < 0) {
+			return r;
+		}
+	}
+	#endif
 
 	if(fp->num > 2) {
 		bzero(fp, sizeof(vfs_file_t));

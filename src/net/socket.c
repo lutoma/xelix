@@ -19,6 +19,7 @@
 
 #include "socket.h"
 #include <net/net.h>
+#include <net/conv.h>
 #include <pico_stack.h>
 #include <pico_socket.h>
 #include <pico_dhcp_client.h>
@@ -29,9 +30,6 @@
 #include <spinlock.h>
 
 #ifdef ENABLE_PICOTCP
-
-#define SOCKSIZE sizeof(struct sockaddr_in)
-#define SOCKSIZE6 sizeof(struct sockaddr_in6)
 
 struct socket {
 	struct pico_socket* pico_socket;
@@ -51,39 +49,7 @@ struct socket {
 	} state;
 };
 
-
-static int bsd_to_pico_addr(union pico_address *addr, const struct sockaddr *_saddr, socklen_t socklen) {
-    if(socklen != SOCKSIZE && socklen != SOCKSIZE6) {
-    	return -1;
-    }
-
-    if (socklen == SOCKSIZE6) {
-        struct sockaddr_in6 *saddr = (struct sockaddr_in6 *)_saddr;
-        memcpy(&addr->ip6.addr, &saddr->sin6_addr.s6_addr, 16);
-        saddr->sin6_family = AF_INET6;
-    } else {
-        struct sockaddr_in *saddr = (struct sockaddr_in *)_saddr;
-        addr->ip4.addr = saddr->sin_addr.s_addr;
-        saddr->sin_family = AF_INET;
-    }
-    return 0;
-}
-
-static uint16_t bsd_to_pico_port(const struct sockaddr *_saddr, socklen_t socklen) {
-    if(socklen != SOCKSIZE && socklen != SOCKSIZE6) {
-    	return -1;
-    }
-
-    if (socklen == SOCKSIZE6) {
-        struct sockaddr_in6 *saddr = (struct sockaddr_in6 *)_saddr;
-        return saddr->sin6_port;
-    } else {
-        struct sockaddr_in *saddr = (struct sockaddr_in *)_saddr;
-        return saddr->sin_port;
-    }
-}
-
-static inline vfs_file_t* get_socket_fp(task_t* task, int sockfd) {
+static inline struct socket* get_socket(task_t* task, int sockfd) {
 	vfs_file_t* fp = vfs_get_from_id(sockfd, task);
 	if(!fp) {
 		sc_errno = EBADF;
@@ -95,7 +61,7 @@ static inline vfs_file_t* get_socket_fp(task_t* task, int sockfd) {
 		return NULL;
 	}
 
-	return fp;
+	return (struct socket*)fp->mount_instance;
 }
 
 static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
@@ -204,6 +170,27 @@ static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
 	return written;
 }
 
+
+int net_vfs_close_cb(vfs_file_t* fp) {
+	serial_printf("net_vfs_close_cb\n");
+	struct socket* sock = (struct socket*)(fp->mount_instance);
+
+	if(!spinlock_get(&net_pico_lock, 200)) {
+		sc_errno = EAGAIN;
+		return -1;
+	}
+
+	if(pico_socket_close(sock->pico_socket) < 0) {
+		spinlock_release(&net_pico_lock);
+		sc_errno = pico_err;
+		return -1;
+	}
+
+	spinlock_release(&net_pico_lock);
+	sock->state = SOCK_CLOSED;
+	return 0;
+}
+
 vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock) {
 	struct socket* sock = (struct socket*)zmalloc(sizeof(struct socket));
 	sock->pico_socket = pico_sock;
@@ -253,19 +240,18 @@ int net_socket(task_t* task, int domain, int type, int protocol) {
 
 int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 	socklen_t addrlen) {
-	vfs_file_t* fd = get_socket_fp(task, sockfd);
-	if(!fd) {
+	struct socket* sock = get_socket(task, sockfd);
+	if(!sock) {
 		return -1;
 	}
 
 	union pico_address pico_addr = { .ip4 = { 0 } };
-	uint16_t port = bsd_to_pico_port(addr, addrlen);
-	if(bsd_to_pico_addr(&pico_addr, addr, addrlen) < 0) {
+	uint16_t port = net_bsd_to_pico_port(addr, addrlen);
+	if(net_bsd_to_pico_addr(&pico_addr, addr, addrlen) < 0) {
 		sc_errno = EINVAL;
 		return -1;
 	}
 
-	struct socket* sock = (struct socket*)fd->mount_instance;
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
@@ -283,8 +269,8 @@ int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 }
 
 int net_listen(task_t* task, int sockfd, int backlog) {
-	vfs_file_t* fd = get_socket_fp(task, sockfd);
-	if(!fd) {
+	struct socket* sock = get_socket(task, sockfd);
+	if(!sock) {
 		return -1;
 	}
 
@@ -292,7 +278,6 @@ int net_listen(task_t* task, int sockfd, int backlog) {
 		backlog = 4;
 	}
 
-	struct socket* sock = (struct socket*)fd->mount_instance;
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
@@ -340,12 +325,11 @@ int net_select(task_t* task, int nfds, fd_set *readfds, fd_set *writefds) {
 int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 	socklen_t *addrlen) {
 
-	vfs_file_t* fd = get_socket_fp(task, sockfd);
-	if(!fd) {
+	struct socket* sock = get_socket(task, sockfd);
+	if(!sock) {
 		return -1;
 	}
 
-	struct socket* sock = (struct socket*)fd->mount_instance;
 	if(sock->state == SOCK_CONNECTED) {
 		sc_errno = EBADF;
 		return -1;
@@ -355,18 +339,21 @@ int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 		asm("hlt\n");
 	}
 
-	union pico_address pico_addr;
-	uint16_t port;
-
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
+
+	union pico_address pico_addr;
+	uint16_t port;
 	struct pico_socket* pico_sock = pico_socket_accept(sock->pico_socket, &pico_addr, &port);
+	spinlock_release(&net_pico_lock);
+	net_conv_pico2bsd(addr, SOCKSIZE, &pico_addr, port);
+
+	// FIXME
 	int yes = 1;
 	pico_socket_setoption(pico_sock, PICO_TCP_NODELAY, &yes);
 
-	spinlock_release(&net_pico_lock);
 	if(!pico_sock) {
 		sc_errno = pico_err;
 		return -1;
@@ -375,6 +362,30 @@ int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 	vfs_file_t* new_fd = new_socket_fd(task, pico_sock);
 	sock->conn_requests--;
 	return new_fd->num;
+}
+
+int net_getpeername(task_t* task, int sockfd, struct sockaddr* addr,
+	socklen_t* addrlen) {
+
+	struct socket* sock = get_socket(task, sockfd);
+	if(!sock) {
+		return -1;
+	}
+
+	return net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->remote_addr,
+		sock->pico_socket->remote_port);
+}
+
+int net_getsockname(task_t* task, int sockfd, struct sockaddr* addr,
+	socklen_t* addrlen) {
+
+	struct socket* sock = get_socket(task, sockfd);
+	if(!sock) {
+		return -1;
+	}
+
+	return net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->local_addr,
+		sock->pico_socket->local_port);
 }
 
 #endif /* ENABLE_PICOTCP */

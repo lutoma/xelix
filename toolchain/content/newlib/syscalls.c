@@ -354,6 +354,18 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 	return syscall(39, nfds, readfds, writefds);
 }
 
+int getpeername(int socket, struct sockaddr *restrict address,
+       socklen_t *restrict address_len) {
+
+	return syscall(40, socket, address, address_len);
+}
+
+int getsockname(int socket, struct sockaddr* __restrict__ address,
+       socklen_t* __restrict__ address_len) {
+
+	return syscall(41, socket, address, address_len);
+}
+
 int ioctl(int fd, int request, ...) {
 	va_list va;
 	va_start(va, request);
