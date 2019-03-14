@@ -139,7 +139,6 @@ static size_t vfs_read_cb(vfs_file_t* fp, void* dest, size_t size) {
 }
 
 static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
-	serial_printf("net_vfs_write sock %d len %d data \"%s\"\n", fp->num, size, strndup(source, size));
 	struct socket* sock = (struct socket*)(fp->mount_instance);
 
 	while(!sock->can_write) {
@@ -155,7 +154,6 @@ static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
 		asm("hlt\n");
 	}
 
-	serial_printf("can_write, sending now.\n");
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
 		return -1;
@@ -163,16 +161,12 @@ static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
 	size_t written = pico_socket_write(sock->pico_socket, source, size);
 	spinlock_release(&net_pico_lock);
 
-	if(written < 0) {
-		sc_errno = pico_err;
-		return -1;
-	}
+	sc_errno = pico_err;
 	return written;
 }
 
 
 int net_vfs_close_cb(vfs_file_t* fp) {
-	serial_printf("net_vfs_close_cb\n");
 	struct socket* sock = (struct socket*)(fp->mount_instance);
 
 	if(!spinlock_get(&net_pico_lock, 200)) {

@@ -71,6 +71,10 @@ static int pico_dsr_cb(struct pico_device* pico_dev, int loop_score) {
 
 // Receive data from device
 void net_receive(struct net_device* dev, void* data, size_t len) {
+	if(!initialized) {
+		return;
+	}
+
 	if(dev->recv_buf_len + len > RECV_BUFFER_SIZE) {
 		log(LOG_WARN, "net: Receive buffer overflow, discarding incoming packets\n");
 		return;
