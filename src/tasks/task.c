@@ -33,7 +33,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define STACKSIZE PAGE_SIZE * 8
+#define STACKSIZE PAGE_SIZE * 128
 #define STACK_LOCATION 0x8000
 
 uint32_t highest_pid = 0;
