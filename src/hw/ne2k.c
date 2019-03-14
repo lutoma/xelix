@@ -93,6 +93,7 @@ struct recv_frame_header {
 static pci_device_t* dev = NULL;
 static struct net_device* net_dev;
 static uint8_t next_receive_page = 0;
+static spinlock_t send_lock;
 
 // Driver has only been tested with QEMU's emulation of the RTL8029AS so far
 static const uint32_t vendor_device_combos[][2] = {
@@ -122,10 +123,9 @@ static void pdma_write(int addr, const void* data, size_t len) {
 	set_dma_la(addr, len);
 	ioutb(R_CR, CR_START | CR_DMA_WRITE);
 
-	// FIXME handle odd bytes
-	uint16_t *p = (uint16_t*)data;
-	for(size_t i = 0; (i + 1) < len; i += 2) {
-		ioutw(0x10, p[i/2]);
+	uint8_t *p = (uint16_t*)data;
+	for(size_t i = 0; i < len; i++) {
+		ioutb(0x10, p[i]);
 	}
 }
 
@@ -133,10 +133,9 @@ static void pdma_read(int addr, void* data, size_t len) {
 	set_dma_la(addr, len);
 	ioutb(R_CR, CR_START | CR_DMA_READ);
 
-	// FIXME handle odd bytes
-	uint16_t *p = (uint16_t*)data;
-	for(size_t i = 0; (i + 1) < len; i += 2) {
-		p[i/2] = iinw(0x10);
+	uint8_t *p = (uint16_t*)data;
+	for(size_t i = 0; i < len; i++) {
+		p[i] = iinb(0x10);
 	}
 }
 
@@ -171,6 +170,10 @@ static void receive() {
 }
 
 static size_t send(void* pdev, void* data, size_t len) {
+	if(!spinlock_get(&send_lock, 200)) {
+		return -1;
+	}
+
 	pdma_write(MEM_TRANSMIT, data, len);
 	ioutb(R_TBCR0, len & 0xff);
 	ioutb(R_TBCR1, len >> 8);
@@ -189,8 +192,12 @@ static void int_handler(isf_t* state) {
 		}
 	}
 
-	if(bit_get(isr, 1) && bit_get(isr, 3)) {
-		log(LOG_ERR, "ne2k: Packet transmit error\n");
+	if(bit_get(isr, 1)) {
+		if(bit_get(isr, 3)) {
+			log(LOG_ERR, "ne2k: Packet transmit error\n");
+		}
+
+		spinlock_release(&send_lock);
 	}
 
 	if(bit_get(isr, 4)) {
@@ -214,7 +221,7 @@ static void enable() {
 	// Set up interrupts and access length, reset counters
 	ioutb(R_ISR, 0xff);
 	ioutb(R_IMR, 0);
-	ioutb(R_DCR, 0x49);
+	ioutb(R_DCR, 0x48);
 	ioutb(R_RBCR0, 0);
 	ioutb(R_RBCR1, 0);
 
@@ -258,36 +265,10 @@ void ne2k_init()
 	uint32_t ndevices = pci_search(devices, vendor_device_combos, 1);
 
 	log(LOG_INFO, "ne2k: Discovered %d devices.\n", ndevices);
-
 	dev = devices[0];
-
 	if(ndevices) {
 		enable();
 	}
-	/*
-
-	int i;
-	for(i = 0; i < ndevices; ++i)
-	{
-		rtl8139_cards[i].device = devices[i];
-		enable(&rtl8139_cards[i]);
-
-		log(LOG_INFO, "ne2k: %d:%d.%d, iobase 0x%x, irq %d, MAC Address %x:%x:%x:%x:%x:%x\n",
-				devices[i]->bus,
-				devices[i]->dev,
-				devices[i]->func,
-				devices[i]->iobase,
-				devices[i]->interrupt_line,
-				rtl8139_cards[i].mac_addr[0],
-				rtl8139_cards[i].mac_addr[1],
-				rtl8139_cards[i].mac_addr[2],
-				rtl8139_cards[i].mac_addr[3],
-				rtl8139_cards[i].mac_addr[4],
-				rtl8139_cards[i].mac_addr[5]
-			 );
-	}
-
-	*/
 }
 
 #endif /* ENABLE_NE2K */
