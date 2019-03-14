@@ -143,20 +143,20 @@ int bind(int socket, const struct sockaddr *address, socklen_t address_len) {
 
 ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
 	struct sockaddr *address, socklen_t *address_len) {
-	return syscall(27, socket, buffer, length);
+	return syscall(2, socket, buffer, length);
 }
 
 ssize_t recv(int socket, void *buffer, size_t length, int flags) {
-	return syscall(27, socket, buffer, length);
+	return syscall(2, socket, buffer, length);
 }
 
 ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len) {
-	return syscall(26, socket, message, length);
+	return syscall(3, socket, message, length);
 }
 
 ssize_t send(int socket, const void *buffer, size_t length, int flags) {
-	return syscall(26, socket, buffer, length);
+	return syscall(3, socket, buffer, length);
 }
 
 int _execve(char *name, char **argv, char **env) {
