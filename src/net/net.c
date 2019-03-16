@@ -65,6 +65,7 @@ static int pico_dsr_cb(struct pico_device* pico_dev, int loop_score) {
 		loop_score--;
 	}
 
+	pico_dev->__serving_interrupt = 0;
 	spinlock_release(&dev->recv_buf_lock);
 	return loop_score;
 }
