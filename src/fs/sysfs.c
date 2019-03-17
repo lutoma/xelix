@@ -51,14 +51,15 @@ static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
 }
 
 vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task) {
-	if(strncmp(path, "/", 2) && !get_file(path, *(struct sysfs_file**)mount_instance)) {
+	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
+	if(strncmp(path, "/", 2) && !file) {
 		sc_errno = ENOENT;
 		return NULL;
 	}
 
 	vfs_file_t* fp = vfs_alloc_fileno(task);
 	fp->inode = 1;
-	fp->type = mount_instance == &sys_files ? FT_IFREG : FT_IFCHR;
+	fp->type = file ? file->type : FT_IFDIR;
 	return fp;
 }
 
@@ -151,6 +152,7 @@ static struct sysfs_file* add_file(struct sysfs_file** table, char* name,
 
 	struct sysfs_file* fp = zmalloc(sizeof(struct sysfs_file));
 	strcpy(fp->name, name);
+	fp->type = table == &sys_files ? FT_IFREG : FT_IFCHR;
 	fp->read_cb = read_cb;
 	fp->write_cb = write_cb;
 	if(*table) {

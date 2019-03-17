@@ -30,6 +30,7 @@ struct sysfs_file {
 	sysfs_read_callback_t read_cb;
 	sysfs_write_callback_t write_cb;
 	void* meta;
+	uint16_t type;
 	struct sysfs_file* next;
 	struct sysfs_file* prev;
 };
