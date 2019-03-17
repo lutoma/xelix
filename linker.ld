@@ -1,4 +1,5 @@
 ENTRY(_start)
+PROVIDE(tty_font = _binary_src_tty_ter_u16n_psf_start);
 
 SECTIONS
 {

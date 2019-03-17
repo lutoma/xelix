@@ -39,7 +39,7 @@ src/lib/strbuffer/%.o: src/lib/strbuffer/%.c src/lib/generic.h src/lib/config.h
 	$(AS) $(MAKE_ASFLAGS) -o $@ $<
 
 %-psf.o: %.psf
-	$(OBJCOPY) -O i786-pc-xelix -B i386 -I binary $< $@
+	$(OBJCOPY) -O i786-pc-xelix -B i386 -I binary -SK _binary_src_tty_ter_u16n_psf_start $< $@
 
 $(CC):
 	make -C toolchain

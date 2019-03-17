@@ -33,9 +33,10 @@
 		+ (y)*fb_desc->common.framebuffer_pitch					\
 		+ (x)*(fb_desc->common.framebuffer_bpp / 8)))
 
-#define CHAR_PTR(x, y) PIXEL_PTR(x * font->width, y * font->height)
+#define CHAR_PTR(x, y) PIXEL_PTR(x * tty_font.width, y * tty_font.height)
 
-struct psf_font {
+// Font from ter-u16n.psf gets linked into the binary
+extern struct {
 	uint32_t magic;
 	uint32_t version;
 	uint32_t header_size;
@@ -45,15 +46,9 @@ struct psf_font {
 	uint32_t bytes_per_glyph;
 	uint32_t height;
 	uint32_t width;
-};
-
-// Font from ter-u16n.psf gets linked into the binary
-extern struct psf_font _binary_src_tty_ter_u16n_psf_start;
-extern char _binary_src_tty_ter_u16n_psf_end;
+} tty_font;
 
 static struct multiboot_tag_framebuffer* fb_desc;
-static struct psf_font* font = &_binary_src_tty_ter_u16n_psf_start;
-
 static struct tty_driver* drv;
 
 static uint32_t convert_color(int color) {
@@ -80,16 +75,16 @@ static uint32_t convert_color(int color) {
 }
 
 static void write_char(uint32_t x, uint32_t y, char chr, uint32_t fg_col, uint32_t bg_col) {
-	x *= font->width;
-	y *= font->height;
+	x *= tty_font.width;
+	y *= tty_font.height;
 
-	uint8_t* bitmap = (uint8_t*)font + font->header_size + (int)chr * font->bytes_per_glyph;
+	uint8_t* bitmap = (uint8_t*)&tty_font + tty_font.header_size + (int)chr * tty_font.bytes_per_glyph;
 	uint32_t fg_color = convert_color(fg_col);
 	uint32_t bg_color = convert_color(bg_col);
 
-	for(int i = 0; i < font->height; i++) {
-		for(int j = 0; j < font->width; j++) {
-			int fg = bit_get(bitmap[i], font->width - j);
+	for(int i = 0; i < tty_font.height; i++) {
+		for(int j = 0; j < tty_font.width; j++) {
+			int fg = bit_get(bitmap[i], tty_font.width - j);
 			*PIXEL_PTR(x + j, y + i) = fg ? fg_color : bg_color;
 		}
 	}
@@ -111,7 +106,7 @@ static void scroll_line() {
 		* (fb_desc->common.framebuffer_bpp / 8)
 		- fb_desc->common.framebuffer_pitch;
 
-	size_t offset = fb_desc->common.framebuffer_pitch * font->height;
+	size_t offset = fb_desc->common.framebuffer_pitch * tty_font.height;
 	memmove((void*)(intptr_t)fb_desc->common.framebuffer_addr,
 		(void*)((intptr_t)fb_desc->common.framebuffer_addr + offset), size);
 
@@ -120,7 +115,7 @@ static void scroll_line() {
 
 struct tty_driver* tty_fbtext_init() {
 	fb_desc = multiboot_get_framebuffer();
-	if(!fb_desc || font->magic != PSF_FONT_MAGIC) {
+	if(!fb_desc || tty_font.magic != PSF_FONT_MAGIC) {
 		return NULL;
 	}
 
@@ -133,8 +128,8 @@ struct tty_driver* tty_fbtext_init() {
 
 
 	drv = kmalloc(sizeof(struct tty_driver));
-	drv->cols = fb_desc->common.framebuffer_width / font->width;
-	drv->rows = fb_desc->common.framebuffer_height / font->height;
+	drv->cols = fb_desc->common.framebuffer_width / tty_font.width;
+	drv->rows = fb_desc->common.framebuffer_height / tty_font.height;
 	drv->xpixel = fb_desc->common.framebuffer_width;
 	drv->ypixel = fb_desc->common.framebuffer_height;
 	drv->write = write_char;
