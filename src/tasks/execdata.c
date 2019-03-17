@@ -75,5 +75,5 @@ void task_setup_execdata(task_t* task) {
 	exc->envc = task->envc;
 	exc->argv = (void*)vmem_translate(task->memory_context, (intptr_t)argv, true);
 	exc->env = (void*)vmem_translate(task->memory_context, (intptr_t)environ, true);
-	strncpy(exc->binary_path, task->binary_path, TASK_PATH_MAX);
+	strncpy(exc->binary_path, task->binary_path, TASK_PATH_MAX + 1);
 }

@@ -471,13 +471,14 @@ int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
 
 int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 	VFS_GET_CB_OR_ERROR(open);
-	uint32_t inode = mp->callbacks.open(mount_path, O_RDONLY, mp->instance, task);
+	vfs_file_t* fp = mp->callbacks.open(mount_path, O_RDONLY, mp->instance, task);
 	kfree(mount_path);
 
-	if(!inode) {
+	if(!fp) {
 		sc_errno = ENOENT;
 		return -1;
 	}
+	vfs_close(fp->num, task);
 	return 0;
 }
 

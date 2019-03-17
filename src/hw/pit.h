@@ -23,4 +23,5 @@
 #define pit_tick (pit_get_tick())
 
 void pit_init(uint16_t frequency);
+void pit_init2();
 uint32_t pit_get_tick(void);

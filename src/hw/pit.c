@@ -63,6 +63,8 @@ void pit_init(uint16_t frequency) {
 	// Send the frequency divisor.
 	outb(0x40, l);
 	outb(0x40, h);
+}
 
-//	sysfs_add_file("tick", sfs_read, NULL, NULL);
+void pit_init2() {
+	sysfs_add_file("tick", sfs_read, NULL);
 }

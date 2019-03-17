@@ -49,6 +49,7 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	time_init();
 	pci_init();
 	vfs_init();
+	pit_init2();
 
 	#ifdef ENABLE_PICOTCP
 	net_init();

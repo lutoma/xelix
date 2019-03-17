@@ -94,7 +94,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	return 0;
 }
 
-static int read_dyn_table(struct elf_load_ctx* ctx, int fd, elf_program_header_t* phead) {
+static int read_dyn_table(task_t* task, int fd, elf_program_header_t* phead) {
 	void* dyn = bin_read(fd, phead->offset, phead->filesz, NULL);
 	if(!dyn) {
 		return -1;
@@ -105,15 +105,15 @@ static int read_dyn_table(struct elf_load_ctx* ctx, int fd, elf_program_header_t
 		switch(tag->tag) {
 			#if 0
 			case DT_NEEDED:
-				if(ctx->ndyndeps >= MAXDEPS) {
+				if(task->elf_ctx.ndyndeps >= MAXDEPS) {
 					return -1;
 				}
 
-				ctx->dyndeps[ctx->ndyndeps++] = tag->val;
+				task->elf_ctx.dyndeps[task->elf_ctx.ndyndeps++] = tag->val;
 				break;
 			#endif
 			case DT_STRTAB:
-				ctx->dynstrtab = (void*)tag->val;
+				task->elf_ctx.dynstrtab = (void*)tag->val;
 				break;
 		}
 		tag++;
