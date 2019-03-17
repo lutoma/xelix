@@ -58,7 +58,7 @@ vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t*
 
 	vfs_file_t* fp = vfs_alloc_fileno(task);
 	fp->inode = 1;
-	fp->type = VFS_FILE_TYPE_REG;
+	fp->type = mount_instance == &sys_files ? FT_IFREG : FT_IFCHR;
 	return fp;
 }
 
@@ -74,7 +74,7 @@ int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	if(is_root) {
 		dest->st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
 	} else {
-		dest->st_mode = fp->mount_instance == &sys_files ? FT_IFREG : FT_IFCHR;
+		dest->st_mode = fp->type;
 
 		if(file->read_cb)
 			dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;

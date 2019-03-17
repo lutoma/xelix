@@ -426,7 +426,7 @@ int vfs_close(int fd, task_t* task) {
 	}
 
 	#ifdef ENABLE_PICOTCP
-	if(fp->type == VFS_FILE_TYPE_SOCKET) {
+	if(fp->type == FT_IFSOCK) {
 		int r = net_vfs_close_cb(fp);
 		if(r < 0) {
 			return r;

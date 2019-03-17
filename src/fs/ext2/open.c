@@ -28,7 +28,7 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-static uint32_t handle_symlink(struct inode* inode, const char* path, uint32_t flags, void* mount_instance, task_t* task) {
+static vfs_file_t* handle_symlink(struct inode* inode, const char* path, uint32_t flags, void* mount_instance, task_t* task) {
 	/* For symlinks with up to 60 chars length, the path is stored in the
 	 * inode in the area where normally the block pointers would be.
 	 * Otherwise in the file itself.
@@ -50,7 +50,7 @@ static uint32_t handle_symlink(struct inode* inode, const char* path, uint32_t f
 	}
 
 	// FIXME Should be vfs_open to make symlinks across mount points possible
-	uint32_t r = ext2_open(new_path, flags, mount_instance, task);
+	vfs_file_t* r = ext2_open(new_path, flags, mount_instance, task);
 	kfree(new_path);
 	return r;
 }
@@ -64,11 +64,10 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 
 	uint32_t dir_inode = 0;
 	struct dirent* dirent = ext2_dirent_find(path, &dir_inode);
+	uint32_t inode_num = dirent ? dirent->inode : 0;
 	struct inode* inode = kmalloc(superblock->inode_size);
-	uint32_t inode_num = 0;
-	bool created = false;
 
-	if(!dirent) {
+	if(!inode_num) {
 		if(!(flags & O_CREAT)) {
 			kfree(inode);
 			sc_errno = ENOENT;
@@ -78,41 +77,40 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 		debug("ext2_open: Could not find inode, creating one.\n");
 		inode_num = ext2_inode_new(inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), EXT2_DIRENT_FT_REG_FILE);
-		created = true;
 	} else {
+		kfree(dirent);
+
 		if((flags & O_CREAT) && (flags & O_EXCL)) {
 			kfree(inode);
-			kfree(dirent);
 			sc_errno = EEXIST;
 			return NULL;
 		}
 
-		inode_num = dirent->inode;
 		if(!ext2_inode_read(inode, inode_num)) {
 			kfree(inode);
-			kfree(dirent);
 			sc_errno = ENOENT;
 			return NULL;
 		}
 	}
 
-	uint32_t ft = vfs_mode_to_filetype(inode->mode);
+	uint16_t ft = vfs_mode_to_filetype(inode->mode);
 	if(ft == FT_IFDIR && (flags & O_WRONLY || flags & O_RDWR)) {
 		kfree(inode);
-		kfree(dirent);
 		sc_errno = EISDIR;
 		return NULL;
 	}
 
-	if(!created && ft == FT_IFLNK) {
-		inode_num = handle_symlink(inode, path, flags, mount_instance, task);
+	if(ft == FT_IFLNK) {
+		vfs_file_t* r = handle_symlink(inode, path, flags, mount_instance, task);
+		kfree(inode);
+		return r;
 	}
 
-	kfree(inode);
-	kfree(dirent);
 	vfs_file_t* fp = vfs_alloc_fileno(task);
-	fp->type = VFS_FILE_TYPE_REG;
+	fp->type = ft;
 	fp->inode = inode_num;
+
+	kfree(inode);
 	return fp;
 }
 

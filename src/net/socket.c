@@ -56,7 +56,7 @@ static inline struct socket* get_socket(task_t* task, int sockfd) {
 		return NULL;
 	}
 
-	if(fp->type != VFS_FILE_TYPE_SOCKET) {
+	if(fp->type != FT_IFSOCK) {
 		sc_errno = ENOTSOCK;
 		return NULL;
 	}
@@ -191,7 +191,7 @@ vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock) {
 	pico_sock->priv = (void*)sock;
 
 	vfs_file_t* fd = vfs_alloc_fileno(task);
-	fd->type = VFS_FILE_TYPE_SOCKET;
+	fd->type = FT_IFSOCK;
 	fd->flags = O_RDWR;
 	fd->callbacks.read = vfs_read_cb;
 	fd->callbacks.write = vfs_write_cb;
@@ -295,7 +295,7 @@ int net_select(task_t* task, int nfds, fd_set *readfds, fd_set *writefds) {
 
 	while(!events) {
 		for(int num = 0; num < VFS_MAX_OPENFILES; num++) {
-			if(!task->files[num].inode || task->files[num].type != VFS_FILE_TYPE_SOCKET) {
+			if(!task->files[num].inode || task->files[num].type != FT_IFSOCK) {
 				continue;
 			}
 

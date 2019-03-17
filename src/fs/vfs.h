@@ -34,6 +34,9 @@
 #define FT_IFDIR	0x4000
 #define FT_IFCHR	0x2000
 #define FT_IFIFO	0x1000
+// Xelix internal
+#define FT_IFPIPE	0x2001
+#define FT_IFTTY	0x2001
 
 // Permissions
 #define S_IRUSR		0x0100
@@ -120,12 +123,7 @@ struct vfs_callbacks {
 };
 
 typedef struct vfs_file {
-	enum {
-		VFS_FILE_TYPE_REG,
-		VFS_FILE_TYPE_PIPE,
-		VFS_FILE_TYPE_SOCKET,
-	} type;
-
+	uint16_t type;
 	uint32_t num;
 	char path[512];
 	char mount_path[512];
