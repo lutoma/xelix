@@ -46,20 +46,18 @@ void dhcp_cb(void* cli, int code) {
 }
 
 void net_tick() {
-	if(!initialized) {
-		return;
+	if(likely(initialized)) {
+		pico_stack_tick();
 	}
-
-	pico_stack_tick();
 }
 
 static int pico_dsr_cb(struct pico_device* pico_dev, int loop_score) {
 	struct net_device* dev = (struct net_device*)pico_dev;
-	if(!spinlock_get(&dev->recv_buf_lock, 200)) {
+	if(unlikely(!spinlock_get(&dev->recv_buf_lock, 200))) {
 		return loop_score;
 	}
 
-	if(dev->recv_buf_len) {
+	if(likely(dev->recv_buf_len)) {
 		pico_stack_recv(pico_dev, dev->recv_buf, dev->recv_buf_len);
 		dev->recv_buf_len = 0;
 		loop_score--;
@@ -72,16 +70,16 @@ static int pico_dsr_cb(struct pico_device* pico_dev, int loop_score) {
 
 // Receive data from device
 void net_receive(struct net_device* dev, void* data, size_t len) {
-	if(!initialized) {
+	if(unlikely(!initialized)) {
 		return;
 	}
 
-	if(dev->recv_buf_len + len > RECV_BUFFER_SIZE) {
+	if(unlikely(dev->recv_buf_len + len > RECV_BUFFER_SIZE)) {
 		log(LOG_WARN, "net: Receive buffer overflow, discarding incoming packets\n");
 		return;
 	}
 
-	if(!spinlock_get(&dev->recv_buf_lock, 200)) {
+	if(unlikely(!spinlock_get(&dev->recv_buf_lock, 200))) {
 		return;
 	}
 

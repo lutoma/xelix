@@ -170,7 +170,7 @@ static void receive() {
 }
 
 static size_t send(void* pdev, void* data, size_t len) {
-	if(!spinlock_get(&send_lock, 200)) {
+	if(unlikely(!spinlock_get(&send_lock, 200))) {
 		return -1;
 	}
 
@@ -185,7 +185,7 @@ static void int_handler(isf_t* state) {
 	uint8_t isr = iinb(R_ISR);
 
 	if(bit_get(isr, 0)) {
-		if(bit_get(isr, 2)) {
+		if(unlikely(bit_get(isr, 2))) {
 			log(LOG_ERR, "ne2k: Packet receive error\n");
 		} else {
 			receive();
@@ -193,18 +193,18 @@ static void int_handler(isf_t* state) {
 	}
 
 	if(bit_get(isr, 1)) {
-		if(bit_get(isr, 3)) {
+		if(unlikely(bit_get(isr, 3))) {
 			log(LOG_ERR, "ne2k: Packet transmit error\n");
 		}
 
 		spinlock_release(&send_lock);
 	}
 
-	if(bit_get(isr, 4)) {
+	if(unlikely(bit_get(isr, 4))) {
 		log(LOG_ERR, "ne2k: Overwrite warning\n");
 	}
 
-	if(bit_get(isr, 5)) {
+	if(unlikely(bit_get(isr, 5))) {
 		log(LOG_ERR, "ne2k: Counter overflow!\n");
 	}
 
