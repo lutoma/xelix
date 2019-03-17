@@ -22,6 +22,7 @@
 #include <lib/log.h>
 #include <fs/vfs.h>
 #include <fs/block.h>
+#include <tasks/task.h>
 
 #ifdef EXT2_DEBUG
   #define debug(args...) log(LOG_DEBUG, "ext2: " args)
@@ -190,6 +191,6 @@ void ext2_dirent_rm(uint32_t inode_num, char* name);
 void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
 uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
-uint32_t ext2_open(char* path, uint32_t flags, void* mount_instance);
+vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* task);
 
 size_t ext2_read(vfs_file_t* fp, void* dest, size_t size);

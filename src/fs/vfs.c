@@ -250,21 +250,17 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return -1;
 	}
 
-	uint32_t inode = mp.callbacks.open(mount_path, flags, mp.instance);
-	if(!inode) {
+	vfs_file_t* fp = mp.callbacks.open(mount_path, flags, mp.instance, task);
+	if(!fp) {
 		kfree(path);
-		sc_errno = ENOENT;
 		return -1;
 	}
 
-	vfs_file_t* fp = vfs_alloc_fileno(task);
-	fp->type = VFS_FILE_TYPE_REG;
 	strcpy(fp->path, path);
 	strcpy(fp->mount_path, mount_path);
 	kfree(path);
 	memcpy(&fp->callbacks, &mp.callbacks, sizeof(struct vfs_callbacks));
 	fp->mount_instance = mp.instance;
-	fp->inode = inode;
 	fp->task = task;
 	fp->flags = flags;
 	return fp->num;
@@ -475,7 +471,7 @@ int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
 
 int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 	VFS_GET_CB_OR_ERROR(open);
-	uint32_t inode = mp->callbacks.open(mount_path, O_RDONLY, mp->instance);
+	uint32_t inode = mp->callbacks.open(mount_path, O_RDONLY, mp->instance, task);
 	kfree(mount_path);
 
 	if(!inode) {

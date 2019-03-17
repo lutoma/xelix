@@ -59,11 +59,16 @@ static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
 	return NULL;
 }
 
-uint32_t sysfs_open(char* path, uint32_t flags, void* mount_instance) {
-	if(!strncmp(path, "/", 2) || get_file(path, *(struct sysfs_file**)mount_instance)) {
-		return 1;
+vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task) {
+	if(strncmp(path, "/", 2) && !get_file(path, *(struct sysfs_file**)mount_instance)) {
+		sc_errno = ENOENT;
+		return NULL;
 	}
-	return 0;
+
+	vfs_file_t* fp = vfs_alloc_fileno(task);
+	fp->inode = 1;
+	fp->type = VFS_FILE_TYPE_REG;
+	return fp;
 }
 
 int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
