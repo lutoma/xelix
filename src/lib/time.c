@@ -183,5 +183,5 @@ void time_init() {
 	last_timestamp = read_rtc();
 	last_tick = pit_tick;
 	log(LOG_INFO, "time: Initial last_timestamp is %u at tick %llu\n", last_timestamp, last_tick);
-	sysfs_add_file("time", sfs_read, NULL, NULL);
+	sysfs_add_file("time", sfs_read, NULL);
 }

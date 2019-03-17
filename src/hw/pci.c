@@ -192,7 +192,8 @@ void pci_init() {
 
 				char* dname = kmalloc(20);
 				snprintf(dname, 20, "pci%dd%df%d", bus, dev, func);
-				sysfs_add_dev(dname, sfs_dev_read, NULL, (void*)pdev);
+				struct sysfs_file* file = sysfs_add_dev(dname, sfs_dev_read, NULL);
+				file->meta = (void*)pdev;
 				kfree(dname);
 
 				pdev->next = first_device;
@@ -207,5 +208,5 @@ void pci_init() {
 		}
 	}
 
-	sysfs_add_file("pci", sfs_read, NULL, NULL);
+	sysfs_add_file("pci", sfs_read, NULL);
 }

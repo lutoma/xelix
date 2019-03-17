@@ -109,6 +109,6 @@ void log(uint32_t level, const char *fmt, ...) {
 
 void log_init() {
 	#ifdef LOG_STORE
-	sysfs_add_file("log", sfs_read, NULL, NULL);
+	sysfs_add_file("log", sfs_read, NULL);
 	#endif
 }

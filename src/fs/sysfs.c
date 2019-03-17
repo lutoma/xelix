@@ -22,18 +22,9 @@
 #include <errno.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
+#include <fs/sysfs.h>
 #include <print.h>
 #include <time.h>
-#include "sysfs.h"
-
-struct sysfs_file {
-	char name[40];
-	sysfs_read_callback_t read_cb;
-	sysfs_write_callback_t write_cb;
-	void* meta;
-	struct sysfs_file* next;
-	struct sysfs_file* prev;
-};
 
 struct sysfs_file* sys_files;
 struct sysfs_file* dev_files;
@@ -155,22 +146,19 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
 	return total_length;
 }
 
-static void add_file(struct sysfs_file** table, char* name,
-	sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb,
-	void* meta) {
+static struct sysfs_file* add_file(struct sysfs_file** table, char* name,
+	sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
 
-	struct sysfs_file* fp = kmalloc(sizeof(struct sysfs_file));
+	struct sysfs_file* fp = zmalloc(sizeof(struct sysfs_file));
 	strcpy(fp->name, name);
 	fp->read_cb = read_cb;
 	fp->write_cb = write_cb;
-	fp->meta = meta;
-	fp->next = NULL;
-	fp->prev = NULL;
 	if(*table) {
 		fp->next = *table;
 		(*table)->prev = fp;
 	}
 	*table = fp;
+	return fp;
 }
 
 static void remove_file(struct sysfs_file** table, char* name) {
@@ -194,16 +182,14 @@ static void remove_file(struct sysfs_file** table, char* name) {
 	kfree(fp);
 }
 
-void sysfs_add_file(char* name, sysfs_read_callback_t read_cb,
-	sysfs_write_callback_t write_cb, void* meta) {
-
-	add_file(&sys_files, name, read_cb, write_cb, meta);
+struct sysfs_file* sysfs_add_file(char* name, sysfs_read_callback_t read_cb,
+	sysfs_write_callback_t write_cb) {
+	return add_file(&sys_files, name, read_cb, write_cb);
 }
 
-void sysfs_add_dev(char* name, sysfs_read_callback_t read_cb,
-	sysfs_write_callback_t write_cb, void* meta) {
-
-	add_file(&dev_files, name, read_cb, write_cb, meta);
+struct sysfs_file* sysfs_add_dev(char* name, sysfs_read_callback_t read_cb,
+	sysfs_write_callback_t write_cb) {
+	return add_file(&dev_files, name, read_cb, write_cb);
 }
 
 void sysfs_rm_file(char* name) {

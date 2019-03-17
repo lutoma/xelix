@@ -65,7 +65,8 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 
 	char tname[10];
 	snprintf(tname, 10, "task%d", task->pid);
-	sysfs_add_file(tname, sfs_read, NULL, (void*)task);
+	struct sysfs_file* file = sysfs_add_file(tname, sfs_read, NULL);
+	file->meta = (void*)task;
 	return task;
 }
 

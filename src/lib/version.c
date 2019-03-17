@@ -30,5 +30,5 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 }
 
 void version_init() {
-	sysfs_add_file("version", sfs_read, NULL, NULL);
+	sysfs_add_file("version", sfs_read, NULL);
 }

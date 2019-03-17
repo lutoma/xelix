@@ -129,7 +129,7 @@ void tty_init() {
 	term->scrollback_end = -1;
 
 	log(LOG_DEBUG, "tty: Can render %d columns, %d rows\n", term->drv->cols, term->drv->rows);
-	sysfs_add_dev("stdin", sfs_read, NULL, NULL);
-	sysfs_add_dev("stdout", NULL, sfs_write, NULL);
-	sysfs_add_dev("stderr", NULL, sfs_write, NULL);
+	sysfs_add_dev("stdin", sfs_read, NULL);
+	sysfs_add_dev("stdout", NULL, sfs_write);
+	sysfs_add_dev("stderr", NULL, sfs_write);
 }

@@ -178,5 +178,5 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 void scheduler_init() {
 	scheduler_state = SCHEDULER_INITIALIZING;
-	sysfs_add_file("tasks", sfs_read, NULL, NULL);
+	sysfs_add_file("tasks", sfs_read, NULL);
 }

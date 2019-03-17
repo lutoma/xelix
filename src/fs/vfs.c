@@ -594,5 +594,5 @@ void vfs_init() {
 
 	bzero(kernel_files, sizeof(kernel_files));
 	vfs_null_init();
-	sysfs_add_file("mounts", sfs_mounts_read, NULL, NULL);
+	sysfs_add_file("mounts", sfs_mounts_read, NULL);
 }

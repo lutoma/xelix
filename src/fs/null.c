@@ -29,11 +29,13 @@ static size_t null_read(void* dest, size_t size, size_t offset, void* meta) {
 	}
 }
 
-static size_t null_write(void* source, size_t size, size_t offset, void* mea) {
+static size_t null_write(void* source, size_t size, size_t offset, void* meta) {
 	return size;
 }
 
 void vfs_null_init(void) {
-	sysfs_add_dev("null", null_read, null_write, (void*)0);
-	sysfs_add_dev("zero", null_read, null_write, (void*)1);
+	struct sysfs_file* null = sysfs_add_dev("null", null_read, null_write);
+	struct sysfs_file* zero = sysfs_add_dev("zero", null_read, null_write);
+	null->meta = (void*)0;
+	zero->meta = (void*)1;
 }
