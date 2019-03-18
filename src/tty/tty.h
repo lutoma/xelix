@@ -46,8 +46,7 @@ struct terminal {
 	uint32_t cur_col;
 	uint32_t cur_row;
 
-	char* read_buf;
-	size_t read_buf_size;
+	char read_buf[0x1000];
 	size_t read_len;
 	bool read_done;
 

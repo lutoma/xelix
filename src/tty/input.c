@@ -21,7 +21,7 @@
 #include <tty/tty.h>
 
 void tty_input_cb(struct tty_input_state* input) {
-	if(!term || !input || !term->read_buf || term->read_len >= term->read_buf_size) {
+	if(!term || !input || term->read_len >= sizeof(term->read_buf)) {
 		return;
 	}
 
@@ -63,22 +63,24 @@ void tty_input_cb(struct tty_input_state* input) {
 		tty_put_char(input->chr);
 	}
 
-	if(input->chr == term->termios.c_cc[VEOL] || term->read_len >= term->read_buf_size) {
+	if(input->chr == term->termios.c_cc[VEOL] || !(term->termios.c_lflag & ICANON) || term->read_len >= sizeof(term->read_buf)) {
 		term->read_done = true;
 	}
 }
 
 size_t tty_read(char* dest, size_t size) {
-	term->read_len = 0;
-	term->read_buf = dest;
-	term->read_buf_size = size;
-
 	while(!term->read_done) {
 		asm("hlt");
 	}
 
-	term->read_buf = NULL;
-	term->read_buf_size = 0;
-	term->read_done = false;
-	return term->read_len;
+	size = MIN(size, term->read_len);
+	term->read_len -= size;
+	memcpy(dest, term->read_buf, size);
+
+	if(term->read_len) {
+		memmove(term->read_buf, term->read_buf + size, term->read_len);
+	} else {
+		term->read_done = false;
+	}
+	return size;
 }
