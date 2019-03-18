@@ -263,6 +263,11 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	fp->mount_instance = mp.instance;
 	fp->task = task;
 	fp->flags = flags;
+
+	if(flags & O_APPEND) {
+		vfs_seek(fp->num, 0, VFS_SEEK_END, task);
+	}
+
 	return fp->num;
 }
 

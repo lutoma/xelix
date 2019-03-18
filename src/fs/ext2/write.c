@@ -62,7 +62,6 @@ size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
 	}
 
 	debug("ext2_write_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
-	log(LOG_DEBUG, "ext2_write_file for %s, off %d, size %d\n", fp->mount_path, fp->offset, size);
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, fp->inode)) {
