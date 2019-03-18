@@ -35,6 +35,9 @@
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 // Symbols provided by LD in linker.ld
 extern void* __kernel_start;
 extern void* __kernel_end;

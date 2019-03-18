@@ -30,7 +30,7 @@ struct tty_input_state {
 	bool alt_left;
 	bool alt_right;
 	bool super;
-	char chr;
+	uint16_t code;
 };
 
 void tty_input_cb(struct tty_input_state* input);
