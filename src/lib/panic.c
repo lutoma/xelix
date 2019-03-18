@@ -43,24 +43,6 @@ static void panic_printf(const char *fmt, ...) {
 	va_end(va);
 }
 
-/* Write to display/serial, completely circumventing the tty framework and
- * device drivers. Writes directly to text video memory / serial ioports.
- *
- * Ideally, the output of this will later then be overwritten by the full
- * output routed via the console framework.
- */
-static void bruteforce_print(char* chars) {
-	static uint8_t* video_memory = (uint8_t*)0xB8000;
-	for(; *chars != 0; chars++) {
-		if(*chars == '\n') {
-			continue;
-		}
-
-		*video_memory++ = *chars;
-		*video_memory++ = 0x1F;
-	}
-}
-
 static void stacktrace() {
 	intptr_t addresses[10];
 	int read = walk_stack(addresses, 10);
@@ -78,13 +60,6 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	va_list va;
 	va_start(va, error);
 	interrupts_disable();
-
-	bruteforce_print("Early Kernel Panic: ");
-	bruteforce_print(error);
-	bruteforce_print(" -- If you can see only this message, but not the full kernel "
-		"panic debug information, either the console framework / display driver "
-		"failed or the kernel panic occured in early startup before the "
-		"initialization of the needed drivers.");
 
 	panic_printf("\nKernel Panic: ");
 	vprintf(error, va);
