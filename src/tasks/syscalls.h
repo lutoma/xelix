@@ -57,6 +57,7 @@ SYS_REDIR(waitpid,		task_waitpid,			syscall.task, (int32_t)syscall.params[0], (i
 SYS_REDIR(fork,			task_fork,				syscall.task, syscall.state);
 SYS_REDIR(exit,			task_exit,				syscall.task);
 SYS_REDIR(execve,		task_execve,			syscall.task, (char*)syscall.params[0], (char**)syscall.params[1], (char**)syscall.params[2]);
+SYS_REDIR(setid,		task_setid,				syscall.task, syscall.params[0], syscall.params[1]);
 
 #ifdef ENABLE_PICOTCP
 SYS_REDIR(socket,		net_socket,				syscall.task, syscall.params[0], syscall.params[1], syscall.params[2]);
@@ -126,4 +127,5 @@ struct syscall_definition syscall_table[] = {
 	{sys_select, "select", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
 	{sys_getpeername, "getpeername", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
 	{sys_getsockname, "getsockname", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
+	{sys_setid, "setid", 0, 0, 0},
 };

@@ -81,22 +81,6 @@ char* _ttyname(int desc) {
 	return "/dev/tty";
 }
 
-uid_t getuid(void) {
-	return 0;
-}
-
-uid_t geteuid(void) {
-	return 0;
-}
-
-uid_t getgid(void) {
-	return 0;
-}
-
-uid_t getegid(void) {
-	return 0;
-}
-
 int getgroups(int gidsetsize, gid_t grouplist[]) {
 	errno = ENOSYS;
 	return -1;
@@ -149,38 +133,10 @@ int chroot(const char *path) {
 	return -1;
 }
 
-int setgid(gid_t gid) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setuid(gid_t gid) {
-	errno = ENOSYS;
-	return -1;
-}
-
 int getrusage(int who, struct rusage *r_usage) {
 	errno = ENOSYS;
 	return -1;
 }
-
-/*
-int pselect(int nfds, fd_set *__restrict__ readfds,
-		fd_set *__restrict__ writefds, fd_set *__restrict__ errorfds,
-		const struct timespec *__restrict__ timeout,
-		const sigset_t *__restrict__ sigmask) {
-	errno = ENOSYS;
-	-1;
-}
-
-int select(int nfds, fd_set *__restrict__ readfds,
-		fd_set *__restrict__ writefds, fd_set *__restrict__ errorfds,
-		struct timeval *__restrict__ timeout) {
-	errno = ENOSYS;
-	-1;
-}
-*/
-
 
 pid_t setsid(void) {
 	errno = ENOSYS;
@@ -210,7 +166,7 @@ int WCOREDUMP(int s) {
 
 int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
 	errno = ENOSYS;
-	return 0;
+	return 1;
 }
 
 long sysconf(int name) {

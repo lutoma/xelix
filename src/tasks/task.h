@@ -64,6 +64,8 @@ struct elf_load_ctx {
 
 typedef struct task {
 	uint32_t pid;
+	uint16_t uid;
+	uint16_t gid;
 	char name[TASK_MAXNAME];
 	struct task* parent;
 	isf_t* state;

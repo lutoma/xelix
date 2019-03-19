@@ -9,6 +9,39 @@
 #include <sys/termios.h>
 #include "util.h"
 
+// Set up environment in the forked task
+static void setup_env(struct passwd* pwd) {
+	if(pwd->pw_gid != getgid()) {
+		if(setgid(pwd->pw_gid) < 0) {
+			perror("Could not change group");
+			exit(EXIT_FAILURE);
+		}
+	}
+	if(pwd->pw_uid != getuid()) {
+		if(setuid(pwd->pw_uid) < 0) {
+			perror("Could not change user");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	chdir(pwd->pw_dir);
+
+	printf("\033[H\033[J");
+	FILE* motd_fp = fopen("/etc/motd", "r");
+	if(motd_fp) {
+		char* motd = (char*)malloc(1024);
+		size_t read = fread(motd, 1024, 1, motd_fp);
+		puts(motd);
+		free(motd);
+	}
+
+	char* __argv[] = { pwd->pw_shell, "-l", NULL };
+	char* __env[] = { "LOGIN=DONE", NULL };
+	execve(pwd->pw_shell, __argv, __env);
+	perror("Could not launch shell");
+	exit(EXIT_FAILURE);
+}
+
 int main() {
 	char hostname[300];
 	gethostname(hostname, 300);
@@ -22,11 +55,8 @@ int main() {
 		char* user = malloc(50);
 		errno = 0;
 		char* read = fgets(user, 50, stdin);
-		if(!read) {
-			if(errno) {
-				perror("fgets");
-				return 1;
-			}
+		if(read < 0) {
+			perror("fgets");
 			continue;
 		}
 
@@ -45,11 +75,8 @@ int main() {
 		termios.c_lflag |= ECHO;
 		tcsetattr(0, TCSANOW, &termios);
 
-		if(!read) {
-			if(errno) {
-				perror("fgets");
-				return 1;
-			}
+		if(read < 0) {
+			perror("fgets");
 			continue;
 		}
 
@@ -66,46 +93,18 @@ int main() {
 			continue;
 		}
 
-		printf("\033[H\033[J");
-		FILE* motd_fp = fopen("/etc/motd", "r");
-		if(motd_fp) {
-			char* motd = (char*)malloc(1024);
-			size_t read = fread(motd, 1024, 1, motd_fp);
-			puts(motd);
-			free(motd);
-		}
-
-		char* __argv[] = { pwd->pw_shell, "-l", NULL };
-
-		char env_user[50];
-		snprintf(env_user, 50, "USER=%s", pwd->pw_name);
-
-		char env_home[100];
-		snprintf(env_home, 100, "HOME=%s", pwd->pw_dir);
-
-		char env_pwd[100];
-		snprintf(env_pwd, 100, "PWD=%s", pwd->pw_dir);
-
-		char env_host[306];
-		snprintf(env_host, 306, "HOST=%s", sname);
-
-		char* __env[] = { "PS1=[$USER@$HOST $PWD]# ", env_home, "TERM=vt100", env_pwd, env_user, env_host, NULL };
-
-		chdir(pwd->pw_dir);
-
 		int pid = fork();
 		if(pid == -1) {
 			perror("Could not fork");
-			exit(-1);
+			continue;
 		}
 
-		if(!pid) {
-			execve(pwd->pw_shell, __argv, __env);
-			perror("Could not launch shell");
-			exit(EXIT_FAILURE);
+		if(pid) {
+			waitpid(pid, NULL, 0);
+			printf("\033[H\033[J");
+		} else {
+			setup_env(pwd);
 		}
-		wait(NULL);
-		printf("\033[H\033[J");
 	}
 
 	free(sname);

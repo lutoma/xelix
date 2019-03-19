@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <pwd.h>
 #include "util.h"
 
 int main(int argc, char* argv[]) {
@@ -15,7 +16,7 @@ int main(int argc, char* argv[]) {
 	fgets(data, 1024, fp);
 
 
-	printf("%-4s %-10s %-4s %-6s\n", "PID", "State", "PPID", "Mem");
+	printf("%-4s %-8s %-10s %-4s %-8s\n", "PID", "User", "State", "PPID", "Mem");
 
 	while(true) {
 		if(feof(fp)) {
@@ -23,6 +24,8 @@ int main(int argc, char* argv[]) {
 		}
 
 		uint32_t pid;
+		uint32_t uid;
+		uint32_t gid;
 		uint32_t ppid;
 		char cstate;
 		char name[300];
@@ -31,7 +34,7 @@ int main(int argc, char* argv[]) {
 		uint32_t sbrk;
 		uint32_t stack;
 
-		if(fscanf(fp, "%d %d %c %s %d 0x%x 0x%x 0x%x\n", &pid, &ppid, &cstate, name, &mem, &entry, &sbrk, &stack) != 8) {
+		if(fscanf(fp, "%d %d %d %d %c %s %d 0x%x 0x%x 0x%x\n", &pid, &uid, &gid, &ppid, &cstate, name, &mem, &entry, &sbrk, &stack) != 10) {
 			fprintf(stderr, "Matching error.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -47,8 +50,18 @@ int main(int argc, char* argv[]) {
 			case 'C': state = "Syscall"; break;
 		}
 
+		char* user;
+		struct passwd* pwd = getpwuid(uid);
+		if(pwd) {
+			user = pwd->pw_name;
+		} else {
+			char _user[10];
+			itoa(uid, _user, 10);
+			user = _user;
+		}
+
 		char buf[100];
-		printf("%-4d %-10s %-4d %-6s %-15s\n", pid, state, ppid, readable_fs(mem, buf), name);
+		printf("%-4d %-8s %-10s %-4d %-8s %-15s\n", pid, user, state, ppid, readable_fs(mem, buf), name);
 	}
 
 	exit(EXIT_SUCCESS);

@@ -8,7 +8,7 @@ all: $(PACKAGE_NAME).tar.xz
 	tar xf $(PACKAGE_NAME).tar.xz
 	patch -p0 < ${PACKAGE_NAME}.patch
 	cd ./$(PACKAGE_NAME) && autoreconf
-	cd ./$(PACKAGE_NAME) && CFLAGS="-L/home/lutoma/code/xelix/mnt/usr/lib -I/home/lutoma/code/xelix/mnt/usr/include/" ./configure --host=i786-pc-xelix --prefix=/usr --disable-threads --disable-acl --disable-xattr --disable-largefile --enable-no-install-program=arch,coreutils,dmesg,mount
+	cd ./$(PACKAGE_NAME) && CFLAGS="-L/home/lutoma/code/xelix/mnt/usr/lib -I/home/lutoma/code/xelix/mnt/usr/include/" ./configure --host=i786-pc-xelix --prefix=/usr --disable-threads --disable-acl --disable-xattr --disable-largefile --enable-no-install-program=arch,coreutils,dmesg,mount,stat
 	patch -p0 < ${PACKAGE_NAME}-patch-two.patch
 	echo 'int main() {return -1;}' > ./$(PACKAGE_NAME)/src/stat.c
 	make -C $(PACKAGE_NAME)

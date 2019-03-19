@@ -140,7 +140,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 	}
 
 	size_t rsize = 0;
-	sysfs_printf("# pid ppid state name memory entry sbrk stack\n")
+	sysfs_printf("# pid uid gid ppid state name memory entry sbrk stack\n")
 
 	task_t* task = current_task;
 	do {
@@ -168,7 +168,10 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 			}
 		}
 
-		sysfs_printf("%d %d %c %s %d 0x%x 0x%x 0x%x\n", task->pid, ppid, state, task->name, mem_alloc, task->entry, task->sbrk, task->stack);
+		sysfs_printf("%d %d %d %d %c %s %d 0x%x 0x%x 0x%x\n",
+			task->pid, task->uid, task->gid, ppid, state, task->name,
+			mem_alloc, task->entry, task->sbrk, task->stack);
+
 	next:
 		task = task->next;
 	} while(task != current_task);

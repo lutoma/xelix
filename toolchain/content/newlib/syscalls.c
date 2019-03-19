@@ -420,6 +420,38 @@ int tcflow(int fd, int action) {
 	return ioctl(fd, TCXONC, action);
 }
 
+uid_t getuid(void) {
+	return _xelix_execdata->uid;
+}
+
+uid_t geteuid(void) {
+	return _xelix_execdata->uid;
+}
+
+uid_t getgid(void) {
+	return _xelix_execdata->gid;
+}
+
+uid_t getegid(void) {
+	return _xelix_execdata->gid;
+}
+
+int setuid(uid_t uid) {
+	int r = syscall(42, 0, uid, 0);
+	if(r >= 0) {
+		_xelix_execdata->uid = uid;
+	}
+	return r;
+}
+
+int setgid(gid_t gid) {
+	int r = syscall(42, 1, gid, 0);
+	if(r >= 0) {
+		_xelix_execdata->gid = gid;
+	}
+	return r;
+}
+
 const char *gai_strerror(int ecode) {
 	switch(ecode) {
 		case EAI_AGAIN: return "temporary failure in name resolution";

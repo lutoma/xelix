@@ -32,6 +32,8 @@ struct execdata {
 	void** argv;
 	void** env;
 	char binary_path[TASK_PATH_MAX];
+	uint16_t uid;
+	uint16_t gid;
 };
 
 /* Sets up a single page of runtime data for the program, including PID, argv,
@@ -69,11 +71,14 @@ void task_setup_execdata(task_t* task) {
 		offset += strlen(task->environ[i]) + 1;
 	}
 
+	serial_printf("exc uid %d gid %d\n", task->uid, task->gid);
 	exc->pid = task->pid;
+	exc->uid = task->uid;
+	exc->gid = task->gid;
 	exc->ppid = task->parent ? task->parent->pid : 0;
 	exc->argc = task->argc;
 	exc->envc = task->envc;
 	exc->argv = (void*)vmem_translate(task->memory_context, (intptr_t)argv, true);
 	exc->env = (void*)vmem_translate(task->memory_context, (intptr_t)environ, true);
-	strncpy(exc->binary_path, task->binary_path, TASK_PATH_MAX + 1);
+	strncpy(exc->binary_path, task->binary_path, TASK_PATH_MAX);
 }
