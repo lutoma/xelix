@@ -80,6 +80,10 @@ int _fork() {
 	return syscall_pf(22, 0, 0, 0);
 }
 
+pid_t vfork(void) {
+	return syscall(22, 0, 0, 0);
+}
+
 pid_t _getpid() {
 	return (pid_t)_xelix_execdata->pid;
 }

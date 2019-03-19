@@ -228,11 +228,6 @@ int setrlimit(int resource, const struct rlimit *rlim) {
 	return -1;
 }
 
-pid_t vfork(void) {
-	errno = ENOSYS;
-	return -1;
-}
-
 ssize_t getline(char **restrict lineptr, size_t *restrict n,
        FILE *restrict stream) {
 	errno = ENOSYS;
