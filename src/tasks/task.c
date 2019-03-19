@@ -217,6 +217,7 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	}
 
 	task_t* new_task = task_new(task->parent, task->pid, path, __env, __envc, __argv, __argc);
+	memcpy(new_task->cwd, task->cwd, TASK_PATH_MAX);
 	new_task->uid = task->uid;
 	new_task->gid = task->gid;
 	if(elf_load_file(new_task, path) == -1) {
