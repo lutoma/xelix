@@ -14,7 +14,6 @@ extern "C" {
 #include <sys/_timespec.h>
 
 /* xelix */
-#define SA_NOCLDSTOP 0
 #define SA_ONSTACK 0
 #define SA_RESETHAND 0
 #define SA_RESTART 0

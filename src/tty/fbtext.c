@@ -91,7 +91,7 @@ static void write_char(uint32_t x, uint32_t y, char chr, uint32_t fg_col, uint32
 }
 
 static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
-	uint32_t* start = CHAR_PTR(start_x, start_x);
+	uint32_t* start = CHAR_PTR(start_x, start_y);
 	uint32_t* end = CHAR_PTR(end_x, end_y);
 	uint32_t color = convert_color(term->bg_color);
 

@@ -101,13 +101,39 @@ static int set_pos(char* intermediate) {
 	return 0;
 }
 
-static int set_line_pos(char* intermediate) {
+static int set_row_pos(char* intermediate) {
 	int arg = 0;
 	if(intermediate) {
 		arg = atoi(intermediate) - 1;
 	}
 
 	term->cur_row = arg;
+	return 0;
+}
+
+static int set_col_pos(char* intermediate) {
+	int arg = 0;
+	if(intermediate) {
+		arg = atoi(intermediate) - 1;
+	}
+
+	term->cur_col = arg;
+	return 0;
+}
+
+static int clear_forward(char* intermediate) {
+	int arg = 1;
+	if(intermediate) {
+		arg = atoi(intermediate);
+	}
+
+	term->drv->clear(term->cur_col, term->cur_row, term->cur_col + arg, term->cur_row);
+	return 0;
+}
+
+static int reset(char* intermediate) {
+	term->fg_color = FG_COLOR_DEFAULT;
+	term->bg_color = BG_COLOR_DEFAULT;
 	return 0;
 }
 
@@ -145,13 +171,17 @@ size_t tty_handle_escape_seq(char* str, size_t str_len) {
 		intermediate = strndup(str + intermediate_start, spos - intermediate_start);
 	}
 
+	serial_printf("escape code %c\n", *cur_str);
 	int result;
 	switch(*cur_str) {
 		case 'm': result = set_char_attrs(intermediate); break;
 		case 'J': result = clear(intermediate); break;
 		case 'K': result = erase_in_line(intermediate); break;
 		case 'H': result = set_pos(intermediate); break;
-		case 'd': result = set_line_pos(intermediate); break;
+		case 'd': result = set_row_pos(intermediate); break;
+		case 'G': result = set_col_pos(intermediate); break;
+		case 'X': result = clear_forward(intermediate); break;
+		case 'l': result = reset(intermediate); break;
 		default:
 			serial_printf("Unknown escape code %c\n", *cur_str);
 			result = -1;
