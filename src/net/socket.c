@@ -239,8 +239,13 @@ int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 		return -1;
 	}
 
-	union pico_address pico_addr = { .ip4 = { 0 } };
 	uint16_t port = net_bsd_to_pico_port(addr, addrlen);
+	if(endian_swap16(port) <= 1024 && task->uid) {
+		sc_errno = EACCES;
+		return -1;
+	}
+
+	union pico_address pico_addr = { .ip4 = { 0 } };
 	if(net_bsd_to_pico_addr(&pico_addr, addr, addrlen) < 0) {
 		sc_errno = EINVAL;
 		return -1;
