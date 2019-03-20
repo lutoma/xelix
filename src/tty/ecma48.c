@@ -171,7 +171,8 @@ size_t tty_handle_escape_seq(char* str, size_t str_len) {
 		intermediate = strndup(str + intermediate_start, spos - intermediate_start);
 	}
 
-	serial_printf("escape code %c\n", *cur_str);
+	static int cnt = 0;
+	serial_printf("escape code #%d, %c\n", cnt++, *cur_str);
 	int result;
 	switch(*cur_str) {
 		case 'm': result = set_char_attrs(intermediate); break;

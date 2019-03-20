@@ -117,10 +117,10 @@ void paging_init() {
 	log(LOG_INFO, "vmem: Enabling paging bit, cr3=0x%x\n", paging_kernel_cr3);
 	asm volatile(
 		"cli;"
-		"mov cr3, %0;"
-		"mov eax, cr0;"
-		"or eax, 0x80000000;"
-		"mov cr0, eax;"
+		"mov %0, %%cr3;"
+		"mov %%cr0, %%eax;"
+		"or $0x80000000, %%eax;"
+		"mov %%eax, %%cr0;"
 		"sti;"
 	:: "r"(paging_kernel_cr3) : "memory", "eax");
 }

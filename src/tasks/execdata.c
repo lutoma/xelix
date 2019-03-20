@@ -71,7 +71,6 @@ void task_setup_execdata(task_t* task) {
 		offset += strlen(task->environ[i]) + 1;
 	}
 
-	serial_printf("exc uid %d gid %d\n", task->uid, task->gid);
 	exc->pid = task->pid;
 	exc->uid = task->uid;
 	exc->gid = task->gid;

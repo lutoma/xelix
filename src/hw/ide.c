@@ -91,7 +91,7 @@ void ide_init_device(uint16_t bus) {
 	uint16_t * buf = (uint16_t *)&device;
 
 	for (int i = 0; i < 256; ++i) {
-		buf[i] = portio_in16(bus);
+		buf[i] = inw(bus);
 	}
 
 	uint8_t * ptr = (uint8_t *)&device.model;

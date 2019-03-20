@@ -96,7 +96,7 @@ static void* data;
 
 // Debugging function
 static void dump_regs(struct ac97_card* card) {
-	uint16_t poctrl = portio_in8(card->nabmbar + PORT_NABM_POCONTROL);
+	uint16_t poctrl = inb(card->nabmbar + PORT_NABM_POCONTROL);
 	uint16_t sr = inw(card->nabmbar + PORT_NABM_POSTATUS);
 
 	log(LOG_DEBUG, "poctrl IOCE: %d\n", bit_get(poctrl, 4));
@@ -110,7 +110,7 @@ static void dump_regs(struct ac97_card* card) {
 	log(LOG_DEBUG, "postatus BCIS: %d\n", bit_get(sr, 3));
 	log(LOG_DEBUG, "postatus FIFOE: %d\n", bit_get(sr, 4));
 
-	uint8_t polvi = portio_in8(card->nabmbar + PORT_NABM_POLVI);
+	uint8_t polvi = inb(card->nabmbar + PORT_NABM_POLVI);
 	log(LOG_DEBUG, "POLVI: %d\n", polvi);
 
 	/*uint16_t pcicmd = pci_config_read16(card->device, 0x04);
@@ -148,12 +148,12 @@ static void interrupt_handler(isf_t *state) {
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_LVBCI);
 	} else if(sr & AC97_X_SR_BCIS) {
 		uint32_t current_buffer = (card->last_buffer + 1) % NUM_BUFFERS;
-		uint16_t samples = portio_in16(card->nabmbar + PORT_NABM_POPICB);
+		uint16_t samples = inw(card->nabmbar + PORT_NABM_POPICB);
 
 		//log(LOG_DEBUG, "ac97: Playing buffer %d, refilling buffer %d, %d samples left\n", current_buffer, card->last_buffer, samples);
 
 		if(current_buffer == 0 || samples < 1) {
-			portio_out8(card->nabmbar + PORT_NABM_POLVI, NUM_BUFFERS);
+			outb(card->nabmbar + PORT_NABM_POLVI, NUM_BUFFERS);
 		}
 
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_BCIS);
@@ -209,7 +209,7 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 	card->nabmbar = pci_get_BAR(card->device, 1) & 0xFFFFFFFC;
 
 	// Turn power on / disable cold reset
-	portio_out32(card->nabmbar + 0x2c, bit_set(portio_in32(card->nabmbar + 0x2c), 1));
+	outl(card->nabmbar + 0x2c, bit_set(inl(card->nabmbar + 0x2c), 1));
 	sleep_ticks(20);
 
 	// Hard reset
@@ -217,11 +217,11 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 	sleep_ticks(20);
 
 	// Warm reset
-	portio_out32(card->nabmbar + 0x2c, bit_set(portio_in32(card->nabmbar + 0x2c), 2));
+	outl(card->nabmbar + 0x2c, bit_set(inl(card->nabmbar + 0x2c), 2));
 
 	// Wait for reset to complete
 	for(int i = 0;; i++) {
-		if(bit_get(portio_in32(card->nabmbar + 0x2c), 2) == 0) {
+		if(bit_get(inl(card->nabmbar + 0x2c), 2) == 0) {
 			log(LOG_INFO, "ac97: Warm reset finished.\n");
 			break;
 		}

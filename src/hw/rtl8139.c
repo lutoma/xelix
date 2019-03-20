@@ -80,12 +80,12 @@ static uint32_t vendor_device_combos[][2] = {
 
 #define RX_BUFFER_SIZE 8192
 
-#define int_out8(card, port, value) portio_out8(card ->device->iobase + port, value)
-#define int_out16(card, port, value) portio_out16(card ->device->iobase + port, value)
-#define int_out32(card, port, value) portio_out32(card ->device->iobase + port, value)
+#define int_out8(card, port, value) outb(card ->device->iobase + port, value)
+#define int_out16(card, port, value) outw(card ->device->iobase + port, value)
+#define int_out32(card, port, value) outl(card ->device->iobase + port, value)
 
-#define int_in8(card, port) portio_in8(card ->device->iobase + port)
-#define int_in16(card, port) portio_in16(card->device->iobase + port)
+#define int_in8(card, port) inb(card ->device->iobase + port)
+#define int_in16(card, port) inw(card->device->iobase + port)
 
 struct rtl8139_card {
 	pci_device_t* device;

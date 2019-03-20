@@ -35,13 +35,13 @@ time_t last_timestamp = 0;
 uint64_t last_tick = 0;
 
 static int in_progress() {
-	portio_out8(0x70, 0x0A);
-	return (portio_in8(0x71) & 0x80);
+	outb(0x70, 0x0A);
+	return (inb(0x71) & 0x80);
 }
 
 static uint8_t get_register(int reg) {
-	portio_out8(0x70, reg);
-	return portio_in8(0x71);
+	outb(0x70, reg);
+	return inb(0x71);
 }
 
 static time_t read_rtc() {

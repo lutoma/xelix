@@ -12,7 +12,7 @@ ifeq ($(BUILD),)
 	BUILD := 0
 endif
 
-MAKE_CFLAGS = -std=gnu18 -ffreestanding -g -O3 -pipe -masm=intel -mtune=sandybridge -mgeneral-regs-only -mhard-float -fstack-protector-strong -Wall -Wframe-larger-than=1024 -I src -I src/lib -I ext/picotcp/build/include -include src/lib/generic.h
+MAKE_CFLAGS = -std=gnu18 -ffreestanding -g -O3 -pipe -mtune=sandybridge -mgeneral-regs-only -mhard-float -fstack-protector-strong -Wall -Wframe-larger-than=1024 -I src -I src/lib -I ext/picotcp/build/include -include src/lib/generic.h
 MAKE_LDFLAGS = -T linker.ld -nostdlib -lgcc
 MAKE_ASFLAGS = -g -f elf
 

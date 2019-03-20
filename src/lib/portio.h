@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,24 +18,34 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
 
-// Legacy
-#define outb(args...) portio_out8(args)
-#define outw(args...) portio_out16(args)
-#define outl(args...) portio_out32(args)
-#define outq(args...) portio_out64(args)
+static inline void outb(uint16_t port, uint8_t value) {
+	asm volatile("outb %0, %1" : : "a" (value), "Nd" (port));
+}
 
-#define inb(args...) portio_in8(args)
-#define inw(args...) portio_in16(args)
-#define inl(args...) portio_in32(args)
-#define inq(args...) portio_in64(args)
+static inline void outw(uint16_t port, uint16_t value) {
+	asm volatile("outw %0, %1" : : "a" (value), "Nd" (port));
+}
 
-void portio_out8(uint16_t port, uint8_t value);
-void portio_out16(uint16_t port, uint16_t value);
-void portio_out32(uint16_t port, uint32_t value);
-void portio_out64(uint16_t port, uint64_t value);
+static inline void outl(uint16_t port, uint32_t value) {
+	asm volatile("outl %0, %1" : : "a" (value), "Nd" (port));
+}
 
-uint8_t portio_in8(uint16_t port);
-uint16_t portio_in16(uint16_t port);
-uint32_t portio_in32(uint16_t port);
-uint64_t portio_in64(uint16_t port);
+static inline uint8_t inb(uint16_t port) {
+	uint8_t ret;
+	asm volatile("inb %1, %0" : "=a" (ret) : "Nd" (port));
+	return ret;
+}
+
+static inline uint16_t inw(uint16_t port) {
+	uint16_t ret;
+	asm volatile("inw %1, %0" : "=a" (ret) : "Nd" (port));
+	return ret;
+}
+
+static inline uint32_t inl(uint16_t port) {
+	uint32_t ret;
+	asm volatile("inl %1, %0" : "=a" (ret) : "Nd" (port));
+	return ret;
+}
