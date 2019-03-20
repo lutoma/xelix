@@ -106,20 +106,20 @@ typedef struct {
 
 struct vfs_callbacks {
 	struct vfs_file* (*open)(char* path, uint32_t flags, void* mount_instance, struct task* task);
-	size_t (*read)(struct vfs_file* fp, void* dest, size_t size);
-	size_t (*write)(struct vfs_file* fp, void* source, size_t size);
-	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size);
-	int (*stat)(struct vfs_file* fp, vfs_stat_t* dest);
-	int (*mkdir)(const char* path, uint32_t mode);
-	int (*symlink)(const char* path1, const char* path2);
-	int (*unlink)(char* name);
-	int (*chmod)(const char* path, uint32_t mode);
-	int (*chown)(const char* path, uint16_t owner, uint16_t group);
-	int (*utimes)(const char* path, struct timeval times[2]);
-	int (*link)(const char* path, const char* new_path);
-	int (*readlink)(const char* orig_path, char* buf, size_t size);
-	int (*rmdir)(char* path);
-	int (*ioctl)(const char* path, int request, void* arg);
+	size_t (*read)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
+	size_t (*write)(struct vfs_file* fp, void* source, size_t size, struct task* task);
+	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
+	int (*stat)(struct vfs_file* fp, vfs_stat_t* dest, struct task* task);
+	int (*mkdir)(const char* path, uint32_t mode, struct task* task);
+	int (*symlink)(const char* path1, const char* path2, struct task* task);
+	int (*unlink)(char* name, struct task* task);
+	int (*chmod)(const char* path, uint32_t mode, struct task* task);
+	int (*chown)(const char* path, uint16_t owner, uint16_t group, struct task* task);
+	int (*utimes)(const char* path, struct timeval times[2], struct task* task);
+	int (*link)(const char* path, const char* new_path, struct task* task);
+	int (*readlink)(const char* orig_path, char* buf, size_t size, struct task* task);
+	int (*rmdir)(char* path, struct task* task);
+	int (*ioctl)(const char* path, int request, void* arg, struct task* task);
 };
 
 typedef struct vfs_file {

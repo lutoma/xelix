@@ -30,7 +30,7 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-size_t ext2_read(vfs_file_t* fp, void* dest, size_t size) {
+size_t ext2_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_read_file called without fp or fp missing inode.\n");
 		sc_errno = EBADF;
@@ -43,6 +43,12 @@ size_t ext2_read(vfs_file_t* fp, void* dest, size_t size) {
 	if(!ext2_inode_read(inode, fp->inode)) {
 		kfree(inode);
 		sc_errno = EBADF;
+		return -1;
+	}
+
+	if(ext2_inode_check_perm(PERM_CHECK_READ, inode, task) < 0) {
+		kfree(inode);
+		sc_errno = EACCES;
 		return -1;
 	}
 

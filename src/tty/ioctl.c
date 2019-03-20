@@ -19,9 +19,10 @@
 
 #include <tty/ioctl.h>
 #include <tty/tty.h>
+#include <tasks/task.h>
 #include <errno.h>
 
-int tty_ioctl(const char* path, int request, void* arg) {
+int tty_ioctl(const char* path, int request, void* arg, task_t* task) {
 	if(!arg) {
 		sc_errno = EINVAL;
 		return -1;

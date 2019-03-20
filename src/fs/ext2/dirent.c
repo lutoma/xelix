@@ -39,11 +39,17 @@ static struct dirent* readdir_r(vfs_file_t* fp, void* kbuf, size_t size, size_t 
 	return ent;
 }
 
-size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size) {
+size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, fp->inode)) {
 		kfree(inode);
 		sc_errno = EBADF;
+		return -1;
+	}
+
+	if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task) < 0) {
+		kfree(inode);
+		sc_errno = EACCES;
 		return -1;
 	}
 
@@ -148,7 +154,7 @@ static struct dirent* search_dir(struct inode* inode, const char* search) {
 	return NULL;
 }
 
-struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino) {
+struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* task) {
 
 	if(unlikely(!strcmp("/", path)))
 		path = "/.";
@@ -167,6 +173,12 @@ struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino) {
 	while(pch != NULL) {
 		int inode_num = dirent ? dirent->inode : ROOT_INODE;
 		if(!ext2_inode_read(inode, inode_num)) {
+			sc_errno = ENOENT;
+			goto bye;
+		}
+
+		if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task) < 0) {
+			sc_errno = EACCES;
 			goto bye;
 		}
 
@@ -180,6 +192,7 @@ struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino) {
 
 		dirent = search_dir(inode, pch);
 		if(!dirent) {
+			sc_errno = ENOENT;
 			goto bye;
 		}
 		pch = strtok_r(NULL, "/", &sp);

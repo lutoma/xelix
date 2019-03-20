@@ -54,7 +54,7 @@ uint32_t ext2_block_new(uint32_t neighbor) {
 
 }
 
-size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
+size_t ext2_write(vfs_file_t* fp, void* source, size_t size, task_t* task) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_write_file called without fp or fp missing inode.\n");
 		sc_errno = EBADF;
@@ -67,6 +67,12 @@ size_t ext2_write(vfs_file_t* fp, void* source, size_t size) {
 	if(!ext2_inode_read(inode, fp->inode)) {
 		kfree(inode);
 		sc_errno = EBADF;
+		return -1;
+	}
+
+	if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task) < 0) {
+		kfree(inode);
+		sc_errno = EACCES;
 		return -1;
 	}
 

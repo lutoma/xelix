@@ -23,6 +23,7 @@
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
+#include <tasks/task.h>
 #include <print.h>
 #include <time.h>
 
@@ -63,7 +64,7 @@ vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t*
 	return fp;
 }
 
-int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
+int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest, task_t* task) {
 	bool is_root = !strncmp(fp->mount_path, "/", 2);
 	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
 	if(!is_root && !file) {
@@ -96,7 +97,7 @@ int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	return 0;
 }
 
-size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size) {
+size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
 	if(!file || !file->read_cb) {
 		sc_errno = file ? ENXIO : ENOENT;
@@ -106,7 +107,7 @@ size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size) {
 	return file->read_cb(dest, size, fp->offset, file->meta);
 }
 
-size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size) {
+size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size, task_t* task) {
 	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
 	if(!file || !file->write_cb) {
 		sc_errno = file ? ENXIO : ENOENT;
@@ -116,7 +117,7 @@ size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size) {
 	return file->write_cb(source, size, fp->offset, file->meta);
 }
 
-size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size) {
+size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	struct sysfs_file* file = *(struct sysfs_file**)fp->mount_instance;
 
 	if(!file || fp->offset) {

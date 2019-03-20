@@ -18,6 +18,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <tasks/task.h>
+
 #define VEOF     1 /* ^D (end of file) */
 #define VEOL     2 /* NULL (end of line) */
 #define VERASE   3 /* ^H (backspace/del) */
@@ -182,4 +184,4 @@ struct winsize {
 	unsigned short ws_ypixel;
 };
 
-int tty_ioctl(const char* path, int request, void* arg);
+int tty_ioctl(const char* path, int request, void* arg, task_t* task);

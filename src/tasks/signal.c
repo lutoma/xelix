@@ -109,6 +109,11 @@ int task_signal_syscall(int target_pid, task_t* source, int sig, isf_t* state) {
 		return -1;
 	}
 
+	if(target_task->uid != source->uid) {
+		sc_errno = EPERM;
+		return -1;
+	}
+
 	/* POSIX: "If sig is 0 (the null signal), error checking is performed but
 	 * no signal is actually sent. The null signal can be used to check the
 	 * validity of pid."

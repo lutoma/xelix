@@ -32,7 +32,7 @@ struct pipe {
 	uint32_t data_size;
 };
 
-size_t pipe_read(vfs_file_t* fp, void* dest, size_t size) {
+size_t pipe_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	struct pipe* pipe = (struct pipe*)fp->mount_instance;
 
 	if(!pipe->data_size && fp->flags & O_NONBLOCK) {
@@ -57,7 +57,7 @@ size_t pipe_read(vfs_file_t* fp, void* dest, size_t size) {
 	return size;
 }
 
-size_t pipe_write(vfs_file_t* fp, void* source, size_t size) {
+size_t pipe_write(vfs_file_t* fp, void* source, size_t size, task_t* task) {
 	struct pipe* pipe = (struct pipe*)fp->mount_instance;
 	if(pipe->data_size + size > PIPE_BUFFER_SIZE) {
 		sc_errno = EFBIG;

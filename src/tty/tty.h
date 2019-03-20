@@ -20,6 +20,7 @@
 
 #include <fs/vfs.h>
 #include <tty/ioctl.h>
+#include <tasks/task.h>
 #include <stdbool.h>
 
 #define FG_COLOR_DEFAULT 7
@@ -62,9 +63,9 @@ void tty_init();
 void tty_put_char(char chr);
 
 /* VFS callbacks */
-static inline size_t tty_vfs_write(vfs_file_t* fp, void* source, size_t size) {
+static inline size_t tty_vfs_write(vfs_file_t* fp, void* source, size_t size, task_t* task) {
 	return tty_write((char*)source, size);
 }
-static inline size_t tty_vfs_read(vfs_file_t* fp, void* dest, size_t size) {
+static inline size_t tty_vfs_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	return tty_read((char*)dest, size);
 }

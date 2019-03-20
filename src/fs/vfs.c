@@ -285,7 +285,7 @@ size_t vfs_read(int fd, void* dest, size_t size, task_t* task) {
 		return -1;
 	}
 
-	size_t read = fp->callbacks.read(fp, dest, size);
+	size_t read = fp->callbacks.read(fp, dest, size, task);
 	fp->offset += read;
 	return read;
 }
@@ -308,7 +308,7 @@ size_t vfs_write(int fd, void* source, size_t size, task_t* task) {
 		return -1;
 	}
 
-	size_t written = fp->callbacks.write(fp, source, size);
+	size_t written = fp->callbacks.write(fp, source, size, task);
 	fp->offset += written;
 	return written;
 }
@@ -327,7 +327,7 @@ size_t vfs_getdents(int fd, void* dest, size_t size, task_t* task) {
 		return -1;
 	}
 
-	return fp->callbacks.getdents(fp, dest, size);
+	return fp->callbacks.getdents(fp, dest, size, task);
 }
 
 int vfs_seek(int fd, size_t offset, int origin, task_t* task) {
@@ -401,7 +401,7 @@ int vfs_ioctl(int fd, int request, void* arg, task_t* task) {
 		return -1;
 	}
 
-	return fp->callbacks.ioctl(fp->mount_path, request, arg);
+	return fp->callbacks.ioctl(fp->mount_path, request, arg, task);
 }
 
 int vfs_stat(int fd, vfs_stat_t* dest, task_t* task) {
@@ -418,7 +418,7 @@ int vfs_stat(int fd, vfs_stat_t* dest, task_t* task) {
 		return -1;
 	}
 
-	return fp->callbacks.stat(fp, dest);
+	return fp->callbacks.stat(fp, dest, task);
 }
 
 int vfs_close(int fd, task_t* task) {
@@ -447,14 +447,14 @@ int vfs_close(int fd, task_t* task) {
 
 int vfs_unlink(char* orig_path, task_t* task) {
 	VFS_GET_CB_OR_ERROR(unlink);
-	int r = mp->callbacks.unlink(mount_path);
+	int r = mp->callbacks.unlink(mount_path, task);
 	kfree(mount_path);
 	return r;
 }
 
 int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
 	VFS_GET_CB_OR_ERROR(chmod);
-	int r = mp->callbacks.chmod(mount_path, mode);
+	int r = mp->callbacks.chmod(mount_path, mode, task);
 	kfree(mount_path);
 	return r;
 }
@@ -462,25 +462,23 @@ int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
 
 int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, task_t* task) {
 	VFS_GET_CB_OR_ERROR(chown);
-	int r = mp->callbacks.chown(mount_path, uid, gid);
+	int r = mp->callbacks.chown(mount_path, uid, gid, task);
 	kfree(mount_path);
 	return r;
 }
 
 int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
 	VFS_GET_CB_OR_ERROR(mkdir);
-	int r = mp->callbacks.mkdir(mount_path, mode);
+	int r = mp->callbacks.mkdir(mount_path, mode, task);
 	kfree(mount_path);
 	return r;
 }
 
 int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 	VFS_GET_CB_OR_ERROR(open);
-	vfs_file_t* fp = mp->callbacks.open(mount_path, O_RDONLY, mp->instance, task);
+	vfs_file_t* fp = mp->callbacks.open(mount_path, amode, mp->instance, task);
 	kfree(mount_path);
-
 	if(!fp) {
-		sc_errno = ENOENT;
 		return -1;
 	}
 	vfs_close(fp->num, task);
@@ -489,21 +487,21 @@ int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 
 int vfs_utimes(const char* orig_path, struct timeval times[2], task_t* task) {
 	VFS_GET_CB_OR_ERROR(utimes);
-	int r = mp->callbacks.utimes(mount_path, times);
+	int r = mp->callbacks.utimes(mount_path, times, task);
 	kfree(mount_path);
 	return r;
 }
 
 int vfs_readlink(const char* orig_path, char* buf, size_t size, task_t* task) {
 	VFS_GET_CB_OR_ERROR(readlink);
-	int r = mp->callbacks.readlink(mount_path, buf, size);
+	int r = mp->callbacks.readlink(mount_path, buf, size, task);
 	kfree(mount_path);
 	return r;
 }
 
 int vfs_rmdir(const char* orig_path, task_t* task) {
 	VFS_GET_CB_OR_ERROR(rmdir);
-	int r = mp->callbacks.rmdir(mount_path);
+	int r = mp->callbacks.rmdir(mount_path, task);
 	kfree(mount_path);
 	return r;
 }
@@ -544,7 +542,7 @@ int vfs_link(const char* orig_path, const char* orig_new_path, task_t* task) {
 		return -1;
 	}
 
-	int r = mp.callbacks.link(mount_path, new_mount_path);
+	int r = mp.callbacks.link(mount_path, new_mount_path, task);
 	kfree(path);
 	kfree(new_path);
 	return r;

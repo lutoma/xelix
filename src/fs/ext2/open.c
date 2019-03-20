@@ -63,20 +63,23 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 	}
 
 	uint32_t dir_inode = 0;
-	struct dirent* dirent = ext2_dirent_find(path, &dir_inode);
+	struct dirent* dirent = ext2_dirent_find(path, &dir_inode, task);
+	if(!dirent && (sc_errno != ENOENT || !(flags & O_CREAT))) {
+		return NULL;
+	}
+
 	uint32_t inode_num = dirent ? dirent->inode : 0;
 	struct inode* inode = kmalloc(superblock->inode_size);
 
 	if(!inode_num) {
-		if(!(flags & O_CREAT)) {
-			kfree(inode);
-			sc_errno = ENOENT;
-			return NULL;
-		}
-
 		debug("ext2_open: Could not find inode, creating one.\n");
 		inode_num = ext2_inode_new(inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), EXT2_DIRENT_FT_REG_FILE);
+
+		if(task) {
+			inode->uid = task->uid;
+			inode->gid = task->gid;
+		}
 	} else {
 		kfree(dirent);
 
@@ -89,6 +92,19 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 		if(!ext2_inode_read(inode, inode_num)) {
 			kfree(inode);
 			sc_errno = ENOENT;
+			return NULL;
+		}
+
+		int perm_check = 0;
+		if((flags & 1) == O_RDONLY || (flags & O_RDWR)) {
+			perm_check += ext2_inode_check_perm(PERM_CHECK_READ, inode, task);
+		}
+		if((flags & O_WRONLY) || (flags & O_RDWR)) {
+			perm_check += ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task);
+		}
+		if(perm_check < 0) {
+			kfree(inode);
+			sc_errno = EACCES;
 			return NULL;
 		}
 	}

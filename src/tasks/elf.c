@@ -39,10 +39,10 @@
 
 static char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf) {
+static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf, task_t* task) {
 	void* buf = inbuf ? inbuf : kmalloc(size);
-	vfs_seek(fd, offset, VFS_SEEK_SET, NULL);
-	size_t read = vfs_read(fd, buf, size, NULL);
+	vfs_seek(fd, offset, VFS_SEEK_SET, task);
+	size_t read = vfs_read(fd, buf, size, task);
 	if(likely(read == size)) {
 		return buf;
 	}
@@ -82,7 +82,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 		}
 	}
 
-	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, phys + phys_offset))) {
+	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, phys + phys_offset, task))) {
 		kfree(phys);
 		return -1;
 	}
@@ -95,7 +95,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 }
 
 static int read_dyn_table(task_t* task, int fd, elf_program_header_t* phead) {
-	void* dyn = bin_read(fd, phead->offset, phead->filesz, NULL);
+	void* dyn = bin_read(fd, phead->offset, phead->filesz, NULL, task);
 	if(!dyn) {
 		return -1;
 	}
@@ -125,7 +125,7 @@ static int read_dyn_table(task_t* task, int fd, elf_program_header_t* phead) {
 
 static uint32_t read_pheads(task_t* task, int fd, elf_t* header, bool is_main) {
 	elf_program_header_t* phead_start = bin_read(fd, header->phoff,
-		header->phnum * header->phentsize, NULL);
+		header->phnum * header->phentsize, NULL, task);
 	if(unlikely(!phead_start)) {
 		return -1;
 	}
@@ -146,7 +146,7 @@ static uint32_t read_pheads(task_t* task, int fd, elf_t* header, bool is_main) {
 				break;
 			case PT_INTERP:
 				if(is_main) {
-					task->elf_ctx.interp = bin_read(fd, phead->offset, phead->filesz, NULL);
+					task->elf_ctx.interp = bin_read(fd, phead->offset, phead->filesz, NULL, task);
 					kfree(phead_start);
 					return task->elf_ctx.interp ? 0 : -1;
 				}
@@ -170,19 +170,19 @@ static uint32_t read_pheads(task_t* task, int fd, elf_t* header, bool is_main) {
 #define LF_ASSERT(cmp, msg)                    \
 if(unlikely(!(cmp))) {                         \
 	log(LOG_INFO, "elf: elf_load: " msg "\n"); \
-	vfs_close(fd, NULL);                       \
+	vfs_close(fd, task);                       \
 	kfree(header);                             \
 	return -1;                                 \
 }
 
 static int load_file(task_t* task, char* path, bool is_main) {
 	debug("elf: Loading %s\n", path);
-	int fd = vfs_open(path, O_RDONLY, NULL);
+	int fd = vfs_open(path, O_RDONLY, task);
 	if(unlikely(fd < 0)) {
 		return -1;
 	}
 
-	elf_t* header = bin_read(fd, 0, sizeof(elf_t), NULL);
+	elf_t* header = bin_read(fd, 0, sizeof(elf_t), NULL, task);
 	LF_ASSERT(header, "Could not read ELF header");
 	LF_ASSERT(!memcmp(header->ident, elf_magic, sizeof(elf_magic)),
 		"Invalid magic");
@@ -204,7 +204,7 @@ static int load_file(task_t* task, char* path, bool is_main) {
 	}
 
 	kfree(header);
-	vfs_close(fd, NULL);
+	vfs_close(fd, task);
 	return 0;
 }
 

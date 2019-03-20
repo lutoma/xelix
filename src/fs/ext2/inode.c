@@ -277,4 +277,24 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 	ext2_free_blocknum_resolver_cache(res_cache);
 	return buf;
 }
+
+int ext2_inode_check_perm(enum inode_check_op op, struct inode* inode, task_t* task) {
+	// Kernel / root
+	if(!task || task->uid == 0) {
+		return 0;
+	}
+
+	int bit_offset = 0;
+	if(task->uid == inode->uid) {
+		bit_offset = 6;
+	} else if(task->gid == inode->gid) {
+		bit_offset = 3;
+	}
+
+	if(inode->mode & (1 << (bit_offset + op))) {
+		return 0;
+	}
+	return -1;
+}
+
 #endif /* ENABLE_EXT2 */

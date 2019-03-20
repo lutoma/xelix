@@ -177,6 +177,13 @@ void ext2_free_blocknum_resolver_cache(struct ext2_blocknum_resolver_cache* cach
 uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 	uint32_t offset, size_t length, uint8_t* buf);
 
+enum inode_check_op {
+	PERM_CHECK_READ = 2,
+	PERM_CHECK_WRITE = 1,
+	PERM_CHECK_EXEC = 0
+};
+int ext2_inode_check_perm(enum inode_check_op, struct inode* inode, task_t* task);
+
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
 void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit);
 char* ext2_chop_path(const char* path, char** ent);
@@ -184,13 +191,13 @@ void ext2_dump_inode(struct inode* buf);
 
 uint32_t ext2_block_new();
 
-size_t ext2_write(vfs_file_t* fp, void* source, size_t size);
-size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size);
-struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino);
+size_t ext2_write(vfs_file_t* fp, void* source, size_t size, task_t* task);
+size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task);
+struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* task);
 void ext2_dirent_rm(uint32_t inode_num, char* name);
 void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
 uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
 vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* task);
 
-size_t ext2_read(vfs_file_t* fp, void* dest, size_t size);
+size_t ext2_read(vfs_file_t* fp, void* dest, size_t size, task_t* task);

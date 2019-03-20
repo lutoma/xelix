@@ -31,8 +31,8 @@
 #include <fs/ext2.h>
 #include <fs/block.h>
 
-int ext2_chmod(const char* path, uint32_t mode) {
-	struct dirent* dirent = ext2_dirent_find(path, NULL);
+int ext2_chmod(const char* path, uint32_t mode, task_t* task) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
 	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
@@ -53,8 +53,8 @@ int ext2_chmod(const char* path, uint32_t mode) {
 	return 0;
 }
 
-int ext2_chown(const char* path, uint16_t uid, uint16_t gid) {
-	struct dirent* dirent = ext2_dirent_find(path, NULL);
+int ext2_chown(const char* path, uint16_t uid, uint16_t gid, task_t* task) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
 	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
@@ -80,7 +80,7 @@ int ext2_chown(const char* path, uint16_t uid, uint16_t gid) {
 	return 0;
 }
 
-int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
+int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest, task_t* task) {
 	if(!fp || !fp->inode) {
 		log(LOG_ERR, "ext2: ext2_stat called without fp or fp missing inode.\n");
 		return -1;
@@ -110,11 +110,11 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest) {
 	return 0;
 }
 
-int ext2_mkdir(const char* path, uint32_t mode) {
+int ext2_mkdir(const char* path, uint32_t mode, task_t* task) {
 	char* name;
 	char* base_path = ext2_chop_path(path, &name);
 
-	struct dirent* parent_dirent = ext2_dirent_find(base_path, NULL);
+	struct dirent* parent_dirent = ext2_dirent_find(base_path, NULL, task);
 	if(!parent_dirent) {
 		kfree(base_path);
 		sc_errno = ENOENT;
@@ -136,6 +136,10 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 	}
 
 	inode->size = bl_off(1);
+	if(task) {
+		inode->uid = task->uid;
+		inode->gid = task->gid;
+	}
 	ext2_inode_write(inode, inode_num);
 	ext2_dirent_add(parent_dirent->inode, inode_num, name, EXT2_DIRENT_FT_DIR);
 
@@ -153,8 +157,8 @@ int ext2_mkdir(const char* path, uint32_t mode) {
 	return 0;
 }
 
-int ext2_utimes(const char* path, struct timeval times[2]) {
-	struct dirent* dirent = ext2_dirent_find(path, NULL);
+int ext2_utimes(const char* path, struct timeval times[2], task_t* task) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
 	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
@@ -162,7 +166,14 @@ int ext2_utimes(const char* path, struct timeval times[2]) {
 
 	struct inode* inode = kmalloc(bl_off(1));
 	if(!ext2_inode_read(inode, dirent->inode)) {
+		kfree(inode);
 		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task) < 0) {
+		kfree(inode);
+		sc_errno = EACCES;
 		return -1;
 	}
 
@@ -178,12 +189,13 @@ int ext2_utimes(const char* path, struct timeval times[2]) {
 	}
 
 	ext2_inode_write(inode, dirent->inode);
+	kfree(inode);
 	return 0;
 }
 
-static int do_unlink(char* path, bool is_dir) {
+static int do_unlink(char* path, bool is_dir, task_t* task) {
 	uint32_t dir_ino = 0;
-	struct dirent* dirent = ext2_dirent_find(path, &dir_ino);
+	struct dirent* dirent = ext2_dirent_find(path, &dir_ino, task);
 	if(!dirent || !dir_ino) {
 		sc_errno = ENOENT;
 		return -1;
@@ -198,6 +210,12 @@ static int do_unlink(char* path, bool is_dir) {
 	if(!ext2_inode_read(inode, dirent->inode)) {
 		kfree(inode);
 		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task) < 0) {
+		kfree(inode);
+		sc_errno = EACCES;
 		return -1;
 	}
 
@@ -287,19 +305,19 @@ static int do_unlink(char* path, bool is_dir) {
 	return 0;
 }
 
-int ext2_unlink(char* path) {
-	return do_unlink(path, false);
+int ext2_unlink(char* path, task_t* task) {
+	return do_unlink(path, false, task);
 }
 
-int ext2_rmdir(char* path) {
-	return do_unlink(path, true);
+int ext2_rmdir(char* path, task_t* task) {
+	return do_unlink(path, true, task);
 }
 
-int ext2_link(const char* path, const char* new_path) {
+int ext2_link(const char* path, const char* new_path, task_t* task) {
 	char* new_name;
 	char* new_dir_path = ext2_chop_path(new_path, &new_name);
-	struct dirent* dirent = ext2_dirent_find(path, NULL);
-	struct dirent* dir_dirent = ext2_dirent_find(new_dir_path, NULL);
+	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
+	struct dirent* dir_dirent = ext2_dirent_find(new_dir_path, NULL, task);
 
 	if(!dirent || !dir_dirent) {
 		kfree(new_dir_path);
@@ -320,8 +338,8 @@ int ext2_link(const char* path, const char* new_path) {
 	return 0;
 }
 
-int ext2_readlink(const char* path, char* buf, size_t size) {
-	struct dirent* dirent = ext2_dirent_find(path, NULL);
+int ext2_readlink(const char* path, char* buf, size_t size, task_t* task) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
 	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
@@ -332,6 +350,13 @@ int ext2_readlink(const char* path, char* buf, size_t size) {
 		kfree(inode);
 		kfree(dirent);
 		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(ext2_inode_check_perm(PERM_CHECK_READ, inode, task) < 0) {
+		kfree(inode);
+		kfree(dirent);
+		sc_errno = EACCES;
 		return -1;
 	}
 
