@@ -39,3 +39,12 @@
 char* strtok_r(char* s, const char* delim, char** last);
 char* substr(char* src, size_t start, size_t len);
 int find_substr(char* list, char* item);
+
+static inline void *memset32(uint32_t *s, uint32_t v, size_t n) {
+	long d0, d1;
+	asm volatile("rep stosl"
+		: "=&c" (d0), "=&D" (d1)
+		: "a" (v), "1" (s), "0" (n)
+		: "memory");
+	return s;
+}

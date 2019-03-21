@@ -57,7 +57,7 @@ static int clear(char* intermediate) {
 
 	switch(arg) {
 		case 0:
-			term->drv->clear(term->cur_col, term->cur_row, term->drv->cols, term->drv->rows); break;
+			term->drv->clear(0, term->cur_row, term->drv->cols, term->drv->rows); break;
 		case 1:
 			term->drv->clear(0, 0, term->cur_col, term->cur_row); break;
 		case 2:
@@ -131,66 +131,96 @@ static int clear_forward(char* intermediate) {
 	return 0;
 }
 
+static int repeat_char(char* intermediate) {
+	int arg = 1;
+	if(intermediate) {
+		arg = atoi(intermediate);
+	}
+
+	if(term->last_char) {
+		for(int i = 0; i < arg; i++) {
+			tty_put_char(term->last_char);
+		}
+	}
+	return 0;
+}
+
 static int reset(char* intermediate) {
 	term->fg_color = FG_COLOR_DEFAULT;
 	term->bg_color = BG_COLOR_DEFAULT;
 	return 0;
 }
 
-#define ESC_ADVANCE(x) { cur_str += x; spos += x; }
+#define ESC_ADVANCE() {		\
+	cur_str++;				\
+	if(++spos >= str_len) {	\
+		return 0;			\
+	}						\
+}
+
 size_t tty_handle_escape_seq(char* str, size_t str_len) {
 	size_t spos = 0;
-
-	// Check if string contains enough space for an escape sequence
-	if(str_len < 3) {
-		return 0;
-	}
-
 	char* cur_str = str;
-	ESC_ADVANCE(1);
+	ESC_ADVANCE();
 
-	if(*cur_str != '[') {
-		return 0;
+	bool is_bdc = false;
+	switch(*cur_str) {
+		case '[':
+			break;
+		case ')':
+		case '(':
+			is_bdc = true;
+			break;
+		default:
+			return 0;
 	}
-	ESC_ADVANCE(1);
+	ESC_ADVANCE();
 
 	// An escape code may have a number of intermediate bytes
 	int intermediate_start = 0;
-	while(spos <= str_len && (*cur_str == ';' || *cur_str == '?' || ('0' <= *cur_str && '9' >= *cur_str))) {
-		if(!intermediate_start) {
-			intermediate_start = spos;
-		}
-		ESC_ADVANCE(1);
-	}
-	if(spos == str_len) {
-		return 0;
-	}
-
 	char* intermediate = NULL;
-	if(intermediate_start) {
-		intermediate = strndup(str + intermediate_start, spos - intermediate_start);
+
+	if(!is_bdc) {
+		while(spos <= str_len && (*cur_str == ';' || *cur_str == '?' || ('0' <= *cur_str && '9' >= *cur_str))) {
+			if(!intermediate_start) {
+				intermediate_start = spos;
+			}
+			ESC_ADVANCE();
+		}
+
+		if(intermediate_start) {
+			intermediate = strndup(str + intermediate_start, spos - intermediate_start);
+		}
 	}
 
-	static int cnt = 0;
-	serial_printf("escape code #%d, %c\n", cnt++, *cur_str);
-	int result;
-	switch(*cur_str) {
-		case 'm': result = set_char_attrs(intermediate); break;
-		case 'J': result = clear(intermediate); break;
-		case 'K': result = erase_in_line(intermediate); break;
-		case 'H': result = set_pos(intermediate); break;
-		case 'd': result = set_row_pos(intermediate); break;
-		case 'G': result = set_col_pos(intermediate); break;
-		case 'X': result = clear_forward(intermediate); break;
-		case 'l': result = reset(intermediate); break;
-		default:
-			serial_printf("Unknown escape code %c\n", *cur_str);
-			result = -1;
-			break;
+	int result = -1;
+	if(is_bdc) {
+		switch(*cur_str) {
+			case '0':
+				term->write_bdc = true;
+				result = 0;
+				break;
+			case 'B':
+				term->write_bdc = false;
+				result = 0;
+				break;
+		}
+	} else {
+		switch(*cur_str) {
+			case 'm': result = set_char_attrs(intermediate); break;
+			case 'J': result = clear(intermediate); break;
+			case 'K': result = erase_in_line(intermediate); break;
+			case 'H': result = set_pos(intermediate); break;
+			case 'd': result = set_row_pos(intermediate); break;
+			case 'G': result = set_col_pos(intermediate); break;
+			case 'X': result = clear_forward(intermediate); break;
+			case 'l': result = reset(intermediate); break;
+			case 'b': result = repeat_char(intermediate); break;
+		}
 	}
 
 	if(intermediate) {
 		kfree(intermediate);
 	}
-	return result == -1 ? 0 :spos;
+	return result == -1 ? 0 : spos;
 }

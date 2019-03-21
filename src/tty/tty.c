@@ -46,7 +46,7 @@ static inline void handle_nonprintable(char chr) {
 	if(chr == term->termios.c_cc[VERASE] || chr == 0x7f) {
 		//term->scrollback_end--;
 		// FIXME limit checking
-		term->drv->write(--term->cur_col, term->cur_row, ' ', term->bg_color, term->bg_color);
+		term->drv->write(--term->cur_col, term->cur_row, ' ', false, term->bg_color, term->bg_color);
 		return;
 	}
 
@@ -58,7 +58,8 @@ static inline void handle_nonprintable(char chr) {
 
 void tty_put_char(char chr) {
 	if(chr > 31 && chr < 127) {
-		term->drv->write(term->cur_col, term->cur_row, chr, term->fg_color, term->bg_color);
+		term->last_char = chr;
+		term->drv->write(term->cur_col, term->cur_row, chr, term->write_bdc, term->fg_color, term->bg_color);
 		term->cur_col++;
 	} else {
 		handle_nonprintable(chr);

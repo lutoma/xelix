@@ -23,15 +23,15 @@
 #include <tasks/task.h>
 #include <stdbool.h>
 
-#define FG_COLOR_DEFAULT 7
-#define BG_COLOR_DEFAULT 0
+#define FG_COLOR_DEFAULT 9
+#define BG_COLOR_DEFAULT 9
 
 struct tty_driver {
 	uint32_t cols;
 	uint32_t rows;
 	uint32_t xpixel;
 	uint32_t ypixel;
-	void (*write)(uint32_t x, uint32_t y, char chr, uint32_t fg_col, uint32_t bg_col);
+	void (*write)(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_col, uint32_t bg_col);
 	void (*scroll_line)();
 	void (*clear)(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
 };
@@ -53,6 +53,8 @@ struct terminal {
 
 	uint32_t fg_color;
 	uint32_t bg_color;
+	bool write_bdc;
+	char last_char;
 };
 
 struct terminal* term;
