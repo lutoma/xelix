@@ -54,6 +54,10 @@ static inline void handle_nonprintable(char chr) {
 		term->cur_col += 8 - (term->cur_col % 8);
 		return;
 	}
+
+	if(chr == term->termios.c_cc[VINTR]) {
+		tty_write("^C\n", 3);
+	}
 }
 
 void tty_put_char(char chr) {
@@ -106,7 +110,7 @@ void tty_init() {
 	term->fg_color = FG_COLOR_DEFAULT;
 	term->bg_color = BG_COLOR_DEFAULT;
 
-	term->termios.c_lflag = ECHO | ICANON;
+	term->termios.c_lflag = ECHO | ICANON | ISIG;
 	term->termios.c_cc[VEOF] = 4;
 	term->termios.c_cc[VEOL] = '\n';
 	term->termios.c_cc[VERASE] = 8;

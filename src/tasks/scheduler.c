@@ -29,6 +29,7 @@
 #include <tasks/elf.h>
 #include <tasks/wait.h>
 #include <fs/sysfs.h>
+#include <tty/tty.h>
 
 static task_t* current_task = NULL;
 
@@ -81,6 +82,8 @@ static void unlink(task_t *t, bool replaced) {
 			}
 			task_signal(t->parent, t, SIGCHLD, t->parent->state);
 		}
+
+		term->fg_task = t->parent;
 	}
 
 	task_cleanup(t);

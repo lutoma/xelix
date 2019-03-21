@@ -39,6 +39,7 @@ struct tty_driver {
 struct terminal {
 	struct tty_driver* drv;
 	struct termios termios;
+	task_t* fg_task;
 
 	size_t scrollback_size;
 	size_t scrollback_end;
