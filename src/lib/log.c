@@ -75,9 +75,7 @@ void log(uint32_t level, const char *fmt, ...) {
 	va_start(va, fmt);
 
 	char fmt_string[500];
-	char prefix[30];
 	size_t fmt_len = vsnprintf(fmt_string, 500, fmt, va);
-	size_t prefix_len = snprintf(prefix, 30, "[%d:%03d] ", uptime(), pit_tick);
 
 	/* Only store for log levels > debug. Storing all debug messages is usually
 	 * not very helpful, consumes a lot of memory and can cause deadlocks
@@ -85,9 +83,16 @@ void log(uint32_t level, const char *fmt, ...) {
 	 */
 	#ifdef LOG_STORE
 	if(level > LOG_DEBUG) {
-		store(prefix, prefix_len);
+		char log_prefix[100];
+		size_t prefix_len = snprintf(log_prefix, 100, "%d %d %d:", pit_tick, time_get(), level);
+		store(log_prefix, prefix_len);
 		store(fmt_string, fmt_len);
 	}
+	#endif
+
+	#if LOG_SERIAL_LEVEL != 0 || LOG_PRINT_LEVEL != 0
+	char prefix[30];
+	size_t prefix_len = snprintf(prefix, 30, "[%d:%03d] ", uptime(), pit_tick);
 	#endif
 
 	#if LOG_SERIAL_LEVEL != 0

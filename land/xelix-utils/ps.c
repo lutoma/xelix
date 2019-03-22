@@ -1,3 +1,21 @@
+/* Copyright © 2018-2019 Lukas Martini
+ *
+ * This file is part of Xelix.
+ *
+ * Xelix is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Xelix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -12,11 +30,13 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
+	// Drop first line
 	char* data = malloc(1024);
 	fgets(data, 1024, fp);
+	free(data);
 
-
-	printf("%-4s %-8s %-10s %-4s %-8s\n", "PID", "User", "State", "PPID", "Mem");
+	int hdr_len = printf("%-4s %-8s %-11s %-4s %s\n", "PID", "User", "State", "PPID", "Mem");
+	printf("\033(0q\033[%db\033(B\n", hdr_len);
 
 	while(true) {
 		if(feof(fp)) {
@@ -41,13 +61,13 @@ int main(int argc, char* argv[]) {
 
 		char* state = "Unknown";
 		switch(cstate) {
-			case 'K': state = "Killed"; break;
-			case 'T': state = "Terminated"; break;
-			case 'B': state = "Blocking"; break;
-			case 'S': state = "Stopped"; break;
-			case 'R': state = "Running"; break;
-			case 'W': state = "Waiting"; break;
-			case 'C': state = "Syscall"; break;
+			case 'K': state = "31mKilled"; break;
+			case 'T': state = "31mTerminated"; break;
+			case 'B': state = "35mBlocking"; break;
+			case 'S': state = "36mStopped"; break;
+			case 'R': state = "32mRunning"; break;
+			case 'W': state = "39mWaiting"; break;
+			case 'C': state = "33mSyscall"; break;
 		}
 
 		char* user;
@@ -60,8 +80,9 @@ int main(int argc, char* argv[]) {
 			user = _user;
 		}
 
-		char buf[100];
-		printf("%-4d %-8s %-10s %-4d %-8s %-15s\n", pid, user, state, ppid, readable_fs(mem, buf), name);
+		char* rfs = readable_fs(mem);
+		printf("%-4d %-8s \033[%-11s\033[m %-4d %-10s %-15s\n", pid, user, state, ppid, rfs, name);
+		free(rfs);
 	}
 
 	exit(EXIT_SUCCESS);
