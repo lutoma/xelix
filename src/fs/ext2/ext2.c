@@ -367,6 +367,42 @@ int ext2_link(const char* path, const char* new_path, task_t* task) {
 	return 0;
 }
 
+int ext2_access(char* path, uint32_t amode, task_t* task) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
+	if(!dirent) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	struct inode* inode = kmalloc(superblock->inode_size);
+	if(!ext2_inode_read(inode, dirent->inode)) {
+		kfree(inode);
+		kfree(dirent);
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	int perm_check = 0;
+	if(amode & R_OK) {
+		perm_check += ext2_inode_check_perm(PERM_CHECK_READ, inode, task);
+	}
+	if(amode & W_OK) {
+		perm_check += ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task);
+	}
+	if(amode & X_OK) {
+		perm_check += ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task);
+	}
+	if(perm_check < 0) {
+		kfree(inode);
+		sc_errno = EACCES;
+		return -1;
+	}
+
+	kfree(inode);
+	kfree(dirent);
+	return 0;
+}
+
 int ext2_readlink(const char* path, char* buf, size_t size, task_t* task) {
 	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
 	if(!dirent) {
@@ -480,6 +516,7 @@ void ext2_init() {
 		.rmdir = ext2_rmdir,
 		.link = ext2_link,
 		.readlink = ext2_readlink,
+		.access = ext2_access,
 	};
 	vfs_mount("/", NULL, "/dev/ide1p1", "ext2", &cb);
 }

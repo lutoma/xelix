@@ -480,14 +480,10 @@ int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
 }
 
 int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
-	VFS_GET_CB_OR_ERROR(open);
-	vfs_file_t* fp = mp->callbacks.open(mount_path, amode, mp->instance, task);
+	VFS_GET_CB_OR_ERROR(access);
+	int r = mp->callbacks.access(mount_path, amode, task);
 	kfree(mount_path);
-	if(!fp) {
-		return -1;
-	}
-	vfs_close(fp->num, task);
-	return 0;
+	return r;
 }
 
 int vfs_utimes(const char* orig_path, struct timeval times[2], task_t* task) {

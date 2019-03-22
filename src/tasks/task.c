@@ -282,6 +282,10 @@ void task_cleanup(task_t* t) {
 }
 
 int task_chdir(task_t* task, const char* dir) {
+	if(vfs_access(dir, R_OK | X_OK, task) < 0) {
+		return -1;
+	}
+
 	int fd = vfs_open(dir, O_RDONLY, task);
 	if(fd == -1) {
 		return -1;

@@ -60,6 +60,12 @@
 #define O_SYNC		0x2000
 #define O_NONBLOCK	0x4000
 
+// access() flags
+#define	F_OK	0
+#define	R_OK	4
+#define	W_OK	2
+#define	X_OK	1
+
 // fcntl operations
 #define	F_DUPFD		0	/* Duplicate fildes */
 #define	F_GETFD		1	/* Get fildes flags (close on exec) */
@@ -106,6 +112,7 @@ typedef struct {
 
 struct vfs_callbacks {
 	struct vfs_file* (*open)(char* path, uint32_t flags, void* mount_instance, struct task* task);
+	int (*access)(char* path, uint32_t amode, struct task* task);
 	size_t (*read)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
 	size_t (*write)(struct vfs_file* fp, void* source, size_t size, struct task* task);
 	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
