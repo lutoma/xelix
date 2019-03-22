@@ -46,6 +46,13 @@ int ext2_chmod(const char* path, uint32_t mode, task_t* task) {
 		return -1;
 	}
 
+	if(inode->uid != task->uid) {
+		kfree(dirent);
+		kfree(inode);
+		sc_errno = EPERM;
+		return -1;
+	}
+
 	inode->mode = vfs_mode_to_filetype(inode->mode) | (mode & 0xfff);
 	ext2_inode_write(inode, dirent->inode);
 	kfree(dirent);
@@ -65,6 +72,13 @@ int ext2_chown(const char* path, uint16_t uid, uint16_t gid, task_t* task) {
 		kfree(dirent);
 		kfree(inode);
 		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(inode->uid != task->uid) {
+		kfree(dirent);
+		kfree(inode);
+		sc_errno = EPERM;
 		return -1;
 	}
 
