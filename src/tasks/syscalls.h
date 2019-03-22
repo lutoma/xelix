@@ -31,7 +31,8 @@
 SYS_REDIR(open,			vfs_open,				(char*)syscall.params[0], syscall.params[1], syscall.task);
 SYS_REDIR(read,			vfs_read,				syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
 SYS_REDIR(write,		vfs_write,				syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
-SYS_REDIR(stat,			vfs_stat,				syscall.params[0], (vfs_stat_t*)syscall.params[1], syscall.task);
+SYS_REDIR(fstat,		vfs_fstat,				syscall.params[0], (vfs_stat_t*)syscall.params[1], syscall.task);
+SYS_REDIR(stat,			vfs_stat,				(char*)syscall.params[0], (vfs_stat_t*)syscall.params[1], syscall.task);
 SYS_REDIR(seek,			vfs_seek,				syscall.params[0], syscall.params[1], syscall.params[2], syscall.task);
 SYS_REDIR(getdents,		vfs_getdents,			syscall.params[0], (void*)syscall.params[1], syscall.params[2], syscall.task);
 SYS_REDIR(close,		vfs_close,				syscall.params[0], syscall.task);
@@ -93,7 +94,7 @@ struct syscall_definition syscall_table[] = {
 	{sys_chmod, "chmod", SYSCALL_ARG_RESOLVE, 0, 0},
 	{sys_link, "link", SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE, 0},
 	{sys_open, "open", SYSCALL_ARG_RESOLVE, 0, 0},
-	{sys_stat, "stat", 0, SYSCALL_ARG_RESOLVE, 0},
+	{sys_fstat, "fstat", 0, SYSCALL_ARG_RESOLVE, 0},
 	{sys_seek, "seek", 0, 0, 0},
 	{sys_getdents, "getdents", 0, SYSCALL_ARG_RESOLVE, 0},
 	{sys_chown, "chown", SYSCALL_ARG_RESOLVE, 0, 0},
@@ -128,4 +129,5 @@ struct syscall_definition syscall_table[] = {
 	{sys_getpeername, "getpeername", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
 	{sys_getsockname, "getsockname", 0, SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE},
 	{sys_setid, "setid", 0, 0, 0},
+	{sys_stat, "stat", SYSCALL_ARG_RESOLVE, SYSCALL_ARG_RESOLVE, 0},
 };

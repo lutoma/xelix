@@ -215,16 +215,7 @@ int _fstat(int file, struct stat* st) {
 }
 
 int _stat(const char* name, struct stat *st) {
-	int fp = open(name, O_RDONLY);
-	if(fp == -1) {
-		return -1;
-	}
-
-	int r = _fstat(fp, st);
-	int stat_errno = errno;
-	_close(fp);
-	errno = stat_errno;
-	return r;
+	return syscall_pf(43, name, st, 0);
 }
 
 int lstat(const char* name, struct stat *st) {

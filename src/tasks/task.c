@@ -189,7 +189,6 @@ int task_exit(task_t* task) {
 
 // Task setuid/setgid
 int task_setid(task_t* task, int which, int id) {
-	serial_printf("task_setid task %d -> %d\n", task->pid, id);
 	if(task->uid != 0) {
 		sc_errno = EPERM;
 		return -1;
@@ -289,7 +288,7 @@ int task_chdir(task_t* task, const char* dir) {
 	}
 
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_stat(fd, stat, task) != 0) {
+	if(vfs_fstat(fd, stat, task) != 0) {
 		kfree(stat);
 		vfs_close(fd, task);
 		sc_errno = ENOENT;

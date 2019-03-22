@@ -109,7 +109,7 @@ struct vfs_callbacks {
 	size_t (*read)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
 	size_t (*write)(struct vfs_file* fp, void* source, size_t size, struct task* task);
 	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
-	int (*stat)(struct vfs_file* fp, vfs_stat_t* dest, struct task* task);
+	int (*stat)(char* path, vfs_stat_t* dest, void* mount_instance, struct task* task);
 	int (*mkdir)(char* path, uint32_t mode, struct task* task);
 	int (*symlink)(const char* path1, const char* path2, struct task* task);
 	int (*unlink)(char* name, struct task* task);
@@ -164,13 +164,13 @@ int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task
 int vfs_link(const char* orig_path, const char* orig_new_path, struct task* task);
 int vfs_readlink(const char* orig_path, char* buf, size_t size, struct task* task);
 int vfs_rmdir(const char* orig_path, struct task* task);
+int vfs_stat(char* path, vfs_stat_t* dest, struct task* task);
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	struct vfs_callbacks* callbacks);
-
-// FIXME Should operate on paths, not open files
-int vfs_stat(int fd, vfs_stat_t* dest, struct task* task);
-
 void vfs_init();
+
+// legacy
+int vfs_fstat(int fd, vfs_stat_t* dest, struct task* task);
 
 static inline char* vfs_filetype_to_verbose(int filetype) {
 	switch(filetype) {
@@ -206,7 +206,7 @@ static inline char* vfs_flags_verbose(uint32_t flags) {
 	if(flags & O_WRONLY) {
 		mode = "O_WRONLY";
 	} else if(flags & O_RDWR) {
-		mode ="O_RDWR";
+		mode = "O_RDWR";
 	}
 
 	return mode;

@@ -64,19 +64,20 @@ vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t*
 	return fp;
 }
 
-int sysfs_stat(vfs_file_t* fp, vfs_stat_t* dest, task_t* task) {
-	bool is_root = !strncmp(fp->mount_path, "/", 2);
-	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
+int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task) {
+	bool is_root = !strncmp(path, "/", 2);
+	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
 	if(!is_root && !file) {
+		sc_errno = ENOENT;
 		return -1;
 	}
 
-	dest->st_dev = fp->mount_instance == &sys_files ? 2 : 3;
+	dest->st_dev = 2;
 	dest->st_ino = 1;
 	if(is_root) {
 		dest->st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
 	} else {
-		dest->st_mode = fp->type;
+		dest->st_mode = file ? file->type : FT_IFDIR;
 
 		if(file->read_cb)
 			dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;

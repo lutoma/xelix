@@ -1,5 +1,5 @@
 /* ext2.c: Implementation of the extended file system, version 2
- * Copyright © 2013-2018 Lukas Martini
+ * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -95,17 +95,12 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 			return NULL;
 		}
 
-		int perm_check = 0;
-		if((flags & 1) == O_RDONLY || (flags & O_RDWR)) {
-			perm_check += ext2_inode_check_perm(PERM_CHECK_READ, inode, task);
-		}
 		if((flags & O_WRONLY) || (flags & O_RDWR)) {
-			perm_check += ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task);
-		}
-		if(perm_check < 0) {
-			kfree(inode);
-			sc_errno = EACCES;
-			return NULL;
+			if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task) < 0) {
+				kfree(inode);
+				sc_errno = EACCES;
+				return NULL;
+			}
 		}
 	}
 

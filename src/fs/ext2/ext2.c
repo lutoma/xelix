@@ -94,20 +94,23 @@ int ext2_chown(const char* path, uint16_t uid, uint16_t gid, task_t* task) {
 	return 0;
 }
 
-int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest, task_t* task) {
-	if(!fp || !fp->inode) {
-		log(LOG_ERR, "ext2: ext2_stat called without fp or fp missing inode.\n");
+int ext2_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task) {
+	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
+	if(!dirent) {
+		sc_errno = ENOENT;
 		return -1;
 	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, fp->inode)) {
+	if(!ext2_inode_read(inode, dirent->inode)) {
+		kfree(dirent);
 		kfree(inode);
+		sc_errno = ENOENT;
 		return -1;
 	}
 
 	dest->st_dev = 1;
-	dest->st_ino = fp->inode;
+	dest->st_ino = dirent->inode;
 	dest->st_mode = inode->mode;
 	dest->st_nlink = inode->link_count;
 	dest->st_uid = inode->uid;
@@ -120,6 +123,7 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest, task_t* task) {
 	dest->st_blksize = bl_off(1);
 	dest->st_blocks = inode->block_count;
 
+	kfree(dirent);
 	kfree(inode);
 	return 0;
 }

@@ -353,7 +353,7 @@ int vfs_seek(int fd, size_t offset, int origin, task_t* task) {
 			break;
 		case VFS_SEEK_END:
 			stat = kmalloc(sizeof(vfs_stat_t));
-			vfs_stat(fp->num, stat, task);
+			vfs_fstat(fp->num, stat, task);
 			fp->offset = stat->st_size + offset;
 			kfree(stat);
 	}
@@ -404,9 +404,8 @@ int vfs_ioctl(int fd, int request, void* arg, task_t* task) {
 	return fp->callbacks.ioctl(fp->mount_path, request, arg, task);
 }
 
-int vfs_stat(int fd, vfs_stat_t* dest, task_t* task) {
-	debug("\n", NULL);
-
+// Legacy
+int vfs_fstat(int fd, vfs_stat_t* dest, task_t* task) {
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
 		sc_errno = EBADF;
@@ -417,8 +416,14 @@ int vfs_stat(int fd, vfs_stat_t* dest, task_t* task) {
 		sc_errno = ENOSYS;
 		return -1;
 	}
+	return fp->callbacks.stat(fp->mount_path, dest, fp->mount_instance, task);
+}
 
-	return fp->callbacks.stat(fp, dest, task);
+int vfs_stat(char* orig_path, vfs_stat_t* dest, task_t* task) {
+	VFS_GET_CB_OR_ERROR(stat);
+	int r = mp->callbacks.stat(mount_path, dest, mp->instance, task);
+	kfree(mount_path);
+	return r;
 }
 
 int vfs_close(int fd, task_t* task) {
