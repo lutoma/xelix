@@ -110,16 +110,28 @@ int ext2_stat(vfs_file_t* fp, vfs_stat_t* dest, task_t* task) {
 	return 0;
 }
 
-int ext2_mkdir(const char* path, uint32_t mode, task_t* task) {
-	char* name;
-	char* base_path = ext2_chop_path(path, &name);
+int ext2_mkdir(char* path, uint32_t mode, task_t* task) {
+	uint32_t parent_inode_num = 0;
+	struct dirent* dirent = ext2_dirent_find(path, &parent_inode_num, task);
 
-	struct dirent* parent_dirent = ext2_dirent_find(base_path, NULL, task);
-	if(!parent_dirent) {
-		kfree(base_path);
+	if(!parent_inode_num || dirent) {
+		sc_errno = parent_inode_num ? EEXIST : ENOENT;
+		return -1;
+	}
+
+	struct inode* parent_inode = kmalloc(superblock->inode_size);
+	if(!ext2_inode_read(parent_inode, parent_inode_num)) {
+		kfree(parent_inode);
 		sc_errno = ENOENT;
 		return -1;
 	}
+
+	if(ext2_inode_check_perm(PERM_CHECK_WRITE, parent_inode, task) < 0) {
+		kfree(parent_inode);
+		sc_errno = EACCES;
+		return -1;
+	}
+	kfree(parent_inode);
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	uint32_t inode_num = ext2_inode_new(inode, FT_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
@@ -141,19 +153,18 @@ int ext2_mkdir(const char* path, uint32_t mode, task_t* task) {
 		inode->gid = task->gid;
 	}
 	ext2_inode_write(inode, inode_num);
-	ext2_dirent_add(parent_dirent->inode, inode_num, name, EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(parent_inode_num, inode_num, vfs_basename(path), EXT2_DIRENT_FT_DIR);
 
 	// Add . and .. dirents
 	ext2_dirent_add(inode_num, inode_num, ".", EXT2_DIRENT_FT_DIR);
-	ext2_dirent_add(inode_num, parent_dirent->inode, "..", EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(inode_num, parent_inode_num, "..", EXT2_DIRENT_FT_DIR);
 
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 	blockgroup_table[blockgroup_num].used_directories++;
 	write_blockgroup_table();
 
-	kfree(parent_dirent);
+	kfree(dirent);
 	kfree(inode);
-	kfree(base_path);
 	return 0;
 }
 
@@ -164,7 +175,7 @@ int ext2_utimes(const char* path, struct timeval times[2], task_t* task) {
 		return -1;
 	}
 
-	struct inode* inode = kmalloc(bl_off(1));
+	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, dirent->inode)) {
 		kfree(inode);
 		sc_errno = ENOENT;
@@ -345,7 +356,7 @@ int ext2_readlink(const char* path, char* buf, size_t size, task_t* task) {
 		return -1;
 	}
 
-	struct inode* inode = kmalloc(bl_off(1));
+	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, dirent->inode)) {
 		kfree(inode);
 		kfree(dirent);

@@ -110,7 +110,7 @@ struct vfs_callbacks {
 	size_t (*write)(struct vfs_file* fp, void* source, size_t size, struct task* task);
 	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
 	int (*stat)(struct vfs_file* fp, vfs_stat_t* dest, struct task* task);
-	int (*mkdir)(const char* path, uint32_t mode, struct task* task);
+	int (*mkdir)(char* path, uint32_t mode, struct task* task);
 	int (*symlink)(const char* path1, const char* path2, struct task* task);
 	int (*unlink)(char* name, struct task* task);
 	int (*chmod)(const char* path, uint32_t mode, struct task* task);
