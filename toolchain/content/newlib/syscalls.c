@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <termios.h>
@@ -441,6 +442,17 @@ int setgid(gid_t gid) {
 		_xelix_execdata->gid = gid;
 	}
 	return r;
+}
+
+char const* getprogname(void) {
+	if(!_progname) {
+		_progname = basename(_xelix_execdata->binary_path);
+	}
+	return _progname;
+}
+
+void setprogname(const char *name) {
+	_progname = name;
 }
 
 const char *gai_strerror(int ecode) {

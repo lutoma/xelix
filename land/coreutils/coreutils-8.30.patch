@@ -74,18 +74,6 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
  #ifdef NODEV
          if (device == NODEV)
            die (EXIT_FAILURE, 0, _("invalid device %s %s"),
-diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/stty.c coreutils-8.30-patched/src/stty.c
---- coreutils-8.30/lib/getprogname.c  2018-05-14 06:22:33.000000000 +0200
-+++ coreutils-8.30-patched/lib/getprogname.c  2019-02-04 20:51:53.078315578 +0100
-@@ -177,7 +177,7 @@
-     }
-   return NULL;
- # else
--#  error "getprogname module not ported to this OS"
-+  return "coreutils";
- # endif
- }
-
 --- coreutils-8.30/lib/getaddrinfo.c  2018-05-14 06:22:33.000000000 +0200
 +++ coreutils-8.30-patched/lib/getaddrinfo.c  2019-02-04 02:58:02.381634107 +0100
 @@ -189,7 +189,7 @@

@@ -36,5 +36,6 @@ struct _xelix_execdata {
 };
 
 struct _xelix_execdata* _xelix_execdata;
+char* _progname;
 
 #endif /* _SYS_XELIX_H */
