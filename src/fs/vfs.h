@@ -49,6 +49,11 @@
 #define S_IWOTH		0x0002
 #define S_IXOTH		0x0001
 
+// setuid/setgid/sticky bit
+#define S_ISUID		0x0800
+#define S_ISGID		0x0400
+#define S_ISVTX		0x0200
+
 // file flags, keep in sync with newlib sys/_default_fcntl.h
 #define	O_RDONLY	0
 #define	O_WRONLY	1

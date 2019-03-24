@@ -202,8 +202,20 @@ static int load_file(task_t* task, char* path, bool is_main) {
 	if(is_main) {
 		task->entry = header->entry;
 	}
-
 	kfree(header);
+
+	// setuid/setgid
+	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
+	if(vfs_fstat(fd, stat, task) == 0) {
+		if(stat->st_mode & S_ISUID) {
+			task->euid = stat->st_uid;
+		}
+		if(stat->st_mode & S_ISGID) {
+			task->egid = stat->st_gid;
+		}
+	}
+
+	kfree(stat);
 	vfs_close(fd, task);
 	return 0;
 }
