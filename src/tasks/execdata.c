@@ -34,6 +34,8 @@ struct execdata {
 	char binary_path[TASK_PATH_MAX];
 	uint16_t uid;
 	uint16_t gid;
+	uint16_t euid;
+	uint16_t egid;
 };
 
 /* Sets up a single page of runtime data for the program, including PID, argv,
@@ -74,6 +76,8 @@ void task_setup_execdata(task_t* task) {
 	exc->pid = task->pid;
 	exc->uid = task->uid;
 	exc->gid = task->gid;
+	exc->euid = task->euid;
+	exc->egid = task->egid;
 	exc->ppid = task->parent ? task->parent->pid : 0;
 	exc->argc = task->argc;
 	exc->envc = task->envc;

@@ -416,7 +416,7 @@ uid_t getuid(void) {
 }
 
 uid_t geteuid(void) {
-	return _xelix_execdata->uid;
+	return _xelix_execdata->euid;
 }
 
 uid_t getgid(void) {
@@ -424,7 +424,7 @@ uid_t getgid(void) {
 }
 
 uid_t getegid(void) {
-	return _xelix_execdata->gid;
+	return _xelix_execdata->egid;
 }
 
 int setuid(uid_t uid) {

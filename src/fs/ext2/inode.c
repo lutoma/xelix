@@ -280,14 +280,14 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 
 int ext2_inode_check_perm(enum inode_check_op op, struct inode* inode, task_t* task) {
 	// Kernel / root
-	if(!task || task->uid == 0) {
+	if(!task || task->euid == 0) {
 		return 0;
 	}
 
 	int bit_offset = 0;
-	if(task->uid == inode->uid) {
+	if(task->euid == inode->uid) {
 		bit_offset = 6;
-	} else if(task->gid == inode->gid) {
+	} else if(task->egid == inode->gid) {
 		bit_offset = 3;
 	}
 

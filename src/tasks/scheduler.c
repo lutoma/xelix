@@ -172,7 +172,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 		}
 
 		sysfs_printf("%d %d %d %d %c %s %d 0x%x 0x%x 0x%x\n",
-			task->pid, task->uid, task->gid, ppid, state, task->name,
+			task->pid, task->euid, task->gid, ppid, state, task->name,
 			mem_alloc, task->entry, task->sbrk, task->stack);
 
 	next:

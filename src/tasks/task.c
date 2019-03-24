@@ -146,6 +146,8 @@ int task_fork(task_t* to_fork, isf_t* state) {
 	memcpy(task->binary_path, to_fork->binary_path, sizeof(task->binary_path));
 	task->uid = to_fork->uid;
 	task->gid = to_fork->gid;
+	task->euid = to_fork->euid;
+	task->egid = to_fork->egid;
 	map_memory(task);
 	task_setup_execdata(task);
 
@@ -189,7 +191,7 @@ int task_exit(task_t* task) {
 
 // Task setuid/setgid
 int task_setid(task_t* task, int which, int id) {
-	if(task->uid != 0) {
+	if(task->euid != 0) {
 		sc_errno = EPERM;
 		return -1;
 	}
@@ -197,9 +199,11 @@ int task_setid(task_t* task, int which, int id) {
 	switch(which) {
 		case 0:
 			task->uid = id;
+			task->euid = id;
 			return 0;
 		case 1:
 			task->gid = id;
+			task->egid = id;
 			return 0;
 	}
 	sc_errno = EINVAL;
@@ -220,6 +224,8 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	memcpy(new_task->cwd, task->cwd, TASK_PATH_MAX);
 	new_task->uid = task->uid;
 	new_task->gid = task->gid;
+	new_task->euid = task->euid;
+	new_task->egid = task->egid;
 	if(elf_load_file(new_task, path) == -1) {
 		return -1;
 	}
@@ -349,7 +355,9 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 	sysfs_printf("%-10s: %d\n", "pid", task->pid);
 	sysfs_printf("%-10s: %d\n", "uid", task->uid);
+	sysfs_printf("%-10s: %d\n", "euid", task->euid);
 	sysfs_printf("%-10s: %d\n", "gid", task->gid);
+	sysfs_printf("%-10s: %d\n", "egid", task->egid);
 	sysfs_printf("%-10s: %s\n", "name", task->name);
 	sysfs_printf("%-10s: 0x%x\n", "stack", task->stack);
 	sysfs_printf("%-10s: 0x%x\n", "entry", task->entry);

@@ -77,8 +77,8 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), EXT2_DIRENT_FT_REG_FILE);
 
 		if(task) {
-			inode->uid = task->uid;
-			inode->gid = task->gid;
+			inode->uid = task->euid;
+			inode->gid = task->egid;
 		}
 	} else {
 		kfree(dirent);

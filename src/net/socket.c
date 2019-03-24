@@ -240,7 +240,7 @@ int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 	}
 
 	uint16_t port = net_bsd_to_pico_port(addr, addrlen);
-	if(endian_swap16(port) <= 1024 && task->uid) {
+	if(endian_swap16(port) <= 1024 && task->euid) {
 		sc_errno = EACCES;
 		return -1;
 	}

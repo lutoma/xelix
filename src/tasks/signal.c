@@ -109,7 +109,7 @@ int task_signal_syscall(int target_pid, task_t* source, int sig, isf_t* state) {
 		return -1;
 	}
 
-	if(target_task->uid != source->uid) {
+	if(target_task->euid != source->euid) {
 		sc_errno = EPERM;
 		return -1;
 	}
