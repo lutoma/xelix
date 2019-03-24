@@ -16,7 +16,11 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <pwd.h>
+#include <stdbool.h>
 
 char* shortname(char* in);
 char* readable_fs(uint64_t size);
 char* time2str(time_t rtime, char* fmt);
+struct passwd* do_auth(char* user);
+void run_shell(struct passwd* pwd, bool print_motd);

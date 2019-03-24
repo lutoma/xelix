@@ -22,6 +22,7 @@
 #include <string.h>
 #include <time.h>
 #include "argparse.h"
+#include "util.h"
 
 static const char *const usage[] = {
     "uptime [options]",

@@ -1,8 +1,9 @@
 PATH += :../../toolchain/local/bin/
 CC := i786-pc-xelix-gcc
+LD := i786-pc-xelix-ld
 CFLAGS += -std=gnu18 -O3 -g -D_GNU_SOURCE
 
-TARGETS=basictest init ps uptime free login dmesg
+TARGETS=basictest init ps uptime free login dmesg su
 
 all: $(TARGETS)
 
@@ -12,7 +13,7 @@ clean:
 
 %: %.asm
 	nasm -g -f elf -o $@.o $<
-	$(CC) -nostdlib -o $@ $@.o
+	$(LD) -nostdlib -o $@ $@.o
 
 %: %.c libutil.a
 	$(CC) $(CFLAGS) -o $@ $@.c -L. -lutil
@@ -26,3 +27,4 @@ libutil.a: util.c argparse.c
 install:
 	install -d ../../mnt/usr/bin/
 	install -D $(TARGETS) ../../mnt/usr/bin/
+	chmod u+s ../../mnt/usr/bin/su
