@@ -28,95 +28,89 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-static struct dirent* readdir_r(vfs_file_t* fp, void* kbuf, size_t size, size_t block_offset) {
-	struct dirent* ent = kbuf + block_offset;
+struct rd_r {
+	uint8_t buf[0x200];
+	size_t read_len;
+	size_t read_off;
+	size_t last_len;
+	struct inode inode;
+};
 
-	if(block_offset > size || block_offset + sizeof(struct dirent) + ent->name_len > size) {
-		return NULL;
+#define dirent_off fp->offset - reent->read_off
+static vfs_dirent_t* readdir_r(vfs_file_t* fp, struct rd_r* reent) {
+	while(1) {
+		if(dirent_off + sizeof(struct dirent) >= reent->read_len) {
+			if(fp->offset >= reent->inode.size) {
+				return NULL;
+			}
+
+			size_t rsize = MIN(sizeof(reent->buf), reent->inode.size - fp->offset);
+			if(!ext2_inode_read_data(&reent->inode, fp->offset, rsize, reent->buf)) {
+				return NULL;
+			}
+			reent->read_off = fp->offset;
+			reent->read_len = rsize;
+		}
+
+		struct dirent* ent = (struct dirent*)(reent->buf + dirent_off);
+		if(dirent_off + sizeof(struct dirent) + ent->name_len >= reent->read_len) {
+			reent->read_len = 0;
+			continue;
+		}
+
+		reent->last_len = ent->record_len;
+		fp->offset += ent->record_len;
+		if(!ent->inode) {
+			continue;
+		}
+
+		// Convert ext2 dirent format to regular dirent
+		size_t length = sizeof(vfs_dirent_t) + ent->name_len + 2;
+		vfs_dirent_t* result = (vfs_dirent_t*)zmalloc(length);
+		result->d_ino = ent->inode;
+		result->d_type = ent->type;
+		result->d_reclen = length;
+		memcpy(result->d_name, ent->name, ent->name_len);
+		result->d_name[ent->name_len] = 0;
+		return result;
 	}
-
-	fp->offset += ent->record_len;
-	return ent;
 }
 
 size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, fp->inode)) {
-		kfree(inode);
+	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
+	if(!ext2_inode_read(&rd_reent->inode, fp->inode)) {
+		kfree(rd_reent);
 		sc_errno = EBADF;
 		return -1;
 	}
 
-	if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task) < 0) {
-		kfree(inode);
+	if(ext2_inode_check_perm(PERM_CHECK_EXEC, &rd_reent->inode, task) < 0) {
+		kfree(rd_reent);
 		sc_errno = EACCES;
 		return -1;
 	}
 
-	if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR) {
-		kfree(inode);
+	if(vfs_mode_to_filetype(rd_reent->inode.mode) != FT_IFDIR) {
+		kfree(rd_reent);
 		sc_errno = ENOTDIR;
 		return -1;
 	}
 
-	// FIXME
-	if(inode->size < 1 || fp->offset >= inode->size) {
-		kfree(inode);
-		return 0;
-	}
-
-	// FIXME
-	if(fp->offset + size > inode->size) {
-		size = inode->size - fp->offset;
-	}
-
-	void* kbuf = kmalloc(size);
-	ext2_inode_read_data(inode, fp->offset, size, kbuf);
-
 	uint32_t offset = 0;
 	vfs_dirent_t* ent = NULL;
-	struct dirent* ext2_ent = NULL;
-	size_t orig_ofs = fp->offset;
-
-	/* The on-disk dirent format of ext2 differs from the dirent format newlib
-	 * expects from the getdents syscall. This loops converts between the two.
-	 */
-	while(1) {
-		ext2_ent = readdir_r(fp, kbuf, size, (fp->offset - orig_ofs));
-		if(!ext2_ent)  {
+	while((ent = readdir_r(fp, rd_reent))) {
+		if(offset + ent->d_reclen >= size) {
+			fp->offset -= rd_reent->last_len;
 			break;
 		}
 
-		uint16_t reclen = sizeof(vfs_dirent_t) + ext2_ent->name_len + 2;
-		if(offset + reclen > size) {
-			break;
-		}
-
-		if(!ext2_ent->inode) {
-			goto next;
-		}
-
-		ent = (vfs_dirent_t*)(buf + offset);
-		memcpy(ent->d_name, ext2_ent->name, ext2_ent->name_len);
-		ent->d_name[ext2_ent->name_len] = 0;
-		ent->d_ino = ext2_ent->inode;
-		ent->d_type = ext2_ent->type;
-		ent->d_reclen = reclen;
-
+		vfs_dirent_t* dest = (vfs_dirent_t*)(buf + offset);
+		memcpy(dest, ent, ent->d_reclen);
 		offset += ent->d_reclen;
-		ent->d_off = offset;
-
-		next:
-		ext2_ent = (struct dirent*)((intptr_t)ext2_ent + (intptr_t)ext2_ent->record_len);
+		dest->d_off = offset;
 	}
 
-	if(ext2_ent && offset < size) {
-		ent->d_off += size - offset;
-		ent->d_reclen += size - offset;
-		offset = size;
-	}
-
-	kfree(kbuf);
+	kfree(rd_reent);
 	return offset;
 }
 
