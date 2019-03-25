@@ -33,22 +33,21 @@ struct rd_r {
 	size_t read_len;
 	size_t read_off;
 	size_t last_len;
-	struct inode inode;
 };
 
-#define dirent_off fp->offset - reent->read_off
-static vfs_dirent_t* readdir_r(vfs_file_t* fp, struct rd_r* reent) {
+#define dirent_off *offset - reent->read_off
+static vfs_dirent_t* readdir_r(struct inode* inode, size_t* offset, struct rd_r* reent) {
 	while(1) {
 		if(dirent_off + sizeof(struct dirent) >= reent->read_len) {
-			if(fp->offset >= reent->inode.size) {
+			if(*offset >= inode->size) {
 				return NULL;
 			}
 
-			size_t rsize = MIN(sizeof(reent->buf), reent->inode.size - fp->offset);
-			if(!ext2_inode_read_data(&reent->inode, fp->offset, rsize, reent->buf)) {
+			size_t rsize = MIN(sizeof(reent->buf), inode->size - *offset);
+			if(!ext2_inode_read_data(inode, *offset, rsize, reent->buf)) {
 				return NULL;
 			}
-			reent->read_off = fp->offset;
+			reent->read_off = *offset;
 			reent->read_len = rsize;
 		}
 
@@ -59,7 +58,7 @@ static vfs_dirent_t* readdir_r(vfs_file_t* fp, struct rd_r* reent) {
 		}
 
 		reent->last_len = ent->record_len;
-		fp->offset += ent->record_len;
+		*offset += ent->record_len;
 		if(!ent->inode) {
 			continue;
 		}
@@ -78,19 +77,24 @@ static vfs_dirent_t* readdir_r(vfs_file_t* fp, struct rd_r* reent) {
 
 size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
 	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
-	if(!ext2_inode_read(&rd_reent->inode, fp->inode)) {
+	struct inode* inode = kmalloc(sizeof(struct inode));
+
+	if(!ext2_inode_read(inode, fp->inode)) {
+		kfree(inode);
 		kfree(rd_reent);
 		sc_errno = EBADF;
 		return -1;
 	}
 
-	if(ext2_inode_check_perm(PERM_CHECK_EXEC, &rd_reent->inode, task) < 0) {
+	if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task) < 0) {
+		kfree(inode);
 		kfree(rd_reent);
 		sc_errno = EACCES;
 		return -1;
 	}
 
-	if(vfs_mode_to_filetype(rd_reent->inode.mode) != FT_IFDIR) {
+	if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR) {
+		kfree(inode);
 		kfree(rd_reent);
 		sc_errno = ENOTDIR;
 		return -1;
@@ -98,7 +102,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
 
 	uint32_t offset = 0;
 	vfs_dirent_t* ent = NULL;
-	while((ent = readdir_r(fp, rd_reent))) {
+	while((ent = readdir_r(inode, &fp->offset, rd_reent))) {
 		if(offset + ent->d_reclen >= size) {
 			fp->offset -= rd_reent->last_len;
 			break;
@@ -110,42 +114,28 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
 		dest->d_off = offset;
 	}
 
+	kfree(inode);
 	kfree(rd_reent);
 	return offset;
 }
 
 // Looks for a directory entry with name `search` in a directory inode
 static struct dirent* search_dir(struct inode* inode, const char* search) {
-	uint8_t* dirent_block = kmalloc(inode->size);
-	if(!ext2_inode_read_data(inode, 0, inode->size, dirent_block)) {
-		return NULL;
+	struct dirent* result = NULL;
+	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
+
+	vfs_dirent_t* ent = NULL;
+	size_t offset = 0;
+	while((ent = readdir_r(inode, &offset, rd_reent))) {
+		if(!strcmp(ent->d_name, search)) {
+			result = kmalloc(ent->d_reclen);
+			memcpy(result, ent, ent->d_reclen);
+			break;
+		}
 	}
 
-	struct dirent* dirent = (struct dirent*)dirent_block;
-	while(dirent < (struct dirent*)(dirent_block + inode->size)) {
-		if(!dirent->inode) {
-			goto next;
-		}
-
-		// Check if this is what we're searching for
-		char* dirent_name = strndup(dirent->name, dirent->name_len);
-		if(!strcmp(search, dirent_name)) {
-			kfree(dirent_name);
-
-			struct dirent* rdir = kmalloc(dirent->record_len);
-			memcpy(rdir, dirent, dirent->record_len);
-			kfree(dirent_block);
-			return rdir;
-		}
-
-		kfree(dirent_name);
-
-		next:
-		dirent = ((struct dirent*)((intptr_t)dirent + dirent->record_len));
-	}
-
-	kfree(dirent_block);
-	return NULL;
+	kfree(rd_reent);
+	return result;
 }
 
 struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* task) {

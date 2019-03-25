@@ -142,7 +142,7 @@ typedef struct vfs_file {
 	void* mount_instance;
 	struct vfs_callbacks callbacks;
 	uint32_t flags;
-	uint32_t offset;
+	size_t offset;
 	uint32_t inode;
 	struct task* task;
 } vfs_file_t;
@@ -153,7 +153,7 @@ typedef struct {
 	uint32_t d_off;
 	uint16_t d_reclen;
     uint8_t d_type;
-	char d_name[] __attribute__ ((nonstring));
+	char d_name[];
 } vfs_dirent_t;
 
 char* vfs_normalize_path(const char* orig_path, char* cwd);
