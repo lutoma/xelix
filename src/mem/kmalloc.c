@@ -74,8 +74,8 @@ struct free_block {
  */
 #ifdef KMALLOC_CHECK
 	#define KMALLOC_MAGIC 0xCAFE
-	#define block_panic(fmt) \
-		panic("kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
+	#define check_err(fmt) \
+		log(LOG_ERR, "kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
 	static void check_header(struct mem_block* header);
 #endif
 
@@ -408,31 +408,31 @@ void kmalloc_init() {
 #ifdef KMALLOC_CHECK
 static void check_header(struct mem_block* header) {
 	if(header->magic != KMALLOC_MAGIC) {
-		block_panic("Invalid magic");
+		check_err("Invalid magic");
 	}
 
 	if(header->size < sizeof(struct free_block)) {
-		block_panic("Block is smaller than minimum size");
+		check_err("Block is smaller than minimum size");
 	}
 
 	if(*GET_FOOTER(header) != header->size) {
-		block_panic("Invalid footer");
+		check_err("Invalid footer");
 	}
 
 	if((intptr_t)header != alloc_start &&
 		PREV_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		block_panic("Previous block has invalid magic");
+		check_err("Previous block has invalid magic");
 	}
 
 	if(alloc_end > (intptr_t)header + FULL_SIZE(header) &&
 		NEXT_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		block_panic("Next block has invalid magic");
+		check_err("Next block has invalid magic");
 	}
 
 	if(header->type == TYPE_FREE) {
 		struct free_block* fb = GET_FB(header);
 		if(unlikely(fb->magic != KMALLOC_MAGIC)) {
-			block_panic("Free block without free block metadata");
+			check_err("Free block without free block metadata");
 		}
 	}
 }
