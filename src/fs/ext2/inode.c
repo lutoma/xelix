@@ -29,7 +29,7 @@
 #include <fs/block.h>
 #include <fs/ext2.h>
 
-#define INODE_CACHE_MAX 50
+#define INODE_CACHE_MAX 0x100
 struct inode_cache_entry {
 	uint32_t num;
 	struct inode inode;
@@ -56,14 +56,12 @@ static uint32_t find_inode(uint32_t inode_num) {
 }
 
 static struct inode* check_cache(uint32_t inode_num) {
-	struct inode_cache_entry* entry = NULL;
-	for(int i = 0; i < INODE_CACHE_MAX; i++) {
-		entry = &inode_cache[i];
-		if(!entry->num || entry->num == inode_num) {
-			break;
+	for(int i = 0; i < INODE_CACHE_MAX && inode_cache[i].num; i++) {
+		if(inode_cache[i].num == inode_num) {
+			return &inode_cache[i].inode;
 		}
 	}
-	return entry->num ? &entry->inode : NULL;
+	return NULL;
 }
 
 bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
@@ -88,10 +86,11 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 		return false;
 	}
 
-
-	struct inode_cache_entry* cache = &inode_cache[inode_cache_end++ % INODE_CACHE_MAX];
-	cache->num = inode_num;
-	memcpy(&cache->inode, buf, sizeof(struct inode));
+	struct inode_cache_entry cache = inode_cache[inode_cache_end];
+	memcpy(&cache.inode, buf, sizeof(struct inode));
+	cache.num = inode_num;
+	inode_cache_end++;
+	inode_cache_end %= INODE_CACHE_MAX;
 	return true;
 }
 
