@@ -337,6 +337,10 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 }
 
 void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+	if(!ptr) {
+		return;
+	}
+
 	#ifdef KMALLOC_DEBUG
 	_g_debug_file = _debug_file;
 	#endif
