@@ -68,7 +68,7 @@ struct sigaction {
 // Can't include <tasks/task.h> as that includes us, so use stub struct def.
 struct task;
 int task_signal(struct task* task, struct task* source, int sig, isf_t* state);
-int task_signal_syscall(int target_pid, struct task* source, int sig, isf_t* state);
+int task_signal_syscall(struct task* source, isf_t* state, int target_pid, int sig);
 int task_sigprocmask(struct task* task, int how, uint32_t* set, uint32_t* oset);
 int task_sigaction(struct task* task, int sig, const struct sigaction* act,
 	struct sigaction* oact);

@@ -1,5 +1,5 @@
 /* syscall.c: Syscall handling
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -29,16 +29,14 @@
 
 #include "syscalls.h"
 
-static inline int handle_arg_flags(struct syscall* syscall, int num, uint8_t flags) {
-	if(flags & SYSCALL_ARG_RESOLVE) {
-		if(flags & SYSCALL_ARG_RESOLVE_NULL_OK && !syscall->params[num]) {
+static inline int handle_arg_flags(task_t* task, uint32_t* arg, uint8_t flags) {
+	if(flags & SCA_TRANSLATE) {
+		if(flags & SCA_NULLOK && !*arg) {
 			return 0;
 		}
 
-		syscall->params[num] = vmem_translate(syscall->task->memory_context,
-			syscall->params[num], false);
-
-		if(!syscall->params[num]) {
+		*arg = vmem_translate(task->memory_context, *arg, false);
+		if(!*arg) {
 			return -1;
 		}
 	}
@@ -46,8 +44,25 @@ static inline int handle_arg_flags(struct syscall* syscall, int num, uint8_t fla
 	return 0;
 }
 
-static void int_handler(isf_t* regs)
-{
+static inline void print_arg(bool first, uint8_t flags, uint32_t value) {
+	if(flags != SCA_UNUSED) {
+		char* fmt = "%d";
+		if(flags & SCA_POINTER) {
+			fmt = "%#x";
+		}
+		if(flags & SCA_STRING) {
+			fmt = "\"%s\"";
+		}
+
+		if(!first) {
+			serial_printf(", ");
+		}
+		serial_printf(fmt, value);
+	}
+
+}
+
+static void int_handler(isf_t* state) {
 	task_t* task = scheduler_get_current();
 	if(!task) {
 		log(LOG_WARN, "syscall: Got interrupt, but there is no current task.\n");
@@ -55,45 +70,72 @@ static void int_handler(isf_t* regs)
 	}
 
 	task->task_state = TASK_STATE_SYSCALL;
+	uint32_t scnum = state->eax;
+	uint32_t arg0 = state->ebx;
+	uint32_t arg1 = state->ecx;
+	uint32_t arg2 = state->edx;
 
-	struct syscall syscall;
-	syscall.num = regs->eax;
-	syscall.params[0] = regs->ebx;
-	syscall.params[1] = regs->ecx;
-	syscall.params[2] = regs->edx;
-	syscall.state = regs;
-	syscall.task = task;
+	struct syscall_definition def = syscall_table[scnum];
+	if (scnum >= sizeof(syscall_table) / sizeof(struct syscall_definition) || !def.handler) {
+		state->eax = -1;
+		state->ebx = EINVAL;
+		return;
+	}
 
-	struct syscall_definition def = syscall_table[syscall.num];
-	if (syscall.num >= sizeof(syscall_table) / sizeof(struct syscall_definition) || def.handler == NULL) {
-		log(LOG_WARN, "syscall: Invalid syscall %d\n", syscall.num);
-		regs->eax = -1;
-		regs->ebx = EINVAL;
+	if(handle_arg_flags(task, &arg0, def.arg0_flags) == -1 ||
+		handle_arg_flags(task, &arg1, def.arg1_flags) == -1 ||
+		handle_arg_flags(task, &arg2, def.arg2_flags) == -1) {
+
+		state->eax = -1;
+		state->ebx = EINVAL;
 		return;
 	}
 
 #ifdef SYSCALL_DEBUG
 	task_t* cur = scheduler_get_current();
-	log(LOG_DEBUG, "PID %d <%s>: %s(0x%x 0x%x 0x%x)\n",
+	log(LOG_DEBUG, "%d %s: %s(",
 		cur->pid, cur->name,
-		def.name,
-		regs->ebx,
-		regs->ecx,
-		regs->edx);
+		def.name);
+
+	print_arg(true, def.arg0_flags, arg0);
+	print_arg(false, def.arg1_flags, arg1);
+	print_arg(false, def.arg2_flags, arg2);
+	serial_printf(")\n");
 #endif
 
-	if(handle_arg_flags(&syscall, 0, def.arg0) == -1 ||
-		handle_arg_flags(&syscall, 1, def.arg1) == -1 ||
-		handle_arg_flags(&syscall, 2, def.arg2) == -1) {
-
-		regs->eax = -1;
-		regs->ebx = EINVAL;
-		return;
-	}
-
 	task->syscall_errno = 0;
-	regs->eax = def.handler(syscall);
-	regs->ebx = task->syscall_errno;
+	if(def.arg2_flags != SCA_UNUSED) {
+		if(def.flags & SCF_TASKEND) {
+			state->eax = def.handler(arg0, arg1, arg2, task);
+		} else if(def.flags & SCF_STATE) {
+			state->eax = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1, arg2);
+		} else {
+			state->eax = def.handler((uint32_t)task, arg0, arg1, arg2);
+		}
+	} else if(def.arg1_flags != SCA_UNUSED) {
+		if(def.flags & SCF_TASKEND) {
+			state->eax = def.handler(arg0, arg1, task);
+		} else if(def.flags & SCF_STATE) {
+			state->eax = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1);
+		} else {
+			state->eax = def.handler((uint32_t)task, arg0, arg1);
+		}
+	} else if(def.arg0_flags != SCA_UNUSED) {
+		if(def.flags & SCF_TASKEND) {
+			state->eax = def.handler(arg0, task);
+		} else if(def.flags & SCF_STATE) {
+			state->eax = def.handler((uint32_t)task, (uint32_t)state, arg0);
+		} else {
+			state->eax = def.handler((uint32_t)task, arg0);
+		}
+	} else {
+		if(def.flags & SCF_STATE) {
+			state->eax = def.handler((uint32_t)task, (uint32_t)state);
+		} else {
+			state->eax = def.handler((uint32_t)task);
+		}
+	}
+	state->ebx = task->syscall_errno;
 
 	// Only change state back if it hasn't alreay been modified
 	if(task->task_state == TASK_STATE_SYSCALL) {
@@ -101,7 +143,7 @@ static void int_handler(isf_t* regs)
 	}
 
 #ifdef SYSCALL_DEBUG
-	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", regs->eax, regs->ebx);
+	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", state->eax, state->ebx);
 #endif
 }
 

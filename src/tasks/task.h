@@ -155,7 +155,7 @@ int task_exit(task_t* task);
 int task_setid(task_t* task, int which, int id);
 void task_cleanup(task_t* t);
 int task_chdir(task_t* task, const char* dir);
-void* task_sbrk(task_t* task, size_t length);
+void* task_sbrk(task_t* task, size_t length, size_t l2);
 
 #define task_add_mem_flat(task, start, size, section, flags) \
 	task_add_mem(task, start, start, size, section, flags)

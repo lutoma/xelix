@@ -18,6 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
+
 #define is_digit(C) ((C) >= '0' && (C) <= '9')
 static inline uint32_t atoi(const char* s) {
 	uint32_t n = 0;

@@ -317,19 +317,17 @@ int task_chdir(task_t* task, const char* dir) {
 	return 0;
 }
 
-void* task_sbrk(task_t* task, size_t length) {
-	length = VMEM_ALIGN(length);
-
-	if(length < 0 || length > 0x500000) {
-		sc_errno = ENOMEM;
-		return (void*)-1;
-	}
+void* task_sbrk(task_t* task, size_t length, size_t l2) {
+	// Legacy support: Length used to be passed in second parameter
+	length = length ? length : l2;
 
 	if(!length) {
 		return task->sbrk;
 	}
 
+	length = VMEM_ALIGN(length);
 	void* phys_addr = zmalloc_a(length);
+
 	if(!phys_addr) {
 		sc_errno = EAGAIN;
 		return (void*)-1;

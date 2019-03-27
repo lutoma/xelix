@@ -102,7 +102,7 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 }
 
 // Syscall API
-int task_signal_syscall(int target_pid, task_t* source, int sig, isf_t* state) {
+int task_signal_syscall(task_t* source, isf_t* state, int target_pid, int sig) {
 	task_t* target_task = scheduler_find(target_pid);
 	if(!target_task) {
 		sc_errno = ESRCH;

@@ -92,7 +92,7 @@ void log(uint32_t level, const char *fmt, ...) {
 
 	#if LOG_SERIAL_LEVEL != 0 || LOG_PRINT_LEVEL != 0
 	char prefix[30];
-	size_t prefix_len = snprintf(prefix, 30, "[%d:%03d] ", uptime(), pit_tick);
+	snprintf(prefix, 30, "[%d:%03d] ", uptime(), pit_tick);
 	#endif
 
 	#if LOG_SERIAL_LEVEL != 0

@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2016 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,44 +24,26 @@
 #include <print.h>
 
 #define SYSCALL_INTERRUPT 0x80
-#define SYSCALL_HANDLER(name) uint32_t sys_ ## name (struct syscall syscall)
-#define SYSCALL_ARG_RESOLVE 1
-#define SYSCALL_ARG_RESOLVE_NULL_OK 2
 
-#define DEFINE_SYSCALL(name) extern uint32_t sys_ ## name (struct syscall syscall);
-#define SYS_REDIR(name, fname, args...) \
-	static inline uint32_t sys_ ## name (struct syscall syscall) { \
-		return fname ( args ); \
-	}
+#define SCF_TASKEND 1
+#define SCF_STATE 2
 
-#define SYS_DISABLED(name) \
-	static inline uint32_t sys_ ## name (struct syscall syscall) {sc_errno = ENOSYS; return -1;}
+#define SCA_UNUSED 0
+#define SCA_TRANSLATE 1
+#define SCA_NULLOK 2
+#define SCA_INT 4
+#define SCA_POINTER 8
+#define SCA_STRING 16
 
-#define SYSCALL_ENTRY_OG(name, arg0, arg1, arg2) \
-	{ \
-		.handler = sys_exit, \
-		.name = "exit", \
-		.arg0 = arg0, \
-		.arg1 = arg1, \
-		.arg2 = arg2, \
-	}
-
-struct syscall {
-	int num;
-	int params[3];
-	isf_t* state;
-	task_t* task;
-};
-
-typedef uint32_t (*syscall_t)(struct syscall);
-
+typedef uint32_t (*syscall_cb)(uint32_t, ...);
 struct syscall_definition {
-	syscall_t handler;
 	char name[50];
+	syscall_cb handler;
+	uint8_t flags;
 
-	uint8_t arg0;
-	uint8_t arg1;
-	uint8_t arg2;
+	uint8_t arg0_flags;
+	uint8_t arg1_flags;
+	uint8_t arg2_flags;
 };
 
 char** syscall_copy_array(task_t* task, char** array, uint32_t* count);
