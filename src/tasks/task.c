@@ -317,11 +317,11 @@ int task_chdir(task_t* task, const char* dir) {
 	return 0;
 }
 
-void* task_sbrk(task_t* task, size_t length, size_t l2) {
+void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 	// Legacy support: Length used to be passed in second parameter
 	length = length ? length : l2;
 
-	if(!length) {
+	if(length <= 0) {
 		return task->sbrk;
 	}
 
