@@ -19,6 +19,7 @@
  */
 
 #include <hw/pci.h>
+#include <stdbool.h>
 
 #define AC97_MAX_CARDS 10
 
@@ -30,6 +31,10 @@ struct ac97_card {
 	uint16_t sample_rate;
 	uint32_t last_buffer;
 	uint32_t last_written_buffer;
+
+	bool is_playing;
+	int playing_buffer;
+	int last_wr_buffer;
 };
 
 struct ac97_card ac97_cards[AC97_MAX_CARDS];

@@ -1,5 +1,5 @@
 /* ac97.c: Driver for the AC97 sound chip
- * Copyright © 2015, 2016 Lukas Martini
+ * Copyright © 2015-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -29,12 +29,13 @@
 #include <string.h>
 #include <multiboot.h>
 #include <fs/vfs.h>
+#include <fs/sysfs.h>
 
 // Number of buffers to cache. More buffers = more latency. Maximum is 31.
 #define NUM_BUFFERS 32
 
 // Maximum hardware supported length is 0xFFFE (*2 for stereo)
-#define BUFFER_LENGTH 0xFFFE
+#define MAX_BUFFER_LENGTH (0xFFFE * 2)
 
 #define PORT_NAM_RESET				0x0000
 #define PORT_NAM_MASTER_VOLUME		0x0002
@@ -48,6 +49,7 @@
 #define PORT_NAM_LR_SPLRATE			0x0032
 #define PORT_NAM_FRONT_DAC_RATE		0x002C
 #define PORT_NABM_POBDBAR			0x0010
+#define PORT_NABM_POCIV				0x0014
 #define PORT_NABM_POLVI				0x0015
 #define PORT_NABM_POCONTROL			0x001B
 #define PORT_NABM_GLB_CTRL_STAT		0x0060
@@ -59,7 +61,6 @@
 #define PORT_NABM_MCCONTROL			0x002B
 #define PORT_NABM_POPICB			0x0018
 #define PORT_NABM_GLOB_STA			0x0030
-#define NABM_POCIV					0x0014
 
 /* Status register flags */
 #define AC97_X_SR_DCH   (1 << 0)  /* DMA controller halted */
@@ -79,11 +80,10 @@ static uint32_t vendor_device_combos[][2] = {
 	{0x8086, 0x2415},
 	{0x8086, 0x2425},
 	{0x8086, 0x2445},
-	{(uint32_t)NULL}
+	{0}
 };
 
-struct buf_desc
-{
+struct buf_desc {
 	void* buf;
 	uint16_t len;
 	uint16_t reserve :14;
@@ -92,43 +92,9 @@ struct buf_desc
 } __attribute__((packed));
 
 static int cards = 0;
-static void* data;
-
-// Debugging function
-static void dump_regs(struct ac97_card* card) {
-	uint16_t poctrl = inb(card->nabmbar + PORT_NABM_POCONTROL);
-	uint16_t sr = inw(card->nabmbar + PORT_NABM_POSTATUS);
-
-	log(LOG_DEBUG, "poctrl IOCE: %d\n", bit_get(poctrl, 4));
-	log(LOG_DEBUG, "poctrl FEIE: %d\n", bit_get(poctrl, 3));
-	log(LOG_DEBUG, "poctrl LVBIE: %d\n", bit_get(poctrl, 2));
-	log(LOG_DEBUG, "poctrl RPBM: %d\n", bit_get(poctrl, 0));
-
-	log(LOG_DEBUG, "postatus DCH: %d\n", bit_get(sr, 0));
-	log(LOG_DEBUG, "postatus CELV: %d\n", bit_get(sr, 1));
-	log(LOG_DEBUG, "postatus LVBCI: %d\n", bit_get(sr, 2));
-	log(LOG_DEBUG, "postatus BCIS: %d\n", bit_get(sr, 3));
-	log(LOG_DEBUG, "postatus FIFOE: %d\n", bit_get(sr, 4));
-
-	uint8_t polvi = inb(card->nabmbar + PORT_NABM_POLVI);
-	log(LOG_DEBUG, "POLVI: %d\n", polvi);
-
-	/*uint16_t pcicmd = pci_config_read16(card->device, 0x04);
-	log(LOG_DEBUG, "pcicmd MSE: %d\n", bit_get(pcicmd, 1));
-	log(LOG_DEBUG, "pcicmd BME: %d\n", bit_get(pcicmd, 2));
-	log(LOG_DEBUG, "pcicmd ID: %d\n", bit_get(pcicmd, 10));*/
-}
-
-static void fill_buffer(struct ac97_card* card, uint32_t offset, uint32_t bufno) {
-	card->descs[bufno].buf = (void*)((intptr_t)data + (BUFFER_LENGTH * 2 * offset)); // FIXME This should do mapping to the phys addr, but kernel space is 1:1 mapped atm anyway.
-	card->descs[bufno].len = BUFFER_LENGTH;
-	card->descs[bufno].ioc = 1;
-	card->descs[bufno].bup = 0;
-}
 
 static void interrupt_handler(isf_t *state) {
 	struct ac97_card* card = &ac97_cards[0];
-
 	/*// Find the card this IRQ is coming from
 	for(int i = 0; i < cards; i++) {
 		if(likely(state->interrupt == ac97_cards[i].device->interrupt_line + IRQ0)) {
@@ -142,27 +108,14 @@ static void interrupt_handler(isf_t *state) {
 	}
 
 	uint16_t sr = inw(card->nabmbar + PORT_NABM_POSTATUS);
-
 	if(sr & AC97_X_SR_LVBCI) {
-		// Last valid buffer completion. Shouldn't actually happen
+		card->is_playing = false;
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_LVBCI);
 	} else if(sr & AC97_X_SR_BCIS) {
-		uint32_t current_buffer = (card->last_buffer + 1) % NUM_BUFFERS;
-		uint16_t samples = inw(card->nabmbar + PORT_NABM_POPICB);
-
-		//log(LOG_DEBUG, "ac97: Playing buffer %d, refilling buffer %d, %d samples left\n", current_buffer, card->last_buffer, samples);
-
-		if(current_buffer == 0 || samples < 1) {
-			outb(card->nabmbar + PORT_NABM_POLVI, NUM_BUFFERS);
-		}
-
+		card->playing_buffer = inb(card->nabmbar + PORT_NABM_POCIV);
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_BCIS);
-
-		// Refill the previous buffer
-		fill_buffer(card, ++card->last_written_buffer, card->last_buffer);
-
-		card->last_buffer = current_buffer;
 	} else if(sr & AC97_X_SR_FIFOE) {
+		card->is_playing = false;
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_FIFOE);
 	}
 }
@@ -193,15 +146,41 @@ static void set_sample_rate(struct ac97_card* card) {
 	log(LOG_DEBUG, "ac97: Sample rate set to %d Hz\n", card->sample_rate);
 }
 
-/* For some reason the whole kernel gets bricked when this is compiled with
- * optimizations on. Seems to be a bug around static functions. Blame GCC.
- */
-static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) {
+static size_t sfs_write(void* source, size_t size, size_t offset, void* meta) {
+	struct ac97_card* card = &ac97_cards[0];
+	int bno = card->last_wr_buffer++;
+	if(bno >= NUM_BUFFERS) {
+		card->last_wr_buffer = 1;
+		bno = 0;
+	}
+
+	while(card->is_playing && bno == card->playing_buffer) {
+		asm("hlt");
+	}
+
+	size = MIN(size, MAX_BUFFER_LENGTH);
+	void* buf = zmalloc(size);
+	memcpy(buf, source, size);
+
+	kfree(card->descs[bno].buf);
+	card->descs[bno].buf = buf;
+	card->descs[bno].len = size / 2;
+	card->descs[bno].ioc = 1;
+	card->descs[bno].bup = 0;
+	outb(card->nabmbar + PORT_NABM_POLVI, bno);
+
+	if(!card->is_playing) {
+		card->is_playing = true;
+		outb(card->nabmbar + PORT_NABM_POCONTROL, AC97_X_CR_RPBM | AC97_X_CR_FEIE | AC97_X_CR_IOCE);
+	}
+	return size;
+}
+
+static void enable_card(struct ac97_card* card) {
 	interrupts_register(card->device->interrupt_line + IRQ0, interrupt_handler, false);
 
 	// Enable bus master, disable MSE
-	//pci_config_write(card->device, 4, 5);
-
+	pci_config_write(card->device, 4, 5);
 	sleep_ticks(30);
 
 	// Get correct PCI bars for the sound chip control io ports
@@ -209,7 +188,7 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 	card->nabmbar = pci_get_BAR(card->device, 1) & 0xFFFFFFFC;
 
 	// Turn power on / disable cold reset
-	outl(card->nabmbar + 0x2c, bit_set(inl(card->nabmbar + 0x2c), 1));
+	outl(card->nabmbar + 0x2c, inl(card->nabmbar + 0x2c) | 1 << 1);
 	sleep_ticks(20);
 
 	// Hard reset
@@ -217,11 +196,11 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 	sleep_ticks(20);
 
 	// Warm reset
-	outl(card->nabmbar + 0x2c, bit_set(inl(card->nabmbar + 0x2c), 2));
+	outl(card->nabmbar + 0x2c, inl(card->nabmbar + 0x2c) | 1 << 2);
 
 	// Wait for reset to complete
 	for(int i = 0;; i++) {
-		if(bit_get(inl(card->nabmbar + 0x2c), 2) == 0) {
+		if((inl(card->nabmbar + 0x2c) & (1 << 2)) == 0) {
 			log(LOG_INFO, "ac97: Warm reset finished.\n");
 			break;
 		}
@@ -240,63 +219,25 @@ static void __attribute__((optimize("O0"))) enable_card(struct ac97_card* card) 
 	sleep_ticks(20);
 
 	set_sample_rate(card);
-	card->descs = kmalloc_a(sizeof(struct buf_desc)*32);
-	// FIXME This should do mapping to the phys addr, but kernel space is 1:1 mapped atm anyway.
+	card->descs = zmalloc_a(sizeof(struct buf_desc) * 32);
 	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs);
+	sysfs_add_dev("ac97", NULL, sfs_write);
 }
 
-void ac97_play(char* file) {
-	struct ac97_card* card = &ac97_cards[0];
-	int fd = vfs_open(file, O_RDONLY, NULL);
-	if(fd == -1) {
-		return;
-	}
-
-	// FIXME Use this properly, stat or use return value of vfs_read to choose buffer num
-	data = kmalloc(9999999);
-	size_t read = vfs_read(fd, data, 9999999, NULL);
-	vfs_close(fd);
-
-	if(read < 1) {
-		return NULL;
-	}
-
-	for(int i = 0; i < NUM_BUFFERS; i++) {
-		fill_buffer(card, i, i);
-	}
-
-	card->last_buffer = 0;
-	card->last_written_buffer = NUM_BUFFERS - 1;
-
-	outb(card->nabmbar + PORT_NABM_POLVI, NUM_BUFFERS);
-	outb(card->nabmbar + PORT_NABM_POCONTROL, AC97_X_CR_RPBM | AC97_X_CR_FEIE | AC97_X_CR_IOCE);
-}
-
-void ac97_init()
-{
+void ac97_init() {
 	memset(ac97_cards, 0, AC97_MAX_CARDS * sizeof(struct ac97_card));
-
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(pci_device_t*) * AC97_MAX_CARDS);
-	uint32_t volatile num_devices = pci_search(devices, vendor_device_combos, AC97_MAX_CARDS);
-
+	uint32_t num_devices = pci_search(devices, vendor_device_combos, AC97_MAX_CARDS);
 	log(LOG_INFO, "ac97: Discovered %d devices.\n", num_devices);
 
-	for(int i = 0; i < num_devices; ++i)
-	{
+	for(int i = 0; i < num_devices; ++i) {
 		ac97_cards[i].device = devices[i];
 		cards++;
 
-		//devices[i]->interrupt_line = pci_get_interrupt_line(devices[i]);
-
 		enable_card(&ac97_cards[i]);
-
 		log(LOG_INFO, "ac97: %d:%d.%d, iobase 0x%x, irq %d\n",
-				devices[i]->bus,
-				devices[i]->dev,
-				devices[i]->func,
-				devices[i]->iobase,
-				devices[i]->interrupt_line
-			 );
+			devices[i]->bus, devices[i]->dev, devices[i]->func,
+			devices[i]->iobase, devices[i]->interrupt_line);
 	}
 }
 

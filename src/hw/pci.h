@@ -76,6 +76,16 @@ typedef struct pci_device {
 	struct pci_device* next;
 } pci_device_t;
 
+#define pci_expand_dev(device) device->bus, device->dev, device->func
+#define pci_config_read(device, offset) _pci_config_read(pci_expand_dev(device), offset)
+#define pci_config_write(device, offset, val) \
+	_pci_config_write(pci_expand_dev(device), offset, val)
+
+uint32_t _pci_config_read(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
+void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func,
+	uint8_t offset, uint32_t val);
+
+
 uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2], uint32_t max);
 uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar);
 void pci_init();

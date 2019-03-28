@@ -30,12 +30,7 @@
 #define PCI_CONFIG_DATA    0x0CFC
 #define PCI_CONFIG_ADDRESS 0x0CF8
 
-#define expand_dev(device) device->bus, device->dev, device->func
-#define get_header_type(device) ((uint16_t)config_read(device, 0xe) & 127)
-#define config_read(device, offset) _config_read(expand_dev(device), offset)
-
-#define config_write(device, offset, val) \
-	_config_write(expand_dev(device), offset, val)
+#define get_header_type(device) ((uint16_t)pci_config_read(device, 0xe) & 127)
 
 #define get_address(bus, dev, func, offset) (0x80000000 | (bus << 16) | \
 	(dev << 11) | (func << 8) | (offset & 0xFC))
@@ -43,7 +38,7 @@
 static pci_device_t* first_device = NULL;
 
 
-static inline uint32_t _config_read(uint8_t bus, uint8_t dev, uint8_t func,
+uint32_t _pci_config_read(uint8_t bus, uint8_t dev, uint8_t func,
 	uint8_t offset) {
 
 	outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
@@ -54,7 +49,7 @@ static inline uint32_t _config_read(uint8_t bus, uint8_t dev, uint8_t func,
 	return (inl(PCI_CONFIG_DATA) >> ((offset % 4) * 8)) & 0xffff;
 }
 
-static inline void _config_write(uint8_t bus, uint8_t dev, uint8_t func,
+void _pci_config_write(uint8_t bus, uint8_t dev, uint8_t func,
 	uint8_t offset, uint32_t val) {
 
 	outl(PCI_CONFIG_ADDRESS, get_address(bus, dev, func, offset));
@@ -72,7 +67,7 @@ uint32_t pci_get_BAR(pci_device_t* device, uint8_t bar) {
 	}
 
 	uint8_t _register = 0x10 + 0x4 * bar;
-	return config_read(device, _register);
+	return pci_config_read(device, _register);
 }
 
 static uint32_t get_IO_base(pci_device_t* device) {
@@ -107,15 +102,15 @@ static void load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t 
 	device->dev = dev;
 	device->func = func;
 
-	device->vendor = (uint16_t)config_read(device, 0);
-	device->device = (uint16_t)config_read(device, 2);
-	device->revision = (uint16_t)config_read(device, 0x8);
-	device->class = (uint16_t)(config_read(device, 0x8) >> 16);
+	device->vendor = (uint16_t)pci_config_read(device, 0);
+	device->device = (uint16_t)pci_config_read(device, 2);
+	device->revision = (uint16_t)pci_config_read(device, 0x8);
+	device->class = (uint16_t)(pci_config_read(device, 0x8) >> 16);
 	device->iobase = get_IO_base(device);
 	device->membase = get_mem_base(device);
 	device->header_type = get_header_type(device);
-	device->interrupt_pin = (uint16_t)config_read(device, 0x3d);
-	device->interrupt_line = (uint16_t)config_read(device, 0x3c);
+	device->interrupt_pin = (uint16_t)pci_config_read(device, 0x3d);
+	device->interrupt_line = (uint16_t)pci_config_read(device, 0x3c);
 }
 
 /* Searches a PCI device by vendor and device IDs.
@@ -178,7 +173,7 @@ void pci_init() {
 	for(uint8_t bus = 0; bus < PCI_MAX_BUS; bus++) {
 		for(uint8_t dev = 0; dev < PCI_MAX_DEV; dev++) {
 			for(uint8_t func = 0; func < PCI_MAX_FUNC; func++) {
-				uint16_t vendor = (uint16_t)_config_read(bus, dev, func, 0);
+				uint16_t vendor = (uint16_t)_pci_config_read(bus, dev, func, 0);
 
 				/* Devices which don't exist should have a vendor of 0xffff,
 				 * however, some weird chipsets also wrongly set it to zero.
