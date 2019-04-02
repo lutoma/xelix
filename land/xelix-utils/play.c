@@ -17,18 +17,20 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <fcntl.h>
+#include <unistd.h>
 #include <termios.h>
+#include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 
 #define CHUNK_SIZE (0x800 * 2)
 
 int main(int argc, const char** argv) {
 	if(argc < 2) {
-		fprintf(stderr, "Usage: %s [file]\n");
+		fprintf(stderr, "Usage: %s [file]\n", argv[0]);
 		return -1;
 	}
 
@@ -43,7 +45,7 @@ int main(int argc, const char** argv) {
 		perror("Could not stat");
 		return -1;
 	}
-	int dest_fd = open("/dev/ac97", O_WRONLY);
+	int dest_fd = open("/dev/dsp", O_WRONLY);
 	if(source_fd < 0) {
 		perror("Could not open device");
 		return -1;

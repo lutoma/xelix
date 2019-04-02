@@ -221,7 +221,7 @@ static void enable_card(struct ac97_card* card) {
 	set_sample_rate(card);
 	card->descs = zmalloc_a(sizeof(struct buf_desc) * 32);
 	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs);
-	sysfs_add_dev("ac97", NULL, sfs_write);
+	sysfs_add_dev("dsp", NULL, sfs_write);
 }
 
 void ac97_init() {
