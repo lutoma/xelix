@@ -139,7 +139,7 @@ static int repeat_char(char* intermediate) {
 
 	if(term->last_char) {
 		for(int i = 0; i < arg; i++) {
-			tty_put_char(term->last_char);
+			tty_write(&term->last_char, 1);
 		}
 	}
 	return 0;

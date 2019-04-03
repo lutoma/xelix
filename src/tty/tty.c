@@ -60,26 +60,15 @@ static inline void handle_nonprintable(char chr) {
 	}
 }
 
-void tty_put_char(char chr) {
-	if(chr > 31 && chr < 127) {
-		term->last_char = chr;
-		term->drv->write(term->cur_col, term->cur_row, chr, term->write_bdc, term->fg_color, term->bg_color);
-		term->cur_col++;
-	} else {
-		handle_nonprintable(chr);
-	}
-}
-
 size_t tty_write(char* source, size_t size) {
+	bool remove_cursor = false;
+
 	if(!term->drv) {
 		return 0;
 	}
 
 	for(int i = 0; i < size; i++) {
 		char chr = source[i];
-
-		// FIXME Should just memcopy whole string
-		//*(scrollback + (++scrollback_end % scrollback_size)) = chr;
 
 		if(chr == 033) {
 			size_t skip = tty_handle_escape_seq(source + i, size - i);
@@ -90,10 +79,25 @@ size_t tty_write(char* source, size_t size) {
 		}
 
 		if(term->cur_col >= term->drv->cols) {
-			tty_put_char(term->termios.c_cc[VEOL]);
+			serial_printf("width overflow.\n");
+			remove_cursor = true;
+			handle_nonprintable(term->termios.c_cc[VEOL]);
+			i--;
+			continue;
 		}
-		tty_put_char(chr);
+
+		if(chr > 31 && chr < 127) {
+			term->last_char = chr;
+			term->drv->write(term->cur_col, term->cur_row, chr,
+				term->write_bdc, term->fg_color, term->bg_color);
+			term->cur_col++;
+		} else {
+			remove_cursor = true;
+			handle_nonprintable(chr);
+		}
 	}
+
+	term->drv->set_cursor(term->cur_col, term->cur_row, remove_cursor);
 	return size;
 }
 

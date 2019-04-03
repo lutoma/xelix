@@ -78,27 +78,16 @@ static struct multiboot_tag_framebuffer* fb_desc;
 static struct tty_driver* drv;
 
 static uint32_t convert_color(int color, bool bg) {
-	switch(color) {
-		case 0: // black
-			return 0x272822;
-		case 1: // red
-			return 0xF92672;
-		case 2: // green
-			return 0xA6E22E;
-		case 3: // yellow
-			return 0xE6DB74;
-		case 4: // blue
-			return 0x66D9EF;
-		case 5: // magenta
-			return 0xFD5FF0;
-		case 6: // cyan
-			return 0xA1EFE4;
-		case 7: // white
-			return bg ? 0xe9e9e9 : 0xffffff;
-		case 9: // default
-		default:
-			return bg ? 0x272822 : 0xe9e9e9;
+	// RGB colors: Black, red, green, yellow, blue, magenta, cyan, white, default
+	const uint32_t colors_fg[] = {0x272822, 0xf92672, 0xa6e22e, 0xe6db74,
+		0x66d9ef, 0xfd5ff0, 0xa1efe4, 0xffffff, 0xe9e9e9};
+	const uint32_t colors_bg[] = {0x272822, 0xf92672, 0xa6e22e, 0xe6db74,
+		0x66d9ef, 0xfd5ff0, 0xa1efe4, 0xe9e9e9, 0x272822};
+
+	if(color < 0 || color >= ARRAY_SIZE(colors_fg)) {
+		color = 8;
 	}
+	return (bg ? colors_bg : colors_fg)[color];
 }
 
 static inline const uint8_t* get_char_bitmap(char chr, bool bdc) {
@@ -171,6 +160,36 @@ static void scroll_line() {
 	clear(0, drv->rows - 1, drv->cols, drv->rows - 1);
 }
 
+static void set_cursor(uint32_t x, uint32_t y, bool restore) {
+	x *= tty_font.width;
+	y *= tty_font.height;
+
+	static uint32_t* last_data = NULL;
+	static uint32_t last_x = -1;
+	static uint32_t last_y = -1;
+	if(!last_data) {
+		last_data = zmalloc(tty_font.height * sizeof(uint32_t));
+	}
+
+	if(restore && last_x != -1) {
+		for(int i = 0; i < tty_font.height; i++) {
+			*PIXEL_PTR(last_x, last_y + i) = last_data[i];
+		}
+	}
+
+
+	for(int i = 0; i < tty_font.height; i++) {
+		last_data[i] = *PIXEL_PTR(x, y + i);
+	}
+
+
+	last_x = x;
+	last_y = y;
+	for(int i = 0; i < tty_font.height; i++) {
+		*PIXEL_PTR(x, y + i) = 0xfd971f;
+	}
+}
+
 struct tty_driver* tty_fbtext_init() {
 	fb_desc = multiboot_get_framebuffer();
 	if(!fb_desc || tty_font.magic != PSF_FONT_MAGIC) {
@@ -194,6 +213,7 @@ struct tty_driver* tty_fbtext_init() {
 	drv->write = write_char;
 	drv->scroll_line = scroll_line;
 	drv->clear = clear;
+	drv->set_cursor = set_cursor;
 
 	clear(0, 0, drv->cols, drv->rows);
 	return drv;

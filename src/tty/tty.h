@@ -34,6 +34,7 @@ struct tty_driver {
 	void (*write)(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_col, uint32_t bg_col);
 	void (*scroll_line)();
 	void (*clear)(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
+	void (*set_cursor)(uint32_t x, uint32_t y, bool restore);
 };
 
 struct terminal {
@@ -63,7 +64,6 @@ struct terminal* term;
 size_t tty_write(char* source, size_t size);
 size_t tty_read(char* source, size_t size);
 void tty_init();
-void tty_put_char(char chr);
 
 /* VFS callbacks */
 static inline size_t tty_vfs_write(vfs_file_t* fp, void* source, size_t size, task_t* task) {

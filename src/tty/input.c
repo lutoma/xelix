@@ -100,7 +100,7 @@ void tty_input_cb(struct tty_input_state* input) {
 	}
 
 	if(term->termios.c_lflag & ECHO) {
-		tty_put_char(chr);
+		tty_write(&chr, 1);
 	}
 
 	if(chr == term->termios.c_cc[VEOL] || !(term->termios.c_lflag & ICANON) || term->read_len >= sizeof(term->read_buf)) {
