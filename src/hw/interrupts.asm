@@ -102,12 +102,8 @@ interrupts_fault_handler:
 	call cpu_fault_handler
 	mov esp, eax
 
-	; reload paging context
-	pop eax
-	cmp eax, [paging_kernel_cr3]
-	je isf_return
-
 	; Re-enable paging
+	pop eax
 	mov cr3, eax
 	mov eax, cr0
 	or eax, (1 << 31)
