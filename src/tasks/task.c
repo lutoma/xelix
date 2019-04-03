@@ -183,8 +183,9 @@ int task_fork(task_t* to_fork, isf_t* state) {
 	return task->pid;
 }
 
-int task_exit(task_t* task) {
+int task_exit(task_t* task, int code) {
 	task->task_state = TASK_STATE_TERMINATED;
+	task->exit_code = code << 8;
 	task->interrupt_yield = true;
 	return 0;
 }

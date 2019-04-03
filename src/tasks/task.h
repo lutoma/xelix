@@ -106,6 +106,9 @@ typedef struct task {
 		TASK_STATE_SYSCALL
 	} task_state;
 
+	// Exit code in a format compatible with the waitpid() stat_loc field
+	int exit_code;
+
 	char** environ;
 	char** argv;
 	uint32_t argc;
@@ -117,10 +120,13 @@ typedef struct task {
 	struct sigaction signal_handlers[32];
 	uint32_t signal_mask;
 
-	/* If task_state is TASK_STATE_WAITING, this specifies the task we are
-	 * waiting for, or any child if 0.
-	 */
-	uint32_t wait_for;
+	struct {
+		/* If task_state is TASK_STATE_WAITING, this specifies the task we are
+		 * waiting for, or any child if 0.
+		 */
+		uint32_t wait_for;
+		int* stat_loc;
+	} wait_context;
 
 	// TODO Is this actually the same as PATH_MAX in our toolchain?
 	char cwd[TASK_PATH_MAX + 1];
@@ -151,7 +157,7 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 void task_set_initial_state(task_t* task);
 int task_fork(task_t* to_fork, isf_t* state);
 int task_execve(task_t* task, char* path, char** argv, char** env);
-int task_exit(task_t* task);
+int task_exit(task_t* task, int code);
 int task_setid(task_t* task, int which, int id);
 void task_cleanup(task_t* t);
 int task_chdir(task_t* task, const char* dir);

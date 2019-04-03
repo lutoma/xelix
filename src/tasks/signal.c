@@ -53,7 +53,6 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 	}
 
 	if(sa.sa_handler && (uint32_t)sa.sa_handler != SIG_DFL) {
-
 		iret_t* iret = task->kernel_stack + PAGE_SIZE - sizeof(iret_t);
 		iret->user_esp -= 11 * sizeof(uint32_t);
 
@@ -62,6 +61,10 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 		// Address of signal handler and signal number as argument to it
 		*user_stack = (uint32_t)sa.sa_handler;
 		*(user_stack + 1) = sig;
+
+		if(!state) {
+			state = task->state;
+		}
 
 		// GP registers, will be restored by task_sigjmp_crt0 using popa
 		*(user_stack + 2) = state->edi;
@@ -97,6 +100,7 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 	}
 
 	task->task_state = TASK_STATE_TERMINATED;
+	task->exit_code = 0x100 | sig;
 	task->interrupt_yield = true;
 	return 0;
 }

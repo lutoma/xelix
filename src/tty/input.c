@@ -81,7 +81,7 @@ void tty_input_cb(struct tty_input_state* input) {
 			case 'c':
 			case 'C':
 				if(term->fg_task && term->termios.c_lflag & ISIG) {
-					task_signal(term->fg_task, NULL, SIGINT, term->fg_task->state);
+					task_signal(term->fg_task, NULL, SIGINT, NULL);
 					term->fg_task->interrupt_yield = true;
 				}
 				chr = term->termios.c_cc[VINTR];

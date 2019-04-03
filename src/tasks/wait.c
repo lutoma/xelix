@@ -46,7 +46,8 @@ int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options) {
 		child_pid = 0;
 	}
 
-	task->wait_for = child_pid;
+	task->wait_context.wait_for = child_pid;
+	task->wait_context.stat_loc = stat_loc;
 	task->task_state = TASK_STATE_WAITING;
 	task->interrupt_yield = true;
 
@@ -54,15 +55,18 @@ int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options) {
 	return 0;
 }
 
-/* Called by the scheduler whenever a task with state TASK_STATE_WAITING is
- * unlinked.
+/* Called by the scheduler whenever a task with a parent that is in the
+ * TASK_STATE_WAITING state is unlinked.
  */
 void wait_finish(task_t* task, task_t* child) {
 	// Check if this is the child we're waiting for
-	if(task->wait_for && task->wait_for != child->pid) {
+	if(task->wait_context.wait_for && task->wait_context.wait_for != child->pid) {
 		return;
 	}
 
 	// Set the return value of the wait() syscall to the pid of the returned child
 	task->state->eax = child->pid;
+	if(task->wait_context.stat_loc) {
+		*task->wait_context.stat_loc = child->exit_code;
+	}
 }

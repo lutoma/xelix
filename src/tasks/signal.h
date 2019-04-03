@@ -60,9 +60,9 @@
 #define SIG_IGN 1
 
 struct sigaction {
-	void* sa_handler;
-	uint32_t sa_mask;
 	int sa_flags;
+	uint32_t sa_mask;
+	void* sa_handler;
 };
 
 // Can't include <tasks/task.h> as that includes us, so use stub struct def.

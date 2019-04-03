@@ -1,50 +1,45 @@
-/* Copyright © 2016 Lukas Martini
- *
- * This file is part of Xelix.
- *
- * Xelix is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Xelix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #ifndef _SYS_WAIT_H
 #define _SYS_WAIT_H
 
-#include <stdint.h>
-#include <sys/signal.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/types.h>
 
-#define WCONTINUED 1
-#define WNOHANG 2
-#define WUNTRACED 4
+#define WNOHANG 1
+#define WUNTRACED 2
 
-// FIXME
-#define WEXITSTATUS(args...) (args)
-#define WIFEXITED(args...) (args)
-#define WIFCONTINUED(args...) (args)
-#define WIFSIGNALED(args...) (args)
-#define WIFSTOPPED(args...) (args)
-#define WTERMSIG(args...) (args)
-#define WSTOPSIG(args...) (args)
+/* A status looks like:
+      <1 byte info> <1 byte code>
 
-typedef uint32_t idtype_t;
+      <code> == 0, child has exited, info is the exit value
+      <code> == 1..7e, child has exited, info is the signal number.
+      <code> == 7f, child has stopped, info was the signal number.
+      <code> == 80, there was a core dump.
+*/
 
-/* These should actually be defined in sys/types.h & sys/signal.h according to
- * POSIX and just redefined here. newlib doesn't define them there though. */
-typedef uint32_t id_t;
+#define WIFEXITED(w)	(((w) & 0xff) == 0)
+#define WIFSIGNALED(w)	(((w) & 0x7f) > 0 && (((w) & 0x7f) < 0x7f))
+#define WIFSTOPPED(w)	(((w) & 0xff) == 0x7f)
+#define WEXITSTATUS(w)	(((w) >> 8) & 0xff)
+#define WTERMSIG(w)	((w) & 0x7f)
+#define WSTOPSIG	WEXITSTATUS
+#define WCOREDUMP(w) 0
 
+pid_t wait (int *);
+pid_t waitpid (pid_t, int *, int);
 
-pid_t wait(int*);
-int waitid(idtype_t, id_t, siginfo_t*, int);
-pid_t waitpid(pid_t, int*, int);
+#ifdef _COMPILING_NEWLIB
+pid_t _wait (int *);
+#endif
 
-#endif /* _SYS_WAIT_H */
+/* Provide prototypes for most of the _<systemcall> names that are
+   provided in newlib for some compilers.  */
+pid_t _wait (int *);
+
+#ifdef __cplusplus
+};
+#endif
+
+#endif
