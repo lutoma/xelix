@@ -22,6 +22,8 @@
 #ifndef MULTIBOOT_HEADER
 #define MULTIBOOT_HEADER 1
 
+#include <tasks/elf.h>
+
 /* How many bytes from the start of the file we search for the header.  */
 #define MULTIBOOT_SEARCH			32768
 #define MULTIBOOT_HEADER_ALIGN			8
@@ -331,6 +333,8 @@ struct multiboot_tag_load_base_addr
 void multiboot_init(uint32_t magic, void* header);
 struct multiboot_tag_mmap* multiboot_get_mmap();
 struct multiboot_tag_framebuffer* multiboot_get_framebuffer();
+struct elf_sym* multiboot_get_symtab(size_t* length);
+char* multiboot_get_strtab(size_t* length);
 
 #endif /* ! MULTIBOOT_HEADER */
 

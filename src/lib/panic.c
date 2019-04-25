@@ -30,6 +30,7 @@
 #include <mem/kmalloc.h>
 #include <spinlock.h>
 #include <stdarg.h>
+#include <multiboot.h>
 
 // lib/walk_stack.asm
 extern int walk_stack(intptr_t* addresses, int naddr);
@@ -43,12 +44,39 @@ static void panic_printf(const char *fmt, ...) {
 	va_end(va);
 }
 
+static char* addr2name(intptr_t address) {
+	size_t symtab_length;
+	size_t strtab_length;
+	size_t loff = -1;
+	char* name = "?";
+
+	struct elf_sym* symtab = multiboot_get_symtab(&symtab_length);
+	char* strtab = multiboot_get_strtab(&strtab_length);
+	if(!symtab_length || !strtab_length) {
+		return "?";
+	}
+
+	for(struct elf_sym* sym = symtab; (intptr_t)sym < (intptr_t)symtab + symtab_length; sym++) {
+		if(sym->name == 0 || sym->value == 0 || sym->value > address) {
+			continue;
+		}
+
+		size_t offset = address - sym->value;
+		if(offset < 0x3000 && offset < loff) {
+			loff = offset;
+			name = strtab + sym->name;
+		}
+	}
+
+	return name;
+}
+
 static void stacktrace() {
 	intptr_t addresses[10];
 	int read = walk_stack(addresses, 10);
 
 	for(int i = 0; i < read; i++) {
-		panic_printf("#%-16d0x%x\n", i, addresses[i]);
+		panic_printf("#%-16d %s <%#x>\n", i, addr2name(addresses[i]), addresses[i]);
 	}
 }
 

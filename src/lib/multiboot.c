@@ -1,5 +1,5 @@
 /* multiboot.c: Multiboot2 header parsing
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,9 +20,21 @@
 #include <multiboot.h>
 #include <log.h>
 #include <panic.h>
+#include <tasks/elf.h>
 
 static struct multiboot_tag_mmap* mmap_info = NULL;
 static struct multiboot_tag_framebuffer framebuffer_info;
+
+/* Optimally, this would kmalloc based on ELF sizes, but this
+ * is loaded before kmalloc is ready, and afterwards the data
+ * may have been overwritten. Instead, allocate static buffer
+ * and hope it fits.
+ */
+#define SYMTAB_BSIZE 0x5000
+static char symtab[SYMTAB_BSIZE];
+static char strtab[SYMTAB_BSIZE];
+size_t symtab_len = 0;
+size_t strtab_len = 0;
 
 static char* tag_type_names[] = {
 	NULL,
@@ -57,6 +69,41 @@ struct multiboot_tag_framebuffer* multiboot_get_framebuffer() {
 	return &framebuffer_info;
 }
 
+struct elf_sym* multiboot_get_symtab(size_t* length) {
+	*length = symtab_len;
+	return (struct elf_sym*)&symtab;
+}
+
+char* multiboot_get_strtab(size_t* length) {
+	*length = strtab_len;
+	return strtab;
+}
+
+static int extract_symtab(struct multiboot_tag_elf_sections* multiboot_tag) {
+	int r = -2;
+	struct elf_section* elf_section = (struct elf_section*)multiboot_tag->sections;
+	struct elf_section* sh_section = (struct elf_section*)((intptr_t)elf_section
+		+ (intptr_t)multiboot_tag->entsize
+		* (intptr_t)multiboot_tag->shndx);
+
+	for(int i = 0; i < multiboot_tag->num; i++) {
+		char* shname = sh_section->addr + elf_section->name;
+
+		if(!strcmp(".symtab", shname)) {
+			symtab_len = MIN(SYMTAB_BSIZE, elf_section->size);
+			memcpy(&symtab, elf_section->addr, symtab_len);
+			r++;
+		}
+		if(!strcmp(".strtab", shname)) {
+			strtab_len = MIN(SYMTAB_BSIZE, elf_section->size);
+			memcpy(&strtab, elf_section->addr, strtab_len);
+			r++;
+		}
+		elf_section = (struct elf_section*)((intptr_t)elf_section + (intptr_t)multiboot_tag->entsize);
+	}
+	return r;
+}
+
 void multiboot_init(uint32_t magic, void* header) {
 	if(magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
 		panic("Bootloader is not multiboot2 compliant (eax 0x%x != 0x%x).\n",
@@ -69,6 +116,8 @@ void multiboot_init(uint32_t magic, void* header) {
 
 	log(LOG_INFO, "multiboot2 tags:\n");
 	struct multiboot_tag* tag = header + offset;
+	char strrep[150];
+
 	while(tag < (struct multiboot_tag*)(header + total_size)) {
 		// Tags are always padded to be 8-aligned
 		if((intptr_t)tag % 8) {
@@ -79,21 +128,32 @@ void multiboot_init(uint32_t magic, void* header) {
 			break;
 		}
 
-		char* strrep = "";
-		if(tag->type == MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME || tag->type == MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME) {
-			strrep = (char*)(tag + 1);
-		}
-		log(LOG_INFO, "  %#-10x size %-4d %-18s %s\n", tag, tag->size, tag_type_names[tag->type], strrep);
-
 		switch(tag->type) {
+			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
+			case MULTIBOOT_TAG_TYPE_CMDLINE:
+				strncpy(strrep, (char*)(tag + 1), 149);
+				break;
+			case MULTIBOOT_TAG_TYPE_LOAD_BASE_ADDR:
+				snprintf(strrep, 150, "%#x", ((struct multiboot_tag_load_base_addr*)tag)->load_base_addr);
+				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
+				/* This can be passed by reference since it's only used before
+				 * memory system initialization and won't be erased earlier.
+				 */
 				mmap_info = (struct multiboot_tag_mmap*)tag;
 				break;
+			case MULTIBOOT_TAG_TYPE_ELF_SECTIONS:
+				if(extract_symtab((struct multiboot_tag_elf_sections*)tag) == 0) {
+					snprintf(strrep, 150, "symtab=%#x, strtab=%#x", &symtab, &strtab);
+				}
+				break;
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-				memcpy(&framebuffer_info, (struct multiboot_tag_framebuffer*)tag, sizeof(framebuffer_info));
+				memcpy(&framebuffer_info, tag, sizeof(framebuffer_info));
 				break;
 		}
 
+		log(LOG_INFO, "  %#-10x size %-4d %-18s %s\n", tag, tag->size, tag_type_names[tag->type], strrep);
 		tag = (struct multiboot_tag*)((intptr_t)tag + tag->size);
+		*strrep = 0;
 	}
 }
