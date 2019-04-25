@@ -31,4 +31,8 @@
 	return;																					\
 }}
 
+// lib/walk_stack.asm
+extern int walk_stack(intptr_t* addresses, int naddr);
+
+char* addr2name(intptr_t address);
 void __attribute__((optimize("O0"))) panic(char* error, ...);

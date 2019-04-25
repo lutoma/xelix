@@ -79,7 +79,6 @@ size_t tty_write(char* source, size_t size) {
 		}
 
 		if(term->cur_col >= term->drv->cols) {
-			serial_printf("width overflow.\n");
 			remove_cursor = true;
 			handle_nonprintable(term->termios.c_cc[VEOL]);
 			i--;

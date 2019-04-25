@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <panic.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
 
@@ -35,7 +36,7 @@ static char* buffer = (char*)&early_buffer;
 static size_t buffer_size = 0x700;
 static size_t log_size = 0;
 
-static void store(char* string, size_t len) {
+static void append(char* string, size_t len) {
 	if(log_size + len > buffer_size) {
 		if(!kmalloc_ready) {
 			serial_printf("log: Static buffer exhausted before kmalloc is ready.\n");
@@ -56,6 +57,13 @@ static void store(char* string, size_t len) {
 	log_size += len;
 }
 
+static void store(uint32_t level, char* fmt_string, size_t fmt_len) {
+	char log_prefix[100];
+	size_t prefix_len = snprintf(log_prefix, 100, "%d %d %d:", pit_tick, time_get(), level);
+	append(log_prefix, prefix_len);
+	append(fmt_string, fmt_len);
+}
+
 static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 	if(offset >= log_size) {
 		return 0;
@@ -70,6 +78,17 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 }
 #endif
 
+void  __attribute__((optimize("O0"))) ltrace() {
+	intptr_t addresses[10];
+	int read = walk_stack(addresses, 10);
+
+	for(int i = 0; i < read; i++) {
+		char trace[500];
+		size_t trace_len = snprintf(trace, 500, "#%-16d %s <%#x>\n", i, addr2name(addresses[i]), addresses[i]);
+		store(LOG_ERR, trace, trace_len);
+	}
+}
+
 void log(uint32_t level, const char *fmt, ...) {
 	va_list va;
 	va_start(va, fmt);
@@ -83,10 +102,11 @@ void log(uint32_t level, const char *fmt, ...) {
 	 */
 	#ifdef LOG_STORE
 	if(level > LOG_DEBUG) {
-		char log_prefix[100];
-		size_t prefix_len = snprintf(log_prefix, 100, "%d %d %d:", pit_tick, time_get(), level);
-		store(log_prefix, prefix_len);
-		store(fmt_string, fmt_len);
+		store(level, fmt_string, fmt_len);
+
+		if(level == LOG_ERR) {
+			ltrace();
+		}
 	}
 	#endif
 

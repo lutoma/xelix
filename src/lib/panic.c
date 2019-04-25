@@ -32,8 +32,6 @@
 #include <stdarg.h>
 #include <multiboot.h>
 
-// lib/walk_stack.asm
-extern int walk_stack(intptr_t* addresses, int naddr);
 static spinlock_t lock;
 
 static void panic_printf(const char *fmt, ...) {
@@ -44,7 +42,7 @@ static void panic_printf(const char *fmt, ...) {
 	va_end(va);
 }
 
-static char* addr2name(intptr_t address) {
+char* addr2name(intptr_t address) {
 	size_t symtab_length;
 	size_t strtab_length;
 	size_t loff = -1;
@@ -69,15 +67,6 @@ static char* addr2name(intptr_t address) {
 	}
 
 	return name;
-}
-
-static void stacktrace() {
-	intptr_t addresses[10];
-	int read = walk_stack(addresses, 10);
-
-	for(int i = 0; i < read; i++) {
-		panic_printf("#%-16d %s <%#x>\n", i, addr2name(addresses[i]), addresses[i]);
-	}
 }
 
 void __attribute__((optimize("O0"))) panic(char* error, ...) {
@@ -113,9 +102,14 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	}
 
 	panic_printf("Paging context:  %s\n\n", vmem_get_name(vmem_currentContext));
-
 	panic_printf("Call trace:\n");
-	stacktrace();
+	intptr_t addresses[10];
+	int read = walk_stack(addresses, 10);
+
+	for(int i = 0; i < read; i++) {
+		panic_printf("#%-6d %s <%#x>\n", i, addr2name(addresses[i]), addresses[i]);
+	}
+
 	freeze();
 }
 
