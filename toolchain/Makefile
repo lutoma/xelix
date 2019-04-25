@@ -59,6 +59,7 @@ binutils-patch:
 	@echo "Patching binutils"
 	@patch -p0 < patch/binutils-${BINUTILS_VERSION}.patch
 	@cp content/binutils/xelix_i386.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
+	@cp content/binutils/xelix_arm.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
 
 gcc-all: gcc-download gcc-patch gcc-make gcc-install
 
@@ -83,7 +84,7 @@ gcc-install:
 	@make -C build/gcc install-gcc
 	@make -C build/gcc install-target-libgcc
 	@make -C build/gcc install-target-libstdc++-v3
-	@ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc
+	@ln -s arm-none-xelix-gcc local/bin/arm-none-xelix-cc
 
 gcc-make:
 	@echo "Building gcc"
