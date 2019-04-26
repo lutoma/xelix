@@ -26,13 +26,16 @@
 #include <log.h>
 #include "time.h"
 
-#define CURRENT_YEAR        2018
 
-// FIXME Should get this from ACPI
-int century_register = 0x00;
+#define CURRENT_YEAR        2018
 
 time_t last_timestamp = 0;
 uint64_t last_tick = 0;
+
+#ifdef __i386__
+
+// FIXME Should get this from ACPI
+int century_register = 0x00;
 
 static int in_progress() {
 	outb(0x70, 0x0A);
@@ -150,8 +153,10 @@ static time_t read_rtc() {
 
 	return t;
 }
+#endif
 
 uint32_t time_get() {
+	#ifdef __i386__
 	uint32_t stick = pit_tick;
 	if(stick <= last_tick + PIT_RATE) {
 		return last_timestamp;
@@ -161,6 +166,9 @@ uint32_t time_get() {
 	last_timestamp += offset / PIT_RATE;
 	last_tick = stick;
 	return last_timestamp;
+	#else
+	return 0;
+	#endif
 }
 
 int time_get_timeval(struct timeval* tv) {
@@ -180,8 +188,11 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 }
 
 void time_init() {
+	#ifdef __i386__
 	last_timestamp = read_rtc();
 	last_tick = pit_tick;
+	#endif
 	log(LOG_INFO, "time: Initial last_timestamp is %u at tick %llu\n", last_timestamp, last_tick);
 	sysfs_add_file("time", sfs_read, NULL);
 }
+

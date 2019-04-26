@@ -17,6 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef ENABLE_PICOTCP
 #include "socket.h"
 #include <net/net.h>
 #include <net/conv.h>
@@ -28,8 +29,6 @@
 #include <errno.h>
 #include <endian.h>
 #include <spinlock.h>
-
-#ifdef ENABLE_PICOTCP
 
 struct socket {
 	struct pico_socket* pico_socket;

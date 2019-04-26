@@ -27,6 +27,7 @@
 
 // Set up the memory areas marked as free in the multiboot headers
 static void copy_multiboot_areas() {
+#ifdef __i386__
 	struct multiboot_tag_mmap* mmap = multiboot_get_mmap();
 	if(!mmap) {
 		panic("Could not get memory map from multiboot info\n");
@@ -79,11 +80,21 @@ static void copy_multiboot_areas() {
 
 		}
 	}
+#endif
 }
 
 void memory_track_init() {
+	memory_track_num_areas = 0;
 	memset(memory_track_areas, 0, sizeof(memory_track_area_t) * MEMORY_TRACK_MAX_AREAS);
-	copy_multiboot_areas();
+
+	#ifdef __arm__
+		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];
+		area->addr = (void*)0x300000;
+		area->size = 0x1000000;
+		area->type = MEMORY_TYPE_FREE;
+	#else
+		copy_multiboot_areas();
+	#endif
 
 	log(LOG_INFO, "memory_track: Areas:\n");
 

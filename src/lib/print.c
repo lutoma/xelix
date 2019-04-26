@@ -117,6 +117,7 @@ static inline void _out_char(char character, void* buffer, size_t idx, size_t ma
 static inline void _out_char_serial(char character, void* buffer, size_t idx, size_t maxlen)
 {
   (void)buffer; (void)idx; (void)maxlen;
+
   if (character) {
     serial_send(character);
   }

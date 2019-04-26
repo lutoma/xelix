@@ -39,9 +39,6 @@
 #define IRQ14 46
 #define IRQ15 47
 
-#define interrupts_disable() asm volatile("cli")
-#define interrupts_enable() asm volatile("sti")
-
 #define EFLAGS_IF 0x200
 
 /* Interrupt stack frame */

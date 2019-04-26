@@ -80,7 +80,7 @@ void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint
 
 intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool reverse);
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__arm__)
 	#define PAGE_SIZE 4096
 	#define VMEM_ALIGN(x) (typeof(x))(((intptr_t)(x) & 0xfff) ? ((intptr_t)(x) & 0xFFFFF000) + 0x1000 : x)
 	#define VMEM_ALIGN_DOWN(x) (typeof(x))( \
@@ -88,4 +88,5 @@ intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool revers
 #else
 	#define PAGE_SIZE 0
 	#define VMEM_ALIGN(x) (x)
+	#define VMEM_ALIGN_DOWN(x) (x)
 #endif

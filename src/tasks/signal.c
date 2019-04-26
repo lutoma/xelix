@@ -31,6 +31,7 @@
 extern void task_sigjmp_crt0(void);
 
 int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
+	#ifdef __i386__
 	if(sig > 32) {
 		sc_errno = EINVAL;
 		return -1;
@@ -102,6 +103,7 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 	task->task_state = TASK_STATE_TERMINATED;
 	task->exit_code = 0x100 | sig;
 	task->interrupt_yield = true;
+	#endif
 	return 0;
 }
 

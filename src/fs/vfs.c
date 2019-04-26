@@ -589,7 +589,9 @@ static size_t sfs_mounts_read(void* dest, size_t size, size_t offset, void* meta
 }
 
 void vfs_init() {
+	#ifdef __i386__
 	ide_init();
+	#endif
 	part_init();
 	sysfs_init();
 

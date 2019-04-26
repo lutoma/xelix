@@ -20,7 +20,11 @@
 
 // This file gets included automatically by GCC
 
-#ifndef __xelix__
+#if !defined(__i386__) && !defined(__arm__)
+	#error "Unsupported architecture"
+#endif
+
+#if !defined(__xelix__) && !defined(__arm__)
 	#error "Please use a Xelix cross-compiler to compile this code"
 #endif
 
@@ -47,6 +51,20 @@ extern void* __kernel_end;
 #define KERNEL_SIZE (KERNEL_END - KERNEL_START)
 
 static inline void __attribute__((noreturn)) freeze(void) {
-	asm volatile("cli; hlt");
+	#ifdef __arm__
+		asm volatile("cpsid if; wfi");
+	#else
+		asm volatile("cli; hlt");
+	#endif
 	__builtin_unreachable();
 }
+
+#ifdef __arm__
+	#define interrupts_disable() asm volatile("cpsid if")
+	#define interrupts_enable() asm volatile("cpsie if")
+	#define halt() asm volatile("wfi")
+#else
+	#define interrupts_disable() asm volatile("cli")
+	#define interrupts_enable() asm volatile("sti")
+	#define halt() asm volatile("hlt")
+#endif

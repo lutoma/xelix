@@ -171,7 +171,9 @@ int task_fork(task_t* to_fork, isf_t* state) {
 		}
 	}
 
+	#ifdef __i386__
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+	#endif
 
 	/* Set syscall return values for the forked task – need to set here since
 	 * the regular syscall return handling only affects the main process.
@@ -258,7 +260,9 @@ void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
+	#ifdef __i386__
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+	#endif
 	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
 	task->state->esp = task->state->ebp - sizeof(iret_t);
 

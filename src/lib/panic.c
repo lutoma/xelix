@@ -102,6 +102,8 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	}
 
 	panic_printf("Paging context:  %s\n\n", vmem_get_name(vmem_currentContext));
+
+	#ifdef __i386__
 	panic_printf("Call trace:\n");
 	intptr_t addresses[10];
 	int read = walk_stack(addresses, 10);
@@ -109,6 +111,7 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	for(int i = 0; i < read; i++) {
 		panic_printf("#%-6d %s <%#x>\n", i, addr2name(addresses[i]), addresses[i]);
 	}
+	#endif
 
 	freeze();
 }

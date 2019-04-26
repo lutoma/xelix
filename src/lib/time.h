@@ -32,10 +32,12 @@ void time_init();
 
 #define sleep(t) sleep_ticks((t) * PIT_RATE)
 static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
+	#ifdef __i386__
 	const uint32_t until = pit_tick + timeout;
 	while(pit_tick <= until) {
 		asm volatile("hlt");
 	}
+	#endif
 }
 
 static inline uint32_t uptime(void) {

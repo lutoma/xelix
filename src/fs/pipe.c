@@ -41,7 +41,7 @@ size_t pipe_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	}
 
 	while(!pipe->data_size) {
-		asm("hlt");
+		halt();
 	}
 
 	if(size > pipe->data_size) {

@@ -33,23 +33,37 @@
 #include <mem/mem.h>
 #include <mem/gdt.h>
 #include <hw/ac97.h>
-#include <net/net.h>
 #include <multiboot.h>
 
-void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
+#ifdef ENABLE_PICOTCP
+#include <net/net.h>
+#endif
+
+void
+#if __i386__
+	__attribute__((fastcall))
+#endif
+xelix_main(uint32_t multiboot_magic,
 	void* multiboot_info) {
 
 	serial_init();
+	#ifdef __i386__
 	gdt_init();
 	interrupts_init();
 	pit_init(PIT_RATE);
 	multiboot_init(multiboot_magic, multiboot_info);
+	#endif
 	mem_init();
+	log(LOG_DEBUG, "hello world?, allocation at %#x\n", kmalloc(1));
 	tty_init();
 	time_init();
+	#ifdef __i386__
 	pci_init();
+	#endif
 	vfs_init();
+	#ifdef __i386__
 	pit_init2();
+	#endif
 
 	#ifdef ENABLE_PICOTCP
 	net_init();
@@ -64,6 +78,10 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	log_init();
 	version_init();
 
+	log(LOG_DEBUG, "bootup done.\n");
+
+	#if __i386__
+
 	char* __env[] = { NULL };
 	char* __argv[] = { vfs_basename(INIT_PATH), NULL };
 
@@ -73,13 +91,5 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	}
 	scheduler_add(init);
 	scheduler_init();
-
-	asm(
-	".il:"
-		"hlt;"
-		"jmp .il;"
-		"ud2;"
-		"cli;"
-	);
-	__builtin_unreachable();
+	#endif
 }

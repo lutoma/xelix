@@ -79,6 +79,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 #endif
 
 void  __attribute__((optimize("O0"))) ltrace() {
+	#ifdef __i386__
 	intptr_t addresses[10];
 	int read = walk_stack(addresses, 10);
 
@@ -87,6 +88,7 @@ void  __attribute__((optimize("O0"))) ltrace() {
 		size_t trace_len = snprintf(trace, 500, "#%-16d %s <%#x>\n", i, addr2name(addresses[i]), addresses[i]);
 		store(LOG_ERR, trace, trace_len);
 	}
+	#endif
 }
 
 void log(uint32_t level, const char *fmt, ...) {

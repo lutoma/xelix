@@ -18,6 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef ENABLE_PICOTCP
 #include <net/conv.h>
 #include <net/socket.h>
 #include <pico_socket.h>
@@ -74,3 +75,5 @@ int net_conv_pico2bsd(struct sockaddr* saddr, socklen_t socklen, union pico_addr
 			return -1;
 	}
 }
+
+#endif

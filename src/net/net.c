@@ -17,6 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef ENABLE_PICOTCP
 #include "net.h"
 #include <pico_stack.h>
 #include <pico_ipv4.h>
@@ -25,8 +26,6 @@
 #include <spinlock.h>
 #include <hw/rtl8139.h>
 #include <hw/ne2k.h>
-
-#ifdef ENABLE_PICOTCP
 
 #define RECV_BUFFER_SIZE 2048
 

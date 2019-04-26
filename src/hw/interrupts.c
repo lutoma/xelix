@@ -24,7 +24,10 @@
 #include <mem/vmem.h>
 #include <mem/paging.h>
 #include <mem/gdt.h>
+
+#ifdef ENABLE_PICOTCP
 #include <net/net.h>
+#endif
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
@@ -54,7 +57,11 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 	#endif
 
 	// Run scheduler every 100th tick, or when task yields
+	#ifdef __i386__
 	if((intr == IRQ0 && !(pit_get_tick() % 100)) || (task && task->interrupt_yield)) {
+	#else
+	if(intr == IRQ0 || (task && task->interrupt_yield)) {
+	#endif
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}
@@ -66,7 +73,9 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 			dump_isf(LOG_DEBUG, new_task->state);
 			#endif
 
-			gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
+			#ifdef __i386__
+				gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
+			#endif
 			return new_task->state;
 		}
 	}
@@ -79,7 +88,9 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 }
 
 void interrupts_init() {
+	#ifdef __i386__
 	idt_init();
+	#endif
 	bzero(interrupt_handlers, sizeof(interrupt_handlers));
 	interrupts_enable();
 }

@@ -101,6 +101,9 @@ isf_t* __attribute__((fastcall)) cpu_fault_handler(uint32_t intr, intptr_t cr2, 
 		panic("cpu_fault: No new task.\n");
 	}
 
+	#ifdef __i386__
 	gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
+	#endif
+
 	return new_task->state;
 }

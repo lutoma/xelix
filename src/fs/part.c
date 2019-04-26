@@ -33,13 +33,22 @@ struct mbr_partition {
 };
 
 bool part_read(uint32_t lba, uint8_t * buf) {
-	return ide_read_sector(0x1F0, 0, lba + start, buf);
+	#ifdef __i386__
+		return ide_read_sector(0x1F0, 0, lba + start, buf);
+	#else
+		return false;
+	#endif
 }
 void part_write(uint32_t lba, uint8_t * buf) {
-	return ide_write_sector(0x1F0, 0, lba + start, buf);
+	#ifdef __i386__
+		return ide_write_sector(0x1F0, 0, lba + start, buf);
+	#else
+		return false;
+	#endif
 }
 
 void part_init() {
+	#ifdef __i386__
 	uint8_t* buf = kmalloc(512);
 	if(!ide_read_sector(0x1F0, 0, 0, buf)) {
 		kfree(buf);
@@ -48,4 +57,5 @@ void part_init() {
 
 	struct mbr_partition* part = (struct mbr_partition*)(buf + 0x01BE);
 	start = part->start;
+	#endif
 }

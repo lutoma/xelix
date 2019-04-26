@@ -21,31 +21,43 @@
 #pragma once
 
 static inline void outb(uint16_t port, uint8_t value) {
+	#ifdef __i386__
 	asm volatile("outb %0, %1" : : "a" (value), "Nd" (port));
+	#endif
 }
 
 static inline void outw(uint16_t port, uint16_t value) {
+	#ifdef __i386__
 	asm volatile("outw %0, %1" : : "a" (value), "Nd" (port));
+	#endif
 }
 
 static inline void outl(uint16_t port, uint32_t value) {
+	#ifdef __i386__
 	asm volatile("outl %0, %1" : : "a" (value), "Nd" (port));
+	#endif
 }
 
 static inline uint8_t inb(uint16_t port) {
 	uint8_t ret;
+	#ifdef __i386__
 	asm volatile("inb %1, %0" : "=a" (ret) : "Nd" (port));
+	#endif
 	return ret;
 }
 
 static inline uint16_t inw(uint16_t port) {
 	uint16_t ret;
+	#ifdef __i386__
 	asm volatile("inw %1, %0" : "=a" (ret) : "Nd" (port));
+	#endif
 	return ret;
 }
 
 static inline uint32_t inl(uint16_t port) {
 	uint32_t ret;
+	#ifdef __i386__
 	asm volatile("inl %1, %0" : "=a" (ret) : "Nd" (port));
+	#endif
 	return ret;
 }
