@@ -2,19 +2,14 @@
 all: xelix.bin
 
 PATH += :toolchain/local/bin
-CC := i786-pc-xelix-gcc
-OBJCOPY := i786-pc-xelix-objcopy
 LD := $(CC)
-AS := nasm
-QEMU := qemu-system-i386
 
 ifeq ($(BUILD),)
 	BUILD := 0
 endif
 
-MAKE_CFLAGS = -std=gnu18 -ffreestanding -g -O3 -pipe -mtune=sandybridge -mgeneral-regs-only -mhard-float -fstack-protector-strong -Wall -Wframe-larger-than=1024 -I src -I src/lib -I ext/picotcp/build/include -include src/lib/generic.h
+MAKE_CFLAGS = $(ARCH_CFLAGS) -std=gnu18 -ffreestanding -g -O3 -pipe -fstack-protector-strong -Wall -Wframe-larger-than=1024 -I src -I src/lib -I ext/picotcp/build/include -include src/lib/generic.h
 MAKE_LDFLAGS = -T linker.ld -nostdlib -lgcc
-MAKE_ASFLAGS = -g -f elf
 
 ifeq ($(shell uname -s), Darwin)
 	AS := $(shell find /usr/local/Cellar/nasm/*/bin/nasm)
@@ -38,8 +33,11 @@ src/lib/strbuffer/%.o: src/lib/strbuffer/%.c src/lib/generic.h src/lib/config.h
 %-asm.o: %.asm
 	$(AS) $(MAKE_ASFLAGS) -o $@ $<
 
+%-S.o: %.S
+	$(CC) $(MAKE_ASFLAGS) -o $@ -c $<
+
 %-psf.o: %.psf
-	$(OBJCOPY) -O i786-pc-xelix -B i386 -I binary -SK _binary_src_tty_ter_u16n_psf_start $< $@
+	$(OBJCOPY) -O i786-pc-xelix -B i386 -I binary -SK _binary_src_tty_teru16n_psf_start $< $@
 
 $(CC):
 	make -C toolchain

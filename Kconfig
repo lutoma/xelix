@@ -1,5 +1,11 @@
 mainmenu "Xelix configuration"
 
+config ARCH
+	string "Target architecture"
+	default "i386"
+	---help---
+	Build target architecture. Can be either "i386" or "arm".
+
 menu "Interrupts"
 	config INTERRUPTS_DEBUG
 		bool "Interrupts debugging"
