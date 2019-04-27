@@ -110,6 +110,10 @@ static inline const uint8_t* get_char_bitmap(char chr, bool bdc) {
 }
 
 static void write_char(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_col, uint32_t bg_col) {
+	#ifdef __arm__
+	return;
+	#endif
+
 	x *= tty_font.width;
 	y *= tty_font.height;
 
@@ -130,6 +134,10 @@ static void write_char(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_c
 }
 
 static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
+	#ifdef __arm__
+	return;
+	#endif
+
 	size_t x_size = ((end_x - start_x) * tty_font.width * (fb_desc->common.framebuffer_bpp / 8));
 	uint32_t color = convert_color(term->bg_color, true);
 
@@ -148,6 +156,10 @@ static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t e
 }
 
 static void scroll_line() {
+	#ifdef __arm__
+	return;
+	#endif
+
 	size_t size = fb_desc->common.framebuffer_width
 		* fb_desc->common.framebuffer_height
 		* (fb_desc->common.framebuffer_bpp / 8)
@@ -161,6 +173,10 @@ static void scroll_line() {
 }
 
 static void set_cursor(uint32_t x, uint32_t y, bool restore) {
+	#ifdef __arm__
+	return;
+	#endif
+
 	x *= tty_font.width;
 	y *= tty_font.height;
 

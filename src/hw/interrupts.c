@@ -57,11 +57,7 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 	#endif
 
 	// Run scheduler every 100th tick, or when task yields
-	#ifdef __i386__
 	if((intr == IRQ0 && !(pit_get_tick() % 100)) || (task && task->interrupt_yield)) {
-	#else
-	if(intr == IRQ0 || (task && task->interrupt_yield)) {
-	#endif
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}
@@ -90,6 +86,9 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 void interrupts_init() {
 	#ifdef __i386__
 	idt_init();
+	#else
+	uint32_t* picmmio = (uint32_t*)0x14000000;
+	picmmio[0x2] = (1<<5) | (1<<6) | (1<<7);
 	#endif
 	bzero(interrupt_handlers, sizeof(interrupt_handlers));
 	interrupts_enable();

@@ -52,7 +52,7 @@ extern void* __kernel_end;
 
 static inline void __attribute__((noreturn)) freeze(void) {
 	#ifdef __arm__
-		asm volatile("cpsid if; wfi");
+		asm volatile("cpsid if; b arm_halt;");
 	#else
 		asm volatile("cli; hlt");
 	#endif
@@ -63,8 +63,10 @@ static inline void __attribute__((noreturn)) freeze(void) {
 	#define interrupts_disable() asm volatile("cpsid if")
 	#define interrupts_enable() asm volatile("cpsie if")
 	#define halt() asm volatile("wfi")
+	#define __fastcall
 #else
 	#define interrupts_disable() asm volatile("cli")
 	#define interrupts_enable() asm volatile("sti")
 	#define halt() asm volatile("hlt")
+	#define __fastcall __attribute__((fastcall))
 #endif

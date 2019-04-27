@@ -152,8 +152,10 @@ int task_fork(task_t* to_fork, isf_t* state) {
 	task_setup_execdata(task);
 
 	// Adjust kernel esp
+	#ifdef __i386__
 	intptr_t diff = state->esp - to_fork->kernel_stack;
 	task->state->esp = task->kernel_stack + diff;
+	#endif
 
 	struct task_mem* alloc = to_fork->memory_allocations;
 	for(; alloc; alloc = alloc->next) {
@@ -178,8 +180,13 @@ int task_fork(task_t* to_fork, isf_t* state) {
 	/* Set syscall return values for the forked task – need to set here since
 	 * the regular syscall return handling only affects the main process.
 	 */
+	#ifdef __i386__
 	task->state->eax = 0;
 	task->state->ebx = 0;
+	#else
+	task->state->r0 = 0;
+	task->state->r1 = 0;
+	#endif
 
 	scheduler_add(task);
 	return task->pid;
@@ -259,10 +266,9 @@ static void clean_memory(task_t* t) {
 void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
-	task->state->ds = GDT_SEG_DATA_PL3;
 	#ifdef __i386__
+	task->state->ds = GDT_SEG_DATA_PL3;
 	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
-	#endif
 	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
 	task->state->esp = task->state->ebp - sizeof(iret_t);
 
@@ -273,6 +279,7 @@ void task_set_initial_state(task_t* task) {
 	iret->eflags = EFLAGS_IF;
 	iret->user_esp = (uint32_t)task->state->ebp;
 	iret->ss = GDT_SEG_DATA_PL3;
+	#endif
 }
 
 void task_cleanup(task_t* t) {

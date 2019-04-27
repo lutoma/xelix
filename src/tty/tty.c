@@ -61,6 +61,10 @@ static inline void handle_nonprintable(char chr) {
 }
 
 size_t tty_write(char* source, size_t size) {
+	#ifdef __arm__
+	return size;
+	#endif
+
 	bool remove_cursor = false;
 
 	if(!term->drv) {

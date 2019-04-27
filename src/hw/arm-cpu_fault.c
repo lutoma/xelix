@@ -1,6 +1,5 @@
-#pragma once
-
-/* Copyright © 2010-2018 Lukas Martini
+/* fault.c: Catch and process CPU fault interrupts
+ * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,10 +17,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#include <panic.h>
 
-#define pit_tick (pit_get_tick())
-
-void pit_init(uint16_t frequency);
-void pit_init2();
-uint32_t pit_get_tick(void);
+void cpu_fault_handler(uint32_t r0, uint32_t r1) {
+	panic("CPU fault, r0 %d, r1 %d", r0, r1);
+}

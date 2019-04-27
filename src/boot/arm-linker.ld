@@ -3,10 +3,14 @@ PROVIDE(tty_font = _binary_src_tty_teru16n_psf_start);
 
 SECTIONS
 {
-	/* The first section should be at 0x8000. */
-	. = 0x8000;
+	. = 0;
 	PROVIDE(__kernel_start = .);
 
+	.init : {
+		KEEP(*(.init))
+	}
+
+	. = 0x8000;
 	.text : {
 		KEEP(*(.text.boot))
 		*(.text*)

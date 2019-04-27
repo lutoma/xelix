@@ -39,22 +39,17 @@
 #include <net/net.h>
 #endif
 
-void
-#if __i386__
-	__attribute__((fastcall))
-#endif
-xelix_main(uint32_t multiboot_magic,
-	void* multiboot_info) {
-
+void __fastcall xelix_main(uint32_t multiboot_magic, void* multiboot_info) {
 	serial_init();
 	#ifdef __i386__
 	gdt_init();
+	#endif
 	interrupts_init();
+	#ifdef __i386__
 	pit_init(PIT_RATE);
 	multiboot_init(multiboot_magic, multiboot_info);
 	#endif
 	mem_init();
-	log(LOG_DEBUG, "hello world?, allocation at %#x\n", kmalloc(1));
 	tty_init();
 	time_init();
 	#ifdef __i386__
@@ -77,8 +72,6 @@ xelix_main(uint32_t multiboot_magic,
 	syscall_init();
 	log_init();
 	version_init();
-
-	log(LOG_DEBUG, "bootup done.\n");
 
 	#if __i386__
 

@@ -43,7 +43,7 @@ void part_write(uint32_t lba, uint8_t * buf) {
 	#ifdef __i386__
 		return ide_write_sector(0x1F0, 0, lba + start, buf);
 	#else
-		return false;
+		return;
 	#endif
 }
 

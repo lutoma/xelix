@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -43,6 +43,7 @@
 
 /* Interrupt stack frame */
 typedef struct {
+#ifdef __i386__
 	uint32_t cr3;
 	uint32_t ds;
 
@@ -55,6 +56,22 @@ typedef struct {
 	uint32_t ecx;
 	uint32_t eax;
 	void* esp;
+#else /* ARM */
+   // user mode r13 & r14
+   uint32_t usr_r13;
+   uint32_t usr_r14;
+
+   // CPSR before IRQ and supervisor mode SPSR
+   uint32_t cpsr;
+   uint32_t svc_spsr;
+
+   // supervisor mode r13 & r14
+   uint32_t svc_r13;
+   uint32_t svc_r14;
+
+   uint32_t r0, r1, r2, r3, r4, r5, r6, r7;
+   uint32_t r8, r9, r10, r11, r12, r15;
+#endif
 } __attribute__((__packed__)) isf_t;
 
 typedef struct {
@@ -92,10 +109,12 @@ static inline void interrupts_bulk_register(uint8_t start, uint8_t end, interrup
 }
 
 static inline void dump_isf(uint32_t level, isf_t* state) {
+	#ifdef __i386__
 	log(level, "isf_t at 0x%x:\n", state);
 	log(level, "  EAX=0x%-10x EBX=0x%-10x ECX=0x%-10x EDX=0x%-10x\n", state->eax, state->ebx, state->ecx, state->edx);
 	log(level, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
 	//log(level, "  EIP=0x%-10x CR2=0x%-10x CR3=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->cr2, state->cr3, state->eflags);
+	#endif
 }
 
 void interrupts_init();

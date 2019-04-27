@@ -35,6 +35,22 @@
 #define SCA_POINTER 8
 #define SCA_STRING 16
 
+#ifdef __i386__
+	#define SCREG_CALLNUM eax
+	#define SCREG_RESULT eax
+	#define SCREG_ERRNO ebx
+	#define SCREG_ARG0 ebx
+	#define SCREG_ARG1 ecx
+	#define SCREG_ARG2 edx
+#else /* ARM */
+	#define SCREG_CALLNUM r7
+	#define SCREG_RESULT r0
+	#define SCREG_ERRNO r1
+	#define SCREG_ARG0 r0
+	#define SCREG_ARG1 r1
+	#define SCREG_ARG2 r2
+#endif
+
 typedef uint32_t (*syscall_cb)(uint32_t, ...);
 struct syscall_definition {
 	char name[50];

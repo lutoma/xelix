@@ -25,9 +25,9 @@
 #include <multiboot.h>
 #include <hw/serial.h>
 
+#ifdef __i386__
 // Set up the memory areas marked as free in the multiboot headers
 static void copy_multiboot_areas() {
-#ifdef __i386__
 	struct multiboot_tag_mmap* mmap = multiboot_get_mmap();
 	if(!mmap) {
 		panic("Could not get memory map from multiboot info\n");
@@ -80,8 +80,8 @@ static void copy_multiboot_areas() {
 
 		}
 	}
-#endif
 }
+#endif
 
 void memory_track_init() {
 	memory_track_num_areas = 0;

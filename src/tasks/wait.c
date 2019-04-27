@@ -65,7 +65,12 @@ void wait_finish(task_t* task, task_t* child) {
 	}
 
 	// Set the return value of the wait() syscall to the pid of the returned child
+	#ifdef __i386__
 	task->state->eax = child->pid;
+	#else
+	task->state->r0 = child->pid;
+	#endif
+
 	if(task->wait_context.stat_loc) {
 		*task->wait_context.stat_loc = child->exit_code;
 	}

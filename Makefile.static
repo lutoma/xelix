@@ -2,13 +2,11 @@ ifeq ($(ARCH),arm)
 	PREFIX = arm-none-eabi
 	MAKE_CFLAGS = -mcpu=arm1176jzf-s -fpic -msoft-float
 	MAKE_ASFLAGS := $(MAKE_CFLAGS) -ffreestanding
-	MAKE_LDFLAGS = -e 0x8000
 	AS := $(PREFIX)-gcc
 else
 	PREFIX = i786-pc-xelix
 	MAKE_CFLAGS = -mtune=sandybridge -mgeneral-regs-only -mhard-float
 	MAKE_ASFLAGS = -g -f elf
-	MAKE_LDFLAGS =
 	AS = nasm
 endif
 
@@ -19,7 +17,7 @@ QEMU := qemu-system-$(ARCH)
 LD := $(CC)
 
 MAKE_CFLAGS += -std=gnu18 -ffreestanding -g -O3 -pipe -fstack-protector-strong -Wall -Wframe-larger-than=1024 -I src -I src/lib -I ext/picotcp/build/include -include src/lib/generic.h
-MAKE_LDFLAGS += -T src/boot/$(ARCH)-linker.ld -nostdlib -lgcc
+MAKE_LDFLAGS := -T src/boot/$(ARCH)-linker.ld -nostdlib -lgcc
 
 ifeq ($(shell uname -s), Darwin)
 	AS := $(shell find /usr/local/Cellar/nasm/*/bin/nasm)

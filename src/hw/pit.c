@@ -1,5 +1,5 @@
 /* generic.c: Interface to the programmable interrupt timer
- * Copyright © 2010-2018 Lukas Martini
+ * Copyright © 2010-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -46,6 +46,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 // Initialize the PIT
 void pit_init(uint16_t frequency) {
+	#ifdef __i386__
 	// preemptability setting here also affects scheduler, so leave set to false
 	interrupts_register(IRQ0, &timer_callback, false);
 
@@ -63,6 +64,8 @@ void pit_init(uint16_t frequency) {
 	// Send the frequency divisor.
 	outb(0x40, l);
 	outb(0x40, h);
+	#else
+	#endif
 }
 
 void pit_init2() {

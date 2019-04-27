@@ -17,14 +17,40 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-.section ".text.boot"
+.section ".bss"
+.global stack_begin
+.global stack_end
+.lcomm stack_begin, 1024 * 8
+stack_end:
+.global int_stack_begin
+.global int_stack_end
+.lcomm int_stack_begin, 1024 * 8
+int_stack_end:
 
+.section ".text.boot"
 .global _start
-.org 0x8000
+.global arm_halt
 
 _start:
+	// Shut off extra cores
+	mrc p15, 0, r5, c0, c0, 5
+	and r5, r5, #3
+	cmp r5, #0
+	bne arm_halt
+
 	// Setup the stack.
-	mov sp, #0x8000
+	ldr r5, =stack_end
+	mov sp, r5
+
+	mrs r0, cpsr
+	bic r0, $0b11111111
+	orr r0, $0b11010010
+	msr cpsr, r0
+	ldr r5, =int_stack_end
+	mov sp, r5
+	bic r0, $0b11111111
+	orr r0, $0b11010011
+	msr cpsr, r0
 
 	// Clear out bss.
 	ldr r4, =__bss_start
@@ -47,6 +73,6 @@ _start:
 	ldr r3, =xelix_main
 	blx r3
 
-halt:
+arm_halt:
 	wfe
-	b halt
+	b arm_halt
