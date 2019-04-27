@@ -3,12 +3,13 @@ PROVIDE(tty_font = _binary_src_tty_teru16n_psf_start);
 
 SECTIONS
 {
-	/* The first section should be at 0x100000. */
+	/* The first section should be at 0x100000 */
 	. = 0x100000;
 	PROVIDE(__kernel_start = .);
 
+	/* The multiboot header has to be in the first 8kb */
 	.text : {
-		KEEP(*(.text.boot))
+		*(multiboot)
 		*(.text*)
 	}
 
@@ -20,11 +21,9 @@ SECTIONS
 		*(.rodata*)
 	}
 
-	PROVIDE(__bss_start = .);
 	.bss ALIGN(4096) : {
 		*(.bss)
 	}
-	PROVIDE(__bss_end = .);
 
 	.eh_frame ALIGN(4096) : {
 		*(.eh_frame)

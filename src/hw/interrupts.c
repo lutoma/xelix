@@ -34,7 +34,7 @@
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
-isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs) {
+isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
 	struct interrupt_reg reg = interrupt_handlers[intr];
 	task_t* task = scheduler_get_current();
 

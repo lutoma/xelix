@@ -26,6 +26,8 @@
 static inline void mem_init() {
 	memory_track_init();
 	kmalloc_init();
-//	vmem_init();
+#ifdef __i386__
+	vmem_init();
+#endif
 	paging_init();
 }
