@@ -595,7 +595,7 @@ void vfs_init() {
 	part_init();
 	sysfs_init();
 
-	#ifdef ENABLE_EXT2
+	#if defined(ENABLE_EXT2) && !defined(__arm__)
 	ext2_init();
 	#endif
 

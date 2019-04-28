@@ -61,6 +61,7 @@ typedef struct {
    uint32_t usr_r13;
    uint32_t usr_r14;
 
+/*
    // CPSR before IRQ and supervisor mode SPSR
    uint32_t cpsr;
    uint32_t svc_spsr;
@@ -68,12 +69,14 @@ typedef struct {
    // supervisor mode r13 & r14
    uint32_t svc_r13;
    uint32_t svc_r14;
+*/
 
    uint32_t r0, r1, r2, r3, r4, r5, r6, r7;
    uint32_t r8, r9, r10, r11, r12, r15;
 #endif
 } __attribute__((__packed__)) isf_t;
 
+#ifdef __i386__
 typedef struct {
 	/* Pushed by the processor automatically. This is what the processor
 	 * expects to be in the kernel stack when doing an iret to ring 3.
@@ -84,6 +87,7 @@ typedef struct {
 	uint32_t user_esp;
 	uint32_t ss;
 } __attribute__((__packed__)) iret_t;
+#endif
 
 typedef void (*interrupt_handler_t)(isf_t*);
 struct interrupt_reg {
@@ -109,11 +113,15 @@ static inline void interrupts_bulk_register(uint8_t start, uint8_t end, interrup
 }
 
 static inline void dump_isf(uint32_t level, isf_t* state) {
-	#ifdef __i386__
 	log(level, "isf_t at 0x%x:\n", state);
+	#ifdef __i386__
 	log(level, "  EAX=0x%-10x EBX=0x%-10x ECX=0x%-10x EDX=0x%-10x\n", state->eax, state->ebx, state->ecx, state->edx);
 	log(level, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
-	//log(level, "  EIP=0x%-10x CR2=0x%-10x CR3=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->cr2, state->cr3, state->eflags);
+	log(level, "  EIP=0x%-10x CR2=0x%-10x CR3=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->cr2, state->cr3, state->eflags);
+	#else
+	log(level, "  R0=0x%-10x R1=0x%-10x R2=0x%-10x R3=0x%-10x\n", state->r0, state->r1, state->r2, state->r3);
+	log(level, "  R4=0x%-10x R5=0x%-10x R6=0x%-10x R7=0x%-10x\n", state->r4, state->r5, state->r6, state->r7);
+	log(level, "  R8=0x%-10x R9=0x%-10x R10=0x%-10x R11=0x%-10x\n", state->r8, state->r9, state->r10, state->r11);
 	#endif
 }
 
