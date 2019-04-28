@@ -24,11 +24,12 @@ SECTIONS
 		*(.rodata*)
 	}
 
-	PROVIDE(__bss_start = .);
+	/* bss start & length symbols are used in arm-boot.S to clear bss */
 	.bss ALIGN(4096) : {
+		PROVIDE(__bss_start = .);
 		*(.bss)
 	}
-	PROVIDE(__bss_end = .);
+	PROVIDE(__bss_len = . - __bss_start);
 
 	.eh_frame ALIGN(4096) : {
 		*(.eh_frame)

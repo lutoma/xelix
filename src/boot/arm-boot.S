@@ -20,10 +20,11 @@
 .section ".bss"
 .global stack_begin
 .global stack_end
-.lcomm stack_begin, 1024 * 8
-stack_end:
 .global int_stack_begin
 .global int_stack_end
+
+.lcomm stack_begin, 1024 * 8
+stack_end:
 .lcomm int_stack_begin, 1024 * 8
 int_stack_end:
 
@@ -38,7 +39,7 @@ _start:
 	cmp r5, #0
 	bne arm_halt
 
-	// Setup the stack.
+	// Stack setup for supervisor / irq mode
 	ldr r5, =stack_end
 	mov sp, r5
 
@@ -52,26 +53,13 @@ _start:
 	orr r0, $0b11010011
 	msr cpsr, r0
 
-	// Clear out bss.
-	ldr r4, =__bss_start
-	ldr r9, =__bss_end
-	mov r5, #0
-	mov r6, #0
-	mov r7, #0
-	mov r8, #0
-	b 2f
+	// Clear BSS
+	ldr r0, =__bss_start
+	mov r1, #0
+	ldr r2, =__bss_len
+	bl memset
 
-1:
-	// store multiple at r4.
-	stmia r4!, {r5-r8}
-
-	// If we are still below bss_end, loop.
-2:
-	cmp r4, r9
-	blo 1b
-
-	ldr r3, =xelix_main
-	blx r3
+	bl xelix_main
 
 arm_halt:
 	wfe

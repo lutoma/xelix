@@ -41,6 +41,7 @@
 
 void __fastcall xelix_main(uint32_t multiboot_magic, void* multiboot_info) {
 	serial_init();
+
 	#ifdef __i386__
 	gdt_init();
 	#endif
