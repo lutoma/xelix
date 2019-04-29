@@ -21,7 +21,8 @@
 #include <stdint.h>
 
 #define pit_tick (pit_get_tick())
+uint32_t pit_rate;
 
-void pit_init(uint16_t frequency);
+void pit_init();
 void pit_init2();
 uint32_t pit_get_tick(void);

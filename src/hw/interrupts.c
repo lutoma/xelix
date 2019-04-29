@@ -19,6 +19,7 @@
 
 #include <hw/interrupts.h>
 #include <string.h>
+#include <portio.h>
 #include <hw/idt.h>
 #include <tasks/scheduler.h>
 #include <mem/vmem.h>
@@ -86,10 +87,8 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
 void interrupts_init() {
 	#ifdef __i386__
 	idt_init();
-	#else
-	//uint32_t* picmmio = (uint32_t*)0x14000000;
-	//picmmio[0x2] = (1<<5) | (1<<6) | (1<<7);
 	#endif
+
 	bzero(interrupt_handlers, sizeof(interrupt_handlers));
 	interrupts_enable();
 }

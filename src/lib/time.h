@@ -30,16 +30,14 @@ uint32_t time_get();
 int time_get_timeval(struct timeval* tv);
 void time_init();
 
-#define sleep(t) sleep_ticks((t) * PIT_RATE)
+#define sleep(t) sleep_ticks((t) * pit_rate)
 static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
-	#ifdef __i386__
 	const uint32_t until = pit_tick + timeout;
 	while(pit_tick <= until) {
-		asm volatile("hlt");
+		halt();
 	}
-	#endif
 }
 
 static inline uint32_t uptime(void) {
-	return (uint32_t)pit_tick / PIT_RATE;
+	return (uint32_t)pit_tick / pit_rate;
 }

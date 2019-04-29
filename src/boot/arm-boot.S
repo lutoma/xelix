@@ -39,6 +39,16 @@ _start:
 	cmp r5, #0
 	bne arm_halt
 
+	// Throwaway stack for memset
+	// Real stack is in BSS and will also get cleared
+	mov sp, #0x4000
+
+	// Clear BSS
+	ldr r0, =__bss_start
+	mov r1, #0
+	ldr r2, =__bss_len
+	bl memset
+
 	// Stack setup for supervisor / irq mode
 	ldr r5, =stack_end
 	mov sp, r5
@@ -52,12 +62,6 @@ _start:
 	bic r0, $0b11111111
 	orr r0, $0b11010011
 	msr cpsr, r0
-
-	// Clear BSS
-	ldr r0, =__bss_start
-	mov r1, #0
-	ldr r2, =__bss_len
-	bl memset
 
 	bl xelix_main
 

@@ -1,6 +1,6 @@
 ifeq ($(ARCH),arm)
 	PREFIX = arm-none-eabi
-	MAKE_CFLAGS = -mcpu=arm1176jzf-s -fpic -msoft-float
+	MAKE_CFLAGS = -mcpu=cortex-a7 -fpic -msoft-float
 	MAKE_ASFLAGS := $(MAKE_CFLAGS) -ffreestanding
 	AS := $(PREFIX)-gcc
 else

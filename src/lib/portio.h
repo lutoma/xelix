@@ -20,44 +20,51 @@
 
 #pragma once
 
+#ifdef __i386__
 static inline void outb(uint16_t port, uint8_t value) {
-	#ifdef __i386__
 	asm volatile("outb %0, %1" : : "a" (value), "Nd" (port));
-	#endif
 }
 
 static inline void outw(uint16_t port, uint16_t value) {
-	#ifdef __i386__
 	asm volatile("outw %0, %1" : : "a" (value), "Nd" (port));
-	#endif
 }
 
 static inline void outl(uint16_t port, uint32_t value) {
-	#ifdef __i386__
 	asm volatile("outl %0, %1" : : "a" (value), "Nd" (port));
-	#endif
 }
 
 static inline uint8_t inb(uint16_t port) {
 	uint8_t ret = 0;
-	#ifdef __i386__
 	asm volatile("inb %1, %0" : "=a" (ret) : "Nd" (port));
-	#endif
 	return ret;
 }
 
 static inline uint16_t inw(uint16_t port) {
 	uint16_t ret = 0;
-	#ifdef __i386__
 	asm volatile("inw %1, %0" : "=a" (ret) : "Nd" (port));
-	#endif
 	return ret;
 }
 
 static inline uint32_t inl(uint16_t port) {
 	uint32_t ret = 0;
-	#ifdef __i386__
 	asm volatile("inl %1, %0" : "=a" (ret) : "Nd" (port));
-	#endif
 	return ret;
 }
+#endif
+
+#ifdef __arm__
+// for raspi2 & 3, 0x20200000 for raspi1
+#define RPI_MMIO_BASE 0x3F200000
+#define rpi_mmio_write(reg, data) mmio_write(RPI_MMIO_BASE + (reg), data)
+#define rpi_mmio_read(reg) mmio_read(RPI_MMIO_BASE + (reg))
+
+// Memory-Mapped I/O output
+static inline void mmio_write(uint32_t reg, uint32_t data) {
+	*(volatile uint32_t*)reg = data;
+}
+
+// Memory-Mapped I/O input
+static inline uint32_t mmio_read(uint32_t reg) {
+	return *(volatile uint32_t*)reg;
+}
+#endif

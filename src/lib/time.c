@@ -158,12 +158,12 @@ static time_t read_rtc() {
 uint32_t time_get() {
 	#ifdef __i386__
 	uint32_t stick = pit_tick;
-	if(stick <= last_tick + PIT_RATE) {
+	if(stick <= last_tick + pit_rate) {
 		return last_timestamp;
 	}
 
 	uint32_t offset = (stick - last_tick);
-	last_timestamp += offset / PIT_RATE;
+	last_timestamp += offset / pit_rate;
 	last_tick = stick;
 	return last_timestamp;
 	#else

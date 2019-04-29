@@ -85,7 +85,7 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	va_end(va);
 
 	panic_printf("Last PIT tick:   %d (rate %d, uptime: %d seconds)\n",
-		(uint32_t)pit_tick, PIT_RATE, uptime());
+		(uint32_t)pit_tick, pit_rate, uptime());
 
 	task_t* task = scheduler_get_current();
 	if(task) {

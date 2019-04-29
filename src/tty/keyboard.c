@@ -26,6 +26,7 @@
 #define flush() { while(inb(0x64) & 1) { inb(0x60); }}
 #define send(c) { while((inb(0x64) & 0x2)); outb(0x60, (c)); }
 
+#ifdef __i386__
 static void intr_handler(isf_t* regs) {
 	static struct tty_input_state state;
 	state.code = (uint16_t)inb(0x60);
@@ -73,8 +74,10 @@ static void intr_handler(isf_t* regs) {
 
 	tty_input_cb(&state);
 }
+#endif
 
 void tty_keyboard_init() {
+	#ifdef __i386__
 	flush();
 
 	// Reset
@@ -87,4 +90,5 @@ void tty_keyboard_init() {
 	send(0xF4);
 	flush();
 	interrupts_register(IRQ1, &intr_handler, false);
+	#endif
 }

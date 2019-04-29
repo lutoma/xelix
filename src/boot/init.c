@@ -46,8 +46,8 @@ void __fastcall xelix_main(uint32_t multiboot_magic, void* multiboot_info) {
 	gdt_init();
 	#endif
 	interrupts_init();
+	pit_init();
 	#ifdef __i386__
-	pit_init(PIT_RATE);
 	multiboot_init(multiboot_magic, multiboot_info);
 	#endif
 	mem_init();
