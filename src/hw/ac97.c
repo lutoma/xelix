@@ -97,7 +97,7 @@ static void interrupt_handler(isf_t *state) {
 	struct ac97_card* card = &ac97_cards[0];
 	/*// Find the card this IRQ is coming from
 	for(int i = 0; i < cards; i++) {
-		if(likely(state->interrupt == ac97_cards[i].device->interrupt_line + IRQ0)) {
+		if(likely(state->interrupt == IRQ(ac97_cards[i].device->interrupt_line))) {
 			card = &ac97_cards[i];
 		}
 	}*/
@@ -177,7 +177,7 @@ static size_t sfs_write(void* source, size_t size, size_t offset, void* meta) {
 }
 
 static void enable_card(struct ac97_card* card) {
-	interrupts_register(card->device->interrupt_line + IRQ0, interrupt_handler, false);
+	interrupts_register(IRQ(card->device->interrupt_line), interrupt_handler, false);
 
 	// Enable bus master, disable MSE
 	pci_config_write(card->device, 4, 5);

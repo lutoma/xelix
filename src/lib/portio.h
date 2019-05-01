@@ -55,8 +55,11 @@ static inline uint32_t inl(uint16_t port) {
 #ifdef __arm__
 // for raspi2 & 3, 0x20200000 for raspi1
 #define RPI_MMIO_BASE 0x3F200000
+#define BCM2836_MMIO_BASE 0x40000000
 #define rpi_mmio_write(reg, data) mmio_write(RPI_MMIO_BASE + (reg), data)
 #define rpi_mmio_read(reg) mmio_read(RPI_MMIO_BASE + (reg))
+#define bcm2836_mmio_write(reg, data) mmio_write(BCM2836_MMIO_BASE + (reg), data)
+#define bcm2836_mmio_read(reg) mmio_read(BCM2836_MMIO_BASE + (reg))
 
 // Memory-Mapped I/O output
 static inline void mmio_write(uint32_t reg, uint32_t data) {

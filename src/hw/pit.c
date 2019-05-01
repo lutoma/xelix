@@ -46,10 +46,10 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 // Initialize the PIT
 void pit_init() {
-	// preemptability setting here also affects scheduler, so leave set to false
-	interrupts_register(IRQ0, &timer_callback, false);
-
 	#ifdef __i386__
+	// preemptability setting here also affects scheduler, so leave set to false
+	interrupts_register(IRQ(0), &timer_callback, false);
+
 	pit_rate = PIT_RATE;
 
 	// The value we send to the PIT is the value to divide it's input clock
@@ -68,12 +68,14 @@ void pit_init() {
 	outb(0x40, h);
 
 	#elif __arm__
-/*	asm volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r" (pit_rate));
+	interrupts_register(IRQ(3), &timer_callback, false);
+
+	/*asm volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r" (pit_rate));
 	log(LOG_DEBUG, "pit: ARM Timer frequency %d\n", pit_rate);
 	asm volatile ("mcr p15, 0, %0, c14, c3, 0" :: "r" (pit_rate));
 	mmio_write(0x40000040, 0x08);
 	asm volatile ("mcr p15, 0, %0, c14, c3, 1" :: "r" (1));
-*/
+	*/
 	#endif
 }
 

@@ -17,6 +17,10 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define ARM_INT_TYPE_SVC 1
+#define ARM_INT_TYPE_IRQ 2
+#define ARM_INT_TYPE_FIQ 3
+
 .extern interrupts_callback
 .extern _start
 
@@ -24,25 +28,40 @@
 .section ".init"
 b arm_handle_fault	// Reset
 b arm_handle_fault	// Undefined instruction
-b arm_handle_irq	// Software interrupt
+b arm_handle_svc	// Software interrupt
 b arm_handle_fault	// Abort (prefetch)
 b arm_handle_fault	// Abort (data)
 b .					// Reserved
-b arm_handle_irq	// IRQ0
-b arm_handle_irq	// IRQ1
+b arm_handle_irq	// IRQ
+b arm_handle_fiq	// FIQ
 
 .section ".text"
 arm_handle_fault:
     //srsdb sp!, #0b10011
     cpsie aif, #0b10011
-	b cpu_fault_handler
+	bl cpu_fault_handler
 	b .
 
+arm_handle_svc:
+	push {r12, lr}
+	mov r12, #ARM_INT_TYPE_SVC
+	b arm_common_handler
+
 arm_handle_irq:
+	push {r12, lr}
+	mov r12, #ARM_INT_TYPE_IRQ
+	b arm_common_handler
+
+arm_handle_fiq:
+	push {r12, lr}
+	mov r12, #ARM_INT_TYPE_FIQ
+	b arm_common_handler
+
+arm_common_handler:
 	//sub     lr, #4 // ???
 
 	// Store non-banked registers
-	push    {r0 - r12, lr}
+	push    {r0 - r11}
 
 	// Store supervisor sp/lr/SPSR & CPSR
 /*	msr     cpsr_ctl, #0xD3
@@ -57,9 +76,8 @@ arm_handle_irq:
 	stmdb   sp, {sp, lr}^
 	sub     sp, #8
 
-
 	// Call C handler
-	mov		r0, #42
+	mov		r0, r12
 	mov     r1, sp
 	bl      interrupts_callback
 	mov     sp, r0

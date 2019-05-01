@@ -23,7 +23,11 @@
 #include <mem/vmem.h>
 #include <print.h>
 
+#ifdef __i386__
 #define SYSCALL_INTERRUPT 0x80
+#else
+#define SYSCALL_INTERRUPT ARM_INT_TYPE_SVC
+#endif
 
 #define SCF_TASKEND 1
 #define SCF_STATE 2

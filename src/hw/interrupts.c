@@ -32,17 +32,8 @@
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
-/* This one get's called from the architecture-specific interrupt
- * handlers, which do fiddling like EOIs (i386).
- */
-isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
+static void dispatch(uint32_t intr, isf_t* regs) {
 	struct interrupt_reg reg = interrupt_handlers[intr];
-	task_t* task = scheduler_get_current();
-
-	#ifdef INTERRUPTS_DEBUG
-	debug("state before:\n");
-	dump_isf(LOG_DEBUG, regs);
-	#endif
 
 	if(reg.handler) {
 		if(reg.can_reent) {
@@ -50,15 +41,54 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
 		}
 		reg.handler(regs);
 	}
+}
+
+#ifdef __arm__
+static void arm_dispatch(uint32_t type, isf_t* regs) {
+	if(type != ARM_INT_TYPE_IRQ) {
+		dispatch(type, regs);
+		return;
+	}
+
+	// Retrieve CPU no from bits 0 & 1 of MPIDR
+	uint32_t cpu;
+	asm volatile("mrc p15,0,%0,c0,c0,5" : "=r" (cpu));
+	cpu &= 3;
+
+	uint32_t pending = bcm2836_mmio_read((0x60 + 4 * cpu));
+	uint32_t irq;
+
+	while ((irq = __builtin_ffs(pending))) {
+		irq -= 1;
+		uint32_t _irq = IRQ(cpu * 32 + irq);
+		dispatch(_irq, regs);
+		pending &= ~(1 << irq);
+	}
+}
+#endif
+
+// Called from i386-interrupts.asm and arm-interrupts.S
+isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
+	#ifdef INTERRUPTS_DEBUG
+	debug("state before:\n");
+	dump_isf(LOG_DEBUG, regs);
+	#endif
+
+	#ifdef __i386__
+	dispatch(intr, regs);
+	#else
+	arm_dispatch(intr, regs);
+	#endif
 
 	#ifdef ENABLE_PICOTCP
-	if(intr == IRQ0) {
+	if(intr == IRQ(0)) {
 		net_tick();
 	}
 	#endif
 
+	task_t* task = scheduler_get_current();
 	// Run scheduler every 100th tick, or when task yields
-	if((intr == IRQ0 && !(pit_get_tick() % 100)) || (task && task->interrupt_yield)) {
+	if((intr == IRQ(0) && !(pit_get_tick() % 100)) || (task && task->interrupt_yield)) {
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}
