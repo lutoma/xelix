@@ -61,12 +61,11 @@ static inline void handle_nonprintable(char chr) {
 }
 
 size_t tty_write(char* source, size_t size) {
-	bool remove_cursor = false;
-
-	if(!term->drv) {
+	if(!term || !term->drv) {
 		return 0;
 	}
 
+	bool remove_cursor = false;
 	for(int i = 0; i < size; i++) {
 		char chr = source[i];
 

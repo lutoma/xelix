@@ -38,6 +38,4 @@ static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
 	}
 }
 
-static inline uint32_t uptime(void) {
-	return (uint32_t)pit_tick / pit_rate;
-}
+#define uptime() (pit_tick / pit_rate)

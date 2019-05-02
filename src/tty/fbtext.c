@@ -217,11 +217,11 @@ struct tty_driver* tty_fbtext_init() {
 		return NULL;
 	}
 
- 	framebuffer.addr = fb_desc.common->addr;
- 	framebuffer.pitch = fb_desc.common->pitch;
- 	framebuffer.width = fb_desc.common->width;
- 	framebuffer.height = fb_desc.common->height;
- 	framebuffer.bpp = fb_desc.common->bpp;
+ 	framebuffer.addr = fb_desc->common.framebuffer_addr;
+ 	framebuffer.pitch = fb_desc->common.framebuffer_pitch;
+ 	framebuffer.width = fb_desc->common.framebuffer_width;
+ 	framebuffer.height = fb_desc->common.framebuffer_height;
+ 	framebuffer.bpp = fb_desc->common.framebuffer_bpp;
  	#else /* ARM */
 	mbox_tag.width = 1366;
 	mbox_tag.buffer_width = 1366;

@@ -21,8 +21,9 @@
 #include <stdint.h>
 
 #define pit_tick (pit_get_tick())
-uint32_t pit_rate;
+#define pit_rate (pit_get_rate())
 
 void pit_init();
 void pit_init2();
 uint32_t pit_get_tick(void);
+uint32_t pit_get_rate(void);

@@ -24,6 +24,7 @@
 #include <time.h>
 
 static uint32_t tick = 0;
+static uint32_t rate = 1;
 
 // The timer callback. Gets called every time the PIT fires.
 static void timer_callback(isf_t* regs) {
@@ -34,13 +35,17 @@ uint32_t pit_get_tick(void) {
 	return tick;
 }
 
+uint32_t pit_get_rate(void) {
+	return rate;
+}
+
 static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 	if(offset) {
 		return 0;
 	}
 
 	size_t rsize = 0;
-	sysfs_printf("%d %d %d", uptime(), tick, pit_rate);
+	sysfs_printf("%d %d %d", uptime(), tick, rate);
 	return rsize;
 }
 
@@ -49,13 +54,12 @@ void pit_init() {
 	#ifdef __i386__
 	// preemptability setting here also affects scheduler, so leave set to false
 	interrupts_register(IRQ(0), &timer_callback, false);
-
-	pit_rate = PIT_RATE;
+	rate = PIT_RATE;
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is
 	// that the divisor must be small enough to fit into 16-bits.
-	uint32_t divisor = 1193180 / pit_rate;
+	uint32_t divisor = 1193180 / rate;
 	// Send the command byte.
 	outb(0x43, 0x36);
 
@@ -70,13 +74,14 @@ void pit_init() {
 	#else
 	interrupts_register(IRQ(3), &timer_callback, false);
 
-	/*asm volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r" (pit_rate));
-	log(LOG_DEBUG, "pit: ARM Timer frequency %d\n", pit_rate);
-	asm volatile ("mcr p15, 0, %0, c14, c3, 0" :: "r" (pit_rate));
+	/*asm volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r" (rate));
+	log(LOG_DEBUG, "pit: ARM Timer frequency %d\n", rate);
+	asm volatile ("mcr p15, 0, %0, c14, c3, 0" :: "r" (rate));
 	mmio_write(0x40000040, 0x08);
 	asm volatile ("mcr p15, 0, %0, c14, c3, 1" :: "r" (1));
 	*/
 	#endif
+	log(LOG_DEBUG, "pit: Timer frequency %d\n", rate);
 }
 
 void pit_init2() {

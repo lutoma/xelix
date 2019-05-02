@@ -16,7 +16,7 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
-[section multiboot]
+[section .multiboot]
 ALIGN 4,db 0
 header_start:
 	dd 0xe85250d6

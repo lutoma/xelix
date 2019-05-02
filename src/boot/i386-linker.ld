@@ -9,7 +9,7 @@ SECTIONS
 
 	/* The multiboot header has to be in the first 8kb */
 	.text : {
-		*(multiboot)
+		*(.multiboot)
 		*(.text*)
 	}
 
