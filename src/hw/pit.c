@@ -67,7 +67,7 @@ void pit_init() {
 	outb(0x40, l);
 	outb(0x40, h);
 
-	#elif __arm__
+	#else
 	interrupts_register(IRQ(3), &timer_callback, false);
 
 	/*asm volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r" (pit_rate));

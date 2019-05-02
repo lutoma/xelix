@@ -1,4 +1,4 @@
-/* interrupts.c: Initialization of and interface to interrupts.
+/* interrupts.c: Interrupt dispatching
  * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
@@ -58,6 +58,7 @@ static void arm_dispatch(uint32_t type, isf_t* regs) {
 	uint32_t pending = bcm2836_mmio_read((0x60 + 4 * cpu));
 	uint32_t irq;
 
+	// There may be multiple pending IRQs
 	while ((irq = __builtin_ffs(pending))) {
 		irq -= 1;
 		uint32_t _irq = IRQ(cpu * 32 + irq);

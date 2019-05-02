@@ -33,7 +33,7 @@
 // Controls actuation of pull up/down for specific GPIO pin.
 #define GPPUDCLK0 0x98
 
-#define UART0_BASE 0x1000
+#define UART0_BASE 0x201000
 #define UART0_DR (UART0_BASE + 0x00)
 #define UART0_RSRECR (UART0_BASE + 0x04)
 #define UART0_FR (UART0_BASE + 0x18)
@@ -95,7 +95,7 @@ void serial_init() {
 	outb(PORT+3, 0x03);
 	outb(PORT+2, 0xC7);
 	outb(PORT+4, 0x0B);
-	#elif __arm__
+	#else
 	// Disable UART0.
 	rpi_mmio_write(UART0_CR, 0x00000000);
 	// Setup the GPIO pin 14 && 15.

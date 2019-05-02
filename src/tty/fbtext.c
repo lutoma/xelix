@@ -27,13 +27,17 @@
 #include <bitmap.h>
 
 #define PSF_FONT_MAGIC 0x864ab572
-
-#define PIXEL_PTR(x, y) 										\
-	((uint32_t*)((uint32_t)fb_desc->common.framebuffer_addr		\
-		+ (y)*fb_desc->common.framebuffer_pitch					\
-		+ (x)*(fb_desc->common.framebuffer_bpp / 8)))
-
+#define PIXEL_PTR(x, y) ((uint32_t*)((uint32_t)framebuffer.addr \
+	+ (y)*framebuffer.pitch + (x)*(framebuffer.bpp / 8)))
 #define CHAR_PTR(x, y) PIXEL_PTR(x * tty_font.width, y * tty_font.height)
+
+struct {
+ 	uint32_t addr;
+ 	uint32_t pitch;
+ 	uint32_t width;
+ 	uint32_t height;
+ 	uint8_t bpp;
+} framebuffer;
 
 // Font from ter-u16n.psf gets linked into the binary
 extern struct {
@@ -47,6 +51,23 @@ extern struct {
 	uint32_t height;
 	uint32_t width;
 } tty_font;
+
+#ifdef __arm__
+#include <hw/arm-mailbox.h>
+
+struct {
+	uint32_t width;
+	uint32_t height;
+	uint32_t buffer_width;
+	uint32_t buffer_height;
+	uint32_t pitch;
+	uint32_t bit_depth;
+	uint32_t x;
+	uint32_t y;
+	void* buffer;
+	uint32_t buffer_size;
+} mbox_tag __aligned(16);
+#endif
 
 // Special block drawing characters - Should get merged into main font
 const uint8_t tty_fbtext_bdc_font[][16] = {
@@ -74,7 +95,6 @@ const uint8_t tty_fbtext_bdc_font[][16] = {
 	 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08}
 };
 
-static struct multiboot_tag_framebuffer* fb_desc;
 static struct tty_driver* drv;
 
 static uint32_t convert_color(int color, bool bg) {
@@ -110,10 +130,6 @@ static inline const uint8_t* get_char_bitmap(char chr, bool bdc) {
 }
 
 static void write_char(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_col, uint32_t bg_col) {
-	#ifdef __arm__
-	return;
-	#endif
-
 	x *= tty_font.width;
 	y *= tty_font.height;
 
@@ -134,15 +150,11 @@ static void write_char(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_c
 }
 
 static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
-	#ifdef __arm__
-	return;
-	#endif
-
-	size_t x_size = ((end_x - start_x) * tty_font.width * (fb_desc->common.framebuffer_bpp / 8));
+	size_t x_size = ((end_x - start_x) * tty_font.width * (framebuffer.bpp / 8));
 	uint32_t color = convert_color(term->bg_color, true);
 
 	if(start_x == 0 && end_x == drv->cols) {
-		size_t y_size = ((end_y - start_y + 1)  * tty_font.height * fb_desc->common.framebuffer_pitch);
+		size_t y_size = ((end_y - start_y + 1)  * tty_font.height * framebuffer.pitch);
 		memset32(CHAR_PTR(start_x, start_y), color, x_size + y_size);
 		return;
 	}
@@ -156,27 +168,19 @@ static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t e
 }
 
 static void scroll_line() {
-	#ifdef __arm__
-	return;
-	#endif
+	size_t size = framebuffer.width
+		* framebuffer.height
+		* (framebuffer.bpp / 8)
+		- framebuffer.pitch;
 
-	size_t size = fb_desc->common.framebuffer_width
-		* fb_desc->common.framebuffer_height
-		* (fb_desc->common.framebuffer_bpp / 8)
-		- fb_desc->common.framebuffer_pitch;
-
-	size_t offset = fb_desc->common.framebuffer_pitch * tty_font.height;
-	memmove((void*)(intptr_t)fb_desc->common.framebuffer_addr,
-		(void*)((intptr_t)fb_desc->common.framebuffer_addr + offset), size);
+	size_t offset = framebuffer.pitch * tty_font.height;
+	memmove((void*)(intptr_t)framebuffer.addr,
+		(void*)((intptr_t)framebuffer.addr + offset), size);
 
 	clear(0, drv->rows - 1, drv->cols, drv->rows - 1);
 }
 
 static void set_cursor(uint32_t x, uint32_t y, bool restore) {
-	#ifdef __arm__
-	return;
-	#endif
-
 	x *= tty_font.width;
 	y *= tty_font.height;
 
@@ -207,25 +211,57 @@ static void set_cursor(uint32_t x, uint32_t y, bool restore) {
 }
 
 struct tty_driver* tty_fbtext_init() {
-	fb_desc = multiboot_get_framebuffer();
-	if(!fb_desc || tty_font.magic != PSF_FONT_MAGIC) {
+	#ifdef __i386__
+	struct multiboot_tag_framebuffer* fb_desc = multiboot_get_framebuffer();
+	if(!fb_desc) {
 		return NULL;
 	}
 
+ 	framebuffer.addr = fb_desc.common->addr;
+ 	framebuffer.pitch = fb_desc.common->pitch;
+ 	framebuffer.width = fb_desc.common->width;
+ 	framebuffer.height = fb_desc.common->height;
+ 	framebuffer.bpp = fb_desc.common->bpp;
+ 	#else /* ARM */
+	mbox_tag.width = 1366;
+	mbox_tag.buffer_width = 1366;
+	mbox_tag.height = 768;
+	mbox_tag.buffer_height = 768;
+	mbox_tag.bit_depth = 32;
+
+	vc_mbox_write((uint32_t)&mbox_tag, 1);
+	uint32_t reply = vc_mbox_read(1);
+	if(reply != 0) {
+		return NULL;
+	}
+
+ 	framebuffer.addr = (uint32_t)mbox_tag.buffer;
+ 	framebuffer.pitch = mbox_tag.pitch;
+ 	framebuffer.width = mbox_tag.width;
+ 	framebuffer.height = mbox_tag.height;
+ 	framebuffer.bpp = mbox_tag.bit_depth;
+	#endif
+
+ 	if(tty_font.magic != PSF_FONT_MAGIC || !framebuffer.addr ||
+ 		!framebuffer.width || !framebuffer.height) {
+ 		log(LOG_ERR, "fbtext: Initialization failed.\n");
+ 		return NULL;
+ 	}
+
 	log(LOG_DEBUG, "fbtext: %dx%d bpp %d pitch 0x%x at 0x%x\n",
-		fb_desc->common.framebuffer_width,
-		fb_desc->common.framebuffer_height,
-		fb_desc->common.framebuffer_bpp,
-		fb_desc->common.framebuffer_pitch,
-		(uint32_t)fb_desc->common.framebuffer_addr);
+		framebuffer.width,
+		framebuffer.height,
+		framebuffer.bpp,
+		framebuffer.pitch,
+		(uint32_t)framebuffer.addr);
 
 	log(LOG_DEBUG, "fbtext: font width %d height %d flags %d\n", tty_font.width, tty_font.height, tty_font.flags);
 
 	drv = kmalloc(sizeof(struct tty_driver));
-	drv->cols = fb_desc->common.framebuffer_width / tty_font.width;
-	drv->rows = fb_desc->common.framebuffer_height / tty_font.height;
-	drv->xpixel = fb_desc->common.framebuffer_width;
-	drv->ypixel = fb_desc->common.framebuffer_height;
+	drv->cols = framebuffer.width / tty_font.width;
+	drv->rows = framebuffer.height / tty_font.height;
+	drv->xpixel = framebuffer.width;
+	drv->ypixel = framebuffer.height;
 	drv->write = write_char;
 	drv->scroll_line = scroll_line;
 	drv->clear = clear;

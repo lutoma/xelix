@@ -18,8 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
 #ifdef __i386__
 static inline void outb(uint16_t port, uint8_t value) {
 	asm volatile("outb %0, %1" : : "a" (value), "Nd" (port));
@@ -53,8 +51,8 @@ static inline uint32_t inl(uint16_t port) {
 #endif
 
 #ifdef __arm__
-// for raspi2 & 3, 0x20200000 for raspi1
-#define RPI_MMIO_BASE 0x3F200000
+// for raspi2 & 3, 0x20000000 for raspi1
+#define RPI_MMIO_BASE 0x3F000000
 #define BCM2836_MMIO_BASE 0x40000000
 #define rpi_mmio_write(reg, data) mmio_write(RPI_MMIO_BASE + (reg), data)
 #define rpi_mmio_read(reg) mmio_read(RPI_MMIO_BASE + (reg))
