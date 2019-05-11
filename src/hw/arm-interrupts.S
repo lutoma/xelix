@@ -22,40 +22,43 @@
 #define ARM_INT_TYPE_FIQ 3
 
 .extern interrupts_callback
-.extern _start
+.global arm_exception_vectors
 
-// Interrupt/exception vector table at 0x0
-.section ".init"
-b arm_handle_fault	// Reset
-b arm_handle_fault	// Undefined instruction
+// Interrupt/exception vector table. Copied to 0x0 on interrupt init
+.section ".text"
+.balign 32
+arm_exception_vectors:
+b arm_handle_reset	// Reset
+b arm_handle_udi	// Undefined instruction
 b arm_handle_svc	// Software interrupt
-b arm_handle_fault	// Abort (prefetch)
-b arm_handle_fault	// Abort (data)
+b arm_handle_abrt	// Abort (prefetch)
+b arm_handle_abrtd	// Abort (data)
 b .					// Reserved
 b arm_handle_irq	// IRQ
 b arm_handle_fiq	// FIQ
 
-.section ".text"
 arm_handle_fault:
-    //srsdb sp!, #0b10011
+    // Disable exceptions, get IFSR & IFAR
     cpsie aif, #0b10011
-	bl cpu_fault_handler
-	b .
+    mrc p15, 0, r0, c5, c0, 1
+    mrc p15, 0, r1, c6, c0, 2
+	b cpu_fault_handler
 
-arm_handle_svc:
+.macro pre_handler, name, lroffset, typenum
+arm_handle_\name:
+	sub lr, #\lroffset
 	push {r12, lr}
-	mov r12, #ARM_INT_TYPE_SVC
+	mov r12, #\typenum
 	b arm_common_handler
+.endm
 
-arm_handle_irq:
-	push {r12, lr}
-	mov r12, #ARM_INT_TYPE_IRQ
-	b arm_common_handler
-
-arm_handle_fiq:
-	push {r12, lr}
-	mov r12, #ARM_INT_TYPE_FIQ
-	b arm_common_handler
+pre_handler reset, 0, 43
+pre_handler udi, 4, 42
+pre_handler svc, 0, ARM_INT_TYPE_SVC
+pre_handler abrt, 4, 4
+pre_handler abrtd, 8, 5
+pre_handler irq, 4, ARM_INT_TYPE_IRQ
+pre_handler fiq, 4, ARM_INT_TYPE_FIQ
 
 arm_common_handler:
 	//sub     lr, #4 // ???

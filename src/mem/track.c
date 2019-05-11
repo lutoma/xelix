@@ -85,7 +85,6 @@ static void copy_multiboot_areas() {
 
 void memory_track_init() {
 	memory_track_num_areas = 0;
-	memset(memory_track_areas, 0, sizeof(memory_track_area_t) * MEMORY_TRACK_MAX_AREAS);
 
 	#ifdef __arm__
 		memory_track_area_t* area = &memory_track_areas[memory_track_num_areas++];

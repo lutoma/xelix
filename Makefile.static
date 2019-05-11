@@ -18,7 +18,7 @@ OBJCOPY := $(PREFIX)-objcopy
 QEMU := qemu-system-$(ARCH)
 LD := $(CC)
 
-MAKE_CFLAGS += -std=gnu18 -ffreestanding -g -O3 -pipe -fstack-protector-strong -Wall -Wframe-larger-than=1024 $(INCLUDE)
+MAKE_CFLAGS += -std=gnu18 -ffreestanding -g -O3 -pipe -fstack-protector-strong -Wall -Wframe-larger-than=1024 -Wcast-align $(INCLUDE)
 MAKE_LDFLAGS := -T src/boot/$(ARCH)-linker.ld -nostdlib -lgcc
 
 ifeq ($(shell uname -s), Darwin)
@@ -47,6 +47,9 @@ ext/picotcp/build/lib/libpicotcp.a:
 
 %-psf.o: %.psf
 	$(OBJCOPY) -O $(PREFIX) -B $(ARCH) -I binary -SK _binary_src_tty_teru16n_psf_start $< $@
+
+kernel7.img: xelix.bin
+	arm-none-eabi-objcopy xelix.bin -O binary kernel7.img
 
 $(CC):
 	make -C toolchain

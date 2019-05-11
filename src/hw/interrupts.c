@@ -32,6 +32,10 @@
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
+#ifdef __arm__
+extern uint32_t arm_exception_vectors[];
+#endif
+
 static void dispatch(uint32_t intr, isf_t* regs) {
 	struct interrupt_reg reg = interrupt_handlers[intr];
 
@@ -118,6 +122,10 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
 void interrupts_init() {
 	#ifdef __i386__
 	idt_init();
+	#else
+	serial_printf("interrupts: Setting VBAR to %#x\n", arm_exception_vectors);
+	asm volatile("mcr p15, 0, %0, c12, c0, 0" :: "r" (arm_exception_vectors));
+	asm volatile("mcr p15, 4, %0, c12, c0, 0" :: "r" (arm_exception_vectors));
 	#endif
 
 	bzero(interrupt_handlers, sizeof(interrupt_handlers));

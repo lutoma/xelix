@@ -31,6 +31,21 @@
 
 #define SCROLLBACK_PAGES 15
 
+uint8_t default_c_cc[NCCS] = {
+	0,
+	4, // VEOF
+	'\n', // VEOL
+	8, // VERASE
+	3, // VINTR
+	21, // VKILL
+	0,  // VMIN
+	28, // VQUIT
+	17, // VSTART
+	19, // VSTOP
+	26, // VSUSP
+	0,
+};
+
 static inline void handle_nonprintable(char chr) {
 	if(chr == term->termios.c_cc[VEOL]) {
 		term->cur_row++;
@@ -113,17 +128,7 @@ void tty_init() {
 	term->bg_color = BG_COLOR_DEFAULT;
 
 	term->termios.c_lflag = ECHO | ICANON | ISIG;
-	term->termios.c_cc[VEOF] = 4;
-	term->termios.c_cc[VEOL] = '\n';
-	term->termios.c_cc[VERASE] = 8;
-	term->termios.c_cc[VINTR] = 3;
-	term->termios.c_cc[VKILL] = 21;
-	//term->termios.c_cc[VMIN] = 'minimum';
-	term->termios.c_cc[VQUIT] = 28;
-	term->termios.c_cc[VSTART] = 17;
-	term->termios.c_cc[VSTOP] = 19;
-	term->termios.c_cc[VSUSP] = 26;
-	//term->termios.c_cc[VTIME] = 'Timeout';
+	memcpy(term->termios.c_cc, default_c_cc, sizeof(default_c_cc));
 
 	tty_keyboard_init();
 	term->drv = tty_fbtext_init();
