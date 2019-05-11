@@ -33,6 +33,8 @@
 #include <multiboot.h>
 
 static spinlock_t lock;
+// Should seed this using RNG
+uintptr_t __stack_chk_guard = 0xcafed00d;
 
 static void panic_printf(const char *fmt, ...) {
 	va_list va;
@@ -118,7 +120,4 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 
 void __stack_chk_fail(void) {
 	panic("Stack protector failure\n");
-}
-void __stack_chk_guard(void) {
-	panic("Stack protector guard failure\n");
 }
