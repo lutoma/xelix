@@ -32,11 +32,11 @@
 #define CHAR_PTR(x, y) PIXEL_PTR(x * tty_font.width, y * tty_font.height)
 
 struct {
- 	uint32_t addr;
- 	uint32_t pitch;
- 	uint32_t width;
- 	uint32_t height;
- 	uint8_t bpp;
+	uint32_t addr;
+	uint32_t pitch;
+	uint32_t width;
+	uint32_t height;
+	uint8_t bpp;
 } framebuffer;
 
 // Font from ter-u16n.psf gets linked into the binary
@@ -210,6 +210,37 @@ static void set_cursor(uint32_t x, uint32_t y, bool restore) {
 	}
 }
 
+/* A mailbox property request with multiple tags to set up a framebuffer.
+ * Can't be sent using vc_prop_request as all the framebuffer setup needs
+ * to be in the same request.
+ */
+struct mailbox_fb_request {
+	uint32_t size;
+	uint32_t code;
+
+	uint32_t pres_id;
+	uint32_t pres_size;
+	uint32_t pres_code;
+	uint32_t pres_data[2];
+
+	uint32_t vres_id;
+	uint32_t vres_size;
+	uint32_t vres_code;
+	uint32_t vres_data[2];
+
+	uint32_t bpp_id;
+	uint32_t bpp_size;
+	uint32_t bpp_code;
+	uint32_t bpp_data;
+
+	uint32_t fb_id;
+	uint32_t fb_size;
+	uint32_t fb_code;
+	uint32_t fb_data[2];
+
+	uint32_t end_tag;
+} __attribute__((aligned(16)));
+
 struct tty_driver* tty_fbtext_init() {
 	#ifdef __i386__
 	struct multiboot_tag_framebuffer* fb_desc = multiboot_get_framebuffer();
@@ -217,36 +248,73 @@ struct tty_driver* tty_fbtext_init() {
 		return NULL;
 	}
 
- 	framebuffer.addr = fb_desc->common.framebuffer_addr;
- 	framebuffer.pitch = fb_desc->common.framebuffer_pitch;
- 	framebuffer.width = fb_desc->common.framebuffer_width;
- 	framebuffer.height = fb_desc->common.framebuffer_height;
- 	framebuffer.bpp = fb_desc->common.framebuffer_bpp;
- 	#else /* ARM */
-	mbox_tag.width = 1366;
-	mbox_tag.buffer_width = 1366;
-	mbox_tag.height = 768;
-	mbox_tag.buffer_height = 768;
-	mbox_tag.bit_depth = 32;
+	framebuffer.addr = fb_desc->common.framebuffer_addr;
+	framebuffer.pitch = fb_desc->common.framebuffer_pitch;
+	framebuffer.width = fb_desc->common.framebuffer_width;
+	framebuffer.height = fb_desc->common.framebuffer_height;
+	framebuffer.bpp = fb_desc->common.framebuffer_bpp;
+	#else /* ARM */
 
-	vc_mbox_write((uint32_t)&mbox_tag, 1);
-	uint32_t reply = vc_mbox_read(1);
-	if(reply != 0) {
+	// Get display resolution
+	uint32_t* resolution = vc_prop_request(0x40003);
+	if(!resolution) {
+		log(LOG_ERR, "fbtext: Could not get preferred resolution\n");
 		return NULL;
 	}
 
- 	framebuffer.addr = (uint32_t)mbox_tag.buffer;
- 	framebuffer.pitch = mbox_tag.pitch;
- 	framebuffer.width = mbox_tag.width;
- 	framebuffer.height = mbox_tag.height;
- 	framebuffer.bpp = mbox_tag.bit_depth;
+	volatile  __attribute__((aligned(16))) struct mailbox_fb_request fbreq = {
+		.size = sizeof(fbreq),
+		.code = 0,
+
+		.pres_id = 0x48003,
+		.pres_size = sizeof(fbreq.pres_data),
+		.pres_code = 0,
+		.pres_data = {*resolution, *(resolution + 1)},
+
+		.vres_id = 0x48004,
+		.vres_size = sizeof(fbreq.vres_data),
+		.vres_code = 0,
+		.vres_data = {*resolution, *(resolution + 1)},
+
+		.bpp_id = 0x48005,
+		.bpp_size = sizeof(fbreq.bpp_data),
+		.bpp_code = 0,
+		.bpp_data = 32,
+
+		.fb_id = 0x40001,
+		.fb_size = sizeof(fbreq.fb_data),
+		.fb_code = 0,
+		.fb_data = {16, 0},
+
+		.end_tag = 0,
+	};
+
+	vc_mbox_write((uint32_t)&fbreq, 8);
+	vc_mbox_read(8);
+	if(fbreq.code != (1 << 31)) {
+ 		log(LOG_ERR, "fbtext: Framebuffer mailbox call failed\n");
+		return NULL;
+	}
+
+	framebuffer.width = fbreq.pres_data[0];
+	framebuffer.height = fbreq.pres_data[1];
+	framebuffer.bpp = fbreq.bpp_data;
+	framebuffer.addr = fbreq.fb_data[0];
+
+ 	// Get framebuffer pitch
+	uint32_t* pitch = vc_prop_request(0x40008);
+	if(!pitch) {
+		log(LOG_ERR, "fbtext: Could not get framebuffer pitch\n");
+		return NULL;
+	}
+	framebuffer.pitch = *pitch;
 	#endif
 
- 	if(tty_font.magic != PSF_FONT_MAGIC || !framebuffer.addr ||
- 		!framebuffer.width || !framebuffer.height) {
- 		log(LOG_ERR, "fbtext: Initialization failed.\n");
- 		return NULL;
- 	}
+	if(tty_font.magic != PSF_FONT_MAGIC || !framebuffer.addr ||
+		!framebuffer.width || !framebuffer.height) {
+		log(LOG_ERR, "fbtext: Initialization failed.\n");
+		return NULL;
+	}
 
 	log(LOG_DEBUG, "fbtext: %dx%d bpp %d pitch 0x%x at 0x%x\n",
 		framebuffer.width,

@@ -23,9 +23,9 @@
 .global int_stack_begin
 .global int_stack_end
 .balign 8
-.lcomm stack_begin, 1024 * 8
+.lcomm stack_begin, 1024 * 16
 stack_end:
-.lcomm int_stack_begin, 1024 * 8
+.lcomm int_stack_begin, 1024 * 16
 int_stack_end:
 
 .section ".text.boot"

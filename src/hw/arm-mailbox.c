@@ -50,9 +50,21 @@
 #define MBOX_DATA(data) ((data) & ~15)
 #define MBOX_MSG(data, chan) (MBOX_DATA(data) | MBOX_CHAN(chan))
 
+static volatile struct {
+	uint32_t size;
+	uint32_t code;
+	uint32_t tag_ident;
+	uint32_t tag_buffer_size;
+	uint32_t tag_code;
+	uint32_t tag_buffer[16];
+	uint32_t end_tag;
+} __attribute__((aligned(16))) ptag;
+
 uint32_t vc_mbox_read(unsigned chan) {
 	while(1) {
-		while(rpi_mmio_read(MBOX0_STATUS) & MBOX_STATUS_EMPTY);
+		while(rpi_mmio_read(MBOX0_STATUS) & MBOX_STATUS_EMPTY) {
+			halt();
+		}
 
 		uint32_t val = rpi_mmio_read(MBOX0_READ);
 		if (MBOX_CHAN(val) == chan)
@@ -61,6 +73,18 @@ uint32_t vc_mbox_read(unsigned chan) {
 }
 
 void vc_mbox_write(uint32_t msg, unsigned chan) {
-	while(rpi_mmio_read(MBOX0_STATUS) & MBOX_STATUS_FULL);
+	while(rpi_mmio_read(MBOX0_STATUS) & MBOX_STATUS_FULL) {
+		halt();
+	}
+
 	rpi_mmio_write(MBOX1_WRITE, MBOX_MSG(msg, chan));
+}
+
+uint32_t* vc_prop_request(uint32_t code) {
+	ptag.size = sizeof(ptag);
+	ptag.tag_ident = code;
+	ptag.tag_buffer_size = sizeof(ptag.tag_buffer);
+	vc_mbox_write((uint32_t)&ptag, 8);
+	vc_mbox_read(8);
+	return ptag.code == (1 << 31) ? (uint32_t*)ptag.tag_buffer : NULL;
 }

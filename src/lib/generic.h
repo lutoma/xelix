@@ -63,7 +63,8 @@ static inline void __attribute__((noreturn)) freeze(void) {
 #ifdef __arm__
 	#define interrupts_disable() asm volatile("cpsid if")
 	#define interrupts_enable() asm volatile("cpsie if")
-	#define halt() asm volatile("wfi")
+//	#define halt() asm volatile("wfe")
+	#define halt() {}
 	#define __fastcall
 #else
 	#define interrupts_disable() asm volatile("cli")

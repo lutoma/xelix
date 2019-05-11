@@ -20,3 +20,4 @@
 
 uint32_t vc_mbox_read(unsigned chan);
 void vc_mbox_write(uint32_t msg, unsigned chan);
+uint32_t* vc_prop_request(uint32_t code);
