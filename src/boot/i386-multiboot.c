@@ -25,6 +25,10 @@
 static struct multiboot_tag_mmap* mmap_info = NULL;
 static struct multiboot_tag_framebuffer framebuffer_info;
 
+/* These are set by i386-boot.asm right after boot */
+uint32_t multiboot_magic;
+void* multiboot_header;
+
 /* Optimally, this would kmalloc based on ELF sizes, but this
  * is loaded before kmalloc is ready, and afterwards the data
  * may have been overwritten. Instead, allocate static buffer
@@ -104,21 +108,21 @@ static int extract_symtab(struct multiboot_tag_elf_sections* multiboot_tag) {
 	return r;
 }
 
-void multiboot_init(uint32_t magic, void* header) {
-	if(magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
+void multiboot_init() {
+	if(multiboot_magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
 		panic("Bootloader is not multiboot2 compliant (eax 0x%x != 0x%x).\n",
-			magic, MULTIBOOT2_BOOTLOADER_MAGIC);
+			multiboot_magic, MULTIBOOT2_BOOTLOADER_MAGIC);
 	}
 
 	// Start of header is 2 uint32_t.
-	uint32_t total_size = *(uint32_t*)header;
+	uint32_t total_size = *(uint32_t*)multiboot_header;
 	intptr_t offset = 8;
 
 	log(LOG_INFO, "multiboot2 tags:\n");
-	struct multiboot_tag* tag = header + offset;
+	struct multiboot_tag* tag = multiboot_header + offset;
 	char strrep[150];
 
-	while(tag < (struct multiboot_tag*)(header + total_size)) {
+	while(tag < (struct multiboot_tag*)(multiboot_header + total_size)) {
 		// Tags are always padded to be 8-aligned
 		tag = ALIGN(tag, 8);
 
