@@ -33,12 +33,13 @@
 #include <mem/mem.h>
 #include <mem/gdt.h>
 #include <hw/ac97.h>
-#include <net/net.h>
 #include <multiboot.h>
 
-void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
-	void* multiboot_info) {
+#ifdef ENABLE_PICOTCP
+#include <net/net.h>
+#endif
 
+void __fastcall xelix_main(uint32_t multiboot_magic, void* multiboot_info) {
 	serial_init();
 	gdt_init();
 	interrupts_init();
@@ -73,13 +74,4 @@ void __attribute__((fastcall, noreturn)) xelix_main(uint32_t multiboot_magic,
 	}
 	scheduler_add(init);
 	scheduler_init();
-
-	asm(
-	".il:"
-		"hlt;"
-		"jmp .il;"
-		"ud2;"
-		"cli;"
-	);
-	__builtin_unreachable();
 }

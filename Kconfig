@@ -1,12 +1,18 @@
 mainmenu "Xelix configuration"
 
+config ARCH
+	string "Target architecture"
+	default "i386"
+	---help---
+	Build target architecture. Can be either "i386" or "arm".
+
 menu "Interrupts"
 	config INTERRUPTS_DEBUG
 		bool "Interrupts debugging"
 
 	config PIT_RATE
 		int "PIT tick rate / scheduling frequency (In Hz)"
-		default 100
+		default 1000
 		---help---
 		How often the interrupt timer should fire per second. This is also
 		the task switching frequency, and the maximum time resolution.

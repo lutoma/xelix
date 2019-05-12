@@ -58,7 +58,7 @@ static const struct exception exceptions[] = {
 	{0, "Virtualization exception"},
 };
 
-isf_t* __attribute__((fastcall)) cpu_fault_handler(uint32_t intr, intptr_t cr2, uint32_t d1, uint32_t d2) {
+isf_t* __fastcall cpu_fault_handler(uint32_t intr, intptr_t cr2, uint32_t d1, uint32_t d2) {
 	if(intr >= sizeof(exceptions) / sizeof(struct exception)) {
 		panic("Unknown CPU exception");
 	}

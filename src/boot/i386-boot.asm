@@ -1,4 +1,4 @@
-; header.asm: Multiboot header and init
+; i386-boot.asm: Multiboot 2 header and i386 init
 ; Copyright © 2010-2019 Lukas Martini
 
 ; This file is part of Xelix.
@@ -16,7 +16,7 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
-[section multiboot]
+[section .multiboot]
 ALIGN 4,db 0
 header_start:
 	dd 0xe85250d6
@@ -58,3 +58,9 @@ _start:
 	mov ecx, eax
 	mov edx, ebx
 	call xelix_main
+
+.il:
+	hlt
+	jmp .il
+	ud2
+	cli
