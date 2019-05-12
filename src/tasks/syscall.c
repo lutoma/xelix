@@ -70,15 +70,15 @@ static void int_handler(isf_t* state) {
 	}
 
 	task->task_state = TASK_STATE_SYSCALL;
-	uint32_t scnum = state->eax;
-	uint32_t arg0 = state->ebx;
-	uint32_t arg1 = state->ecx;
-	uint32_t arg2 = state->edx;
+	uint32_t scnum = state->SCREG_CALLNUM;
+	uint32_t arg0 = state->SCREG_ARG0;
+	uint32_t arg1 = state->SCREG_ARG1;
+	uint32_t arg2 = state->SCREG_ARG2;
 
 	struct syscall_definition def = syscall_table[scnum];
 	if (scnum >= sizeof(syscall_table) / sizeof(struct syscall_definition) || !def.handler) {
-		state->eax = -1;
-		state->ebx = EINVAL;
+		state->SCREG_RESULT = -1;
+		state->SCREG_ERRNO = EINVAL;
 		return;
 	}
 
@@ -86,8 +86,8 @@ static void int_handler(isf_t* state) {
 		handle_arg_flags(task, &arg1, def.arg1_flags) == -1 ||
 		handle_arg_flags(task, &arg2, def.arg2_flags) == -1) {
 
-		state->eax = -1;
-		state->ebx = EINVAL;
+		state->SCREG_RESULT = -1;
+		state->SCREG_ERRNO = EINVAL;
 		return;
 	}
 
@@ -106,36 +106,36 @@ static void int_handler(isf_t* state) {
 	task->syscall_errno = 0;
 	if(def.arg2_flags != SCA_UNUSED) {
 		if(def.flags & SCF_TASKEND) {
-			state->eax = def.handler(arg0, arg1, arg2, task);
+			state->SCREG_RESULT = def.handler(arg0, arg1, arg2, task);
 		} else if(def.flags & SCF_STATE) {
-			state->eax = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1, arg2);
+			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1, arg2);
 		} else {
-			state->eax = def.handler((uint32_t)task, arg0, arg1, arg2);
+			state->SCREG_RESULT = def.handler((uint32_t)task, arg0, arg1, arg2);
 		}
 	} else if(def.arg1_flags != SCA_UNUSED) {
 		if(def.flags & SCF_TASKEND) {
-			state->eax = def.handler(arg0, arg1, task);
+			state->SCREG_RESULT = def.handler(arg0, arg1, task);
 		} else if(def.flags & SCF_STATE) {
-			state->eax = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1);
+			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1);
 		} else {
-			state->eax = def.handler((uint32_t)task, arg0, arg1);
+			state->SCREG_RESULT = def.handler((uint32_t)task, arg0, arg1);
 		}
 	} else if(def.arg0_flags != SCA_UNUSED) {
 		if(def.flags & SCF_TASKEND) {
-			state->eax = def.handler(arg0, task);
+			state->SCREG_RESULT = def.handler(arg0, task);
 		} else if(def.flags & SCF_STATE) {
-			state->eax = def.handler((uint32_t)task, (uint32_t)state, arg0);
+			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state, arg0);
 		} else {
-			state->eax = def.handler((uint32_t)task, arg0);
+			state->SCREG_RESULT = def.handler((uint32_t)task, arg0);
 		}
 	} else {
 		if(def.flags & SCF_STATE) {
-			state->eax = def.handler((uint32_t)task, (uint32_t)state);
+			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state);
 		} else {
-			state->eax = def.handler((uint32_t)task);
+			state->SCREG_RESULT = def.handler((uint32_t)task);
 		}
 	}
-	state->ebx = task->syscall_errno;
+	state->SCREG_ERRNO = task->syscall_errno;
 
 	// Only change state back if it hasn't alreay been modified
 	if(task->task_state == TASK_STATE_SYSCALL) {
@@ -143,7 +143,7 @@ static void int_handler(isf_t* state) {
 	}
 
 #ifdef SYSCALL_DEBUG
-	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", state->eax, state->ebx);
+	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", state->SCREG_RESULT, state->SCREG_ERRNO);
 #endif
 }
 
