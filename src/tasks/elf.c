@@ -64,7 +64,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 		section = TMEM_SECTION_CODE;
 	}
 
-	size_t size = VMEM_ALIGN(phead->memsz);
+	size_t size = ALIGN(phead->memsz, PAGE_SIZE);
 	void* phys = zmalloc_a(size);
 	if(unlikely(!phys)) {
 		return -1;
@@ -74,7 +74,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	size_t phys_offset = 0;
 
 	if(is_main) {
-		virt = VMEM_ALIGN_DOWN(phead->vaddr);
+		virt = ALIGN_DOWN(phead->vaddr, PAGE_SIZE);
 		phys_offset = phead->vaddr - virt;
 
 		if(virt + size > task->sbrk) {

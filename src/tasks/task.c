@@ -326,7 +326,7 @@ void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 		return task->sbrk;
 	}
 
-	length = VMEM_ALIGN(length);
+	length = ALIGN(length, PAGE_SIZE);
 	void* phys_addr = zmalloc_a(length);
 
 	if(!phys_addr) {

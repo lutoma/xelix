@@ -139,7 +139,7 @@ int vmem_add_page(struct vmem_context *ctx, struct vmem_page *pg)
 
 struct vmem_page *vmem_get_page_phys(struct vmem_context *ctx, void *phys_addr)
 {
-	phys_addr = VMEM_ALIGN_DOWN(phys_addr);
+	phys_addr = ALIGN_DOWN(phys_addr, PAGE_SIZE);
 	struct vmem_context_node *node = ctx->node;
 
 	FIND_NODE(node, node->page->phys_addr == phys_addr);
@@ -151,7 +151,7 @@ struct vmem_page *vmem_get_page_phys(struct vmem_context *ctx, void *phys_addr)
 
 struct vmem_page *vmem_get_page_virt(struct vmem_context *ctx, void *virt_addr)
 {
-	virt_addr = VMEM_ALIGN_DOWN(virt_addr);
+	virt_addr = ALIGN_DOWN(virt_addr, PAGE_SIZE);
 	struct vmem_context_node *node = ctx->node;
 
 	FIND_NODE(node, node->page->virt_addr == virt_addr);
@@ -178,7 +178,7 @@ struct vmem_page *vmem_get_page(struct vmem_context *ctx, uint32_t offset)
 
 struct vmem_page *vmem_rm_page_phys(struct vmem_context *ctx, void *phys_addr)
 {
-	phys_addr = VMEM_ALIGN_DOWN(phys_addr);
+	phys_addr = ALIGN_DOWN(phys_addr, PAGE_SIZE);
 	struct vmem_context_node *node = ctx->node;
 	struct vmem_context_node *prev_node = NULL;
 
@@ -205,7 +205,7 @@ struct vmem_page *vmem_rm_page_phys(struct vmem_context *ctx, void *phys_addr)
 
 struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr)
 {
-	virt_addr = VMEM_ALIGN_DOWN(virt_addr);
+	virt_addr = ALIGN_DOWN(virt_addr, PAGE_SIZE);
 	struct vmem_context_node *node = ctx->node;
 	struct vmem_context_node *prev_node = NULL;
 
@@ -274,7 +274,7 @@ void *vmem_get_cache(struct vmem_context *ctx)
 }
 
 void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, bool user, bool ro) {
-	for(uint32_t i = 0; i < VMEM_ALIGN(size); i += PAGE_SIZE)
+	for(uint32_t i = 0; i < ALIGN(size, PAGE_SIZE); i += PAGE_SIZE)
 	{
 		struct vmem_page *page = vmem_new_page();
 		page->readonly = ro;

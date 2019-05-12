@@ -120,7 +120,7 @@ void multiboot_init(uint32_t magic, void* header) {
 
 	while(tag < (struct multiboot_tag*)(header + total_size)) {
 		// Tags are always padded to be 8-aligned
-		tag = (struct multiboot_tag*)ALIGN((intptr_t)tag, 8);
+		tag = ALIGN(tag, 8);
 
 		if(!tag->type || !tag->size) {
 			break;
