@@ -53,7 +53,7 @@ extern struct {
 } tty_font;
 
 #ifdef __arm__
-#include <hw/arm-mailbox.h>
+#include <bsp/arm-mailbox.h>
 
 struct {
 	uint32_t width;

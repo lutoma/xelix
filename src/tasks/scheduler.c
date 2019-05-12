@@ -20,7 +20,7 @@
 #include "scheduler.h"
 #include <log.h>
 #include <mem/kmalloc.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <panic.h>
 #include <string.h>
 #include <mem/vmem.h>

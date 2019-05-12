@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gdt.h"
+#include "i386-gdt.h"
 #include <stdint.h>
 #include <string.h>
 #include <mem/kmalloc.h>

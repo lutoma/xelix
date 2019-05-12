@@ -18,8 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "idt.h"
-#include <hw/interrupts.h>
+#include "i386-idt.h"
+#include <int/int.h>
 #include <log.h>
 #include <string.h>
 #include <portio.h>

@@ -24,7 +24,6 @@
 #include <string.h>
 #include <time.h>
 #include <mem/kmalloc.h>
-#include <hw/ide.h>
 #include <fs/vfs.h>
 #include <fs/block.h>
 #include <fs/ext2.h>

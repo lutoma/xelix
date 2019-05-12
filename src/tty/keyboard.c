@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <tty/tty.h>
 #include <tty/input.h>
 #include <portio.h>

@@ -19,7 +19,7 @@
 
 #include <string.h>
 #include <mem/kmalloc.h>
-#include <hw/ide.h>
+#include <fs/i386-ide.h>
 
 uint32_t start = 0;
 

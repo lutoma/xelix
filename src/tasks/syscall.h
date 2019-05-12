@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <tasks/task.h>
 #include <mem/vmem.h>
 #include <print.h>

@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/interrupts.h>
+#include <int/int.h>
 
 #define	SIGHUP	1	/* hangup */
 #define	SIGINT	2	/* interrupt */

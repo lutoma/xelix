@@ -24,8 +24,8 @@
 #include <pico_device.h>
 #include <pico_dhcp_client.h>
 #include <spinlock.h>
-#include <hw/rtl8139.h>
-#include <hw/ne2k.h>
+#include <net/i386-rtl8139.h>
+#include <net/i386-ne2k.h>
 
 #define RECV_BUFFER_SIZE 2048
 

@@ -19,7 +19,7 @@
  */
 
 #include <tasks/task.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 
 enum {
 	SCHEDULER_OFF,

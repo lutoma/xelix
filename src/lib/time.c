@@ -21,7 +21,7 @@
  */
 
 #include <portio.h>
-#include <hw/timer.h>
+#include <bsp/timer.h>
 #include <fs/sysfs.h>
 #include <log.h>
 #include "time.h"

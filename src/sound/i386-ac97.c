@@ -19,12 +19,11 @@
 
 #ifdef ENABLE_AC97
 
-#include <hw/ac97.h>
-#include <hw/pci.h>
-
+#include <sound/i386-ac97.h>
+#include <bsp/i386-pci.h>
 #include <log.h>
 #include <portio.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <mem/kmalloc.h>
 #include <string.h>
 #include <multiboot.h>

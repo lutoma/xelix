@@ -19,7 +19,7 @@
 
 #include <log.h>
 #include <print.h>
-#include <hw/timer.h>
+#include <bsp/timer.h>
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>

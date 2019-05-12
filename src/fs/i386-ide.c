@@ -23,9 +23,9 @@
 
 #include <log.h>
 #include <mem/kmalloc.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <portio.h>
-#include "ide.h"
+#include <fs/i386-ide.h>
 
 ide_channel_regs_t ide_channels[2];
 ide_device_t ide_devices[4];

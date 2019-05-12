@@ -28,7 +28,7 @@
 #include <string.h>
 #include <print.h>
 #include <fs/sysfs.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <mem/kmalloc.h>
 #include <mem/vmem.h>
 

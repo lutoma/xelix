@@ -18,7 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/ide.h>
 #include <lib/log.h>
 #include <fs/vfs.h>
 #include <fs/block.h>
