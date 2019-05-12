@@ -23,7 +23,7 @@
 #include "print.h"
 #include <tty/tty.h>
 #include <hw/interrupts.h>
-#include <hw/pit.h>
+#include <hw/timer.h>
 #include <hw/serial.h>
 #include <string.h>
 #include <mem/vmem.h>
@@ -45,6 +45,7 @@ static void panic_printf(const char *fmt, ...) {
 }
 
 char* addr2name(intptr_t address) {
+#ifdef __i386__
 	size_t symtab_length;
 	size_t strtab_length;
 	size_t loff = -1;
@@ -69,6 +70,9 @@ char* addr2name(intptr_t address) {
 	}
 
 	return name;
+#else
+	return "?";
+#endif
 }
 
 void __attribute__((optimize("O0"))) panic(char* error, ...) {
@@ -87,7 +91,7 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	va_end(va);
 
 	panic_printf("Last PIT tick:   %d (rate %d, uptime: %d seconds)\n",
-		(uint32_t)pit_tick, pit_rate, uptime());
+		(uint32_t)timer_tick, timer_rate, uptime());
 
 	task_t* task = scheduler_get_current();
 	if(task) {

@@ -93,7 +93,7 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
 
 	task_t* task = scheduler_get_current();
 	// Run scheduler every 100th tick, or when task yields
-	if((intr == IRQ(0) && !(pit_get_tick() % 100)) || (task && task->interrupt_yield)) {
+	if((intr == IRQ(0) && !(timer_get_tick() % 100)) || (task && task->interrupt_yield)) {
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}

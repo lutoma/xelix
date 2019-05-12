@@ -23,7 +23,7 @@
 #include <version.h>
 #include <hw/serial.h>
 #include <hw/interrupts.h>
-#include <hw/pit.h>
+#include <hw/timer.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
 #include <tty/tty.h>
@@ -39,27 +39,20 @@
 #include <net/net.h>
 #endif
 
-void __fastcall xelix_main(uint32_t multiboot_magic, void* multiboot_info) {
-	serial_init();
+void (*boot_sequence[])(void) = {
+#if defined(__i386__)
+	serial_init, gdt_init, interrupts_init, timer_init, multiboot_init,
+	mem_init, tty_init, time_init, pci_init, vfs_init, timer_init2,
+#elif defined(__arm__)
+	serial_init, interrupts_init, timer_init, mem_init, tty_init, time_init,
+	vfs_init, timer_init2
+#endif
+};
 
-	#ifdef __i386__
-	gdt_init();
-	#endif
-	interrupts_init();
-	pit_init();
-	#ifdef __i386__
-	multiboot_init(multiboot_magic, multiboot_info);
-	#endif
-	mem_init();
-	tty_init();
-	time_init();
-	#ifdef __i386__
-	pci_init();
-	#endif
-	vfs_init();
-	#ifdef __i386__
-	pit_init2();
-	#endif
+void xelix_main(void) {
+	for(int i = 0; i < ARRAY_SIZE(boot_sequence); i++) {
+		boot_sequence[i]();
+	}
 
 	#ifdef ENABLE_PICOTCP
 	net_init();

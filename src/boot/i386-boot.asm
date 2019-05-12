@@ -50,13 +50,18 @@ stack_end:
 
 [section .text]
 EXTERN xelix_main
+; i386-multiboot.c
+EXTERN multiboot_magic
+EXTERN multiboot_header
 GLOBAL _start
 
 _start:
+	; Store multiboot magic and header
+	mov [multiboot_magic], eax
+	mov [multiboot_header], ebx
+
 	mov ebp, stack_end
 	mov esp, stack_end
-	mov ecx, eax
-	mov edx, ebx
 	call xelix_main
 
 .il:

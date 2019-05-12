@@ -21,7 +21,7 @@
 #include "generic.h"
 #include "print.h"
 #include <hw/interrupts.h>
-#include <hw/pit.h>
+#include <hw/timer.h>
 #include <tasks/scheduler.h>
 
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")

@@ -20,10 +20,10 @@
 
 #include <stdint.h>
 
-#define pit_tick (pit_get_tick())
-#define pit_rate (pit_get_rate())
+#define timer_tick (timer_get_tick())
+#define timer_rate (timer_get_rate())
 
-void pit_init();
-void pit_init2();
-uint32_t pit_get_tick(void);
-uint32_t pit_get_rate(void);
+void timer_init();
+void timer_init2();
+uint32_t timer_get_tick(void);
+uint32_t timer_get_rate(void);

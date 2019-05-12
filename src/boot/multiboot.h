@@ -330,7 +330,7 @@ struct multiboot_tag_load_base_addr
 
 #endif /* ! ASM_FILE */
 
-void multiboot_init(uint32_t magic, void* header);
+void multiboot_init();
 struct multiboot_tag_mmap* multiboot_get_mmap();
 struct multiboot_tag_framebuffer* multiboot_get_framebuffer();
 struct elf_sym* multiboot_get_symtab(size_t* length);

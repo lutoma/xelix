@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/pit.h>
+#include <hw/timer.h>
 
 typedef uint32_t time_t;
 struct timeval {
@@ -30,12 +30,12 @@ uint32_t time_get();
 int time_get_timeval(struct timeval* tv);
 void time_init();
 
-#define sleep(t) sleep_ticks((t) * pit_rate)
+#define sleep(t) sleep_ticks((t) * timer_rate)
 static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
-	const uint32_t until = pit_tick + timeout;
-	while(pit_tick <= until) {
+	const uint32_t until = timer_tick + timeout;
+	while(timer_tick <= until) {
 		halt();
 	}
 }
 
-#define uptime() (pit_tick / pit_rate)
+#define uptime() (timer_tick / timer_rate)

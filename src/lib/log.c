@@ -19,7 +19,7 @@
 
 #include <log.h>
 #include <print.h>
-#include <hw/pit.h>
+#include <hw/timer.h>
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
@@ -59,7 +59,7 @@ static void append(char* string, size_t len) {
 
 static void store(uint32_t level, char* fmt_string, size_t fmt_len) {
 	char log_prefix[100];
-	size_t prefix_len = snprintf(log_prefix, 100, "%d %d %d:", pit_tick, time_get(), level);
+	size_t prefix_len = snprintf(log_prefix, 100, "%d %d %d:", timer_tick, time_get(), level);
 	append(log_prefix, prefix_len);
 	append(fmt_string, fmt_len);
 }
@@ -114,7 +114,7 @@ void log(uint32_t level, const char *fmt, ...) {
 
 	#if LOG_SERIAL_LEVEL != 0 || LOG_PRINT_LEVEL != 0
 	char prefix[30];
-	snprintf(prefix, 30, "[%d:%03d] ", uptime(), pit_tick);
+	snprintf(prefix, 30, "[%d:%03d] ", uptime(), timer_tick);
 	#endif
 
 	#if LOG_SERIAL_LEVEL != 0

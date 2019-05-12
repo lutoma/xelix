@@ -21,7 +21,7 @@
  */
 
 #include <portio.h>
-#include <hw/pit.h>
+#include <hw/timer.h>
 #include <fs/sysfs.h>
 #include <log.h>
 #include "time.h"
@@ -157,13 +157,13 @@ static time_t read_rtc() {
 
 uint32_t time_get() {
 	#ifdef __i386__
-	uint32_t stick = pit_tick;
-	if(stick <= last_tick + pit_rate) {
+	uint32_t stick = timer_tick;
+	if(stick <= last_tick + timer_rate) {
 		return last_timestamp;
 	}
 
 	uint32_t offset = (stick - last_tick);
-	last_timestamp += offset / pit_rate;
+	last_timestamp += offset / timer_rate;
 	last_tick = stick;
 	return last_timestamp;
 	#else
@@ -190,7 +190,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 void time_init() {
 	#ifdef __i386__
 	last_timestamp = read_rtc();
-	last_tick = pit_tick;
+	last_tick = timer_tick;
 	#endif
 	log(LOG_INFO, "time: Initial last_timestamp is %u at tick %llu\n", last_timestamp, last_tick);
 	sysfs_add_file("time", sfs_read, NULL);

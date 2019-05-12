@@ -1,4 +1,4 @@
-/* generic.c: Interface to the programmable interrupt timer
+/* timer.c: Interface to the programmable interrupt timer
  * Copyright © 2010-2019 Lukas Martini
  *
  * This file is part of Xelix.
@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "pit.h"
+#include "timer.h"
 #include <hw/interrupts.h>
 #include <fs/sysfs.h>
 #include <portio.h>
@@ -31,11 +31,11 @@ static void timer_callback(isf_t* regs) {
 	tick++;
 }
 
-uint32_t pit_get_tick(void) {
+uint32_t timer_get_tick(void) {
 	return tick;
 }
 
-uint32_t pit_get_rate(void) {
+uint32_t timer_get_rate(void) {
 	return rate;
 }
 
@@ -50,7 +50,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 }
 
 // Initialize the PIT
-void pit_init() {
+void timer_init() {
 	#ifdef __i386__
 	// preemptability setting here also affects scheduler, so leave set to false
 	interrupts_register(IRQ(0), &timer_callback, false);
@@ -71,7 +71,7 @@ void pit_init() {
 	outb(0x40, l);
 	outb(0x40, h);
 
-	#else
+	#else /* ARM */
 	interrupts_register(IRQ(3), &timer_callback, false);
 
 	/*asm volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r" (rate));
@@ -84,6 +84,6 @@ void pit_init() {
 	log(LOG_DEBUG, "pit: Timer frequency %d\n", rate);
 }
 
-void pit_init2() {
+void timer_init2() {
 	sysfs_add_file("tick", sfs_read, NULL);
 }
