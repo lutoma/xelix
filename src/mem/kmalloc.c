@@ -87,8 +87,10 @@ struct footer {
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
 	#define debug(args...) log(LOG_DEBUG, args)
+	#define DEBUGREGS , char* _debug_file, uint32_t _debug_line, const char* _debug_func
 #else
 	#define debug(args...)
+	#define DEBUGREGS
 #endif
 
 
@@ -255,9 +257,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 	return NULL;
 }
 
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
-	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
-
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero DEBUGREGS) {
 	if(unlikely(!kmalloc_ready)) {
 		panic("Attempt to kmalloc before allocator is kmalloc_ready.\n");
 	}
@@ -321,7 +321,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	return (void*)GET_CONTENT(header);
 }
 
-void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+void _kfree(void *ptr DEBUGREGS) {
 	if(!ptr) {
 		return;
 	}

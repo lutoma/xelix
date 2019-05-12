@@ -22,16 +22,27 @@
 
 extern bool kmalloc_ready;
 
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
-	char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+#ifdef KMALLOC_DEBUG
+	void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
+		char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
-void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func);
+	void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 
-#define kmalloc(sz) _kmalloc(sz, false, false, __FILE__, __LINE__, __FUNCTION__)
-#define kmalloc_a(sz) _kmalloc(sz, true, false, __FILE__, __LINE__, __FUNCTION__)
-#define zmalloc(sz) _kmalloc(sz, false, true, __FILE__, __LINE__, __FUNCTION__)
-#define zmalloc_a(sz) _kmalloc(sz, true, true, __FILE__, __LINE__, __FUNCTION__)
-#define kfree(ptr) _kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
+	#define kmalloc(sz) _kmalloc(sz, false, false, __FILE__, __LINE__, __FUNCTION__)
+	#define kmalloc_a(sz) _kmalloc(sz, true, false, __FILE__, __LINE__, __FUNCTION__)
+	#define zmalloc(sz) _kmalloc(sz, false, true, __FILE__, __LINE__, __FUNCTION__)
+	#define zmalloc_a(sz) _kmalloc(sz, true, true, __FILE__, __LINE__, __FUNCTION__)
+	#define kfree(ptr) _kfree(ptr, __FILE__, __LINE__, __FUNCTION__)
+#else
+	void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero);
+	void _kfree(void *ptr);
+
+	#define kmalloc(sz) _kmalloc(sz, false, false)
+	#define kmalloc_a(sz) _kmalloc(sz, true, false)
+	#define zmalloc(sz) _kmalloc(sz, false, true)
+	#define zmalloc_a(sz) _kmalloc(sz, true, true)
+	#define kfree(ptr) _kfree(ptr)
+#endif
 
 #define kfree_array(arr) do { \
 	for(typeof(arr) i = arr; *i; i++) { \
