@@ -18,8 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <multiboot.h>
-
 #define MEMORY_TRACK_MAX_AREAS 256
 
 typedef enum {

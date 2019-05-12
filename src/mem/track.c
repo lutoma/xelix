@@ -22,7 +22,7 @@
 #include <print.h>
 #include <panic.h>
 #include <string.h>
-#include <multiboot.h>
+#include <boot/multiboot.h>
 #include <hw/serial.h>
 
 // Set up the memory areas marked as free in the multiboot headers

@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <multiboot.h>
+#include <boot/multiboot.h>
 #include <log.h>
 #include <panic.h>
 #include <tasks/elf.h>

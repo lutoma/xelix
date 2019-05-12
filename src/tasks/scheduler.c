@@ -25,7 +25,7 @@
 #include <string.h>
 #include <mem/vmem.h>
 #include <mem/paging.h>
-#include <multiboot.h>
+#include <boot/multiboot.h>
 #include <tasks/elf.h>
 #include <tasks/wait.h>
 #include <fs/sysfs.h>

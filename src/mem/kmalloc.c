@@ -22,7 +22,6 @@
 #include "vmem.h"
 #include <log.h>
 #include <string.h>
-#include <multiboot.h>
 #include <panic.h>
 #include <spinlock.h>
 #include <fs/sysfs.h>
