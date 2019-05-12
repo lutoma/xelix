@@ -110,7 +110,7 @@ void tty_input_cb(struct tty_input_state* input) {
 
 size_t tty_read(char* dest, size_t size) {
 	while(!term->read_done) {
-		asm("hlt");
+		halt();
 	}
 
 	size = MIN(size, term->read_len);

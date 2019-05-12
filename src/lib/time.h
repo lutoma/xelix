@@ -34,7 +34,7 @@ void time_init();
 static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
 	const uint32_t until = pit_tick + timeout;
 	while(pit_tick <= until) {
-		asm volatile("hlt");
+		halt();
 	}
 }
 
