@@ -47,7 +47,7 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 // Initialize the PIT
 void pit_init(uint16_t frequency) {
 	// preemptability setting here also affects scheduler, so leave set to false
-	interrupts_register(IRQ0, &timer_callback, false);
+	interrupts_register(IRQ(0), &timer_callback, false);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is

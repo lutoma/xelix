@@ -250,7 +250,7 @@ static void enable() {
 
 	// Do this here since we're in page 1 anyway
 	ioutb(R_CURR, PAGE_RECEIVE + 1);
-	interrupts_register(dev->interrupt_line + IRQ0, int_handler, false);
+	interrupts_register(IRQ(dev->interrupt_line), int_handler, false);
 
 	ioutb(R_CR, CR_STOP);	// Reset page
 	ioutb(R_IMR, 0xff);		// Unmask all interrupts

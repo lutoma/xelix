@@ -1,7 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,24 +21,8 @@
 #include <log.h>
 #include <stdbool.h>
 
-#define IRQ0 32
-#define IRQ1 33
-#define IRQ2 34
-#define IRQ3 35
-#define IRQ4 36
-#define IRQ5 37
-#define IRQ6 38
-#define IRQ7 39
-#define IRQ8 40
-#define IRQ9 41
-#define IRQ10 42
-#define IRQ11 43
-#define IRQ12 44
-#define IRQ13 45
-#define IRQ14 46
-#define IRQ15 47
-
 #ifdef __i386__
+	#define IRQ(n) (n + 0x20)
 	#define EFLAGS_IF 0x200
 #endif
 
