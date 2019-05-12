@@ -23,7 +23,7 @@
 #include <version.h>
 #include <hw/serial.h>
 #include <hw/interrupts.h>
-#include <hw/pit.h>
+#include <hw/timer.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
 #include <tty/tty.h>
@@ -43,14 +43,14 @@ void __fastcall xelix_main(uint32_t multiboot_magic, void* multiboot_info) {
 	serial_init();
 	gdt_init();
 	interrupts_init();
-	pit_init(PIT_RATE);
+	timer_init();
 	multiboot_init(multiboot_magic, multiboot_info);
 	mem_init();
 	tty_init();
 	time_init();
 	pci_init();
 	vfs_init();
-	pit_init2();
+	timer_init2();
 
 	#ifdef ENABLE_PICOTCP
 	net_init();

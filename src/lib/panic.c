@@ -23,7 +23,7 @@
 #include "print.h"
 #include <tty/tty.h>
 #include <hw/interrupts.h>
-#include <hw/pit.h>
+#include <hw/timer.h>
 #include <hw/serial.h>
 #include <string.h>
 #include <mem/vmem.h>
@@ -87,7 +87,7 @@ void __attribute__((optimize("O0"))) panic(char* error, ...) {
 	va_end(va);
 
 	panic_printf("Last PIT tick:   %d (rate %d, uptime: %d seconds)\n",
-		(uint32_t)pit_tick, PIT_RATE, uptime());
+		(uint32_t)timer_tick, timer_rate, uptime());
 
 	task_t* task = scheduler_get_current();
 	if(task) {
