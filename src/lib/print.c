@@ -33,7 +33,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <print.h>
-#include <hw/serial.h>
+#include <tty/serial.h>
 #include <tty/tty.h>
 
 

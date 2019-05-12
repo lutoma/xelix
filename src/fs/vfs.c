@@ -30,7 +30,7 @@
 #include <fs/sysfs.h>
 #include <fs/part.h>
 #include <fs/ext2.h>
-#include <hw/ide.h>
+#include <fs/i386-ide.h>
 #include <net/socket.h>
 
 #ifdef VFS_DEBUG

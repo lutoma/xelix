@@ -26,8 +26,6 @@
 #include <print.h>
 #include <time.h>
 #include <mem/kmalloc.h>
-#include <hw/ide.h>
-#include <hw/serial.h>
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 

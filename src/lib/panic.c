@@ -22,9 +22,9 @@
 #include "generic.h"
 #include "print.h"
 #include <tty/tty.h>
-#include <hw/interrupts.h>
-#include <hw/timer.h>
-#include <hw/serial.h>
+#include <int/int.h>
+#include <bsp/timer.h>
+#include <tty/serial.h>
 #include <string.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>

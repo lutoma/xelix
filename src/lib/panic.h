@@ -20,8 +20,8 @@
 
 #include "generic.h"
 #include "print.h"
-#include <hw/interrupts.h>
-#include <hw/timer.h>
+#include <int/int.h>
+#include <bsp/timer.h>
 #include <tasks/scheduler.h>
 
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")

@@ -27,7 +27,7 @@
 #include <portio.h>
 #include <string.h>
 #include <print.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <mem/kmalloc.h>
 #include <net/ether.h>
 #include <net/net.h>

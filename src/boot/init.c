@@ -21,18 +21,18 @@
 #include <panic.h>
 #include <time.h>
 #include <version.h>
-#include <hw/serial.h>
-#include <hw/interrupts.h>
-#include <hw/timer.h>
+#include <tty/serial.h>
+#include <int/int.h>
+#include <bsp/timer.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
 #include <tty/tty.h>
-#include <hw/pci.h>
+#include <bsp/i386-pci.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
 #include <mem/mem.h>
-#include <mem/gdt.h>
-#include <hw/ac97.h>
+#include <mem/i386-gdt.h>
+#include <sound/i386-ac97.h>
 #include <boot/multiboot.h>
 
 #ifdef ENABLE_PICOTCP

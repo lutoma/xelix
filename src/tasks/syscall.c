@@ -18,7 +18,7 @@
  */
 
 #include "syscall.h"
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <log.h>
 #include <tasks/scheduler.h>
 #include <print.h>

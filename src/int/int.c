@@ -17,13 +17,13 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <string.h>
-#include <hw/idt.h>
+#include <int/i386-idt.h>
 #include <tasks/scheduler.h>
 #include <mem/vmem.h>
 #include <mem/paging.h>
-#include <mem/gdt.h>
+#include <mem/i386-gdt.h>
 #include <net/net.h>
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)

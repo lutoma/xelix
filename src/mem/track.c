@@ -23,7 +23,6 @@
 #include <panic.h>
 #include <string.h>
 #include <boot/multiboot.h>
-#include <hw/serial.h>
 
 // Set up the memory areas marked as free in the multiboot headers
 static void copy_multiboot_areas() {

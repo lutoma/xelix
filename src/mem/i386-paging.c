@@ -24,7 +24,7 @@
 #include <print.h>
 #include <string.h>
 #include <mem/vmem.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 
 typedef struct {
 	bool present    : 1;

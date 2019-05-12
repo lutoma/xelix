@@ -18,5 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
+
 uint8_t* vfs_block_read(uint32_t offset, size_t size, uint8_t* buf);
 bool vfs_block_write(uint32_t offset, size_t size, uint8_t* buf);

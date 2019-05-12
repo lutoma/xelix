@@ -20,10 +20,10 @@
 #include <log.h>
 #include <panic.h>
 #include <bitmap.h>
-#include <hw/interrupts.h>
+#include <int/int.h>
 #include <mem/vmem.h>
 #include <mem/paging.h>
-#include <mem/gdt.h>
+#include <mem/i386-gdt.h>
 #include <tasks/scheduler.h>
 #include <tasks/task.h>
 

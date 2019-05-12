@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/timer.h>
+#include <bsp/timer.h>
 
 typedef uint32_t time_t;
 struct timeval {
