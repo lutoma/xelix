@@ -43,13 +43,13 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#define ALIGN_DOWN(val, to) ((val) &~ ((to) - 1))
-#define ALIGN(val, to) ((val) % (to) ? ALIGN_DOWN(val, to) + (to) : (val))
+#define ALIGN_DOWN(val, to) (typeof(val))((intptr_t)(val) &~ ((to) - 1))
+#define ALIGN(val, to) (typeof(val))((intptr_t)(val) % (to) ? ALIGN_DOWN((intptr_t)val, to) + (to) : (val))
 
 // Symbols provided by LD in linker.ld
 extern void* __kernel_start;
 extern void* __kernel_end;
-#define KERNEL_START VMEM_ALIGN_DOWN((void*)&__kernel_start)
+#define KERNEL_START ALIGN_DOWN((void*)&__kernel_start, PAGE_SIZE)
 #define KERNEL_END ((void*)&__kernel_end)
 #define KERNEL_SIZE (KERNEL_END - KERNEL_START)
 

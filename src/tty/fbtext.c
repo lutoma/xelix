@@ -20,7 +20,7 @@
 #include <tty/fbtext.h>
 #include <tty/tty.h>
 #include <mem/kmalloc.h>
-#include <multiboot.h>
+#include <boot/multiboot.h>
 #include <string.h>
 #include <print.h>
 #include <log.h>

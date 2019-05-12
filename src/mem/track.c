@@ -22,7 +22,7 @@
 #include <print.h>
 #include <panic.h>
 #include <string.h>
-#include <multiboot.h>
+#include <boot/multiboot.h>
 #include <hw/serial.h>
 
 #ifdef __i386__

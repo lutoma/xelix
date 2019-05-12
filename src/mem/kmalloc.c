@@ -22,7 +22,6 @@
 #include "vmem.h"
 #include <log.h>
 #include <string.h>
-#include <multiboot.h>
 #include <panic.h>
 #include <spinlock.h>
 #include <fs/sysfs.h>
@@ -188,7 +187,7 @@ static size_t get_alignment_offset(void* address) {
 
 	// Check if page is not already page aligned by circumstance
 	if(content_addr & (PAGE_SIZE - 1)) {
-		offset = VMEM_ALIGN(content_addr) - content_addr;
+		offset = ALIGN(content_addr, PAGE_SIZE) - content_addr;
 
 		/* We need at least x bytes to store the headers and footers of our
 		 * block and of the new block we'll create in the offset

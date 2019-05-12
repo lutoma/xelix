@@ -30,7 +30,7 @@
 #include <mem/kmalloc.h>
 #include <spinlock.h>
 #include <stdarg.h>
-#include <multiboot.h>
+#include <boot/multiboot.h>
 
 static spinlock_t lock;
 // Should seed this using RNG

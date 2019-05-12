@@ -33,7 +33,7 @@
 #include <mem/mem.h>
 #include <mem/gdt.h>
 #include <hw/ac97.h>
-#include <multiboot.h>
+#include <boot/multiboot.h>
 
 #ifdef ENABLE_PICOTCP
 #include <net/net.h>
