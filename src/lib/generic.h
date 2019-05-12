@@ -43,6 +43,8 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define ALIGN_DOWN(val, to) ((val) &~ ((to) - 1))
+#define ALIGN(val, to) ((val) % (to) ? ALIGN_DOWN(val, to) + (to) : (val))
 
 // Symbols provided by LD in linker.ld
 extern void* __kernel_start;
