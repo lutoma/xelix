@@ -27,15 +27,15 @@
 #include <spinlock.h>
 #include <fs/sysfs.h>
 
-#define GET_FOOTER(x) ((uint32_t*)((intptr_t)x + x->size + sizeof(struct mem_block)))
+#define GET_FOOTER(x) ((struct footer*)((intptr_t)x + x->size + sizeof(struct mem_block)))
 #define GET_CONTENT(x) ((void*)((intptr_t)x + sizeof(struct mem_block)))
 #define GET_FB(x) ((struct free_block*)GET_CONTENT(x))
 #define GET_HEADER_FROM_FB(x) ((struct mem_block*)((intptr_t)(x) - sizeof(struct mem_block)))
-#define PREV_FOOTER(x) ((uint32_t*)((intptr_t)x - sizeof(uint32_t)))
+#define PREV_FOOTER(x) ((uint32_t*)((intptr_t)x - sizeof(struct footer)))
 #define PREV_BLOCK(x) ((struct mem_block*)((intptr_t)PREV_FOOTER(x) \
 	- (*PREV_FOOTER(x)) - sizeof(struct mem_block)))
-#define NEXT_BLOCK(x) ((struct mem_block*)((intptr_t)GET_FOOTER(x) + sizeof(uint32_t)))
-#define FULL_SIZE(x) (x->size + sizeof(uint32_t) + sizeof(struct mem_block))
+#define NEXT_BLOCK(x) ((struct mem_block*)((intptr_t)GET_FOOTER(x) + sizeof(struct footer)))
+#define FULL_SIZE(x) (x->size + sizeof(struct footer) + sizeof(struct mem_block))
 
 /* This is the block header struct. It is always located directly before the
  * start of the allocated area. Following the allocated area, there is a single
@@ -54,7 +54,7 @@ struct mem_block {
 		TYPE_USED,
 		TYPE_FREE
 	} type;
-};
+} __aligned(8);
 
 /* For free blocks, this struct gets stored inside the allocated area. As a
  * side effect of this, the minimum size for allocations is the size of this
@@ -66,7 +66,11 @@ struct free_block {
 	#endif
 	struct free_block* prev;
 	struct free_block* next;
-};
+} __aligned(8);
+
+struct footer {
+	uint32_t size;
+} __aligned(8);
 
 /* If enabled, all block headers will begin with a magic which will be checked
  * during any modifications. Very useful to track down buffer overflows, but
@@ -82,11 +86,11 @@ struct free_block {
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
-	char* _g_debug_file = "";
-	#define debug(args...) { if(vmem_kernelContext \
-		&& strcmp(_g_debug_file, "src/memory/vmem.c")) log(LOG_DEBUG, args); }
+	#define debug(args...) log(LOG_DEBUG, args)
+	#define DEBUGREGS , char* _debug_file, uint32_t _debug_line, const char* _debug_func
 #else
 	#define debug(args...)
+	#define DEBUGREGS
 #endif
 
 
@@ -118,7 +122,7 @@ static inline struct mem_block* set_block(size_t sz, struct mem_block* header) {
 	#endif
 
 	// Add uint32_t footer with size so we can find the header
-	*GET_FOOTER(header) = header->size;
+	GET_FOOTER(header)->size = header->size;
 	return header;
 }
 
@@ -167,14 +171,14 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 static inline struct mem_block* split_block(struct mem_block* header, size_t sz) {
 	// Make sure the block is big enough to get split first
 	if(header->size < sz + sizeof(struct mem_block)
-		+ sizeof(uint32_t) + sizeof(struct free_block)) {
+		+ sizeof(struct footer) + sizeof(struct free_block)) {
 
 		return NULL;
 	}
 
 	size_t orig_size = header->size;
 	set_block(sz, header);
-	size_t new_size = orig_size - sz - sizeof(struct mem_block) - sizeof(uint32_t);
+	size_t new_size = orig_size - sz - sizeof(struct mem_block) - sizeof(struct footer);
 	return set_block(new_size, NEXT_BLOCK(header));
 }
 
@@ -230,7 +234,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 		 */
 		if(align) {
 			alignment_offset = get_alignment_offset(fblock);
-			sz_needed += alignment_offset + sizeof(struct mem_block) + sizeof(uint32_t);
+			sz_needed += alignment_offset + sizeof(struct mem_block) + sizeof(struct footer);
 		}
 
 		if(fblock->size >= sz_needed) {
@@ -253,38 +257,23 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 	return NULL;
 }
 
-void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
-	char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
-
-	#ifdef KMALLOC_DEBUG
-	_g_debug_file = _debug_file;
-	#endif
-
+void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero DEBUGREGS) {
 	if(unlikely(!kmalloc_ready)) {
 		panic("Attempt to kmalloc before allocator is kmalloc_ready.\n");
 	}
 
-	debug("kmalloc: %s:%d %s 0x%x ", _debug_file, _debug_line, _debug_func, sz);
+	debug("kmalloc: %s:%d %s %#x ", _debug_file, _debug_line, _debug_func, sz);
 
-	if(unlikely(sz < sizeof(struct free_block))) {
-		sz = sizeof(struct free_block);
-	}
-
-	#ifdef KMALLOC_DEBUG
-		if(sz >= (1024 * 1024)) {
-			debug("(%d MB) ", sz / (1024 * 1024));
-		} else if(sz >= 1024) {
-			debug("(%d KB) ", sz / 1024);
-		}
-	#endif
+	// Ensure size is byte-aligned and no smaller than minimum
+	size_t sz_needed = ALIGN(sz, 8);
+	sz_needed = MAX(sz_needed, sizeof(struct free_block));
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
 		debug("Could not get spinlock\n");
 		return NULL;
 	}
 
-	struct mem_block* header = get_free_block(sz, align);
-	size_t sz_needed = sz;
+	struct mem_block* header = get_free_block(sz_needed, align);
 	size_t alignment_offset = 0;
 
 	if(align) {
@@ -292,7 +281,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	}
 
 	if(!header) {
-		debug("NEW ");
+		debug("NEW alloc_end=%#x ", alloc_end);
 
 		if(alloc_end + sz_needed >= alloc_max) {
 			panic("kmalloc: Out of memory");
@@ -303,14 +292,14 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 		}
 
 		header = set_block(sz_needed, (struct mem_block*)alloc_end);
-		alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(uint32_t);
+		alloc_end = (uint32_t)GET_FOOTER(header) + sizeof(struct footer);
 	}
 
 	if(align && alignment_offset) {
 		debug("ALIGN off 0x%x ", alignment_offset);
 
 		struct mem_block* new = split_block(header, alignment_offset
-			- sizeof(struct mem_block) - sizeof(uint32_t));
+			- sizeof(struct mem_block) - sizeof(struct footer));
 
 		new->type = TYPE_USED;
 		free_block(header, true);
@@ -328,22 +317,14 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 	check_header(header);
 	#endif
 
-	#ifdef KMALLOC_CHECK
-	check_header(header);
-	#endif
-
 	debug("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
 	return (void*)GET_CONTENT(header);
 }
 
-void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _debug_func) {
+void _kfree(void *ptr DEBUGREGS) {
 	if(!ptr) {
 		return;
 	}
-
-	#ifdef KMALLOC_DEBUG
-	_g_debug_file = _debug_file;
-	#endif
 
 	struct mem_block* header = (struct mem_block*)((intptr_t)ptr
 		- sizeof(struct mem_block));
@@ -351,7 +332,7 @@ void _kfree(void *ptr, char* _debug_file, uint32_t _debug_line, const char* _deb
 	debug("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line,
 		_debug_func, ptr, header->size);
 	if(unlikely((intptr_t)header < alloc_start ||
-		(intptr_t)ptr >= alloc_end ||header->type == TYPE_FREE)) {
+		(intptr_t)ptr >= alloc_end || header->type == TYPE_FREE)) {
 
 		log(LOG_ERR, "kmalloc: Attempt to free invalid block\n");
 		return;
@@ -403,9 +384,16 @@ void kmalloc_init() {
 	}
 
 	largest_area->type = MEMORY_TYPE_KMALLOC;
-	alloc_start = alloc_end = (intptr_t)largest_area->addr;
+	alloc_start = (intptr_t)largest_area->addr;
+
+	if(alloc_start % 8) {
+		alloc_start = (alloc_start &~ 7) + 8;
+	}
+
+	alloc_end = alloc_start;
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	kmalloc_ready = true;
+	log(LOG_DEBUG, "kmalloc: Allocating from %#x - %#x\n", alloc_start, alloc_max);
 	sysfs_add_file("memfree", sfs_read, NULL);
 }
 
@@ -419,7 +407,7 @@ static void check_header(struct mem_block* header) {
 		check_err("Block is smaller than minimum size");
 	}
 
-	if(*GET_FOOTER(header) != header->size) {
+	if(GET_FOOTER(header)->size != header->size) {
 		check_err("Invalid footer");
 	}
 
