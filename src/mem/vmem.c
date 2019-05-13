@@ -21,7 +21,6 @@
 #include "vmem.h"
 #include <log.h>
 #include <mem/kmalloc.h>
-#include <print.h>
 #include <panic.h>
 #include <string.h>
 #include <tasks/scheduler.h>
@@ -304,7 +303,7 @@ intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool revers
 }
 
 static void vmem_dump_page_internal(struct vmem_context *ctx, struct vmem_page *pg, uint32_t i) {
-	printf("Virt 0x%x Phys 0x%x Cow 0x%x ro:%d alloc:%d cow:%d\n",
+	log(LOG_DEBUG, "Virt 0x%x Phys 0x%x Cow 0x%x ro:%d alloc:%d cow:%d\n",
 			pg->virt_addr,
 			pg->phys_addr,
 			pg->cow_src_addr,

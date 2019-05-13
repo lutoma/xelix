@@ -19,7 +19,6 @@
 
 #include <mem/track.h>
 #include <log.h>
-#include <print.h>
 #include <panic.h>
 #include <string.h>
 #include <boot/multiboot.h>

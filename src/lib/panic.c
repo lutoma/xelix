@@ -20,7 +20,7 @@
 #include "panic.h"
 
 #include "generic.h"
-#include "print.h"
+#include <printf.h>
 #include <tty/tty.h>
 #include <int/int.h>
 #include <bsp/timer.h>
@@ -36,12 +36,9 @@ static spinlock_t lock;
 // Should seed this using RNG
 uintptr_t __stack_chk_guard = 0xcafed00d;
 
-static void panic_printf(const char *fmt, ...) {
-	va_list va;
-	va_start(va, fmt);
-	vprintf(fmt, va);
-	serial_vprintf(fmt, va);
-	va_end(va);
+#define panic_printf(fmt, args...) { \
+	serial_printf(fmt, ## args);     \
+	printf(fmt, ## args);            \
 }
 
 char* addr2name(intptr_t address) {
@@ -75,19 +72,18 @@ char* addr2name(intptr_t address) {
 #endif
 }
 
-void __attribute__((optimize("O0"))) panic(char* error, ...) {
+void __attribute__((optimize("O0"))) panic(char* fmt, ...) {
 	if(unlikely(!spinlock_get(&lock, 30))) {
 		freeze();
 	}
 
 	va_list va;
-	va_start(va, error);
+	va_start(va, fmt);
 	interrupts_disable();
 
-	panic_printf("\nKernel Panic: ");
-	vprintf(error, va);
-	serial_vprintf(error, va);
-	panic_printf("\n");
+	char error[500];
+	vsnprintf(error, 500, fmt, va);
+	panic_printf("\nKernel Panic: %s\n", error);
 	va_end(va);
 
 	panic_printf("Last PIT tick:   %d (rate %d, uptime: %d seconds)\n",

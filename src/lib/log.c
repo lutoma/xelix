@@ -18,7 +18,7 @@
  */
 
 #include <log.h>
-#include <print.h>
+#include <printf.h>
 #include <bsp/timer.h>
 #include <stdarg.h>
 #include <string.h>

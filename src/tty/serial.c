@@ -52,15 +52,9 @@
 #define UART0_ITIP (UART0_BASE + 0x84)
 #define UART0_ITOP (UART0_BASE + 0x88)
 #define UART0_TDR (UART0_BASE + 0x8C)
-
-// Loop <delay> times in a way that the compiler won't optimize away
-static inline void delay(int32_t count) {
-	asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
-		 : "=r"(count): [count]"0"(count) : "cc");
-}
 #endif
 
-void serial_send(const char c) {
+void serial_send(const char c, void* unused) {
 	#if defined(__i386__)
 	while(!CAN_SEND);
 	outb(PORT, c);
@@ -68,7 +62,7 @@ void serial_send(const char c) {
 	#elif defined(__arm__)
 	// Silly quickfix for minicom
 	if(c == '\n') {
-		serial_send('\r');
+		serial_send('\r', NULL);
 	}
 
 	while(rpi_mmio_read(UART0_FR) & (1 << 5));
@@ -82,11 +76,6 @@ char serial_recv() {
 	return inb(PORT);
 	#endif
 	return '\0';
-}
-
-void serial_print(const char* s) {
-	while(*s != '\0')
-		serial_send(*(s++));
 }
 
 void serial_init() {

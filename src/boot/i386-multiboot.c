@@ -19,6 +19,7 @@
 
 #include <boot/multiboot.h>
 #include <log.h>
+#include <printf.h>
 #include <panic.h>
 #include <tasks/elf.h>
 

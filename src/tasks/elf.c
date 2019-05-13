@@ -20,7 +20,7 @@
 #include "elf.h"
 
 #include <log.h>
-#include <print.h>
+#include <printf.h>
 #include <string.h>
 #include <errno.h>
 #include <tasks/task.h>

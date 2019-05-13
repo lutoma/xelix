@@ -22,7 +22,6 @@
 #include <bsp/i386-pci.h>
 #include <log.h>
 #include <string.h>
-#include <print.h>
 #include <portio.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>

@@ -22,7 +22,6 @@
 #include <mem/kmalloc.h>
 #include <boot/multiboot.h>
 #include <string.h>
-#include <print.h>
 #include <log.h>
 #include <bitmap.h>
 

@@ -18,73 +18,74 @@
  */
 
 #include <panic.h>
+#include <printf.h>
 
 void decode_fault_status(uint32_t fsr) {
     uint32_t status = ((fsr & (1 << 10)) >> 6) | (fsr & 0x7);
     switch (status) {
     case 0b00001:
-	serial_print("alignment fault\n");
+	serial_printf("alignment fault\n");
 	break;
     case 0b00100:
-	serial_print("fault on instruction cache maintenance\n");
+	serial_printf("fault on instruction cache maintenance\n");
 	break;
     case 0b01100:
-	serial_print("synchronnous external abort, first level translation fault\n");
+	serial_printf("synchronnous external abort, first level translation fault\n");
 	break;
     case 0b01110:
-	serial_print("synchronnous external abort, second level translation fault\n");
+	serial_printf("synchronnous external abort, second level translation fault\n");
 	break;
     case 0b11100:
-	serial_print("synchronnous parity error, first level translation fault\n");
+	serial_printf("synchronnous parity error, first level translation fault\n");
 	break;
     case 0b11110:
-	serial_print("synchronnous parity error, second level translation fault\n");
+	serial_printf("synchronnous parity error, second level translation fault\n");
 	break;
 
     case 0b00101:
-	serial_print("first level translation fault\n");
+	serial_printf("first level translation fault\n");
 	break;
     case 0b00111:
-	serial_print("second level translation fault\n");
+	serial_printf("second level translation fault\n");
 	break;
     case 0b00011:
-	serial_print("first level access flag fault\n");
+	serial_printf("first level access flag fault\n");
 	break;
     case 0b00110:
-	serial_print("second level access flag fault\n");
+	serial_printf("second level access flag fault\n");
 	break;
     case 0b01001:
-	serial_print("first level domain fault, domain %ld\n", (fsr & 0xF0) >> 4);
+	serial_printf("first level domain fault, domain %ld\n", (fsr & 0xF0) >> 4);
 	break;
     case 0b01011:
-	serial_print("second level domain fault, domain %ld\n", (fsr & 0xF0) >> 4);
+	serial_printf("second level domain fault, domain %ld\n", (fsr & 0xF0) >> 4);
 	break;
     case 0b01101:
-	serial_print("first level permission fault\n");
+	serial_printf("first level permission fault\n");
 	break;
     case 0b01111:
-	serial_print("second level permission fault\n");
+	serial_printf("second level permission fault\n");
 	break;
     case 0b00010:
-	serial_print("debug event\n");
+	serial_printf("debug event\n");
 	break;
     case 0b01000:
-	serial_print("synchronous external abort\n");
+	serial_printf("synchronous external abort\n");
 	break;
     case 0b10000:
-	serial_print("TLB conflict event\n");
+	serial_printf("TLB conflict event\n");
 	break;
     case 0b11001:
-	serial_print("synchronous parity error on memory access\n");
+	serial_printf("synchronous parity error on memory access\n");
 	break;
     case 0b10110:
-	serial_print("asynchronous external abort\n");
+	serial_printf("asynchronous external abort\n");
 	break;
     case 0b11000:
-	serial_print("asynchronous parity error on memory access\n");
+	serial_printf("asynchronous parity error on memory access\n");
 	break;
     default:
-	serial_print("unknown / reserved fault\n");
+	serial_printf("unknown / reserved fault\n");
     }
 }
 
