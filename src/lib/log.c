@@ -58,7 +58,7 @@ static void append(char* string, size_t len) {
 }
 
 static void store(uint32_t level, char* fmt_string, size_t fmt_len) {
-	char log_prefix[100];
+	char log_prefix[100] __aligned(8);
 	size_t prefix_len = snprintf(log_prefix, 100, "%d %d %d:", timer_tick, time_get(), level);
 	append(log_prefix, prefix_len);
 	append(fmt_string, fmt_len);
