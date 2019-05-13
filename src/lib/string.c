@@ -161,6 +161,7 @@ char* strndup(const char* old, size_t num)
 	return new;
 }
 
+#ifndef __arm__
 #undef memset
 void memset(void* ptr, uint8_t fill, uint32_t size) {
 	uint8_t* p = (uint8_t*) ptr;
@@ -186,6 +187,7 @@ void* memcpy(void* dest, const void* src, uint32_t size) {
 
 	return dest;
 }
+#endif
 
 #undef memcmp
 int32_t memcmp(const void *s1, const void *s2, size_t n) {
@@ -201,6 +203,7 @@ int32_t memcmp(const void *s1, const void *s2, size_t n) {
 	return 0;
 }
 
+#ifndef __arm__
 #undef memmove
 void* memmove(void *dst, const void *src, size_t len) {
 		size_t i;
@@ -270,6 +273,7 @@ void* memmove(void *dst, const void *src, size_t len) {
 
 		return dst;
 }
+#endif
 
 #undef strchr
 char *strchr(const char *p, int ch) {
