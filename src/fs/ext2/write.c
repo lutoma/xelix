@@ -23,7 +23,6 @@
 #include <log.h>
 #include <string.h>
 #include <errno.h>
-#include <print.h>
 #include <time.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>

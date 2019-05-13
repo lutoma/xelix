@@ -19,7 +19,6 @@
 
 #include "pipe.h"
 #include <fs/vfs.h>
-#include <print.h>
 #include <errno.h>
 #include <tasks/task.h>
 #include <mem/kmalloc.h>

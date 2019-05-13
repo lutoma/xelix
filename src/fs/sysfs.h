@@ -18,7 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <print.h>
+#include <printf.h>
 
 #define sysfs_printf(args...) rsize += snprintf(dest + rsize, size - rsize, args);
 

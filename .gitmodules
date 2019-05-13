@@ -1,3 +1,7 @@
 [submodule "util/kconfig"]
 	path = util/kconfig
 	url = https://github.com/guillon/kconfig.git
+
+[submodule "ext/printf"]
+	path = ext/printf
+	url = https://github.com/mpaland/printf.git

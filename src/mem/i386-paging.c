@@ -21,7 +21,6 @@
 #include "paging.h"
 #include <mem/kmalloc.h>
 #include <log.h>
-#include <print.h>
 #include <string.h>
 #include <mem/vmem.h>
 #include <int/int.h>

@@ -19,7 +19,6 @@
  */
 
 #include "generic.h"
-#include "print.h"
 #include <int/int.h>
 #include <bsp/timer.h>
 #include <tasks/scheduler.h>

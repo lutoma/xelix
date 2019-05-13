@@ -35,7 +35,7 @@
  * compile-time configuration.
  */
 
-#include <print.h>
+#include <printf.h>
 #include <string.h>
 #include <mem/kmalloc.h>
 #include <md5.h>

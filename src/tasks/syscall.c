@@ -21,7 +21,7 @@
 #include <int/int.h>
 #include <log.h>
 #include <tasks/scheduler.h>
-#include <print.h>
+#include <printf.h>
 #include <panic.h>
 #include <errno.h>
 #include <mem/vmem.h>
