@@ -2,7 +2,7 @@ INCLUDE := -I src -I src/lib -I ext/picotcp/build/include -include src/lib/gener
 
 ifeq ($(ARCH),arm)
 	PREFIX = arm-none-eabi
-	MAKE_CFLAGS = -mcpu=cortex-a7 -fpic -msoft-float
+	MAKE_CFLAGS = -mcpu=cortex-a7 -fpic -msoft-float -mno-unaligned-access
 	MAKE_ASFLAGS := $(MAKE_CFLAGS) -ffreestanding
 	AS := $(PREFIX)-gcc
 else

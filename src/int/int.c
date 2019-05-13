@@ -123,7 +123,7 @@ void interrupts_init() {
 	#ifdef __i386__
 	idt_init();
 	#else
-	serial_printf("interrupts: Setting VBAR to %#x\n", arm_exception_vectors);
+	log(LOG_INFO, "int: Enabling interrupts, VBAR=%#x\n", arm_exception_vectors);
 	asm volatile("mcr p15, 0, %0, c12, c0, 0" :: "r" (arm_exception_vectors));
 	asm volatile("mcr p15, 4, %0, c12, c0, 0" :: "r" (arm_exception_vectors));
 	#endif
