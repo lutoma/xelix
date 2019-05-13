@@ -59,13 +59,18 @@ static inline uint32_t inl(uint16_t port) {
 #define bcm2836_mmio_write(reg, data) mmio_write(BCM2836_MMIO_BASE + (reg), data)
 #define bcm2836_mmio_read(reg) mmio_read(BCM2836_MMIO_BASE + (reg))
 
+// ARM data memory barrier
+#define dmb() asm volatile("mcr p15, #0, %0, c7, c10, #5" :: "r" (0))
+
 // Memory-Mapped I/O output
 static inline void mmio_write(uint32_t reg, uint32_t data) {
 	*(volatile uint32_t*)reg = data;
+	dmb();
 }
 
 // Memory-Mapped I/O input
 static inline uint32_t mmio_read(uint32_t reg) {
+	dmb();
 	return *(volatile uint32_t*)reg;
 }
 #endif

@@ -55,18 +55,24 @@ extern struct {
 #ifdef __arm__
 #include <bsp/arm-mailbox.h>
 
-struct {
-	uint32_t width;
-	uint32_t height;
-	uint32_t buffer_width;
-	uint32_t buffer_height;
-	uint32_t pitch;
-	uint32_t bit_depth;
-	uint32_t x;
-	uint32_t y;
-	void* buffer;
-	uint32_t buffer_size;
-} mbox_tag __aligned(16);
+/* A mailbox property request with multiple tags to set up a framebuffer.
+ * Can't be sent using vc_prop_request as all the framebuffer setup needs
+ * to be in the same request.
+ */
+#define mpr_tag(name, data_size) \
+	struct { uint32_t id; uint32_t size; \
+	uint32_t code; uint32_t data[data_size]; } name
+
+struct mailbox_fb_request {
+	uint32_t size;
+	uint32_t code;
+	mpr_tag(pres, 2);
+	mpr_tag(vres, 2);
+	mpr_tag(bpp, 1);
+	mpr_tag(fb, 2);
+	mpr_tag(pitch, 1);
+	uint32_t end_tag;
+} __aligned(16);
 #endif
 
 // Special block drawing characters - Should get merged into main font
@@ -210,37 +216,6 @@ static void set_cursor(uint32_t x, uint32_t y, bool restore) {
 	}
 }
 
-/* A mailbox property request with multiple tags to set up a framebuffer.
- * Can't be sent using vc_prop_request as all the framebuffer setup needs
- * to be in the same request.
- */
-struct mailbox_fb_request {
-	uint32_t size;
-	uint32_t code;
-
-	uint32_t pres_id;
-	uint32_t pres_size;
-	uint32_t pres_code;
-	uint32_t pres_data[2];
-
-	uint32_t vres_id;
-	uint32_t vres_size;
-	uint32_t vres_code;
-	uint32_t vres_data[2];
-
-	uint32_t bpp_id;
-	uint32_t bpp_size;
-	uint32_t bpp_code;
-	uint32_t bpp_data;
-
-	uint32_t fb_id;
-	uint32_t fb_size;
-	uint32_t fb_code;
-	uint32_t fb_data[2];
-
-	uint32_t end_tag;
-} __attribute__((aligned(16)));
-
 struct tty_driver* tty_fbtext_init() {
 	#ifdef __i386__
 	struct multiboot_tag_framebuffer* fb_desc = multiboot_get_framebuffer();
@@ -262,56 +237,36 @@ struct tty_driver* tty_fbtext_init() {
 		return NULL;
 	}
 
-	volatile  __attribute__((aligned(16))) struct mailbox_fb_request fbreq = {
+	volatile __aligned(16) struct mailbox_fb_request fbreq = {
 		.size = sizeof(fbreq),
 		.code = 0,
 
-		.pres_id = 0x48003,
-		.pres_size = sizeof(fbreq.pres_data),
-		.pres_code = 0,
-		.pres_data = {*resolution, *(resolution + 1)},
-
-		.vres_id = 0x48004,
-		.vres_size = sizeof(fbreq.vres_data),
-		.vres_code = 0,
-		.vres_data = {*resolution, *(resolution + 1)},
-
-		.bpp_id = 0x48005,
-		.bpp_size = sizeof(fbreq.bpp_data),
-		.bpp_code = 0,
-		.bpp_data = 32,
-
-		.fb_id = 0x40001,
-		.fb_size = sizeof(fbreq.fb_data),
-		.fb_code = 0,
-		.fb_data = {16, 0},
+		.pres  = {0x48003, sizeof(fbreq.pres.data),  0, {*resolution, *(resolution + 1)}},
+		.vres  = {0x48004, sizeof(fbreq.vres.data),  0, {*resolution, *(resolution + 1)}},
+		.bpp   = {0x48005, sizeof(fbreq.bpp.data),   0, {32}},
+		.fb    = {0x40001, sizeof(fbreq.fb.data),    0, {16, 0}},
+		.pitch = {0x40008, sizeof(fbreq.pitch.data), 0, {0}},
 
 		.end_tag = 0,
 	};
 
-	vc_mbox_write((uint32_t)&fbreq, 8);
+	vc_mbox_write(0x40000000 + (uint32_t)&fbreq, 8);
 	vc_mbox_read(8);
 	if(fbreq.code != (1 << 31)) {
  		log(LOG_ERR, "fbtext: Framebuffer mailbox call failed\n");
 		return NULL;
 	}
 
-	framebuffer.width = fbreq.pres_data[0];
-	framebuffer.height = fbreq.pres_data[1];
-	framebuffer.bpp = fbreq.bpp_data;
-	framebuffer.addr = fbreq.fb_data[0];
-
- 	// Get framebuffer pitch
-	uint32_t* pitch = vc_prop_request(0x40008);
-	if(!pitch) {
-		log(LOG_ERR, "fbtext: Could not get framebuffer pitch\n");
-		return NULL;
-	}
-	framebuffer.pitch = *pitch;
+	framebuffer.width = fbreq.pres.data[0];
+	framebuffer.height = fbreq.pres.data[1];
+	framebuffer.bpp = fbreq.bpp.data[0];
+	framebuffer.addr = fbreq.fb.data[0];
+	framebuffer.pitch = fbreq.pitch.data[0];
 	#endif
 
 	if(tty_font.magic != PSF_FONT_MAGIC || !framebuffer.addr ||
-		!framebuffer.width || !framebuffer.height) {
+		!framebuffer.width || !framebuffer.height || !framebuffer.bpp ||
+		!framebuffer.pitch) {
 		log(LOG_ERR, "fbtext: Initialization failed.\n");
 		return NULL;
 	}
