@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,16 +20,26 @@
 
 #include <stdbool.h>
 
-#define SPINLOCK_LOCKED 1
-#define SPINLOCK_UNLOCKED 0
+/* See https://gcc.gnu.org/onlinedocs/gcc-4.4.3/gcc/Atomic-Builtins.html for
+ * documentation on the GCC builtin atomic function used here.
+ */
 
+#define spinlock_release(x) __sync_lock_release(x)
 #define spinlock_cmd(command, tries, retval) \
-	static spinlock_t lock = SPINLOCK_UNLOCKED; \
+	static spinlock_t lock = 0; \
 	if(!spinlock_get(&lock, tries)) return retval; \
 	do {command;} while(0); \
 	spinlock_release(&lock);
 
-#define spinlock_release(x) __sync_lock_release(x)
-
 typedef uint8_t spinlock_t;
-bool spinlock_get(spinlock_t* lock, uint32_t numretries);
+static inline bool spinlock_get(spinlock_t* lock, uint32_t retries) {
+	for(int i = 0; i < retries; i++) {
+		if(!__sync_lock_test_and_set(lock, 1)) {
+			return true;
+		}
+
+		halt();
+	}
+	return false;
+}
+
