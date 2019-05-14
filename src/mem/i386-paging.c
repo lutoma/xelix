@@ -1,4 +1,4 @@
-/* paging.c: Paging intialization / allocation
+/* paging.c: x86 paging stub for vmem
  * Copyright © 2011 Fritz Grimpen
  * Copyright © 2011-2018 Lukas Martini
  *
@@ -48,70 +48,47 @@ struct paging_context {
 	page_table_t tables[1024];
 };
 
-static bool paging_initialized = false;
+void paging_apply(struct vmem_context* ctx, struct vmem_page *pg) {
+	uint32_t page_dir_offset = (uintptr_t)pg->virt_addr >> 22;
+	uint32_t page_table_offset = ((uintptr_t)pg->virt_addr >> 12) % 1024;
 
-static int paging_assign(struct paging_context *ctx, uint32_t virtual, uint32_t physical, bool rw, bool user, bool mapped)
-{
-	// Align virtual and physical addresses to 4096 byte
-	virtual = virtual - virtual % 4096;
-	physical = physical - physical % 4096;
+	struct paging_context* pg_ctx = ctx->tables;
+	page_t *page_dir = &(pg_ctx->directory.nodes[page_dir_offset]);
+	page_t *page_table = &(pg_ctx->tables[page_dir_offset].nodes[page_table_offset]);
 
-	uint32_t page_dir_offset = virtual >> 22;
-	uint32_t page_table_offset = (virtual >> 12) % 1024;
-
-	page_t *page_dir = &(ctx->directory.nodes[page_dir_offset]);
-	page_t *page_table = &(ctx->tables[page_dir_offset].nodes[page_table_offset]);
-	if (!page_dir->present)
-	{
+	if(!page_dir->present) {
 		page_dir->present = true;
 		page_dir->rw = 1;
 		page_dir->user = 1;
-		page_dir->frame = (int)page_table >> 12;
+		page_dir->frame = (uintptr_t)page_table >> 12;
 	}
 
-	page_table->present = mapped;
-	page_table->rw = rw;
-	page_table->user = user;
-	page_table->frame = physical >> 12;
-
-	return 0;
+	page_table->present = pg->allocated;
+	page_table->rw = !pg->readonly;
+	page_table->user = pg->user;
+	page_table->frame = (uintptr_t)pg->phys_addr >> 12;
 }
 
-void paging_applyPage(struct vmem_context *ctx, struct vmem_page *pg)
-{
-	struct paging_context *pgCtx = vmem_get_cache(ctx);
-	paging_assign(pgCtx, (uint32_t)pg->virt_addr, (uint32_t)pg->phys_addr, !pg->readonly, pg->user, pg->allocated);
-}
-
-static void paging_vmIterator(struct vmem_context *ctx, struct vmem_page *pg, uint32_t offset)
-{
-	paging_applyPage(ctx, pg);
-}
-
-struct paging_context* paging_get_context(struct vmem_context* ctx) {
-	struct paging_context *pgCtx = vmem_get_cache(ctx);
-
-	if (pgCtx == NULL)
-	{
+void* paging_get_table(struct vmem_context* ctx) {
+	if(!ctx->tables) {
 		/* Build paging context for vmem_context */
-		pgCtx = kmalloc_a(sizeof(struct paging_context));
-		if (pgCtx == NULL)
+		ctx->tables = zmalloc_a(sizeof(struct paging_context));
+		if(!ctx->tables) {
 			return false;
-		memset(pgCtx, 0, sizeof(struct paging_context));
-		vmem_set_cache(ctx, pgCtx);
+		}
 
-		vmem_iterate(ctx, paging_vmIterator);
+		struct vmem_page* page = ctx->first_page;
+		for(int i = 0; page != NULL && i < ctx->pages; i++) {
+			paging_apply(ctx, page);
+			page = page->next;
+		}
 	}
 
-	return pgCtx;
+	return ctx->tables;
 }
 
 void paging_init() {
-	paging_initialized = true;
-	vmem_applyPage = paging_applyPage;
-
-	vmem_currentContext = vmem_kernelContext;
-	paging_kernel_cr3 = paging_get_context(vmem_kernelContext);
+	paging_kernel_cr3 = paging_get_table(vmem_kernelContext);
 
 	log(LOG_INFO, "vmem: Enabling paging bit, cr3=0x%x\n", paging_kernel_cr3);
 	asm volatile(

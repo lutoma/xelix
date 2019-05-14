@@ -52,8 +52,7 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	task->state = zmalloc_a(PAGE_SIZE);
 	task->stack = zmalloc_a(STACKSIZE);
 	task->kernel_stack = zmalloc_a(STACKSIZE);
-	task->memory_context = vmem_new();
-	vmem_set_task(task->memory_context, task);
+	task->memory_context = zmalloc(sizeof(struct vmem_context));
 
 	strcpy(task->name, name);
 	memcpy(task->cwd, parent ? parent->cwd : "/", TASK_PATH_MAX);
@@ -171,7 +170,7 @@ int task_fork(task_t* to_fork, isf_t* state) {
 		}
 	}
 
-	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+	task->state->cr3 = (uint32_t)paging_get_table(task->memory_context);
 
 	/* Set syscall return values for the forked task – need to set here since
 	 * the regular syscall return handling only affects the main process.
@@ -258,7 +257,7 @@ void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
-	task->state->cr3 = (uint32_t)paging_get_context(task->memory_context);
+	task->state->cr3 = (uint32_t)paging_get_table(task->memory_context);
 	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
 	task->state->esp = task->state->ebp - sizeof(iret_t);
 

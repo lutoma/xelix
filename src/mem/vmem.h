@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2011 Fritz Grimpen
- * Copyright © 2013-2018 Lukas Martini
+ * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,63 +20,41 @@
  */
 
 #include <int/int.h>
+#include <stdbool.h>
 
 #define PAGE_SIZE 4096
 
-struct vmem_context;
+/* Internal representation of a node. This will get mapped to the hardware form
+ * by <arch>-paging.c.
+ */
 struct vmem_page {
+	struct vmem_page* next;
 	bool readonly:1;
 	bool cow:1; /* Copy-on-Write mechanism */
 	bool allocated:1;
 	bool user:1;
 
-	void *cow_src_addr;
-	void *virt_addr;
-	void *phys_addr;
+	void* cow_src_addr;
+	void* virt_addr;
+	void* phys_addr;
 };
 
-typedef void (*vmem_iterator_t)(struct vmem_context *, struct vmem_page *, uint32_t);
+struct vmem_context {
+	struct vmem_page* first_page;
+	struct vmem_page* last_page;
+	uint32_t pages;
 
-/* Initialize vmem_kernelContext for paging_init() */
-void vmem_init();
-struct vmem_context *vmem_kernelContext;
-struct vmem_context *vmem_currentContext;
-struct vmem_context *vmem_processContext;
+	// Address of the actual page tables that will be read by the hardware
+	void* tables;
+};
 
-/* Some callbacks for magic functions */
-void (*vmem_applyPage)(struct vmem_context *, struct vmem_page *);
+struct vmem_context* vmem_kernelContext;
 
-/* Generate new page context */
-struct vmem_context *vmem_new();
-void vmem_set_task(struct vmem_context* ctx, void* task);
 struct vmem_page *vmem_new_page();
-
 int vmem_add_page(struct vmem_context *ctx, struct vmem_page *pg);
-
-struct vmem_page *vmem_get_page_phys(struct vmem_context *ctx, void *phys_addr);
-struct vmem_page *vmem_get_page_virt(struct vmem_context *ctx, void *virt_addr);
-struct vmem_page *vmem_get_page(struct vmem_context *ctx, uint32_t offset);
-
-/* Remove pages in a specific context by physical or virtual address */
-struct vmem_page *vmem_rm_page_phys(struct vmem_context *ctx, void *phys_addr);
-struct vmem_page *vmem_rm_page_virt(struct vmem_context *ctx, void *virt_addr);
-
-/* Remove memory context entirely */
+struct vmem_page* vmem_get_page(struct vmem_context* ctx, void* addr, bool phys);
 void vmem_rm_context(struct vmem_context* ctx);
-
-/* Iterator */
-int vmem_iterate(struct vmem_context *ctx, vmem_iterator_t callback);
-
-uint32_t vmem_count_pages(struct vmem_context *ctx);
-void vmem_dump_page(struct vmem_page *pg);
-void vmem_dump(struct vmem_context *ctx);
-char* vmem_get_name(struct vmem_context* ctx);
-
-/* Get/Set cached paging context */
-void vmem_set_cache(struct vmem_context *ctx, void *cache);
-void *vmem_get_cache(struct vmem_context *ctx);
-
 void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, bool user, bool ro);
 #define vmem_map_flat(ctx, start, size, user, ro) vmem_map(ctx, start, start, size, user, ro)
-
-intptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool reverse);
+uintptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool reverse);
+void vmem_init();

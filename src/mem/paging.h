@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,9 +20,8 @@
 
 #include <mem/vmem.h>
 
-struct paging_context;
 struct paging_context* paging_kernel_cr3;
 
-void paging_applyPage(struct vmem_context *ctx, struct vmem_page *pg);
-struct paging_context* paging_get_context(struct vmem_context* ctx);
+void paging_apply(struct vmem_context* ctx, struct vmem_page *pg);
+void* paging_get_table(struct vmem_context* ctx);
 void paging_init();
