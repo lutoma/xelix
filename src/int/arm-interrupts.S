@@ -61,8 +61,6 @@ pre_handler irq, 4, ARM_INT_TYPE_IRQ
 pre_handler fiq, 4, ARM_INT_TYPE_FIQ
 
 arm_common_handler:
-	//sub     lr, #4 // ???
-
 	// Store non-banked registers
 	push    {r0 - r11}
 

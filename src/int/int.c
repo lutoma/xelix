@@ -120,12 +120,11 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* regs) {
 }
 
 void interrupts_init() {
-	#ifdef __i386__
+	#if defined(__i386__)
 	idt_init();
-	#else
+	#elif defined(__arm__)
 	log(LOG_INFO, "int: Enabling interrupts, VBAR=%#x\n", arm_exception_vectors);
 	asm volatile("mcr p15, 0, %0, c12, c0, 0" :: "r" (arm_exception_vectors));
-	asm volatile("mcr p15, 4, %0, c12, c0, 0" :: "r" (arm_exception_vectors));
 	#endif
 
 	bzero(interrupt_handlers, sizeof(interrupt_handlers));

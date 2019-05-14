@@ -39,9 +39,25 @@ _start:
 	cmp r5, #0
 	bne arm_halt
 
-	// Throwaway stack for memset
-	// Real stack is in BSS and will also get cleared
-	mov sp, #0x4000
+	// Switch to SVC if the bootloader has left us in HYP mode
+	mrs	r9, cpsr
+	// test for HYP mode
+	eor	r9, r9, #0x1A
+	tst	r9, #0x1F
+	// clear mode bits
+	bic	r9, r9, #0x1F
+	// mask IRQ/FIQ bits and set SVC mode
+	orr	r9, r9, #0xC0 | 0x13
+	// branch if not HYP mode
+	bne	1f
+	// mask Abort bit
+	orr	r9, r9, #0x100
+	adr	lr, 2f
+	msr	spsr_cxsf, r9
+	msr ELR_hyp, lr
+	eret
+1:	msr	cpsr_c, r9
+2:
 
 	// Clear BSS
 	ldr r0, =__bss_start
