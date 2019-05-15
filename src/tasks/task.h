@@ -175,12 +175,10 @@ static inline char* task_mem_section_verbose(enum task_mem_section section) {
 		"Code",    /* Contains program code and is read-only */
 		"Data",    /* Contains static data */
 		"Heap",    /* Allocated by brk(2) at runtime */
-		"MMAP",    /* Allocated by mmap(2) at runtime */
 		"Kernel",  /* Contains kernel-internal data */
-		"Unmapped" /* Unmapped */
 	};
 
-	if(section <= sizeof(names) / sizeof(char*)) {
+	if(section < ARRAY_SIZE(names)) {
 		return names[section];
 	}
 	return NULL;
