@@ -100,6 +100,6 @@ uintptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool rever
 void vmem_init() {
 	// Initialize kernel context
 	struct vmem_context *ctx = zmalloc(sizeof(struct vmem_context));
-	vmem_map_flat(ctx, 0, 0xffffe000U, 0, 0);
+	vmem_map_flat(ctx, PAGE_SIZE, 0xffffe000U, 0, 0);
 	vmem_kernelContext = ctx;
 }

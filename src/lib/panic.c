@@ -99,7 +99,7 @@ void __attribute__((optimize("O0"))) panic(char* fmt, ...) {
 		panic_printf("Running task:    [No task running]\n");
 	}
 
-	panic_printf("Call trace:\n");
+	panic_printf("\nCall trace:\n");
 	intptr_t addresses[10];
 	int read = walk_stack(addresses, 10);
 
