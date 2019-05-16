@@ -48,25 +48,30 @@ struct paging_context {
 	page_table_t tables[1024];
 };
 
-void paging_apply(struct vmem_context* ctx, struct vmem_page *pg) {
-	uint32_t page_dir_offset = (uintptr_t)pg->virt_addr >> 22;
-	uint32_t page_table_offset = ((uintptr_t)pg->virt_addr >> 12) % 1024;
+void paging_apply(struct vmem_context* ctx, struct vmem_range* range) {
+	for(uintptr_t off = 0; off < range->length; off += PAGE_SIZE) {
+		uintptr_t virt_addr = range->virt_start + off;
+		uintptr_t phys_addr = range->phys_start + off;
 
-	struct paging_context* pg_ctx = ctx->tables;
-	page_t *page_dir = &(pg_ctx->directory.nodes[page_dir_offset]);
-	page_t *page_table = &(pg_ctx->tables[page_dir_offset].nodes[page_table_offset]);
+		uint32_t page_dir_offset = virt_addr >> 22;
+		uint32_t page_table_offset = (virt_addr >> 12) % 1024;
 
-	if(!page_dir->present) {
-		page_dir->present = true;
-		page_dir->rw = 1;
-		page_dir->user = 1;
-		page_dir->frame = (uintptr_t)page_table >> 12;
+		struct paging_context* pg_ctx = ctx->tables;
+		page_t *page_dir = &(pg_ctx->directory.nodes[page_dir_offset]);
+		page_t *page_table = &(pg_ctx->tables[page_dir_offset].nodes[page_table_offset]);
+
+		if(!page_dir->present) {
+			page_dir->present = true;
+			page_dir->rw = 1;
+			page_dir->user = 1;
+			page_dir->frame = (uintptr_t)page_table >> 12;
+		}
+
+		page_table->present = range->allocated;
+		page_table->rw = !range->readonly;
+		page_table->user = range->user;
+		page_table->frame = phys_addr >> 12;
 	}
-
-	page_table->present = pg->allocated;
-	page_table->rw = !pg->readonly;
-	page_table->user = pg->user;
-	page_table->frame = (uintptr_t)pg->phys_addr >> 12;
 }
 
 void* paging_get_table(struct vmem_context* ctx) {
@@ -77,10 +82,10 @@ void* paging_get_table(struct vmem_context* ctx) {
 			return false;
 		}
 
-		struct vmem_page* page = ctx->first_page;
-		for(int i = 0; page != NULL && i < ctx->pages; i++) {
-			paging_apply(ctx, page);
-			page = page->next;
+		struct vmem_range* range = ctx->first_range;
+		for(int i = 0; range && i < ctx->num_ranges; i++) {
+			paging_apply(ctx, range);
+			range = range->next;
 		}
 	}
 

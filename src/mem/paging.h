@@ -22,6 +22,6 @@
 
 struct paging_context* paging_kernel_cr3;
 
-void paging_apply(struct vmem_context* ctx, struct vmem_page *pg);
+void paging_apply(struct vmem_context* ctx, struct vmem_range* range);
 void* paging_get_table(struct vmem_context* ctx);
 void paging_init();

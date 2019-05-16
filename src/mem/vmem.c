@@ -26,80 +26,71 @@
 #include <string.h>
 #include <tasks/scheduler.h>
 
-int vmem_add_page(struct vmem_context *ctx, struct vmem_page *pg) {
-	pg->next = NULL;
+static struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintptr_t addr, bool phys) {
+	struct vmem_range* range = ctx->first_range;
 
-	if(!ctx->first_page) {
-		ctx->pages = 1;
-		ctx->first_page = pg;
-		ctx->last_page = pg;
-		return 0;
-	}
+	for(; range; range = range->next) {
+		uintptr_t start = (phys ? range->phys_start : range->virt_start);
 
-	ctx->last_page->next = pg;
-	ctx->last_page = pg;
-	++ctx->pages;
-
-	if(ctx->tables) {
-		paging_apply(ctx, pg);
-	}
-	return 0;
-}
-
-struct vmem_page* vmem_get_page(struct vmem_context* ctx, void* addr, bool phys) {
-	addr = ALIGN_DOWN(addr, PAGE_SIZE);
-	struct vmem_page* page = ctx->first_page;
-
-	for(; page; page = page->next) {
-		if((phys ? page->phys_addr : page->virt_addr) == addr) {
-			return page;
+		if(addr >= start && addr <= (start + range->length)) {
+			return range;
 		}
 	}
 	return NULL;
 }
 
+void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uintptr_t size, bool user, bool ro) {
+	struct vmem_range* range = zmalloc(sizeof(struct vmem_range));
+	range->readonly = ro;
+	range->cow = 0;
+	range->allocated = 1;
+	range->user = user;
+	range->virt_start = ALIGN_DOWN((uintptr_t)virt_start, PAGE_SIZE);
+	range->phys_start = ALIGN_DOWN((uintptr_t)phys_start, PAGE_SIZE);
+	range->length = ALIGN(size, PAGE_SIZE);
+	range->next = NULL;
+
+	if(!ctx->last_range) {
+		ctx->first_range = range;
+		ctx->last_range = range;
+		ctx->num_ranges = 1;
+	} else {
+		ctx->last_range->next = range;
+		ctx->last_range = range;
+		++ctx->num_ranges;
+	}
+
+	if(ctx->tables) {
+		paging_apply(ctx, range);
+	}
+	return;
+}
+
+uintptr_t vmem_translate(struct vmem_context* ctx, uintptr_t raddress, bool phys) {
+	struct vmem_range* range = vmem_get_range(ctx, raddress, phys);
+	if(!range) {
+		return 0;
+	}
+
+	uintptr_t diff = raddress - (phys ? range->phys_start : range->virt_start);
+	return (phys ? range->virt_start : range->phys_start) + diff;
+}
+
 void vmem_rm_context(struct vmem_context* ctx) {
-	struct vmem_page* page = ctx->first_page;
-	for (uint32_t i = 0; page && i < ctx->pages; i++) {
-		struct vmem_page* old_page = page;
-		page = page->next;
-		kfree(old_page);
+	struct vmem_range* range = ctx->first_range;
+	for (uint32_t i = 0; range && i < ctx->num_ranges; i++) {
+		struct vmem_range* old_range = range;
+		range = range->next;
+		kfree(old_range);
 	}
 
 	kfree(ctx->tables);
 	kfree(ctx);
 }
 
-void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint32_t size, bool user, bool ro) {
-	for(uintptr_t i = 0; i < ALIGN(size, PAGE_SIZE); i += PAGE_SIZE) {
-		struct vmem_page *page = zmalloc(sizeof(struct vmem_page));
-		page->readonly = ro;
-		page->cow = 0;
-		page->allocated = 1;
-		page->user = user;
-		page->virt_addr = virt_start + i;
-		page->phys_addr = phys_start + i;
-		vmem_add_page(ctx, page);
-	}
-}
-
-uintptr_t vmem_translate(struct vmem_context* ctx, intptr_t raddress, bool reverse) {
-	int diff = raddress % PAGE_SIZE;
-	raddress -= diff;
-
-	struct vmem_page* page = vmem_get_page(ctx, (void*)raddress, reverse);
-
-	if(!page) {
-		return 0;
-	}
-
-	intptr_t v = reverse ? (intptr_t)page->virt_addr : (intptr_t)page->phys_addr;
-	return v + diff;
-}
-
 void vmem_init() {
 	// Initialize kernel context
 	struct vmem_context *ctx = zmalloc(sizeof(struct vmem_context));
-	vmem_map_flat(ctx, PAGE_SIZE, 0xffffe000U, 0, 0);
+	vmem_map_flat(ctx, (void*)PAGE_SIZE, 0xffffe000U, 0, 0);
 	vmem_kernelContext = ctx;
 }

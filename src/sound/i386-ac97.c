@@ -25,8 +25,8 @@
 #include <portio.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
+#include <boot/multiboot.h>
 #include <string.h>
-#include <multiboot.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 
