@@ -23,7 +23,7 @@
 #include <tasks/elf.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
-#include <mem/paging.h>
+#include <mem/vmem.h>
 #include <mem/i386-gdt.h>
 #include <int/int.h>
 #include <tty/tty.h>
@@ -179,7 +179,7 @@ int task_fork(task_t* to_fork, isf_t* state) {
 		}
 	}
 
-	task->state->cr3 = (uint32_t)paging_get_table(task->memory_context);
+	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->memory_context);
 
 	/* Set syscall return values for the forked task – need to set here since
 	 * the regular syscall return handling only affects the main process.
@@ -269,7 +269,7 @@ void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
-	task->state->cr3 = (uint32_t)paging_get_table(task->memory_context);
+	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->memory_context);
 	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
 	task->state->esp = task->state->ebp - sizeof(iret_t);
 

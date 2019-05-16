@@ -27,5 +27,4 @@ static inline void mem_init() {
 	memory_track_init();
 	kmalloc_init();
 	vmem_init();
-	paging_init();
 }

@@ -22,7 +22,7 @@
 #include <int/int.h>
 #include <stdbool.h>
 
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 0x1000
 
 /* Internal representation of a page allocation. This will get mapped to the
  * hardware form by <arch>-paging.c.
@@ -30,29 +30,26 @@
 struct vmem_range {
 	struct vmem_range* next;
 	bool readonly:1;
-	bool cow:1;
-	bool allocated:1;
 	bool user:1;
 
-	void* cow_src;
 	uintptr_t virt_start;
 	uintptr_t phys_start;
 	uintptr_t length;
 };
 
 struct vmem_context {
-	struct vmem_range* first_range;
-	struct vmem_range* last_range;
-	uint32_t num_ranges;
+	struct vmem_range* ranges;
 
 	// Address of the actual page tables that will be read by the hardware
-	void* tables;
+	struct paging_context* hwdata;
 };
 
-struct vmem_context* vmem_kernelContext;
+/* Used in interrupt handlers to return to kernel paging context */
+void* vmem_kernel_hwdata;
 
 void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uintptr_t size, bool user, bool ro);
 #define vmem_map_flat(ctx, start, size, user, ro) vmem_map(ctx, start, start, size, user, ro)
 uintptr_t vmem_translate(struct vmem_context* ctx, uintptr_t raddress, bool reverse);
+void* vmem_get_hwdata(struct vmem_context* ctx);
 void vmem_rm_context(struct vmem_context* ctx);
 void vmem_init();

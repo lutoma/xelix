@@ -18,7 +18,7 @@
 
 [EXTERN cpu_fault_handler]
 [EXTERN interrupts_callback]
-[EXTERN paging_kernel_cr3]
+[EXTERN vmem_kernel_hwdata]
 
 %define PIT_MASTER	0x20
 %define PIT_SLAVE	0xA0
@@ -144,7 +144,7 @@ interrupts_common_handler:
 	test eax, eax
 	jnz .return
 
-	mov ecx, [paging_kernel_cr3]
+	mov ecx, [vmem_kernel_hwdata]
 	jecxz .no_paging
 
 	mov edx, cr3
@@ -164,7 +164,7 @@ interrupts_common_handler:
 .return:
 	; reload paging context
 	pop eax
-	cmp eax, [paging_kernel_cr3]
+	cmp eax, [vmem_kernel_hwdata]
 	je isf_return
 	mov cr3, eax
 
