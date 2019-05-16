@@ -109,6 +109,7 @@ typedef struct task {
 	// Exit code in a format compatible with the waitpid() stat_loc field
 	int exit_code;
 
+	// These arrays are not necessarily NULL-terminated, always check argc/envc!
 	char** environ;
 	char** argv;
 	uint32_t argc;

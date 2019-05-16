@@ -44,9 +44,9 @@ extern bool kmalloc_ready;
 	#define kfree(ptr) _kfree(ptr)
 #endif
 
-#define kfree_array(arr) do { \
-	for(typeof(arr) i = arr; *i; i++) { \
-		kfree(*i); \
+#define kfree_array(arr, max) do { \
+	for(int i = 0; i < max && *(arr + i); i++) { \
+		kfree(*(arr + i)); \
 	} \
 	kfree(arr); \
 } while(0)

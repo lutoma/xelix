@@ -57,10 +57,19 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	strcpy(task->name, name);
 	memcpy(task->cwd, parent ? parent->cwd : "/", TASK_PATH_MAX);
 	task->parent = parent;
-	task->environ = environ;
+
 	task->envc = envc;
-	task->argv = argv;
 	task->argc = argc;
+	task->environ = kmalloc(sizeof(char*) * task->envc);
+	task->argv = kmalloc(sizeof(char*) * task->argc);
+
+	for(int i = 0; i < task->envc; i++) {
+		task->environ[i] = strdup(environ[i]);
+	}
+
+	for(int i = 0; i < task->argc; i++) {
+		task->argv[i] = strdup(argv[i]);
+	}
 
 	char tname[10];
 	snprintf(tname, 10, "task%d", task->pid);
@@ -221,6 +230,9 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	}
 
 	task_t* new_task = task_new(task->parent, task->pid, path, __env, __envc, __argv, __argc);
+	kfree_array(__argv, __argc);
+	kfree_array(__env, __envc);
+
 	memcpy(new_task->cwd, task->cwd, TASK_PATH_MAX);
 	new_task->uid = task->uid;
 	new_task->gid = task->gid;
@@ -280,10 +292,8 @@ void task_cleanup(task_t* t) {
 	kfree(t->stack);
 	kfree(t->kernel_stack);
 
-	// FIXME No good since we pass those in as static strings occasionally
-	//kfree_array(t->environ);
-	//kfree_array(t->argv);
-
+	kfree_array(t->environ, t->envc);
+	kfree_array(t->argv, t->argc);
 	kfree(t);
 }
 
