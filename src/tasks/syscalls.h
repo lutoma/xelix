@@ -164,7 +164,7 @@ const struct syscall_definition syscall_table[] = {
 		SCA_UNUSED, SCA_UNUSED, SCA_UNUSED},
 
 	// 31
-	{"readlink", (syscall_cb)vfs_readlink, 0,
+	{"readlink", (syscall_cb)vfs_readlink, SCF_TASKEND,
 		SCA_STRING | SCA_TRANSLATE, SCA_POINTER | SCA_TRANSLATE, SCA_INT},
 
 	// 32
