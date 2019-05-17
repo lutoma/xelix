@@ -52,3 +52,4 @@ extern bool kmalloc_ready;
 } while(0)
 
 void kmalloc_init();
+void kmalloc_map_all();

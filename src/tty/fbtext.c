@@ -204,6 +204,12 @@ struct tty_driver* tty_fbtext_init() {
 
 	log(LOG_DEBUG, "fbtext: font width %d height %d flags %d\n", tty_font.width, tty_font.height, tty_font.flags);
 
+	// Map the framebuffer into the kernel paging context
+	size_t vmem_size = fb_desc->common.framebuffer_width
+		* fb_desc->common.framebuffer_height
+		* fb_desc->common.framebuffer_bpp;
+	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, 0, 0);
+
 	drv = kmalloc(sizeof(struct tty_driver));
 	drv->cols = fb_desc->common.framebuffer_width / tty_font.width;
 	drv->rows = fb_desc->common.framebuffer_height / tty_font.height;

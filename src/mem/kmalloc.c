@@ -396,6 +396,13 @@ void kmalloc_init() {
 	sysfs_add_file("memfree", sfs_read, NULL);
 }
 
+/* Called by vmem_init to map our pages - can't be done in init() as kmalloc is
+ * initialized before vmem.
+ */
+void kmalloc_map_all() {
+	vmem_map_flat(NULL, (void*)alloc_start, alloc_max - alloc_start, 0, 0);
+}
+
 #ifdef KMALLOC_CHECK
 static void check_header(struct mem_block* header) {
 	if(header->magic != KMALLOC_MAGIC) {

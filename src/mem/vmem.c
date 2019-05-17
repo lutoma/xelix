@@ -25,7 +25,16 @@
 #include <string.h>
 #include <tasks/scheduler.h>
 
+static struct vmem_context* kernel_ctx = NULL;
+
 void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uintptr_t size, bool user, bool ro) {
+	if(!ctx) {
+		if(!kernel_ctx) {
+			return;
+		}
+		ctx = kernel_ctx;
+	}
+
 	struct vmem_range* range = zmalloc(sizeof(struct vmem_range));
 	range->readonly = ro;
 	range->user = user;
@@ -54,6 +63,10 @@ static inline struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintpt
 }
 
 uintptr_t vmem_translate(struct vmem_context* ctx, uintptr_t raddress, bool phys) {
+	if(!ctx) {
+		ctx = kernel_ctx;
+	}
+
 	struct vmem_range* range = vmem_get_range(ctx, raddress, phys);
 	if(!range) {
 		return 0;
@@ -90,8 +103,9 @@ void* vmem_get_hwdata(struct vmem_context* ctx) {
 
 void vmem_init() {
 	// Initialize kernel context
-	struct vmem_context *ctx = zmalloc(sizeof(struct vmem_context));
-	vmem_map_flat(ctx, (void*)PAGE_SIZE, 0xffffe000U, 0, 0);
-	vmem_kernel_hwdata = vmem_get_hwdata(ctx);
+	kernel_ctx = zmalloc(sizeof(struct vmem_context));
+	vmem_map_flat(NULL, (void*)KERNEL_START, KERNEL_SIZE, 0, 0);
+	kmalloc_map_all();
+	vmem_kernel_hwdata = vmem_get_hwdata(kernel_ctx);
 	paging_init();
 }
