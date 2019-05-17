@@ -8,7 +8,8 @@ ifeq ($(ARCH),arm)
 else
 	PREFIX = i786-pc-xelix
 	MAKE_CFLAGS = -mtune=sandybridge -mgeneral-regs-only -mhard-float
-	MAKE_ASFLAGS = -g -f elf
+	MAKE_NASMFLAGS = -g -f elf
+	MAKE_ASFLAGS := $(MAKE_CFLAGS) -ffreestanding
 	AS = nasm
 endif
 
@@ -40,7 +41,7 @@ ext/picotcp/build/lib/libpicotcp.a:
 	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
-	$(AS) $(MAKE_ASFLAGS) -o $@ $<
+	$(AS) $(MAKE_NASMFLAGS) -o $@ $<
 
 %-S.o: %.S
 	$(CC) $(MAKE_ASFLAGS) -o $@ -c $<
