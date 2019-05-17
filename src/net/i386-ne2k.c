@@ -19,14 +19,14 @@
 
 #ifdef ENABLE_NE2K
 
-#include <hw/ne2k.h>
+#include <net/i386-ne2k.h>
 #include <net/net.h>
-#include <hw/pci.h>
+#include <bsp/i386-pci.h>
 #include <log.h>
 #include <portio.h>
 #include <bitmap.h>
 #include <string.h>
-#include <print.h>
+#include <printf.h>
 #include <fs/sysfs.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
