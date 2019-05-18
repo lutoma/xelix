@@ -21,13 +21,6 @@
 #include <tty/tty.h>
 #include <tty/keymap.h>
 
-inline size_t write_escape(char* dest, char e) {
-	dest[0] = '\033';
-	dest[1] = '[';
-	dest[2] = e;
-	return 3;
-}
-
 /* Convert tty_input_state/keycodes to ASCII character. Also converts a number of
  * single-byte escape sequences that are used in both canonical and non-canonical
  * mode.
@@ -46,10 +39,11 @@ static inline char convert_to_char(struct tty_input_state* input) {
 			return term->termios.c_cc[VEOL];
 	}
 
-	if(input->control_left || input->control_right) {
+	if((input->control_left || input->control_right) && *chr >= 'a' && *chr <= 'z') {
 		switch(*chr) {
 			case 'd': return term->termios.c_cc[VEOF];
 			case 'c': return term->termios.c_cc[VINTR];
+			default: return *chr - 'a' + 1;
 		}
 	}
 
@@ -108,15 +102,27 @@ static void handle_noncanon(struct tty_input_state* input) {
 
 	size_t inputlen = 3;
 	switch(input->code) {
-		case 0x48: inputseq = "\033[A"; break;
-		case 0x50: inputseq = "\033[B"; break;
-		case 0x4d: inputseq = "\033[C"; break;
-		case 0x4b: inputseq = "\033[D"; break;
-		case 0x4f: inputseq = "\033[F"; break;
-		case 0x47: inputseq = "\033[H"; break;
-		case 0x53: inputseq = "\033[3"; break;
+		case 0x48: inputseq = "\033[A"; break; // Up arrow
+		case 0x50: inputseq = "\033[B"; break; // Down arrow
+		case 0x4d: inputseq = "\033[C"; break; // Right arrow
+		case 0x4b: inputseq = "\033[D"; break; // Left arrow
+		case 0x4f: inputseq = "\033[F"; break; // End
+		case 0x47: inputseq = "\033[H"; break; // Home
+		case 0x53: inputseq = "\033[3~"; break; // Del
 		case 0x49: inputseq = "\033[5"; break;
 		case 0x51: inputseq = "\033[6"; break;
+		case 0xbb: inputseq = "\217[P"; break; // F1
+		case 0xbc: inputseq = "\217[Q"; break; // F2
+		case 0xbd: inputseq = "\217[R"; break; // F3
+		case 0xbe: inputseq = "\217[S"; break; // F4
+		case 0xbf: inputseq = "\033[15~"; break; // F5
+		case 0xc0: inputseq = "\033[17~"; break; // F6
+		case 0xc1: inputseq = "\033[18~"; break; // F7
+		case 0xc2: inputseq = "\033[19~"; break; // F8
+		case 0xc3: inputseq = "\033[20~"; break; // F9
+		case 0xc4: inputseq = "\033[21~"; break; // F10
+		case 0xd7: inputseq = "\033[23~"; break; // F11
+		case 0xd8: inputseq = "\033[24~"; break; // F12*/
 		default:
 			*char_p = convert_to_char(input);
 			if(!*char_p) {
