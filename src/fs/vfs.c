@@ -259,7 +259,6 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	strcpy(fp->path, path);
 	strcpy(fp->mount_path, mount_path);
 	kfree(path);
-	memcpy(&fp->callbacks, &mp.callbacks, sizeof(struct vfs_callbacks));
 	fp->mount_instance = mp.instance;
 	fp->task = task;
 	fp->flags = flags;
@@ -481,7 +480,7 @@ int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
 
 int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 	VFS_GET_CB_OR_ERROR(access);
-	int r = mp->callbacks.access(mount_path, amode, task);
+	int r = mp->callbacks.access(mount_path, amode, mp->instance, task);
 	kfree(mount_path);
 	return r;
 }
@@ -575,8 +574,8 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 	return 0;
 }
 
-static size_t sfs_mounts_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset) {
+static size_t sfs_mounts_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
+	if(fp->offset) {
 		return 0;
 	}
 
@@ -599,5 +598,9 @@ void vfs_init() {
 
 	bzero(kernel_files, sizeof(kernel_files));
 	vfs_null_init();
-	sysfs_add_file("mounts", sfs_mounts_read, NULL);
+
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_mounts_read,
+	};
+	sysfs_add_file("mounts", &sfs_cb);
 }

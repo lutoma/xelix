@@ -20,8 +20,8 @@
 #include <fs/sysfs.h>
 #include <string.h>
 
-static size_t null_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(meta == (void*)1) {
+static size_t null_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
+	if(fp->meta == 1) {
 		bzero(dest, size);
 		return size;
 	} else {
@@ -29,13 +29,18 @@ static size_t null_read(void* dest, size_t size, size_t offset, void* meta) {
 	}
 }
 
-static size_t null_write(void* source, size_t size, size_t offset, void* meta) {
+static size_t null_write(struct vfs_file* fp, void* source, size_t size, struct task* task) {
 	return size;
 }
 
 void vfs_null_init(void) {
-	struct sysfs_file* null = sysfs_add_dev("null", null_read, null_write);
-	struct sysfs_file* zero = sysfs_add_dev("zero", null_read, null_write);
+	struct vfs_callbacks sfs_cb = {
+		.read = null_read,
+		.write = null_write,
+	};
+
+	struct sysfs_file* null = sysfs_add_dev("null", &sfs_cb);
+	struct sysfs_file* zero = sysfs_add_dev("zero", &sfs_cb);
 	null->meta = (void*)0;
 	zero->meta = (void*)1;
 }

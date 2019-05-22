@@ -39,8 +39,8 @@ uint32_t timer_get_rate(void) {
 	return rate;
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
+	if(fp->offset) {
 		return 0;
 	}
 
@@ -74,5 +74,8 @@ void timer_init() {
 }
 
 void timer_init2() {
-	sysfs_add_file("tick", sfs_read, NULL);
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("tick", &sfs_cb);
 }

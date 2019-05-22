@@ -1,5 +1,5 @@
 /* sysfs.c: System FS. Used for /dev and /sys.
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -26,8 +26,18 @@
 #include <tasks/task.h>
 #include <time.h>
 
-struct sysfs_file* sys_files;
-struct sysfs_file* dev_files;
+vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task);
+int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task);
+int sysfs_access(char* path, uint32_t amode, void* mount_instance, struct task* task);
+
+static struct vfs_callbacks callbacks = {
+	.open = sysfs_open,
+	.stat = sysfs_stat,
+	.access = sysfs_access,
+};
+
+static struct sysfs_file* sys_files;
+static struct sysfs_file* dev_files;
 
 static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
 	if(!first) {
@@ -50,19 +60,6 @@ static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
 	return NULL;
 }
 
-vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task) {
-	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
-	if(strncmp(path, "/", 2) && !file) {
-		sc_errno = ENOENT;
-		return NULL;
-	}
-
-	vfs_file_t* fp = vfs_alloc_fileno(task);
-	fp->inode = 1;
-	fp->type = file ? file->type : FT_IFDIR;
-	return fp;
-}
-
 int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task) {
 	bool is_root = !strncmp(path, "/", 2);
 	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
@@ -78,9 +75,9 @@ int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task)
 	} else {
 		dest->st_mode = file ? file->type : FT_IFDIR;
 
-		if(file->read_cb)
+		if(file->cb.read)
 			dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
-		if(file->write_cb)
+		if(file->cb.write)
 			dest->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
 	}
 	dest->st_nlink = 1;
@@ -97,24 +94,22 @@ int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task)
 	return 0;
 }
 
-size_t sysfs_read_file(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
-	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
-	if(!file || !file->read_cb) {
-		sc_errno = file ? ENXIO : ENOENT;
+int sysfs_access(char* path, uint32_t amode, void* mount_instance, struct task* task) {
+	if(!strncmp(path, "/", 2)) {
+		return 0;
+	}
+
+	// Only root dir has exec perm
+	if(amode & X_OK) {
+		sc_errno = EACCES;
 		return -1;
 	}
 
-	return file->read_cb(dest, size, fp->offset, file->meta);
-}
-
-size_t sysfs_write_file(vfs_file_t* fp, void* source, size_t size, task_t* task) {
-	struct sysfs_file* file = get_file(fp->mount_path, *(struct sysfs_file**)fp->mount_instance);
-	if(!file || !file->write_cb) {
-		sc_errno = file ? ENXIO : ENOENT;
+	if(!get_file(path, *(struct sysfs_file**)mount_instance)) {
+		sc_errno = ENOENT;
 		return -1;
 	}
-
-	return file->write_cb(source, size, fp->offset, file->meta);
+	return 0;
 }
 
 size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
@@ -148,14 +143,42 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	return total_length;
 }
 
+vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task) {
+	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
+	bool is_root = !strncmp(path, "/", 2);
+	if(!(file || is_root)) {
+		sc_errno = ENOENT;
+		return NULL;
+	}
+
+	vfs_file_t* fp = vfs_alloc_fileno(task);
+	fp->inode = 1;
+
+	if(is_root) {
+		fp->type = FT_IFDIR;
+		memcpy(&fp->callbacks, &callbacks, sizeof(struct vfs_callbacks));
+		fp->callbacks.getdents = sysfs_getdents;
+	} else {
+		fp->type = file->type;
+		fp->meta = (uint32_t)file->meta;
+		memcpy(&fp->callbacks, &file->cb, sizeof(struct vfs_callbacks));
+		if(!fp->callbacks.stat) {
+			fp->callbacks.stat = sysfs_stat;
+		}
+		if(!fp->callbacks.access) {
+			fp->callbacks.access = sysfs_access;
+		}
+	}
+	return fp;
+}
+
 static struct sysfs_file* add_file(struct sysfs_file** table, char* name,
-	sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb) {
+	struct vfs_callbacks* cb) {
 
 	struct sysfs_file* fp = zmalloc(sizeof(struct sysfs_file));
 	strcpy(fp->name, name);
 	fp->type = table == &sys_files ? FT_IFREG : FT_IFCHR;
-	fp->read_cb = read_cb;
-	fp->write_cb = write_cb;
+	memcpy(&fp->cb, cb, sizeof(struct vfs_callbacks));
 	if(*table) {
 		fp->next = *table;
 		(*table)->prev = fp;
@@ -185,14 +208,12 @@ static void remove_file(struct sysfs_file** table, char* name) {
 	kfree(fp);
 }
 
-struct sysfs_file* sysfs_add_file(char* name, sysfs_read_callback_t read_cb,
-	sysfs_write_callback_t write_cb) {
-	return add_file(&sys_files, name, read_cb, write_cb);
+struct sysfs_file* sysfs_add_file(char* name, struct vfs_callbacks* cb) {
+	return add_file(&sys_files, name, cb);
 }
 
-struct sysfs_file* sysfs_add_dev(char* name, sysfs_read_callback_t read_cb,
-	sysfs_write_callback_t write_cb) {
-	return add_file(&dev_files, name, read_cb, write_cb);
+struct sysfs_file* sysfs_add_dev(char* name, struct vfs_callbacks* cb) {
+	return add_file(&dev_files, name, cb);
 }
 
 void sysfs_rm_file(char* name) {
@@ -204,22 +225,6 @@ void sysfs_rm_dev(char* name) {
 }
 
 void sysfs_init() {
-	struct vfs_callbacks cb = {
-		.open = sysfs_open,
-		.stat = sysfs_stat,
-		.read = sysfs_read_file,
-		.write = sysfs_write_file,
-		.getdents = sysfs_getdents,
-		.symlink = NULL,
-		.unlink = NULL,
-		.chown = NULL,
-		.chmod = NULL,
-		.mkdir = NULL,
-		.utimes = NULL,
-		.rmdir = NULL,
-		.link = NULL,
-		.readlink = NULL,
-	};
-	vfs_mount("/sys", &sys_files, "sys", "sysfs", &cb);
-	vfs_mount("/dev", &dev_files, "dev", "sysfs", &cb);
+	vfs_mount("/sys", &sys_files, "sys", "sysfs", &callbacks);
+	vfs_mount("/dev", &dev_files, "dev", "sysfs", &callbacks);
 }

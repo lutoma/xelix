@@ -64,16 +64,16 @@ static void store(uint32_t level, char* fmt_string, size_t fmt_len) {
 	append(fmt_string, fmt_len);
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset >= log_size) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
+	if(fp->offset >= log_size) {
 		return 0;
 	}
 
-	if(offset + size > log_size) {
-		size = log_size - offset;
+	if(fp->offset + size > log_size) {
+		size = log_size - fp->offset;
 	}
 
-	memcpy(dest, buffer + offset, size);
+	memcpy(dest, buffer + fp->offset, size);
 	return size;
 }
 #endif
@@ -134,6 +134,9 @@ void log(uint32_t level, const char *fmt, ...) {
 
 void log_init() {
 	#ifdef LOG_STORE
-	sysfs_add_file("log", sfs_read, NULL);
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("log", &sfs_cb);
 	#endif
 }

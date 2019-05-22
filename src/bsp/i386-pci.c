@@ -143,8 +143,8 @@ uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2
 	return devices_found;
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
+	if(fp->offset) {
 		return 0;
 	}
 
@@ -156,13 +156,6 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 			dev->class, dev->revision, dev->iobase,
 			dev->header_type, dev->interrupt_line, dev->interrupt_pin);
 	}
-
-	return rsize;
-}
-static size_t sfs_dev_read(void* dest, size_t size, size_t offset, void* meta) {
-	size_t rsize = 0;
-	pci_device_t* dev = (pci_device_t*)meta;
-	sysfs_printf("hello from sfs_dev_read, device bus %d, dev %d func %d\n", dev->bus, dev->dev, dev->func);
 
 	return rsize;
 }
@@ -184,12 +177,6 @@ void pci_init() {
 				pci_device_t* pdev = kmalloc(sizeof(pci_device_t));
 				load_device(pdev, bus, dev, func);
 
-				char* dname = kmalloc(20);
-				snprintf(dname, 20, "pci%dd%df%d", bus, dev, func);
-				struct sysfs_file* file = sysfs_add_dev(dname, sfs_dev_read, NULL);
-				file->meta = (void*)pdev;
-				kfree(dname);
-
 				pdev->next = first_device;
 				first_device = pdev;
 
@@ -202,5 +189,8 @@ void pci_init() {
 		}
 	}
 
-	sysfs_add_file("pci", sfs_read, NULL);
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("pci", &sfs_cb);
 }

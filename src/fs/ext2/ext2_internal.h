@@ -167,6 +167,7 @@ struct ext2_blocknum_resolver_cache {
 struct superblock* superblock;
 struct blockgroup* blockgroup_table;
 struct inode* root_inode;
+struct vfs_callbacks* ext2_callbacks;
 
 bool ext2_inode_write(struct inode* buf, uint32_t inode_num);
 bool ext2_inode_read(struct inode* buf, uint32_t inode_num);

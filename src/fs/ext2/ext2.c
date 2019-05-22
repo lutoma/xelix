@@ -365,7 +365,7 @@ int ext2_link(const char* path, const char* new_path, task_t* task) {
 	return 0;
 }
 
-int ext2_access(char* path, uint32_t amode, task_t* task) {
+int ext2_access(char* path, uint32_t amode, void* mount_instance, task_t* task) {
 	struct dirent* dirent = ext2_dirent_find(path, NULL, task);
 	if(!dirent) {
 		sc_errno = ENOENT;
@@ -436,6 +436,23 @@ int ext2_readlink(const char* path, char* buf, size_t size, task_t* task) {
 	return strlen(buf);
 }
 
+struct vfs_callbacks cb = {
+	.open = ext2_open,
+	.stat = ext2_stat,
+	.read = ext2_read,
+	.write = ext2_write,
+	.getdents = ext2_getdents,
+	.unlink = ext2_unlink,
+	.chmod = ext2_chmod,
+	.chown = ext2_chown,
+	.symlink = NULL,
+	.mkdir = ext2_mkdir,
+	.utimes = ext2_utimes,
+	.rmdir = ext2_rmdir,
+	.link = ext2_link,
+	.readlink = ext2_readlink,
+	.access = ext2_access,
+};
 
 void ext2_init() {
 	// Main superblock always has an offset of 1024
@@ -499,23 +516,7 @@ void ext2_init() {
 	superblock->mount_time = time_get();
 	write_superblock();
 
-	struct vfs_callbacks cb = {
-		.open = ext2_open,
-		.stat = ext2_stat,
-		.read = ext2_read,
-		.write = ext2_write,
-		.getdents = ext2_getdents,
-		.unlink = ext2_unlink,
-		.chmod = ext2_chmod,
-		.chown = ext2_chown,
-		.symlink = NULL,
-		.mkdir = ext2_mkdir,
-		.utimes = ext2_utimes,
-		.rmdir = ext2_rmdir,
-		.link = ext2_link,
-		.readlink = ext2_readlink,
-		.access = ext2_access,
-	};
+	ext2_callbacks = &cb;
 	vfs_mount("/", NULL, "/dev/ide1p1", "ext2", &cb);
 }
 

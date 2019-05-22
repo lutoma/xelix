@@ -38,7 +38,7 @@
 
 uint32_t highest_pid = 0;
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta);
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task);
 
 static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
@@ -73,7 +73,10 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 
 	char tname[10];
 	snprintf(tname, 10, "task%d", task->pid);
-	struct sysfs_file* file = sysfs_add_file(tname, sfs_read, NULL);
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	struct sysfs_file* file = sysfs_add_file(tname, &sfs_cb);
 	file->meta = (void*)task;
 	return task;
 }
@@ -128,17 +131,6 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	vfs_open("/dev/stdin", O_RDONLY, task);
 	vfs_open("/dev/stdout", O_WRONLY, task);
 	vfs_open("/dev/stderr", O_WRONLY, task);
-
-	/* Set direct callbacks to console. Not technically necessary since
-	 * /dev/stdout etc will also resolve through the vfs (to sysfs), but this
-	 * avoids the lookup overhead.
-	 */
-	task->files[0].callbacks.read = tty_vfs_read;
-	task->files[1].callbacks.write = tty_vfs_write;
-	task->files[2].callbacks.write = tty_vfs_write;
-	task->files[0].callbacks.ioctl = tty_ioctl;
-	task->files[1].callbacks.ioctl = tty_ioctl;
-	task->files[2].callbacks.ioctl = tty_ioctl;
 	term->fg_task = task;
 	return task;
 }
@@ -353,13 +345,13 @@ void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 	return virt_addr;
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
+	if(fp->offset) {
 		return 0;
 	}
 
 	size_t rsize = 0;
-	task_t* task = (task_t*)meta;
+	task_t* task = (task_t*)fp->meta;
 
 	sysfs_printf("%-10s: %d\n", "pid", task->pid);
 	sysfs_printf("%-10s: %d\n", "uid", task->uid);

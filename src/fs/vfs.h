@@ -116,7 +116,7 @@ typedef struct {
 
 struct vfs_callbacks {
 	struct vfs_file* (*open)(char* path, uint32_t flags, void* mount_instance, struct task* task);
-	int (*access)(char* path, uint32_t amode, struct task* task);
+	int (*access)(char* path, uint32_t amode, void* mount_instance, struct task* task);
 	size_t (*read)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
 	size_t (*write)(struct vfs_file* fp, void* source, size_t size, struct task* task);
 	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size, struct task* task);

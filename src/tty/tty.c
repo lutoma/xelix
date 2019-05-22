@@ -115,10 +115,10 @@ size_t tty_write(char* source, size_t size) {
 }
 
 /* Sysfs callbacks */
-static size_t sfs_write(void* source, size_t size, size_t offset, void* meta) {
+static size_t sfs_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
 	return tty_write((char*)source, size);
 }
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
 	return tty_read((char*)dest, size);
 }
 
@@ -139,9 +139,18 @@ void tty_init() {
 	term->scrollback_size = term->drv->cols * term->drv->rows * SCROLLBACK_PAGES;
 	term->scrollback = zmalloc(term->scrollback_size);
 	term->scrollback_end = -1;
-
 	log(LOG_DEBUG, "tty: Can render %d columns, %d rows\n", term->drv->cols, term->drv->rows);
-	sysfs_add_dev("stdin", sfs_read, NULL);
-	sysfs_add_dev("stdout", NULL, sfs_write);
-	sysfs_add_dev("stderr", NULL, sfs_write);
+
+	struct vfs_callbacks stdin_cb = {
+		.read = sfs_read,
+		.ioctl = tty_ioctl,
+	};
+	struct vfs_callbacks stdout_cb = {
+		.write = sfs_write,
+		.ioctl = tty_ioctl,
+	};
+
+	sysfs_add_dev("stdin", &stdin_cb);
+	sysfs_add_dev("stdout", &stdout_cb);
+	sysfs_add_dev("stderr", &stdout_cb);
 }

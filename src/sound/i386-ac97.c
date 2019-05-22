@@ -145,7 +145,7 @@ static void set_sample_rate(struct ac97_card* card) {
 	log(LOG_DEBUG, "ac97: Sample rate set to %d Hz\n", card->sample_rate);
 }
 
-static size_t sfs_write(void* source, size_t size, size_t offset, void* meta) {
+static size_t sfs_write(struct vfs_file* fp, void* source, size_t size, struct task* task) {
 	struct ac97_card* card = &ac97_cards[0];
 	int bno = card->last_wr_buffer++;
 	if(bno >= NUM_BUFFERS) {
@@ -220,7 +220,11 @@ static void enable_card(struct ac97_card* card) {
 	set_sample_rate(card);
 	card->descs = zmalloc_a(sizeof(struct buf_desc) * 32);
 	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs);
-	sysfs_add_dev("dsp", NULL, sfs_write);
+
+	struct vfs_callbacks sfs_cb = {
+		.write = sfs_write,
+	};
+	sysfs_add_dev("dsp", &sfs_cb);
 }
 
 void ac97_init() {

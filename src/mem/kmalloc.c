@@ -350,8 +350,8 @@ void _kfree(void *ptr DEBUGREGS) {
 	spinlock_release(&kmalloc_lock);
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
+	if(fp->offset) {
 		return 0;
 	}
 
@@ -393,7 +393,11 @@ void kmalloc_init() {
 	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
 	kmalloc_ready = true;
 	log(LOG_DEBUG, "kmalloc: Allocating from %#x - %#x\n", alloc_start, alloc_max);
-	sysfs_add_file("memfree", sfs_read, NULL);
+
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("memfree", &sfs_cb);
 }
 
 /* Called by vmem_init to map our pages - can't be done in init() as kmalloc is

@@ -137,15 +137,14 @@ task_t* scheduler_select(isf_t* last_regs) {
 	return current_task;
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
+	if(fp->offset) {
 		return 0;
 	}
 
 	size_t rsize = 0;
 	sysfs_printf("# pid uid gid ppid state name memory entry sbrk stack\n")
 
-	task_t* task = current_task;
 	do {
 		if(task->task_state == TASK_STATE_REPLACED) {
 			goto next;
@@ -184,5 +183,8 @@ static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
 
 void scheduler_init() {
 	scheduler_state = SCHEDULER_INITIALIZING;
-	sysfs_add_file("tasks", sfs_read, NULL);
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("tasks", &sfs_cb);
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2018 Lukas Martini
+/* Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,24 +19,21 @@
  */
 
 #include <printf.h>
+#include <fs/vfs.h>
 
 #define sysfs_printf(args...) rsize += snprintf(dest + rsize, size - rsize, args);
 
-typedef size_t (*sysfs_read_callback_t)(void* dest, size_t size, size_t offset, void* meta);
-typedef size_t (*sysfs_write_callback_t)(void* data, size_t size, size_t offset, void* meta);
-
 struct sysfs_file {
 	char name[40];
-	sysfs_read_callback_t read_cb;
-	sysfs_write_callback_t write_cb;
+	struct vfs_callbacks cb;
 	void* meta;
 	uint16_t type;
 	struct sysfs_file* next;
 	struct sysfs_file* prev;
 };
 
-struct sysfs_file* sysfs_add_file(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb);
-struct sysfs_file* sysfs_add_dev(char* name, sysfs_read_callback_t read_cb, sysfs_write_callback_t write_cb);
+struct sysfs_file* sysfs_add_file(char* name, struct vfs_callbacks* cb);
+struct sysfs_file* sysfs_add_dev(char* name, struct vfs_callbacks* cb);
 void sysfs_rm_file(char* name);
 void sysfs_rm_dev(char* name);
 void sysfs_init();

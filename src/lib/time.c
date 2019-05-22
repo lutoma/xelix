@@ -169,8 +169,8 @@ int time_get_timeval(struct timeval* tv) {
 	return 0;
 }
 
-static size_t sfs_read(void* dest, size_t size, size_t offset, void* meta) {
-	if(offset) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
+	if(fp->offset) {
 		return 0;
 	}
 
@@ -183,5 +183,8 @@ void time_init() {
 	last_timestamp = read_rtc();
 	last_tick = timer_tick;
 	log(LOG_INFO, "time: Initial last_timestamp is %u at tick %llu\n", last_timestamp, last_tick);
-	sysfs_add_file("time", sfs_read, NULL);
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("time", &sfs_cb);
 }
