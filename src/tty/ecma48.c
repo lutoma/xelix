@@ -22,19 +22,15 @@
 #include <mem/kmalloc.h>
 #include <stdlib.h>
 
-static int set_char_attrs(char* intermediate) {
-	if(!intermediate) {
+static int set_char_attrs(int args[], size_t num_args) {
+	if(!num_args) {
 		term->fg_color = FG_COLOR_DEFAULT;
 		term->bg_color = BG_COLOR_DEFAULT;
 		return 0;
 	}
 
-	char* last = intermediate;
-	char* pos = NULL;
-	do {
-		pos = strchr(last, ';');
-		int attr = atoi(last);
-
+	for(int i = 0; i < num_args; i++) {
+		int attr = args[i];
 		if(attr == 0) {
 			term->fg_color = FG_COLOR_DEFAULT;
 			term->bg_color = BG_COLOR_DEFAULT;
@@ -43,18 +39,12 @@ static int set_char_attrs(char* intermediate) {
 		} else if(attr >= 40 && attr < 50) {
 			term->bg_color = attr - 40;
 		}
-
-		last = pos + 1;
-	} while(pos);
+	}
 	return 0;
 }
 
-static int clear(char* intermediate) {
-	int arg = 0;
-	if(intermediate) {
-		arg = atoi(intermediate);
-	}
-
+static int clear(int args[], size_t num_args) {
+	int arg = num_args ? args[0] : 0;
 	switch(arg) {
 		case 0:
 			term->drv->clear(0, term->cur_row, term->drv->cols, term->drv->rows); break;
@@ -66,12 +56,8 @@ static int clear(char* intermediate) {
 	return 0;
 }
 
-static int erase_in_line(char* intermediate) {
-	int arg = 0;
-	if(intermediate) {
-		arg = atoi(intermediate);
-	}
-
+static int erase_in_line(int args[], size_t num_args) {
+	int arg = num_args ? args[0] : 0;
 	switch(arg) {
 		case 0:
 			term->drv->clear(term->cur_col, term->cur_row, term->drv->cols, term->cur_row); break;
@@ -83,60 +69,37 @@ static int erase_in_line(char* intermediate) {
 	return 0;
 }
 
-static int set_pos(char* intermediate) {
-	if(!intermediate) {
+static int set_pos(int args[], size_t num_args) {
+	if(num_args < 2) {
 		term->cur_col = 0;
 		term->cur_row = 0;
 		return 0;
 	}
 
-	char* pos = strchr(intermediate, ';');
-	if(!pos) {
-		return -1;
-	}
-
-	*pos = 0;
-	term->cur_col = atoi(pos + 1) - 1;
-	term->cur_row = atoi(intermediate) - 1;
+	term->cur_row = args[0] - 1;
+	term->cur_col = args[1] - 1;
+	return 0;
+}
+static int set_row_pos(int args[], size_t num_args) {
+	int arg = num_args ? args[0] : 1;
+	term->cur_row = --arg;
 	return 0;
 }
 
-static int set_row_pos(char* intermediate) {
-	int arg = 0;
-	if(intermediate) {
-		arg = atoi(intermediate) - 1;
-	}
-
-	term->cur_row = arg;
+static int set_col_pos(int args[], size_t num_args) {
+	int arg = num_args ? args[0] : 1;
+	term->cur_col = --arg;
 	return 0;
 }
 
-static int set_col_pos(char* intermediate) {
-	int arg = 0;
-	if(intermediate) {
-		arg = atoi(intermediate) - 1;
-	}
-
-	term->cur_col = arg;
-	return 0;
-}
-
-static int clear_forward(char* intermediate) {
-	int arg = 1;
-	if(intermediate) {
-		arg = atoi(intermediate);
-	}
-
+static int clear_forward(int args[], size_t num_args) {
+	int arg = num_args ? args[0] : 1;
 	term->drv->clear(term->cur_col, term->cur_row, term->cur_col + arg, term->cur_row);
 	return 0;
 }
 
-static int repeat_char(char* intermediate) {
-	int arg = 1;
-	if(intermediate) {
-		arg = atoi(intermediate);
-	}
-
+static int repeat_char(int args[], size_t num_args) {
+	int arg = num_args ? args[0] : 1;
 	if(term->last_char) {
 		for(int i = 0; i < arg; i++) {
 			tty_write(&term->last_char, 1);
@@ -145,9 +108,18 @@ static int repeat_char(char* intermediate) {
 	return 0;
 }
 
-static int reset(char* intermediate) {
+static int reset(int args[], size_t num_args) {
 	term->fg_color = FG_COLOR_DEFAULT;
 	term->bg_color = BG_COLOR_DEFAULT;
+	return 0;
+}
+
+static int set_bdc(char arg) {
+	switch(arg) {
+		case '0': term->write_bdc = true; break;
+		case 'B': term->write_bdc = false; break;
+		default: return -1;
+	}
 	return 0;
 }
 
@@ -158,69 +130,89 @@ static int reset(char* intermediate) {
 	}						\
 }
 
+/* This function gets called by the tty output handlers whenever they encounter
+ * Esc (\033). It returns the number of handled characters. If an escape code
+ * is not recognized, this returns 0 so the code is printed to the screen.
+ */
 size_t tty_handle_escape_seq(char* str, size_t str_len) {
 	size_t spos = 0;
 	char* cur_str = str;
 	ESC_ADVANCE();
 
-	bool is_bdc = false;
-	switch(*cur_str) {
-		case '[':
-			break;
-		case ')':
-		case '(':
-			is_bdc = true;
-			break;
-		default:
-			return 0;
+	// \033( or \033) for Block Drawing Character mode settings
+	if(*cur_str == ')' || *cur_str == '(') {
+		ESC_ADVANCE();
+		return set_bdc(*cur_str) == -1 ? 0 : spos;
+	} else if(*cur_str != '[') {
+		return 0;
 	}
+
+	// Parse out any potential numeric intermediate arguments
 	ESC_ADVANCE();
+	int args[10];
+	size_t num_args = 0;
+	char* arg_start = NULL;
 
-	// An escape code may have a number of intermediate bytes
-	int intermediate_start = 0;
-	char* intermediate = NULL;
-
-	if(!is_bdc) {
-		while(spos <= str_len && (*cur_str == ';' || *cur_str == '?' || ('0' <= *cur_str && '9' >= *cur_str))) {
-			if(!intermediate_start) {
-				intermediate_start = spos;
+	while(1) {
+		if('0' <= *cur_str && '9' >= *cur_str) {
+			if(!arg_start) {
+				arg_start = cur_str;
 			}
-			ESC_ADVANCE();
+		} else {
+			if((*cur_str == ';' && !arg_start)) {
+				return 0;
+			}
+
+			if(arg_start) {
+				size_t len = cur_str - arg_start;
+				if(num_args >= ARRAY_SIZE(args) || !len) {
+					return 0;
+				}
+
+				char* astr = strndup(arg_start, len);
+				args[num_args++] = atoi(astr);
+				kfree(astr);
+				arg_start = NULL;
+			}
+
+			if(*cur_str != ';' && *cur_str != '?') {
+				break;
+			}
 		}
 
-		if(intermediate_start) {
-			intermediate = strndup(str + intermediate_start, spos - intermediate_start);
-		}
+		ESC_ADVANCE();
 	}
 
 	int result = -1;
-	if(is_bdc) {
-		switch(*cur_str) {
-			case '0':
-				term->write_bdc = true;
-				result = 0;
-				break;
-			case 'B':
-				term->write_bdc = false;
-				result = 0;
-				break;
-		}
-	} else {
-		switch(*cur_str) {
-			case 'm': result = set_char_attrs(intermediate); break;
-			case 'J': result = clear(intermediate); break;
-			case 'K': result = erase_in_line(intermediate); break;
-			case 'H': result = set_pos(intermediate); break;
-			case 'd': result = set_row_pos(intermediate); break;
-			case 'G': result = set_col_pos(intermediate); break;
-			case 'X': result = clear_forward(intermediate); break;
-			case 'l': result = reset(intermediate); break;
-			case 'b': result = repeat_char(intermediate); break;
-		}
+	switch(*cur_str) {
+		case 'A': // CUU
+			term->cur_row--;
+			result = 0;
+			break;
+		case 'B': // CUD
+			term->cur_row++;
+			result = 0;
+			break;
+		case 'C': // CUF
+		// FIXME
+		case '@': // ICH
+			term->cur_col++;
+			result = 0;
+			break;
+		case 'D': // CUB
+			term->cur_col--;
+			result = 0;
+			break;
+		case 'm': result = set_char_attrs(args, num_args); break;
+		case 'J': result = clear(args, num_args); break;
+		case 'K': result = erase_in_line(args, num_args); break;
+		case 'H': result = set_pos(args, num_args); break; // CUP
+		case 'd': result = set_row_pos(args, num_args); break;
+		case 'G': result = set_col_pos(args, num_args); break;
+		case 'X': result = clear_forward(args, num_args); break;
+		case 'l': result = reset(args, num_args); break;
+		case 'b': result = repeat_char(args, num_args); break;
 	}
 
-	if(intermediate) {
-		kfree(intermediate);
-	}
 	return result == -1 ? 0 : spos;
 }
