@@ -117,6 +117,10 @@ void* _sbrk(int incr) {
 	return (void*)syscall_pf(7, 0, incr, 0);
 }
 
+int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
+	return syscall(9, fds, nfds, timeout);
+}
+
 pid_t waitpid(pid_t pid, int* stat_loc, int options) {
 	return syscall(29, pid, stat_loc, options);
 }

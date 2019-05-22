@@ -87,6 +87,20 @@
 #define	F_RSETLKW 	13	/* Set or Clear remote record-lock(Blocking) */
 #define	F_DUPFD_CLOEXEC	14	/* As F_DUPFD, but set close-on-exec flag */
 
+// Poll events
+// Testable events (may be specified in events field)
+#define	POLLIN		0x0001
+#define	POLLPRI		0x0002
+#define	POLLOUT		0x0004
+#define	POLLRDNORM	0x0040
+#define	POLLWRNORM	POLLOUT
+#define	POLLRDBAND	0x0080
+#define	POLLWRBAND	0x0100
+// Non-testable events (may not be specified in events field).
+#define	POLLERR		0x0008
+#define	POLLHUP		0x0010
+#define	POLLNVAL	0x0020
+
 #define vfs_mode_to_filetype(mode) (mode & 0xf000)
 
 // Can't include <tasks/task.h> as that includes us, so use stub struct def.
@@ -114,6 +128,12 @@ typedef struct {
 	long st_spare4[2];
 } __attribute__((packed)) vfs_stat_t;
 
+struct pollfd {
+	int fd;			/* file descriptor */
+	short events;	/* requested events */
+	short revents;	/* returned events */
+};
+
 struct vfs_callbacks {
 	struct vfs_file* (*open)(char* path, uint32_t flags, void* mount_instance, struct task* task);
 	int (*access)(char* path, uint32_t amode, void* mount_instance, struct task* task);
@@ -131,6 +151,7 @@ struct vfs_callbacks {
 	int (*readlink)(const char* orig_path, char* buf, size_t size, struct task* task);
 	int (*rmdir)(char* path, struct task* task);
 	int (*ioctl)(const char* path, int request, void* arg, struct task* task);
+	int (*poll)(struct vfs_file* fp, int events);
 };
 
 typedef struct vfs_file {
@@ -144,6 +165,9 @@ typedef struct vfs_file {
 	size_t offset;
 	uint32_t inode;
 	struct task* task;
+
+	// File-system specific
+	uint32_t meta;
 } vfs_file_t;
 
 // Keep in sync with newlib
@@ -175,6 +199,7 @@ int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task
 int vfs_link(const char* orig_path, const char* orig_new_path, struct task* task);
 int vfs_readlink(const char* orig_path, char* buf, size_t size, struct task* task);
 int vfs_rmdir(const char* orig_path, struct task* task);
+int vfs_poll(struct pollfd* fds, uint32_t nfds, int timeout, struct task* task);
 int vfs_stat(char* path, vfs_stat_t* dest, struct task* task);
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	struct vfs_callbacks* callbacks);

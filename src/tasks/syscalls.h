@@ -66,8 +66,8 @@ const struct syscall_definition syscall_table[] = {
 		SCA_UNUSED, SCA_UNUSED, SCA_UNUSED},
 
 	// 9
-	{"", NULL, 0,
-		SCA_UNUSED, SCA_UNUSED, SCA_UNUSED},
+	{"poll", (syscall_cb)vfs_poll, SCF_TASKEND,
+		SCA_POINTER | SCA_TRANSLATE, SCA_INT, SCA_INT},
 
 	// 10
 	{"unlink", (syscall_cb)vfs_unlink, SCF_TASKEND,

@@ -1,4 +1,4 @@
-/* tty.c: tty ioctl
+/* ioctl.c: tty ioctl
  * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.

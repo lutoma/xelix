@@ -506,6 +506,35 @@ int vfs_rmdir(const char* orig_path, task_t* task) {
 	return r;
 }
 
+int vfs_poll(struct pollfd* fds, uint32_t nfds, int timeout, task_t* task) {
+	uint32_t timeout_end = 0;
+	if(timeout >= 0) {
+		timeout_end = timer_get_tick() + (timeout * 1000 / timer_get_rate());
+	}
+
+	while(1) {
+		for(uint32_t i = 0; i < nfds; i++) {
+			vfs_file_t* fp = vfs_get_from_id(fds[i].fd, task);
+			if(!fp->callbacks.poll) {
+				sc_errno = ENOSYS;
+				return -1;
+			}
+
+			int r = fp->callbacks.poll(fp, fds[i].events);
+			if(r) {
+				fds[i].revents = r;
+				return 1;
+			}
+		}
+
+		if(timeout_end && timer_get_tick() > timeout_end) {
+			break;
+		}
+		halt();
+	}
+	return 0;
+}
+
 int vfs_link(const char* orig_path, const char* orig_new_path, task_t* task) {
 	char* pwd = "/";
 	if(task) {

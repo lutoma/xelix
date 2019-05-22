@@ -21,6 +21,7 @@
 #include <tty/fbtext.h>
 #include <tty/keyboard.h>
 #include <tty/ecma48.h>
+#include <tty/input.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
@@ -144,6 +145,7 @@ void tty_init() {
 	struct vfs_callbacks stdin_cb = {
 		.read = sfs_read,
 		.ioctl = tty_ioctl,
+		.poll = tty_poll,
 	};
 	struct vfs_callbacks stdout_cb = {
 		.write = sfs_write,

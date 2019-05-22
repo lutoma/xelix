@@ -159,11 +159,6 @@ int issetugid(void) {
 	return 0;
 }
 
-int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
-	errno = ENOSYS;
-	return 1;
-}
-
 long sysconf(int name) {
 	errno = ENOSYS;
 	return 0;

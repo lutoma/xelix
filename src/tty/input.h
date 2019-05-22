@@ -19,6 +19,7 @@
  */
 
 #include <stdbool.h>
+#include <fs/vfs.h>
 
 struct tty_input_state {
 	bool shift;
@@ -34,3 +35,4 @@ struct tty_input_state {
 };
 
 void tty_input_cb(struct tty_input_state* input);
+int tty_poll(vfs_file_t* fp, int events);

@@ -1,4 +1,4 @@
-/* tty.c: Terminal input handling
+/* input.c: Terminal input handling
  * Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
@@ -169,4 +169,11 @@ size_t tty_read(char* dest, size_t size) {
 		term->read_done = false;
 	}
 	return size;
+}
+
+int tty_poll(vfs_file_t* fp, int events) {
+	if(events & POLLIN && term->read_len) {
+		return POLLIN;
+	}
+	return 0;
 }
