@@ -35,10 +35,10 @@
 #include <config.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/cdefs.h>
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
-#define __aligned(x)	__attribute__((aligned (x)))
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -63,5 +63,4 @@ static inline void __attribute__((noreturn)) freeze(void) {
        #define interrupts_disable() asm volatile("cli")
        #define interrupts_enable() asm volatile("sti")
        #define halt() asm volatile("hlt")
-       #define __fastcall __attribute__((fastcall))
 #endif
