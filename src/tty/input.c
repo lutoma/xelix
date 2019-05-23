@@ -26,19 +26,19 @@
  * mode.
  */
 static inline char convert_to_char(struct tty_input_state* input) {
-	if(input->code >= 512) {
+	if(input->code >= ARRAY_SIZE(tty_keymap_en)) {
 		return 0;
 	}
 
 	char* chr = &tty_keymap_en[input->code];
 	switch(*chr) {
-		case 0x8:
-		case 0x7f:
+		case '\b':
 			return term->termios.c_cc[VERASE];
 		case '\n':
 			return term->termios.c_cc[VEOL];
 	}
 
+	// Map presses of Ctrl+[a-z] to ASCII chars 1-26
 	if((input->control_left || input->control_right) && *chr >= 'a' && *chr <= 'z') {
 		switch(*chr) {
 			case 'd': return term->termios.c_cc[VEOF];
@@ -100,29 +100,31 @@ static void handle_noncanon(struct tty_input_state* input) {
 	char* inputseq;
 	char char_p[1];
 
-	size_t inputlen = 3;
+	// Handle special keys that send escape sequences
+	size_t inputlen;
 	switch(input->code) {
-		case 0x48: inputseq = "\033[A"; break; // Up arrow
-		case 0x50: inputseq = "\033[B"; break; // Down arrow
-		case 0x4d: inputseq = "\033[C"; break; // Right arrow
-		case 0x4b: inputseq = "\033[D"; break; // Left arrow
-		case 0x4f: inputseq = "\033[F"; break; // End
-		case 0x47: inputseq = "\033[H"; break; // Home
-		case 0x53: inputseq = "\033[3~"; break; // Del
-		case 0x49: inputseq = "\033[5"; break;
-		case 0x51: inputseq = "\033[6"; break;
-		case 0xbb: inputseq = "\217[P"; break; // F1
-		case 0xbc: inputseq = "\217[Q"; break; // F2
-		case 0xbd: inputseq = "\217[R"; break; // F3
-		case 0xbe: inputseq = "\217[S"; break; // F4
-		case 0xbf: inputseq = "\033[15~"; break; // F5
-		case 0xc0: inputseq = "\033[17~"; break; // F6
-		case 0xc1: inputseq = "\033[18~"; break; // F7
-		case 0xc2: inputseq = "\033[19~"; break; // F8
-		case 0xc3: inputseq = "\033[20~"; break; // F9
-		case 0xc4: inputseq = "\033[21~"; break; // F10
-		case 0xd7: inputseq = "\033[23~"; break; // F11
-		case 0xd8: inputseq = "\033[24~"; break; // F12*/
+		case 0x48: inputlen=3; inputseq = "\e[A"; break;   // Up arrow
+		case 0x50: inputlen=3; inputseq = "\e[B"; break;   // Down arrow
+		case 0x4d: inputlen=3; inputseq = "\e[C"; break;   // Right arrow
+		case 0x4b: inputlen=3; inputseq = "\e[D"; break;   // Left arrow
+		case 0x4f: inputlen=3; inputseq = "\e[F"; break;   // End
+		case 0x47: inputlen=3; inputseq = "\e[H"; break;   // Home
+		case 0x49: inputlen=3; inputseq = "\e[5"; break;   // Page up
+		case 0x51: inputlen=3; inputseq = "\e[6"; break;   // Page down
+		case 0x52: inputlen=4; inputseq = "\e[2~"; break;  // Insert
+		case 0x53: inputlen=4; inputseq = "\e[3~"; break;  // Del
+		case 0xbb: inputlen=3; inputseq = "\217[P"; break; // F1
+		case 0xbc: inputlen=3; inputseq = "\217[Q"; break; // F2
+		case 0xbd: inputlen=3; inputseq = "\217[R"; break; // F3
+		case 0xbe: inputlen=3; inputseq = "\217[S"; break; // F4
+		case 0xbf: inputlen=5; inputseq = "\e[15~"; break; // F5
+		case 0xc0: inputlen=5; inputseq = "\e[17~"; break; // F6
+		case 0xc1: inputlen=5; inputseq = "\e[18~"; break; // F7
+		case 0xc2: inputlen=5; inputseq = "\e[19~"; break; // F8
+		case 0xc3: inputlen=5; inputseq = "\e[20~"; break; // F9
+		case 0xc4: inputlen=5; inputseq = "\e[21~"; break; // F10
+		case 0xd7: inputlen=5; inputseq = "\e[23~"; break; // F11
+		case 0xd8: inputlen=5; inputseq = "\e[24~"; break; // F12
 		default:
 			*char_p = convert_to_char(input);
 			if(!*char_p) {
@@ -142,6 +144,7 @@ static void handle_noncanon(struct tty_input_state* input) {
 	term->read_done = true;
 }
 
+// Called by keyboard interrupt handler.
 void tty_input_cb(struct tty_input_state* input) {
 	if(!term || !input || term->read_len >= sizeof(term->read_buf)) {
 		return;

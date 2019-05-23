@@ -36,7 +36,7 @@ uint8_t default_c_cc[NCCS] = {
 	0,
 	4, // VEOF
 	'\n', // VEOL
-	8, // VERASE
+	'\b', // VERASE
 	3, // VINTR
 	21, // VKILL
 	0,  // VMIN
@@ -85,7 +85,7 @@ size_t tty_write(char* source, size_t size) {
 	for(int i = 0; i < size; i++) {
 		char chr = source[i];
 
-		if(chr == 033) {
+		if(chr == '\e') {
 			size_t skip = tty_handle_escape_seq(source + i, size - i);
 			if(skip) {
 				i += skip;
