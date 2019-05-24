@@ -393,6 +393,7 @@ int vfs_dup2(int fd1, int fd2, task_t* task) {
 		return -1;
 	}
 
+	fp2->num = fd2;
 	__sync_add_and_fetch(&fp1->refs, 1);
 	fp2->dup_target = fp1->dup_target ? fp1->dup_target : fp1;
 	return 0;
