@@ -378,19 +378,19 @@ int vfs_dup2(int fd1, int fd2, task_t* task) {
 	}
 
 	vfs_file_t* fp2 = task? &task->files[fd2] : &kernel_files[fd2];
-	if(fp2->refs) {
+	if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1)) {
 		// Can't use fd as dup target that is already a duplication source
 		if(fp2->refs > 1) {
 			sc_errno = EIO;
 			return -1;
 		}
 
-		vfs_close(fp2->num, task);
-	}
-
-	if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1)) {
-		sc_errno = EIO;
-		return -1;
+		// Attempt to close and try again
+		vfs_close(fd2, task);
+		if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1)) {
+			sc_errno = EIO;
+			return -1;
+		}
 	}
 
 	fp2->num = fd2;
@@ -440,10 +440,6 @@ int vfs_stat(char* orig_path, vfs_stat_t* dest, task_t* task) {
 
 int vfs_close(int fd, task_t* task) {
 	debug("\n", NULL);
-
-	if(fd < 3) {
-		return 0;
-	}
 
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
