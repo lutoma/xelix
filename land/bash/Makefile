@@ -1,4 +1,4 @@
-PACKAGE_VERSION := 4.4
+PACKAGE_VERSION := 5.0
 PACKAGE_NAME := bash-$(PACKAGE_VERSION)
 PACKAGE_URL := https://ftp.gnu.org/gnu/bash/$(PACKAGE_NAME).tar.gz
 

@@ -1,11 +1,11 @@
---- bash-4.4/support/config.sub	2013-12-17 16:49:47.000000000 +0100
-+++ ../../../bash-4.4/support/config.sub	2018-10-07 05:02:03.820062850 +0200
-@@ -1376,7 +1376,7 @@
- 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
- 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
- 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
--	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
-+	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -xelix*)
+--- bash-5.0/support/config.sub	2018-11-16 21:34:44.000000000 +0100
++++ bash-5.0/support/config.sub	2019-05-24 19:56:36.696395231 +0200
+@@ -1360,7 +1360,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd*)
++	     | midnightbsd* | xelix*)
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
- 	-qnx*)
+ 	qnx*)
