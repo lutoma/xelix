@@ -155,6 +155,10 @@ struct vfs_callbacks {
 };
 
 typedef struct vfs_file {
+	// Reference counter, fd will get reused if 0
+	int refs;
+	struct vfs_file* dup_target;
+
 	uint16_t type;
 	uint32_t num;
 	char path[512];
@@ -181,7 +185,7 @@ typedef struct {
 
 char* vfs_normalize_path(const char* orig_path, char* cwd);
 vfs_file_t* vfs_get_from_id(int id, struct task* task);
-vfs_file_t* vfs_alloc_fileno(struct task* task);
+vfs_file_t* vfs_alloc_fileno(struct task* task, int min);
 int vfs_open(const char* orig_path, uint32_t flags, struct task* task);
 size_t vfs_read(int fd, void* dest, size_t size, struct task* task);
 size_t vfs_write(int fd, void* source, size_t size, struct task* task);
@@ -189,6 +193,7 @@ size_t vfs_getdents(int fd, void* dest, size_t size, struct task* task);
 int vfs_seek(int fd, size_t offset, int origin, struct task* task);
 int vfs_close(int fd, struct task* task);
 int vfs_fcntl(int fd, int cmd, int arg3, struct task* task);
+int vfs_dup2(int fd1, int fd2, struct task* task);
 int vfs_ioctl(int fd, int request, void* arg, struct task* task);
 int vfs_unlink(char* orig_path, struct task* task);
 int vfs_chmod(const char* orig_path, uint32_t mode, struct task* task);

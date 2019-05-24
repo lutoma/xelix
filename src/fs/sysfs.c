@@ -151,7 +151,7 @@ vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t*
 		return NULL;
 	}
 
-	vfs_file_t* fp = vfs_alloc_fileno(task);
+	vfs_file_t* fp = vfs_alloc_fileno(task, 0);
 	fp->inode = 1;
 
 	if(is_root) {

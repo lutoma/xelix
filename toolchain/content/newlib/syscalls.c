@@ -325,18 +325,7 @@ int dup(int fildes) {
 }
 
 int dup2(int fildes, int fildes2) {
-	if(fildes2 < 0 || fildes2 >= OPEN_MAX) {
-		errno = EBADF;
-		return -1;
-	}
-
-	// FIXME Should check validity of fildes here
-	if(fildes == fildes2) {
-		return fildes2;
-	}
-
-	close(fildes2);
-	return fcntl(fildes, F_DUPFD, fildes2);
+	return syscall(44, fildes, fildes2, 0);
 }
 
 

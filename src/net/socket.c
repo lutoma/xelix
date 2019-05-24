@@ -190,7 +190,7 @@ vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock) {
 	sock->pico_socket = pico_sock;
 	pico_sock->priv = (void*)sock;
 
-	vfs_file_t* fd = vfs_alloc_fileno(task);
+	vfs_file_t* fd = vfs_alloc_fileno(task, 20);
 	fd->type = FT_IFSOCK;
 	fd->flags = O_RDWR;
 	fd->callbacks.read = vfs_read_cb;

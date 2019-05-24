@@ -117,7 +117,7 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 	}
 	kfree(inode);
 
-	vfs_file_t* fp = vfs_alloc_fileno(task);
+	vfs_file_t* fp = vfs_alloc_fileno(task, 3);
 	fp->type = ft;
 	fp->inode = inode_num;
 	memcpy(&fp->callbacks, ext2_callbacks, sizeof(struct vfs_callbacks));

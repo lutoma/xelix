@@ -65,7 +65,6 @@ struct mountpoint {
 
 struct mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
 vfs_file_t kernel_files[VFS_MAX_OPENFILES];
-static spinlock_t kernel_file_open_lock;
 uint32_t last_mountpoint = -1;
 uint32_t last_dir = 0;
 
@@ -129,12 +128,13 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	return new_path;
 }
 
-vfs_file_t* vfs_get_from_id(int id, task_t* task) {
-	vfs_file_t* fd = task? &task->files[id] : &kernel_files[id];
-	if(!fd->inode) {
+vfs_file_t* vfs_get_from_id(int fd, task_t* task) {
+	vfs_file_t* fp = task? &task->files[fd] : &kernel_files[fd];
+	if(!fp->refs) {
 		return NULL;
 	}
-	return fd;
+
+	return fp->dup_target ? fp->dup_target : fp;
 }
 
 static int get_mountpoint(char* path, char** mount_path) {
@@ -178,37 +178,21 @@ static struct mountpoint* resolve_path(task_t* task, const char* orig_path, char
 	return &mountpoints[mp_num];
 }
 
-vfs_file_t* vfs_alloc_fileno(task_t* task) {
-	vfs_file_t* fdir = task ? task->files : kernel_files;
-	spinlock_t* lock = task ? &task->file_open_lock : &kernel_file_open_lock;
-	uint32_t num = 0;
+vfs_file_t* vfs_alloc_fileno(task_t* task, int min) {
+	vfs_file_t* file = &(task ? task->files : kernel_files)[min];
 
-	if(!spinlock_get(lock, 200)) {
-		sc_errno = EAGAIN;
-		return NULL;
-	}
-
-	for(; num < VFS_MAX_OPENFILES; num++) {
-		if(!fdir[num].inode) {
-			break;
+	for(int i = min; i < VFS_MAX_OPENFILES; i++, file++) {
+		if(!file->refs) {
+			if(likely(__sync_bool_compare_and_swap(&file->refs, 0, 1))) {
+				file->refs = 1;
+				file->num = i;
+				return file;
+			}
 		}
 	}
 
-	if(num >= VFS_MAX_OPENFILES) {
-		spinlock_release(lock);
-		sc_errno = ENFILE;
-		return NULL;
-	}
-
-	/* Set to a dummy inode so two subsequent calls of this function don't
-	 * return the same file.
-	 */
-	fdir[num].inode = 1;
-	spinlock_release(lock);
-
-	fdir[num].num = num;
-	fdir[num].offset = 0;
-	return &fdir[num];
+	sc_errno = ENFILE;
+	return NULL;
 }
 
 int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
@@ -367,10 +351,10 @@ int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
 	}
 
 	if(cmd == F_DUPFD) {
-		vfs_file_t* nfile = &task->files[arg3];
-		memcpy(nfile, fp, sizeof(vfs_file_t));
-		nfile->num = arg3;
-		return 0;
+		vfs_file_t* fp2 = vfs_alloc_fileno(task, MAX(3, arg3));
+		__sync_add_and_fetch(&fp->refs, 1);
+		fp2->dup_target = fp;
+		return fp2->num;
 	} else if(cmd == F_GETFL) {
 		return fp->flags;
 	} else if(cmd == F_SETFL) {
@@ -384,6 +368,34 @@ int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
 
 	sc_errno = ENOSYS;
 	return -1;
+}
+
+int vfs_dup2(int fd1, int fd2, task_t* task) {
+	vfs_file_t* fp1 = vfs_get_from_id(fd1, task);
+	if(!fp1) {
+		sc_errno = EBADF;
+		return -1;
+	}
+
+	vfs_file_t* fp2 = task? &task->files[fd2] : &kernel_files[fd2];
+	if(fp2->refs) {
+		// Can't use fd as dup target that is already a duplication source
+		if(fp2->refs > 1) {
+			sc_errno = EIO;
+			return -1;
+		}
+
+		vfs_close(fp2->num, task);
+	}
+
+	if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1)) {
+		sc_errno = EIO;
+		return -1;
+	}
+
+	__sync_add_and_fetch(&fp1->refs, 1);
+	fp2->dup_target = fp1->dup_target ? fp1->dup_target : fp1;
+	return 0;
 }
 
 int vfs_ioctl(int fd, int request, void* arg, task_t* task) {
@@ -428,22 +440,32 @@ int vfs_stat(char* orig_path, vfs_stat_t* dest, task_t* task) {
 int vfs_close(int fd, task_t* task) {
 	debug("\n", NULL);
 
+	if(fd < 3) {
+		return 0;
+	}
+
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
-	#ifdef ENABLE_PICOTCP
-	if(fp->type == FT_IFSOCK) {
-		int r = net_vfs_close_cb(fp);
-		if(r < 0) {
-			return r;
+	// Decrease ref counter and check if we've reached 0
+	if(!__sync_sub_and_fetch(&fp->refs, 1)) {
+		if(fp->dup_target) {
+			// Decrease dup target ref counter
+			vfs_close(fp->dup_target->num, task);
 		}
-	}
-	#endif
 
-	if(fp->num > 2) {
+		#ifdef ENABLE_PICOTCP
+		if(fp->type == FT_IFSOCK) {
+			int r = net_vfs_close_cb(fp);
+			if(r < 0) {
+				return r;
+			}
+		}
+		#endif
+
 		bzero(fp, sizeof(vfs_file_t));
 	}
 	return 0;

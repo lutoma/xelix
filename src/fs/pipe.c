@@ -69,9 +69,15 @@ size_t pipe_write(vfs_file_t* fp, void* source, size_t size, task_t* task) {
 }
 
 int vfs_pipe(int fildes[2], task_t* task) {
-	vfs_file_t* fd1 = vfs_alloc_fileno(task);
-	vfs_file_t* fd2 = vfs_alloc_fileno(task);
-	if(!fd1 || !fd2) {
+	vfs_file_t* fd1 = vfs_alloc_fileno(task, 3);
+	if(!fd1) {
+		sc_errno = EMFILE;
+		return -1;
+	}
+
+	vfs_file_t* fd2 = vfs_alloc_fileno(task, fd1->num);
+	if(!fd2) {
+		vfs_close(fd1->num, task);
 		sc_errno = EMFILE;
 		return -1;
 	}
