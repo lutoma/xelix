@@ -69,4 +69,9 @@ void wait_finish(task_t* task, task_t* child) {
 	if(task->wait_context.stat_loc) {
 		*task->wait_context.stat_loc = child->exit_code;
 	}
+
+	/* Usually, the task state is set to running by the SIGCHLD, but if the
+	 * signal is masked, we still need to return from the wait.
+	 */
+	task->task_state = TASK_STATE_RUNNING;
 }
