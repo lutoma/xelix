@@ -129,12 +129,16 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 }
 
 vfs_file_t* vfs_get_from_id(int fd, task_t* task) {
+	if(fd < 0 || fd >= ARRAY_SIZE(task->files)) {
+		return NULL;
+	}
+
 	vfs_file_t* fp = task? &task->files[fd] : &kernel_files[fd];
 	if(!fp->refs) {
 		return NULL;
 	}
 
-	return fp->dup_target ? fp->dup_target : fp;
+	return fp->dup_target ? vfs_get_from_id(fp->dup_target, task) : fp;
 }
 
 static int get_mountpoint(char* path, char** mount_path) {
@@ -203,8 +207,7 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		"open", 0, orig_path);
 	#endif
 
-	if(!orig_path || !strcmp(orig_path, "")) {
-		log(LOG_ERR, "vfs: vfs_open called with empty path.\n");
+	if(!orig_path || !(*orig_path)) {
 		sc_errno = ENOENT;
 		return -1;
 	}
@@ -353,7 +356,7 @@ int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
 	if(cmd == F_DUPFD) {
 		vfs_file_t* fp2 = vfs_alloc_fileno(task, MAX(3, arg3));
 		__sync_add_and_fetch(&fp->refs, 1);
-		fp2->dup_target = fp;
+		fp2->dup_target = fp->num;
 		return fp2->num;
 	} else if(cmd == F_GETFL) {
 		return fp->flags;
@@ -395,7 +398,7 @@ int vfs_dup2(int fd1, int fd2, task_t* task) {
 
 	fp2->num = fd2;
 	__sync_add_and_fetch(&fp1->refs, 1);
-	fp2->dup_target = fp1->dup_target ? fp1->dup_target : fp1;
+	fp2->dup_target = fp1->dup_target ? fp1->dup_target : fp1->num;
 	return 0;
 }
 
@@ -451,7 +454,7 @@ int vfs_close(int fd, task_t* task) {
 	if(!__sync_sub_and_fetch(&fp->refs, 1)) {
 		if(fp->dup_target) {
 			// Decrease dup target ref counter
-			vfs_close(fp->dup_target->num, task);
+			vfs_close(fp->dup_target, task);
 		}
 
 		#ifdef ENABLE_PICOTCP

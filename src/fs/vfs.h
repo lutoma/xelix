@@ -157,7 +157,7 @@ struct vfs_callbacks {
 typedef struct vfs_file {
 	// Reference counter, fd will get reused if 0
 	int refs;
-	struct vfs_file* dup_target;
+	int dup_target;
 
 	uint16_t type;
 	uint32_t num;
