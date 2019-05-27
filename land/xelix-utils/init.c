@@ -44,7 +44,6 @@ int main() {
 
 	sigset_t set;
 	sigfillset(&set);
-	sigdelset(&set, SIGCHLD);
 	sigprocmask(SIG_SETMASK, &set, NULL);
 
 	char* login_argv[] = { "login", NULL };
