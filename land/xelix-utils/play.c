@@ -19,14 +19,99 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
+#include <poll.h>
+#include <termios.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
 #define CHUNK_SIZE (0x800 * 2)
+
+static inline char poll_input(int timeout) {
+	struct pollfd pfd = {
+		.fd = 0,
+		.events = POLLIN,
+	};
+
+	if(poll(&pfd, 1, timeout) < 1) {
+		return 0;
+	}
+	return getchar();
+}
+
+void playback_loop(size_t size, int source_fd, int dest_fd) {
+	// 44.1khz sample rate, s16le, 2 channels
+	int runtime = size / (44100 * 4);
+
+	size_t total_written;
+	float lcperc = 0;
+	int lptime = 0;
+	bool pause = false;
+
+	uint8_t* buf = malloc(CHUNK_SIZE);
+
+	while(1) {
+		char input = poll_input(pause ? -1 : 0);
+		if(input) {
+			switch(input) {
+				case ' ':
+					pause = !pause;
+					break;
+			}
+			fflush(stdin);
+		}
+
+		if(!pause) {
+			if(!read(source_fd, buf, CHUNK_SIZE)) {
+				break;
+			}
+
+			total_written += write(dest_fd, buf, CHUNK_SIZE);
+		}
+
+		float cperc = (float)total_written / (float)size;
+		int ptime = total_written / (44100 * 4);
+
+		if(cperc != lcperc || ptime != lptime) {
+			printf("\033[2K\033[G %d:%02d / %d:%02d (%2.1f%%)",
+				ptime / 60, ptime % 60,
+				runtime / 60, runtime % 60,
+				cperc * 100);
+
+			if(pause) {
+				printf(" (paused)");
+			}
+
+			fflush(stdout);
+			lcperc = cperc;
+			lptime = ptime;
+		}
+	}
+
+	free(buf);
+}
+
+void play_file(const char* path, int dest_fd) {
+	//printf("Playing: %s\n", basename(path));
+	int source_fd = open(path, O_RDONLY);
+	if(source_fd < 0) {
+		perror("Could not open");
+		return ;
+	}
+
+	struct stat stat;
+	if(fstat(source_fd, &stat) < 0) {
+		perror("Could not stat");
+		return;
+	}
+
+	playback_loop(stat.st_size, source_fd, dest_fd);
+	close(source_fd);
+}
 
 int main(int argc, const char** argv) {
 	if(argc < 2) {
@@ -34,52 +119,22 @@ int main(int argc, const char** argv) {
 		return -1;
 	}
 
-	int source_fd = open(argv[1], O_RDONLY);
-	if(source_fd < 0) {
-		perror("Could not open");
-		return -1;
-	}
-
-	struct stat stat;
-	if(fstat(source_fd, &stat) < 0) {
-		perror("Could not stat");
-		return -1;
-	}
 	int dest_fd = open("/dev/dsp", O_WRONLY);
-	if(source_fd < 0) {
+	if(dest_fd == -1) {
 		perror("Could not open device");
 		return -1;
 	}
 
-	struct winsize winsize;
-	if(ioctl(0, TIOCGWINSZ, &winsize) < 0) {
-		perror("Could not get terminal size");
-		return -1;
+	// Raw stdin
+	struct termios termios;
+	ioctl(0, TCGETS, &termios);
+	termios.c_lflag &= ~(ICANON | ECHO);
+	ioctl(0, TCSETS, &termios);
+
+	for(int i = 1; i < argc; i++) {
+		play_file(argv[i], dest_fd);
 	}
 
-	uint8_t* buf = malloc(CHUNK_SIZE);
-	size_t total_written;
-	float lcperc = 0;
-
-	while(1) {
-		if(!read(source_fd, buf, CHUNK_SIZE)) {
-			break;
-		}
-
-		total_written += write(dest_fd, buf, CHUNK_SIZE);
-		float cperc = (float)total_written / (float)stat.st_size;
-
-		// 44.1khz sample rate, s16le, 2 channels
-		//int second = total_written / (44100 * 16 * 2);
-		if(cperc != lcperc) {
-			printf("\033[G %2.1f%% [\033[47m \033[%db\033[m\033[%dG]", cperc * 100, (int)(cperc * winsize.ws_col), winsize.ws_col);
-			fflush(stdout);
-			lcperc = cperc;
-		}
-	}
-
-	free(buf);
-	close(source_fd);
 	close(dest_fd);
 	printf("\n");
 	return 0;
