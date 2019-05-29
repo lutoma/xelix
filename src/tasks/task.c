@@ -242,11 +242,18 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	new_task->egid = task->egid;
 	new_task->strace_observer = task->strace_observer;
 	new_task->strace_fd = task->strace_fd;
+
 	if(elf_load_file(new_task, path) == -1) {
 		return -1;
 	}
 
-	memcpy(new_task->files, task->files, sizeof(new_task->files));
+	for(int i = 0; i < VFS_MAX_OPENFILES; i++) {
+		struct vfs_file* file = &task->files[i];
+		if(file->refs && !(file->flags & O_CLOEXEC)) {
+			memcpy(&new_task->files[i], file, sizeof(struct vfs_file));
+		}
+	}
+
 	scheduler_add(new_task);
 	task->task_state = TASK_STATE_REPLACED;
 	task->interrupt_yield = true;

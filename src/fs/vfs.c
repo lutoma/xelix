@@ -358,6 +358,18 @@ int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
 			fp->flags &= ~O_NONBLOCK;
 		}
 		return 0;
+	} else if(cmd == F_GETFD) {
+		return fp->flags & O_CLOEXEC;
+	} else if(cmd == F_SETFD) {
+		/* Only one fd flag defined so far, FD_CLOEXEC (1), so just merge this
+		 * into the file status flags.
+		 */
+		if(arg3 & 1) {
+			fp->flags |= O_CLOEXEC;
+		} else {
+			fp->flags &= ~O_CLOEXEC;
+		}
+		return 0;
 	}
 
 	sc_errno = ENOSYS;
