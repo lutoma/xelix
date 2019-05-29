@@ -1,4 +1,4 @@
-/* Copyright © 2018 Lukas Martini
+/* Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -37,5 +37,7 @@ struct _xelix_execdata {
 
 struct _xelix_execdata* _xelix_execdata;
 char* _progname;
+
+int _strace(void);
 
 #endif /* _SYS_XELIX_H */

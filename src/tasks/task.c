@@ -30,6 +30,7 @@
 #include <tty/ioctl.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
+#include <fs/pipe.h>
 #include <string.h>
 #include <errno.h>
 
@@ -135,7 +136,7 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	return task;
 }
 
-int task_fork(task_t* to_fork, isf_t* state) {
+static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task_t* task = alloc_task(to_fork, 0, to_fork->name, to_fork->environ,
 		to_fork->envc, to_fork->argv, to_fork->argc);
 
@@ -180,7 +181,16 @@ int task_fork(task_t* to_fork, isf_t* state) {
 	task->state->ebx = 0;
 
 	scheduler_add(task);
-	return task->pid;
+	return task;
+}
+
+int task_fork(task_t* to_fork, isf_t* state) {
+	task_t* task = _fork(to_fork, state);
+	if(task) {
+		return task->pid;
+	} else {
+		return -1;
+	}
 }
 
 int task_exit(task_t* task, int code) {
@@ -230,6 +240,8 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	new_task->gid = task->gid;
 	new_task->euid = task->euid;
 	new_task->egid = task->egid;
+	new_task->strace_observer = task->strace_observer;
+	new_task->strace_fd = task->strace_fd;
 	if(elf_load_file(new_task, path) == -1) {
 		return -1;
 	}
@@ -343,6 +355,22 @@ void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 		TASK_MEM_FORK | TASK_MEM_FREE);
 
 	return virt_addr;
+}
+
+int task_strace(task_t* task, isf_t* state) {
+	task_t* fork = _fork(task, state);
+	if(!fork) {
+		return -1;
+	}
+
+	int pipe[2];
+	if(vfs_pipe(pipe, task) != 0) {
+		return -1;
+	}
+
+	fork->strace_observer = task;
+	fork->strace_fd = pipe[1];
+	return pipe[0];
 }
 
 static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {

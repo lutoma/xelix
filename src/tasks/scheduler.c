@@ -45,6 +45,7 @@ void scheduler_add(task_t *task) {
 		task->previous = task;
 	} else {
 		task->next = current_task->next;
+		task->next->previous = task;
 		task->previous = current_task;
 		current_task->next = task;
 	}
@@ -84,9 +85,14 @@ static void unlink(task_t *t, bool replaced) {
 		}
 
 		term->fg_task = t->parent;
+
+		if(t->strace_observer && t->strace_fd) {
+			vfs_close(t->strace_fd, t->strace_observer);
+		}
 	}
 
 	task_cleanup(t);
+
 }
 
 task_t* scheduler_select(isf_t* last_regs) {

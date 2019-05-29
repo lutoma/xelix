@@ -149,6 +149,9 @@ typedef struct task {
 
 	// ELF loader context, needed for dlopen/dlsym.
 	struct elf_load_ctx elf_ctx;
+
+	struct task* strace_observer;
+	int strace_fd;
 } task_t;
 
 task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
@@ -161,6 +164,7 @@ int task_setid(task_t* task, int which, int id);
 void task_cleanup(task_t* t);
 int task_chdir(task_t* task, const char* dir);
 void* task_sbrk(task_t* task, int32_t length, int32_t l2);
+int task_strace(task_t* task, isf_t* state);
 
 #define task_add_mem_flat(task, start, size, section, flags) \
 	task_add_mem(task, start, start, size, section, flags)

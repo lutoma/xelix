@@ -242,4 +242,8 @@ const struct syscall_definition syscall_table[] = {
 	// 44
 	{"dup2", (syscall_cb)vfs_dup2, SCF_TASKEND,
 		SCA_INT, SCA_INT, SCA_UNUSED},
+
+	// 45
+	{"strace", (syscall_cb)task_strace, SCF_STATE,
+		SCA_UNUSED, SCA_UNUSED, SCA_UNUSED},
 };

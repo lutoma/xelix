@@ -21,11 +21,13 @@
 #include <int/int.h>
 #include <log.h>
 #include <tasks/scheduler.h>
+#include <fs/vfs.h>
 #include <printf.h>
 #include <panic.h>
 #include <errno.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
+#include <tty/serial.h>
 
 #include "syscalls.h"
 
@@ -145,6 +147,50 @@ static void int_handler(isf_t* state) {
 #ifdef SYSCALL_DEBUG
 	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", state->SCREG_RESULT, state->SCREG_ERRNO);
 #endif
+
+	if(task->strace_observer && task->strace_fd) {
+		vfs_file_t* strace_file = vfs_get_from_id(task->strace_fd, task->strace_observer);
+		if(!strace_file) {
+			return;
+		}
+
+		struct strace {
+			uint32_t call;
+			uint32_t arg0;
+			char arg0_ptrdata[0x50];
+			uint32_t arg1;
+			char arg1_ptrdata[0x50];
+			uint32_t arg2;
+			char arg2_ptrdata[0x50];
+			uint32_t result;
+			uint32_t errno;
+		};
+
+		struct strace strace = {
+			.call = scnum,
+			.result = state->SCREG_RESULT,
+			.errno = state->SCREG_ERRNO,
+		};
+
+		if(def.arg0_flags & (SCA_STRING | SCA_POINTER)) {
+			memcpy(strace.arg0_ptrdata, (void*)arg0, 0x50);
+		}
+		if(def.arg1_flags & (SCA_STRING | SCA_POINTER)) {
+			memcpy(strace.arg1_ptrdata, (void*)arg1, 0x50);
+		}
+		if(def.arg2_flags & (SCA_STRING | SCA_POINTER)) {
+			memcpy(strace.arg2_ptrdata, (void*)arg2, 0x50);
+		}
+
+		strace.arg0 = arg0;
+		strace.arg1 = arg1;
+		strace.arg2 = arg2;
+
+		if(strace_file && strace_file->callbacks.write) {
+			strace_file->callbacks.write(strace_file, &strace, sizeof(struct strace), task->strace_observer);
+		}
+	}
+
 }
 
 // Check an array to make sure it's NULL-terminated, then copy to kernel space

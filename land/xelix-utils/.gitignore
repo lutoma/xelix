@@ -9,3 +9,5 @@ libutil.a
 login
 dmesg
 su
+play
+strace

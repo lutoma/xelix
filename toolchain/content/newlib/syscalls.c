@@ -355,6 +355,10 @@ int getsockname(int socket, struct sockaddr* __restrict__ address,
 	return syscall(41, socket, address, address_len);
 }
 
+int _strace(void) {
+	return syscall(45, 0, 0, 0);
+}
+
 int ioctl(int fd, int request, ...) {
 	va_list va;
 	va_start(va, request);

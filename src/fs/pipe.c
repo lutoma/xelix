@@ -29,6 +29,7 @@
 struct pipe {
 	void* buffer;
 	uint32_t data_size;
+	int fd[2];
 };
 
 size_t pipe_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
@@ -36,6 +37,12 @@ size_t pipe_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 
 	if(!pipe->data_size && fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
+		return -1;
+	}
+
+	vfs_file_t* write_fp = vfs_get_from_id(pipe->fd[1], task);
+	if(!pipe->data_size && !write_fp) {
+		sc_errno = EBADF;
 		return -1;
 	}
 
@@ -47,8 +54,8 @@ size_t pipe_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 		size = pipe->data_size;
 	}
 
-	memcpy(dest, pipe->buffer, pipe->data_size);
-	pipe->data_size -= size;
+	memcpy(dest, pipe->buffer, size);
+	pipe->data_size -= MIN(pipe->data_size, size);
 	if(pipe->data_size) {
 		memmove(pipe->buffer, pipe->buffer + size, pipe->data_size);
 	}
@@ -84,6 +91,8 @@ int vfs_pipe(int fildes[2], task_t* task) {
 
 	struct pipe* pipe = zmalloc(sizeof(struct pipe));
 	pipe->buffer = zmalloc(PIPE_BUFFER_SIZE);
+	pipe->fd[0] = fd1->num;
+	pipe->fd[1] = fd2->num;
 
 	fd1->callbacks.read = pipe_read;
 	fd2->callbacks.write = pipe_write;
