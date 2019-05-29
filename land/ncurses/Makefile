@@ -15,3 +15,4 @@ $(PACKAGE_NAME).tar.gz:
 .PHONY: install
 install:
 	make DESTDIR=$(abspath ../../mnt) -C $(PACKAGE_NAME) install
+	tic -o $(abspath ../../mnt/usr/share/terminfo) xelix.terminfo

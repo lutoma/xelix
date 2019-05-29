@@ -216,3 +216,14 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
    {
      int fd = dirfd (dirp);
      if (0 <= fd && _gl_register_fd (fd, dir_name) != fd)
+--- coreutils-8.30/src/dircolors.hin	2018-06-24 04:12:51.000000000 +0200
++++ coreutils-8.30/src/dircolors.hin	2019-05-29 23:08:36.426222319 +0200
+@@ -33,6 +33,7 @@ TERM st
+ TERM terminator
+ TERM tmux*
+ TERM vt100
++TERM xelix
+ TERM xterm*
+ 
+ # Below are the color init strings for the basic file types. A color init
+
