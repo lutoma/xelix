@@ -129,6 +129,7 @@ int main(int argc, const char** argv) {
 	struct termios termios;
 	ioctl(0, TCGETS, &termios);
 	termios.c_lflag &= ~(ICANON | ECHO);
+	termios.c_lflag |= ISIG;
 	ioctl(0, TCSETS, &termios);
 
 	for(int i = 1; i < argc; i++) {
@@ -137,5 +138,11 @@ int main(int argc, const char** argv) {
 
 	close(dest_fd);
 	printf("\n");
+
+	// Reset stdin
+	ioctl(0, TCGETS, &termios);
+	termios.c_lflag |= ICANON | ECHO;
+	ioctl(0, TCSETS, &termios);
+
 	return 0;
 }
