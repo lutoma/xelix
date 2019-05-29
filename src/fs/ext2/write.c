@@ -88,6 +88,7 @@ size_t ext2_write(vfs_file_t* fp, void* source, size_t size, task_t* task) {
 	}
 
 	if(!ext2_inode_write_data(inode, fp->inode, fp->offset, size, source)) {
+		kfree(inode);
 		return -1;
 	}
 

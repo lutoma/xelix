@@ -129,6 +129,7 @@ int ext2_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task) 
 int ext2_mkdir(char* path, uint32_t mode, task_t* task) {
 	uint32_t parent_inode_num = 0;
 	struct dirent* dirent = ext2_dirent_find(path, &parent_inode_num, task);
+	kfree(dirent);
 
 	if(!parent_inode_num || dirent) {
 		sc_errno = parent_inode_num ? EEXIST : ENOENT;
@@ -179,7 +180,6 @@ int ext2_mkdir(char* path, uint32_t mode, task_t* task) {
 	blockgroup_table[blockgroup_num].used_directories++;
 	write_blockgroup_table();
 
-	kfree(dirent);
 	kfree(inode);
 	return 0;
 }
@@ -194,12 +194,14 @@ int ext2_utimes(const char* path, struct timeval times[2], task_t* task) {
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, dirent->inode)) {
 		kfree(inode);
+		kfree(dirent);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task) < 0) {
 		kfree(inode);
+		kfree(dirent);
 		sc_errno = EACCES;
 		return -1;
 	}
@@ -217,6 +219,7 @@ int ext2_utimes(const char* path, struct timeval times[2], task_t* task) {
 
 	ext2_inode_write(inode, dirent->inode);
 	kfree(inode);
+	kfree(dirent);
 	return 0;
 }
 
@@ -229,6 +232,7 @@ static int do_unlink(char* path, bool is_dir, task_t* task) {
 	}
 
 	if(dirent->inode == ROOT_INODE) {
+		kfree(dirent);
 		sc_errno = EACCES;
 		return -1;
 	}
@@ -236,12 +240,14 @@ static int do_unlink(char* path, bool is_dir, task_t* task) {
 	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, dirent->inode)) {
 		kfree(inode);
+		kfree(dirent);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task) < 0) {
 		kfree(inode);
+		kfree(dirent);
 		sc_errno = EACCES;
 		return -1;
 	}
@@ -256,12 +262,16 @@ static int do_unlink(char* path, bool is_dir, task_t* task) {
 	if(is_dir) {
 		if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR) {
 			sc_errno = ENOTDIR;
+			kfree(inode);
+			kfree(dirent);
 			return -1;
 		}
 
 		// FIXME Should probably check more throroughly it only contains ./..
 		// and has no hard links
 		if(link_count > 2) {
+			kfree(inode);
+			kfree(dirent);
 			sc_errno = ENOTEMPTY;
 			return -1;
 		}
@@ -270,6 +280,8 @@ static int do_unlink(char* path, bool is_dir, task_t* task) {
 		link_count -= 2;
 	} else {
 		if(vfs_mode_to_filetype(inode->mode) == FT_IFDIR) {
+			kfree(inode);
+			kfree(dirent);
 			sc_errno = EISDIR;
 			return -1;
 		}
@@ -314,12 +326,14 @@ static int do_unlink(char* path, bool is_dir, task_t* task) {
 			if(!ext2_inode_read(dir_inode, dir_ino)) {
 				kfree(dir_inode);
 				kfree(inode);
+				kfree(dirent);
 				sc_errno = ENOENT;
 				return -1;
 			}
 
 			dir_inode->link_count--;
 			ext2_inode_write(dir_inode, dir_ino);
+			kfree(dir_inode);
 		}
 
 		write_superblock();
@@ -349,12 +363,16 @@ int ext2_link(const char* path, const char* new_path, task_t* task) {
 	if(!dirent || !dir_dirent) {
 		kfree(new_dir_path);
 		kfree(dirent);
+		kfree(dir_dirent);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	// Directory hard links are not allowed in ext2
 	if(dirent->type == EXT2_DIRENT_FT_DIR) {
+		kfree(new_dir_path);
+		kfree(dirent);
+		kfree(dir_dirent);
 		sc_errno = EACCES;
 		return -1;
 	}
@@ -362,6 +380,7 @@ int ext2_link(const char* path, const char* new_path, task_t* task) {
 	ext2_dirent_add(dir_dirent->inode, dirent->inode, new_name, dirent->type);
 	kfree(new_dir_path);
 	kfree(dirent);
+	kfree(dir_dirent);
 	return 0;
 }
 
@@ -392,6 +411,7 @@ int ext2_access(char* path, uint32_t amode, void* mount_instance, task_t* task) 
 	}
 	if(perm_check < 0) {
 		kfree(inode);
+		kfree(dirent);
 		sc_errno = EACCES;
 		return -1;
 	}

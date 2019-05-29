@@ -161,7 +161,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		}
 
 		if(!cache->indirect_table) {
-			cache->indirect_table = (uint32_t*)kmalloc(bl_off(1));
+			cache->indirect_table = (uint32_t*)zmalloc(bl_off(1));
 			vfs_block_read(bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)cache->indirect_table);
 		}
 
@@ -172,7 +172,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		}
 
 		if(!cache->double_table) {
-			cache->double_table = (uint32_t*)kmalloc(bl_off(1));
+			cache->double_table = (uint32_t*)zmalloc(bl_off(1));
 			vfs_block_read(bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)cache->double_table);
 		}
 
@@ -182,7 +182,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		}
 
 		if(!cache->double_second_table) {
-			cache->double_second_table = (uint32_t*)kmalloc(bl_off(1));
+			cache->double_second_table = (uint32_t*)zmalloc(bl_off(1));
 		}
 
 		if(cache->double_second_block != indir_block_num) {

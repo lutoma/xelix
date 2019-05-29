@@ -70,7 +70,7 @@ uint32_t last_dir = 0;
 
 char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	if(!strcmp(orig_path, ".")) {
-		return cwd;
+		return strdup(cwd);
 	}
 
 	char* path;
@@ -83,8 +83,7 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 
 	size_t plen = strlen(path);
 	char* ptr = path + plen - 1;
-	char* new_path = kmalloc(plen + 1);
-	bzero(new_path, plen + 1);
+	char* new_path = zmalloc(plen + 1);
 	char* nptr = new_path + plen;
 	int skip = 0;
 	int set = 0;
@@ -165,11 +164,7 @@ static int get_mountpoint(char* path, char** mount_path) {
 }
 
 static struct mountpoint* resolve_path(task_t* task, const char* orig_path, char** mount_path) {
-	char* pwd = "/";
-	if(task) {
-		pwd = strndup(task->cwd, 265);
-	}
-
+	char* pwd = task ? task->cwd : "/";
 	char* path = vfs_normalize_path(orig_path, pwd);
 	int mp_num = get_mountpoint(path, mount_path);
 	kfree(path);
@@ -217,12 +212,7 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		return -1;
 	}
 
-	char* pwd = "/";
-	if(task) {
-		pwd = strndup(task->cwd, 265);
-	}
-
-	char* path = vfs_normalize_path(orig_path, pwd);
+	char* path = vfs_normalize_path(orig_path, task ? task->cwd : "/");
 	char* mount_path = NULL;
 	int mp_num = get_mountpoint(path, &mount_path);
 	if(mp_num < 0) {
@@ -233,6 +223,7 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 
 	struct mountpoint mp = mountpoints[mp_num];
 	if(!mp.callbacks.open) {
+		kfree(path);
 		sc_errno = ENOSYS;
 		return -1;
 	}
@@ -558,11 +549,7 @@ int vfs_poll(struct pollfd* fds, uint32_t nfds, int timeout, task_t* task) {
 }
 
 int vfs_link(const char* orig_path, const char* orig_new_path, task_t* task) {
-	char* pwd = "/";
-	if(task) {
-		pwd = strndup(task->cwd, 265);
-	}
-
+	char* pwd = task ? task->cwd : "/";
 	char* path = vfs_normalize_path(orig_path, pwd);
 	char* new_path = vfs_normalize_path(orig_new_path, pwd);
 

@@ -104,6 +104,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
 	while((ent = readdir_r(inode, &fp->offset, rd_reent))) {
 		if(offset + ent->d_reclen >= size) {
 			fp->offset -= rd_reent->last_len;
+			kfree(ent);
 			break;
 		}
 
@@ -111,6 +112,7 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
 		memcpy(dest, ent, ent->d_reclen);
 		offset += ent->d_reclen;
 		dest->d_off = offset;
+		kfree(ent);
 	}
 
 	kfree(inode);
@@ -129,8 +131,10 @@ static struct dirent* search_dir(struct inode* inode, const char* search) {
 		if(!strcmp(ent->d_name, search)) {
 			result = kmalloc(ent->d_reclen);
 			memcpy(result, ent, ent->d_reclen);
+			kfree(ent);
 			break;
 		}
+		kfree(ent);
 	}
 
 	kfree(rd_reent);
@@ -196,6 +200,8 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 
 	uint8_t* dirent_block = kmalloc(inode->size);
 	if(!ext2_inode_read_data(inode, 0, inode->size, dirent_block)) {
+		kfree(dirent_block);
+		kfree(inode);
 		return;
 	}
 
@@ -224,6 +230,8 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 	}
 
 	if(!found) {
+		kfree(dirent_block);
+		kfree(inode);
 		return;
 	}
 
@@ -234,6 +242,7 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 
 	ext2_inode_write_data(inode, inode_num, 0, inode->size, dirent_block);
 	kfree(dirent_block);
+	kfree(inode);
 }
 
 static inline uint32_t align_dirent_len(uint32_t dlen) {
