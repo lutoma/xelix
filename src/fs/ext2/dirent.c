@@ -268,8 +268,8 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 		return;
 	}
 
-	// Length/offsets need to be 4-aligned
-	size_t dlen = align_dirent_len(sizeof(struct dirent) + strlen(name));
+	// Length/offsets need to be 4-aligned. +1 for NULL to terminate name
+	size_t dlen = align_dirent_len(sizeof(struct dirent) + strlen(name) + 1);
 
 	// Cycle through dirents until we find one with enough space to insert ours.
 	struct dirent* current_ent = dirents;
