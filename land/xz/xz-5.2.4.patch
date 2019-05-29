@@ -1,0 +1,11 @@
+--- xz-5.2.4/build-aux/config.sub	2018-04-29 18:01:26.000000000 +0200
++++ xz-5.2.4/build-aux/config.sub	2019-05-29 06:48:20.907372708 +0200
+@@ -1417,7 +1417,7 @@ case $os in
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox*)
++	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
