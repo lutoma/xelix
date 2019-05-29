@@ -1,4 +1,4 @@
-/* Copyright © 2013-2018 Lukas Martini *
+/* Copyright © 2013-2019 Lukas Martini
  * This file is part of Xelix.
  *
  * Xelix is free software: you can redistribute it and/or modify
@@ -41,289 +41,16 @@
 #include <mntent.h>
 #include <pthread.h>
 
+#ifdef NOISY_STUBS
+	#define STUBWARN(cmd) fprintf(stderr, "xelix-newlib: " # cmd # " stub called.\n");
+#else
+	#define STUBWARN(cmd)
+#endif
 
-clock_t _times(struct tms *buf) {
-	errno = ENOSYS;
-	return -1;
-}
-
-void _rewinddir(DIR* dd) {
-	errno = ENOSYS;
-	return;
-}
-
-void seekdir(DIR* dd, long int sd) {
-	errno = ENOSYS;
-	return;
-}
-
-speed_t cfgetispeed(const struct termios *termios_p) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int cfsetispeed(struct termios *termios_p, speed_t speed) {
-	errno = ENOSYS;
-	return -1;
-}
-
-speed_t cfgetospeed(const struct termios *termios_p) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int cfsetospeed(struct termios *termios_p, speed_t speed) {
-	errno = ENOSYS;
-	return -1;
-}
-
-char* _ttyname(int desc) {
-	return "/dev/tty";
-}
-
-int getgroups(int gidsetsize, gid_t grouplist[]) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setgroups (int ngroups, const gid_t *grouplist) {
-	errno = ENOSYS;
-	return -1;
-}
-
-pid_t getpgrp(void) {
-	// Simply return 1 as per POSIX getpgrp has no return code to indicate an
-	// error
-	return 1;
-}
-
-int setreuid(uid_t ruid, uid_t euid) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setregid(gid_t rgid, gid_t egid) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setpgid(pid_t pid, pid_t pgid) {
-	errno = ENOSYS;
-	return -1;
-}
-
-mode_t umask(mode_t cmask) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int gtty (int __fd, struct sgttyb *__params) {
-	errno = ENOSYS;
-	return 0;
-}
-
-/* Set the terminal parameters associated with FD to *PARAMS.  */
-int stty (int __fd, __const struct sgttyb *__params) {
-	errno = ENOSYS;
-	return 0;
-}
-
-int chroot(const char *path) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int getrusage(int who, struct rusage *r_usage) {
-	errno = ENOSYS;
-	return -1;
-}
-
-pid_t setsid(void) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int ftruncate(int fildes, off_t length) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setsockopt(int socket, int level, int option_name,
-       const void *option_value, socklen_t option_len) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int issetugid(void) {
-	errno=ENOSYS;
-	return 0;
-}
-
-long sysconf(int name) {
-	errno = ENOSYS;
-	return 0;
-}
-
-int getrlimit(int resource, struct rlimit *rlim) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int setrlimit(int resource, const struct rlimit *rlim) {
-	errno = ENOSYS;
-	return -1;
-}
-
-ssize_t getline(char **restrict lineptr, size_t *restrict n,
-       FILE *restrict stream) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int usleep(useconds_t useconds) {
-	errno = ENOSYS;
-	return -1;
-}
-
-unsigned sleep(unsigned seconds) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int stime(time_t *t) {
-	errno = ENOSYS;
-	return -1;
-}
-
-long fpathconf(int fildes, int name) {
-	errno = ENOSYS;
-	return -1;
-}
-long pathconf(const char *path, int name) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int fchmod(int fildes, mode_t mode) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int lchmod(const char *path, mode_t mode) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int fchown(int fd, uid_t owner, gid_t group) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int lchown(const char *path, uid_t owner, gid_t group) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int mknod(const char *path, mode_t mode, dev_t dev) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int lutimes(const char *path, const struct timeval times[2]) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int sched_yield(void) {
-	errno = ENOSYS;
-	return -1;
-}
-
-char *realpath(const char *restrict file_name,
-       char *restrict resolved_name) {
-	errno = ENOSYS;
-	return NULL;
-}
-
-int fsync(int fildes) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int getgrouplist(const char *user, gid_t group,
-                        gid_t *groups, int *ngroups) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int mkfifo(const char *path, mode_t mode) {
-	errno = ENOSYS;
-	return -1;
-}
-
-unsigned alarm(unsigned seconds) {
-	errno = ENOSYS;
-	return 0;
-}
-
-void flockfile(FILE *file) {}
-int ftrylockfile(FILE *file) {
-	errno = ENOSYS;
-	return -1;
-}
-void funlockfile(FILE *file) {}
-
-
-int fdatasync(int fildes) {
-	errno = ENOSYS;
-	return -1;
-}
-
-void err(int eval, const char *fmt, ...) {
-	return 0;
-}
-
-int nanosleep(const struct timespec *rqtp, struct timespec *rmtp) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int connect(int socket, const struct sockaddr *address,
-	socklen_t address_len) {
-	errno = ENOSYS;
-	return -1;
-}
-
-struct servent *getservbyname(const char *name, const char *proto) {
-	errno = ENOSYS;
-	return NULL;
-}
-
-struct hostent *gethostbyname(const char *name) {
-	errno = ENOSYS;
-	return NULL;
-}
-
-int shutdown(int socket, int how) {
-	errno = ENOSYS;
-	return -1;
-}
-
-void freeaddrinfo(struct addrinfo *ai) {}
-
-int getaddrinfo(const char *restrict nodename,
-       const char *restrict servname,
-       const struct addrinfo *restrict hints,
-       struct addrinfo **restrict res) {
-	errno = ENOSYS;
-	return -1;
-}
-
-int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
-       char *restrict node, socklen_t nodelen, char *restrict service,
-       socklen_t servicelen, int flags) {
-	errno = ENOSYS;
-	return -1;
+#define STUB(rt, cmd, args, ret...) rt cmd args { \
+	STUBWARN(cmd); \
+	errno = ENOSYS; \
+	return ret; \
 }
 
 int _isatty (int fd) {
@@ -334,68 +61,75 @@ int _isatty (int fd) {
 	return 0;
 }
 
-int pthread_mutex_destroy(pthread_mutex_t *mutex) {
-	return ENOSYS;
-}
-
-int pthread_mutex_init(pthread_mutex_t *restrict mutex,
-       const pthread_mutexattr_t *restrict attr) {
-	return ENOSYS;
-}
-
-int pthread_sigmask(int how, const sigset_t *restrict set,
-       sigset_t *restrict oset) {
-	return ENOSYS;
-}
-
-int pthread_mutex_lock(pthread_mutex_t *mutex) {
-	return ENOSYS;
-}
-
-int pthread_mutex_trylock(pthread_mutex_t *mutex) {
-	return ENOSYS;
-}
-
-int pthread_mutex_unlock(pthread_mutex_t *mutex) {
-	return ENOSYS;
-}
-
-int pthread_cond_init(pthread_cond_t *cond,
-    const pthread_condattr_t *attr) {
-	return ENOSYS;
-}
-
-int pthread_cond_destroy(pthread_cond_t *cond) {
-	return ENOSYS;
-}
-
-int pthread_cond_signal(pthread_cond_t *cond) {
-	return ENOSYS;
-}
-
-int pthread_cond_broadcast(pthread_cond_t *cond) {
-	return ENOSYS;
-}
-
-int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex) {
-	return ENOSYS;
-}
-
-int pthread_cond_timedwait(pthread_cond_t *cond,
-    pthread_mutex_t *mutex, const struct timespec *abstime) {
-	return ENOSYS;
-}
-
-int pthread_join(pthread_t thread, void **value_ptr) {
-	return ENOSYS;
-}
-
-int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-	void *(*start_routine) (void *), void *arg) {
-	return ENOSYS;
-}
-
-int killpg (pid_t pid, int sig) {
-	errno = ENOSYS;
-	return -1;
-}
+STUB(clock_t, _times, (struct tms *buf), -1);
+STUB(void, _rewinddir, (DIR* dd));
+STUB(void, seekdir, (DIR* dd, long int sd));
+STUB(speed_t, cfgetispeed, (const struct termios *termios_p), -1);
+STUB(int, cfsetispeed, (struct termios *termios_p, speed_t speed), -1);
+STUB(speed_t, cfgetospeed, (const struct termios *termios_p), -1);
+STUB(int, cfsetospeed, (struct termios *termios_p, speed_t speed), -1);
+STUB(char*, _ttyname, (int desc), NULL);
+STUB(int, getgroups, (int gidsetsize, gid_t grouplist[]), -1);
+STUB(int, setgroups, (int ngroups, const gid_t *grouplist), -1);
+STUB(pid_t, getpgrp, (void), -1);
+STUB(int, setreuid, (uid_t ruid, uid_t euid), -1);
+STUB(int, setregid, (gid_t rgid, gid_t egid), -1);
+STUB(int, setpgid, (pid_t pid, pid_t pgid), -1);
+STUB(mode_t, umask, (mode_t cmask), -1);
+STUB(int, gtty, (int __fd, struct sgttyb *__params), -1);
+STUB(int, stty, (int __fd, __const struct sgttyb *__params), -1);
+STUB(int, chroot, (const char *path), -1);
+STUB(int, getrusage, (int who, struct rusage *r_usage), -1);
+STUB(pid_t, setsid, (void), -1);
+STUB(int, ftruncate, (int fildes, off_t length), -1);
+STUB(int, setsockopt, (int socket, int level, int option_name, const void *option_value, socklen_t option_len), -1);
+STUB(int, issetugid, (void), -1);
+STUB(long, sysconf, (int name), -1);
+STUB(int, getrlimit, (int resource, struct rlimit *rlim), -1);
+STUB(int, setrlimit, (int resource, const struct rlimit *rlim), -1);
+STUB(ssize_t, getline, (char **restrict lineptr, size_t *restrict n, FILE *restrict stream), -1);
+STUB(int, usleep, (useconds_t useconds), -1);
+STUB(unsigned, sleep, (unsigned seconds), -1);
+STUB(int, stime, (time_t *t), -1);
+STUB(long, fpathconf, (int fildes, int name), -1);
+STUB(long, pathconf, (const char *path, int name), -1);
+STUB(int, fchmod, (int fildes, mode_t mode), -1);
+STUB(int, lchmod, (const char *path, mode_t mode), -1);
+STUB(int, fchown, (int fd, uid_t owner, gid_t group), -1);
+STUB(int, lchown, (const char *path, uid_t owner, gid_t group), -1);
+STUB(int, mknod, (const char *path, mode_t mode, dev_t dev), -1);
+STUB(int, lutimes, (const char *path, const struct timeval times[2]), -1);
+STUB(int, sched_yield, (void), -1);
+STUB(char*, realpath, (const char *restrict file_name, char *restrict resolved_name), NULL);
+STUB(int, fsync, (int fildes), -1);
+STUB(int, getgrouplist, (const char *user, gid_t group, gid_t *groups, int *ngroups), -1);
+STUB(int, mkfifo, (const char *path, mode_t mode), -1);
+STUB(unsigned, alarm, (unsigned seconds), -1);
+STUB(void, flockfile, (FILE *file));
+STUB(int, ftrylockfile, (FILE *file), -1);
+STUB(void, funlockfile, (FILE *file));
+STUB(int, fdatasync, (int fildes), -1);
+STUB(void, err, (int eval, const char *fmt, ...));
+STUB(int, nanosleep, (const struct timespec *rqtp, struct timespec *rmtp), -1);
+STUB(int, connect, (int socket, const struct sockaddr *address, socklen_t address_len), -1);
+STUB(struct servent*, getservbyname, (const char *name, const char *proto), NULL);
+STUB(struct hostent*, gethostbyname, (const char *name), NULL);
+STUB(int, shutdown, (int socket, int how), -1);
+STUB(void, freeaddrinfo, (struct addrinfo *ai));
+STUB(int, getaddrinfo, (const char *restrict nodename, const char *restrict servname, const struct addrinfo *restrict hints, struct addrinfo **restrict res), -1);
+STUB(int, getnameinfo, (const struct sockaddr *restrict sa, socklen_t salen, char *restrict node, socklen_t nodelen, char *restrict service, socklen_t servicelen, int flags), -1);
+STUB(int, pthread_mutex_destroy, (pthread_mutex_t *mutex), -1);
+STUB(int, pthread_mutex_init, (pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr), -1);
+STUB(int, pthread_sigmask, (int how, const sigset_t *restrict set, sigset_t *restrict oset), -1);
+STUB(int, pthread_mutex_lock, (pthread_mutex_t *mutex), -1);
+STUB(int, pthread_mutex_trylock, (pthread_mutex_t *mutex), -1);
+STUB(int, pthread_mutex_unlock, (pthread_mutex_t *mutex), -1);
+STUB(int, pthread_cond_init, (pthread_cond_t *cond, const pthread_condattr_t *attr), -1);
+STUB(int, pthread_cond_destroy, (pthread_cond_t *cond), -1);
+STUB(int, pthread_cond_signal, (pthread_cond_t *cond), -1);
+STUB(int, pthread_cond_broadcast, (pthread_cond_t *cond), -1);
+STUB(int, pthread_cond_wait, (pthread_cond_t *cond, pthread_mutex_t *mutex), -1);
+STUB(int, pthread_cond_timedwait, (pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime), -1);
+STUB(int, pthread_join, (pthread_t thread, void **value_ptr), -1);
+STUB(int, pthread_create, (pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg), -1);
+STUB(int, killpg, (pid_t pid, int sig), -1);
