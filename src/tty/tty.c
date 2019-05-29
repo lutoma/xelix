@@ -88,6 +88,7 @@ size_t tty_write(char* source, size_t size) {
 		if(chr == '\e') {
 			size_t skip = tty_handle_escape_seq(source + i, size - i);
 			if(skip) {
+				remove_cursor = true;
 				i += skip;
 				continue;
 			}
