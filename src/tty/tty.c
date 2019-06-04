@@ -30,8 +30,6 @@
 #include <stdlib.h>
 #include <log.h>
 
-#define SCROLLBACK_PAGES 15
-
 uint8_t default_c_cc[NCCS] = {
 	0,
 	4, // VEOF
@@ -47,13 +45,13 @@ uint8_t default_c_cc[NCCS] = {
 	0,
 };
 
-static inline void handle_nonprintable(char chr) {
+static inline void handle_nonprintable(struct terminal* term, char chr) {
 	if(chr == term->termios.c_cc[VEOL]) {
 		term->cur_row++;
 		term->cur_col = 0;
 
 		if(term->cur_row >= term->drv->rows) {
-			term->drv->scroll_line();
+			term->drv->scroll_line(term);
 			term->cur_row--;
 		}
 		return;
@@ -62,7 +60,7 @@ static inline void handle_nonprintable(char chr) {
 	if(chr == term->termios.c_cc[VERASE] || chr == 0x7f) {
 		//term->scrollback_end--;
 		// FIXME limit checking
-		term->drv->write(--term->cur_col, term->cur_row, ' ', false, term->bg_color, term->bg_color);
+		term->drv->write(term, --term->cur_col, term->cur_row, ' ', false);
 		return;
 	}
 
@@ -72,11 +70,11 @@ static inline void handle_nonprintable(char chr) {
 	}
 
 	if(chr == term->termios.c_cc[VINTR]) {
-		tty_write("^C\n", 3);
+		tty_write(NULL, "^C\n", 3);
 	}
 }
 
-size_t tty_write(char* source, size_t size) {
+size_t tty_write(struct terminal* term, char* source, size_t size) {
 	if(!term || !term->drv) {
 		return 0;
 	}
@@ -86,7 +84,7 @@ size_t tty_write(char* source, size_t size) {
 		char chr = source[i];
 
 		if(chr == '\e') {
-			size_t skip = tty_handle_escape_seq(source + i, size - i);
+			size_t skip = tty_handle_escape_seq(term, source + i, size - i);
 			if(skip) {
 				remove_cursor = true;
 				i += skip;
@@ -96,60 +94,99 @@ size_t tty_write(char* source, size_t size) {
 
 		if(term->cur_col >= term->drv->cols) {
 			remove_cursor = true;
-			handle_nonprintable(term->termios.c_cc[VEOL]);
+			handle_nonprintable(term, term->termios.c_cc[VEOL]);
 			i--;
 			continue;
 		}
 
 		if(chr > 31 && chr < 127) {
 			term->last_char = chr;
-			term->drv->write(term->cur_col, term->cur_row, chr,
-				term->write_bdc, term->fg_color, term->bg_color);
+			term->drv->write(term, term->cur_col, term->cur_row, chr, term->write_bdc);
 			term->cur_col++;
 		} else {
 			remove_cursor = true;
-			handle_nonprintable(chr);
+			handle_nonprintable(term, chr);
 		}
 	}
 
-	term->drv->set_cursor(term->cur_col, term->cur_row, remove_cursor);
+	term->drv->set_cursor(term, term->cur_col, term->cur_row, remove_cursor);
 	return size;
 }
 
-/* Sysfs callbacks */
-static size_t sfs_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
-	return tty_write((char*)source, size);
+void tty_switch(int n) {
+		struct terminal* new_tty = &ttys[n];
+		new_tty->drv->rerender(active_tty, new_tty);
+		active_tty = new_tty;
 }
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
-	return tty_read((char*)dest, size);
+
+/* Sysfs callbacks */
+static size_t stdout_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
+	return tty_write(rtask ? rtask->ctty : &ttys[0], (char*)source, size);
+}
+static size_t stdin_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
+	return tty_read(rtask ? rtask->ctty : &ttys[0], (char*)dest, size);
+}
+
+static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task);
+struct vfs_callbacks tty_cb = {
+	.open = tty_open,
+	.read = NULL,
+	.ioctl = NULL,
+	.poll = NULL,
+};
+
+static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task) {
+	int n = atoi(path + 4);
+
+	vfs_file_t* fp = vfs_alloc_fileno(task, 0);
+	fp->inode = 1;
+	fp->type = FT_IFCHR;
+	memcpy(&fp->callbacks, &tty_cb, sizeof(struct vfs_callbacks));
+
+	if(task && !task->ctty && !(flags & O_NOCTTY)) {
+		task->ctty = &ttys[n];
+	}
+
+	return fp;
 }
 
 void tty_init() {
-	term = zmalloc(sizeof(struct terminal));
-	term->fg_color = FG_COLOR_DEFAULT;
-	term->bg_color = BG_COLOR_DEFAULT;
+	for(int i = 0; i < 10; i++) {
+		ttys[i].fg_color = FG_COLOR_DEFAULT;
+		ttys[i].bg_color = BG_COLOR_DEFAULT;
 
-	term->termios.c_lflag = ECHO | ICANON | ISIG;
-	memcpy(term->termios.c_cc, default_c_cc, sizeof(default_c_cc));
+		ttys[i].termios.c_lflag = ECHO | ICANON | ISIG;
+		memcpy(ttys[i].termios.c_cc, default_c_cc, sizeof(default_c_cc));
 
-	tty_keyboard_init();
-	term->drv = tty_fbtext_init();
-	if(!term->drv) {
-		panic("Could not initialize tty driver");
+		char name[6];
+		snprintf(&name[0], 6, "tty%d", i);
+		sysfs_add_dev(&name[0], &tty_cb);
 	}
 
-	term->scrollback_size = term->drv->cols * term->drv->rows * SCROLLBACK_PAGES;
-	term->scrollback = zmalloc(term->scrollback_size);
-	term->scrollback_end = -1;
-	log(LOG_DEBUG, "tty: Can render %d columns, %d rows\n", term->drv->cols, term->drv->rows);
+	active_tty = &ttys[0];
+	//sysfs_add_dev("tty", &tty_cb);
+
+	tty_keyboard_init();
+	struct tty_driver* fbtext_drv = tty_fbtext_init();
+	if(!fbtext_drv) {
+		panic("tty: Could not initialize fbtext driver");
+	}
+
+	for(int i = 0; i < 10; i++) {
+		ttys[i].drv = fbtext_drv;
+		ttys[i].drv_buf = kmalloc(fbtext_drv->buf_size);
+		fbtext_drv->clear(&ttys[i], 0, 0, fbtext_drv->cols, fbtext_drv->rows);
+	}
+
+	log(LOG_INFO, "tty: Can render %d columns, %d rows\n", fbtext_drv->cols, fbtext_drv->rows);
 
 	struct vfs_callbacks stdin_cb = {
-		.read = sfs_read,
+		.read = stdin_read,
 		.ioctl = tty_ioctl,
 		.poll = tty_poll,
 	};
 	struct vfs_callbacks stdout_cb = {
-		.write = sfs_write,
+		.write = stdout_write,
 		.ioctl = tty_ioctl,
 	};
 

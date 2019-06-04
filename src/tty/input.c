@@ -20,12 +20,13 @@
 #include <tty/input.h>
 #include <tty/tty.h>
 #include <tty/keymap.h>
+#include <stdlib.h>
 
 /* Convert tty_input_state/keycodes to ASCII character. Also converts a number of
  * single-byte escape sequences that are used in both canonical and non-canonical
  * mode.
  */
-static inline char convert_to_char(struct tty_input_state* input) {
+static inline char convert_to_char(struct terminal* term, struct tty_input_state* input) {
 	if(input->code >= ARRAY_SIZE(tty_keymap_en)) {
 		return 0;
 	}
@@ -57,8 +58,8 @@ static inline char convert_to_char(struct tty_input_state* input) {
 /* Canonical read mode input handler. Perform internal line-editing and block
  * read syscall until we encounter VEOF, VEOL, or the buffer is full.
  */
-static void handle_canon(struct tty_input_state* input) {
-	char chr = convert_to_char(input);
+static void handle_canon(struct terminal* term, struct tty_input_state* input) {
+	char chr = convert_to_char(term, input);
 	if(!chr) {
 		return;
 	}
@@ -85,7 +86,7 @@ static void handle_canon(struct tty_input_state* input) {
 	}
 
 	if(term->termios.c_lflag & ECHO) {
-		tty_write(&chr, 1);
+		tty_write(term, &chr, 1);
 	}
 
 	if(chr == term->termios.c_cc[VEOL] || term->read_len >= sizeof(term->read_buf)) {
@@ -96,7 +97,7 @@ static void handle_canon(struct tty_input_state* input) {
 /* Non-canonical read mode: Return immediately upon input regardless of
  * buffer size, and also return ECMA-48 encoded versions of control characters.
  */
-static void handle_noncanon(struct tty_input_state* input) {
+static void handle_noncanon(struct terminal* term, struct tty_input_state* input) {
 	char* inputseq;
 	char char_p[1];
 
@@ -126,7 +127,7 @@ static void handle_noncanon(struct tty_input_state* input) {
 		case 0xd7: inputlen=5; inputseq = "\e[23~"; break; // F11
 		case 0xd8: inputlen=5; inputseq = "\e[24~"; break; // F12
 		default:
-			*char_p = convert_to_char(input);
+			*char_p = convert_to_char(term, input);
 			if(!*char_p) {
 				return;
 			}
@@ -138,7 +139,7 @@ static void handle_noncanon(struct tty_input_state* input) {
 	memcpy(term->read_buf, inputseq, inputlen);
 	term->read_len += inputlen;
 	if(term->termios.c_lflag & ECHO) {
-		tty_write(inputseq, inputlen);
+		tty_write(term, inputseq, inputlen);
 	}
 
 	term->read_done = true;
@@ -146,18 +147,27 @@ static void handle_noncanon(struct tty_input_state* input) {
 
 // Called by keyboard interrupt handler.
 void tty_input_cb(struct tty_input_state* input) {
-	if(!term || !input || term->read_len >= sizeof(term->read_buf)) {
+	if(!active_tty || !input || active_tty->read_len >= sizeof(active_tty->read_buf)) {
 		return;
 	}
 
-	if(term->termios.c_lflag & ICANON) {
-		handle_canon(input);
+	// Check for ctrl-alt-f1 etc
+	if((input->control_left || input->control_right) &&
+		(input->alt_left || input->alt_right) &&
+		input->code >= 0xbb && input->code <= 0xc4) {
+
+		tty_switch(input->code - 0xbb);
+		return;
+	}
+
+	if(active_tty->termios.c_lflag & ICANON) {
+		handle_canon(active_tty, input);
 	} else {
-		handle_noncanon(input);
+		handle_noncanon(active_tty, input);
 	}
 }
 
-size_t tty_read(char* dest, size_t size) {
+size_t tty_read(struct terminal* term, char* dest, size_t size) {
 	while(!term->read_done) {
 		halt();
 	}
@@ -175,7 +185,8 @@ size_t tty_read(char* dest, size_t size) {
 }
 
 int tty_poll(vfs_file_t* fp, int events) {
-	if(events & POLLIN && term->read_len) {
+	int n = atoi(fp->mount_path + 4);
+	if(events & POLLIN && ttys[n].read_len) {
 		return POLLIN;
 	}
 	return 0;

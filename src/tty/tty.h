@@ -31,20 +31,18 @@ struct tty_driver {
 	uint32_t rows;
 	uint32_t xpixel;
 	uint32_t ypixel;
-	void (*write)(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_col, uint32_t bg_col);
-	void (*scroll_line)();
-	void (*clear)(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
-	void (*set_cursor)(uint32_t x, uint32_t y, bool restore);
+	uint32_t buf_size;
+	void (*write)(struct terminal* term, uint32_t x, uint32_t y, char chr, bool bdc);
+	void (*scroll_line)(struct terminal* term);
+	void (*clear)(struct terminal* term, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
+	void (*set_cursor)(struct terminal* term, uint32_t x, uint32_t y, bool restore);
+	void (*rerender)(struct terminal* tty_old, struct terminal* tty_new);
 };
 
 struct terminal {
 	struct tty_driver* drv;
 	struct termios termios;
 	task_t* fg_task;
-
-	size_t scrollback_size;
-	size_t scrollback_end;
-	char* scrollback;
 
 	uint32_t cur_col;
 	uint32_t cur_row;
@@ -57,18 +55,14 @@ struct terminal {
 	uint32_t bg_color;
 	bool write_bdc;
 	char last_char;
+
+	void* drv_buf;
 };
 
-struct terminal* term;
+struct terminal* active_tty;
+struct terminal ttys[10];
 
-size_t tty_write(char* source, size_t size);
-size_t tty_read(char* source, size_t size);
+size_t tty_write(struct terminal* tty, char* source, size_t size);
+size_t tty_read(struct terminal* tty, char* source, size_t size);
+void tty_switch(int n);
 void tty_init();
-
-/* VFS callbacks */
-static inline size_t tty_vfs_write(vfs_file_t* fp, void* source, size_t size, task_t* task) {
-	return tty_write((char*)source, size);
-}
-static inline size_t tty_vfs_read(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
-	return tty_read((char*)dest, size);
-}

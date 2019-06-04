@@ -132,7 +132,6 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	vfs_open("/dev/stdin", O_RDONLY, task);
 	vfs_open("/dev/stdout", O_WRONLY, task);
 	vfs_open("/dev/stderr", O_WRONLY, task);
-	term->fg_task = task;
 	return task;
 }
 
@@ -149,6 +148,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task->gid = to_fork->gid;
 	task->euid = to_fork->euid;
 	task->egid = to_fork->egid;
+	task->ctty = to_fork->ctty;
 	map_memory(task);
 	task_setup_execdata(task);
 
@@ -242,6 +242,7 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	new_task->egid = task->egid;
 	new_task->strace_observer = task->strace_observer;
 	new_task->strace_fd = task->strace_fd;
+	new_task->ctty = task->ctty;
 
 	if(elf_load_file(new_task, path) == -1) {
 		return -1;

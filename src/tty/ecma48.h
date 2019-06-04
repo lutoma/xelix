@@ -20,4 +20,4 @@
 
 #include <tty/tty.h>
 
-size_t tty_handle_escape_seq(char* str, size_t str_len);
+size_t tty_handle_escape_seq(struct terminal* term, char* str, size_t str_len);

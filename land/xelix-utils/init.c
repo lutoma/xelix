@@ -21,10 +21,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include "util.h"
 
-static void launch(const char* path, char** argv, char** env) {
+static void launch(const char* tty, const char* path, char** argv, char** env) {
 	int pid = fork();
 	if(pid == -1) {
 		perror("Could not fork");
@@ -32,6 +33,7 @@ static void launch(const char* path, char** argv, char** env) {
 	}
 
 	if(!pid) {
+		int tty_fd = open(tty, O_RDONLY);
 		execve(path, argv, env);
 	}
 }
@@ -49,10 +51,9 @@ int main() {
 	char* login_argv[] = { "login", NULL };
 	char* login_env[] = { "USER=root", NULL };
 
-	while(true) {
-		launch("/usr/bin/login", login_argv, login_env);
-		wait(NULL);
-		printf("\033[H\033[J");
-		fflush(stdout);
-	}
+	launch("/dev/tty0", "/usr/bin/login", login_argv, login_env);
+	launch("/dev/tty1", "/usr/bin/login", login_argv, login_env);
+	wait(NULL);
+	printf("\033[H\033[J");
+	fflush(stdout);
 }

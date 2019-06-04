@@ -40,7 +40,7 @@ static struct sysfs_file* sys_files;
 static struct sysfs_file* dev_files;
 
 static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
-	if(!first) {
+	if(!first || !strncmp(path, "/", 2)) {
 		return NULL;
 	}
 
@@ -149,6 +149,11 @@ vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t*
 	if(!(file || is_root)) {
 		sc_errno = ENOENT;
 		return NULL;
+	}
+
+	if(file && file->cb.open) {
+		// File has its own open callback
+		return file->cb.open(path, flags, mount_instance, task);
 	}
 
 	vfs_file_t* fp = vfs_alloc_fileno(task, 0);

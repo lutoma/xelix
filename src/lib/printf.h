@@ -21,10 +21,9 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <tty/serial.h>
+#include <tty/tty.h>
 
-// printf output stub
-extern size_t tty_write(char* source, size_t size);
-#define _putchar(x) tty_write(&(x), 1)
+#define _putchar(x) tty_write(&ttys[0], &(x), 1)
 
 /* Make sure functions in printf.c have correct names - There's no stdlib here,
  * so no risk of conflicts.

@@ -27,12 +27,12 @@
 
 #define PSF_FONT_MAGIC 0x864ab572
 
-#define PIXEL_PTR(x, y) 										\
-	((uint32_t*)((uint32_t)fb_desc->common.framebuffer_addr		\
+#define PIXEL_PTR(dbuf, x, y) 									\
+	((uint32_t*)((uintptr_t)(dbuf)								\
 		+ (y)*fb_desc->common.framebuffer_pitch					\
 		+ (x)*(fb_desc->common.framebuffer_bpp / 8)))
 
-#define CHAR_PTR(x, y) PIXEL_PTR(x * tty_font.width, y * tty_font.height)
+#define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * tty_font.width, y * tty_font.height)
 
 // Font from ter-u16n.psf gets linked into the binary
 extern struct {
@@ -114,7 +114,16 @@ static inline const uint8_t* get_char_bitmap(char chr, bool bdc) {
 	return NULL;
 }
 
-static void write_char(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_col, uint32_t bg_col) {
+static inline uintptr_t get_fb_buf(struct terminal* term) {
+	if(term == active_tty) {
+		return fb_desc->common.framebuffer_addr;
+	} else {
+		return (uintptr_t)term->drv_buf;
+	}
+
+}
+
+static void write_char(struct terminal* term, uint32_t x, uint32_t y, char chr, bool bdc) {
 	x *= tty_font.width;
 	y *= tty_font.height;
 
@@ -123,50 +132,54 @@ static void write_char(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t fg_c
 		return;
 	}
 
-	const uint32_t fg_color = convert_color(fg_col, false);
-	const uint32_t bg_color = convert_color(bg_col, true);
+	uintptr_t dest = get_fb_buf(term);
+	const uint32_t fg_color = convert_color(term->fg_color, false);
+	const uint32_t bg_color = convert_color(term->bg_color, true);
 
 	for(int i = 0; i < tty_font.height; i++) {
 		for(int j = 0; j < tty_font.width; j++) {
 			int fg = bitmap[i] & (1 << (tty_font.width - j - 1));
-			*PIXEL_PTR(x + j, y + i) = fg ? fg_color : bg_color;
+			*PIXEL_PTR(dest, x + j, y + i) = fg ? fg_color : bg_color;
 		}
 	}
 }
 
-static void clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
+static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
 	size_t x_size = ((end_x - start_x) * tty_font.width * (fb_desc->common.framebuffer_bpp / 8));
 	uint32_t color = convert_color(term->bg_color, true);
+	uintptr_t dest = get_fb_buf(term);
 
 	if(start_x == 0 && end_x == drv->cols) {
 		size_t y_size = ((end_y - start_y + 1)  * tty_font.height * fb_desc->common.framebuffer_pitch);
-		memset32(CHAR_PTR(start_x, start_y), color, x_size + y_size);
+		memset32(CHAR_PTR(dest, start_x, start_y), color, x_size + y_size);
 		return;
 	}
 
 	for(int y = start_y; y <= end_y; y++) {
 		for(int x = start_x; x <= end_x; x++) {
 			// FIXME
-			write_char(x, y, ' ', false, term->bg_color, term->bg_color);
+			write_char(term, x, y, ' ', false);
 		}
 	}
 }
 
-static void scroll_line() {
+static void scroll_line(struct terminal* term) {
 	size_t size = fb_desc->common.framebuffer_width
 		* fb_desc->common.framebuffer_height
 		* (fb_desc->common.framebuffer_bpp / 8)
 		- fb_desc->common.framebuffer_pitch;
 
 	size_t offset = fb_desc->common.framebuffer_pitch * tty_font.height;
-	memmove((void*)(intptr_t)fb_desc->common.framebuffer_addr,
-		(void*)((intptr_t)fb_desc->common.framebuffer_addr + offset), size);
+	uintptr_t dest = get_fb_buf(term);
 
-	clear(0, drv->rows - 1, drv->cols, drv->rows - 1);
+	memmove((void*)dest, (void*)(dest + offset), size);
+	clear(term, 0, drv->rows - 1, drv->cols, drv->rows - 1);
 	cursor_data.last_y -= tty_font.height;
 }
 
-static void set_cursor(uint32_t x, uint32_t y, bool restore) {
+static void set_cursor(struct terminal* term, uint32_t x, uint32_t y, bool restore) {
+	uintptr_t dest = get_fb_buf(term);
+
 	x *= tty_font.width;
 	y *= tty_font.height;
 
@@ -175,20 +188,29 @@ static void set_cursor(uint32_t x, uint32_t y, bool restore) {
 	} else {
 		if(restore) {
 			for(int i = 0; i < tty_font.height; i++) {
-				*PIXEL_PTR(cursor_data.last_x, cursor_data.last_y + i) = cursor_data.last_data[i];
+				*PIXEL_PTR(dest, cursor_data.last_x, cursor_data.last_y + i) = cursor_data.last_data[i];
 			}
 		}
 	}
 
 	for(int i = 0; i < tty_font.height; i++) {
-		cursor_data.last_data[i] = *PIXEL_PTR(x, y + i);
+		cursor_data.last_data[i] = *PIXEL_PTR(dest, x, y + i);
 	}
 
 	cursor_data.last_x = x;
 	cursor_data.last_y = y;
 	for(int i = 0; i < tty_font.height; i++) {
-		*PIXEL_PTR(x, y + i) = 0xfd971f;
+		*PIXEL_PTR(dest, x, y + i) = 0xfd971f;
 	}
+}
+
+static void rerender(struct terminal* tty_old, struct terminal* tty_new) {
+	if(!tty_old->drv_buf || !tty_new->drv_buf) {
+		return;
+	}
+
+	memcpy(tty_old->drv_buf, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, tty_old->drv->buf_size);
+	memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, tty_new->drv_buf, tty_new->drv->buf_size);
 }
 
 struct tty_driver* tty_fbtext_init() {
@@ -217,11 +239,11 @@ struct tty_driver* tty_fbtext_init() {
 	drv->rows = fb_desc->common.framebuffer_height / tty_font.height;
 	drv->xpixel = fb_desc->common.framebuffer_width;
 	drv->ypixel = fb_desc->common.framebuffer_height;
+	drv->buf_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 	drv->write = write_char;
 	drv->scroll_line = scroll_line;
 	drv->clear = clear;
 	drv->set_cursor = set_cursor;
-
-	clear(0, 0, drv->cols, drv->rows);
+	drv->rerender = rerender;
 	return drv;
 }

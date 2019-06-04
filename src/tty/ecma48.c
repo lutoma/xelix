@@ -22,7 +22,7 @@
 #include <mem/kmalloc.h>
 #include <stdlib.h>
 
-static int set_char_attrs(int args[], size_t num_args) {
+static int set_char_attrs(struct terminal* term, int args[], size_t num_args) {
 	if(!num_args) {
 		term->fg_color = FG_COLOR_DEFAULT;
 		term->bg_color = BG_COLOR_DEFAULT;
@@ -43,33 +43,33 @@ static int set_char_attrs(int args[], size_t num_args) {
 	return 0;
 }
 
-static int clear(int args[], size_t num_args) {
+static int clear(struct terminal* term, int args[], size_t num_args) {
 	int arg = num_args ? args[0] : 0;
 	switch(arg) {
 		case 0:
-			term->drv->clear(0, term->cur_row, term->drv->cols, term->drv->rows); break;
+			term->drv->clear(term, 0, term->cur_row, term->drv->cols, term->drv->rows); break;
 		case 1:
-			term->drv->clear(0, 0, term->cur_col, term->cur_row); break;
+			term->drv->clear(term, 0, 0, term->cur_col, term->cur_row); break;
 		case 2:
-			term->drv->clear(0, 0, term->drv->cols, term->drv->rows); break;
+			term->drv->clear(term, 0, 0, term->drv->cols, term->drv->rows); break;
 	}
 	return 0;
 }
 
-static int erase_in_line(int args[], size_t num_args) {
+static int erase_in_line(struct terminal* term, int args[], size_t num_args) {
 	int arg = num_args ? args[0] : 0;
 	switch(arg) {
 		case 0:
-			term->drv->clear(term->cur_col, term->cur_row, term->drv->cols, term->cur_row); break;
+			term->drv->clear(term, term->cur_col, term->cur_row, term->drv->cols, term->cur_row); break;
 		case 1:
-			term->drv->clear(0, term->cur_row, term->cur_col, term->cur_row); break;
+			term->drv->clear(term, 0, term->cur_row, term->cur_col, term->cur_row); break;
 		case 2:
-			term->drv->clear(0, term->cur_row, term->drv->cols, term->cur_row); break;
+			term->drv->clear(term, 0, term->cur_row, term->drv->cols, term->cur_row); break;
 	}
 	return 0;
 }
 
-static int set_pos(int args[], size_t num_args) {
+static int set_pos(struct terminal* term, int args[], size_t num_args) {
 	if(num_args < 2) {
 		term->cur_col = 0;
 		term->cur_row = 0;
@@ -80,41 +80,41 @@ static int set_pos(int args[], size_t num_args) {
 	term->cur_col = args[1] - 1;
 	return 0;
 }
-static int set_row_pos(int args[], size_t num_args) {
+static int set_row_pos(struct terminal* term, int args[], size_t num_args) {
 	int arg = num_args ? args[0] : 1;
 	term->cur_row = --arg;
 	return 0;
 }
 
-static int set_col_pos(int args[], size_t num_args) {
+static int set_col_pos(struct terminal* term, int args[], size_t num_args) {
 	int arg = num_args ? args[0] : 1;
 	term->cur_col = --arg;
 	return 0;
 }
 
-static int clear_forward(int args[], size_t num_args) {
+static int clear_forward(struct terminal* term, int args[], size_t num_args) {
 	int arg = num_args ? args[0] : 1;
-	term->drv->clear(term->cur_col, term->cur_row, term->cur_col + arg, term->cur_row);
+	term->drv->clear(term, term->cur_col, term->cur_row, term->cur_col + arg, term->cur_row);
 	return 0;
 }
 
-static int repeat_char(int args[], size_t num_args) {
+static int repeat_char(struct terminal* term, int args[], size_t num_args) {
 	int arg = num_args ? args[0] : 1;
 	if(term->last_char) {
 		for(int i = 0; i < arg; i++) {
-			tty_write(&term->last_char, 1);
+			tty_write(term, &term->last_char, 1);
 		}
 	}
 	return 0;
 }
 
-static int reset(int args[], size_t num_args) {
+static int reset(struct terminal* term, int args[], size_t num_args) {
 	term->fg_color = FG_COLOR_DEFAULT;
 	term->bg_color = BG_COLOR_DEFAULT;
 	return 0;
 }
 
-static int set_bdc(char arg) {
+static int set_bdc(struct terminal* term, char arg) {
 	switch(arg) {
 		case '0': term->write_bdc = true; break;
 		case 'B': term->write_bdc = false; break;
@@ -134,7 +134,7 @@ static int set_bdc(char arg) {
  * Esc (\033). It returns the number of handled characters. If an escape code
  * is not recognized, this returns 0 so the code is printed to the screen.
  */
-size_t tty_handle_escape_seq(char* str, size_t str_len) {
+size_t tty_handle_escape_seq(struct terminal* term, char* str, size_t str_len) {
 	size_t spos = 0;
 	char* cur_str = str;
 	ESC_ADVANCE();
@@ -142,7 +142,7 @@ size_t tty_handle_escape_seq(char* str, size_t str_len) {
 	// \033( or \033) for Block Drawing Character mode settings
 	if(*cur_str == ')' || *cur_str == '(') {
 		ESC_ADVANCE();
-		return set_bdc(*cur_str) == -1 ? 0 : spos;
+		return set_bdc(term, *cur_str) == -1 ? 0 : spos;
 	} else if(*cur_str != '[') {
 		return 0;
 	}
@@ -203,15 +203,15 @@ size_t tty_handle_escape_seq(char* str, size_t str_len) {
 			term->cur_col--;
 			result = 0;
 			break;
-		case 'm': result = set_char_attrs(args, num_args); break;
-		case 'J': result = clear(args, num_args); break;
-		case 'K': result = erase_in_line(args, num_args); break;
-		case 'H': result = set_pos(args, num_args); break; // CUP
-		case 'd': result = set_row_pos(args, num_args); break;
-		case 'G': result = set_col_pos(args, num_args); break;
-		case 'X': result = clear_forward(args, num_args); break;
-		case 'l': result = reset(args, num_args); break;
-		case 'b': result = repeat_char(args, num_args); break;
+		case 'm': result = set_char_attrs(term, args, num_args); break;
+		case 'J': result = clear(term, args, num_args); break;
+		case 'K': result = erase_in_line(term, args, num_args); break;
+		case 'H': result = set_pos(term, args, num_args); break; // CUP
+		case 'd': result = set_row_pos(term, args, num_args); break;
+		case 'G': result = set_col_pos(term, args, num_args); break;
+		case 'X': result = clear_forward(term, args, num_args); break;
+		case 'l': result = reset(term, args, num_args); break;
+		case 'b': result = repeat_char(term, args, num_args); break;
 	}
 
 	return result == -1 ? 0 : spos;

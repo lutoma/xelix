@@ -21,13 +21,16 @@
 #include <tty/tty.h>
 #include <tasks/task.h>
 #include <errno.h>
+#include <stdlib.h>
 
 int tty_ioctl(const char* path, int request, void* arg, task_t* task) {
-	if(!arg) {
+	int n = atoi(path + 4);
+	if(!arg || n > 9) {
 		sc_errno = EINVAL;
 		return -1;
 	}
 
+	struct terminal* term = &ttys[n];
 	switch(request) {
 		case TIOCGWINSZ:;
 			struct winsize* ws = (struct winsize*)arg;

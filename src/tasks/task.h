@@ -78,6 +78,9 @@ typedef struct task {
 	void* entry;
 	void* sbrk;
 
+	// Controlling terminal
+	struct terminal* ctty;
+
 	// Kernel stack used for interrupts. This will be loaded into the TSS.
 	void* kernel_stack;
 

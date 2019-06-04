@@ -49,6 +49,10 @@ void scheduler_add(task_t *task) {
 		task->previous = current_task;
 		current_task->next = task;
 	}
+
+	if(task->ctty) {
+		task->ctty->fg_task = task;
+	}
 }
 
 task_t* scheduler_find(uint32_t pid) {
@@ -84,7 +88,9 @@ static void unlink(task_t *t, bool replaced) {
 			task_signal(t->parent, t, SIGCHLD, t->parent->state);
 		}
 
-		term->fg_task = t->parent;
+		if(t == t->ctty->fg_task) {
+			t->ctty->fg_task = t->parent;
+		}
 
 		if(t->strace_observer && t->strace_fd) {
 			vfs_close(t->strace_fd, t->strace_observer);
