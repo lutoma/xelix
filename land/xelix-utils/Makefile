@@ -11,17 +11,20 @@ all: $(TARGETS)
 clean:
 	rm -f $(TARGETS) util.o libutil.a basictest.o
 
+init: init.c ini.c
+	$(CC) $(CFLAGS) -o $@ init.c ini.c -L. -lutil
+
+libutil.a: util.c argparse.c
+	$(CC) $(CFLAGS) -c -o util.o util.c
+	$(CC) $(CFLAGS) -c -o argparse.o argparse.c
+	ar rcs $@ util.o argparse.o
+
 %: %.asm
 	nasm -g -f elf -o $@.o $<
 	$(LD) -nostdlib -o $@ $@.o
 
 %: %.c libutil.a
 	$(CC) $(CFLAGS) -o $@ $@.c -L. -lutil
-
-libutil.a: util.c argparse.c
-	$(CC) $(CFLAGS) -c -o util.o util.c
-	$(CC) $(CFLAGS) -c -o argparse.o argparse.c
-	ar rcs $@ util.o argparse.o
 
 .PHONY: install
 install:

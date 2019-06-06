@@ -22,21 +22,79 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <string.h>
+#include <strings.h>
+#include <limits.h>
 #include <sys/wait.h>
 #include "util.h"
+#include "ini.h"
 
-static void launch(const char* tty, const char* path, char** argv, char** env) {
-	int pid = fork();
+struct service {
+	struct service* next;
+
+	pid_t pid;
+	char tty[PATH_MAX];
+	char path[PATH_MAX];
+};
+
+struct service* services;
+
+static void launch_service(struct service* service) {
+	char* argv[40];
+	char* path = strdup(service->path);
+
+	argv[0] = strtok(path, " ");
+	if(!argv[0]) {
+		return;
+	}
+
+	size_t argc = 1;
+	for(; argc < 40; argc++) {
+		argv[argc] = strtok(NULL, " ");
+		if(!argv[argc]) {
+			break;
+		}
+	}
+
+	pid_t pid = fork();
 	if(pid == -1) {
 		perror("Could not fork");
-		exit(-1);
+		return;
 	}
 
-	if(!pid) {
-		int tty_fd = open(tty, O_RDONLY);
-		execve(path, argv, env);
+	if(pid) {
+		service->pid = pid;
+		service->next = services;
+		services = service;
+	} else {
+		if(*service->tty) {
+			if(open(service->tty, O_RDONLY) < 0) {
+				perror("Could not open tty");
+				exit(-1);
+			}
+		}
+
+		char* env[] = {"foo=bar", NULL};
+		execve(argv[0], argv, env);
 	}
 }
+
+#define MATCH(s, n) strcasecmp(section, s) == 0 && strcasecmp(name, n) == 0
+static int handler(void* user, const char* section, const char* name,
+                   const char* value) {
+
+	struct service* service = (struct service*)user;
+    if (MATCH("service", "execstart")) {
+    	strlcpy(service->path, value, PATH_MAX);
+	} else if (MATCH("service", "tty")) {
+    	strlcpy(service->tty, value, PATH_MAX);
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
 
 int main() {
 	if(getpid() != 1) {
@@ -44,16 +102,57 @@ int main() {
 		return -1;
 	}
 
+	open("/dev/tty0", O_RDONLY);
 	sigset_t set;
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
 
-	char* login_argv[] = { "login", NULL };
-	char* login_env[] = { "USER=root", NULL };
+	if(chdir("/etc/init.d") == -1) {
+		perror("Could not switch to services directory");
+		return -1;
+	}
 
-	launch("/dev/tty0", "/usr/bin/login", login_argv, login_env);
-	launch("/dev/tty1", "/usr/bin/login", login_argv, login_env);
-	wait(NULL);
-	printf("\033[H\033[J");
-	fflush(stdout);
+	DIR* svd_dir = opendir(".");
+	if(!svd_dir) {
+		perror("Could not open services directory");
+		return -1;
+	}
+
+	struct dirent* ent = readdir(svd_dir);
+	for(; ent; ent = readdir(svd_dir)) {
+		if(ent->d_type != DT_REG && ent->d_type != DT_LNK) {
+			continue;
+		}
+
+		struct service* service = calloc(1, sizeof(struct service));
+		if(!service) {
+			perror("Could not allocate service struct");
+			continue;
+		}
+
+	    if(ini_parse(ent->d_name, handler, service) < 0) {
+	        fprintf(stderr, "Can't load '%s'\n", ent->d_name);
+	        continue;
+	    }
+
+	    launch_service(service);
+	}
+
+	while(1) {
+		int wstat;
+		pid_t pid = waitpid(-1, &wstat, 0);
+
+		if(!pid || WIFSTOPPED(wstat) || (WIFSIGNALED(wstat) &&
+			(WTERMSIG(wstat) == SIGKILL || WTERMSIG(wstat) == SIGTERM))) {
+			continue;
+		}
+
+		struct service* service = services;
+		for(; service; service = service->next) {
+			if(service->pid == pid) {
+				launch_service(service);
+				break;
+			}
+		}
+	}
 }

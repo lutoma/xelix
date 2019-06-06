@@ -143,7 +143,7 @@ static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, st
 	fp->type = FT_IFCHR;
 	memcpy(&fp->callbacks, &tty_cb, sizeof(struct vfs_callbacks));
 
-	if(task && !task->ctty && !(flags & O_NOCTTY)) {
+	if(task && !(flags & O_NOCTTY)) {
 		task->ctty = &ttys[n];
 	}
 

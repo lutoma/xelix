@@ -25,7 +25,7 @@
 #include <pwd.h>
 #include "util.h"
 
-int main() {
+int main(int argc, char* argv[], char* env[]) {
 	sigset_t set;
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
@@ -34,8 +34,14 @@ int main() {
 	gethostname(hostname, 300);
 	char* sname = shortname(strdup(hostname));
 
+	char* tty = ttyname(STDIN_FILENO);
+	if(tty) {
+		tty = basename(tty);
+	}
+
+	printf("\033[H\033[J");
 	while(true) {
-        printf("\nxelix tty1\n\n%s ", sname);
+        printf("\nxelix %s\n\n%s ", tty, sname);
 		struct passwd* pwd = do_auth(NULL);
 		if(pwd) {
 			run_shell(pwd, true);

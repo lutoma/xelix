@@ -1,0 +1,4 @@
+[Service]
+ExecStart=/usr/bin/login
+TTY=/dev/tty1
+
