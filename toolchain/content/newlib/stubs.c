@@ -40,6 +40,7 @@
 #include <poll.h>
 #include <mntent.h>
 #include <pthread.h>
+#include <syslog.h>
 
 #ifdef NOISY_STUBS
 	#define STUBWARN(cmd) fprintf(stderr, "xelix-newlib: " # cmd # " stub called.\n");
@@ -133,3 +134,9 @@ STUB(int, pthread_cond_timedwait, (pthread_cond_t *cond, pthread_mutex_t *mutex,
 STUB(int, pthread_join, (pthread_t thread, void **value_ptr), -1);
 STUB(int, pthread_create, (pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg), -1);
 STUB(int, killpg, (pid_t pid, int sig), -1);
+STUB(void, closelog, (void));
+STUB(void, openlog, (const char* ident, int logopt, int facility));
+STUB(int, setlogmask, (int maskpri), -1);
+STUB(void, syslog, (int prio, const char* fmt, ...));
+STUB(void, syslog, (int prio, const char* fmt, ...));
+STUB(int, initgroups, (const char *user, gid_t group), -1);

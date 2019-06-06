@@ -29,5 +29,7 @@ libutil.a: util.c argparse.c
 .PHONY: install
 install:
 	install -d ../../mnt/usr/bin/
+	install -d ../../mnt/etc/init.d/
 	install -D $(TARGETS) ../../mnt/usr/bin/
+	install -D tty0-login tty1-login ../../mnt/etc/init.d
 	chmod u+s ../../mnt/usr/bin/su
