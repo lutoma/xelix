@@ -11,7 +11,7 @@ all: $(TARGETS)
 clean:
 	rm -f $(TARGETS) util.o libutil.a basictest.o
 
-init: init.c ini.c
+init: init.c ini.c libutil.a
 	$(CC) $(CFLAGS) -o $@ init.c ini.c -L. -lutil
 
 libutil.a: util.c argparse.c

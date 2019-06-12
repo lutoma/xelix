@@ -21,6 +21,7 @@
 #include <tty/tty.h>
 #include <tty/keymap.h>
 #include <stdlib.h>
+#include <errno.h>
 
 /* Convert tty_input_state/keycodes to ASCII character. Also converts a number of
  * single-byte escape sequences that are used in both canonical and non-canonical
@@ -185,8 +186,13 @@ size_t tty_read(struct terminal* term, char* dest, size_t size) {
 }
 
 int tty_poll(vfs_file_t* fp, int events) {
-	int n = atoi(fp->mount_path + 4);
-	if(events & POLLIN && ttys[n].read_len) {
+	struct terminal* term = tty_from_path(fp->mount_path, fp->task);
+	if(!term) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	if(events & POLLIN && term->read_len) {
 		return POLLIN;
 	}
 	return 0;

@@ -119,6 +119,30 @@ void tty_switch(int n) {
 		active_tty = new_tty;
 }
 
+struct terminal* tty_from_path(const char* path, task_t* task) {
+	if(!strcmp(path, "/console")) {
+		return &ttys[0];
+	}
+
+	if(!strcmp(path, "/stdin") || !strcmp(path, "/stdout") ||
+		!strcmp(path, "/stderr") || !strcmp(path, "/tty") ||
+		!strcmp(path, "/tty0")) {
+		return task->ctty;
+	}
+
+	// 4 chars prefix, path format is "/ttyN"
+	if(strlen(path) < 5) {
+		return NULL;
+	}
+
+	int n = atoi(path + 4) - 1;
+	if(n < 0 || n > TTY_NUM) {
+		return NULL;
+	}
+
+	return &ttys[n];
+}
+
 /* Sysfs callbacks */
 static size_t stdout_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
 	return tty_write(rtask ? rtask->ctty : &ttys[0], (char*)source, size);
@@ -136,7 +160,11 @@ struct vfs_callbacks tty_cb = {
 };
 
 static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task) {
-	int n = atoi(path + 4);
+	struct terminal* term = tty_from_path(path, task);
+	if(!term) {
+		sc_errno = EINVAL;
+		return NULL;
+	}
 
 	vfs_file_t* fp = vfs_alloc_fileno(task, 0);
 	fp->inode = 1;
@@ -144,27 +172,31 @@ static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, st
 	memcpy(&fp->callbacks, &tty_cb, sizeof(struct vfs_callbacks));
 
 	if(task && !(flags & O_NOCTTY)) {
-		task->ctty = &ttys[n];
+		task->ctty = term;
 	}
-
 	return fp;
 }
 
 void tty_init() {
 	for(int i = 0; i < 10; i++) {
-		ttys[i].fg_color = FG_COLOR_DEFAULT;
-		ttys[i].bg_color = BG_COLOR_DEFAULT;
+		struct terminal* tty = &ttys[i];
+		tty->num = i;
+		tty->fg_color = FG_COLOR_DEFAULT;
+		tty->bg_color = BG_COLOR_DEFAULT;
 
-		ttys[i].termios.c_lflag = ECHO | ICANON | ISIG;
-		memcpy(ttys[i].termios.c_cc, default_c_cc, sizeof(default_c_cc));
+		tty->termios.c_lflag = ECHO | ICANON | ISIG;
+		memcpy(tty->termios.c_cc, default_c_cc, sizeof(default_c_cc));
+		snprintf(tty->path, 30, "/dev/tty%d", i + 1);
 
 		char name[6];
-		snprintf(&name[0], 6, "tty%d", i);
+		snprintf(&name[0], 6, "tty%d", i + 1);
 		sysfs_add_dev(&name[0], &tty_cb);
 	}
 
 	active_tty = &ttys[0];
-	//sysfs_add_dev("tty", &tty_cb);
+	sysfs_add_dev("console", &tty_cb);
+	sysfs_add_dev("tty", &tty_cb);
+	sysfs_add_dev("tty0", &tty_cb);
 
 	tty_keyboard_init();
 	struct tty_driver* fbtext_drv = tty_fbtext_init();

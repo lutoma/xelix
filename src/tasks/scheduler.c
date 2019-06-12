@@ -155,7 +155,7 @@ static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task
 	}
 
 	size_t rsize = 0;
-	sysfs_printf("# pid uid gid ppid state name memory entry sbrk stack\n")
+	sysfs_printf("# pid uid gid ppid state name memory tty\n")
 
 	do {
 		if(task->task_state == TASK_STATE_REPLACED) {
@@ -182,9 +182,13 @@ static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task
 			}
 		}
 
-		sysfs_printf("%d %d %d %d %c %s %d 0x%x 0x%x 0x%x\n",
-			task->pid, task->euid, task->gid, ppid, state, task->name,
-			mem_alloc, task->entry, task->sbrk, task->stack);
+		sysfs_printf("%d %d %d %d %c \"%s", task->pid, task->euid, task->gid,
+			ppid, state, task->name);
+
+		for(int i = 1; i < task->argc; i++) {
+			sysfs_printf(" %s", task->argv[i]);
+		}
+		sysfs_printf("\" %d %s\n", mem_alloc, task->ctty ? task->ctty->path : "-");
 
 	next:
 		task = task->next;

@@ -400,6 +400,7 @@ static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task
 	sysfs_printf("%-10s: 0x%x\n", "sbrk", task->sbrk);
 	sysfs_printf("%-10s: %d\n", "state", task->task_state);
 	sysfs_printf("%-10s: %s\n", "cwd", task->cwd);
+	sysfs_printf("%-10s: %s\n", "tty", task->ctty ? task->ctty->path : "");
 	sysfs_printf("%-10s: %d\n", "argc", task->argc);
 
 	sysfs_printf("%-10s: ", "argv");

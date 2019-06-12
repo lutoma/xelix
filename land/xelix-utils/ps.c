@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <pwd.h>
 #include "util.h"
 
@@ -35,7 +36,7 @@ int main(int argc, char* argv[]) {
 	fgets(data, 1024, fp);
 	free(data);
 
-	int hdr_len = printf("%-4s %-8s %-11s %-4s %s\n", "PID", "User", "State", "PPID", "Mem");
+	int hdr_len = printf("PID   User     State    PPID  TTY   Mem\n");
 	printf("\033(0q\033[%db\033(B\n", hdr_len);
 
 	while(true) {
@@ -48,13 +49,12 @@ int main(int argc, char* argv[]) {
 		uint32_t gid;
 		uint32_t ppid;
 		char cstate;
-		char name[300];
+		char name[500];
 		uint32_t mem;
-		uint32_t entry;
-		uint32_t sbrk;
-		uint32_t stack;
+		char _tty[30];
+		char* tty = _tty;
 
-		if(fscanf(fp, "%d %d %d %d %c %s %d 0x%x 0x%x 0x%x\n", &pid, &uid, &gid, &ppid, &cstate, name, &mem, &entry, &sbrk, &stack) != 10) {
+		if(fscanf(fp, "%d %d %d %d %c \"%500[^\"]\" %d %s\n", &pid, &uid, &gid, &ppid, &cstate, name, &mem, &_tty) != 8) {
 			fprintf(stderr, "Matching error.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -81,7 +81,11 @@ int main(int argc, char* argv[]) {
 		}
 
 		char* rfs = readable_fs(mem);
-		printf("%-4d %-8s \033[%-11s\033[m %-4d %-10s %-15s\n", pid, user, state, ppid, rfs, name);
+		if(*tty == '/') {
+			tty = basename(tty);
+		}
+
+		printf("%-5d %-8s \033[%-11s\033[m %-5d %-5s %-10s %-15s\n", pid, user, state, ppid, tty, rfs, name);
 		free(rfs);
 	}
 

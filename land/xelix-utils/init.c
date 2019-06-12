@@ -102,7 +102,7 @@ int main() {
 		return -1;
 	}
 
-	open("/dev/tty0", O_RDONLY);
+	open("/dev/tty1", O_RDONLY);
 	sigset_t set;
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
