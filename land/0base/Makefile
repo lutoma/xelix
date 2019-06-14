@@ -18,3 +18,4 @@ install:
 	echo 'root:x:0:root' > ../../mnt/etc/group
 	echo 'localhost.localdomain' > ../../mnt/etc/hostname
 	cp motd ../../mnt/etc/
+	ln -s /sys/mounts ../../mnt/etc/mtab

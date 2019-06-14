@@ -26,20 +26,17 @@
 #include <tasks/task.h>
 #include <time.h>
 
-vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task);
-int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task);
-int sysfs_access(char* path, uint32_t amode, void* mount_instance, struct task* task);
-
 static struct vfs_callbacks callbacks = {
 	.open = sysfs_open,
 	.stat = sysfs_stat,
 	.access = sysfs_access,
+	.readlink = sysfs_readlink,
 };
 
 static struct sysfs_file* sys_files;
 static struct sysfs_file* dev_files;
 
-static struct sysfs_file* get_file(char* path, struct sysfs_file* first) {
+static struct sysfs_file* get_file(const char* path, struct sysfs_file* first) {
 	if(!first || !strncmp(path, "/", 2)) {
 		return NULL;
 	}
@@ -66,6 +63,11 @@ int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task)
 	if(!is_root && !file) {
 		sc_errno = ENOENT;
 		return -1;
+	}
+
+	// Check if file has its own stat callback
+	if(file && file->cb.stat) {
+		return file->cb.stat(path, dest, mount_instance, task);
 	}
 
 	dest->st_dev = 2;
@@ -112,6 +114,21 @@ int sysfs_access(char* path, uint32_t amode, void* mount_instance, struct task* 
 	return 0;
 }
 
+int sysfs_readlink(const char* path, char* buf, size_t size, void* mount_instance, struct task* task) {
+	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
+	if(!file) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	if(!file->cb.readlink) {
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	return file->cb.readlink(path, buf, size, mount_instance, task);
+}
+
 size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	struct sysfs_file* file = *(struct sysfs_file**)fp->mount_instance;
 
@@ -151,8 +168,8 @@ vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t*
 		return NULL;
 	}
 
+	// Check if file has its own open callback
 	if(file && file->cb.open) {
-		// File has its own open callback
 		return file->cb.open(path, flags, mount_instance, task);
 	}
 

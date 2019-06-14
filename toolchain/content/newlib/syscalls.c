@@ -480,3 +480,7 @@ const char *hstrerror(int ecode) {
 		default: return "unknown error";
 	}
 }
+
+int ttyname_r(int fd, char *buf, size_t buflen) {
+	return readlink("/dev/tty", buf, buflen) ? 0 : EBADF;
+}

@@ -519,7 +519,7 @@ int vfs_utimes(const char* orig_path, struct timeval times[2], task_t* task) {
 
 int vfs_readlink(const char* orig_path, char* buf, size_t size, task_t* task) {
 	VFS_GET_CB_OR_ERROR(readlink);
-	int r = mp->callbacks.readlink(mount_path, buf, size, task);
+	int r = mp->callbacks.readlink(mount_path, buf, size, mp->instance, task);
 	kfree(mount_path);
 	return r;
 }

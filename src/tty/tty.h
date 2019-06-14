@@ -72,5 +72,5 @@ struct terminal ttys[TTY_NUM];
 size_t tty_write(struct terminal* tty, char* source, size_t size);
 size_t tty_read(struct terminal* tty, char* source, size_t size);
 void tty_switch(int n);
-struct terminal* tty_from_path(const char* path, task_t* task);
+struct terminal* tty_from_path(const char* path, task_t* task, int* is_link);
 void tty_init();

@@ -150,7 +150,7 @@ struct vfs_callbacks {
 	int (*chown)(const char* path, uint16_t owner, uint16_t group, struct task* task);
 	int (*utimes)(const char* path, struct timeval times[2], struct task* task);
 	int (*link)(const char* path, const char* new_path, struct task* task);
-	int (*readlink)(const char* orig_path, char* buf, size_t size, struct task* task);
+	int (*readlink)(const char* orig_path, char* buf, size_t size, void* mount_instance, struct task* task);
 	int (*rmdir)(char* path, struct task* task);
 	int (*ioctl)(const char* path, int request, void* arg, struct task* task);
 	int (*poll)(struct vfs_file* fp, int events);

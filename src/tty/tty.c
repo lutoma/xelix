@@ -119,7 +119,7 @@ void tty_switch(int n) {
 		active_tty = new_tty;
 }
 
-struct terminal* tty_from_path(const char* path, task_t* task) {
+struct terminal* tty_from_path(const char* path, task_t* task, int* is_link) {
 	if(!strcmp(path, "/console")) {
 		return &ttys[0];
 	}
@@ -127,6 +127,10 @@ struct terminal* tty_from_path(const char* path, task_t* task) {
 	if(!strcmp(path, "/stdin") || !strcmp(path, "/stdout") ||
 		!strcmp(path, "/stderr") || !strcmp(path, "/tty") ||
 		!strcmp(path, "/tty0")) {
+
+		if(is_link) {
+			*is_link = 1;
+		}
 		return task->ctty;
 	}
 
@@ -144,34 +148,76 @@ struct terminal* tty_from_path(const char* path, task_t* task) {
 }
 
 /* Sysfs callbacks */
-static size_t stdout_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
+static size_t sfs_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
 	return tty_write(rtask ? rtask->ctty : &ttys[0], (char*)source, size);
 }
-static size_t stdin_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
+static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
 	return tty_read(rtask ? rtask->ctty : &ttys[0], (char*)dest, size);
 }
+
+static int tty_stat(char* path, vfs_stat_t* dest, void* mount_instance, struct task* task) {
+	int is_link = 0;
+	struct terminal* term = tty_from_path(path, task, &is_link);
+	if(!term) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	dest->st_dev = 2;
+	dest->st_ino = 3;
+	dest->st_mode = is_link ? FT_IFLNK : FT_IFCHR;
+	dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+	dest->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+	dest->st_nlink = 1;
+	dest->st_blocks = 0;
+	dest->st_blksize = 1024;
+	dest->st_uid = 0;
+	dest->st_gid = 0;
+	dest->st_rdev = 0;
+	dest->st_size = term->read_len;
+	uint32_t t = time_get();
+	dest->st_atime = t;
+	dest->st_mtime = t;
+	dest->st_ctime = t;
+	return 0;
+}
+
+static int tty_readlink(const char* path, char* buf, size_t size, void* mount_instance, struct task* task) {
+	int is_link = 0;
+	struct terminal* term = tty_from_path(path, task, &is_link);
+	if(!is_link) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	int len = MIN(strlen(term->path), size);
+	memcpy(buf, term->path, len);
+	return len;
+}
+
 
 static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task);
 struct vfs_callbacks tty_cb = {
 	.open = tty_open,
-	.read = NULL,
-	.ioctl = NULL,
-	.poll = NULL,
+	.read = sfs_read,
+	.write = sfs_write,
+	.ioctl = tty_ioctl,
+	.poll = tty_poll,
+	.stat = tty_stat,
+	.readlink = tty_readlink,
+	.access = sysfs_access,
 };
 
 static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task) {
-	struct terminal* term = tty_from_path(path, task);
-	if(!term) {
-		sc_errno = EINVAL;
-		return NULL;
-	}
+	int is_link = 0;
+	struct terminal* term = tty_from_path(path, task, &is_link);
 
 	vfs_file_t* fp = vfs_alloc_fileno(task, 0);
 	fp->inode = 1;
-	fp->type = FT_IFCHR;
+	fp->type = is_link ? FT_IFLNK : FT_IFCHR;
 	memcpy(&fp->callbacks, &tty_cb, sizeof(struct vfs_callbacks));
 
-	if(task && !(flags & O_NOCTTY)) {
+	if(!is_link && task && !(flags & O_NOCTTY)) {
 		task->ctty = term;
 	}
 	return fp;
@@ -194,10 +240,6 @@ void tty_init() {
 	}
 
 	active_tty = &ttys[0];
-	sysfs_add_dev("console", &tty_cb);
-	sysfs_add_dev("tty", &tty_cb);
-	sysfs_add_dev("tty0", &tty_cb);
-
 	tty_keyboard_init();
 	struct tty_driver* fbtext_drv = tty_fbtext_init();
 	if(!fbtext_drv) {
@@ -211,18 +253,10 @@ void tty_init() {
 	}
 
 	log(LOG_INFO, "tty: Can render %d columns, %d rows\n", fbtext_drv->cols, fbtext_drv->rows);
-
-	struct vfs_callbacks stdin_cb = {
-		.read = stdin_read,
-		.ioctl = tty_ioctl,
-		.poll = tty_poll,
-	};
-	struct vfs_callbacks stdout_cb = {
-		.write = stdout_write,
-		.ioctl = tty_ioctl,
-	};
-
-	sysfs_add_dev("stdin", &stdin_cb);
-	sysfs_add_dev("stdout", &stdout_cb);
-	sysfs_add_dev("stderr", &stdout_cb);
+	sysfs_add_dev("console", &tty_cb);
+	sysfs_add_dev("tty", &tty_cb);
+	sysfs_add_dev("tty0", &tty_cb);
+	sysfs_add_dev("stdin", &tty_cb);
+	sysfs_add_dev("stdout", &tty_cb);
+	sysfs_add_dev("stderr", &tty_cb);
 }

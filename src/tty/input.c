@@ -186,7 +186,7 @@ size_t tty_read(struct terminal* term, char* dest, size_t size) {
 }
 
 int tty_poll(vfs_file_t* fp, int events) {
-	struct terminal* term = tty_from_path(fp->mount_path, fp->task);
+	struct terminal* term = tty_from_path(fp->mount_path, fp->task, NULL);
 	if(!term) {
 		sc_errno = EINVAL;
 		return -1;

@@ -24,6 +24,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <math.h>
+#include <errno.h>
 #include <sys/termios.h>
 #include "util.h"
 
@@ -78,8 +79,9 @@ struct passwd* do_auth(char* user) {
 		fflush(stdout);
 
 		char _user[50];
+		errno = 0;
 		if(!fgets(_user, 50, stdin)) {
-			if(!feof(stdin)) {
+			if(!feof(stdin) || errno) {
 				perror("fgets");
 			}
 			return NULL;
@@ -100,13 +102,15 @@ struct passwd* do_auth(char* user) {
 	tcsetattr(0, TCSANOW, &termios);
 
 	char pass[500];
+	errno = 0;
 	char* res = fgets(pass, 500, stdin);
+	int fgets_errno = errno;
 
 	termios.c_lflag |= ECHO;
 	tcsetattr(0, TCSANOW, &termios);
 
 	if(!res) {
-		if(!feof(stdin)) {
+		if(!feof(stdin) || fgets_errno) {
 			perror("fgets");
 		}
 		return NULL;
@@ -138,7 +142,6 @@ void run_shell(struct passwd* pwd, bool print_motd) {
 	}
 
 	chdir(pwd->pw_dir);
-
 	if(print_motd) {
 		printf("\033[H\033[J");
 		FILE* motd_fp = fopen("/etc/motd", "r");
@@ -146,6 +149,7 @@ void run_shell(struct passwd* pwd, bool print_motd) {
 			char* motd = (char*)malloc(1024);
 			size_t read = fread(motd, 1024, 1, motd_fp);
 			puts(motd);
+			fflush(stdout);
 			free(motd);
 		}
 	}

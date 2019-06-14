@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <limits.h>
 #include <pwd.h>
 #include "util.h"
 
@@ -34,9 +35,10 @@ int main(int argc, char* argv[], char* env[]) {
 	gethostname(hostname, 300);
 	char* sname = shortname(strdup(hostname));
 
-	char* tty = ttyname(STDIN_FILENO);
-	if(tty) {
-		tty = basename(tty);
+	char tty_buf[PATH_MAX];
+	char* tty = "";
+	if(ttyname_r(STDIN_FILENO, tty_buf, PATH_MAX) == 0) {
+		tty = basename(tty_buf);
 	}
 
 	printf("\033[H\033[J");
