@@ -45,6 +45,40 @@ uint8_t default_c_cc[NCCS] = {
 	0,
 };
 
+struct terminal* tty_from_path(const char* path, task_t* task, int* is_link) {
+	if(!strcmp(path, "/console")) {
+		return &ttys[0];
+	}
+
+	if(!strcmp(path, "/stdin") || !strcmp(path, "/stdout") ||
+		!strcmp(path, "/stderr") || !strcmp(path, "/tty") ||
+		!strcmp(path, "/tty0")) {
+
+		if(is_link) {
+			*is_link = 1;
+		}
+		return task->ctty;
+	}
+
+	// 4 chars prefix, path format is "/ttyN"
+	if(strlen(path) < 5) {
+		return NULL;
+	}
+
+	int n = atoi(path + 4) - 1;
+	if(n < 0 || n > TTY_NUM) {
+		return NULL;
+	}
+
+	return &ttys[n];
+}
+
+void tty_switch(int n) {
+		struct terminal* new_tty = &ttys[n];
+		new_tty->drv->rerender(active_tty, new_tty);
+		active_tty = new_tty;
+}
+
 static inline void handle_nonprintable(struct terminal* term, char chr) {
 	if(chr == term->termios.c_cc[VEOL]) {
 		term->cur_row++;
@@ -70,11 +104,11 @@ static inline void handle_nonprintable(struct terminal* term, char chr) {
 	}
 
 	if(chr == term->termios.c_cc[VINTR]) {
-		tty_write(NULL, "^C\n", 3);
+		_tty_write(NULL, "^C\n", 3);
 	}
 }
 
-size_t tty_write(struct terminal* term, char* source, size_t size) {
+size_t _tty_write(struct terminal* term, char* source, size_t size) {
 	if(!term || !term->drv) {
 		return 0;
 	}
@@ -113,46 +147,31 @@ size_t tty_write(struct terminal* term, char* source, size_t size) {
 	return size;
 }
 
-void tty_switch(int n) {
-		struct terminal* new_tty = &ttys[n];
-		new_tty->drv->rerender(active_tty, new_tty);
-		active_tty = new_tty;
+static size_t tty_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
+	return _tty_write(rtask ? rtask->ctty : &ttys[0], (char*)source, size);
 }
 
-struct terminal* tty_from_path(const char* path, task_t* task, int* is_link) {
-	if(!strcmp(path, "/console")) {
-		return &ttys[0];
+static size_t tty_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
+	struct terminal* term = rtask ? rtask->ctty : &ttys[0];
+	if(!term) {
+		sc_errno = EINVAL;
+		return 0;
 	}
 
-	if(!strcmp(path, "/stdin") || !strcmp(path, "/stdout") ||
-		!strcmp(path, "/stderr") || !strcmp(path, "/tty") ||
-		!strcmp(path, "/tty0")) {
-
-		if(is_link) {
-			*is_link = 1;
-		}
-		return task->ctty;
+	while(!term->read_done) {
+		halt();
 	}
 
-	// 4 chars prefix, path format is "/ttyN"
-	if(strlen(path) < 5) {
-		return NULL;
+	size = MIN(size, term->read_len);
+	term->read_len -= size;
+	memcpy(dest, term->read_buf, size);
+
+	if(term->read_len) {
+		memmove(term->read_buf, term->read_buf + size, term->read_len);
+	} else {
+		term->read_done = false;
 	}
-
-	int n = atoi(path + 4) - 1;
-	if(n < 0 || n > TTY_NUM) {
-		return NULL;
-	}
-
-	return &ttys[n];
-}
-
-/* Sysfs callbacks */
-static size_t sfs_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
-	return tty_write(rtask ? rtask->ctty : &ttys[0], (char*)source, size);
-}
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
-	return tty_read(rtask ? rtask->ctty : &ttys[0], (char*)dest, size);
+	return size;
 }
 
 static int tty_stat(char* path, vfs_stat_t* dest, void* mount_instance, struct task* task) {
@@ -195,12 +214,24 @@ static int tty_readlink(const char* path, char* buf, size_t size, void* mount_in
 	return len;
 }
 
+static int tty_poll(vfs_file_t* fp, int events) {
+	struct terminal* term = tty_from_path(fp->mount_path, fp->task, NULL);
+	if(!term) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	if(events & POLLIN && term->read_len) {
+		return POLLIN;
+	}
+	return 0;
+}
 
 static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task);
 struct vfs_callbacks tty_cb = {
 	.open = tty_open,
-	.read = sfs_read,
-	.write = sfs_write,
+	.read = tty_read,
+	.write = tty_write,
 	.ioctl = tty_ioctl,
 	.poll = tty_poll,
 	.stat = tty_stat,

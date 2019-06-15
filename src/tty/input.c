@@ -87,7 +87,7 @@ static void handle_canon(struct terminal* term, struct tty_input_state* input) {
 	}
 
 	if(term->termios.c_lflag & ECHO) {
-		tty_write(term, &chr, 1);
+		_tty_write(term, &chr, 1);
 	}
 
 	if(chr == term->termios.c_cc[VEOL] || term->read_len >= sizeof(term->read_buf)) {
@@ -140,7 +140,7 @@ static void handle_noncanon(struct terminal* term, struct tty_input_state* input
 	memcpy(term->read_buf, inputseq, inputlen);
 	term->read_len += inputlen;
 	if(term->termios.c_lflag & ECHO) {
-		tty_write(term, inputseq, inputlen);
+		_tty_write(term, inputseq, inputlen);
 	}
 
 	term->read_done = true;
@@ -166,34 +166,4 @@ void tty_input_cb(struct tty_input_state* input) {
 	} else {
 		handle_noncanon(active_tty, input);
 	}
-}
-
-size_t tty_read(struct terminal* term, char* dest, size_t size) {
-	while(!term->read_done) {
-		halt();
-	}
-
-	size = MIN(size, term->read_len);
-	term->read_len -= size;
-	memcpy(dest, term->read_buf, size);
-
-	if(term->read_len) {
-		memmove(term->read_buf, term->read_buf + size, term->read_len);
-	} else {
-		term->read_done = false;
-	}
-	return size;
-}
-
-int tty_poll(vfs_file_t* fp, int events) {
-	struct terminal* term = tty_from_path(fp->mount_path, fp->task, NULL);
-	if(!term) {
-		sc_errno = EINVAL;
-		return -1;
-	}
-
-	if(events & POLLIN && term->read_len) {
-		return POLLIN;
-	}
-	return 0;
 }

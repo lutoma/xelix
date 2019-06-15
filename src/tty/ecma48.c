@@ -102,7 +102,7 @@ static int repeat_char(struct terminal* term, int args[], size_t num_args) {
 	int arg = num_args ? args[0] : 1;
 	if(term->last_char) {
 		for(int i = 0; i < arg; i++) {
-			tty_write(term, &term->last_char, 1);
+			_tty_write(term, &term->last_char, 1);
 		}
 	}
 	return 0;
