@@ -279,7 +279,7 @@ void tty_init() {
 
 	for(int i = 0; i < 10; i++) {
 		ttys[i].drv = fbtext_drv;
-		ttys[i].drv_buf = kmalloc(fbtext_drv->buf_size);
+		ttys[i].drv_buf = kmalloc_a(fbtext_drv->buf_size);
 		fbtext_drv->clear(&ttys[i], 0, 0, fbtext_drv->cols, fbtext_drv->rows);
 	}
 

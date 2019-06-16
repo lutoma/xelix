@@ -145,21 +145,29 @@ static void write_char(struct terminal* term, uint32_t x, uint32_t y, char chr, 
 }
 
 static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
-	size_t x_size = ((end_x - start_x) * tty_font.width * (fb_desc->common.framebuffer_bpp / 8));
 	uint32_t color = convert_color(term->bg_color, true);
 	uintptr_t dest = get_fb_buf(term);
 
+	// If end_y == start_y, we still need to clear 1 line
+	int lines = MAX(1, (end_y - start_y));
+
+	// memset32 entire area for full line clears
 	if(start_x == 0 && end_x == drv->cols) {
-		size_t y_size = ((end_y - start_y + 1)  * tty_font.height * fb_desc->common.framebuffer_pitch);
-		memset32(CHAR_PTR(dest, start_x, start_y), color, x_size + y_size);
+		size_t clear_size = lines * tty_font.height
+			* fb_desc->common.framebuffer_pitch;
+
+		memset32(CHAR_PTR(dest, start_x, start_y), color, clear_size / 4);
 		return;
 	}
 
-	for(int y = start_y; y <= end_y; y++) {
-		for(int x = start_x; x <= end_x; x++) {
-			// FIXME
-			write_char(term, x, y, ' ', false);
-		}
+	// Partial clear, do individual memset32 for each line
+	int chars = MAX(1, end_x - start_x);
+	size_t clear_size = chars * tty_font.width
+		* (fb_desc->common.framebuffer_bpp / 8);
+
+	for(int i = 0; i < lines * tty_font.height; i++) {
+		void* mdest = PIXEL_PTR(dest, start_x * tty_font.width, start_y * tty_font.height + i);
+		memset32(mdest, color, clear_size / 4);
 	}
 }
 
