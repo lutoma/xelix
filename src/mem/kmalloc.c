@@ -79,7 +79,7 @@ struct footer {
 	#define KMALLOC_MAGIC 0xCAFE
 	#define check_err(fmt) \
 		log(LOG_ERR, "kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
-	static void check_header(struct mem_block* header);
+	static void check_header(struct mem_block* header, bool recurse);
 #endif
 
 /* Enable debugging. This will send out cryptic debug codes to the serial line
@@ -208,7 +208,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
 
 		#ifdef KMALLOC_CHECK
-		check_header(fblock);
+		check_header(fblock, true);
 		#endif
 
 		if(unlikely(fblock->type != TYPE_FREE)) {
@@ -313,7 +313,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero D
 	}
 
 	#ifdef KMALLOC_CHECK
-	check_header(header);
+	check_header(header, true);
 	#endif
 
 	debug("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
@@ -338,7 +338,7 @@ void _kfree(void *ptr DEBUGREGS) {
 	}
 
 	#ifdef KMALLOC_CHECK
-	check_header(header);
+	check_header(header, true);
 	#endif
 
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
@@ -408,7 +408,11 @@ void kmalloc_map_all() {
 }
 
 #ifdef KMALLOC_CHECK
-static void check_header(struct mem_block* header) {
+static void check_header(struct mem_block* header, bool recurse) {
+	if(!header || (uintptr_t)header < alloc_start || (uintptr_t)header > alloc_end) {
+		check_err("Allocation out of bounds");
+	}
+
 	if(header->magic != KMALLOC_MAGIC) {
 		check_err("Invalid magic");
 	}
@@ -421,21 +425,19 @@ static void check_header(struct mem_block* header) {
 		check_err("Invalid footer");
 	}
 
-	if((intptr_t)header != alloc_start &&
-		PREV_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		check_err("Previous block has invalid magic");
-	}
-
-	if(alloc_end > (intptr_t)header + FULL_SIZE(header) &&
-		NEXT_BLOCK(header)->magic != KMALLOC_MAGIC) {
-		check_err("Next block has invalid magic");
-	}
-
 	if(header->type == TYPE_FREE) {
 		struct free_block* fb = GET_FB(header);
 		if(unlikely(fb->magic != KMALLOC_MAGIC)) {
 			check_err("Free block without free block metadata");
 		}
+	}
+
+	if((intptr_t)header != alloc_start && recurse) {
+		check_header(PREV_BLOCK(header), false);
+	}
+
+	if(alloc_end > (intptr_t)header + FULL_SIZE(header) && recurse) {
+		check_header(NEXT_BLOCK(header), false);
 	}
 }
 #endif
@@ -447,7 +449,7 @@ void kmalloc_stats() {
 	for(; (intptr_t)header < alloc_end; header = NEXT_BLOCK(header)) {
 
 		#ifdef KMALLOC_CHECK
-		check_header(header);
+		check_header(header, false);
 		if(header->magic != KMALLOC_MAGIC) {
 			log(LOG_DEBUG, "0x%x\tcorrupted header\n", header);
 			continue;
