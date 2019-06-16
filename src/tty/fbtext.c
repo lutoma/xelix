@@ -76,12 +76,6 @@ const uint8_t tty_fbtext_bdc_font[][16] = {
 static struct multiboot_tag_framebuffer* fb_desc;
 static struct tty_driver* drv;
 
-static struct {
-	uint32_t last_x;
-	uint32_t last_y;
-	uint32_t* last_data;
-} cursor_data;
-
 static uint32_t convert_color(int color, bool bg) {
 	// RGB colors: Black, red, green, yellow, blue, magenta, cyan, white, default
 	const uint32_t colors_fg[] = {0x272822, 0xf92672, 0xa6e22e, 0xe6db74,
@@ -182,7 +176,9 @@ static void scroll_line(struct terminal* term) {
 
 	memmove((void*)dest, (void*)(dest + offset), size);
 	clear(term, 0, drv->rows - 1, drv->cols, drv->rows - 1);
-	cursor_data.last_y -= tty_font.height;
+	if(term->cursor_data.last_y >= tty_font.height) {
+		term->cursor_data.last_y -= tty_font.height;
+	}
 }
 
 static void set_cursor(struct terminal* term, uint32_t x, uint32_t y, bool restore) {
@@ -191,22 +187,22 @@ static void set_cursor(struct terminal* term, uint32_t x, uint32_t y, bool resto
 	x *= tty_font.width;
 	y *= tty_font.height;
 
-	if(!cursor_data.last_data) {
-		cursor_data.last_data = zmalloc(tty_font.height * sizeof(uint32_t));
+	if(!term->cursor_data.last_data) {
+		term->cursor_data.last_data = zmalloc(tty_font.height * sizeof(uint32_t));
 	} else {
 		if(restore) {
 			for(int i = 0; i < tty_font.height; i++) {
-				*PIXEL_PTR(dest, cursor_data.last_x, cursor_data.last_y + i) = cursor_data.last_data[i];
+				*PIXEL_PTR(dest, term->cursor_data.last_x, term->cursor_data.last_y + i) = term->cursor_data.last_data[i];
 			}
 		}
 	}
 
 	for(int i = 0; i < tty_font.height; i++) {
-		cursor_data.last_data[i] = *PIXEL_PTR(dest, x, y + i);
+		term->cursor_data.last_data[i] = *PIXEL_PTR(dest, x, y + i);
 	}
 
-	cursor_data.last_x = x;
-	cursor_data.last_y = y;
+	term->cursor_data.last_x = x;
+	term->cursor_data.last_y = y;
 	for(int i = 0; i < tty_font.height; i++) {
 		*PIXEL_PTR(dest, x, y + i) = 0xfd971f;
 	}

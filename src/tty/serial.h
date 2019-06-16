@@ -18,6 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <printf.h>
+
 #define serial_printf(fmt, args...) fctprintf(serial_send, NULL, fmt, ## args)
 
 void serial_init();

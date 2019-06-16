@@ -63,6 +63,12 @@ struct terminal {
 	char last_char;
 
 	void* drv_buf;
+
+	struct {
+		uint32_t last_x;
+		uint32_t last_y;
+		uint32_t* last_data;
+	} cursor_data;
 };
 
 struct terminal* active_tty;
