@@ -145,7 +145,7 @@ static void set_sample_rate(struct ac97_card* card) {
 	log(LOG_DEBUG, "ac97: Sample rate set to %d Hz\n", card->sample_rate);
 }
 
-static size_t sfs_write(struct vfs_file* fp, void* source, size_t size, struct task* task) {
+static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	struct ac97_card* card = &ac97_cards[0];
 	int bno = card->last_wr_buffer++;
 	if(bno >= NUM_BUFFERS) {

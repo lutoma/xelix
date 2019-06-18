@@ -184,4 +184,4 @@ struct winsize {
 	unsigned short ws_ypixel;
 };
 
-int tty_ioctl(const char* path, int request, void* arg, task_t* task);
+int tty_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg);

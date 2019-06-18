@@ -39,7 +39,7 @@
 
 uint32_t highest_pid = 0;
 
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task);
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 
 static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
@@ -381,13 +381,13 @@ int task_strace(task_t* task, isf_t* state) {
 	return pipe[0];
 }
 
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
-	if(fp->offset) {
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset) {
 		return 0;
 	}
 
 	size_t rsize = 0;
-	task_t* task = (task_t*)fp->meta;
+	task_t* task = (task_t*)ctx->fp->meta;
 
 	sysfs_printf("%-10s: %d\n", "pid", task->pid);
 	sysfs_printf("%-10s: %d\n", "uid", task->uid);

@@ -64,16 +64,16 @@ static void store(uint32_t level, char* fmt_string, size_t fmt_len) {
 	append(fmt_string, fmt_len);
 }
 
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
-	if(fp->offset >= log_size) {
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset >= log_size) {
 		return 0;
 	}
 
-	if(fp->offset + size > log_size) {
-		size = log_size - fp->offset;
+	if(ctx->fp->offset + size > log_size) {
+		size = log_size - ctx->fp->offset;
 	}
 
-	memcpy(dest, buffer + fp->offset, size);
+	memcpy(dest, buffer + ctx->fp->offset, size);
 	return size;
 }
 #endif

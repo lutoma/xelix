@@ -57,9 +57,9 @@ static struct sysfs_file* get_file(const char* path, struct sysfs_file* first) {
 	return NULL;
 }
 
-int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task) {
-	bool is_root = !strncmp(path, "/", 2);
-	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
+int sysfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
+	bool is_root = !strncmp(ctx->path, "/", 2);
+	struct sysfs_file* file = get_file(ctx->path, *(struct sysfs_file**)ctx->mp->instance);
 	if(!is_root && !file) {
 		sc_errno = ENOENT;
 		return -1;
@@ -67,7 +67,7 @@ int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task)
 
 	// Check if file has its own stat callback
 	if(file && file->cb.stat) {
-		return file->cb.stat(path, dest, mount_instance, task);
+		return file->cb.stat(ctx, dest);
 	}
 
 	dest->st_dev = 2;
@@ -96,8 +96,8 @@ int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task)
 	return 0;
 }
 
-int sysfs_access(char* path, uint32_t amode, void* mount_instance, struct task* task) {
-	if(!strncmp(path, "/", 2)) {
+int sysfs_access(struct vfs_callback_ctx* ctx, uint32_t amode) {
+	if(!strncmp(ctx->path, "/", 2)) {
 		return 0;
 	}
 
@@ -107,15 +107,15 @@ int sysfs_access(char* path, uint32_t amode, void* mount_instance, struct task* 
 		return -1;
 	}
 
-	if(!get_file(path, *(struct sysfs_file**)mount_instance)) {
+	if(!get_file(ctx->path, *(struct sysfs_file**)ctx->mp->instance)) {
 		sc_errno = ENOENT;
 		return -1;
 	}
 	return 0;
 }
 
-int sysfs_readlink(const char* path, char* buf, size_t size, void* mount_instance, struct task* task) {
-	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
+int sysfs_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
+	struct sysfs_file* file = get_file(ctx->path, *(struct sysfs_file**)ctx->mp->instance);
 	if(!file) {
 		sc_errno = ENOENT;
 		return -1;
@@ -126,13 +126,13 @@ int sysfs_readlink(const char* path, char* buf, size_t size, void* mount_instanc
 		return -1;
 	}
 
-	return file->cb.readlink(path, buf, size, mount_instance, task);
+	return file->cb.readlink(ctx, buf, size);
 }
 
-size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
-	struct sysfs_file* file = *(struct sysfs_file**)fp->mount_instance;
+size_t sysfs_getdents(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	struct sysfs_file* file = *(struct sysfs_file**)ctx->mp->instance;
 
-	if(!file || fp->offset) {
+	if(!file || ctx->fp->offset) {
 		return 0;
 	}
 
@@ -152,7 +152,7 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 		dir->d_reclen = rec_len;
 
 		total_length += rec_len;
-		fp->offset++;
+		ctx->fp->offset++;
 		dir = (vfs_dirent_t*)((intptr_t)dir + dir->d_reclen);
 		file = file->next;
 	}
@@ -160,9 +160,9 @@ size_t sysfs_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task) {
 	return total_length;
 }
 
-vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task) {
-	struct sysfs_file* file = get_file(path, *(struct sysfs_file**)mount_instance);
-	bool is_root = !strncmp(path, "/", 2);
+vfs_file_t* sysfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
+	struct sysfs_file* file = get_file(ctx->path, *(struct sysfs_file**)ctx->mp->instance);
+	bool is_root = !strncmp(ctx->path, "/", 2);
 	if(!(file || is_root)) {
 		sc_errno = ENOENT;
 		return NULL;
@@ -170,10 +170,10 @@ vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t*
 
 	// Check if file has its own open callback
 	if(file && file->cb.open) {
-		return file->cb.open(path, flags, mount_instance, task);
+		return file->cb.open(ctx, flags);
 	}
 
-	vfs_file_t* fp = vfs_alloc_fileno(task, 0);
+	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 0);
 	fp->inode = 1;
 
 	if(is_root) {

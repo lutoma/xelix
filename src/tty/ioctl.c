@@ -24,8 +24,8 @@
 #include <stdlib.h>
 #include <printf.h>
 
-int tty_ioctl(const char* path, int request, void* arg, task_t* task) {
-	struct terminal* term = tty_from_path(path, task, NULL);
+int tty_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
+	struct terminal* term = tty_from_path(ctx->path, ctx->task, NULL);
 	if(!term) {
 		sc_errno = EINVAL;
 		return -1;
@@ -50,5 +50,6 @@ int tty_ioctl(const char* path, int request, void* arg, task_t* task) {
 			sc_errno = ENOSYS;
 			return -1;
 	}
+	serial_printf("tty_ioctl done.\n");
 }
 

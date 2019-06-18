@@ -191,13 +191,13 @@ void ext2_dump_inode(struct inode* buf);
 
 uint32_t ext2_block_new();
 
-size_t ext2_write(vfs_file_t* fp, void* source, size_t size, task_t* task);
-size_t ext2_getdents(vfs_file_t* fp, void* dest, size_t size, task_t* task);
+size_t ext2_write(struct vfs_callback_ctx* ctx, void* source, size_t size);
+size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* task);
 void ext2_dirent_rm(uint32_t inode_num, char* name);
 void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
 
 uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
-vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* task);
+vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags);
 
-size_t ext2_read(vfs_file_t* fp, void* dest, size_t size, task_t* task);
+size_t ext2_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);

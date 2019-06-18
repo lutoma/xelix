@@ -38,7 +38,7 @@ void sysfs_rm_file(char* name);
 void sysfs_rm_dev(char* name);
 void sysfs_init();
 
-vfs_file_t* sysfs_open(char* path, uint32_t flags, void* mount_instance, task_t* task);
-int sysfs_stat(char* path, vfs_stat_t* dest, void* mount_instance, task_t* task);
-int sysfs_access(char* path, uint32_t amode, void* mount_instance, struct task* task);
-int sysfs_readlink(const char* path, char* buf, size_t size, void* mount_instance, struct task* task);
+vfs_file_t* sysfs_open(struct vfs_callback_ctx* ctx, uint32_t flags);
+int sysfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest);
+int sysfs_access(struct vfs_callback_ctx* ctx, uint32_t amode);
+int sysfs_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size);

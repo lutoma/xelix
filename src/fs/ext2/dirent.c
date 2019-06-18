@@ -74,18 +74,18 @@ static vfs_dirent_t* readdir_r(struct inode* inode, size_t* offset, struct rd_r*
 	}
 }
 
-size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
+size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
 	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
 	struct inode* inode = kmalloc(sizeof(struct inode));
 
-	if(!ext2_inode_read(inode, fp->inode)) {
+	if(!ext2_inode_read(inode, ctx->fp->inode)) {
 		kfree(inode);
 		kfree(rd_reent);
 		sc_errno = EBADF;
 		return -1;
 	}
 
-	if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task) < 0) {
+	if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, ctx->task) < 0) {
 		kfree(inode);
 		kfree(rd_reent);
 		sc_errno = EACCES;
@@ -101,9 +101,9 @@ size_t ext2_getdents(vfs_file_t* fp, void* buf, size_t size, task_t* task) {
 
 	uint32_t offset = 0;
 	vfs_dirent_t* ent = NULL;
-	while((ent = readdir_r(inode, &fp->offset, rd_reent))) {
+	while((ent = readdir_r(inode, &ctx->fp->offset, rd_reent))) {
 		if(offset + ent->d_reclen >= size) {
-			fp->offset -= rd_reent->last_len;
+			ctx->fp->offset -= rd_reent->last_len;
 			kfree(ent);
 			break;
 		}

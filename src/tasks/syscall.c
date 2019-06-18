@@ -186,8 +186,8 @@ static void int_handler(isf_t* state) {
 		strace.arg1 = arg1;
 		strace.arg2 = arg2;
 
-		if(strace_file && strace_file->callbacks.write) {
-			strace_file->callbacks.write(strace_file, &strace, sizeof(struct strace), task->strace_observer);
+		if(strace_file) {
+			vfs_write(strace_file->num, &strace, sizeof(struct strace), task->strace_observer);
 		}
 	}
 

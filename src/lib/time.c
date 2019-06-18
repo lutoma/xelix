@@ -169,8 +169,8 @@ int time_get_timeval(struct timeval* tv) {
 	return 0;
 }
 
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
-	if(fp->offset) {
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset) {
 		return 0;
 	}
 

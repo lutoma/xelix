@@ -149,11 +149,12 @@ task_t* scheduler_select(isf_t* last_regs) {
 	return current_task;
 }
 
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
-	if(fp->offset) {
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset) {
 		return 0;
 	}
 
+	task_t* task = ctx->task;
 	size_t rsize = 0;
 	sysfs_printf("# pid uid gid ppid state name memory tty\n")
 

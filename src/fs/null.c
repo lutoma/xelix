@@ -20,8 +20,8 @@
 #include <fs/sysfs.h>
 #include <string.h>
 
-static size_t null_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
-	if(fp->meta == 1) {
+static size_t null_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->meta == 1) {
 		bzero(dest, size);
 		return size;
 	} else {
@@ -29,7 +29,7 @@ static size_t null_read(struct vfs_file* fp, void* dest, size_t size, struct tas
 	}
 }
 
-static size_t null_write(struct vfs_file* fp, void* source, size_t size, struct task* task) {
+static size_t null_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	return size;
 }
 

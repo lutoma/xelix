@@ -147,12 +147,12 @@ size_t _tty_write(struct terminal* term, char* source, size_t size) {
 	return size;
 }
 
-static size_t tty_write(struct vfs_file* fp, void* source, size_t size, struct task* rtask) {
-	return _tty_write(rtask ? rtask->ctty : &ttys[0], (char*)source, size);
+static size_t tty_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
+	return _tty_write(ctx->task ? ctx->task->ctty : &ttys[0], (char*)source, size);
 }
 
-static size_t tty_read(struct vfs_file* fp, void* dest, size_t size, struct task* rtask) {
-	struct terminal* term = rtask ? rtask->ctty : &ttys[0];
+static size_t tty_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	struct terminal* term = ctx->task ? ctx->task->ctty : &ttys[0];
 	if(!term) {
 		sc_errno = EINVAL;
 		return 0;
@@ -174,9 +174,9 @@ static size_t tty_read(struct vfs_file* fp, void* dest, size_t size, struct task
 	return size;
 }
 
-static int tty_stat(char* path, vfs_stat_t* dest, void* mount_instance, struct task* task) {
+static int tty_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 	int is_link = 0;
-	struct terminal* term = tty_from_path(path, task, &is_link);
+	struct terminal* term = tty_from_path(ctx->path, ctx->task, &is_link);
 	if(!term) {
 		sc_errno = ENOENT;
 		return -1;
@@ -201,9 +201,9 @@ static int tty_stat(char* path, vfs_stat_t* dest, void* mount_instance, struct t
 	return 0;
 }
 
-static int tty_readlink(const char* path, char* buf, size_t size, void* mount_instance, struct task* task) {
+static int tty_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
 	int is_link = 0;
-	struct terminal* term = tty_from_path(path, task, &is_link);
+	struct terminal* term = tty_from_path(ctx->path, ctx->task, &is_link);
 	if(!is_link) {
 		sc_errno = EINVAL;
 		return -1;
@@ -214,8 +214,8 @@ static int tty_readlink(const char* path, char* buf, size_t size, void* mount_in
 	return len;
 }
 
-static int tty_poll(vfs_file_t* fp, int events) {
-	struct terminal* term = tty_from_path(fp->mount_path, fp->task, NULL);
+static int tty_poll(struct vfs_callback_ctx* ctx, int events) {
+	struct terminal* term = tty_from_path(ctx->fp->mount_path, ctx->fp->task, NULL);
 	if(!term) {
 		sc_errno = EINVAL;
 		return -1;
@@ -227,7 +227,7 @@ static int tty_poll(vfs_file_t* fp, int events) {
 	return 0;
 }
 
-static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task);
+static vfs_file_t* tty_open(struct vfs_callback_ctx* ctx, uint32_t flags);
 struct vfs_callbacks tty_cb = {
 	.open = tty_open,
 	.read = tty_read,
@@ -239,17 +239,17 @@ struct vfs_callbacks tty_cb = {
 	.access = sysfs_access,
 };
 
-static vfs_file_t* tty_open(char* path, uint32_t flags, void* mount_instance, struct task* task) {
+static vfs_file_t* tty_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	int is_link = 0;
-	struct terminal* term = tty_from_path(path, task, &is_link);
+	struct terminal* term = tty_from_path(ctx->path, ctx->task, &is_link);
 
-	vfs_file_t* fp = vfs_alloc_fileno(task, 0);
+	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 0);
 	fp->inode = 1;
 	fp->type = is_link ? FT_IFLNK : FT_IFCHR;
 	memcpy(&fp->callbacks, &tty_cb, sizeof(struct vfs_callbacks));
 
-	if(!is_link && task && !(flags & O_NOCTTY)) {
-		task->ctty = term;
+	if(!is_link && ctx->task && !(flags & O_NOCTTY)) {
+		ctx->task->ctty = term;
 	}
 	return fp;
 }

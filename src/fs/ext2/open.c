@@ -27,7 +27,7 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-static vfs_file_t* handle_symlink(struct inode* inode, const char* path, uint32_t flags, void* mount_instance, task_t* task) {
+static vfs_file_t* handle_symlink(struct vfs_callback_ctx* ctx, struct inode* inode, uint32_t flags) {
 	/* For symlinks with up to 60 chars length, the path is stored in the
 	 * inode in the area where normally the block pointers would be.
 	 * Otherwise in the file itself.
@@ -39,30 +39,28 @@ static vfs_file_t* handle_symlink(struct inode* inode, const char* path, uint32_
 	}
 
 	char* sym_path = (char*)inode->blocks;
-	char* new_path;
 	if(sym_path[0] != '/') {
-		char* base_path = ext2_chop_path(path, NULL);
-		new_path = vfs_normalize_path(sym_path, base_path);
+		char* base_path = ext2_chop_path(ctx->path, NULL);
+		ctx->path = vfs_normalize_path(sym_path, base_path);
 		kfree(base_path);
 	} else {
-		new_path = strdup(sym_path);
+		ctx->path = strdup(sym_path);
 	}
 
 	// FIXME Should be vfs_open to make symlinks across mount points possible
-	vfs_file_t* r = ext2_open(new_path, flags, mount_instance, task);
-	kfree(new_path);
+	vfs_file_t* r = ext2_open(ctx, flags);
 	return r;
 }
 
 // The public open interface to the virtual file system
-vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* task) {
-	if(!path || !strcmp(path, "")) {
+vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
+	if(!ctx || !ctx->path || !strcmp(ctx->path, "")) {
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
 		return NULL;
 	}
 
 	uint32_t dir_inode = 0;
-	struct dirent* dirent = ext2_dirent_find(path, &dir_inode, task);
+	struct dirent* dirent = ext2_dirent_find(ctx->path, &dir_inode, ctx->task);
 	if(!dirent && (sc_errno != ENOENT || !(flags & O_CREAT))) {
 		return NULL;
 	}
@@ -73,11 +71,11 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 	if(!inode_num) {
 		debug("ext2_open: Could not find inode, creating one.\n");
 		inode_num = ext2_inode_new(inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-		ext2_dirent_add(dir_inode, inode_num, vfs_basename(path), EXT2_DIRENT_FT_REG_FILE);
+		ext2_dirent_add(dir_inode, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_REG_FILE);
 
-		if(task) {
-			inode->uid = task->euid;
-			inode->gid = task->egid;
+		if(ctx->task) {
+			inode->uid = ctx->task->euid;
+			inode->gid = ctx->task->egid;
 		}
 	} else {
 		kfree(dirent);
@@ -95,7 +93,7 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 		}
 
 		if((flags & O_WRONLY) || (flags & O_RDWR)) {
-			if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, task) < 0) {
+			if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, ctx->task) < 0) {
 				kfree(inode);
 				sc_errno = EACCES;
 				return NULL;
@@ -111,13 +109,13 @@ vfs_file_t* ext2_open(char* path, uint32_t flags, void* mount_instance, task_t* 
 	}
 
 	if(ft == FT_IFLNK) {
-		vfs_file_t* r = handle_symlink(inode, path, flags, mount_instance, task);
+		vfs_file_t* r = handle_symlink(ctx, inode, flags);
 		kfree(inode);
 		return r;
 	}
 	kfree(inode);
 
-	vfs_file_t* fp = vfs_alloc_fileno(task, 3);
+	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 3);
 	fp->type = ft;
 	fp->inode = inode_num;
 	memcpy(&fp->callbacks, ext2_callbacks, sizeof(struct vfs_callbacks));

@@ -19,6 +19,7 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 #include <time.h>
 
 #define VFS_SEEK_SET 0
@@ -136,24 +137,49 @@ struct pollfd {
 	short revents;	/* returned events */
 };
 
+struct vfs_mountpoint;
+struct vfs_callback_ctx {
+	// File descriptor - Only set on vfs calls that take open files
+	struct vfs_file* fp;
+
+	// Path as seen by the vfs (but after vfs_normalize_path has been run)
+	char* orig_path;
+
+	// Path starting from the mountpoint
+	char* path;
+
+	struct vfs_mountpoint* mp;
+	struct task* task;
+	bool free_paths;
+};
+
 struct vfs_callbacks {
-	struct vfs_file* (*open)(char* path, uint32_t flags, void* mount_instance, struct task* task);
-	int (*access)(char* path, uint32_t amode, void* mount_instance, struct task* task);
-	size_t (*read)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
-	size_t (*write)(struct vfs_file* fp, void* source, size_t size, struct task* task);
-	size_t (*getdents)(struct vfs_file* fp, void* dest, size_t size, struct task* task);
-	int (*stat)(char* path, vfs_stat_t* dest, void* mount_instance, struct task* task);
-	int (*mkdir)(char* path, uint32_t mode, struct task* task);
-	int (*symlink)(const char* path1, const char* path2, struct task* task);
-	int (*unlink)(char* name, struct task* task);
-	int (*chmod)(const char* path, uint32_t mode, struct task* task);
-	int (*chown)(const char* path, uint16_t owner, uint16_t group, struct task* task);
-	int (*utimes)(const char* path, struct timeval times[2], struct task* task);
-	int (*link)(const char* path, const char* new_path, struct task* task);
-	int (*readlink)(const char* orig_path, char* buf, size_t size, void* mount_instance, struct task* task);
-	int (*rmdir)(char* path, struct task* task);
-	int (*ioctl)(const char* path, int request, void* arg, struct task* task);
-	int (*poll)(struct vfs_file* fp, int events);
+	struct vfs_file* (*open)(struct vfs_callback_ctx* ctx, uint32_t flags);
+	int (*access)(struct vfs_callback_ctx* ctx, uint32_t amode);
+	size_t (*read)(struct vfs_callback_ctx* ctx, void* dest, size_t size);
+	size_t (*write)(struct vfs_callback_ctx* ctx, void* source, size_t size);
+	size_t (*getdents)(struct vfs_callback_ctx* ctx, void* dest, size_t size);
+	int (*stat)(struct vfs_callback_ctx* ctx, vfs_stat_t* dest);
+	int (*mkdir)(struct vfs_callback_ctx* ctx, uint32_t mode);
+	int (*symlink)(struct vfs_callback_ctx* ctx, const char* target);
+	int (*unlink)(struct vfs_callback_ctx* ctx);
+	int (*chmod)(struct vfs_callback_ctx* ctx, uint32_t mode);
+	int (*chown)(struct vfs_callback_ctx* ctx, uint16_t owner, uint16_t group);
+	int (*utimes)(struct vfs_callback_ctx* ctx, struct timeval times[2]);
+	int (*link)(struct vfs_callback_ctx* ctx, const char* new_path);
+	int (*readlink)(struct vfs_callback_ctx* ctx, char* buf, size_t size);
+	int (*rmdir)(struct vfs_callback_ctx* ctx);
+	int (*ioctl)(struct vfs_callback_ctx* ctx, int request, void* arg);
+	int (*poll)(struct vfs_callback_ctx* ctx, int events);
+};
+
+struct vfs_mountpoint {
+	int num;
+	char path[265];
+	void* instance;
+	char* dev;
+	char* type;
+	struct vfs_callbacks callbacks;
 };
 
 typedef struct vfs_file {
@@ -165,6 +191,7 @@ typedef struct vfs_file {
 	uint32_t num;
 	char path[512];
 	char mount_path[512];
+	struct vfs_mountpoint* mp;
 	void* mount_instance;
 	struct vfs_callbacks callbacks;
 	uint32_t flags;

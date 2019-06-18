@@ -143,8 +143,8 @@ uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2
 	return devices_found;
 }
 
-static size_t sfs_read(struct vfs_file* fp, void* dest, size_t size, struct task* task) {
-	if(fp->offset) {
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset) {
 		return 0;
 	}
 
