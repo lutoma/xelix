@@ -127,28 +127,43 @@ int ext2_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 }
 
 int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
-	uint32_t parent_inode_num = 0;
-	struct dirent* dirent = ext2_dirent_find(ctx->path, &parent_inode_num, ctx->task);
-	kfree(dirent);
+	char* base_name = NULL;
+	char* base_path = ext2_chop_path(ctx->path, &base_name);
+	if(!base_path || ! base_name) {
+		sc_errno = EINVAL;
+		return -1;
+	}
 
-	if(!parent_inode_num || dirent) {
-		sc_errno = parent_inode_num ? EEXIST : ENOENT;
+	// Ensure parent directory exists and permissions are ok
+	struct dirent* parent = ext2_dirent_find(base_path, NULL, ctx->task);
+	if(!parent) {
+		sc_errno = ENOENT;
 		return -1;
 	}
 
 	struct inode* parent_inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(parent_inode, parent_inode_num)) {
+	if(!ext2_inode_read(parent_inode, parent->inode)) {
+		kfree(parent);
 		kfree(parent_inode);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	if(ext2_inode_check_perm(PERM_CHECK_WRITE, parent_inode, ctx->task) < 0) {
+		kfree(parent);
 		kfree(parent_inode);
 		sc_errno = EACCES;
 		return -1;
 	}
 	kfree(parent_inode);
+
+	// Ensure directory doesn't already exist
+	struct dirent* check_dirent = ext2_dirent_find(ctx->path, NULL, ctx->task);
+	if(check_dirent) {
+		kfree(check_dirent);
+		sc_errno = EEXIST;
+		return -1;
+	}
 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	uint32_t inode_num = ext2_inode_new(inode, FT_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
@@ -160,9 +175,12 @@ int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	buf->record_len = bl_off(1);
 
 	if(!ext2_inode_write_data(inode, inode_num, 0, sizeof(struct dirent), (uint8_t*)buf)) {
+		kfree(parent);
+		kfree(buf);
 		sc_errno = ENOENT;
 		return -1;
 	}
+	kfree(buf);
 
 	inode->size = bl_off(1);
 	if(ctx->task) {
@@ -170,16 +188,17 @@ int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
 		inode->gid = ctx->task->egid;
 	}
 	ext2_inode_write(inode, inode_num);
-	ext2_dirent_add(parent_inode_num, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(parent->inode, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_DIR);
 
 	// Add . and .. dirents
 	ext2_dirent_add(inode_num, inode_num, ".", EXT2_DIRENT_FT_DIR);
-	ext2_dirent_add(inode_num, parent_inode_num, "..", EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(inode_num, parent->inode, "..", EXT2_DIRENT_FT_DIR);
 
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 	blockgroup_table[blockgroup_num].used_directories++;
 	write_blockgroup_table();
 
+	kfree(parent);
 	kfree(inode);
 	return 0;
 }
