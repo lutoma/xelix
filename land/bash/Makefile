@@ -6,7 +6,7 @@ PACKAGE_URL := https://ftp.gnu.org/gnu/bash/$(PACKAGE_NAME).tar.gz
 all: $(PACKAGE_NAME).tar.gz
 	tar xf $(PACKAGE_NAME).tar.gz
 	patch -p0 < ${PACKAGE_NAME}.patch
-	cd ./$(PACKAGE_NAME) && ./configure --host=i786-pc-xelix --prefix=/usr
+	cd ./$(PACKAGE_NAME) && ./configure --host=i786-pc-xelix --prefix=/usr --disable-job-control
 	make -C $(PACKAGE_NAME)
 
 $(PACKAGE_NAME).tar.gz:
