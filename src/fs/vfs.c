@@ -184,6 +184,7 @@ static inline struct vfs_callback_ctx* context_from_path(const char* path, task_
 
 	int mp_num = get_mountpoint(ctx->orig_path, &ctx->path);
 	if(mp_num < 0 || !ctx->path) {
+		kfree(ctx->orig_path);
 		free_context(ctx);
 		sc_errno = ENOENT;
 		return NULL;
@@ -230,7 +231,6 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 		sc_errno = EINVAL;
 		return -1;
 	}
-
 
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
