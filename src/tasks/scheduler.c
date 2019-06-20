@@ -58,7 +58,7 @@ void scheduler_add(task_t *task) {
 task_t* scheduler_find(uint32_t pid) {
 	task_t* start = current_task;
 	for(task_t* t = start; t->next != start; t = t->next) {
-		if(t->pid == pid) {
+		if(t->pid == pid && t->task_state != TASK_STATE_REPLACED) {
 			return t;
 		}
 	}
