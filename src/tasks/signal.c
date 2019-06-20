@@ -90,11 +90,6 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 		return 0;
 	}
 
-	if(sig == SIGCHLD && task->task_state == TASK_STATE_WAITING) {
-		task->task_state = TASK_STATE_RUNNING;
-		return 0;
-	}
-
 	if(sig == SIGCHLD || sig == SIGCONT || sig == SIGURG) {
 		return 0;
 	}

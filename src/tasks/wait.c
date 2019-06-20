@@ -51,8 +51,15 @@ int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options) {
 	task->task_state = TASK_STATE_WAITING;
 	task->interrupt_yield = true;
 
-	// Will be overriden below
-	return 0;
+	// Will be set in wait_finish below
+	task->wait_context.wait_res_pid = 0;
+
+	// Wait until wait_finish is called
+	while((volatile int)task->task_state == TASK_STATE_WAITING) {
+		// FIXME Should scheduler yield immediately instead of waiting for tick
+		halt();
+	}
+	return (volatile int)task->wait_context.wait_res_pid;
 }
 
 /* Called by the scheduler whenever a task with a parent that is in the
@@ -64,8 +71,8 @@ void wait_finish(task_t* task, task_t* child) {
 		return;
 	}
 
-	// Set the return value of the wait() syscall to the pid of the returned child
-	task->state->eax = child->pid;
+	// This is used as return value for waitpid above.
+	task->wait_context.wait_res_pid = child->pid;
 	if(task->wait_context.stat_loc) {
 		*task->wait_context.stat_loc = child->exit_code;
 	}

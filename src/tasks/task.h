@@ -127,6 +127,9 @@ typedef struct task {
 		 * waiting for, or any child if 0.
 		 */
 		uint32_t wait_for;
+
+		// Used to pass result pid from wait_finish to task_waitpid
+		int wait_res_pid;
 		int* stat_loc;
 	} wait_context;
 

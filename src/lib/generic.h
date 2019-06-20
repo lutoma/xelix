@@ -64,3 +64,5 @@ static inline void __attribute__((noreturn)) freeze(void) {
        #define interrupts_enable() asm volatile("sti")
        #define halt() asm volatile("hlt")
 #endif
+
+#include <tty/serial.h>
