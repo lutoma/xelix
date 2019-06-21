@@ -34,15 +34,6 @@
 #include <fs/i386-ide.h>
 #include <net/socket.h>
 
-#ifdef VFS_DEBUG
-# define debug(fmt, args...) log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s " fmt, \
-	fp->task ? fp->task->pid : 0, \
-	fp->task ? fp->task->name : "kernel", \
-	__func__ + 4, fp->num, fp->path, args)
-#else
-# define debug(args...)
-#endif
-
 struct vfs_mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
 vfs_file_t kernel_files[VFS_MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
@@ -215,13 +206,6 @@ vfs_file_t* vfs_alloc_fileno(task_t* task, int min) {
 }
 
 int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
-	#ifdef VFS_DEBUG
-	log(LOG_DEBUG, "vfs: %3d %-20s %-13s %5d %-25s\n",
-		task ? task->pid : 0,
-		task ? task->name : "kernel",
-		"open", 0, orig_path);
-	#endif
-
 	if(!orig_path || !(*orig_path)) {
 		sc_errno = ENOENT;
 		return -1;
@@ -265,8 +249,6 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 }
 
 size_t vfs_read(int fd, void* dest, size_t size, task_t* task) {
-	debug("size %d\n", size);
-
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_WRONLY) {
 		sc_errno = EBADF;
@@ -284,8 +266,6 @@ size_t vfs_read(int fd, void* dest, size_t size, task_t* task) {
 }
 
 size_t vfs_write(int fd, void* source, size_t size, task_t* task) {
-	debug("size %d\n", size);
-
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_RDONLY) {
 		sc_errno = EBADF;
@@ -307,8 +287,6 @@ size_t vfs_write(int fd, void* source, size_t size, task_t* task) {
 }
 
 size_t vfs_getdents(int fd, void* dest, size_t size, task_t* task) {
-	debug("size %d\n", size);
-
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp) {
 		sc_errno = EBADF;
@@ -324,8 +302,6 @@ size_t vfs_getdents(int fd, void* dest, size_t size, task_t* task) {
 }
 
 int vfs_seek(int fd, size_t offset, int origin, task_t* task) {
-	debug("offset %d origin %d\n", offset, origin);
-
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
 		sc_errno = EBADF;
@@ -422,8 +398,6 @@ int vfs_dup2(int fd1, int fd2, task_t* task) {
 }
 
 int vfs_ioctl(int fd, int request, void* arg, task_t* task) {
-	debug("\n", NULL);
-
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp) {
 		sc_errno = EBADF;
@@ -475,8 +449,6 @@ int vfs_stat(char* orig_path, vfs_stat_t* dest, task_t* task) {
 }
 
 int vfs_close(int fd, task_t* task) {
-	debug("\n", NULL);
-
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
 		sc_errno = EBADF;

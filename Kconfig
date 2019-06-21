@@ -113,9 +113,6 @@ menu "File systems"
 	int "Maximum open files"
 	default 500
 
-	config VFS_DEBUG
-		bool "File system debugging"
-
 	config ENABLE_EXT2
 	bool "Enable ext2 support"
 	default y
