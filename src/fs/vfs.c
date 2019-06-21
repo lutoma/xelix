@@ -647,31 +647,35 @@ int vfs_rmdir(const char* orig_path, task_t* task) {
 }
 
 int vfs_poll(struct pollfd* fds, uint32_t nfds, int timeout, task_t* task) {
+	int ret = 0;
 	uint32_t timeout_end = 0;
 	if(timeout >= 0) {
 		timeout_end = timer_get_tick() + (timeout * 1000 / timer_get_rate());
 	}
 
+	// Build contexts ahead of time to avoid constantly reallocating in the loop
+	struct vfs_callback_ctx** contexts = kmalloc(sizeof(void*) * nfds);
+	for(int i = 0; i < nfds; i++) {
+		contexts[i] = context_from_fd(fds[i].fd, task);
+
+		if(!contexts[i] || !contexts[i]->fp) {
+			sc_errno = EBADF;
+			return -1;
+		}
+
+		if(!contexts[i]->fp->callbacks.poll) {
+			sc_errno = ENOSYS;
+			return -1;
+		}
+	}
+
 	while(1) {
 		for(uint32_t i = 0; i < nfds; i++) {
-			struct vfs_callback_ctx* ctx = context_from_fd(fds[i].fd, task);
-			if(!ctx || !ctx->fp) {
-				free_context(ctx);
-				sc_errno = EBADF;
-				return -1;
-			}
-
-			if(!ctx->fp->callbacks.ioctl) {
-				free_context(ctx);
-				sc_errno = ENOSYS;
-				return -1;
-			}
-
-			int r = ctx->fp->callbacks.poll(ctx, fds[i].events);
-			free_context(ctx);
-			if(r) {
+			int r = contexts[i]->fp->callbacks.poll(contexts[i], fds[i].events);
+			if(r > 0) {
 				fds[i].revents = r;
-				return 1;
+				ret = 1;
+				goto bye;
 			}
 		}
 
@@ -680,7 +684,13 @@ int vfs_poll(struct pollfd* fds, uint32_t nfds, int timeout, task_t* task) {
 		}
 		halt();
 	}
-	return 0;
+
+bye:
+	for(int i = 0; i < nfds; i++) {
+		free_context(contexts[i]);
+	}
+	kfree(contexts);
+	return ret;
 }
 
 int vfs_link(const char* orig_path, const char* orig_new_path, task_t* task) {

@@ -215,7 +215,7 @@ static int tty_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
 }
 
 static int tty_poll(struct vfs_callback_ctx* ctx, int events) {
-	struct terminal* term = tty_from_path(ctx->fp->mount_path, ctx->fp->task, NULL);
+	struct terminal* term = tty_from_path(ctx->fp->mount_path, ctx->task, NULL);
 	if(!term) {
 		sc_errno = EINVAL;
 		return -1;
