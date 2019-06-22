@@ -75,8 +75,7 @@ static void launch_service(struct service* service) {
 			}
 		}
 
-		char* env[] = {"foo=bar", NULL};
-		execve(argv[0], argv, env);
+		execv(argv[0], argv);
 	}
 }
 

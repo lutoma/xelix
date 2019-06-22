@@ -155,8 +155,7 @@ void run_shell(struct passwd* pwd, bool print_motd) {
 	}
 
 	char* __argv[] = { pwd->pw_shell, "-l", NULL };
-	char* __env[] = { "LOGIN=DONE", NULL };
-	execve(pwd->pw_shell, __argv, __env);
+	execv(pwd->pw_shell, __argv);
 	perror("Could not launch shell");
 	return;
 }

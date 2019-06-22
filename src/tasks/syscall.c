@@ -203,7 +203,7 @@ char** syscall_copy_array(task_t* task, char** array, uint32_t* count) {
 		}
 	}
 
-	if(size < 1 || size >= 200) {
+	if(size >= 200) {
 		return NULL;
 	}
 
