@@ -116,7 +116,7 @@ static void map_memory(task_t* task) {
 	 */
 	task_add_mem(task, (void*)STACK_LOCATION, task->stack, STACKSIZE, TMEM_SECTION_DATA, 0);
 	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, TMEM_SECTION_KERNEL, 0);
-	task_add_mem_flat(task, task->state, PAGE_SIZE, TMEM_SECTION_DATA, 0);
+	task_add_mem_flat(task, task->state, PAGE_SIZE, TMEM_SECTION_KERNEL, 0);
 
 	// FIXME Should have TMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
 	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000, TMEM_SECTION_CODE, 0);
