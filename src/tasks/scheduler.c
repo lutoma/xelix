@@ -18,18 +18,8 @@
  */
 
 #include "scheduler.h"
-#include <log.h>
-#include <mem/kmalloc.h>
-#include <int/int.h>
 #include <panic.h>
-#include <string.h>
-#include <mem/vmem.h>
-#include <mem/paging.h>
-#include <boot/multiboot.h>
-#include <tasks/elf.h>
-#include <tasks/wait.h>
 #include <fs/sysfs.h>
-#include <tty/tty.h>
 
 static task_t* current_task = NULL;
 
@@ -72,33 +62,7 @@ static void unlink(task_t *t, bool replaced) {
 
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
-
-	if(!replaced) {
-		// Stop child tasks
-		for(task_t* i = t->next; i->next != t->next; i = i->next) {
-			if(i->parent == t) {
-				unlink(i, false);
-			}
-		}
-
-		if(t->parent) {
-			if(t->parent->task_state == TASK_STATE_WAITING) {
-				wait_finish(t->parent, t);
-			}
-			task_signal(t->parent, t, SIGCHLD, t->parent->state);
-		}
-
-		if(t == t->ctty->fg_task) {
-			t->ctty->fg_task = t->parent;
-		}
-
-		if(t->strace_observer && t->strace_fd) {
-			vfs_close(t->strace_fd, t->strace_observer);
-		}
-	}
-
-	task_cleanup(t);
-
+	task_cleanup(t, replaced);
 }
 
 task_t* scheduler_select(isf_t* last_regs) {

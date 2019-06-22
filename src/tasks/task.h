@@ -167,7 +167,7 @@ int task_fork(task_t* to_fork, isf_t* state);
 int task_execve(task_t* task, char* path, char** argv, char** env);
 int task_exit(task_t* task, int code);
 int task_setid(task_t* task, int which, int id);
-void task_cleanup(task_t* t);
+void task_cleanup(task_t* t, bool replaced);
 int task_chdir(task_t* task, const char* dir);
 void* task_sbrk(task_t* task, int32_t length, int32_t l2);
 int task_strace(task_t* task, isf_t* state);

@@ -20,6 +20,7 @@
 #include <tasks/task.h>
 #include <tasks/execdata.h>
 #include <tasks/syscall.h>
+#include <tasks/wait.h>
 #include <tasks/elf.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
@@ -288,10 +289,34 @@ void task_set_initial_state(task_t* task) {
 	iret->ss = GDT_SEG_DATA_PL3;
 }
 
-void task_cleanup(task_t* t) {
+void task_cleanup(task_t* t, bool replaced) {
 	char tname[10];
 	snprintf(tname, 10, "task%d", t->pid);
 	sysfs_rm_file(tname);
+
+	if(!replaced) {
+		task_t* init = scheduler_find(1);
+		for(task_t* i = t->next; i->next != t->next; i = i->next) {
+			if(i->parent == t) {
+				i->parent = init;
+			}
+		}
+
+		if(t->parent) {
+			if(t->parent->task_state == TASK_STATE_WAITING) {
+				wait_finish(t->parent, t);
+			}
+			task_signal(t->parent, t, SIGCHLD, t->parent->state);
+		}
+
+		if(t == t->ctty->fg_task) {
+			t->ctty->fg_task = t->parent;
+		}
+
+		if(t->strace_observer && t->strace_fd) {
+			vfs_close(t->strace_fd, t->strace_observer);
+		}
+	}
 
 	clean_memory(t);
 	kfree(t->state);
