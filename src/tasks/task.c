@@ -166,12 +166,6 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	}
 
 	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
-	for(uint32_t num = 0; num < VFS_MAX_OPENFILES; num++) {
-		if(task->files[num].refs) {
-			task->files[num].task = task;
-		}
-	}
-
 	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->memory_context);
 
 	/* Set syscall return values for the forked task – need to set here since

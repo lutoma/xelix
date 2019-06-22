@@ -197,7 +197,6 @@ typedef struct vfs_file {
 	uint32_t flags;
 	size_t offset;
 	uint32_t inode;
-	struct task* task;
 
 	// File-system specific
 	uint32_t meta;

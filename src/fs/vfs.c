@@ -39,7 +39,10 @@ vfs_file_t kernel_files[VFS_MAX_OPENFILES];
 uint32_t last_mountpoint = -1;
 uint32_t last_dir = 0;
 
+/* Normalizes orig_path (which may be relative to cwd) into an absolute path,
+ * removing all ../. and extraneous slashes in the process. */
 char* vfs_normalize_path(const char* orig_path, char* cwd) {
+	// Would still work without this, but might as well take a shortcut
 	if(!strcmp(orig_path, ".")) {
 		return strdup(cwd);
 	}
@@ -59,6 +62,9 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	int skip = 0;
 	int set = 0;
 
+	/* Iterate over string in reverse order so we can easily skip parent
+	 * directories on ..
+	 */
 	for(; ptr >= path; ptr--) {
 		if(likely(*ptr != '/')) {
 			continue;
@@ -72,6 +78,9 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 			continue;
 		}
 
+		/* It's important this check comes before the skip below so we catch
+		 * consecutive slashes (/usr///bin/ etc.)
+		 */
 		if(!strcmp(seg, "..")) {
 			skip++;
 			continue;
@@ -94,6 +103,12 @@ char* vfs_normalize_path(const char* orig_path, char* cwd) {
 	}
 
 	kfree(path);
+
+	/* Since we copy the path in reverse order and the result is likely shorter
+	 * than the original, we will end up with zero padding at the start of the
+	 * buffer that needs to be moved to the end of it. Just returning an offset
+	 * wouldn't work because it breaks kfree() later.
+	 */
 	memmove(new_path, nptr, strlen(nptr) + 1);
 	return new_path;
 }
@@ -194,7 +209,6 @@ vfs_file_t* vfs_alloc_fileno(task_t* task, int min) {
 	for(int i = min; i < VFS_MAX_OPENFILES; i++, file++) {
 		if(!file->refs) {
 			if(likely(__sync_bool_compare_and_swap(&file->refs, 0, 1))) {
-				file->refs = 1;
 				file->num = i;
 				return file;
 			}
@@ -237,7 +251,6 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	strcpy(fp->mount_path, ctx->path);
 	fp->mount_instance = ctx->mp->instance;
 	fp->mp = ctx->mp;
-	fp->task = task;
 	fp->flags = flags;
 
 	if(flags & O_APPEND) {
