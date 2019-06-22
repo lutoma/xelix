@@ -209,8 +209,7 @@ static struct sysfs_file* add_file(struct sysfs_file** table, char* name,
 	return fp;
 }
 
-static void remove_file(struct sysfs_file** table, char* name) {
-	struct sysfs_file* fp = get_file(name, *table);
+static void remove_file(struct sysfs_file** table, struct sysfs_file* fp) {
 	if(!fp) {
 		return;
 	}
@@ -238,12 +237,12 @@ struct sysfs_file* sysfs_add_dev(char* name, struct vfs_callbacks* cb) {
 	return add_file(&dev_files, name, cb);
 }
 
-void sysfs_rm_file(char* name) {
-	remove_file(&sys_files, name);
+void sysfs_rm_file(struct sysfs_file* fp) {
+	remove_file(&sys_files, fp);
 }
 
-void sysfs_rm_dev(char* name) {
-	remove_file(&dev_files, name);
+void sysfs_rm_dev(struct sysfs_file* fp) {
+	remove_file(&dev_files, fp);
 }
 
 void sysfs_init() {

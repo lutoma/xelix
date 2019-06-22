@@ -78,8 +78,9 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};
-	struct sysfs_file* file = sysfs_add_file(tname, &sfs_cb);
-	file->meta = (void*)task;
+
+	task->sysfs_file = sysfs_add_file(tname, &sfs_cb);
+	task->sysfs_file->meta = (void*)task;
 	return task;
 }
 
@@ -226,6 +227,15 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 		return 0;
 	}
 
+	/* Normally removed in task_cleanup, but it may take until after this
+	 * function is done for the scheduler to invoke it. Since task_new adds a
+	 * new sysfs file, remove the old one here to avoid conflicts.
+	 */
+	if(task->sysfs_file) {
+		sysfs_rm_file(task->sysfs_file);
+	}
+	task->sysfs_file = NULL;
+
 	task_t* new_task = task_new(task->parent, task->pid, path, __env, __envc, __argv, __argc);
 	kfree_array(__argv, __argc);
 	kfree_array(__env, __envc);
@@ -256,22 +266,6 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	return 0;
 }
 
-static void clean_memory(task_t* t) {
-	struct task_mem* alloc = t->memory_allocations;
-	while(alloc) {
-		if(alloc->flags & TASK_MEM_FREE) {
-			kfree(alloc->phys_addr);
-		}
-
-		struct task_mem* old_alloc = alloc;
-		alloc = alloc->next;
-		kfree(old_alloc);
-	}
-
-	t->memory_allocations = NULL;
-	vmem_rm_context(t->memory_context);
-}
-
 void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
@@ -289,36 +283,58 @@ void task_set_initial_state(task_t* task) {
 	iret->ss = GDT_SEG_DATA_PL3;
 }
 
-void task_cleanup(task_t* t, bool replaced) {
-	char tname[10];
-	snprintf(tname, 10, "task%d", t->pid);
-	sysfs_rm_file(tname);
 
-	if(!replaced) {
-		task_t* init = scheduler_find(1);
-		for(task_t* i = t->next; i->next != t->next; i = i->next) {
-			if(i->parent == t) {
-				i->parent = init;
-			}
-		}
-
-		if(t->parent) {
-			if(t->parent->task_state == TASK_STATE_WAITING) {
-				wait_finish(t->parent, t);
-			}
-			task_signal(t->parent, t, SIGCHLD, t->parent->state);
-		}
-
-		if(t == t->ctty->fg_task) {
-			t->ctty->fg_task = t->parent;
-		}
-
-		if(t->strace_observer && t->strace_fd) {
-			vfs_close(t->strace_fd, t->strace_observer);
+static inline void task_userland_eol(task_t* t) {
+	task_t* init = scheduler_find(1);
+	for(task_t* i = t->next; i->next != t->next; i = i->next) {
+		if(i->parent == t) {
+			i->parent = init;
 		}
 	}
 
-	clean_memory(t);
+	if(t->parent) {
+		if(t->parent->task_state == TASK_STATE_WAITING) {
+			wait_finish(t->parent, t);
+		}
+		task_signal(t->parent, t, SIGCHLD, t->parent->state);
+	}
+
+	if(t == t->ctty->fg_task) {
+		t->ctty->fg_task = t->parent;
+	}
+
+	if(t->strace_observer && t->strace_fd) {
+		vfs_close(t->strace_fd, t->strace_observer);
+	}
+}
+
+void task_cleanup(task_t* t, bool replaced) {
+	/* Don't let userland know about the exit if the task gets replaced (execve)
+	 * by another one with the same PID.
+	 */
+	if(!replaced) {
+		task_userland_eol(t);
+	}
+
+	// Could have already been removed by execve
+	if(t->sysfs_file) {
+		sysfs_rm_file(t->sysfs_file);
+	}
+
+	struct task_mem* alloc = t->memory_allocations;
+	while(alloc) {
+		if(alloc->flags & TASK_MEM_FREE) {
+			kfree(alloc->phys_addr);
+		}
+
+		struct task_mem* old_alloc = alloc;
+		alloc = alloc->next;
+		kfree(old_alloc);
+	}
+
+	t->memory_allocations = NULL;
+	vmem_rm_context(t->memory_context);
+
 	kfree(t->state);
 	kfree(t->stack);
 	kfree(t->kernel_stack);

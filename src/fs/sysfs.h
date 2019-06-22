@@ -34,8 +34,8 @@ struct sysfs_file {
 
 struct sysfs_file* sysfs_add_file(char* name, struct vfs_callbacks* cb);
 struct sysfs_file* sysfs_add_dev(char* name, struct vfs_callbacks* cb);
-void sysfs_rm_file(char* name);
-void sysfs_rm_dev(char* name);
+void sysfs_rm_file(struct sysfs_file* fp);
+void sysfs_rm_dev(struct sysfs_file* fp);
 void sysfs_init();
 
 vfs_file_t* sysfs_open(struct vfs_callback_ctx* ctx, uint32_t flags);

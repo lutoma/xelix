@@ -158,6 +158,8 @@ typedef struct task {
 
 	struct task* strace_observer;
 	int strace_fd;
+
+	struct sysfs_file* sysfs_file;
 } task_t;
 
 task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
