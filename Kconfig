@@ -57,11 +57,12 @@ menu "Memory"
 		bearable.
 
 	config KMALLOC_CHECK
-		bool "kmalloc: Check all headers"
+		bool "kmalloc: Check all headers against buffer overflows/OOB"
 		---help---
-		This will check the memory allocation headers and footers during all
-		kmalloc/kfree operations. Useful to track down buffer overflows, but
-		slows things down.
+		Simple bounds/buffer overflow checking by inserting canaries at the
+		beginning and end of all internal structures (which are placed before and
+		after the actual allocations and tend to get overwritten on buffer overflow).
+		Wastes memory and makes things slow. Only use during development.
 endmenu
 
 menu "Tasks"

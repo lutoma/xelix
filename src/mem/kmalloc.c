@@ -36,52 +36,6 @@
 #define NEXT_BLOCK(x) ((struct mem_block*)((intptr_t)GET_FOOTER(x) + sizeof(struct footer)))
 #define FULL_SIZE(x) (x->size + sizeof(struct footer) + sizeof(struct mem_block))
 
-/* This is the block header struct. It is always located directly before the
- * start of the allocated area. Following the allocated area, there is a single
- * uint32_t containing the length of the block. As a result, any block header
- * except the first should always have the length of the previous block
- * directly before it. This makes it possible to use these blocks as a doubly
- * linked list.
- */
-struct mem_block {
-	#ifdef KMALLOC_CHECK
-	uint16_t magic;
-	#endif
-	uint32_t size;
-
-	enum {
-		TYPE_USED,
-		TYPE_FREE
-	} type;
-} __aligned(8);
-
-/* For free blocks, this struct gets stored inside the allocated area. As a
- * side effect of this, the minimum size for allocations is the size of this
- * struct.
- */
-struct free_block {
-	#ifdef KMALLOC_CHECK
-	uint16_t magic;
-	#endif
-	struct free_block* prev;
-	struct free_block* next;
-} __aligned(8);
-
-struct footer {
-	uint32_t size;
-} __aligned(8);
-
-/* If enabled, all block headers will begin with a magic which will be checked
- * during any modifications. Very useful to track down buffer overflows, but
- * comes with a performance penalty and wastes a bit of memory.
- */
-#ifdef KMALLOC_CHECK
-	#define KMALLOC_MAGIC 0xCAFE
-	#define check_err(fmt) \
-		log(LOG_ERR, "kmalloc: Metadata corruption at 0x%x: " fmt "\n", header);
-	static void check_header(struct mem_block* header, bool recurse);
-#endif
-
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
 #ifdef KMALLOC_DEBUG
@@ -92,6 +46,58 @@ struct footer {
 	#define DEBUGREGS
 #endif
 
+/* Simple bounds/buffer overflow checking by inserting canaries at the
+ * beginning and end of all internal structures (which are placed before and
+ * after the actual allocations and tend to get overwritten on buffer overflow).
+ * Wastes memory and makes things slow. Only use during development.
+ */
+#ifdef KMALLOC_CHECK
+	#define KMALLOC_CANARY 0xCAFE
+	#define SET_CANARIES(x) (x)->canary1 = KMALLOC_CANARY; \
+		(x)->canary2 = KMALLOC_CANARY
+	#define CANARY(x) uint16_t canary ## x
+#else
+	#define SET_CANARIES(x)
+	#define CANARY(x)
+#endif
+
+/* This is the block header struct. It is always located directly before the
+ * start of the allocated area. Following the allocated area, there is a single
+ * uint32_t containing the length of the block. As a result, any block header
+ * except the first should always have the length of the previous block
+ * directly before it. This makes it possible to use these blocks as a doubly
+ * linked list.
+ */
+struct mem_block {
+	CANARY(1);
+	uint32_t size;
+
+	enum {
+		TYPE_USED,
+		TYPE_FREE
+	} type;
+	CANARY(2);
+} __aligned(8);
+
+/* For free blocks, this struct gets stored inside the allocated area. As a
+ * side effect of this, the minimum size for allocations is the size of this
+ * struct.
+ */
+struct free_block {
+	CANARY(1);
+	struct free_block* prev;
+	struct free_block* next;
+	CANARY(2);
+} __aligned(8);
+
+struct footer {
+	uint32_t size;
+} __aligned(8);
+
+
+#ifdef KMALLOC_CHECK
+	static void check_header(struct mem_block* header, bool recurse);
+#endif
 
 bool kmalloc_ready = false;
 static spinlock_t kmalloc_lock;
@@ -116,12 +122,10 @@ static inline void unlink_free_block(struct free_block* fb) {
 
 static inline struct mem_block* set_block(size_t sz, struct mem_block* header) {
 	header->size = sz;
-	#ifdef KMALLOC_CHECK
-	header->magic = KMALLOC_MAGIC;
-	#endif
+	SET_CANARIES(header);
 
-	// Add uint32_t footer with size so we can find the header
-	GET_FOOTER(header)->size = header->size;
+	struct footer* footer = GET_FOOTER(header);
+	footer->size = header->size;
 	return header;
 }
 
@@ -134,7 +138,8 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 	 */
 	if((intptr_t)header > alloc_start && prev->type == TYPE_FREE) {
 		#ifdef KMALLOC_CHECK
-		header->magic = 0;
+		header->canary1 = 0;
+		header->canary2 = 0;
 		#endif
 
 		header = set_block(prev->size + FULL_SIZE(header), prev);
@@ -143,9 +148,7 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 
 		fb->prev = last_free;
 		fb->next = (struct free_block*)NULL;
-		#ifdef KMALLOC_CHECK
-		fb->magic = KMALLOC_MAGIC;
-		#endif
+		SET_CANARIES(fb);
 
 		if(last_free) {
 			last_free->next = fb;
@@ -160,7 +163,8 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 		set_block(header->size + FULL_SIZE(next), header);
 		unlink_free_block(GET_FB(next));
 		#ifdef KMALLOC_CHECK
-		next->magic = 0;
+		next->canary1 = 0;
+		next->canary2 = 0;
 		#endif
 	}
 
@@ -408,35 +412,48 @@ void kmalloc_map_all() {
 }
 
 #ifdef KMALLOC_CHECK
+#define check_err(fmt, args...) \
+	panic("kmalloc: Metadata corruption at 0x%x: " fmt "\n", header, ##args);
+
+#define check_canaries(x)										\
+	if(unlikely((x)->canary1 != KMALLOC_CANARY)) {				\
+		check_err("Invalid " #x " start canary (%#x != %#x)",	\
+			(x)->canary1, KMALLOC_CANARY);						\
+	}															\
+																\
+	if(unlikely((x)->canary2 != KMALLOC_CANARY)) {				\
+		check_err("Invalid " #x " end canary (%#x != %#x)",		\
+			(x)->canary1, KMALLOC_CANARY);						\
+	}
+
 static void check_header(struct mem_block* header, bool recurse) {
-	if(!header || (uintptr_t)header < alloc_start || (uintptr_t)header > alloc_end) {
+	if(unlikely(!header || (uintptr_t)header < alloc_start || (uintptr_t)header > alloc_end)) {
 		check_err("Allocation out of bounds");
 	}
 
-	if(header->magic != KMALLOC_MAGIC) {
-		check_err("Invalid magic");
-	}
-
-	if(header->size < sizeof(struct free_block)) {
-		check_err("Block is smaller than minimum size");
-	}
-
-	if(GET_FOOTER(header)->size != header->size) {
-		check_err("Invalid footer");
-	}
-
+	check_canaries(header);
 	if(header->type == TYPE_FREE) {
-		struct free_block* fb = GET_FB(header);
-		if(unlikely(fb->magic != KMALLOC_MAGIC)) {
-			check_err("Free block without free block metadata");
-		}
+		struct free_block* free_block = GET_FB(header);
+		check_canaries(free_block);
 	}
 
-	if((intptr_t)header != alloc_start && recurse) {
+	int min_sz = sizeof(struct free_block);
+	if(unlikely(header->size < min_sz)) {
+		check_err("Block is smaller than minimum size (%d < %d)",
+			header->size, min_sz);
+	}
+
+	struct footer* footer = GET_FOOTER(header);
+	if(unlikely(header->size != footer->size)) {
+		check_err("Header size doesn't match footer size (%d != %d)",
+			header->size, footer->size);
+	}
+
+	if(likely((intptr_t)header != alloc_start) && recurse) {
 		check_header(PREV_BLOCK(header), false);
 	}
 
-	if(alloc_end > (intptr_t)header + FULL_SIZE(header) && recurse) {
+	if(likely(alloc_end > (intptr_t)header + FULL_SIZE(header)) && recurse) {
 		check_header(NEXT_BLOCK(header), false);
 	}
 }
@@ -450,10 +467,6 @@ void kmalloc_stats() {
 
 		#ifdef KMALLOC_CHECK
 		check_header(header, false);
-		if(header->magic != KMALLOC_MAGIC) {
-			log(LOG_DEBUG, "0x%x\tcorrupted header\n", header);
-			continue;
-		}
 		#endif
 
 		log(LOG_DEBUG, "0x%x\tsize 0x%x\tres 0x%x\t", header, header->size,
