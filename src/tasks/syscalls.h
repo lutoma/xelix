@@ -40,9 +40,8 @@
  *  typedef uint32_t (*syscall_cb)(task_t* task, [isf_t* state],
  * 		syscall arguments..)
  *
- * Possible flags are SCF_TASKEND (calls the callback with task as the last
- * argument instead of the first, legacy) and SCF_STATE (Also passes on the isf
- * state to the callback, cannot be used with SCF_TASKEND).
+ * The only currently defined flag is SCF_STATE, in which case the isf state is
+ * passed after the task.
  *
  * In addition, each argument has an individual flags field. If the flags field
  * for an argument is 0, the argument is ignored (and the callback will be
@@ -68,23 +67,23 @@ const struct syscall_definition syscall_table[] = {
 		SCA_INT, 0, 0, 0},
 
 	// 2
-	{"read", (syscall_cb)vfs_read, SCF_TASKEND,
+	{"read", (syscall_cb)vfs_read, 0,
 		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 3
-	{"write", (syscall_cb)vfs_write, SCF_TASKEND,
+	{"write", (syscall_cb)vfs_write, 0,
 		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 4
-	{"access", (syscall_cb)vfs_access, SCF_TASKEND,
+	{"access", (syscall_cb)vfs_access, 0,
 		SCA_STRING, SCA_INT, 0, 0},
 
 	// 5
-	{"close", (syscall_cb)vfs_close, SCF_TASKEND,
+	{"close", (syscall_cb)vfs_close, 0,
 		SCA_INT, 0, 0, 0},
 
 	// 6
-	{"mkdir", (syscall_cb)vfs_mkdir, SCF_TASKEND,
+	{"mkdir", (syscall_cb)vfs_mkdir, 0,
 		SCA_STRING, SCA_INT, 0, 0},
 
 	// 7
@@ -96,47 +95,47 @@ const struct syscall_definition syscall_table[] = {
 		0, 0, 0, 0},
 
 	// 9
-	{"poll", (syscall_cb)vfs_poll, SCF_TASKEND,
+	{"poll", (syscall_cb)vfs_poll, 0,
 		SCA_POINTER | SCA_SIZE_IN_1, SCA_INT, SCA_INT, sizeof(struct pollfd)},
 
 	// 10
-	{"unlink", (syscall_cb)vfs_unlink, SCF_TASKEND,
+	{"unlink", (syscall_cb)vfs_unlink, 0,
 		SCA_STRING, 0, 0, 0},
 
 	// 11
-	{"chmod", (syscall_cb)vfs_chmod, SCF_TASKEND,
+	{"chmod", (syscall_cb)vfs_chmod, 0,
 		SCA_STRING, 0, 0, 0},
 
 	// 12
-	{"link", (syscall_cb)vfs_link, SCF_TASKEND,
+	{"link", (syscall_cb)vfs_link, 0,
 		SCA_STRING, SCA_STRING, 0, 0},
 
 	// 13
-	{"open", (syscall_cb)vfs_open, SCF_TASKEND,
+	{"open", (syscall_cb)vfs_open, 0,
 		SCA_STRING, SCA_INT, 0, 0},
 
 	// 14
-	{"fstat", (syscall_cb)vfs_fstat, SCF_TASKEND,
+	{"fstat", (syscall_cb)vfs_fstat, 0,
 		SCA_INT, SCA_POINTER, 0, sizeof(vfs_stat_t)},
 
 	// 15
-	{"seek", (syscall_cb)vfs_seek, SCF_TASKEND,
+	{"seek", (syscall_cb)vfs_seek, 0,
 		SCA_INT, SCA_INT, SCA_INT, 0},
 
 	// 16
-	{"getdents", (syscall_cb)vfs_getdents, SCF_TASKEND,
+	{"getdents", (syscall_cb)vfs_getdents, 0,
 		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 17
-	{"chown", (syscall_cb)vfs_chown, SCF_TASKEND,
+	{"chown", (syscall_cb)vfs_chown, 0,
 		SCA_STRING, SCA_INT, SCA_INT, 0},
 
 	// 18
-	{"signal", (syscall_cb)task_signal_syscall, SCF_TASKEND,
+	{"signal", (syscall_cb)task_signal_syscall, 0,
 		SCA_INT, SCA_INT, 0, 0},
 
 	// 19
-	{"gettimeofday", (syscall_cb)time_get_timeval, SCF_TASKEND,
+	{"gettimeofday", (syscall_cb)time_get_timeval, 0,
 		SCA_POINTER, 0, 0, sizeof(struct timeval)},
 
 	// 20
@@ -144,7 +143,7 @@ const struct syscall_definition syscall_table[] = {
 		SCA_STRING, 0, 0, 0},
 
 	// 21
-	{"utimes", (syscall_cb)vfs_utimes, SCF_TASKEND,
+	{"utimes", (syscall_cb)vfs_utimes, 0,
 		SCA_STRING, 0, 0, 0},
 
 	// 22
@@ -152,8 +151,8 @@ const struct syscall_definition syscall_table[] = {
 		0, 0, 0, 0},
 
 	// 23
-	{"rmdir", (syscall_cb)vfs_rmdir,
-		SCF_TASKEND, SCA_STRING, 0, 0, 0},
+	{"rmdir", (syscall_cb)vfs_rmdir, 0,
+		SCA_STRING, 0, 0, 0},
 
 #ifdef ENABLE_PICOTCP
 	// 24
@@ -175,7 +174,7 @@ const struct syscall_definition syscall_table[] = {
 
 	// 26
 	/* FIXME Size incorrect */
-	{"ioctl", (syscall_cb)vfs_ioctl, SCF_TASKEND,
+	{"ioctl", (syscall_cb)vfs_ioctl, 0,
 		SCA_INT, SCA_INT, SCA_POINTER | SCA_NULLOK, 0x600},
 
 	// 27
@@ -195,7 +194,7 @@ const struct syscall_definition syscall_table[] = {
 		0, 0, 0, 0},
 
 	// 31
-	{"readlink", (syscall_cb)vfs_readlink, SCF_TASKEND,
+	{"readlink", (syscall_cb)vfs_readlink, 0,
 		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 32
@@ -218,7 +217,7 @@ const struct syscall_definition syscall_table[] = {
 		0, 0, 0, 0},
 
 	// 36
-	{"fcntl", (syscall_cb)vfs_fcntl, SCF_TASKEND,
+	{"fcntl", (syscall_cb)vfs_fcntl, 0,
 		SCA_INT, SCA_INT, SCA_INT, 0},
 
 #ifdef ENABLE_PICOTCP
@@ -269,11 +268,11 @@ const struct syscall_definition syscall_table[] = {
 		SCA_INT, SCA_INT, 0, 0},
 
 	// 43
-	{"stat", (syscall_cb)vfs_stat, SCF_TASKEND,
+	{"stat", (syscall_cb)vfs_stat, 0,
 		SCA_STRING, SCA_POINTER, 0, sizeof(vfs_stat_t)},
 
 	// 44
-	{"dup2", (syscall_cb)vfs_dup2, SCF_TASKEND,
+	{"dup2", (syscall_cb)vfs_dup2, 0,
 		SCA_INT, SCA_INT, 0, 0},
 
 	// 45

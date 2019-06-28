@@ -131,9 +131,9 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 
 	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
 	map_memory(task);
-	vfs_open("/dev/stdin", O_RDONLY, task);
-	vfs_open("/dev/stdout", O_WRONLY, task);
-	vfs_open("/dev/stderr", O_WRONLY, task);
+	vfs_open(task, "/dev/stdin", O_RDONLY);
+	vfs_open(task, "/dev/stdout", O_WRONLY);
+	vfs_open(task, "/dev/stderr", O_WRONLY);
 	return task;
 }
 
@@ -304,7 +304,7 @@ static inline void task_userland_eol(task_t* t) {
 	}
 
 	if(t->strace_observer && t->strace_fd) {
-		vfs_close(t->strace_fd, t->strace_observer);
+		vfs_close(t->strace_observer, t->strace_fd);
 	}
 }
 
@@ -345,32 +345,32 @@ void task_cleanup(task_t* t, bool replaced) {
 }
 
 int task_chdir(task_t* task, const char* dir) {
-	if(vfs_access(dir, R_OK | X_OK, task) < 0) {
+	if(vfs_access(task, dir, R_OK | X_OK) < 0) {
 		return -1;
 	}
 
-	int fd = vfs_open(dir, O_RDONLY, task);
+	int fd = vfs_open(task, dir, O_RDONLY);
 	if(fd == -1) {
 		return -1;
 	}
 
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_fstat(fd, stat, task) != 0) {
+	if(vfs_fstat(task, fd, stat) != 0) {
 		kfree(stat);
-		vfs_close(fd, task);
+		vfs_close(task, fd);
 		sc_errno = ENOENT;
 		return -1;
 	}
 
 	if(vfs_mode_to_filetype(stat->st_mode) != FT_IFDIR) {
-		vfs_close(fd, task);
+		vfs_close(task, fd);
 		sc_errno = ENOTDIR;
 		return -1;
 	}
 
 	kfree(stat);
 	strcpy(task->cwd, vfs_get_from_id(fd, task)->path);
-	vfs_close(fd, task);
+	vfs_close(task, fd);
 	return 0;
 }
 

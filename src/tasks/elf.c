@@ -41,8 +41,8 @@ static char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 
 
 static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf, task_t* task) {
 	void* buf = inbuf ? inbuf : kmalloc(size);
-	vfs_seek(fd, offset, VFS_SEEK_SET, task);
-	size_t read = vfs_read(fd, buf, size, task);
+	vfs_seek(task, fd, offset, VFS_SEEK_SET);
+	size_t read = vfs_read(task, fd, buf, size);
 	if(likely(read == size)) {
 		return buf;
 	}
@@ -170,14 +170,14 @@ static uint32_t read_pheads(task_t* task, int fd, elf_t* header, bool is_main) {
 #define LF_ASSERT(cmp, msg)                    \
 if(unlikely(!(cmp))) {                         \
 	log(LOG_INFO, "elf: elf_load: " msg "\n"); \
-	vfs_close(fd, task);                       \
+	vfs_close(task, fd);                       \
 	kfree(header);                             \
 	return -1;                                 \
 }
 
 static int load_file(task_t* task, char* path, bool is_main) {
 	debug("elf: Loading %s\n", path);
-	int fd = vfs_open(path, O_RDONLY, task);
+	int fd = vfs_open(task, path, O_RDONLY);
 	if(unlikely(fd < 0)) {
 		return -1;
 	}
@@ -206,7 +206,7 @@ static int load_file(task_t* task, char* path, bool is_main) {
 
 	// setuid/setgid
 	vfs_stat_t* stat = kmalloc(sizeof(vfs_stat_t));
-	if(vfs_fstat(fd, stat, task) == 0) {
+	if(vfs_fstat(task, fd, stat) == 0) {
 		if(stat->st_mode & S_ISUID) {
 			task->euid = stat->st_uid;
 		}
@@ -216,7 +216,7 @@ static int load_file(task_t* task, char* path, bool is_main) {
 	}
 
 	kfree(stat);
-	vfs_close(fd, task);
+	vfs_close(task, fd);
 	return 0;
 }
 

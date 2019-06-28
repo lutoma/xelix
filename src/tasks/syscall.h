@@ -24,8 +24,7 @@
 
 #define SYSCALL_INTERRUPT 0x80
 
-#define SCF_TASKEND 1
-#define SCF_STATE 2
+#define SCF_STATE 1
 
 #define SCA_INT 1
 #define SCA_POINTER 2

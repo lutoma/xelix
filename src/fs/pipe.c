@@ -84,7 +84,7 @@ int vfs_pipe(int fildes[2], task_t* task) {
 
 	vfs_file_t* fd2 = vfs_alloc_fileno(task, fd1->num);
 	if(!fd2) {
-		vfs_close(fd1->num, task);
+		vfs_close(task, fd1->num);
 		sc_errno = EMFILE;
 		return -1;
 	}

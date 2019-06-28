@@ -214,32 +214,32 @@ typedef struct {
 char* vfs_normalize_path(const char* orig_path, char* cwd);
 vfs_file_t* vfs_get_from_id(int id, struct task* task);
 vfs_file_t* vfs_alloc_fileno(struct task* task, int min);
-int vfs_open(const char* orig_path, uint32_t flags, struct task* task);
-size_t vfs_read(int fd, void* dest, size_t size, struct task* task);
-size_t vfs_write(int fd, void* source, size_t size, struct task* task);
-size_t vfs_getdents(int fd, void* dest, size_t size, struct task* task);
-int vfs_seek(int fd, size_t offset, int origin, struct task* task);
-int vfs_close(int fd, struct task* task);
-int vfs_fcntl(int fd, int cmd, int arg3, struct task* task);
-int vfs_dup2(int fd1, int fd2, struct task* task);
-int vfs_ioctl(int fd, int request, void* arg, struct task* task);
-int vfs_unlink(char* orig_path, struct task* task);
-int vfs_chmod(const char* orig_path, uint32_t mode, struct task* task);
-int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, struct task* task);
-int vfs_mkdir(const char* orig_path, uint32_t mode, struct task* task);
-int vfs_access(const char* orig_path, uint32_t amode, struct task* task);
-int vfs_utimes(const char* orig_path, struct timeval times[2], struct task* task);
-int vfs_link(const char* orig_path, const char* orig_new_path, struct task* task);
-int vfs_readlink(const char* orig_path, char* buf, size_t size, struct task* task);
-int vfs_rmdir(const char* orig_path, struct task* task);
-int vfs_poll(struct pollfd* fds, uint32_t nfds, int timeout, struct task* task);
-int vfs_stat(char* path, vfs_stat_t* dest, struct task* task);
+int vfs_open(struct task* task, const char* orig_path, uint32_t flags);
+size_t vfs_read(struct task* task, int fd, void* dest, size_t size);
+size_t vfs_write(struct task* task, int fd, void* source, size_t size);
+size_t vfs_getdents(struct task* task, int fd, void* dest, size_t size);
+int vfs_seek(struct task* task, int fd, size_t offset, int origin);
+int vfs_close(struct task* task, int fd);
+int vfs_fcntl(struct task* task, int fd, int cmd, int arg3);
+int vfs_dup2(struct task* task, int fd1, int fd2);
+int vfs_ioctl(struct task* task, int fd, int request, void* arg);
+int vfs_unlink(struct task* task, char* orig_path);
+int vfs_chmod(struct task* task, const char* orig_path, uint32_t mode);
+int vfs_chown(struct task* task, const char* orig_path, uint16_t uid, uint16_t gid);
+int vfs_mkdir(struct task* task, const char* orig_path, uint32_t mode);
+int vfs_access(struct task* task, const char* orig_path, uint32_t amode);
+int vfs_utimes(struct task* task, const char* orig_path, struct timeval times[2]);
+int vfs_link(struct task* task, const char* orig_path, const char* orig_new_path);
+int vfs_readlink(struct task* task, const char* orig_path, char* buf, size_t size);
+int vfs_rmdir(struct task* task, const char* orig_path);
+int vfs_poll(struct task* task, struct pollfd* fds, uint32_t nfds, int timeout);
+int vfs_stat(struct task* task, char* path, vfs_stat_t* dest);
 int vfs_mount(char* path, void* instance, char* dev, char* type,
 	struct vfs_callbacks* callbacks);
 void vfs_init();
 
 // legacy
-int vfs_fstat(int fd, vfs_stat_t* dest, struct task* task);
+int vfs_fstat(struct task* task, int fd, vfs_stat_t* dest);
 
 static inline char* vfs_filetype_to_verbose(int filetype) {
 	switch(filetype) {

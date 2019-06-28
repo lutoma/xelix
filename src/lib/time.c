@@ -23,6 +23,7 @@
 #include <portio.h>
 #include <bsp/timer.h>
 #include <fs/sysfs.h>
+#include <tasks/task.h>
 #include <log.h>
 #include "time.h"
 
@@ -163,7 +164,7 @@ uint32_t time_get() {
 	return last_timestamp;
 }
 
-int time_get_timeval(struct timeval* tv) {
+int time_get_timeval(task_t* task, struct timeval* tv) {
 	tv->tv_sec = time_get();
 	tv->tv_usec = 0;
 	return 0;

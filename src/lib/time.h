@@ -20,6 +20,7 @@
 
 #include <bsp/timer.h>
 
+struct task;
 typedef uint32_t time_t;
 struct timeval {
 	uint64_t tv_sec;
@@ -27,7 +28,7 @@ struct timeval {
 };
 
 uint32_t time_get();
-int time_get_timeval(struct timeval* tv);
+int time_get_timeval(struct task* task, struct timeval* tv);
 void time_init();
 
 #define sleep(t) sleep_ticks((t) * timer_rate)

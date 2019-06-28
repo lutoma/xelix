@@ -148,30 +148,23 @@ static void int_handler(isf_t* state) {
 #endif
 
 	// Shuffle arguments into callback format
-	int num_cb_args = num_args + 1;
 	uintptr_t cb_args[5] = {0};
-	int aoff;
-	if(def.flags & SCF_TASKEND) {
-		cb_args[0] = (uintptr_t)task;
-		aoff = 0;
-	} else {
-		if(def.flags & SCF_STATE) {
-			num_cb_args++;
-			cb_args[num_cb_args - 2] = (uintptr_t)state;
-			aoff--;
-		}
-
-		cb_args[num_cb_args - 1] = (uintptr_t)task;
-		aoff = -1;
+	int aoff = 0;
+	if(def.flags & SCF_STATE) {
+		cb_args[num_args] = (uintptr_t)state;
+		aoff++;
 	}
+
+	cb_args[num_args + aoff] = (uintptr_t)task;
+	aoff++;
 
 	// Reverse order for cdecl
 	for(int i = 0; i < num_args; i++) {
-		cb_args[num_args + aoff - i] = args[i];
+		cb_args[num_args - aoff - i] = args[i];
 	}
 
 	task->syscall_errno = 0;
-	state->SCREG_RESULT = variadic_call(def.handler, num_cb_args, cb_args);
+	state->SCREG_RESULT = variadic_call(def.handler, num_args + aoff, cb_args);
 	state->SCREG_ERRNO = task->syscall_errno;
 
 	// Only change state back if it hasn't alreay been modified
@@ -183,9 +176,9 @@ static void int_handler(isf_t* state) {
 	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", state->SCREG_RESULT, state->SCREG_ERRNO);
 #endif
 
-	if(task->strace_observer && task->strace_fd) {
+	if(unlikely(task->strace_observer && task->strace_fd)) {
 		vfs_file_t* strace_file = vfs_get_from_id(task->strace_fd, task->strace_observer);
-		if(!strace_file) {
+		if(unlikely(!strace_file)) {
 			return;
 		}
 
@@ -220,12 +213,8 @@ static void int_handler(isf_t* state) {
 		strace.arg0 = args[0];
 		strace.arg1 = args[1];
 		strace.arg2 = args[2];
-
-		if(strace_file) {
-			vfs_write(strace_file->num, &strace, sizeof(struct strace), task->strace_observer);
-		}
+		vfs_write(task->strace_observer, strace_file->num, &strace, sizeof(struct strace));
 	}
-
 }
 
 // Check an array to make sure it's NULL-terminated, then copy to kernel space

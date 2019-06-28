@@ -219,7 +219,7 @@ vfs_file_t* vfs_alloc_fileno(task_t* task, int min) {
 	return NULL;
 }
 
-int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
+int vfs_open(task_t* task, const char* orig_path, uint32_t flags) {
 	if(!orig_path || !(*orig_path)) {
 		sc_errno = ENOENT;
 		return -1;
@@ -254,14 +254,14 @@ int vfs_open(const char* orig_path, uint32_t flags, task_t* task) {
 	fp->flags = flags;
 
 	if(flags & O_APPEND) {
-		vfs_seek(fp->num, 0, VFS_SEEK_END, task);
+		vfs_seek(task, fp->num, 0, VFS_SEEK_END);
 	}
 
 	free_context(ctx);
 	return fp->num;
 }
 
-size_t vfs_read(int fd, void* dest, size_t size, task_t* task) {
+size_t vfs_read(task_t* task, int fd, void* dest, size_t size) {
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_WRONLY) {
 		sc_errno = EBADF;
@@ -278,7 +278,7 @@ size_t vfs_read(int fd, void* dest, size_t size, task_t* task) {
 	return read;
 }
 
-size_t vfs_write(int fd, void* source, size_t size, task_t* task) {
+size_t vfs_write(task_t* task, int fd, void* source, size_t size) {
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_RDONLY) {
 		sc_errno = EBADF;
@@ -299,7 +299,7 @@ size_t vfs_write(int fd, void* source, size_t size, task_t* task) {
 	return written;
 }
 
-size_t vfs_getdents(int fd, void* dest, size_t size, task_t* task) {
+size_t vfs_getdents(task_t* task, int fd, void* dest, size_t size) {
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp) {
 		sc_errno = EBADF;
@@ -314,7 +314,7 @@ size_t vfs_getdents(int fd, void* dest, size_t size, task_t* task) {
 	return ctx->fp->callbacks.getdents(ctx, dest, size);
 }
 
-int vfs_seek(int fd, size_t offset, int origin, task_t* task) {
+int vfs_seek(task_t* task, int fd, size_t offset, int origin) {
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
 		sc_errno = EBADF;
@@ -335,14 +335,14 @@ int vfs_seek(int fd, size_t offset, int origin, task_t* task) {
 			break;
 		case VFS_SEEK_END:
 			stat = kmalloc(sizeof(vfs_stat_t));
-			vfs_fstat(fp->num, stat, task);
+			vfs_fstat(task, fp->num, stat);
 			fp->offset = stat->st_size + offset;
 			kfree(stat);
 	}
 	return 0;
 }
 
-int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
+int vfs_fcntl(task_t* task, int fd, int cmd, int arg3) {
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
 		sc_errno = EBADF;
@@ -381,7 +381,7 @@ int vfs_fcntl(int fd, int cmd, int arg3, task_t* task) {
 	return -1;
 }
 
-int vfs_dup2(int fd1, int fd2, task_t* task) {
+int vfs_dup2(task_t* task, int fd1, int fd2) {
 	vfs_file_t* fp1 = vfs_get_from_id(fd1, task);
 	if(!fp1) {
 		sc_errno = EBADF;
@@ -397,7 +397,7 @@ int vfs_dup2(int fd1, int fd2, task_t* task) {
 		}
 
 		// Attempt to close and try again
-		vfs_close(fd2, task);
+		vfs_close(task, fd2);
 		if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1)) {
 			sc_errno = EIO;
 			return -1;
@@ -410,7 +410,7 @@ int vfs_dup2(int fd1, int fd2, task_t* task) {
 	return 0;
 }
 
-int vfs_ioctl(int fd, int request, void* arg, task_t* task) {
+int vfs_ioctl(task_t* task, int fd, int request, void* arg) {
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp) {
 		sc_errno = EBADF;
@@ -425,7 +425,7 @@ int vfs_ioctl(int fd, int request, void* arg, task_t* task) {
 	return ctx->fp->callbacks.ioctl(ctx, request, arg);
 }
 
-int vfs_fstat(int fd, vfs_stat_t* dest, task_t* task) {
+int vfs_fstat(task_t* task, int fd, vfs_stat_t* dest) {
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -443,7 +443,7 @@ int vfs_fstat(int fd, vfs_stat_t* dest, task_t* task) {
 	return r;
 }
 
-int vfs_stat(char* orig_path, vfs_stat_t* dest, task_t* task) {
+int vfs_stat(task_t* task, char* orig_path, vfs_stat_t* dest) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -461,7 +461,7 @@ int vfs_stat(char* orig_path, vfs_stat_t* dest, task_t* task) {
 	return r;
 }
 
-int vfs_close(int fd, task_t* task) {
+int vfs_close(task_t* task, int fd) {
 	vfs_file_t* fp = vfs_get_from_id(fd, task);
 	if(!fp) {
 		sc_errno = EBADF;
@@ -472,7 +472,7 @@ int vfs_close(int fd, task_t* task) {
 	if(!__sync_sub_and_fetch(&fp->refs, 1)) {
 		if(fp->dup_target) {
 			// Decrease dup target ref counter
-			vfs_close(fp->dup_target, task);
+			vfs_close(task, fp->dup_target);
 		}
 
 		#ifdef ENABLE_PICOTCP
@@ -489,7 +489,7 @@ int vfs_close(int fd, task_t* task) {
 	return 0;
 }
 
-int vfs_unlink(char* orig_path, task_t* task) {
+int vfs_unlink(task_t* task, char* orig_path) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -507,7 +507,7 @@ int vfs_unlink(char* orig_path, task_t* task) {
 	return r;
 }
 
-int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
+int vfs_chmod(task_t* task, const char* orig_path, uint32_t mode) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -525,7 +525,7 @@ int vfs_chmod(const char* orig_path, uint32_t mode, task_t* task) {
 	return r;
 }
 
-int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, task_t* task) {
+int vfs_chown(task_t* task, const char* orig_path, uint16_t uid, uint16_t gid) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -543,7 +543,7 @@ int vfs_chown(const char* orig_path, uint16_t uid, uint16_t gid, task_t* task) {
 	return r;
 }
 
-int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
+int vfs_mkdir(task_t* task, const char* orig_path, uint32_t mode) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -561,7 +561,7 @@ int vfs_mkdir(const char* orig_path, uint32_t mode, task_t* task) {
 	return r;
 }
 
-int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
+int vfs_access(task_t* task, const char* orig_path, uint32_t amode) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		return -1;
@@ -578,7 +578,7 @@ int vfs_access(const char* orig_path, uint32_t amode, task_t* task) {
 	return r;
 }
 
-int vfs_utimes(const char* orig_path, struct timeval times[2], task_t* task) {
+int vfs_utimes(task_t* task, const char* orig_path, struct timeval times[2]) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -596,7 +596,7 @@ int vfs_utimes(const char* orig_path, struct timeval times[2], task_t* task) {
 	return r;
 }
 
-int vfs_readlink(const char* path, char* buf, size_t size, task_t* task) {
+int vfs_readlink(task_t* task, const char* path, char* buf, size_t size) {
 	struct vfs_callback_ctx* ctx = context_from_path(path, task);
 	if(!ctx) {
 		return -1;
@@ -613,7 +613,7 @@ int vfs_readlink(const char* path, char* buf, size_t size, task_t* task) {
 	return r;
 }
 
-int vfs_rmdir(const char* orig_path, task_t* task) {
+int vfs_rmdir(task_t* task, const char* orig_path) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
@@ -631,7 +631,7 @@ int vfs_rmdir(const char* orig_path, task_t* task) {
 	return r;
 }
 
-int vfs_poll(struct pollfd* fds, uint32_t nfds, int timeout, task_t* task) {
+int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 	int ret = 0;
 	uint32_t timeout_end = 0;
 	if(timeout >= 0) {
@@ -678,7 +678,7 @@ bye:
 	return ret;
 }
 
-int vfs_link(const char* orig_path, const char* orig_new_path, task_t* task) {
+int vfs_link(task_t* task, const char* orig_path, const char* orig_new_path) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
