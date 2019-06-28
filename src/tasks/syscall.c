@@ -32,23 +32,9 @@
 
 #include "syscalls.h"
 
-static inline void print_arg(bool first, uint8_t flags, uint32_t value) {
-	if(flags != 0) {
-		char* fmt = "%d";
-		if(flags & SCA_POINTER) {
-			fmt = "%#x";
-		}
-		if(flags & SCA_STRING) {
-			fmt = "\"%s\"";
-		}
-
-		if(!first) {
-			serial_printf(", ");
-		}
-		serial_printf(fmt, value);
-	}
-
-}
+#ifdef SYSCALL_DEBUG
+static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value);
+#endif
 
 static inline uintptr_t copy_to_kernel(task_t* task, uint32_t addr, size_t ptr_size) {
 	struct vmem_range* vmem_range = vmem_get_range(task->memory_context, addr, false);
@@ -70,6 +56,46 @@ static inline uintptr_t copy_to_kernel(task_t* task, uint32_t addr, size_t ptr_s
 	return addr;
 }
 
+static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t* args, uint8_t* flags) {
+	vfs_file_t* strace_file = vfs_get_from_id(task->strace_fd, task->strace_observer);
+	if(unlikely(!strace_file)) {
+		return;
+	}
+
+	struct strace {
+		uint32_t call;
+		uint32_t arg0;
+		char arg0_ptrdata[0x50];
+		uint32_t arg1;
+		char arg1_ptrdata[0x50];
+		uint32_t arg2;
+		char arg2_ptrdata[0x50];
+		uint32_t result;
+		uint32_t errno;
+	};
+
+	struct strace strace = {
+		.call = scnum,
+		.result = state->SCREG_RESULT,
+		.errno = state->SCREG_ERRNO,
+	};
+
+	if(flags[0] & (SCA_STRING | SCA_POINTER)) {
+		memcpy(strace.arg0_ptrdata, (void*)args[0], 0x50);
+	}
+	if(flags[1] & (SCA_STRING | SCA_POINTER)) {
+		memcpy(strace.arg1_ptrdata, (void*)args[1], 0x50);
+	}
+	if(flags[2] & (SCA_STRING | SCA_POINTER)) {
+		memcpy(strace.arg2_ptrdata, (void*)args[2], 0x50);
+	}
+
+	strace.arg0 = args[0];
+	strace.arg1 = args[1];
+	strace.arg2 = args[2];
+	vfs_write(task->strace_observer, strace_file->num, &strace, sizeof(struct strace));
+}
+
 #define call_fail() \
 	state->SCREG_RESULT = -1; \
 	state->SCREG_ERRNO = EINVAL; \
@@ -77,16 +103,16 @@ static inline uintptr_t copy_to_kernel(task_t* task, uint32_t addr, size_t ptr_s
 
 static void int_handler(isf_t* state) {
 	task_t* task = scheduler_get_current();
-	if(!task) {
+	if(unlikely(!task)) {
 		log(LOG_WARN, "syscall: Got interrupt, but there is no current task.\n");
-		return;
+		call_fail();
 	}
 
 	task->task_state = TASK_STATE_SYSCALL;
 	uint32_t scnum = state->SCREG_CALLNUM;
 	struct syscall_definition def = syscall_table[scnum];
 
-	if(scnum >= ARRAY_SIZE(syscall_table) || !def.handler) {
+	if(unlikely(scnum >= ARRAY_SIZE(syscall_table) || !def.handler)) {
 		call_fail();
 	}
 
@@ -131,7 +157,7 @@ static void int_handler(isf_t* state) {
 		}
 
 		args[i] = copy_to_kernel(task, args[i], ptr_size);
-		if(!args[i]) {
+		if(unlikely(!args[i])) {
 			call_fail();
 		}
 	}
@@ -141,9 +167,9 @@ static void int_handler(isf_t* state) {
 		task->pid, task->name,
 		def.name);
 
-	print_arg(true, def.arg0_flags, args[0]);
-	print_arg(false, def.arg1_flags, args[1]);
-	print_arg(false, def.arg2_flags, args[2]);
+	dbg_print_arg(true, flags[0], args[0]);
+	dbg_print_arg(false, flags[1], args[1]);
+	dbg_print_arg(false, flags[2], args[2]);
 	serial_printf(")\n");
 #endif
 
@@ -177,43 +203,7 @@ static void int_handler(isf_t* state) {
 #endif
 
 	if(unlikely(task->strace_observer && task->strace_fd)) {
-		vfs_file_t* strace_file = vfs_get_from_id(task->strace_fd, task->strace_observer);
-		if(unlikely(!strace_file)) {
-			return;
-		}
-
-		struct strace {
-			uint32_t call;
-			uint32_t arg0;
-			char arg0_ptrdata[0x50];
-			uint32_t arg1;
-			char arg1_ptrdata[0x50];
-			uint32_t arg2;
-			char arg2_ptrdata[0x50];
-			uint32_t result;
-			uint32_t errno;
-		};
-
-		struct strace strace = {
-			.call = scnum,
-			.result = state->SCREG_RESULT,
-			.errno = state->SCREG_ERRNO,
-		};
-
-		if(def.arg0_flags & (SCA_STRING | SCA_POINTER)) {
-			memcpy(strace.arg0_ptrdata, (void*)args[0], 0x50);
-		}
-		if(def.arg1_flags & (SCA_STRING | SCA_POINTER)) {
-			memcpy(strace.arg1_ptrdata, (void*)args[1], 0x50);
-		}
-		if(def.arg2_flags & (SCA_STRING | SCA_POINTER)) {
-			memcpy(strace.arg2_ptrdata, (void*)args[2], 0x50);
-		}
-
-		strace.arg0 = args[0];
-		strace.arg1 = args[1];
-		strace.arg2 = args[2];
-		vfs_write(task->strace_observer, strace_file->num, &strace, sizeof(struct strace));
+		send_strace(task, state, scnum, args, flags);
 	}
 }
 
@@ -249,3 +239,22 @@ char** syscall_copy_array(task_t* task, char** array, uint32_t* count) {
 void syscall_init() {
 	interrupts_register(SYSCALL_INTERRUPT, int_handler, true);
 }
+
+#ifdef SYSCALL_DEBUG
+static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value) {
+	if(flags != 0) {
+		char* fmt = "%d";
+		if(flags & SCA_POINTER) {
+			fmt = "%#x";
+		}
+		if(flags & SCA_STRING) {
+			fmt = "\"%s\"";
+		}
+
+		if(!first) {
+			serial_printf(", ");
+		}
+		serial_printf(fmt, value);
+	}
+}
+#endif

@@ -378,8 +378,6 @@ void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 	// Legacy support: Length used to be passed in second parameter
 	if(!length && l2) {
 		length = l2;
-		log(LOG_WARN, "tasks: Legacy sbrk syscall interface used by task %d <%s>.\n",
-			task->pid, task->name);
 	}
 	length = length ? length : l2;
 
