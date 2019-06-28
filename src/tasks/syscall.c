@@ -36,24 +36,64 @@
 static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value);
 #endif
 
-static inline uintptr_t copy_to_kernel(task_t* task, uint32_t addr, size_t ptr_size) {
+static inline void ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t ptr_size, bool user_to_kernel) {
+	uintptr_t off = 0;
+	struct vmem_range* cr;
+
+	while(off < ptr_size) {
+		cr = vmem_get_range(task->memory_context, addr + off, false);
+		uintptr_t paddr = vmem_translate_ptr(cr, addr + off, false);
+		size_t copy_size = MIN(ptr_size - off, cr->length - (paddr - cr->phys_start));
+		if(!copy_size) {
+			break;
+		}
+
+		if(user_to_kernel) {
+			memcpy((void*)paddr, kaddr + off, copy_size);
+		} else {
+			memcpy(kaddr + off, (void*)paddr, copy_size);
+		}
+
+		off += copy_size;
+	}
+}
+
+static inline uintptr_t map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_size, bool* copied) {
 	struct vmem_range* vmem_range = vmem_get_range(task->memory_context, addr, false);
 	if(!vmem_range) {
 		return 0;
 	}
 
-	if(ptr_size) {
-		uintptr_t ptr_end = addr + ptr_size;
-		uintptr_t range_end = vmem_range->virt_start + vmem_range->length;
-		//serial_printf("Range %#x - %#x, Pointer %#x - %#x\n", vmem_range->virt_start, range_end, addr, ptr_end);
-		if(ptr_end > range_end) {
-			serial_printf("oob\n");
-			//return 0;
+	uintptr_t ptr_end = addr + ptr_size;
+	struct vmem_range* cr = vmem_range;
+
+	for(int i = 1;; i++) {
+		uintptr_t virt_end = cr->virt_start + cr->length;
+		uintptr_t phys_end = cr->phys_start + cr->length;
+
+		/* We've reached the end of the pointer and the buffer is contiguous in
+		 * physical memory, so just pass it directly.
+		 */
+		if(ptr_end <= virt_end) {
+			return vmem_translate_ptr(vmem_range, addr, false);
+		}
+
+		// Get next vmem range
+		cr = vmem_get_range(task->memory_context, virt_end + PAGE_SIZE * i, false);
+		if(!cr) {
+			return 0;
+		}
+
+		// Check if next range is in adjacent physical pages
+		if(cr->phys_start != phys_end) {
+			break;
 		}
 	}
 
-	addr = vmem_translate_ptr(vmem_range, addr, false);
-	return addr;
+	void* fmb = kmalloc(ptr_size);
+	ctx_copy(task, fmb, addr, ptr_size, false);
+	*copied = true;
+	return (uintptr_t)fmb;
 }
 
 static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t* args, uint8_t* flags) {
@@ -120,6 +160,10 @@ static void int_handler(isf_t* state) {
 	uint8_t flags[3] = {def.arg0_flags, def.arg1_flags, def.arg2_flags};
 	uint32_t args[3] = {state->SCREG_ARG0, state->SCREG_ARG1,
 		state->SCREG_ARG2};
+	uint32_t oargs[3] = {state->SCREG_ARG0, state->SCREG_ARG1,
+		state->SCREG_ARG2};
+	bool copied[3] = {0};
+	size_t ptr_sizes[3] = {0};
 
 	// Translate arguments into kernel memory where needed
 	for(int i = 0; i < 3; i++) {
@@ -137,7 +181,9 @@ static void int_handler(isf_t* state) {
 		 * otherwise use the default value
 		 */
 		size_t ptr_size = 0;
-		if(flags[i] & SCA_POINTER) {
+		if(flags[i] & SCA_STRING) {
+			ptr_size = 512;
+		}  else {
 			ptr_size = def.ptr_size;
 			if(flags[i] & SCA_SIZE_IN_0) {
 				ptr_size = MAX(1, ptr_size) * args[0];
@@ -147,6 +193,7 @@ static void int_handler(isf_t* state) {
 				ptr_size = MAX(1, ptr_size) * args[2];
 			}
 		}
+		ptr_sizes[i] = ptr_size;
 
 		if(unlikely((flags[i] & SCA_POINTER) && !ptr_size && !(flags[i] & SCA_NULLOK))) {
 			call_fail();
@@ -156,7 +203,11 @@ static void int_handler(isf_t* state) {
 			continue;
 		}
 
-		args[i] = copy_to_kernel(task, args[i], ptr_size);
+		if(!ptr_size) {
+			call_fail();
+		}
+
+		args[i] = map_to_kernel(task, args[i], ptr_size, &copied[i]);
 		if(unlikely(!args[i])) {
 			call_fail();
 		}
@@ -192,6 +243,15 @@ static void int_handler(isf_t* state) {
 	task->syscall_errno = 0;
 	state->SCREG_RESULT = variadic_call(def.handler, num_args + aoff, cb_args);
 	state->SCREG_ERRNO = task->syscall_errno;
+
+	for(int i = 0; i < 3; i++) {
+		if(!copied[i]) {
+			continue;
+		}
+
+		ctx_copy(task, (void*)args[i], oargs[i], ptr_sizes[i], true);
+		kfree((void*)args[i]);
+	}
 
 	// Only change state back if it hasn't alreay been modified
 	if(task->task_state == TASK_STATE_SYSCALL) {

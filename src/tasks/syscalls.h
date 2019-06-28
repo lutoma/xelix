@@ -175,7 +175,7 @@ const struct syscall_definition syscall_table[] = {
 	// 26
 	/* FIXME Size incorrect */
 	{"ioctl", (syscall_cb)vfs_ioctl, 0,
-		SCA_INT, SCA_INT, SCA_POINTER | SCA_NULLOK, 0x600},
+		SCA_INT, SCA_INT, SCA_POINTER | SCA_NULLOK, 0x1},
 
 	// 27
 	{"", NULL, 0,
@@ -200,7 +200,7 @@ const struct syscall_definition syscall_table[] = {
 	// 32
 	/* FIXME Size incorrect */
 	{"execve", (syscall_cb)task_execve, 0,
-		SCA_STRING, SCA_POINTER, SCA_POINTER, 0x600},
+		SCA_STRING, SCA_POINTER, SCA_POINTER, 0x100},
 
 	// 33
 	{"sigaction", (syscall_cb)task_sigaction, 0,
