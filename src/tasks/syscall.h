@@ -27,12 +27,13 @@
 #define SCF_TASKEND 1
 #define SCF_STATE 2
 
-#define SCA_UNUSED 0
-#define SCA_TRANSLATE 1
-#define SCA_NULLOK 2
-#define SCA_INT 4
-#define SCA_POINTER 8
-#define SCA_STRING 16
+#define SCA_INT 1
+#define SCA_POINTER 2
+#define SCA_STRING 4
+#define SCA_NULLOK 8
+#define SCA_SIZE_IN_0 16
+#define SCA_SIZE_IN_1 32
+#define SCA_SIZE_IN_2 64
 
 #ifdef __i386__
 	#define SCREG_CALLNUM eax
@@ -53,6 +54,7 @@ struct syscall_definition {
 	uint8_t arg0_flags;
 	uint8_t arg1_flags;
 	uint8_t arg2_flags;
+	size_t ptr_size;
 };
 
 char** syscall_copy_array(task_t* task, char** array, uint32_t* count);

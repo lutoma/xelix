@@ -24,6 +24,10 @@
 
 #define PAGE_SIZE 0x1000
 
+#define vmem_translate_ptr(range, addr, phys)					\
+	(phys ? range->virt_start : range->phys_start)				\
+	+ (addr - (phys ? range->phys_start : range->virt_start))
+
 /* Internal representation of a page allocation. This will get mapped to the
  * hardware form by <arch>-paging.c.
  */
@@ -49,7 +53,15 @@ void* vmem_kernel_hwdata;
 
 void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uintptr_t size, bool user, bool ro);
 #define vmem_map_flat(ctx, start, size, user, ro) vmem_map(ctx, start, start, size, user, ro)
-uintptr_t vmem_translate(struct vmem_context* ctx, uintptr_t raddress, bool reverse);
+struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintptr_t addr, bool phys);
 void* vmem_get_hwdata(struct vmem_context* ctx);
 void vmem_rm_context(struct vmem_context* ctx);
 void vmem_init();
+
+static inline uintptr_t vmem_translate(struct vmem_context* ctx, uintptr_t raddress, bool phys) {
+	struct vmem_range* range = vmem_get_range(ctx, raddress, phys);
+	if(!range) {
+		return 0;
+	}
+	return vmem_translate_ptr(range, raddress, phys);
+}

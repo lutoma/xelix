@@ -25,29 +25,15 @@
 #include <printf.h>
 #include <panic.h>
 #include <errno.h>
+#include <variadic.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
 #include <tty/serial.h>
 
 #include "syscalls.h"
 
-static inline int handle_arg_flags(task_t* task, uint32_t* arg, uint8_t flags) {
-	if(flags & SCA_TRANSLATE) {
-		if(flags & SCA_NULLOK && !*arg) {
-			return 0;
-		}
-
-		*arg = vmem_translate(task->memory_context, *arg, false);
-		if(!*arg) {
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
 static inline void print_arg(bool first, uint8_t flags, uint32_t value) {
-	if(flags != SCA_UNUSED) {
+	if(flags != 0) {
 		char* fmt = "%d";
 		if(flags & SCA_POINTER) {
 			fmt = "%#x";
@@ -64,6 +50,31 @@ static inline void print_arg(bool first, uint8_t flags, uint32_t value) {
 
 }
 
+static inline uintptr_t copy_to_kernel(task_t* task, uint32_t addr, size_t ptr_size) {
+	struct vmem_range* vmem_range = vmem_get_range(task->memory_context, addr, false);
+	if(!vmem_range) {
+		return 0;
+	}
+
+	if(ptr_size) {
+		uintptr_t ptr_end = addr + ptr_size;
+		uintptr_t range_end = vmem_range->virt_start + vmem_range->length;
+		//serial_printf("Range %#x - %#x, Pointer %#x - %#x\n", vmem_range->virt_start, range_end, addr, ptr_end);
+		if(ptr_end > range_end) {
+			serial_printf("oob\n");
+			//return 0;
+		}
+	}
+
+	addr = vmem_translate_ptr(vmem_range, addr, false);
+	return addr;
+}
+
+#define call_fail() \
+	state->SCREG_RESULT = -1; \
+	state->SCREG_ERRNO = EINVAL; \
+	return
+
 static void int_handler(isf_t* state) {
 	task_t* task = scheduler_get_current();
 	if(!task) {
@@ -73,70 +84,94 @@ static void int_handler(isf_t* state) {
 
 	task->task_state = TASK_STATE_SYSCALL;
 	uint32_t scnum = state->SCREG_CALLNUM;
-	uint32_t arg0 = state->SCREG_ARG0;
-	uint32_t arg1 = state->SCREG_ARG1;
-	uint32_t arg2 = state->SCREG_ARG2;
-
 	struct syscall_definition def = syscall_table[scnum];
-	if (scnum >= sizeof(syscall_table) / sizeof(struct syscall_definition) || !def.handler) {
-		state->SCREG_RESULT = -1;
-		state->SCREG_ERRNO = EINVAL;
-		return;
+
+	if(scnum >= ARRAY_SIZE(syscall_table) || !def.handler) {
+		call_fail();
 	}
 
-	if(handle_arg_flags(task, &arg0, def.arg0_flags) == -1 ||
-		handle_arg_flags(task, &arg1, def.arg1_flags) == -1 ||
-		handle_arg_flags(task, &arg2, def.arg2_flags) == -1) {
+	int num_args = 0;
+	uint8_t flags[3] = {def.arg0_flags, def.arg1_flags, def.arg2_flags};
+	uint32_t args[3] = {state->SCREG_ARG0, state->SCREG_ARG1,
+		state->SCREG_ARG2};
 
-		state->SCREG_RESULT = -1;
-		state->SCREG_ERRNO = EINVAL;
-		return;
+	// Translate arguments into kernel memory where needed
+	for(int i = 0; i < 3; i++) {
+		if(!flags[i]) {
+			break;
+		}
+		num_args++;
+
+		// Pass non-pointer types 1:1
+		if(!(flags[i] & (SCA_POINTER | SCA_STRING))) {
+			continue;
+		}
+
+		/* Get pointer size - From an argument if SCA_SIZE_IN_* is set,
+		 * otherwise use the default value
+		 */
+		size_t ptr_size = 0;
+		if(flags[i] & SCA_POINTER) {
+			ptr_size = def.ptr_size;
+			if(flags[i] & SCA_SIZE_IN_0) {
+				ptr_size = MAX(1, ptr_size) * args[0];
+			} else if(flags[i] & SCA_SIZE_IN_1) {
+				ptr_size = MAX(1, ptr_size) * args[1];
+			} else if(flags[i] & SCA_SIZE_IN_2) {
+				ptr_size = MAX(1, ptr_size) * args[2];
+			}
+		}
+
+		if(unlikely((flags[i] & SCA_POINTER) && !ptr_size && !(flags[i] & SCA_NULLOK))) {
+			call_fail();
+		}
+
+		if(flags[i] & SCA_NULLOK && !args[i]) {
+			continue;
+		}
+
+		args[i] = copy_to_kernel(task, args[i], ptr_size);
+		if(!args[i]) {
+			call_fail();
+		}
 	}
 
 #ifdef SYSCALL_DEBUG
-	task_t* cur = scheduler_get_current();
 	log(LOG_DEBUG, "%d %s: %s(",
-		cur->pid, cur->name,
+		task->pid, task->name,
 		def.name);
 
-	print_arg(true, def.arg0_flags, arg0);
-	print_arg(false, def.arg1_flags, arg1);
-	print_arg(false, def.arg2_flags, arg2);
+	print_arg(true, def.arg0_flags, args[0]);
+	print_arg(false, def.arg1_flags, args[1]);
+	print_arg(false, def.arg2_flags, args[2]);
 	serial_printf(")\n");
 #endif
 
-	task->syscall_errno = 0;
-	if(def.arg2_flags != SCA_UNUSED) {
-		if(def.flags & SCF_TASKEND) {
-			state->SCREG_RESULT = def.handler(arg0, arg1, arg2, task);
-		} else if(def.flags & SCF_STATE) {
-			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1, arg2);
-		} else {
-			state->SCREG_RESULT = def.handler((uint32_t)task, arg0, arg1, arg2);
-		}
-	} else if(def.arg1_flags != SCA_UNUSED) {
-		if(def.flags & SCF_TASKEND) {
-			state->SCREG_RESULT = def.handler(arg0, arg1, task);
-		} else if(def.flags & SCF_STATE) {
-			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state, arg0, arg1);
-		} else {
-			state->SCREG_RESULT = def.handler((uint32_t)task, arg0, arg1);
-		}
-	} else if(def.arg0_flags != SCA_UNUSED) {
-		if(def.flags & SCF_TASKEND) {
-			state->SCREG_RESULT = def.handler(arg0, task);
-		} else if(def.flags & SCF_STATE) {
-			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state, arg0);
-		} else {
-			state->SCREG_RESULT = def.handler((uint32_t)task, arg0);
-		}
+	// Shuffle arguments into callback format
+	int num_cb_args = num_args + 1;
+	uintptr_t cb_args[5] = {0};
+	int aoff;
+	if(def.flags & SCF_TASKEND) {
+		cb_args[0] = (uintptr_t)task;
+		aoff = 0;
 	} else {
 		if(def.flags & SCF_STATE) {
-			state->SCREG_RESULT = def.handler((uint32_t)task, (uint32_t)state);
-		} else {
-			state->SCREG_RESULT = def.handler((uint32_t)task);
+			num_cb_args++;
+			cb_args[num_cb_args - 2] = (uintptr_t)state;
+			aoff--;
 		}
+
+		cb_args[num_cb_args - 1] = (uintptr_t)task;
+		aoff = -1;
 	}
+
+	// Reverse order for cdecl
+	for(int i = 0; i < num_args; i++) {
+		cb_args[num_args + aoff - i] = args[i];
+	}
+
+	task->syscall_errno = 0;
+	state->SCREG_RESULT = variadic_call(def.handler, num_cb_args, cb_args);
 	state->SCREG_ERRNO = task->syscall_errno;
 
 	// Only change state back if it hasn't alreay been modified
@@ -173,18 +208,18 @@ static void int_handler(isf_t* state) {
 		};
 
 		if(def.arg0_flags & (SCA_STRING | SCA_POINTER)) {
-			memcpy(strace.arg0_ptrdata, (void*)arg0, 0x50);
+			memcpy(strace.arg0_ptrdata, (void*)args[0], 0x50);
 		}
 		if(def.arg1_flags & (SCA_STRING | SCA_POINTER)) {
-			memcpy(strace.arg1_ptrdata, (void*)arg1, 0x50);
+			memcpy(strace.arg1_ptrdata, (void*)args[1], 0x50);
 		}
 		if(def.arg2_flags & (SCA_STRING | SCA_POINTER)) {
-			memcpy(strace.arg2_ptrdata, (void*)arg2, 0x50);
+			memcpy(strace.arg2_ptrdata, (void*)args[2], 0x50);
 		}
 
-		strace.arg0 = arg0;
-		strace.arg1 = arg1;
-		strace.arg2 = arg2;
+		strace.arg0 = args[0];
+		strace.arg1 = args[1];
+		strace.arg2 = args[2];
 
 		if(strace_file) {
 			vfs_write(strace_file->num, &strace, sizeof(struct strace), task->strace_observer);

@@ -49,9 +49,12 @@ void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uint
 	}
 }
 
-static inline struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintptr_t addr, bool phys) {
-	struct vmem_range* range = ctx->ranges;
+struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintptr_t addr, bool phys) {
+	if(!ctx) {
+		ctx = kernel_ctx;
+	}
 
+	struct vmem_range* range = ctx->ranges;
 	for(; range; range = range->next) {
 		uintptr_t start = (phys ? range->phys_start : range->virt_start);
 
@@ -60,20 +63,6 @@ static inline struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintpt
 		}
 	}
 	return NULL;
-}
-
-uintptr_t vmem_translate(struct vmem_context* ctx, uintptr_t raddress, bool phys) {
-	if(!ctx) {
-		ctx = kernel_ctx;
-	}
-
-	struct vmem_range* range = vmem_get_range(ctx, raddress, phys);
-	if(!range) {
-		return 0;
-	}
-
-	uintptr_t diff = raddress - (phys ? range->phys_start : range->virt_start);
-	return (phys ? range->virt_start : range->phys_start) + diff;
 }
 
 void vmem_rm_context(struct vmem_context* ctx) {
