@@ -33,7 +33,7 @@
 #include "syscalls.h"
 
 #ifdef SYSCALL_DEBUG
-static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value);
+static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value, uint32_t ovalue);
 #endif
 
 static inline void ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t ptr_size, bool user_to_kernel) {
@@ -96,23 +96,11 @@ static inline uintptr_t map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_s
 	return (uintptr_t)fmb;
 }
 
-static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t* args, uint8_t* flags) {
+static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t* args, uintptr_t* oargs, uint8_t* flags) {
 	vfs_file_t* strace_file = vfs_get_from_id(task->strace_fd, task->strace_observer);
 	if(unlikely(!strace_file)) {
 		return;
 	}
-
-	struct strace {
-		uint32_t call;
-		uint32_t arg0;
-		char arg0_ptrdata[0x50];
-		uint32_t arg1;
-		char arg1_ptrdata[0x50];
-		uint32_t arg2;
-		char arg2_ptrdata[0x50];
-		uint32_t result;
-		uint32_t errno;
-	};
 
 	struct strace strace = {
 		.call = scnum,
@@ -120,19 +108,12 @@ static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t*
 		.errno = state->SCREG_ERRNO,
 	};
 
-	if(flags[0] & (SCA_STRING | SCA_POINTER)) {
-		memcpy(strace.arg0_ptrdata, (void*)args[0], 0x50);
+	for(int i = 0; i < 3; i++) {
+		strace.args[i] = oargs[i];
+		if(flags[i] & (SCA_STRING | SCA_POINTER) && args[i]) {
+			memcpy(strace.ptrdata[i], (void*)args[i], 0x50);
+		}
 	}
-	if(flags[1] & (SCA_STRING | SCA_POINTER)) {
-		memcpy(strace.arg1_ptrdata, (void*)args[1], 0x50);
-	}
-	if(flags[2] & (SCA_STRING | SCA_POINTER)) {
-		memcpy(strace.arg2_ptrdata, (void*)args[2], 0x50);
-	}
-
-	strace.arg0 = args[0];
-	strace.arg1 = args[1];
-	strace.arg2 = args[2];
 	vfs_write(task->strace_observer, strace_file->num, &strace, sizeof(struct strace));
 }
 
@@ -157,13 +138,13 @@ static void int_handler(isf_t* state) {
 	}
 
 	int num_args = 0;
+	bool copied[3] = {0};
+	size_t ptr_sizes[3] = {0};
 	uint8_t flags[3] = {def.arg0_flags, def.arg1_flags, def.arg2_flags};
 	uint32_t args[3] = {state->SCREG_ARG0, state->SCREG_ARG1,
 		state->SCREG_ARG2};
 	uint32_t oargs[3] = {state->SCREG_ARG0, state->SCREG_ARG1,
 		state->SCREG_ARG2};
-	bool copied[3] = {0};
-	size_t ptr_sizes[3] = {0};
 
 	// Translate arguments into kernel memory where needed
 	for(int i = 0; i < 3; i++) {
@@ -180,22 +161,21 @@ static void int_handler(isf_t* state) {
 		/* Get pointer size - From an argument if SCA_SIZE_IN_* is set,
 		 * otherwise use the default value
 		 */
-		size_t ptr_size = 0;
 		if(flags[i] & SCA_STRING) {
-			ptr_size = 512;
-		}  else {
-			ptr_size = def.ptr_size;
+			// FIXME
+			ptr_sizes[i] = 0x1;
+		} else {
+			ptr_sizes[i] = def.ptr_size;
 			if(flags[i] & SCA_SIZE_IN_0) {
-				ptr_size = MAX(1, ptr_size) * args[0];
+				ptr_sizes[i] = MAX(1, ptr_sizes[i]) * args[0];
 			} else if(flags[i] & SCA_SIZE_IN_1) {
-				ptr_size = MAX(1, ptr_size) * args[1];
+				ptr_sizes[i] = MAX(1, ptr_sizes[i]) * args[1];
 			} else if(flags[i] & SCA_SIZE_IN_2) {
-				ptr_size = MAX(1, ptr_size) * args[2];
+				ptr_sizes[i] = MAX(1, ptr_sizes[i]) * args[2];
 			}
 		}
-		ptr_sizes[i] = ptr_size;
 
-		if(unlikely((flags[i] & SCA_POINTER) && !ptr_size && !(flags[i] & SCA_NULLOK))) {
+		if(unlikely((flags[i] & SCA_POINTER) && !ptr_sizes[i] && !(flags[i] & SCA_NULLOK))) {
 			call_fail();
 		}
 
@@ -203,11 +183,11 @@ static void int_handler(isf_t* state) {
 			continue;
 		}
 
-		if(!ptr_size) {
+		if(!ptr_sizes[i]) {
 			call_fail();
 		}
 
-		args[i] = map_to_kernel(task, args[i], ptr_size, &copied[i]);
+		args[i] = map_to_kernel(task, args[i], ptr_sizes[i], &copied[i]);
 		if(unlikely(!args[i])) {
 			call_fail();
 		}
@@ -218,9 +198,9 @@ static void int_handler(isf_t* state) {
 		task->pid, task->name,
 		def.name);
 
-	dbg_print_arg(true, flags[0], args[0]);
-	dbg_print_arg(false, flags[1], args[1]);
-	dbg_print_arg(false, flags[2], args[2]);
+	dbg_print_arg(true, flags[0], args[0], oargs[0]);
+	dbg_print_arg(false, flags[1], args[1], oargs[1]);
+	dbg_print_arg(false, flags[2], args[2], oargs[2]);
 	serial_printf(")\n");
 #endif
 
@@ -263,7 +243,7 @@ static void int_handler(isf_t* state) {
 #endif
 
 	if(unlikely(task->strace_observer && task->strace_fd)) {
-		send_strace(task, state, scnum, args, flags);
+		send_strace(task, state, scnum, args, oargs, flags);
 	}
 }
 
@@ -301,20 +281,19 @@ void syscall_init() {
 }
 
 #ifdef SYSCALL_DEBUG
-static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value) {
+static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value, uint32_t ovalue) {
 	if(flags != 0) {
 		char* fmt = "%d";
 		if(flags & SCA_POINTER) {
 			fmt = "%#x";
-		}
-		if(flags & SCA_STRING) {
+		} else if(flags & SCA_STRING) {
 			fmt = "\"%s\"";
 		}
 
 		if(!first) {
 			serial_printf(", ");
 		}
-		serial_printf(fmt, value);
+		serial_printf(fmt, flags & SCA_STRING ? value : ovalue);
 	}
 }
 #endif

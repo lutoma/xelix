@@ -44,6 +44,14 @@
 #endif
 
 
+struct strace {
+	uint32_t call;
+	uint32_t result;
+	uint32_t errno;
+	uintptr_t args[3];
+	char ptrdata[3][0x50];
+};
+
 typedef uint32_t (*syscall_cb)(uint32_t, ...);
 struct syscall_definition {
 	char name[50];
