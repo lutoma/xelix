@@ -114,7 +114,7 @@ ssize_t _read(int file, char *buf, int len) {
 }
 
 void* _sbrk(int incr) {
-	return (void*)syscall_pf(7, 0, incr, 0);
+	return (void*)syscall_pf(7, incr, 0, 0);
 }
 
 int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
