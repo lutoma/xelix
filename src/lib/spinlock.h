@@ -38,7 +38,10 @@ static inline bool spinlock_get(spinlock_t* lock, uint32_t retries) {
 			return true;
 		}
 
-		halt();
+		/* Can't use halt here as this is called from functions that have
+		 * interrupts disabled (kmalloc). Should use scheduler yield.
+		 */
+		//halt();
 	}
 	return false;
 }
