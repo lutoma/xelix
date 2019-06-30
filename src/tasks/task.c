@@ -299,7 +299,7 @@ static inline void task_userland_eol(task_t* t) {
 		task_signal(t->parent, t, SIGCHLD, t->parent->state);
 	}
 
-	if(t == t->ctty->fg_task) {
+	if(t->ctty && t == t->ctty->fg_task) {
 		t->ctty->fg_task = t->parent;
 	}
 
