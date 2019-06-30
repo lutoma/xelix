@@ -51,6 +51,10 @@ task_t* scheduler_find(uint32_t pid) {
 		if(t->pid == pid && t->task_state != TASK_STATE_REPLACED) {
 			return t;
 		}
+
+		if(t->next == t) {
+			break;
+		}
 	}
 	return NULL;
 }
