@@ -29,24 +29,32 @@
 %macro INTERRUPT 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
+		; Push dummy value for exception error code field
+		push dword 0
 		push esp
+
+		; Need to store user esp in the struct, so account for the added field
+		add dword [esp], 4
 		pusha
 		mov ebx, %1
 		jmp interrupts_common_handler
 %endmacro
 
-%macro INTERRUPT_FAULT 1
+%macro INTERRUPT_ERRCODE 1
 	[GLOBAL interrupts_handler%1]
 	interrupts_handler%1:
-		cli
+		; Error code is implicitly pushed by CPU before the exception handler
+		push esp
+		add dword [esp], 4
+		pusha
 		mov ebx, %1
-		jmp interrupts_fault_handler
+		jmp interrupts_common_handler
 %endmacro
 
 %assign i 0
 %rep 256
-	%if i < 32
-		INTERRUPT_FAULT i
+	%if (i == 8 || i == 17 || i == 30 || (i >= 10 && i <= 14))
+		INTERRUPT_ERRCODE i
 	%else
 		INTERRUPT i
 	%endif
@@ -88,45 +96,24 @@ handle_eoi:
 	mov eax, 1
 	ret
 
-
-interrupts_fault_handler:
-	; Disable paging
-	mov eax, cr0
-	and eax, ~(1 << 31)
-	mov cr0, eax
-
-	call handle_eoi
-
-	mov ecx, ebx
-	mov edx, cr2
-	call cpu_fault_handler
-	mov esp, eax
-
-	; Re-enable paging
-	pop eax
-	mov cr3, eax
-	mov eax, cr0
-	or eax, (1 << 31)
-	mov cr0, eax
-
-	jmp isf_return
-
-
-; This is our common Interrupt handler. It saves the processor state, sets up
+; This is the common interrupt handler. It saves the processor state, sets up
 ; for kernel mode segments, handles spurious interrupts, calls the C-level
 ; handler, and finally restores the stack frame.
 
 interrupts_common_handler:
-	; We have to push all the stuff in isf_t (hw/interrupts.h) which
+	; We have to push all the stuff in isf_t (int/int.h) which
 	; interrupts_callback takes in reversed order.
 	;
-	; The cpu automatically pushes eflags, cs, and eip. Our macros above push
-	; the error code (if any, otherwise 0), the interrupt's number, and cr2
-	; (for page faults). The rest is up to us.
+	; The cpu automatically pushes eflags, cs, and eip, and an error code for
+	; some exceptions. Our macros push esp, and the interrupt number. The rest
+	; has to be put into the struct here.
 
-	; push ds & cr3
+	; push ds, cr2 & cr3
 	xor eax, eax
 	mov ax, ds
+	push eax
+
+	mov eax, cr2
 	push eax
 
 	mov eax, cr3
@@ -169,6 +156,9 @@ interrupts_common_handler:
 	mov cr3, eax
 
 isf_return:
+	; Drop cr2
+	add esp, 4
+
 	; reload segment descriptors
 	pop eax
 	mov ds, ax

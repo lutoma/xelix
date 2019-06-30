@@ -30,6 +30,7 @@
 #include <bsp/i386-pci.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
+#include <tasks/exception.h>
 #include <mem/mem.h>
 #include <mem/i386-gdt.h>
 #include <sound/i386-ac97.h>
@@ -60,6 +61,7 @@ void xelix_main(void) {
 	#endif
 
 	// These only register interrupts or initialize sysfs integration
+	task_exception_init();
 	syscall_init();
 	log_init();
 	version_init();

@@ -28,10 +28,8 @@
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
-/* This one get's called from the architecture-specific interrupt
- * handlers, which do fiddling like EOIs (i386).
- */
-isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* state) {
+// Called by i386-interrupts.asm
+isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* state) {
 	struct interrupt_reg reg = interrupt_handlers[intr];
 	volatile task_t* task = scheduler_get_current();
 
@@ -44,7 +42,7 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* state
 		if(reg.can_reent) {
 			interrupts_enable();
 		}
-		reg.handler(task, state, intr);
+		reg.handler((task_t*)task, state, intr);
 	}
 
 	#ifdef ENABLE_PICOTCP

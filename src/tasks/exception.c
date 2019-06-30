@@ -19,15 +19,8 @@
 
 #include <log.h>
 #include <panic.h>
-#include <bitmap.h>
 #include <int/int.h>
-#include <mem/vmem.h>
-#include <mem/paging.h>
-#include <mem/i386-gdt.h>
-#include <tasks/scheduler.h>
 #include <tasks/task.h>
-
-#define has_errcode(i) (i == 8 || i == 17 || i == 30 || (i >= 10 && i <= 14))
 
 struct exception {
 	int signal;
@@ -58,29 +51,20 @@ static const struct exception exceptions[] = {
 	{0, "Virtualization exception"},
 };
 
-isf_t* __fastcall cpu_fault_handler(uint32_t intr, intptr_t cr2, uint32_t d1, uint32_t d2) {
-	if(intr >= sizeof(exceptions) / sizeof(struct exception)) {
-		panic("Unknown CPU exception");
+static void int_handler(task_t* task, isf_t* state, int num) {
+	if(num >= ARRAY_SIZE(exceptions)) {
+		panic("Unknown CPU exception %d", num);
 	}
 
-	struct exception exc = exceptions[intr];
-	task_t* task = scheduler_get_current();
-	uint32_t err_code;
-
-	//uint32_t eip;
-	if(has_errcode(intr)) {
-		err_code = d1;
-		//eip = d2;
-	} else {
-		err_code = 0;
-		//eip = d1;
-	}
+	struct exception exc = exceptions[num];
 
 	// For page faults, bit 2 of the error code is unset if kernel ctx
-	if(intr == 14 && !(err_code & 0b100)) {
-		panic("Page fault for %s to 0x%x%s\n",
-			err_code & 2 ? "write" : "read", cr2,
-			err_code & 1 ? " (page present)" : "");
+	if(num == 14 && !(state->err_code & 0b100)) {
+		panic("Page fault for %s to 0x%x%s%s%s\n",
+			state->err_code & 2 ? "write" : "read", state->cr2,
+			state->err_code & 1 ? " (page present)" : "",
+			state->err_code & 4 ? " (reserved write)" : "",
+			state->err_code & 16 ? " (instruction fetch)" : "");
 	}
 
 	if(!exc.signal || !task) {
@@ -88,19 +72,15 @@ isf_t* __fastcall cpu_fault_handler(uint32_t intr, intptr_t cr2, uint32_t d1, ui
 	}
 
 	task_signal(task, NULL, exc.signal, NULL);
-	if(intr == 14) {
+	if(num == 14) {
 		log(LOG_WARN, "Page fault in task %d %s for %s to 0x%x%s\n",
-			task->pid, task->name, err_code & 2 ? "write" : "read",
-			cr2, err_code & 1 ? " (page present)" : "");
+			task->pid, task->name, state->err_code & 2 ? "write" : "read",
+			state->cr2, state->err_code & 1 ? " (page present)" : "");
 	} else {
 		log(LOG_WARN, "%s in task %d %s\n", exc.name, task->pid, task->name);
 	}
+}
 
-	task_t* new_task = scheduler_select(NULL);
-	if(!new_task || !new_task->state) {
-		panic("cpu_fault: No new task.\n");
-	}
-
-	gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
-	return new_task->state;
+void task_exception_init() {
+	interrupts_bulk_register(0, 31, int_handler, true);
 }
