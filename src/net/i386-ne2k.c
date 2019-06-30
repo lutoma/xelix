@@ -181,7 +181,7 @@ static size_t send(void* pdev, void* data, size_t len) {
 	return len;
 }
 
-static void int_handler(isf_t* state) {
+static void int_handler(task_t* task, isf_t* state, int num) {
 	uint8_t isr = iinb(R_ISR);
 
 	if(bit_get(isr, 0)) {

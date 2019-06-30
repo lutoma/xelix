@@ -27,7 +27,7 @@ static uint32_t tick = 0;
 static uint32_t rate = 1;
 
 // The timer callback. Gets called every time the PIT fires.
-static void timer_callback(isf_t* regs) {
+static void timer_callback(task_t* task, isf_t* state, int num) {
 	tick++;
 }
 

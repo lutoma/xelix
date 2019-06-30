@@ -92,7 +92,7 @@ struct buf_desc {
 
 static int cards = 0;
 
-static void interrupt_handler(isf_t *state) {
+static void interrupt_handler(task_t* task, isf_t* state, int num) {
 	struct ac97_card* card = &ac97_cards[0];
 	/*// Find the card this IRQ is coming from
 	for(int i = 0; i < cards; i++) {

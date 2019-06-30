@@ -26,6 +26,8 @@
 	#define EFLAGS_IF 0x200
 #endif
 
+struct task;
+
 /* Interrupt stack frame */
 typedef struct {
 	uint32_t cr3;
@@ -53,22 +55,22 @@ typedef struct {
 	uint32_t ss;
 } __attribute__((__packed__)) iret_t;
 
-typedef void (*interrupt_handler_t)(isf_t*);
+typedef void (*interrupt_handler_t)(struct task* task, isf_t* state, int num);
 struct interrupt_reg {
 	interrupt_handler_t handler;
 	bool can_reent;
 };
 
-struct interrupt_reg interrupt_handlers[256];
+struct interrupt_reg interrupt_handlers[512];
 
-static inline void interrupts_register(uint8_t n, interrupt_handler_t handler, bool can_reent) {
+static inline void interrupts_register(int n, interrupt_handler_t handler, bool can_reent) {
 	interrupt_handlers[n].handler = handler;
 	interrupt_handlers[n].can_reent = can_reent;
 	log(LOG_INFO, "interrupts: Registered handler for 0x%x.\n", n);
 }
 
-static inline void interrupts_bulk_register(uint8_t start, uint8_t end, interrupt_handler_t handler, bool can_reent) {
-		for(uint8_t i = start; i <= end; i++) {
+static inline void interrupts_bulk_register(int start, int end, interrupt_handler_t handler, bool can_reent) {
+		for(int i = start; i <= end; i++) {
 			interrupt_handlers[i].handler = handler;
 			interrupt_handlers[i].can_reent = can_reent;
 		}

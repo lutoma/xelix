@@ -122,8 +122,7 @@ static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t*
 	state->SCREG_ERRNO = EINVAL; \
 	return
 
-static void int_handler(isf_t* state) {
-	task_t* task = scheduler_get_current();
+static void int_handler(task_t* task, isf_t* state, int num) {
 	if(unlikely(!task)) {
 		log(LOG_WARN, "syscall: Got interrupt, but there is no current task.\n");
 		call_fail();

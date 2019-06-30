@@ -31,20 +31,20 @@
 /* This one get's called from the architecture-specific interrupt
  * handlers, which do fiddling like EOIs (i386).
  */
-isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs) {
+isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* state) {
 	struct interrupt_reg reg = interrupt_handlers[intr];
-	task_t* task = scheduler_get_current();
+	volatile task_t* task = scheduler_get_current();
 
 	#ifdef INTERRUPTS_DEBUG
 	debug("state before:\n");
-	dump_isf(LOG_DEBUG, regs);
+	dump_isf(LOG_DEBUG, state);
 	#endif
 
 	if(reg.handler) {
 		if(reg.can_reent) {
 			interrupts_enable();
 		}
-		reg.handler(regs);
+		reg.handler(task, state, intr);
 	}
 
 	#ifdef ENABLE_PICOTCP
@@ -59,7 +59,7 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 			task->interrupt_yield = false;
 		}
 
-		task_t* new_task = scheduler_select(regs);
+		task_t* new_task = scheduler_select(state);
 		if(new_task && new_task->state) {
 			#ifdef INTERRUPTS_DEBUG
 			debug("state after (task selection):\n");
@@ -73,9 +73,9 @@ isf_t* __attribute__((fastcall)) interrupts_callback(uint32_t intr, isf_t* regs)
 
 	#ifdef INTERRUPTS_DEBUG
 	debug("state after:\n");
-	dump_isf(LOG_DEBUG, regs);
+	dump_isf(LOG_DEBUG, state);
 	#endif
-	return regs;
+	return state;
 }
 
 void interrupts_init() {

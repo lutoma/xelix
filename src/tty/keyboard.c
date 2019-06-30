@@ -26,7 +26,7 @@
 #define flush() { while(inb(0x64) & 1) { inb(0x60); }}
 #define send(c) { while((inb(0x64) & 0x2)); outb(0x60, (c)); }
 
-static void intr_handler(isf_t* regs) {
+static void intr_handler(task_t* task, isf_t* isf_state, int num) {
 	static struct tty_input_state state;
 	state.code = (uint16_t)inb(0x60);
 

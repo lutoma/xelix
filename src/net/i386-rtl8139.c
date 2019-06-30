@@ -189,8 +189,7 @@ static void receive(struct rtl8139_card *card)
 	}
 }
 
-static void int_handler(isf_t *state)
-{
+static void int_handler(task_t* task, isf_t* state, int num) {
 	log(LOG_DEBUG, "rtl8139: Got interrupt\n");
 
 	// FIXME
