@@ -271,20 +271,26 @@ void task_set_initial_state(task_t* task) {
 
 	task->state->ds = GDT_SEG_DATA_PL3;
 	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->memory_context);
-	task->state->ebp = (void*)STACK_LOCATION + STACKSIZE;
-	task->state->esp = task->state->ebp - sizeof(iret_t);
+	task->state->ebp = 0;
+	task->state->esp = ((void*)STACK_LOCATION + STACKSIZE) - sizeof(iret_t);
 
 	// Return stack for iret
 	iret_t* iret = task->stack + STACKSIZE - sizeof(iret_t);
 	iret->entry = task->entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
-	iret->user_esp = (uint32_t)task->state->ebp;
+	iret->user_esp = STACK_LOCATION + STACKSIZE;
 	iret->ss = GDT_SEG_DATA_PL3;
 }
 
+/* Called by the scheduler whenever a task terminates from the userland
+ * perspective. For example, this is called when a task changes to
+ * TASK_STATE_TERMINATED, but not for TASK_STATE_REPLACED, since that task
+ * lives on from the userland POV.
+ */
+void task_userland_eol(task_t* t) {
+	t->task_state = TASK_STATE_ZOMBIE;
 
-static inline void task_userland_eol(task_t* t) {
 	task_t* init = scheduler_find(1);
 	for(task_t* i = t->next; i->next != t->next; i = i->next) {
 		if(i->parent == t) {
@@ -308,14 +314,11 @@ static inline void task_userland_eol(task_t* t) {
 	}
 }
 
-void task_cleanup(task_t* t, bool replaced) {
-	/* Don't let userland know about the exit if the task gets replaced (execve)
-	 * by another one with the same PID.
-	 */
-	if(!replaced) {
-		task_userland_eol(t);
-	}
-
+/* Called by scheduler whenever it encounters a task with TASK_STATE_REAPED or
+ * TASK_STATE_REPLACED. Should deallocate all task objects, but be transparent
+ * to userspace.
+ */
+void task_cleanup(task_t* t) {
 	// Could have already been removed by execve
 	if(t->sysfs_file) {
 		sysfs_rm_file(t->sysfs_file);

@@ -32,7 +32,8 @@ int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options) {
 		// Check if task has any children to wait for.
 		bool have_children = false;
 		for(task_t* i = task->next; i->next != task->next; i = i->next) {
-			if(i->parent == task) {
+			if(i->parent == task && i->task_state != TASK_STATE_REPLACED &&
+				i->task_state != TASK_STATE_REAPED) {
 				have_children = true;
 				break;
 			}
@@ -76,6 +77,8 @@ void wait_finish(task_t* task, task_t* child) {
 	if(task->wait_context.stat_loc) {
 		*task->wait_context.stat_loc = child->exit_code;
 	}
+
+	child->task_state = TASK_STATE_REAPED;
 
 	/* Usually, the task state is set to running by the SIGCHLD, but if the
 	 * signal is masked, we still need to return from the wait.

@@ -89,8 +89,25 @@ typedef struct task {
 
 	// Current task state
 	enum {
-		// Killed, used regardless of specific signal (SIGKILL vs SIGTERM).
+		/* Killed/exited, used regardless of specific signal/exit reason.
+		 * Tasks will only be in this state briefly: After task termination,
+		 * but before the scheduler has called task_userland_eol. Once that has
+		 * happened, the task switches to TASK_STATE_ZOMBIE.
+		 */
 		TASK_STATE_TERMINATED,
+
+		/*
+		 * Task has been killed and task_userland_eol has run, but the parent
+		 * process hasn't run waitpid yet. Once that happens, the task switches
+		 * to TASK_STATE_REAPED and will be deallocated.
+		 */
+		TASK_STATE_ZOMBIE,
+
+		/* Terminated task, parent has run waitpid. Should be ignored when
+		 * iterating the task list and will be removed by the scheduler
+		 * at its next invocation.
+		 */
+		TASK_STATE_REAPED,
 
 		// SIGSTOP
 		TASK_STATE_STOPPED,
@@ -169,7 +186,8 @@ int task_fork(task_t* to_fork, isf_t* state);
 int task_execve(task_t* task, char* path, char** argv, char** env);
 int task_exit(task_t* task, int code);
 int task_setid(task_t* task, int which, int id);
-void task_cleanup(task_t* t, bool replaced);
+void task_userland_eol(task_t* t);
+void task_cleanup(task_t* t);
 int task_chdir(task_t* task, const char* dir);
 void* task_sbrk(task_t* task, int32_t length, int32_t l2);
 int task_strace(task_t* task, isf_t* state);

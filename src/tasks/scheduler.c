@@ -48,7 +48,9 @@ void scheduler_add(task_t *task) {
 task_t* scheduler_find(uint32_t pid) {
 	task_t* start = current_task;
 	for(task_t* t = start; t->next != start; t = t->next) {
-		if(t->pid == pid && t->task_state != TASK_STATE_REPLACED) {
+		if(t->pid == pid && t->task_state != TASK_STATE_REPLACED &&
+			t->task_state != TASK_STATE_TERMINATED &&
+			t->task_state != TASK_STATE_REAPED) {
 			return t;
 		}
 
@@ -59,14 +61,14 @@ task_t* scheduler_find(uint32_t pid) {
 	return NULL;
 }
 
-static void unlink(task_t *t, bool replaced) {
+static inline void unlink(task_t *t) {
 	if(t->next == t || t->previous == t) {
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
 
 	t->next->previous = t->previous;
 	t->previous->next = t->next;
-	task_cleanup(t, replaced);
+	task_cleanup(t);
 }
 
 task_t* scheduler_select(isf_t* last_regs) {
@@ -97,17 +99,19 @@ task_t* scheduler_select(isf_t* last_regs) {
 		}
 
 		if(current_task->task_state == TASK_STATE_TERMINATED) {
-			unlink(current_task, false);
+			task_userland_eol(current_task);
 			continue;
 		}
 
-		if(current_task->task_state == TASK_STATE_REPLACED) {
-			unlink(current_task, true);
+		if(current_task->task_state == TASK_STATE_REAPED ||
+			current_task->task_state == TASK_STATE_REPLACED) {
+			unlink(current_task);
 			continue;
 		}
 
 		if(current_task->task_state == TASK_STATE_STOPPED ||
-			current_task->task_state == TASK_STATE_WAITING) {
+			current_task->task_state == TASK_STATE_WAITING ||
+			current_task->task_state == TASK_STATE_ZOMBIE) {
 			continue;
 		}
 
