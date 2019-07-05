@@ -24,9 +24,8 @@
 static uint8_t* do_read(int start_block, int num_blocks) {
 	uint8_t* buf = kmalloc(num_blocks * 512);
 	for(int i = 0; i < num_blocks; i++) {
-		uint32_t bnum = start_block + i;
+		int bnum = start_block + i;
 
-		//serial_printf("vfs/block: Reading block %d\n", bnum);
 		if(!part_read(bnum, buf + i * 512)) {
 			kfree(buf);
 			return NULL;
@@ -36,7 +35,7 @@ static uint8_t* do_read(int start_block, int num_blocks) {
 	return buf;
 }
 
-static inline int calc_nb(uint32_t offset, uint32_t size) {
+static inline int calc_nb(uint64_t offset, uint64_t size) {
 	int num_blocks = size / 512;
 
 	if(size % 512) {
@@ -51,7 +50,7 @@ static inline int calc_nb(uint32_t offset, uint32_t size) {
 	return num_blocks;
 }
 
-uint8_t* vfs_block_read(uint32_t offset, size_t size, uint8_t* buf) {
+uint8_t* vfs_block_read(uint64_t offset, uint64_t size, uint8_t* buf) {
 	int start_block = offset / 512;
 	int num_blocks = calc_nb(offset, size);
 
@@ -65,7 +64,7 @@ uint8_t* vfs_block_read(uint32_t offset, size_t size, uint8_t* buf) {
 	return buf;
 }
 
-bool vfs_block_write(uint32_t offset, size_t size, uint8_t* buf) {
+bool vfs_block_write(uint64_t offset, uint64_t size, uint8_t* buf) {
 	int start_block = offset / 512;
 	int num_blocks = calc_nb(offset, size);
 
@@ -76,8 +75,7 @@ bool vfs_block_write(uint32_t offset, size_t size, uint8_t* buf) {
 
 	memcpy(int_buf + (offset % 512), buf, size);
 	for(int i = 0; i < num_blocks; i++) {
-		uint32_t bnum = start_block + i;
-		//serial_printf("vfs/block: Writing block %d\n", bnum);
+		int bnum = start_block + i;
 		part_write(bnum, int_buf + i * 512);
 	}
 

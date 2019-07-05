@@ -244,8 +244,8 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 			ext2_inode_write(inode, write_inode_num);
 		}
 
-		uint32_t wr_offset = bl_off(block_num);
-		uint32_t wr_size = bl_off(1);
+		uint64_t wr_offset = bl_off(block_num);
+		uint64_t wr_size = bl_off(1);
 
 		// Handle remainder of offset if first block
 		if(i == 0) {

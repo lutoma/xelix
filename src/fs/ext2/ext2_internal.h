@@ -128,9 +128,9 @@ struct ext2_blocknum_resolver_cache {
 #define inode_to_blockgroup(inode) ((inode - 1) / superblock->inodes_per_group)
 // TODO Should use right shift for negative values (XXX: negative ???)
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
-#define bl_off(block) ((block) * superblock_to_blocksize(superblock))
-#define bl_size(block) ((block) / superblock_to_blocksize(superblock))
-#define bl_mod(block) ((block) % superblock_to_blocksize(superblock))
+#define bl_off(block) (uint64_t)((uint64_t)(block) * superblock_to_blocksize(superblock))
+#define bl_size(block) (uint64_t)((uint64_t)(block) / superblock_to_blocksize(superblock))
+#define bl_mod(block) (uint64_t)((uint64_t)(block) % superblock_to_blocksize(superblock))
 
 #define EXT2_DIRENT_FT_UNKNOWN 0
 #define EXT2_DIRENT_FT_REG_FILE 1
