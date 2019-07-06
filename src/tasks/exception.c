@@ -71,7 +71,6 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		panic(exc.name);
 	}
 
-	task_signal(task, NULL, exc.signal, NULL);
 	if(num == 14) {
 		log(LOG_WARN, "Page fault in task %d %s for %s to 0x%x%s\n",
 			task->pid, task->name, state->err_code & 2 ? "write" : "read",
@@ -79,6 +78,8 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	} else {
 		log(LOG_WARN, "%s in task %d %s\n", exc.name, task->pid, task->name);
 	}
+
+	task_signal(task, NULL, exc.signal, NULL);
 }
 
 void task_exception_init() {
