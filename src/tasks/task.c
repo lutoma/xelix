@@ -276,7 +276,7 @@ void task_set_initial_state(task_t* task) {
 
 	// Return stack for iret
 	iret_t* iret = task->stack + STACKSIZE - sizeof(iret_t);
-	iret->entry = task->entry;
+	iret->eip = task->entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
 	iret->user_esp = STACK_LOCATION + STACKSIZE;

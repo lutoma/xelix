@@ -77,8 +77,8 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 		*(user_stack + 9) = state->eax;
 
 		// Current EIP, will be jumped back to after handler returns
-		*(user_stack + 10) = (uint32_t)iret->entry;
-		iret->entry = task_sigjmp_crt0;
+		*(user_stack + 10) = (uint32_t)iret->eip;
+		iret->eip = task_sigjmp_crt0;
 
 		task->task_state = TASK_STATE_RUNNING;
 		return 0;

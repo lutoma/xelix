@@ -1,4 +1,4 @@
-/* fault.c: Catch and process CPU fault interrupts
+/* exception.c: Handle CPU exceptions
  * Copyright © 2010-2019 Lukas Martini
  *
  * This file is part of Xelix.
@@ -21,6 +21,14 @@
 #include <panic.h>
 #include <int/int.h>
 #include <tasks/task.h>
+#include <mem/vmem.h>
+
+// Page fault error code flags
+#define PFE_PRES  1
+#define PFE_WRITE 2
+#define PFE_USER  4
+#define PFE_RES   8
+#define PFE_INST  16
 
 struct exception {
 	int signal;
@@ -51,34 +59,56 @@ static const struct exception exceptions[] = {
 	{0, "Virtualization exception"},
 };
 
+static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
+	char message[300];
+	snprintf(message, 300, "for %s to 0x%x at %#x%s%s%s",
+		state->err_code & PFE_WRITE ? "write" : "read",
+		state->cr2, eip,
+		state->err_code & PFE_PRES ? " (page present)" : "",
+		state->err_code & PFE_RES ? " (reserved write)" : "",
+		state->err_code & PFE_INST ? " (instruction fetch)" : "");
+
+	if(state->err_code & PFE_USER) {
+		log(LOG_WARN, "Page fault in task %d <%s> %s\n", task->pid,
+			task->name, message);
+
+		struct vmem_range* range = vmem_get_range(task->memory_context, state->cr2, false);
+		if(range) {
+			log(LOG_WARN, "  phys: %#x, flags: ro %d, user %d\n",
+				vmem_translate_ptr(range, state->cr2, false),
+				range->readonly, range->user);
+
+			log(LOG_WARN, "  vmem range: virt %#x -> %#x  phys %#x -> %#x\n",
+				range->virt_start, range->virt_start + range->length,
+				range->phys_start, range->phys_start + range->length);
+		} else {
+			log(LOG_WARN, "  No matching vmem range found.\n");
+		}
+
+		task_signal(task, NULL, SIGSEGV, NULL);
+	} else {
+		panic("Page fault %s\n", message);
+	}
+}
+
 static void int_handler(task_t* task, isf_t* state, int num) {
 	if(num >= ARRAY_SIZE(exceptions)) {
 		panic("Unknown CPU exception %d", num);
 	}
 
 	struct exception exc = exceptions[num];
+	void* eip = ((iret_t*)state->esp)->eip;
 
-	// For page faults, bit 2 of the error code is unset if kernel ctx
-	if(num == 14 && !(state->err_code & 0b100)) {
-		panic("Page fault for %s to 0x%x%s%s%s\n",
-			state->err_code & 2 ? "write" : "read", state->cr2,
-			state->err_code & 1 ? " (page present)" : "",
-			state->err_code & 4 ? " (reserved write)" : "",
-			state->err_code & 16 ? " (instruction fetch)" : "");
+	if(num == 14) {
+		handle_page_fault(task, state, eip);
+		return;
 	}
 
 	if(!exc.signal || !task) {
 		panic(exc.name);
 	}
 
-	if(num == 14) {
-		log(LOG_WARN, "Page fault in task %d %s for %s to 0x%x%s\n",
-			task->pid, task->name, state->err_code & 2 ? "write" : "read",
-			state->cr2, state->err_code & 1 ? " (page present)" : "");
-	} else {
-		log(LOG_WARN, "%s in task %d %s\n", exc.name, task->pid, task->name);
-	}
-
+	log(LOG_WARN, "%s in task %d <%s> at %#x\n", exc.name, task->pid, task->name, eip);
 	task_signal(task, NULL, exc.signal, NULL);
 }
 

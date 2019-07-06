@@ -47,11 +47,11 @@ typedef struct {
 	uint32_t err_code;
 } __attribute__((__packed__)) isf_t;
 
+/* Pushed by the processor automatically. This is what the processor
+ * expects to be in the kernel stack when doing an iret to ring 3.
+ */
 typedef struct {
-	/* Pushed by the processor automatically. This is what the processor
-	 * expects to be in the kernel stack when doing an iret to ring 3.
-	 */
-	void* entry;
+	void* eip;
 	uint32_t cs;
 	uint32_t eflags;
 	uint32_t user_esp;
