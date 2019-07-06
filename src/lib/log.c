@@ -76,7 +76,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	memcpy(dest, buffer + ctx->fp->offset, size);
 	return size;
 }
-#endif
+
 
 void  __attribute__((optimize("O0"))) ltrace() {
 	intptr_t addresses[10];
@@ -88,19 +88,20 @@ void  __attribute__((optimize("O0"))) ltrace() {
 		store(LOG_ERR, trace, trace_len);
 	}
 }
+#endif
 
 void log(uint32_t level, const char *fmt, ...) {
 	va_list va;
 	va_start(va, fmt);
 
 	char fmt_string[500];
-	size_t fmt_len = vsnprintf(fmt_string, 500, fmt, va);
 
 	/* Only store for log levels > debug. Storing all debug messages is usually
 	 * not very helpful, consumes a lot of memory and can cause deadlocks
 	 * (kmalloc debug could end up calling kmalloc in store and lock).
 	 */
 	#ifdef LOG_STORE
+	size_t fmt_len = vsnprintf(fmt_string, 500, fmt, va);
 	if(level > LOG_DEBUG) {
 		store(level, fmt_string, fmt_len);
 
@@ -108,6 +109,8 @@ void log(uint32_t level, const char *fmt, ...) {
 			ltrace();
 		}
 	}
+	#else
+	vsnprintf(fmt_string, 500, fmt, va);
 	#endif
 
 	#if LOG_SERIAL_LEVEL != 0 || LOG_PRINT_LEVEL != 0
