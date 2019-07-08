@@ -23,7 +23,7 @@
 #include <tty/serial.h>
 #include <tty/tty.h>
 
-#define _putchar(x) _tty_write(NULL, &(x), 1)
+#define _putchar(x) _tty_write(&ttys[0], &(x), 1)
 
 /* Make sure functions in printf.c have correct names - There's no stdlib here,
  * so no risk of conflicts.
