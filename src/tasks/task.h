@@ -30,6 +30,7 @@
 #define TASK_MEM_FREE	0x2
 
 enum task_mem_section {
+	TMEM_SECTION_NONE,
 	TMEM_SECTION_STACK,   /* Initial stack */
 	TMEM_SECTION_CODE,    /* Contains program code and is read-only */
 	TMEM_SECTION_DATA,    /* Contains static data */
@@ -84,8 +85,8 @@ typedef struct task {
 	// Kernel stack used for interrupts. This will be loaded into the TSS.
 	void* kernel_stack;
 
-	struct vmem_context* memory_context;
-	struct task_mem* memory_allocations;
+	struct vmem_context* vmem_ctx;
+	struct task_mem* mem_allocs;
 
 	// Current task state
 	enum {
@@ -200,6 +201,7 @@ void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 
 static inline char* task_mem_section_verbose(enum task_mem_section section) {
 	char* names[] = {
+		"None",
 		"Stack",   /* Initial stack */
 		"Code",    /* Contains program code and is read-only */
 		"Data",    /* Contains static data */

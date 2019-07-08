@@ -35,26 +35,36 @@
 #include <string.h>
 #include <errno.h>
 
-#define STACKSIZE PAGE_SIZE * 128
+// Should be kept in sync with value in boot/*-boot.S
+#define KERNEL_STACK_SIZE PAGE_SIZE * 4
+#define STACK_SIZE PAGE_SIZE * 128
 #define STACK_LOCATION 0x8000
 
-uint32_t highest_pid = 0;
+static uint32_t highest_pid = 0;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 
 static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
-	task_t* task = (task_t*)zmalloc(sizeof(task_t));
-	task->pid = pid ? pid : ++highest_pid;
+	task_t* task = zmalloc(sizeof(task_t));
+	task->vmem_ctx = zmalloc(sizeof(struct vmem_context));
+	task->state = zmalloc_a(PAGE_SIZE);
+	task->kernel_stack = zmalloc_a(KERNEL_STACK_SIZE);
+
+	task_add_mem_flat(task, task->state, PAGE_SIZE,
+		TMEM_SECTION_KERNEL, TASK_MEM_FREE);
+
+	task_add_mem_flat(task, task->kernel_stack, KERNEL_STACK_SIZE,
+		TMEM_SECTION_KERNEL, TASK_MEM_FREE);
+
+	// FIXME Should have TMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
+	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000,
+		TMEM_SECTION_CODE, 0);
+
+	task->pid = pid ? pid : __sync_add_and_fetch(&highest_pid, 1);
 	task->task_state = TASK_STATE_RUNNING;
 	task->interrupt_yield = false;
-
-	// State gets mapped into user memory, so needs to be one full page.
-	task->state = zmalloc_a(PAGE_SIZE);
-	task->stack = zmalloc_a(STACKSIZE);
-	task->kernel_stack = zmalloc_a(STACKSIZE);
-	task->memory_context = zmalloc(sizeof(struct vmem_context));
 
 	strcpy(task->name, name);
 	memcpy(task->cwd, parent ? parent->cwd : "/", TASK_PATH_MAX);
@@ -89,7 +99,7 @@ void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	bool user = section != TMEM_SECTION_KERNEL;
 	bool ro = section == TMEM_SECTION_CODE;
 	if(section) {
-		vmem_map(task->memory_context, virt_start, phys_start, size, user, ro);
+		vmem_map(task->vmem_ctx, virt_start, phys_start, size, user, ro);
 	}
 
 	struct task_mem* alloc = zmalloc(sizeof(struct task_mem));
@@ -99,27 +109,8 @@ void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	alloc->section = section;
 	alloc->flags = flags;
 
-	alloc->next = task->memory_allocations;
-	task->memory_allocations = alloc;
-}
-
-static void map_memory(task_t* task) {
-	/* 1:1 map required memory regions:
-	 *  - Task stack
-	 *  - Kernel task stack (for TSS).
-	 *  - Task state struct (used in the interrupt return).
-	 *  - Kernel memory
-	 *
-	 * Todo: Investigate if we can put all the kernel code that runs before
-	 * the paging context switch in a separate ELF section and maybe only map
-	 * that.
-	 */
-	task_add_mem(task, (void*)STACK_LOCATION, task->stack, STACKSIZE, TMEM_SECTION_DATA, 0);
-	task_add_mem_flat(task, task->kernel_stack, STACKSIZE, TMEM_SECTION_KERNEL, 0);
-	task_add_mem_flat(task, task->state, PAGE_SIZE, TMEM_SECTION_KERNEL, 0);
-
-	// FIXME Should have TMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
-	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000, TMEM_SECTION_CODE, 0);
+	alloc->next = task->mem_allocs;
+	task->mem_allocs = alloc;
 }
 
 /* Sets up a new task, including the necessary paging context, stacks,
@@ -130,7 +121,10 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
-	map_memory(task);
+	task->stack = zmalloc_a(STACK_SIZE);
+	task_add_mem(task, (void*)STACK_LOCATION, task->stack, STACK_SIZE,
+		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
+
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
 	vfs_open(task, "/dev/stderr", O_WRONLY);
@@ -142,23 +136,24 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 		to_fork->envc, to_fork->argv, to_fork->argc);
 
 	memcpy(task->cwd, to_fork->cwd, TASK_PATH_MAX);
-	memcpy(task->stack, to_fork->stack, STACKSIZE);
 	memcpy(task->state, state, sizeof(isf_t));
-	memcpy(task->kernel_stack, to_fork->kernel_stack, STACKSIZE);
+	memcpy(task->kernel_stack, to_fork->kernel_stack, KERNEL_STACK_SIZE);
 	memcpy(task->binary_path, to_fork->binary_path, sizeof(task->binary_path));
+	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
+
 	task->uid = to_fork->uid;
 	task->gid = to_fork->gid;
 	task->euid = to_fork->euid;
 	task->egid = to_fork->egid;
 	task->ctty = to_fork->ctty;
-	map_memory(task);
+
 	task_setup_execdata(task);
 
 	// Adjust kernel esp
 	intptr_t diff = state->esp - to_fork->kernel_stack;
 	task->state->esp = task->kernel_stack + diff;
 
-	struct task_mem* alloc = to_fork->memory_allocations;
+	struct task_mem* alloc = to_fork->mem_allocs;
 	for(; alloc; alloc = alloc->next) {
 		if(alloc->flags & TASK_MEM_FORK) {
 			void* phys_addr = zmalloc_a(alloc->len);
@@ -167,8 +162,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 		}
 	}
 
-	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
-	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->memory_context);
+	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
 
 	/* Set syscall return values for the forked task – need to set here since
 	 * the regular syscall return handling only affects the main process.
@@ -270,16 +264,16 @@ void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
-	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->memory_context);
+	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
 	task->state->ebp = 0;
-	task->state->esp = ((void*)STACK_LOCATION + STACKSIZE) - sizeof(iret_t);
+	task->state->esp = ((void*)STACK_LOCATION + STACK_SIZE) - sizeof(iret_t);
 
 	// Return stack for iret
-	iret_t* iret = task->stack + STACKSIZE - sizeof(iret_t);
+	iret_t* iret = task->stack + STACK_SIZE - sizeof(iret_t);
 	iret->eip = task->entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
-	iret->user_esp = STACK_LOCATION + STACKSIZE;
+	iret->user_esp = STACK_LOCATION + STACK_SIZE;
 	iret->ss = GDT_SEG_DATA_PL3;
 }
 
@@ -324,7 +318,7 @@ void task_cleanup(task_t* t) {
 		sysfs_rm_file(t->sysfs_file);
 	}
 
-	struct task_mem* alloc = t->memory_allocations;
+	struct task_mem* alloc = t->mem_allocs;
 	while(alloc) {
 		if(alloc->flags & TASK_MEM_FREE) {
 			kfree(alloc->phys_addr);
@@ -335,16 +329,12 @@ void task_cleanup(task_t* t) {
 		kfree(old_alloc);
 	}
 
-	t->memory_allocations = NULL;
-	vmem_rm_context(t->memory_context);
-
-	kfree(t->state);
-	kfree(t->stack);
-	kfree(t->kernel_stack);
+	t->mem_allocs = NULL;
+	vmem_rm_context(t->vmem_ctx);
 
 	kfree_array(t->environ, t->envc);
 	kfree_array(t->argv, t->argc);
-	kfree(t);
+	//kfree(t);
 }
 
 int task_chdir(task_t* task, const char* dir) {
@@ -467,10 +457,10 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	sysfs_printf("\nTask memory:\n");
-	struct task_mem* alloc = task->memory_allocations;
+	struct task_mem* alloc = task->mem_allocs;
 	for(; alloc; alloc = alloc->next) {
 		sysfs_printf("0x%-8x -> 0x%-8x length 0x%-6x %-10s\n",
-			alloc->phys_addr, alloc->virt_addr, alloc->len,
+			alloc->virt_addr, alloc->phys_addr, alloc->len,
 			task_mem_section_verbose(alloc->section));
 	}
 

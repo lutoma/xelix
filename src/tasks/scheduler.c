@@ -147,7 +147,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 			default: state = 'U'; break;
 		}
 
-		struct task_mem* mem = task->memory_allocations;
+		struct task_mem* mem = task->mem_allocs;
 		uint32_t mem_alloc = 0;
 		for(; mem; mem = mem->next) {
 			if(mem->flags & TASK_MEM_FORK) {

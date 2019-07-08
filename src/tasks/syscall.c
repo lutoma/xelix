@@ -41,7 +41,7 @@ static inline void ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t pt
 	struct vmem_range* cr;
 
 	while(off < ptr_size) {
-		cr = vmem_get_range(task->memory_context, addr + off, false);
+		cr = vmem_get_range(task->vmem_ctx, addr + off, false);
 		uintptr_t paddr = vmem_translate_ptr(cr, addr + off, false);
 		size_t copy_size = MIN(ptr_size - off, cr->length - (paddr - cr->phys_start));
 		if(!copy_size) {
@@ -59,7 +59,7 @@ static inline void ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t pt
 }
 
 static inline uintptr_t map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_size, bool* copied) {
-	struct vmem_range* vmem_range = vmem_get_range(task->memory_context, addr, false);
+	struct vmem_range* vmem_range = vmem_get_range(task->vmem_ctx, addr, false);
 	if(!vmem_range) {
 		return 0;
 	}
@@ -79,7 +79,7 @@ static inline uintptr_t map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_s
 		}
 
 		// Get next vmem range
-		cr = vmem_get_range(task->memory_context, virt_end + PAGE_SIZE * i, false);
+		cr = vmem_get_range(task->vmem_ctx, virt_end + PAGE_SIZE * i, false);
 		if(!cr) {
 			return 0;
 		}
@@ -263,7 +263,7 @@ char** syscall_copy_array(task_t* task, char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		new_array[i] = strndup((char*)vmem_translate(task->memory_context, (intptr_t)array[i], false), 200);
+		new_array[i] = strndup((char*)vmem_translate(task->vmem_ctx, (intptr_t)array[i], false), 200);
 	}
 
 	new_array[i] = NULL;

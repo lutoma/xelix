@@ -240,7 +240,7 @@ int elf_load_file(task_t* task, char* path) {
 
 /*
 	if(ctx->ndyndeps) {
-		char* dynstr = (void*)vmem_translate(task->memory_context, (intptr_t)ctx->dynstrtab, false);
+		char* dynstr = (void*)vmem_translate(task->vmem_ctx, (intptr_t)ctx->dynstrtab, false);
 		for(int i = 0; i < ctx->ndyndeps; i++) {
 			char* lib_path = kmalloc(strlen(dynstr + ctx->dyndeps[i]) + 10);
 			sprintf(lib_path, "/usr/lib/%s", dynstr + ctx->dyndeps[i]);

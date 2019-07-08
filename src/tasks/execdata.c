@@ -59,7 +59,7 @@ void task_setup_execdata(task_t* task) {
 	uint32_t offset = 0;
 	for(int i = 0; i < task->argc; i++) {
 		strncpy((char*)(args + offset), task->argv[i], 200);
-		argv[i] = (char*)vmem_translate(task->memory_context, args + offset, true);
+		argv[i] = (char*)vmem_translate(task->vmem_ctx, args + offset, true);
 		offset += strlen(task->argv[i]) + 1;
 	}
 
@@ -69,7 +69,7 @@ void task_setup_execdata(task_t* task) {
 	offset = 0;
 	for(int i = 0; i < task->envc; i++) {
 		strncpy((char*)(env + offset), task->environ[i], 200);
-		environ[i] = (char*)vmem_translate(task->memory_context, env + offset, true);
+		environ[i] = (char*)vmem_translate(task->vmem_ctx, env + offset, true);
 		offset += strlen(task->environ[i]) + 1;
 	}
 
@@ -81,7 +81,7 @@ void task_setup_execdata(task_t* task) {
 	exc->ppid = task->parent ? task->parent->pid : 0;
 	exc->argc = task->argc;
 	exc->envc = task->envc;
-	exc->argv = (void*)vmem_translate(task->memory_context, (intptr_t)argv, true);
-	exc->env = (void*)vmem_translate(task->memory_context, (intptr_t)environ, true);
+	exc->argv = (void*)vmem_translate(task->vmem_ctx, (intptr_t)argv, true);
+	exc->env = (void*)vmem_translate(task->vmem_ctx, (intptr_t)environ, true);
 	memcpy(exc->binary_path, task->binary_path, TASK_PATH_MAX);
 }

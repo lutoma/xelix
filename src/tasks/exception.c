@@ -72,7 +72,7 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 		log(LOG_WARN, "Page fault in task %d <%s> %s\n", task->pid,
 			task->name, message);
 
-		struct vmem_range* range = vmem_get_range(task->memory_context, state->cr2, false);
+		struct vmem_range* range = vmem_get_range(task->vmem_ctx, state->cr2, false);
 		if(range) {
 			log(LOG_WARN, "  phys: %#x, flags: ro %d, user %d\n",
 				vmem_translate_ptr(range, state->cr2, false),
