@@ -37,8 +37,7 @@
 
 // Should be kept in sync with value in boot/*-boot.S
 #define KERNEL_STACK_SIZE PAGE_SIZE * 4
-#define STACK_SIZE PAGE_SIZE * 128
-#define STACK_LOCATION 0x8000
+#define STACK_LOCATION 0xc0000000
 
 static uint32_t highest_pid = 0;
 
@@ -94,6 +93,30 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	return task;
 }
 
+/* Called on task page faults. If the page fault is in the 2 pages below
+ * the current lower end of the stack, allocate extra stack pages (up to
+ * 512 total), and return control to the task. otherwise, return -1 so the
+ * fault gets raised.
+ */
+int task_page_fault_cb(task_t* task, uintptr_t addr) {
+	if(task->stack_size >= PAGE_SIZE * 512) {
+		return -1;
+	}
+
+	addr = ALIGN_DOWN(addr, PAGE_SIZE);
+	uintptr_t alloc_target = STACK_LOCATION - task->stack_size - PAGE_SIZE * 2;
+	if(addr != alloc_target + PAGE_SIZE && addr != alloc_target) {
+		return -1;
+	}
+
+	void* page = zmalloc_a(PAGE_SIZE * 2);
+	task_add_mem(task, (void*)alloc_target, page, PAGE_SIZE * 2,
+		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
+
+	task->stack_size += PAGE_SIZE * 2;
+	return 0;
+}
+
 void task_add_mem(task_t* task, void* virt_start, void* phys_start,
 	uint32_t size, enum task_mem_section section, int flags) {
 	bool user = section != TMEM_SECTION_KERNEL;
@@ -121,9 +144,12 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
-	task->stack = zmalloc_a(STACK_SIZE);
-	task_add_mem(task, (void*)STACK_LOCATION, task->stack, STACK_SIZE,
-		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
+
+	// Allocate initial stack. Will dynamically grow, so be conservative.
+	task->stack_size = PAGE_SIZE * 2;
+	task->stack = zmalloc_a(task->stack_size);
+	task_add_mem(task, (void*)STACK_LOCATION - task->stack_size, task->stack,
+		task->stack_size, TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
@@ -146,6 +172,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task->euid = to_fork->euid;
 	task->egid = to_fork->egid;
 	task->ctty = to_fork->ctty;
+	task->stack_size = to_fork->stack_size;
 
 	task_setup_execdata(task);
 
@@ -266,14 +293,14 @@ void task_set_initial_state(task_t* task) {
 	task->state->ds = GDT_SEG_DATA_PL3;
 	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
 	task->state->ebp = 0;
-	task->state->esp = ((void*)STACK_LOCATION + STACK_SIZE) - sizeof(iret_t);
+	task->state->esp = (void*)STACK_LOCATION - sizeof(iret_t);
 
 	// Return stack for iret
-	iret_t* iret = task->stack + STACK_SIZE - sizeof(iret_t);
+	iret_t* iret = task->stack + task->stack_size - sizeof(iret_t);
 	iret->eip = task->entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
-	iret->user_esp = STACK_LOCATION + STACK_SIZE;
+	iret->user_esp = STACK_LOCATION;
 	iret->ss = GDT_SEG_DATA_PL3;
 }
 

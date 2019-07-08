@@ -69,6 +69,11 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 		state->err_code & PFE_INST ? " (instruction fetch)" : "");
 
 	if(state->err_code & PFE_USER) {
+		// Some task page faults can be gracefully handled (stack allocations)
+		if(task_page_fault_cb(task, state->cr2) == 0) {
+			return;
+		}
+
 		log(LOG_WARN, "Page fault in task %d <%s> %s\n", task->pid,
 			task->name, message);
 

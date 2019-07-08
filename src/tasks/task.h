@@ -75,9 +75,11 @@ typedef struct task {
 	struct task* next;
 	struct task* previous;
 
-	void* stack;
 	void* entry;
 	void* sbrk;
+
+	void* stack;
+	size_t stack_size;
 
 	// Controlling terminal
 	struct terminal* ctty;
@@ -183,6 +185,7 @@ typedef struct task {
 task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
 void task_set_initial_state(task_t* task);
+int task_page_fault_cb(task_t* task, uintptr_t addr);
 int task_fork(task_t* to_fork, isf_t* state);
 int task_execve(task_t* task, char* path, char** argv, char** env);
 int task_exit(task_t* task, int code);
