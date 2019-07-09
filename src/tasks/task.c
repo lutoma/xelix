@@ -93,27 +93,23 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	return task;
 }
 
-/* Called on task page faults. If the page fault is in the 2 pages below
- * the current lower end of the stack, allocate extra stack pages (up to
- * 512 total), and return control to the task. otherwise, return -1 so the
- * fault gets raised.
+/* Called on task page faults. If the fault is in the pages below the current
+ * lower end of the stack, expand the stack (up to 512 pages total), and return
+ * control to the task. otherwise, return -1 so the fault gets raised.
  */
 int task_page_fault_cb(task_t* task, uintptr_t addr) {
-	if(task->stack_size >= PAGE_SIZE * 512) {
-		return -1;
-	}
-
 	addr = ALIGN_DOWN(addr, PAGE_SIZE);
-	uintptr_t alloc_target = STACK_LOCATION - task->stack_size - PAGE_SIZE * 2;
-	if(addr != alloc_target + PAGE_SIZE && addr != alloc_target) {
+	uintptr_t stack_lower = STACK_LOCATION - task->stack_size;
+	if(addr >= stack_lower || addr <= STACK_LOCATION - PAGE_SIZE * 512) {
 		return -1;
 	}
 
-	void* page = zmalloc_a(PAGE_SIZE * 2);
-	task_add_mem(task, (void*)alloc_target, page, PAGE_SIZE * 2,
+	int alloc_size = MAX(PAGE_SIZE * 2, stack_lower - addr);
+	void* page = zmalloc_a(alloc_size);
+	task_add_mem(task, (void*)(stack_lower - alloc_size), page, alloc_size,
 		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
 
-	task->stack_size += PAGE_SIZE * 2;
+	task->stack_size += alloc_size;
 	return 0;
 }
 
