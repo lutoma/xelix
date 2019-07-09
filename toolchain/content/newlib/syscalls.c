@@ -148,12 +148,19 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 	}
 
 	int found = 0;
-	__convert_fd_set(pfds, readfds, POLLIN, &found, nfds);
-	__convert_fd_set(pfds, writefds, POLLOUT, &found, nfds);
+	if(readfds) {
+		FD_ZERO(readfds);
+		__convert_fd_set(pfds, readfds, POLLIN, &found, nfds);
+	}
 
-	FD_ZERO(readfds);
-	FD_ZERO(writefds);
-	FD_ZERO(exceptfds);
+	if(writefds) {
+		FD_ZERO(writefds);
+		__convert_fd_set(pfds, writefds, POLLOUT, &found, nfds);
+	}
+
+	if(exceptfds) {
+		FD_ZERO(exceptfds);
+	}
 
 	int r = poll(pfds, found, timeout ? timeout->tv_sec : -1);
 	if(r < 0) {
@@ -162,13 +169,13 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 	}
 
 	for(int i = 0; i < found; i++) {
-		if(pfds[i].revents & POLLIN) {
+		if(readfds && pfds[i].revents & POLLIN) {
 			FD_SET(pfds[i].fd, readfds);
 		}
-		if(pfds[i].revents & POLLOUT) {
+		if(writefds && pfds[i].revents & POLLOUT) {
 			FD_SET(pfds[i].fd, writefds);
 		}
-		if(pfds[i].revents & (POLLERR | POLLHUP)) {
+		if(exceptfds && pfds[i].revents & (POLLERR | POLLHUP)) {
 			FD_SET(pfds[i].fd, exceptfds);
 		}
 	}
