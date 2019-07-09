@@ -149,13 +149,13 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 
 	int found = 0;
 	if(readfds) {
-		FD_ZERO(readfds);
 		__convert_fd_set(pfds, readfds, POLLIN, &found, nfds);
+		FD_ZERO(readfds);
 	}
 
 	if(writefds) {
-		FD_ZERO(writefds);
 		__convert_fd_set(pfds, writefds, POLLOUT, &found, nfds);
+		FD_ZERO(writefds);
 	}
 
 	if(exceptfds) {
