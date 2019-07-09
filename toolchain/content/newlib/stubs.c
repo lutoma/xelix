@@ -43,7 +43,7 @@
 #include <syslog.h>
 
 #ifdef NOISY_STUBS
-	#define STUBWARN(cmd) fprintf(stderr, "xelix-newlib: " # cmd # " stub called.\n");
+	#define STUBWARN(cmd) fprintf(stderr, "xelix-newlib: " #cmd " stub called.\n");
 #else
 	#define STUBWARN(cmd)
 #endif
