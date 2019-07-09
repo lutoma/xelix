@@ -228,7 +228,7 @@ const struct syscall_definition syscall_table[] = {
 
 	// 38
 	{"accept", (syscall_cb)net_accept, 0,
-		SCA_INT, SCA_POINTER, SCA_POINTER, 0},
+		SCA_INT, SCA_INT, SCA_POINTER, sizeof(uint32_t)},
 #else
 	// 37
 	{"listen", NULL, 0,
@@ -246,11 +246,11 @@ const struct syscall_definition syscall_table[] = {
 #ifdef ENABLE_PICOTCP
 	// 40
 	{"getpeername", (syscall_cb)net_getpeername, 0,
-		SCA_INT, SCA_POINTER, SCA_POINTER, 0},
+		SCA_INT, SCA_INT, SCA_POINTER, sizeof(uint32_t)},
 
 	// 41
 	{"getsockname", (syscall_cb)net_getsockname, 0,
-		SCA_INT, SCA_POINTER, SCA_POINTER, 0},
+		SCA_INT, SCA_INT, SCA_POINTER, sizeof(uint32_t)},
 #else
 	// 40
 	{"getpeername", NULL, 0,

@@ -122,7 +122,6 @@ int net_socket(task_t* task, int domain, int type, int protocol);
 int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 	socklen_t addrlen);
 int net_listen(task_t* task, int sockfd, int backlog);
-int net_select(task_t* task, int nfds, fd_set *readfds, fd_set *writefds);
 int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 	socklen_t *addrlen);
 int net_getpeername(task_t* task, int sockfd, struct sockaddr* addr,

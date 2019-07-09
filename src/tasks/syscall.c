@@ -36,7 +36,7 @@
 static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value, uint32_t ovalue);
 #endif
 
-static inline void ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t ptr_size, bool user_to_kernel) {
+void sc_ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t ptr_size, bool user_to_kernel) {
 	uintptr_t off = 0;
 	struct vmem_range* cr;
 
@@ -58,7 +58,7 @@ static inline void ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t pt
 	}
 }
 
-static inline uintptr_t map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_size, bool* copied) {
+uintptr_t sc_map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_size, bool* copied) {
 	struct vmem_range* vmem_range = vmem_get_range(task->vmem_ctx, addr, false);
 	if(!vmem_range) {
 		return 0;
@@ -91,7 +91,7 @@ static inline uintptr_t map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_s
 	}
 
 	void* fmb = kmalloc(ptr_size);
-	ctx_copy(task, fmb, addr, ptr_size, false);
+	sc_ctx_copy(task, fmb, addr, ptr_size, false);
 	*copied = true;
 	return (uintptr_t)fmb;
 }
@@ -186,7 +186,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			call_fail();
 		}
 
-		args[i] = map_to_kernel(task, args[i], ptr_sizes[i], &copied[i]);
+		args[i] = sc_map_to_kernel(task, args[i], ptr_sizes[i], &copied[i]);
 		if(unlikely(!args[i])) {
 			call_fail();
 		}
@@ -228,7 +228,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			continue;
 		}
 
-		ctx_copy(task, (void*)args[i], oargs[i], ptr_sizes[i], true);
+		sc_ctx_copy(task, (void*)args[i], oargs[i], ptr_sizes[i], true);
 		kfree((void*)args[i]);
 	}
 

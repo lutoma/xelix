@@ -24,6 +24,7 @@
 #include <pico_socket.h>
 #include <pico_dhcp_client.h>
 #include <tasks/task.h>
+#include <tasks/syscall.h>
 #include <fs/vfs.h>
 #include <errno.h>
 #include <endian.h>
@@ -97,8 +98,8 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 	}
 }
 
-static size_t vfs_read_cb(vfs_file_t* fp, void* dest, size_t size) {
-	struct socket* sock = (struct socket*)(fp->mount_instance);
+static size_t vfs_read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	struct socket* sock = (struct socket*)(ctx->fp->mount_instance);
 
 	if(sock->state == SOCK_CLOSED) {
 		sc_errno = ENOTCONN;
@@ -109,7 +110,7 @@ static size_t vfs_read_cb(vfs_file_t* fp, void* dest, size_t size) {
 		return -1;
 	}
 
-	if(!sock->read_buffer_length && fp->flags & O_NONBLOCK) {
+	if(!sock->read_buffer_length && ctx->fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
@@ -138,8 +139,8 @@ static size_t vfs_read_cb(vfs_file_t* fp, void* dest, size_t size) {
 	return size;
 }
 
-static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
-	struct socket* sock = (struct socket*)(fp->mount_instance);
+static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t size) {
+	struct socket* sock = (struct socket*)(ctx->fp->mount_instance);
 
 	while(!sock->can_write) {
 		if(sock->state == SOCK_CLOSED) {
@@ -165,6 +166,18 @@ static size_t vfs_write_cb(vfs_file_t* fp, void* source, size_t size) {
 	return written;
 }
 
+static int vfs_poll_cb(struct vfs_callback_ctx* ctx, int events) {
+	struct socket* sock = (struct socket*)(ctx->fp->mount_instance);
+	int ret = 0;
+
+	if((events & POLLIN && sock->conn_requests) || sock->read_buffer_length) {
+		ret |= POLLIN;
+	}
+	if(events & POLLOUT && sock->can_write) {
+		ret |= POLLOUT;
+	}
+	return ret;
+}
 
 int net_vfs_close_cb(vfs_file_t* fp) {
 	struct socket* sock = (struct socket*)(fp->mount_instance);
@@ -195,6 +208,7 @@ vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock) {
 	fd->flags = O_RDWR;
 	fd->callbacks.read = vfs_read_cb;
 	fd->callbacks.write = vfs_write_cb;
+	fd->callbacks.poll = vfs_poll_cb;
 	fd->mount_instance = (void*)sock;
 	return fd;
 }
@@ -293,36 +307,8 @@ int net_listen(task_t* task, int sockfd, int backlog) {
 	return 0;
 }
 
-int net_select(task_t* task, int nfds, fd_set *readfds, fd_set *writefds) {
-	int events = 0;
-	FD_ZERO(readfds);
-	FD_ZERO(writefds);
-
-	while(!events) {
-		for(int num = 0; num < VFS_MAX_OPENFILES; num++) {
-			if(!task->files[num].inode || task->files[num].type != FT_IFSOCK) {
-				continue;
-			}
-
-			struct socket* sock = (struct socket*)task->files[num].mount_instance;
-			if(sock->conn_requests || sock->read_buffer_length) {
-				FD_SET(num, readfds);
-				events++;
-			}
-
-			if(sock->can_write) {
-				FD_SET(num, writefds);
-				events++;
-			}
-		}
-		asm("hlt");
-	}
-
-	return events;
-}
-
-int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
-	socklen_t *addrlen) {
+int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
+	socklen_t* addrlen) {
 
 	struct socket* sock = get_socket(task, sockfd);
 	if(!sock) {
@@ -331,6 +317,16 @@ int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 
 	if(sock->state == SOCK_CONNECTED) {
 		sc_errno = EBADF;
+		return -1;
+	}
+
+	/* Since sockaddr is variable length and the length is passed in a pointer,
+	 * we can't use the syscall system's automagic kernel memory mapping.
+	 */
+	bool copied = false;
+	struct sockaddr* addr = (struct sockaddr*)sc_map_to_kernel(task, (uintptr_t)oaddr, *addrlen, &copied);
+	if(!addr) {
+		sc_errno = EINVAL;
 		return -1;
 	}
 
@@ -360,10 +356,15 @@ int net_accept(task_t* task, int sockfd, struct sockaddr *addr,
 
 	vfs_file_t* new_fd = new_socket_fd(task, pico_sock);
 	sock->conn_requests--;
+
+	if(copied) {
+		sc_ctx_copy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		kfree(addr);
+	}
 	return new_fd->num;
 }
 
-int net_getpeername(task_t* task, int sockfd, struct sockaddr* addr,
+int net_getpeername(task_t* task, int sockfd, struct sockaddr* oaddr,
 	socklen_t* addrlen) {
 
 	struct socket* sock = get_socket(task, sockfd);
@@ -371,11 +372,27 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* addr,
 		return -1;
 	}
 
-	return net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->remote_addr,
+	/* Since sockaddr is variable length and the length is passed in a pointer,
+	 * we can't use the syscall system's automagic kernel memory mapping.
+	 */
+	bool copied = false;
+	struct sockaddr* addr = (struct sockaddr*)sc_map_to_kernel(task, (uintptr_t)oaddr, *addrlen, &copied);
+	if(!addr) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	int r = net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->remote_addr,
 		sock->pico_socket->remote_port);
+
+	if(copied) {
+		sc_ctx_copy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		kfree(addr);
+	}
+	return r;
 }
 
-int net_getsockname(task_t* task, int sockfd, struct sockaddr* addr,
+int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 	socklen_t* addrlen) {
 
 	struct socket* sock = get_socket(task, sockfd);
@@ -383,8 +400,24 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* addr,
 		return -1;
 	}
 
-	return net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->local_addr,
+	/* Since sockaddr is variable length and the length is passed in a pointer,
+	 * we can't use the syscall system's automagic kernel memory mapping.
+	 */
+	bool copied = false;
+	struct sockaddr* addr = (struct sockaddr*)sc_map_to_kernel(task, (uintptr_t)oaddr, *addrlen, &copied);
+	if(!addr) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	int r = net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->local_addr,
 		sock->pico_socket->local_port);
+
+	if(copied) {
+		sc_ctx_copy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		kfree(addr);
+	}
+	return r;
 }
 
 #endif /* ENABLE_PICOTCP */
