@@ -138,3 +138,5 @@ STUB(void, openlog, (const char* ident, int logopt, int facility));
 STUB(int, setlogmask, (int maskpri), -1);
 STUB(void, syslog, (int prio, const char* fmt, ...));
 STUB(int, initgroups, (const char *user, gid_t group), -1);
+STUB(void, sync, (void));
+STUB(int, getsockopt, (int sockfd, int level, int optname, void* optval, socklen_t* optlen), -1);
