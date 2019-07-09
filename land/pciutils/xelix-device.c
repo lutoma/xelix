@@ -74,15 +74,6 @@ static void xelix_init(struct pci_access *a UNUSED) {}
 static void xelix_cleanup(struct pci_access *a UNUSED) {}
 
 static int xelix_read(struct pci_dev *d, int pos UNUSED, byte *buf UNUSED, int len UNUSED) {
-  char* dname;
-  asprintf(&dname, "/dev/pci%dd%df%d", d->bus, d->dev, d->func);
-  FILE* fp = fopen(dname, "r");
-  if(!fp) {
-    return 0;
-  }
-
-  free(dname);
-  fclose(fp);
   return 1;
 }
 
