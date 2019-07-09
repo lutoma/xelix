@@ -19,6 +19,7 @@
 
 #include "serial.h"
 #include <portio.h>
+#include <fs/sysfs.h>
 
 #define PORT 0x3f8
 #define CAN_RECV (inb(PORT+5) & 1)
@@ -45,4 +46,27 @@ void serial_init() {
 	outb(PORT+3, 0x03);
 	outb(PORT+2, 0xC7);
 	outb(PORT+4, 0x0B);
+}
+
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	for(int i = 0; i < size; i++) {
+		((char*)dest)[i] = serial_recv();
+	}
+	return size;
+}
+
+static size_t sfs_write(struct vfs_callback_ctx* ctx, void* src, size_t size) {
+	for(int i = 0; i < size; i++) {
+		serial_send(((char*)src)[i], NULL);
+	}
+	return size;
+}
+
+void serial_init2() {
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+		.write = sfs_write,
+	};
+
+	sysfs_add_dev("ttyS0", &sfs_cb);
 }

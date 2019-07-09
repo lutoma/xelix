@@ -67,6 +67,7 @@ void xelix_main(void) {
 	syscall_init();
 	log_init();
 	version_init();
+	serial_init2();
 
 	char* __env[] = { NULL };
 	char* __argv[] = { vfs_basename(INIT_PATH), NULL };
