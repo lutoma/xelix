@@ -22,6 +22,7 @@
 #include <log.h>
 #include <tasks/scheduler.h>
 #include <fs/vfs.h>
+#include <fs/sysfs.h>
 #include <printf.h>
 #include <panic.h>
 #include <errno.h>
@@ -186,7 +187,57 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 }
 
+
+static inline char* arg_type_name(int flags) {
+	if(flags & SCA_INT) {
+		return "int";
+	} else if(flags & SCA_POINTER) {
+		return "void*";
+	} else if(flags & SCA_STRING) {
+		return "char*";
+	}
+	return "";
+}
+
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset) {
+		return 0;
+	}
+
+	size_t rsize = 0;
+	for(int i = 0; i < ARRAY_SIZE(syscall_table); i++) {
+		struct syscall_definition def = syscall_table[i];
+		if(!def.handler) {
+			sysfs_printf("%-3d\n", i);
+		} else {
+			char* hname = addr2name((uintptr_t)def.handler);
+			if(!hname) {
+				hname = "???";
+			}
+
+			sysfs_printf("%-3d %-20s -> %-22s (", i, def.name, hname);
+			if(def.arg0_flags) {
+				sysfs_printf(arg_type_name(def.arg0_flags));
+			}
+			if(def.arg1_flags) {
+				sysfs_printf(", %s", arg_type_name(def.arg1_flags));
+			}
+			if(def.arg2_flags) {
+				sysfs_printf(", %s", arg_type_name(def.arg2_flags));
+			}
+
+			sysfs_printf(")\n");
+		}
+	}
+
+	return rsize;
+}
+
 void syscall_init() {
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("syscalls", &sfs_cb);
 	interrupts_register(SYSCALL_INTERRUPT, int_handler, true);
 }
 
