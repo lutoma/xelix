@@ -64,7 +64,5 @@ struct syscall_definition {
 	size_t ptr_size;
 };
 
-void sc_ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t ptr_size, bool user_to_kernel);
-uintptr_t sc_map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_size, bool* copied);
 char** syscall_copy_array(task_t* task, char** array, uint32_t* count);
 void syscall_init();

@@ -358,7 +358,7 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	sock->conn_requests--;
 
 	if(copied) {
-		sc_ctx_copy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		task_memcpy(task, addr, (uintptr_t)oaddr, *addrlen, true);
 		kfree(addr);
 	}
 	return new_fd->num;
@@ -386,7 +386,7 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* oaddr,
 		sock->pico_socket->remote_port);
 
 	if(copied) {
-		sc_ctx_copy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		task_memcpy(task, addr, (uintptr_t)oaddr, *addrlen, true);
 		kfree(addr);
 	}
 	return r;
@@ -414,7 +414,7 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 		sock->pico_socket->local_port);
 
 	if(copied) {
-		sc_ctx_copy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		task_memcpy(task, addr, (uintptr_t)oaddr, *addrlen, true);
 		kfree(addr);
 	}
 	return r;

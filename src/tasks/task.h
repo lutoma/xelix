@@ -26,27 +26,6 @@
 #define TASK_MAXNAME 256
 #define TASK_PATH_MAX 256
 
-#define TASK_MEM_FORK	0x1
-#define TASK_MEM_FREE	0x2
-
-enum task_mem_section {
-	TMEM_SECTION_NONE,
-	TMEM_SECTION_STACK,   /* Initial stack */
-	TMEM_SECTION_CODE,    /* Contains program code and is read-only */
-	TMEM_SECTION_DATA,    /* Contains static data */
-	TMEM_SECTION_HEAP,    /* Allocated by brk(2) at runtime */
-	TMEM_SECTION_KERNEL,  /* Contains kernel-internal data */
-} section;
-
-struct task_mem {
-	struct task_mem* next;
-	void* virt_addr;
-	void* phys_addr;
-	uint32_t len;
-	enum task_mem_section section;
-	int flags;
-};
-
 struct elf_load_ctx {
 	void* virt_end;
 
@@ -185,7 +164,6 @@ typedef struct task {
 task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
 void task_set_initial_state(task_t* task);
-int task_page_fault_cb(task_t* task, uintptr_t addr);
 int task_fork(task_t* to_fork, isf_t* state);
 int task_execve(task_t* task, char* path, char** argv, char** env);
 int task_exit(task_t* task, int code);
@@ -193,27 +171,6 @@ int task_setid(task_t* task, int which, int id);
 void task_userland_eol(task_t* t);
 void task_cleanup(task_t* t);
 int task_chdir(task_t* task, const char* dir);
-void* task_sbrk(task_t* task, int32_t length, int32_t l2);
 int task_strace(task_t* task, isf_t* state);
 
-#define task_add_mem_flat(task, start, size, section, flags) \
-	task_add_mem(task, start, start, size, section, flags)
-void task_add_mem(task_t* task, void* virt_start, void* phys_start,
-	uint32_t size, enum task_mem_section section, int flags);
-
-
-static inline char* task_mem_section_verbose(enum task_mem_section section) {
-	char* names[] = {
-		"None",
-		"Stack",   /* Initial stack */
-		"Code",    /* Contains program code and is read-only */
-		"Data",    /* Contains static data */
-		"Heap",    /* Allocated by brk(2) at runtime */
-		"Kernel",  /* Contains kernel-internal data */
-	};
-
-	if(section < ARRAY_SIZE(names)) {
-		return names[section];
-	}
-	return NULL;
-}
+#include <tasks/mem.h>

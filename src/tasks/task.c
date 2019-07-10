@@ -37,7 +37,6 @@
 
 // Should be kept in sync with value in boot/*-boot.S
 #define KERNEL_STACK_SIZE PAGE_SIZE * 4
-#define STACK_LOCATION 0xc0000000
 
 static uint32_t highest_pid = 0;
 
@@ -93,45 +92,6 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	return task;
 }
 
-/* Called on task page faults. If the fault is in the pages below the current
- * lower end of the stack, expand the stack (up to 512 pages total), and return
- * control to the task. otherwise, return -1 so the fault gets raised.
- */
-int task_page_fault_cb(task_t* task, uintptr_t addr) {
-	addr = ALIGN_DOWN(addr, PAGE_SIZE);
-	uintptr_t stack_lower = STACK_LOCATION - task->stack_size;
-	if(addr >= stack_lower || addr <= STACK_LOCATION - PAGE_SIZE * 512) {
-		return -1;
-	}
-
-	int alloc_size = MAX(PAGE_SIZE * 2, stack_lower - addr);
-	void* page = zmalloc_a(alloc_size);
-	task_add_mem(task, (void*)(stack_lower - alloc_size), page, alloc_size,
-		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
-
-	task->stack_size += alloc_size;
-	return 0;
-}
-
-void task_add_mem(task_t* task, void* virt_start, void* phys_start,
-	uint32_t size, enum task_mem_section section, int flags) {
-	bool user = section != TMEM_SECTION_KERNEL;
-	bool ro = section == TMEM_SECTION_CODE;
-	if(section) {
-		vmem_map(task->vmem_ctx, virt_start, phys_start, size, user, ro);
-	}
-
-	struct task_mem* alloc = zmalloc(sizeof(struct task_mem));
-	alloc->phys_addr = phys_start;
-	alloc->virt_addr = virt_start;
-	alloc->len = size;
-	alloc->section = section;
-	alloc->flags = flags;
-
-	alloc->next = task->mem_allocs;
-	task->mem_allocs = alloc;
-}
-
 /* Sets up a new task, including the necessary paging context, stacks,
  * interrupt stack frame etc. The binary still has to be mapped into the paging
  * context separately (usually in the ELF loader).
@@ -144,13 +104,91 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
 	task->stack = zmalloc_a(task->stack_size);
-	task_add_mem(task, (void*)STACK_LOCATION - task->stack_size, task->stack,
+	task_add_mem(task, (void*)TASK_STACK_LOCATION - task->stack_size, task->stack,
 		task->stack_size, TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
 	vfs_open(task, "/dev/stderr", O_WRONLY);
 	return task;
+}
+
+
+void task_set_initial_state(task_t* task) {
+	task_setup_execdata(task);
+
+	task->state->ds = GDT_SEG_DATA_PL3;
+	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
+	task->state->ebp = 0;
+	task->state->esp = (void*)TASK_STACK_LOCATION - sizeof(iret_t);
+
+	// Return stack for iret
+	iret_t* iret = task->stack + task->stack_size - sizeof(iret_t);
+	iret->eip = task->entry;
+	iret->cs = GDT_SEG_CODE_PL3;
+	iret->eflags = EFLAGS_IF;
+	iret->user_esp = TASK_STACK_LOCATION;
+	iret->ss = GDT_SEG_DATA_PL3;
+}
+
+/* Called by the scheduler whenever a task terminates from the userland
+ * perspective. For example, this is called when a task changes to
+ * TASK_STATE_TERMINATED, but not for TASK_STATE_REPLACED, since that task
+ * lives on from the userland POV.
+ */
+void task_userland_eol(task_t* t) {
+	t->task_state = TASK_STATE_ZOMBIE;
+
+	task_t* init = scheduler_find(1);
+	for(task_t* i = t->next; i->next != t->next; i = i->next) {
+		if(i->parent == t) {
+			i->parent = init;
+		}
+	}
+
+	if(t->parent) {
+		if(t->parent->task_state == TASK_STATE_WAITING) {
+			wait_finish(t->parent, t);
+		}
+		task_signal(t->parent, t, SIGCHLD, t->parent->state);
+	}
+
+	if(t->ctty && t == t->ctty->fg_task) {
+		t->ctty->fg_task = t->parent;
+	}
+
+	if(t->strace_observer && t->strace_fd) {
+		vfs_close(t->strace_observer, t->strace_fd);
+	}
+}
+
+/* Called by scheduler whenever it encounters a task with TASK_STATE_REAPED or
+ * TASK_STATE_REPLACED. Should deallocate all task objects, but be transparent
+ * to userspace.
+ */
+void task_cleanup(task_t* t) {
+	// Could have already been removed by execve
+	if(t->sysfs_file) {
+		sysfs_rm_file(t->sysfs_file);
+	}
+
+	struct task_mem* alloc = t->mem_allocs;
+	while(alloc) {
+		if(alloc->flags & TASK_MEM_FREE) {
+			kfree(alloc->phys_addr);
+		}
+
+		struct task_mem* old_alloc = alloc;
+		alloc = alloc->next;
+		kfree(old_alloc);
+	}
+
+	t->mem_allocs = NULL;
+	vmem_rm_context(t->vmem_ctx);
+
+	kfree_array(t->environ, t->envc);
+	kfree_array(t->argv, t->argc);
+	//kfree(t);
 }
 
 static task_t* _fork(task_t* to_fork, isf_t* state) {
@@ -237,8 +275,8 @@ int task_setid(task_t* task, int which, int id) {
 int task_execve(task_t* task, char* path, char** argv, char** env) {
 	uint32_t __argc = 0;
 	uint32_t __envc = 0;
-	char** __argv = syscall_copy_array(task, argv, &__argc);
-	char** __env = syscall_copy_array(task, env, &__envc);
+	char** __argv = task_copy_strings(task, argv, &__argc);
+	char** __env = task_copy_strings(task, env, &__envc);
 	if(!__argv || !__env) {
 		log(LOG_WARN, "execve: array check fail\n");
 		return 0;
@@ -283,83 +321,6 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	return 0;
 }
 
-void task_set_initial_state(task_t* task) {
-	task_setup_execdata(task);
-
-	task->state->ds = GDT_SEG_DATA_PL3;
-	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
-	task->state->ebp = 0;
-	task->state->esp = (void*)STACK_LOCATION - sizeof(iret_t);
-
-	// Return stack for iret
-	iret_t* iret = task->stack + task->stack_size - sizeof(iret_t);
-	iret->eip = task->entry;
-	iret->cs = GDT_SEG_CODE_PL3;
-	iret->eflags = EFLAGS_IF;
-	iret->user_esp = STACK_LOCATION;
-	iret->ss = GDT_SEG_DATA_PL3;
-}
-
-/* Called by the scheduler whenever a task terminates from the userland
- * perspective. For example, this is called when a task changes to
- * TASK_STATE_TERMINATED, but not for TASK_STATE_REPLACED, since that task
- * lives on from the userland POV.
- */
-void task_userland_eol(task_t* t) {
-	t->task_state = TASK_STATE_ZOMBIE;
-
-	task_t* init = scheduler_find(1);
-	for(task_t* i = t->next; i->next != t->next; i = i->next) {
-		if(i->parent == t) {
-			i->parent = init;
-		}
-	}
-
-	if(t->parent) {
-		if(t->parent->task_state == TASK_STATE_WAITING) {
-			wait_finish(t->parent, t);
-		}
-		task_signal(t->parent, t, SIGCHLD, t->parent->state);
-	}
-
-	if(t->ctty && t == t->ctty->fg_task) {
-		t->ctty->fg_task = t->parent;
-	}
-
-	if(t->strace_observer && t->strace_fd) {
-		vfs_close(t->strace_observer, t->strace_fd);
-	}
-}
-
-/* Called by scheduler whenever it encounters a task with TASK_STATE_REAPED or
- * TASK_STATE_REPLACED. Should deallocate all task objects, but be transparent
- * to userspace.
- */
-void task_cleanup(task_t* t) {
-	// Could have already been removed by execve
-	if(t->sysfs_file) {
-		sysfs_rm_file(t->sysfs_file);
-	}
-
-	struct task_mem* alloc = t->mem_allocs;
-	while(alloc) {
-		if(alloc->flags & TASK_MEM_FREE) {
-			kfree(alloc->phys_addr);
-		}
-
-		struct task_mem* old_alloc = alloc;
-		alloc = alloc->next;
-		kfree(old_alloc);
-	}
-
-	t->mem_allocs = NULL;
-	vmem_rm_context(t->vmem_ctx);
-
-	kfree_array(t->environ, t->envc);
-	kfree_array(t->argv, t->argc);
-	//kfree(t);
-}
-
 int task_chdir(task_t* task, const char* dir) {
 	if(vfs_access(task, dir, R_OK | X_OK) < 0) {
 		return -1;
@@ -388,35 +349,6 @@ int task_chdir(task_t* task, const char* dir) {
 	strcpy(task->cwd, vfs_get_from_id(fd, task)->path);
 	vfs_close(task, fd);
 	return 0;
-}
-
-void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
-	// Legacy support: Length used to be passed in second parameter
-	if(!length && l2) {
-		length = l2;
-	}
-	length = length ? length : l2;
-
-	if(length <= 0) {
-		return task->sbrk;
-	}
-
-	length = ALIGN(length, PAGE_SIZE);
-	void* phys_addr = zmalloc_a(length);
-
-	if(!phys_addr) {
-		sc_errno = EAGAIN;
-		return (void*)-1;
-	}
-
-	// FIXME sbrk is not set properly in elf.c (?)
-	void* virt_addr = task->sbrk;
-	task->sbrk += length;
-
-	task_add_mem(task, virt_addr, phys_addr, length, TMEM_SECTION_HEAP,
-		TASK_MEM_FORK | TASK_MEM_FREE);
-
-	return virt_addr;
 }
 
 int task_strace(task_t* task, isf_t* state) {

@@ -36,66 +36,6 @@
 static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value, uint32_t ovalue);
 #endif
 
-void sc_ctx_copy(task_t* task, void* kaddr, uintptr_t addr, size_t ptr_size, bool user_to_kernel) {
-	uintptr_t off = 0;
-	struct vmem_range* cr;
-
-	while(off < ptr_size) {
-		cr = vmem_get_range(task->vmem_ctx, addr + off, false);
-		uintptr_t paddr = vmem_translate_ptr(cr, addr + off, false);
-		size_t copy_size = MIN(ptr_size - off, cr->length - (paddr - cr->phys_start));
-		if(!copy_size) {
-			break;
-		}
-
-		if(user_to_kernel) {
-			memcpy((void*)paddr, kaddr + off, copy_size);
-		} else {
-			memcpy(kaddr + off, (void*)paddr, copy_size);
-		}
-
-		off += copy_size;
-	}
-}
-
-uintptr_t sc_map_to_kernel(task_t* task, uintptr_t addr, size_t ptr_size, bool* copied) {
-	struct vmem_range* vmem_range = vmem_get_range(task->vmem_ctx, addr, false);
-	if(!vmem_range) {
-		return 0;
-	}
-
-	uintptr_t ptr_end = addr + ptr_size;
-	struct vmem_range* cr = vmem_range;
-
-	for(int i = 1;; i++) {
-		uintptr_t virt_end = cr->virt_start + cr->length;
-		uintptr_t phys_end = cr->phys_start + cr->length;
-
-		/* We've reached the end of the pointer and the buffer is contiguous in
-		 * physical memory, so just pass it directly.
-		 */
-		if(ptr_end <= virt_end) {
-			return vmem_translate_ptr(vmem_range, addr, false);
-		}
-
-		// Get next vmem range
-		cr = vmem_get_range(task->vmem_ctx, virt_end + PAGE_SIZE * i, false);
-		if(!cr) {
-			return 0;
-		}
-
-		// Check if next range is in adjacent physical pages
-		if(cr->phys_start != phys_end) {
-			break;
-		}
-	}
-
-	void* fmb = kmalloc(ptr_size);
-	sc_ctx_copy(task, fmb, addr, ptr_size, false);
-	*copied = true;
-	return (uintptr_t)fmb;
-}
-
 static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t* args, uintptr_t* oargs, uint8_t* flags) {
 	vfs_file_t* strace_file = vfs_get_from_id(task->strace_fd, task->strace_observer);
 	if(unlikely(!strace_file)) {
@@ -186,7 +126,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			call_fail();
 		}
 
-		args[i] = sc_map_to_kernel(task, args[i], ptr_sizes[i], &copied[i]);
+		args[i] = (uint32_t)task_memmap(task, (void*)args[i], ptr_sizes[i], &copied[i]);
 		if(unlikely(!args[i])) {
 			call_fail();
 		}
@@ -228,7 +168,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			continue;
 		}
 
-		sc_ctx_copy(task, (void*)args[i], oargs[i], ptr_sizes[i], true);
+		task_memcpy(task, (void*)args[i], (void*)oargs[i], ptr_sizes[i], true);
 		kfree((void*)args[i]);
 	}
 
@@ -244,35 +184,6 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	if(unlikely(task->strace_observer && task->strace_fd)) {
 		send_strace(task, state, scnum, args, oargs, flags);
 	}
-}
-
-// Check an array to make sure it's NULL-terminated, then copy to kernel space
-char** syscall_copy_array(task_t* task, char** array, uint32_t* count) {
-	int size = 0;
-
-	for(; size < 200; size++) {
-		if(!array[size]) {
-			break;
-		}
-	}
-
-	if(size >= 200) {
-		return NULL;
-	}
-
-	char** new_array = kmalloc(sizeof(char*) * (size + 1));
-	int i = 0;
-	for(; i < size; i++) {
-		new_array[i] = strndup((char*)vmem_translate(task->vmem_ctx, (intptr_t)array[i], false), 200);
-	}
-
-	new_array[i] = NULL;
-
-	if(count) {
-		*count = size;
-	}
-
-	return new_array;
 }
 
 void syscall_init() {
