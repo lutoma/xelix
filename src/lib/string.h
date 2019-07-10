@@ -24,6 +24,8 @@
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 #define strdup(string) strndup(string, strlen(string))
 #define strcmp __builtin_strcmp
+#define strcasecmp __builtin_strcasecmp
+#define strncasecmp __builtin_strncasecmp
 #define strncmp __builtin_strncmp
 #define strcat __builtin_strcat
 #define strcpy __builtin_strcpy
