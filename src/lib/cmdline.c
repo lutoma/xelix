@@ -20,6 +20,7 @@
 #include <cmdline.h>
 #include <string.h>
 #include <mem/kmalloc.h>
+#include <fs/sysfs.h>
 
 static char* options[50] = {0};
 
@@ -50,6 +51,16 @@ bool cmdline_get_bool(const char* key) {
 	return false;
 }
 
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset) {
+		return 0;
+	}
+
+	size_t rsize = 0;
+	sysfs_printf("%s\n", cmdline_string());
+	return rsize;
+}
+
 void cmdline_init() {
 	char* cmdline = strdup(cmdline_string());
 	size_t len = strlen(cmdline);
@@ -64,4 +75,9 @@ void cmdline_init() {
 			prev = cur + 1;
 		}
 	}
+
+	struct vfs_callbacks sfs_cb = {
+		.read = sfs_read,
+	};
+	sysfs_add_file("cmdline", &sfs_cb);
 }
