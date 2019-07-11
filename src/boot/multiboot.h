@@ -335,6 +335,7 @@ struct multiboot_tag_mmap* multiboot_get_mmap();
 struct multiboot_tag_framebuffer* multiboot_get_framebuffer();
 struct elf_sym* multiboot_get_symtab(size_t* length);
 char* multiboot_get_strtab(size_t* length);
+char* multiboot_get_cmdline();
 
 #endif /* ! MULTIBOOT_HEADER */
 

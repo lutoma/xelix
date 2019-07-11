@@ -36,6 +36,7 @@ void* multiboot_header;
  * and hope it fits.
  */
 #define SYMTAB_BSIZE 0x5000
+static char cmdline[0x400];
 static char symtab[SYMTAB_BSIZE];
 static char strtab[SYMTAB_BSIZE];
 size_t symtab_len = 0;
@@ -82,6 +83,10 @@ struct elf_sym* multiboot_get_symtab(size_t* length) {
 char* multiboot_get_strtab(size_t* length) {
 	*length = strtab_len;
 	return strtab;
+}
+
+char* multiboot_get_cmdline() {
+	return cmdline;
 }
 
 static int extract_symtab(struct multiboot_tag_elf_sections* multiboot_tag) {
@@ -132,8 +137,10 @@ void multiboot_init() {
 		}
 
 		switch(tag->type) {
-			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
+				strncpy(cmdline, (char*)(tag + 1), ARRAY_SIZE(cmdline) - 1);
+				// intentional fallthrough
+			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
 				strncpy(strrep, (char*)(tag + 1), 149);
 				break;
 			case MULTIBOOT_TAG_TYPE_LOAD_BASE_ADDR:
