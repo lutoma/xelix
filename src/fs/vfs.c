@@ -339,7 +339,7 @@ int vfs_seek(task_t* task, int fd, size_t offset, int origin) {
 			fp->offset = stat->st_size + offset;
 			kfree(stat);
 	}
-	return 0;
+	return fp->offset;
 }
 
 int vfs_fcntl(task_t* task, int fd, int cmd, int arg3) {
