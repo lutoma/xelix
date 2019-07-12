@@ -26,12 +26,12 @@
 #include <int/int.h>
 #include <portio.h>
 #include <fs/i386-ide.h>
+#include <fs/block.h>
 
-ide_channel_regs_t ide_channels[2];
-ide_device_t ide_devices[4];
-uint8_t ide_buf[2048] = {0};
-uint8_t ide_irq_invoked = 0;
-uint8_t atapi_packet[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+struct ide_dev {
+	uint16_t bus;
+	uint8_t slave;
+};
 
 void inportsm(unsigned short port, unsigned char * data, unsigned long size) {
 	asm volatile ("rep insw" : "+D" (data), "+c" (size) : "d" (port) : "memory");
@@ -41,22 +41,22 @@ void outportsm(unsigned short port, unsigned char * data, unsigned long size) {
 	asm volatile ("rep outsw" : "+S" (data), "+c" (size) : "d" (port));
 }
 
-void ata_io_wait(uint16_t bus) {
-	inb(bus + ATA_REG_ALTSTATUS);
-	inb(bus + ATA_REG_ALTSTATUS);
-	inb(bus + ATA_REG_ALTSTATUS);
-	inb(bus + ATA_REG_ALTSTATUS);
+void ata_io_wait(struct ide_dev* dev) {
+	inb(dev->bus + ATA_REG_ALTSTATUS);
+	inb(dev->bus + ATA_REG_ALTSTATUS);
+	inb(dev->bus + ATA_REG_ALTSTATUS);
+	inb(dev->bus + ATA_REG_ALTSTATUS);
 }
 
-int ata_wait(uint16_t bus, int advanced) {
+int ata_wait(struct ide_dev* dev, int advanced) {
 	uint8_t status = 0;
 
-	ata_io_wait(bus);
+	ata_io_wait(dev);
 
-	while ((status = inb(bus + ATA_REG_STATUS)) & ATA_SR_BSY);
+	while ((status = inb(dev->bus + ATA_REG_STATUS)) & ATA_SR_BSY);
 
 	if (advanced) {
-		status = inb(bus + ATA_REG_STATUS);
+		status = inb(dev->bus + ATA_REG_STATUS);
 		if (status   & ATA_SR_ERR)  return 1;
 		if (status   & ATA_SR_DF)   return 1;
 		if (!(status & ATA_SR_DRQ)) return 1;
@@ -65,33 +65,35 @@ int ata_wait(uint16_t bus, int advanced) {
 	return 0;
 }
 
-void ata_select(uint16_t bus) {
-	outb(bus + ATA_REG_HDDEVSEL, 0xA0);
+void ata_select(struct ide_dev* dev) {
+	outb(dev->bus + ATA_REG_HDDEVSEL, 0xA0);
 }
 
-void ata_wait_ready(uint16_t bus) {
-	while (inb(bus + ATA_REG_STATUS) & ATA_SR_BSY);
+void ata_wait_ready(struct ide_dev* dev) {
+	while (inb(dev->bus + ATA_REG_STATUS) & ATA_SR_BSY);
 }
 
-void ide_init_device(uint16_t bus) {
+struct ide_dev* ide_init_device(uint16_t bus) {
+	struct ide_dev* dev = zmalloc(sizeof(struct ide_dev));
+	dev->bus = bus;
+	dev->slave = 0;
 
-	log(LOG_INFO, "ide: Initializing IDE device on bus %d\n", bus);
+	log(LOG_INFO, "ide: Initializing IDE device on bus %#x\n", dev->bus);
+	outb(dev->bus + 1, 1);
+	outb(dev->bus + 0x306, 0);
 
-	outb(bus + 1, 1);
-	outb(bus + 0x306, 0);
+	ata_select(dev);
+	ata_io_wait(dev);
 
-	ata_select(bus);
-	ata_io_wait(bus);
-
-	outb(bus + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
-	ata_io_wait(bus);
-	ata_wait_ready(bus);
+	outb(dev->bus + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
+	ata_io_wait(dev);
+	ata_wait_ready(dev);
 
 	ata_identify_t device;
 	uint16_t * buf = (uint16_t *)&device;
 
 	for (int i = 0; i < 256; ++i) {
-		buf[i] = inw(bus);
+		buf[i] = inw(dev->bus);
 	}
 
 	uint8_t * ptr = (uint8_t *)&device.model;
@@ -101,88 +103,68 @@ void ide_init_device(uint16_t bus) {
 		ptr[i] = tmp;
 	}
 
-	outb(bus + ATA_REG_CONTROL, 0x02);
+	outb(dev->bus + ATA_REG_CONTROL, 0x02);
+	return dev;
 }
 
-void ide_init() {
-	ide_init_device(0x1F0);
-}
+int ide_read_cb(struct vfs_block_dev* block_dev, uint32_t lba, void* buf) {
+	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
 
-bool ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) {
 	int errors = 0;
 try_again:
-	outb(bus + ATA_REG_CONTROL, 0x02);
+	outb(dev->bus + ATA_REG_CONTROL, 0x02);
 
-	ata_wait_ready(bus);
+	ata_wait_ready(dev);
 
-	outb(bus + ATA_REG_HDDEVSEL,  0xe0 | slave << 4 |
+	outb(dev->bus + ATA_REG_HDDEVSEL,  0xe0 | dev->slave << 4 |
 								 (lba & 0x0f000000) >> 24);
-	outb(bus + ATA_REG_FEATURES, 0x00);
-	outb(bus + ATA_REG_SECCOUNT0, 1);
-	outb(bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
-	outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
-	outb(bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
-	outb(bus + ATA_REG_COMMAND, ATA_CMD_READ_PIO);
+	outb(dev->bus + ATA_REG_FEATURES, 0x00);
+	outb(dev->bus + ATA_REG_SECCOUNT0, 1);
+	outb(dev->bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
+	outb(dev->bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
+	outb(dev->bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
+	outb(dev->bus + ATA_REG_COMMAND, ATA_CMD_READ_PIO);
 
-	if (ata_wait(bus, 1)) {
+	if (ata_wait(dev, 1)) {
 		errors++;
 		if (errors > 4) {
 			log(LOG_WARN, "ide: Too many errors during read of lba block %u. Bailing.\n", lba);
-			return false;
+			return -1;
 		}
 		goto try_again;
 	}
 
 	int size = 256;
-	inportsm(bus,buf,size);
-	ata_wait(bus, 0);
-	return true;
-}
-
-void ide_write_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) {
-	outb(bus + ATA_REG_CONTROL, 0x02);
-
-	ata_wait_ready(bus);
-
-	outb(bus + ATA_REG_HDDEVSEL,  0xe0 | slave << 4 |
-								 (lba & 0x0f000000) >> 24);
-	ata_wait(bus, 0);
-	outb(bus + ATA_REG_FEATURES, 0x00);
-	outb(bus + ATA_REG_SECCOUNT0, 0x01);
-	outb(bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
-	outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
-	outb(bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
-	outb(bus + ATA_REG_COMMAND, ATA_CMD_WRITE_PIO);
-	ata_wait(bus, 0);
-	int size = 256;
-	outportsm(bus,buf,size);
-	outb(bus + 0x07, ATA_CMD_CACHE_FLUSH);
-	ata_wait(bus, 0);
-}
-
-#if 0
-int ide_cmp(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
-	if(!(size % 4))
-		return -1;
-
-	uint32_t i = 0;
-	while (i < size) {
-		if (*ptr1 != *ptr2) return 1;
-		ptr1++;
-		ptr2++;
-		i += 4;
-	}
+	inportsm(dev->bus, buf, size);
+	ata_wait(dev, 0);
 	return 0;
 }
 
-void ide_write_sector_retry(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf) {
-	uint8_t * read_buf = kmalloc(512);
-	interrupts_disable();
-	do {
-		ide_write_sector(bus,slave,lba,buf);
-		ide_read_sector(bus,slave,lba,read_buf);
-	} while (ide_cmp((uint32_t*)buf,(uint32_t*)read_buf,512));
-	kfree(read_buf);
-	interrupts_enable();
+int ide_write_cb(struct vfs_block_dev* block_dev, uint32_t lba, void* buf) {
+	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
+
+	outb(dev->bus + ATA_REG_CONTROL, 0x02);
+
+	ata_wait_ready(dev);
+
+	outb(dev->bus + ATA_REG_HDDEVSEL,  0xe0 | dev->slave << 4 |
+								 (lba & 0x0f000000) >> 24);
+	ata_wait(dev, 0);
+	outb(dev->bus + ATA_REG_FEATURES, 0x00);
+	outb(dev->bus + ATA_REG_SECCOUNT0, 0x01);
+	outb(dev->bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
+	outb(dev->bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
+	outb(dev->bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
+	outb(dev->bus + ATA_REG_COMMAND, ATA_CMD_WRITE_PIO);
+	ata_wait(dev, 0);
+	int size = 256;
+	outportsm(dev->bus, buf, size);
+	outb(dev->bus + 0x07, ATA_CMD_CACHE_FLUSH);
+	ata_wait(dev, 0);
+	return 0;
 }
-#endif
+
+void ide_init() {
+	struct ide_dev* dev = ide_init_device(0x1F0);
+	vfs_block_register_dev("ide1", 0, ide_read_cb, ide_write_cb, (void*)dev);
+}

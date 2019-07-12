@@ -1,5 +1,5 @@
 /* part.c: MBR partition support
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,8 +20,7 @@
 #include <string.h>
 #include <mem/kmalloc.h>
 #include <fs/i386-ide.h>
-
-uint32_t start = 0;
+#include <fs/block.h>
 
 struct mbr_partition {
 	uint8_t bootable;
@@ -29,23 +28,29 @@ struct mbr_partition {
 	uint8_t type;
 	uint8_t unused2[3];
 	uint32_t start;
-	uint32_t length;
+	uint32_t size;
 };
 
-bool part_read(uint32_t lba, uint8_t * buf) {
-	return ide_read_sector(0x1F0, 0, lba + start, buf);
-}
-void part_write(uint32_t lba, uint8_t * buf) {
-	return ide_write_sector(0x1F0, 0, lba + start, buf);
-}
-
-void part_init() {
+void vfs_part_probe(struct vfs_block_dev* dev) {
 	uint8_t* buf = kmalloc(512);
-	if(!ide_read_sector(0x1F0, 0, 0, buf)) {
+	if(dev->read_cb(dev, 0, buf) < 0) {
 		kfree(buf);
 		return;
 	}
 
+	char* pname = kmalloc(strlen(dev->name) + 3);
 	struct mbr_partition* part = (struct mbr_partition*)(buf + 0x01BE);
-	start = part->start;
+	for(int i = 1; i <= 4; i++, part++) {
+		if(!part->type || !part->size || !part->start) {
+			continue;
+		}
+
+		sprintf(pname, "%sp%d", dev->name, i);
+		vfs_block_register_dev(pname, part->start, dev->read_cb, dev->write_cb, dev->meta);
+		log(LOG_INFO, "part: /dev/%s: MBR part %d /dev/%s type %x size %#x\n",
+			dev->name, i, pname, part->type, part->size);
+	}
+
+	kfree(pname);
+	kfree(buf);
 }

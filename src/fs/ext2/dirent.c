@@ -35,7 +35,7 @@ struct rd_r {
 };
 
 #define dirent_off *offset - reent->read_off
-static vfs_dirent_t* readdir_r(struct inode* inode, size_t* offset, struct rd_r* reent) {
+static vfs_dirent_t* readdir_r(struct inode* inode, uint64_t* offset, struct rd_r* reent) {
 	while(1) {
 		if(dirent_off + sizeof(struct dirent) >= reent->read_len) {
 			if(*offset >= inode->size) {
@@ -124,7 +124,7 @@ static struct dirent* search_dir(struct inode* inode, const char* search) {
 	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
 
 	vfs_dirent_t* ent = NULL;
-	size_t offset = 0;
+	uint64_t offset = 0;
 	while((ent = readdir_r(inode, &offset, rd_reent))) {
 		if(!strcmp(ent->d_name, search)) {
 			result = kmalloc(ent->d_reclen);

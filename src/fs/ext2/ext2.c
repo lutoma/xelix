@@ -493,14 +493,17 @@ struct vfs_callbacks cb = {
 	.access = ext2_access,
 };
 
-void ext2_init() {
+void ext2_init(struct vfs_block_dev* dev) {
+	ext2_block_dev = dev;
+
 	// Main superblock always has an offset of 1024
 	superblock = (struct superblock*)kmalloc(1024);
-	vfs_block_read(1024, sizeof(struct superblock), (uint8_t*)superblock);
-	if(superblock->magic != SUPERBLOCK_MAGIC) {
+	if(vfs_block_read(ext2_block_dev, 2, 2, (uint8_t*)superblock) < 0 ||
+		superblock->magic != SUPERBLOCK_MAGIC) {
 		log(LOG_ERR, "ext2: Invalid magic\n");
 		return;
 	}
+
 
 	log(LOG_INFO, "ext2: Revision %d, block size %d, %d blockgroups\n",
 			superblock->revision, bl_off(1), superblock->blockgroup_num);
@@ -532,7 +535,7 @@ void ext2_init() {
 	}
 
 	blockgroup_table = kmalloc(bl_off(blockgroup_table_size));
-	if(!vfs_block_read(bl_off(blockgroup_table_start),
+	if(!vfs_block_sread(ext2_block_dev, bl_off(blockgroup_table_start),
 		bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)) {
 
 		kfree(superblock);

@@ -157,8 +157,8 @@ struct ext2_blocknum_resolver_cache {
  */
 #define blockgroup_table_size (bl_size(superblock->block_count / superblock->blocks_per_group * sizeof(struct blockgroup)) + 1)
 
-#define write_superblock() vfs_block_write(1024, sizeof(struct superblock), (uint8_t*)superblock)
-#define write_blockgroup_table() vfs_block_write(bl_off(blockgroup_table_start), \
+#define write_superblock() vfs_block_swrite(ext2_block_dev, 1024, sizeof(struct superblock), (uint8_t*)superblock)
+#define write_blockgroup_table() vfs_block_swrite(ext2_block_dev, bl_off(blockgroup_table_start), \
 	bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)
 
 #define ext2_inode_read_data(inode, offset, length, buf) ext2_inode_data_rw(inode, 0, offset, length, buf)
@@ -168,6 +168,7 @@ struct superblock* superblock;
 struct blockgroup* blockgroup_table;
 struct inode* root_inode;
 struct vfs_callbacks* ext2_callbacks;
+struct vfs_block_dev* ext2_block_dev;
 
 bool ext2_inode_write(struct inode* buf, uint32_t inode_num);
 bool ext2_inode_read(struct inode* buf, uint32_t inode_num);
@@ -175,7 +176,7 @@ uint32_t ext2_inode_new(struct inode* inode, uint16_t mode);
 uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct ext2_blocknum_resolver_cache* cache);
 void ext2_free_blocknum_resolver_cache(struct ext2_blocknum_resolver_cache* cache);
 uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
-	uint32_t offset, size_t length, uint8_t* buf);
+	uint64_t offset, size_t length, uint8_t* buf);
 
 enum inode_check_op {
 	PERM_CHECK_READ = 2,

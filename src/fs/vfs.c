@@ -22,12 +22,15 @@
 #include <mem/kmalloc.h>
 #include <string.h>
 #include <list.h>
+#include <time.h>
+#include <errno.h>
 #include <printf.h>
 #include <spinlock.h>
-#include <errno.h>
 #include <stdbool.h>
-#include <time.h>
+#include <cmdline.h>
+#include <panic.h>
 #include <fs/null.h>
+#include <fs/block.h>
 #include <fs/sysfs.h>
 #include <fs/part.h>
 #include <fs/ext2.h>
@@ -222,11 +225,6 @@ vfs_file_t* vfs_alloc_fileno(task_t* task, int min) {
 int vfs_open(task_t* task, const char* orig_path, uint32_t flags) {
 	if(!orig_path || !(*orig_path)) {
 		sc_errno = ENOENT;
-		return -1;
-	}
-
-	if((flags & O_EXCL) && !(flags & O_CREAT)) {
-		sc_errno = EINVAL;
 		return -1;
 	}
 
@@ -749,12 +747,23 @@ static size_t sfs_mounts_read(struct vfs_callback_ctx* ctx, void* dest, size_t s
 }
 
 void vfs_init() {
-	ide_init();
-	part_init();
-	sysfs_init();
+	char* root_path = cmdline_get("root");
+	if(!root_path) {
+		panic("vfs: Could not get root device path - Make sure root= "
+			"is set in kernel command line.");
+	}
 
+	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
+	ide_init();
+
+	struct vfs_block_dev* rootdev = vfs_block_get_dev(root_path);
+	if(!rootdev) {
+		panic("vfs: Could not resolve root device path.");
+	}
+
+	sysfs_init();
 	#ifdef ENABLE_EXT2
-	ext2_init();
+	ext2_init(rootdev);
 	#endif
 
 	bzero(kernel_files, sizeof(kernel_files));
@@ -763,5 +772,5 @@ void vfs_init() {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_mounts_read,
 	};
-	sysfs_add_file("mounts", &sfs_cb);
+	sysfs_add_file("mounted", &sfs_cb);
 }

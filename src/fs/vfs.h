@@ -195,7 +195,7 @@ typedef struct vfs_file {
 	void* mount_instance;
 	struct vfs_callbacks callbacks;
 	uint32_t flags;
-	size_t offset;
+	uint64_t offset;
 	uint32_t inode;
 
 	// File-system specific

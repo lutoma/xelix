@@ -18,4 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-void ext2_init();
+#include <fs/block.h>
+
+void ext2_init(struct vfs_block_dev* dev);

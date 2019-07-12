@@ -80,7 +80,7 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 		return false;
 	}
 
-	uint8_t* ret = vfs_block_read(inode_off, superblock->inode_size, (uint8_t*)buf);
+	uint8_t* ret = vfs_block_sread(ext2_block_dev, inode_off, superblock->inode_size, (uint8_t*)buf);
 	if(!ret) {
 		return false;
 	}
@@ -108,7 +108,7 @@ bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
 		memcpy(cache_in, buf, sizeof(struct inode));
 	}
 
-	return vfs_block_write(inode_off, superblock->inode_size, (uint8_t*)buf);
+	return vfs_block_swrite(ext2_block_dev, inode_off, superblock->inode_size, (uint8_t*)buf);
 }
 
 uint32_t ext2_inode_new(struct inode* inode, uint16_t mode) {
@@ -162,7 +162,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 
 		if(!cache->indirect_table) {
 			cache->indirect_table = (uint32_t*)zmalloc(bl_off(1));
-			vfs_block_read(bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)cache->indirect_table);
+			vfs_block_sread(ext2_block_dev, bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)cache->indirect_table);
 		}
 
 		real_block_num = cache->indirect_table[block_num - 12];
@@ -173,7 +173,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 
 		if(!cache->double_table) {
 			cache->double_table = (uint32_t*)zmalloc(bl_off(1));
-			vfs_block_read(bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)cache->double_table);
+			vfs_block_sread(ext2_block_dev, bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)cache->double_table);
 		}
 
 		uint32_t indir_block_num = cache->double_table[(block_num - entries_per_block - 12) / entries_per_block];
@@ -186,7 +186,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		}
 
 		if(cache->double_second_block != indir_block_num) {
-			vfs_block_read(bl_off(indir_block_num), bl_off(1), (uint8_t*)cache->double_second_table);
+			vfs_block_sread(ext2_block_dev, bl_off(indir_block_num), bl_off(1), (uint8_t*)cache->double_second_table);
 			cache->double_second_block = indir_block_num;
 		}
 
@@ -202,7 +202,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
  * exta_inode_read_data/exta_inode_write_data macros instead.
  */
 uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
-	uint32_t offset, size_t length, uint8_t* buf) {
+	uint64_t offset, size_t length, uint8_t* buf) {
 
 
 	uint32_t num_blocks = bl_size(length);
@@ -259,9 +259,9 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 
 		bool res = false;
 		if(write_inode_num) {
-			res = vfs_block_write(wr_offset, wr_size, buf + buf_offset);
+			res = vfs_block_swrite(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
 		} else {
-			res = vfs_block_read(wr_offset, wr_size, buf + buf_offset);
+			res = vfs_block_sread(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
 		}
 
 		if(!res) {

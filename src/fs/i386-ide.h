@@ -104,25 +104,6 @@
 #define ATA_WRITE     0x01
 
 typedef struct {
-	uint16_t base;
-	uint16_t ctrl;
-	uint16_t bmide;
-	uint16_t nien;
-} ide_channel_regs_t;
-
-typedef struct {
-	uint8_t  reserved;
-	uint8_t  channel;
-	uint8_t  drive;
-	uint16_t type;
-	uint16_t signature;
-	uint16_t capabilities;
-	uint32_t command_sets;
-	uint32_t size;
-	uint8_t  model[41];
-} ide_device_t;
-
-typedef struct {
 	uint8_t  status;
 	uint8_t  chs_first_sector[3];
 	uint8_t  type;
@@ -150,13 +131,6 @@ typedef struct {
 	uint64_t sectors_48;
 	uint16_t unused7[152];
 } __attribute__((packed)) ata_identify_t;
-
-typedef struct {
-	uint8_t     boostrap[446];
-	partition_t partitions[4];
-	uint8_t     signature[2];
-} __attribute__((packed)) mbr_t;
-mbr_t mbr;
 
 void ide_init();
 bool ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);

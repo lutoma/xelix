@@ -18,6 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-void part_init();
 bool part_read(uint32_t lba, uint8_t * buf);
 void part_write(uint32_t lba, uint8_t * buf);
+void vfs_part_probe(struct vfs_block_dev* dev);

@@ -28,7 +28,7 @@
 uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block) {
 	// Todo check blockgroup->free_blocks to see if any blocks are free and otherwise switch block group
 	uint8_t* bitmap = kmalloc(bl_off(1));
-	vfs_block_read(bl_off(bitmap_block), bl_off(1), bitmap);
+	vfs_block_sread(ext2_block_dev, bl_off(bitmap_block), bl_off(1), bitmap);
 	uint32_t result = 0;
 
 	for(int i = 0; i < bl_off(1); i++) {
@@ -48,7 +48,7 @@ uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block) {
 	}
 
 	if(result) {
-		vfs_block_write(bl_off(bitmap_block), bl_off(1), bitmap);
+		vfs_block_swrite(ext2_block_dev, bl_off(bitmap_block), bl_off(1), bitmap);
 	}
 
 	kfree(bitmap);
@@ -57,10 +57,10 @@ uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block) {
 
 void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit) {
 	uint8_t* bitmap = kmalloc(bl_off(1));
-	vfs_block_read(bl_off(bitmap_block), bl_off(1), bitmap);
+	vfs_block_sread(ext2_block_dev, bl_off(bitmap_block), bl_off(1), bitmap);
 	bit--;
 	bitmap[bit / 8] = bit_clear(bitmap[bit / 8], bit % 8);
-	vfs_block_write(bl_off(bitmap_block), bl_off(1), bitmap);
+	vfs_block_swrite(ext2_block_dev, bl_off(bitmap_block), bl_off(1), bitmap);
 	kfree(bitmap);
 }
 

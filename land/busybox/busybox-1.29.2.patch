@@ -90,7 +90,7 @@ index d4ba031..ccbd860 100644
  /* Busybox mount uses either /proc/mounts or /etc/mtab to
   * get the list of currently mounted filesystems */
 -#define bb_path_mtab_file IF_FEATURE_MTAB_SUPPORT("/etc/mtab")IF_NOT_FEATURE_MTAB_SUPPORT("/proc/mounts")
-+#define bb_path_mtab_file IF_FEATURE_MTAB_SUPPORT("/etc/mtab")IF_NOT_FEATURE_MTAB_SUPPORT("/sys/mounts")
++#define bb_path_mtab_file IF_FEATURE_MTAB_SUPPORT("/etc/mtab")IF_NOT_FEATURE_MTAB_SUPPORT("/sys/mounted")
 
  #define bb_path_passwd_file  _PATH_PASSWD
  #define bb_path_group_file   _PATH_GROUP

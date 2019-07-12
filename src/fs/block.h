@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2018 Lukas Martini
+/* Copyright © 2018-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,5 +20,27 @@
 
 #include <stdbool.h>
 
-uint8_t* vfs_block_read(uint64_t offset, uint64_t size, uint8_t* buf);
-bool vfs_block_write(uint64_t offset, uint64_t size, uint8_t* buf);
+struct vfs_block_dev;
+typedef int (*vfs_block_read_cb)(struct vfs_block_dev* dev, uint32_t offset, void* buf);
+typedef int (*vfs_block_write_cb)(struct vfs_block_dev* dev, uint32_t offset, void* buf);
+
+struct vfs_block_dev {
+	struct vfs_block_dev* next;
+	char name[50];
+
+	// Used for partitions
+	uint64_t start_offset;
+
+	vfs_block_read_cb read_cb;
+	vfs_block_read_cb write_cb;
+
+	// For use by device driver
+	void* meta;
+};
+
+int vfs_block_read(struct vfs_block_dev* dev, int start_block, int num_blocks, uint8_t* buf);
+uint8_t* vfs_block_sread(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
+bool vfs_block_swrite(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
+struct vfs_block_dev* vfs_block_get_dev(char* path);
+void vfs_block_register_dev(char* name, uint64_t start_offset,
+	vfs_block_read_cb read_cb, vfs_block_write_cb write_cb, void* meta);

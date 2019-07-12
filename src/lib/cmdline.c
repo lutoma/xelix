@@ -30,7 +30,7 @@ char* cmdline_get(const char* key) {
 	for(int i = 0; i < ARRAY_SIZE(options) && options[i]; i++) {
 		char* opt = options[i];
 
-		if(strlen(opt) >= key_len + 2 && !strncmp(key, opt, key_len)) {
+		if(strlen(opt) >= key_len + 2 && !strncmp(key, opt, key_len - 1)) {
 			if(opt[key_len] != '=') {
 				continue;
 			}
