@@ -78,10 +78,10 @@ static struct tty_driver* drv;
 
 static uint32_t convert_color(int color, bool bg) {
 	// RGB colors: Black, red, green, yellow, blue, magenta, cyan, white, default
-	const uint32_t colors_fg[] = {0x272822, 0xf92672, 0xa6e22e, 0xe6db74,
-		0x66d9ef, 0xfd5ff0, 0xa1efe4, 0xffffff, 0xe9e9e9};
-	const uint32_t colors_bg[] = {0x272822, 0xf92672, 0xa6e22e, 0xe6db74,
-		0x66d9ef, 0xfd5ff0, 0xa1efe4, 0xe9e9e9, 0x272822};
+	const uint32_t colors_fg[] = {0x1e1e1e, 0xff453a, 0x32d74b, 0xffd60a,
+		0x0a84ff, 0xbf5af2, 0x5ac8fa, 0xdedede, 0xffffff};
+	const uint32_t colors_bg[] = {0x1e1e1e, 0xff453a, 0x32d74b, 0xffd60a,
+		0x0a84ff, 0xbf5af2, 0x5ac8fa, 0xffffff, 0x1e1e1e};
 
 	if(color < 0 || color >= ARRAY_SIZE(colors_fg)) {
 		color = 8;
