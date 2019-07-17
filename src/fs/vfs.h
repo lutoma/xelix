@@ -177,8 +177,8 @@ struct vfs_mountpoint {
 	int num;
 	char path[265];
 	void* instance;
-	char* dev;
 	char* type;
+	struct vfs_block_dev* dev;
 	struct vfs_callbacks callbacks;
 };
 
@@ -234,7 +234,7 @@ int vfs_readlink(struct task* task, const char* orig_path, char* buf, size_t siz
 int vfs_rmdir(struct task* task, const char* orig_path);
 int vfs_poll(struct task* task, struct pollfd* fds, uint32_t nfds, int timeout);
 int vfs_stat(struct task* task, char* path, vfs_stat_t* dest);
-int vfs_mount(char* path, void* instance, char* dev, char* type,
+int vfs_mount(char* path, void* instance, struct vfs_block_dev* dev, char* type,
 	struct vfs_callbacks* callbacks);
 void vfs_init();
 

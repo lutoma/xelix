@@ -246,6 +246,6 @@ void sysfs_rm_dev(struct sysfs_file* fp) {
 }
 
 void sysfs_init() {
-	vfs_mount("/sys", &sys_files, "sys", "sysfs", &callbacks);
-	vfs_mount("/dev", &dev_files, "dev", "sysfs", &callbacks);
+	vfs_mount("/sys", &sys_files, NULL, "sysfs", &callbacks);
+	vfs_mount("/dev", &dev_files, NULL, "sysfs", &callbacks);
 }

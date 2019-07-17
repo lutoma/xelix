@@ -706,7 +706,7 @@ int vfs_link(task_t* task, const char* orig_path, const char* orig_new_path) {
 	return r;
 }
 
-int vfs_mount(char* path, void* instance, char* dev, char* type,
+int vfs_mount(char* path, void* instance, struct vfs_block_dev* dev, char* type,
 	struct vfs_callbacks* callbacks) {
 
 	if(!path || !strncmp(path, "", 1)) {
@@ -729,7 +729,11 @@ int vfs_mount(char* path, void* instance, char* dev, char* type,
 	mountpoints[num].num = num;
 	memcpy(&mountpoints[num].callbacks, callbacks, sizeof(struct vfs_callbacks));
 
-	log(LOG_DEBUG, "vfs: Mounted %s (type %s) to %s\n", dev, type, path);
+	if(dev) {
+		log(LOG_DEBUG, "vfs: Mounted /dev/%s (type %s) to %s\n", dev->name, type, path);
+	} else {
+		log(LOG_DEBUG, "vfs: Mounted %s (type %s) to %s\n", type, type, path);
+	}
 	return 0;
 }
 
@@ -741,7 +745,11 @@ static size_t sfs_mounts_read(struct vfs_callback_ctx* ctx, void* dest, size_t s
 	size_t rsize = 0;
 	for(int i = 0; i <= last_mountpoint; i++) {
 		struct vfs_mountpoint mp = mountpoints[i];
-		sysfs_printf("%s %s %s rw,noatime 0 0\n", mp.dev, mp.path, mp.type);
+		if(mp.dev) {
+			sysfs_printf("/dev/%s %s %s rw,noatime 0 0\n", mp.dev->name, mp.path, mp.type);
+		} else {
+			sysfs_printf("%s %s %s rw,noatime 0 0\n", mp.type, mp.path, mp.type);
+		}
 	}
 	return rsize;
 }
