@@ -559,7 +559,7 @@ void ext2_init(struct vfs_block_dev* dev) {
 	write_superblock();
 
 	ext2_callbacks = &cb;
-	vfs_mount("/", NULL, "/dev/ide1p1", "ext2", &cb);
+	vfs_mount("/", NULL, dev->name, "ext2", &cb);
 }
 
 #endif /* ENABLE_EXT2 */

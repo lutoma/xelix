@@ -71,7 +71,7 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 
 	struct inode* cache_in = check_cache(inode_num);
 	if(cache_in) {
-		memcpy(buf, cache_in, sizeof(struct inode));
+		memcpy(buf, cache_in, superblock->inode_size);
 		return true;
 	}
 
@@ -86,7 +86,7 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 	}
 
 	struct inode_cache_entry cache = inode_cache[inode_cache_end];
-	memcpy(&cache.inode, buf, sizeof(struct inode));
+	memcpy(&cache.inode, buf, superblock->inode_size);
 	cache.num = inode_num;
 	inode_cache_end++;
 	inode_cache_end %= INODE_CACHE_MAX;
@@ -105,7 +105,7 @@ bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
 
 	struct inode* cache_in = check_cache(inode_num);
 	if(cache_in) {
-		memcpy(cache_in, buf, sizeof(struct inode));
+		memcpy(cache_in, buf, superblock->inode_size);
 	}
 
 	return vfs_block_swrite(ext2_block_dev, inode_off, superblock->inode_size, (uint8_t*)buf);
@@ -116,7 +116,7 @@ uint32_t ext2_inode_new(struct inode* inode, uint16_t mode) {
 	while(!blockgroup->free_inodes) { blockgroup++; }
 	uint32_t inode_num = ext2_bitmap_search_and_claim(blockgroup->inode_bitmap);
 
-	bzero(inode, sizeof(struct inode));
+	bzero(inode, superblock->inode_size);
 	inode->mode = mode;
 
 	uint32_t t = time_get();

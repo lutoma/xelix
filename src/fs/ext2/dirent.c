@@ -75,7 +75,7 @@ static vfs_dirent_t* readdir_r(struct inode* inode, uint64_t* offset, struct rd_
 }
 
 size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
-	struct inode* inode = kmalloc(sizeof(struct inode));
+	struct inode* inode = kmalloc(superblock->inode_size);
 
 	if(!ext2_inode_read(inode, ctx->fp->inode)) {
 		kfree(inode);
@@ -190,7 +190,7 @@ bye:
 }
 
 void ext2_dirent_rm(uint32_t inode_num, char* name) {
-	struct inode* inode = kmalloc(sizeof(struct inode));
+	struct inode* inode = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(inode, inode_num)) {
 		kfree(inode);
 		return;
@@ -256,7 +256,7 @@ static inline uint32_t align_dirent_len(uint32_t dlen) {
 void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
 	debug("ext2_new_dirent dir %d ino %d name %s\n", dir_num, inode_num, name);
 
-	struct inode* dir = kmalloc(sizeof(struct inode));
+	struct inode* dir = kmalloc(superblock->inode_size);
 	if(!ext2_inode_read(dir, dir_num)) {
 		kfree(dir);
 		return;
@@ -316,7 +316,7 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	ext2_inode_write_data(dir, dir_num, 0, dir->size, dirents);
 
 	// Increase inode link count
-	struct inode* inode = kmalloc(sizeof(struct inode));
+	struct inode* inode = kmalloc(superblock->inode_size);
 	if(ext2_inode_read(inode, inode_num)) {
 		inode->link_count++;
 		ext2_inode_write(inode, inode_num);
