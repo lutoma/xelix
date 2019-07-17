@@ -96,7 +96,7 @@ size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
 	}
 
 	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
-	uint32_t offset = 0;
+	uint64_t offset = 0;
 	vfs_dirent_t* ent = NULL;
 
 	while((ent = readdir_r(inode, &ctx->fp->offset, rd_reent))) {

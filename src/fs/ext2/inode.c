@@ -36,7 +36,7 @@ struct inode_cache_entry {
 static struct inode_cache_entry inode_cache[INODE_CACHE_MAX];
 static uint32_t inode_cache_end = 0;
 
-static uint32_t find_inode(uint32_t inode_num) {
+static uint64_t find_inode(uint32_t inode_num) {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 
@@ -75,7 +75,7 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 		return true;
 	}
 
-	uint32_t inode_off = find_inode(inode_num);
+	uint64_t inode_off = find_inode(inode_num);
 	if(!inode_off) {
 		return false;
 	}
@@ -98,7 +98,7 @@ bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
 		memcpy(root_inode, buf, superblock->inode_size);
 	}
 
-	uint32_t inode_off = find_inode(inode_num);
+	uint64_t inode_off = find_inode(inode_num);
 	if(!inode_off) {
 		return false;
 	}
