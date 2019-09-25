@@ -1,7 +1,7 @@
 #pragma once
 
 /* Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -41,6 +41,7 @@
 char* strtok_r(char* s, const char* delim, char** last);
 char* substr(char* src, size_t start, size_t len);
 int find_substr(char* list, char* item);
+int asprintf(char **strp, const char *fmt, ...);
 
 static inline void *memset32(uint32_t *s, uint32_t v, size_t n) {
 	long d0, d1;

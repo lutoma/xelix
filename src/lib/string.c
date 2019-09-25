@@ -1,6 +1,6 @@
 /* string.c: Common string operations
  * Copyright © 2010 Lukas Martini, Christoph Sünderhauf
- * Copyright © 2011-2018 Lukas Martini
+ * Copyright © 2011-2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -284,4 +284,16 @@ char *strchr(const char *p, int ch) {
 		if (*p == '\0')
 			return (NULL);
 	}
+}
+
+int asprintf(char **strp, const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+
+	size_t len = vsnprintf(NULL, 0, fmt, ap);
+	*strp = kmalloc(len);
+	size_t read = vsnprintf(*strp, len, fmt, ap);
+
+	va_end(ap);
+	return read;
 }
