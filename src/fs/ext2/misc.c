@@ -20,6 +20,7 @@
 #ifdef ENABLE_EXT2
 
 #include "ext2_internal.h"
+#include "misc.h"
 #include <mem/kmalloc.h>
 #include <fs/ext2.h>
 #include <fs/block.h>
@@ -79,23 +80,5 @@ char* ext2_chop_path(const char* path, char** ent) {
 	}
 	return base_path;
 }
-
-void ext2_dump_inode(struct inode* buf) {
-	debug("%-19s: %d\n", "uid", buf->uid);
-	debug("%-19s: %d\n", "gid", buf->gid);
-	debug("%-19s: %d\n", "size", buf->size);
-	debug("%-19s: %d\n", "block_count", buf->block_count);
-	debug("%-19s: %d\n", "link_count", buf->link_count);
-	debug("%-19s: %d\n", "atime", buf->atime);
-	debug("%-19s: %d\n", "ctime", buf->ctime);
-	debug("%-19s: %d\n", "mtime", buf->mtime);
-	debug("%-19s: %d\n", "dtime", buf->dtime);
-
-	debug("Blocks table:\n");
-	for(uint32_t i = 0; i < 15; i++) {
-		debug("\t%2d: 0x%x\n", i, buf->blocks[i]);
-	}
-}
-
 
 #endif /* ENABLE_EXT2 */

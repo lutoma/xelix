@@ -20,6 +20,7 @@
 #ifdef ENABLE_EXT2
 
 #include "ext2_internal.h"
+#include "misc.h"
 #include <log.h>
 #include <string.h>
 #include <errno.h>
@@ -50,53 +51,4 @@ uint32_t ext2_block_new(uint32_t neighbor) {
 	return block_num;
 
 }
-
-size_t ext2_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
-	if(!ctx || !ctx->fp || !ctx->fp->inode) {
-		log(LOG_ERR, "ext2: ext2_write_file called without fp or fp missing inode.\n");
-		sc_errno = EBADF;
-		return -1;
-	}
-
-	debug("ext2_write_file for %s, off %d, size %d\n", ctx->fp->mount_path, ctx->fp->offset, size);
-
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, ctx->fp->inode)) {
-		kfree(inode);
-		sc_errno = EBADF;
-		return -1;
-	}
-
-	if(ext2_inode_check_perm(PERM_CHECK_WRITE, inode, ctx->task) < 0) {
-		kfree(inode);
-		sc_errno = EACCES;
-		return -1;
-	}
-
-	debug("%s uid=%d, gid=%d, size=%d, ft=%s mode=%s\n", ctx->fp->mount_path, inode->uid,
-		inode->gid, inode->size, vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)),
-		vfs_get_verbose_permissions(inode->mode));
-
-	if(vfs_mode_to_filetype(inode->mode) != FT_IFREG) {
-		debug("ext2_write_file: Attempt to write to something weird "
-			"(0x%x: %s)\n", inode->mode,
-			vfs_filetype_to_verbose(vfs_mode_to_filetype(inode->mode)));
-
-		kfree(inode);
-		sc_errno = EISDIR;
-		return -1;
-	}
-
-	if(!ext2_inode_write_data(inode, ctx->fp->inode, ctx->fp->offset, size, source)) {
-		kfree(inode);
-		return -1;
-	}
-
-	inode->size = ctx->fp->offset + size;
-	inode->mtime = time_get();
-	ext2_inode_write(inode, ctx->fp->inode);
-	kfree(inode);
-	return size;
-}
-
 #endif /* ENABLE_EXT2 */

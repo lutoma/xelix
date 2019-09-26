@@ -79,45 +79,6 @@ struct blockgroup {
 	uint32_t reserved[3];
 } __attribute__((packed));
 
-struct inode {
-	uint16_t mode;
-	uint16_t uid;
-	uint32_t size;
-	uint32_t atime;
-	uint32_t ctime;
-	uint32_t mtime;
-	uint32_t dtime;
-	uint16_t gid;
-	uint16_t link_count;
-	uint32_t block_count;
-	uint32_t flags;
-	uint32_t reserved1;
-	uint32_t blocks[15];
-	uint32_t version;
-	uint32_t file_acl;
-	uint32_t dir_acl;
-	uint32_t fragment_address;
-	uint8_t fragment_number;
-	uint8_t fragment_size;
-	uint16_t reserved2[5];
-} __attribute__((packed));
-
-struct dirent {
-	uint32_t inode;
-	uint16_t record_len;
-	uint8_t name_len;
-	uint8_t type;
-	char name[] __attribute__ ((nonstring));
-} __attribute__((packed));
-
-
-struct ext2_blocknum_resolver_cache {
-	uint32_t* indirect_table;
-	uint32_t* double_table;
-	uint32_t double_second_block;
-	uint32_t* double_second_table;
-};
-
 #define SUPERBLOCK_MAGIC 0xEF53
 #define SUPERBLOCK_STATE_CLEAN 1
 #define SUPERBLOCK_STATE_DIRTY 2
@@ -131,16 +92,6 @@ struct ext2_blocknum_resolver_cache {
 #define bl_off(block) (uint64_t)((uint64_t)(block) * superblock_to_blocksize(superblock))
 #define bl_size(block) (uint64_t)((uint64_t)(block) / superblock_to_blocksize(superblock))
 #define bl_mod(block) (uint64_t)((uint64_t)(block) % superblock_to_blocksize(superblock))
-
-#define EXT2_DIRENT_FT_UNKNOWN 0
-#define EXT2_DIRENT_FT_REG_FILE 1
-#define EXT2_DIRENT_FT_DIR 2
-#define EXT2_DIRENT_FT_CHRDEV 3
-#define EXT2_DIRENT_FT_BLKDEV 4
-#define EXT2_DIRENT_FT_FIFO 5
-#define EXT2_DIRENT_FT_SOCk 6
-#define EXT2_DIRENT_FT_SYMLINK 7
-
 
 /* Blockgroup table is located in the block following the superblock. This
  * is usually the second block, but with a 1k block size, the superblock
@@ -161,44 +112,10 @@ struct ext2_blocknum_resolver_cache {
 #define write_blockgroup_table() vfs_block_swrite(ext2_block_dev, bl_off(blockgroup_table_start), \
 	bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)
 
-#define ext2_inode_read_data(inode, offset, length, buf) ext2_inode_data_rw(inode, 0, offset, length, buf)
-#define ext2_inode_write_data ext2_inode_data_rw
-
 struct superblock* superblock;
 struct blockgroup* blockgroup_table;
 struct inode* root_inode;
 struct vfs_callbacks* ext2_callbacks;
 struct vfs_block_dev* ext2_block_dev;
 
-bool ext2_inode_write(struct inode* buf, uint32_t inode_num);
-bool ext2_inode_read(struct inode* buf, uint32_t inode_num);
-uint32_t ext2_inode_new(struct inode* inode, uint16_t mode);
-uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct ext2_blocknum_resolver_cache* cache);
-void ext2_free_blocknum_resolver_cache(struct ext2_blocknum_resolver_cache* cache);
-uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
-	uint64_t offset, size_t length, uint8_t* buf);
-
-enum inode_check_op {
-	PERM_CHECK_READ = 2,
-	PERM_CHECK_WRITE = 1,
-	PERM_CHECK_EXEC = 0
-};
-int ext2_inode_check_perm(enum inode_check_op, struct inode* inode, task_t* task);
-
-uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
-void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit);
-char* ext2_chop_path(const char* path, char** ent);
-void ext2_dump_inode(struct inode* buf);
-
 uint32_t ext2_block_new();
-
-size_t ext2_write(struct vfs_callback_ctx* ctx, void* source, size_t size);
-size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* dest, size_t size);
-struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* task);
-void ext2_dirent_rm(uint32_t inode_num, char* name);
-void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
-
-uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
-vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags);
-
-size_t ext2_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);

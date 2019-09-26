@@ -20,6 +20,9 @@
 #ifdef ENABLE_EXT2
 
 #include "ext2_internal.h"
+#include "misc.h"
+#include "inode.h"
+#include "dirent.h"
 #include <log.h>
 #include <string.h>
 #include <errno.h>

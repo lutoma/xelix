@@ -20,6 +20,9 @@
 #ifdef ENABLE_EXT2
 
 #include "ext2_internal.h"
+#include "misc.h"
+#include "inode.h"
+#include "dirent.h"
 #include <log.h>
 #include <string.h>
 #include <errno.h>
@@ -27,15 +30,8 @@
 #include <fs/vfs.h>
 #include <fs/ext2.h>
 
-struct rd_r {
-	uint8_t buf[0x200];
-	size_t read_len;
-	size_t read_off;
-	size_t last_len;
-};
-
 #define dirent_off *offset - reent->read_off
-static vfs_dirent_t* readdir_r(struct inode* inode, uint64_t* offset, struct rd_r* reent) {
+vfs_dirent_t* ext2_readdir_r(struct inode* inode, uint64_t* offset, struct rd_r* reent) {
 	while(1) {
 		if(dirent_off + sizeof(struct dirent) >= reent->read_len) {
 			if(*offset >= inode->size) {
@@ -74,50 +70,6 @@ static vfs_dirent_t* readdir_r(struct inode* inode, uint64_t* offset, struct rd_
 	}
 }
 
-size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
-	struct inode* inode = kmalloc(superblock->inode_size);
-
-	if(!ext2_inode_read(inode, ctx->fp->inode)) {
-		kfree(inode);
-		sc_errno = EBADF;
-		return -1;
-	}
-
-	if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, ctx->task) < 0) {
-		kfree(inode);
-		sc_errno = EACCES;
-		return -1;
-	}
-
-	if(vfs_mode_to_filetype(inode->mode) != FT_IFDIR) {
-		kfree(inode);
-		sc_errno = ENOTDIR;
-		return -1;
-	}
-
-	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
-	uint64_t offset = 0;
-	vfs_dirent_t* ent = NULL;
-
-	while((ent = readdir_r(inode, &ctx->fp->offset, rd_reent))) {
-		if(offset + ent->d_reclen >= size) {
-			ctx->fp->offset -= rd_reent->last_len;
-			kfree(ent);
-			break;
-		}
-
-		vfs_dirent_t* dest = (vfs_dirent_t*)(buf + offset);
-		memcpy(dest, ent, ent->d_reclen);
-		offset += ent->d_reclen;
-		dest->d_off = offset;
-		kfree(ent);
-	}
-
-	kfree(inode);
-	kfree(rd_reent);
-	return offset;
-}
-
 // Looks for a directory entry with name `search` in a directory inode
 static struct dirent* search_dir(struct inode* inode, const char* search) {
 	struct dirent* result = NULL;
@@ -125,7 +77,7 @@ static struct dirent* search_dir(struct inode* inode, const char* search) {
 
 	vfs_dirent_t* ent = NULL;
 	uint64_t offset = 0;
-	while((ent = readdir_r(inode, &offset, rd_reent))) {
+	while((ent = ext2_readdir_r(inode, &offset, rd_reent))) {
 		if(!strcmp(ent->d_name, search)) {
 			result = kmalloc(ent->d_reclen);
 			memcpy(result, ent, ent->d_reclen);
