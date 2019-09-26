@@ -290,7 +290,7 @@ int asprintf(char **strp, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 
-	size_t len = vsnprintf(NULL, 0, fmt, ap);
+	size_t len = vsnprintf(NULL, 0, fmt, ap) + 1;
 	*strp = kmalloc(len);
 	size_t read = vsnprintf(*strp, len, fmt, ap);
 
