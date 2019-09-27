@@ -48,6 +48,7 @@ struct vfs_callbacks cb = {
 	.link = ext2_link,
 	.readlink = ext2_readlink,
 	.access = ext2_access,
+	.build_path_tree = ext2_build_path_tree,
 };
 
 void ext2_init(struct vfs_block_dev* dev) {

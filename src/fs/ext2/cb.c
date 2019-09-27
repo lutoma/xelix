@@ -623,4 +623,13 @@ size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
 	return offset;
 }
 
+int ext2_build_path_tree(struct vfs_callback_ctx* ctx) {
+	struct dirent* dirent = ext2_dirent_find(ctx->path, NULL, ctx->task);
+	if(!dirent) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+	return 0;
+}
+
 #endif /* ENABLE_EXT2 */

@@ -29,6 +29,7 @@
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <fs/ext2.h>
+#include <fs/ftree.h>
 
 #define dirent_off *offset - reent->read_off
 vfs_dirent_t* ext2_readdir_r(struct inode* inode, uint64_t* offset, struct rd_r* reent) {
@@ -106,19 +107,11 @@ struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* 
 	struct inode* inode = kmalloc(superblock->inode_size);
 	struct dirent* dirent = NULL;
 	struct dirent* result = NULL;
+	struct ftree_file* ft_root = NULL;
+	ext2_inode_read(inode, ROOT_INODE);
 
 	while(pch != NULL) {
 		int inode_num = dirent ? dirent->inode : ROOT_INODE;
-		if(!ext2_inode_read(inode, inode_num)) {
-			sc_errno = ENOENT;
-			goto bye;
-		}
-
-		if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task) < 0) {
-			sc_errno = EACCES;
-			goto bye;
-		}
-
 		if(dirent) {
 			kfree(dirent);
 		}
@@ -132,6 +125,35 @@ struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* 
 			sc_errno = ENOENT;
 			goto bye;
 		}
+
+		if(!ext2_inode_read(inode, dirent->inode)) {
+			sc_errno = ENOENT;
+			goto bye;
+		}
+
+		if(ext2_inode_check_perm(PERM_CHECK_EXEC, dirent->inode, task) < 0) {
+			sc_errno = EACCES;
+			goto bye;
+		}
+
+
+		vfs_stat_t stat = {
+			.st_dev = 1,
+			.st_ino = dirent->inode,
+			.st_mode = inode->mode,
+			.st_nlink = inode->link_count,
+			.st_uid = inode->uid,
+			.st_gid = inode->gid,
+			.st_rdev = 0,
+			.st_size = inode->size,
+			.st_atime = inode->atime,
+			.st_mtime = inode->mtime,
+			.st_ctime = inode->ctime,
+			.st_blksize = 512,
+			.st_blocks = inode->block_count,
+		};
+
+		ft_root = vfs_ftree_insert(ft_root, pch, &stat);
 		pch = strtok_r(NULL, "/", &sp);
 	}
 	result = dirent;

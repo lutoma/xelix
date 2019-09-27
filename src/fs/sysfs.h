@@ -42,3 +42,4 @@ vfs_file_t* sysfs_open(struct vfs_callback_ctx* ctx, uint32_t flags);
 int sysfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest);
 int sysfs_access(struct vfs_callback_ctx* ctx, uint32_t amode);
 int sysfs_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size);
+int sysfs_build_path_tree(struct vfs_callback_ctx* ctx);

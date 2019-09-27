@@ -34,6 +34,7 @@
 #include <fs/sysfs.h>
 #include <fs/part.h>
 #include <fs/ext2.h>
+#include <fs/ftree.h>
 #include <fs/i386-ide.h>
 #include <net/socket.h>
 
@@ -337,6 +338,7 @@ int vfs_seek(task_t* task, int fd, size_t offset, int origin) {
 			fp->offset = stat->st_size + offset;
 			kfree(stat);
 	}
+
 	return fp->offset;
 }
 
@@ -443,20 +445,24 @@ int vfs_fstat(task_t* task, int fd, vfs_stat_t* dest) {
 
 int vfs_stat(task_t* task, char* orig_path, vfs_stat_t* dest) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
-	if(!ctx) {
-		sc_errno = EBADF;
+	struct ftree_file* ft_file = vfs_ftree_find_path(ctx->orig_path);
+	if(!ft_file) {
+		if(!ctx->mp->callbacks.build_path_tree || ctx->mp->callbacks.build_path_tree(ctx) != 0) {
+			free_context(ctx);
+			return -1;
+		}
+
+		ft_file = vfs_ftree_find_path(ctx->orig_path);
+	}
+
+	if(!ft_file) {
+		sc_errno = ENOENT;
 		return -1;
 	}
 
-	if(!ctx->mp->callbacks.stat) {
-		free_context(ctx);
-		sc_errno = ENOSYS;
-		return -1;
-	}
-
-	int r = ctx->mp->callbacks.stat(ctx, dest);
+	memcpy(dest, &ft_file->stat, sizeof(vfs_stat_t));
 	free_context(ctx);
-	return r;
+	return 0;
 }
 
 int vfs_close(task_t* task, int fd) {
@@ -762,6 +768,7 @@ void vfs_init() {
 	}
 
 	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
+	vfs_ftree_init();
 	ide_init();
 
 	struct vfs_block_dev* rootdev = vfs_block_get_dev(root_path);

@@ -171,6 +171,8 @@ struct vfs_callbacks {
 	int (*rmdir)(struct vfs_callback_ctx* ctx);
 	int (*ioctl)(struct vfs_callback_ctx* ctx, int request, void* arg);
 	int (*poll)(struct vfs_callback_ctx* ctx, int events);
+	int (*build_path_tree)(struct vfs_callback_ctx* ctx);
+
 };
 
 struct vfs_mountpoint {

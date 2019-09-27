@@ -33,3 +33,4 @@ int ext2_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size);
 size_t ext2_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 size_t ext2_write(struct vfs_callback_ctx* ctx, void* source, size_t size);
 size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* dest, size_t size);
+int ext2_build_path_tree(struct vfs_callback_ctx* ctx);

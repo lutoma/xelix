@@ -23,6 +23,7 @@
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
+#include <fs/ftree.h>
 #include <tasks/task.h>
 #include <time.h>
 
@@ -31,10 +32,13 @@ static struct vfs_callbacks callbacks = {
 	.stat = sysfs_stat,
 	.access = sysfs_access,
 	.readlink = sysfs_readlink,
+	.build_path_tree = sysfs_build_path_tree,
 };
 
 static struct sysfs_file* sys_files;
 static struct sysfs_file* dev_files;
+static struct ftree_file* sys_root = NULL;
+static struct ftree_file* dev_root = NULL;
 
 static struct sysfs_file* get_file(const char* path, struct sysfs_file* first) {
 	if(!first || !strncmp(path, "/", 2)) {
@@ -56,6 +60,50 @@ static struct sysfs_file* get_file(const char* path, struct sysfs_file* first) {
 
 	return NULL;
 }
+
+int sysfs_build_path_tree(struct vfs_callback_ctx* ctx) {
+	bool is_root = !strncmp(ctx->path, "/", 2);
+	struct sysfs_file* file = get_file(ctx->path, *(struct sysfs_file**)ctx->mp->instance);
+	if(!is_root && !file) {
+		sc_errno = ENOENT;
+		return -1;
+	}
+
+	vfs_stat_t stat;
+
+	// Check if file has its own stat callback
+	if(file && file->cb.stat) {
+		file->cb.stat(ctx, &stat);
+	} else {
+		stat.st_dev = 2;
+		stat.st_ino = 1;
+		if(is_root) {
+			stat.st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
+		} else {
+			stat.st_mode = file ? file->type : FT_IFDIR;
+
+			if(file->cb.read)
+				stat.st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+			if(file->cb.write)
+				stat.st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+		}
+		stat.st_nlink = 1;
+		stat.st_blocks = 2;
+		stat.st_blksize = 1024;
+		stat.st_uid = 0;
+		stat.st_gid = 0;
+		stat.st_rdev = 0;
+		stat.st_size = 0;
+		uint32_t t = time_get();
+		stat.st_atime = t;
+		stat.st_mtime = t;
+		stat.st_ctime = t;
+	}
+
+	vfs_ftree_insert_path(ctx->orig_path, &stat);
+	return 0;
+}
+
 
 int sysfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 	bool is_root = !strncmp(ctx->path, "/", 2);
@@ -246,6 +294,8 @@ void sysfs_rm_dev(struct sysfs_file* fp) {
 }
 
 void sysfs_init() {
+	//sys_root = vfs_ftree_insert(NULL, "sys", stat);
+	//dev_root = vfs_ftree_insert(NULL, "dev", stat);
 	vfs_mount("/sys", &sys_files, NULL, "sysfs", &callbacks);
 	vfs_mount("/dev", &dev_files, NULL, "sysfs", &callbacks);
 }
