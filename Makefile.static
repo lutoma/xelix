@@ -57,7 +57,7 @@ $(CC):
 
 .PHONY: run
 run: xelix.bin mount
-	sudo cp xelix.bin mnt/boot
+	sudo cp xelix.bin mnt/
 	make umount
 	$(QEMU) -hda xelix.qcow2 $(MAKE_QEMU_FLAGS)
 
