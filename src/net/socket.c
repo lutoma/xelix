@@ -324,7 +324,7 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
 	bool copied = false;
-	struct sockaddr* addr = (struct sockaddr*)sc_map_to_kernel(task, (uintptr_t)oaddr, *addrlen, &copied);
+	struct sockaddr* addr = (struct sockaddr*)task_memmap(task, oaddr, *addrlen, &copied);
 	if(!addr) {
 		sc_errno = EINVAL;
 		return -1;
@@ -358,7 +358,7 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	sock->conn_requests--;
 
 	if(copied) {
-		task_memcpy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		task_memcpy(task, addr, oaddr, *addrlen, true);
 		kfree(addr);
 	}
 	return new_fd->num;
@@ -376,7 +376,7 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* oaddr,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
 	bool copied = false;
-	struct sockaddr* addr = (struct sockaddr*)sc_map_to_kernel(task, (uintptr_t)oaddr, *addrlen, &copied);
+	struct sockaddr* addr = (struct sockaddr*)task_memmap(task, oaddr, *addrlen, &copied);
 	if(!addr) {
 		sc_errno = EINVAL;
 		return -1;
@@ -386,7 +386,7 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* oaddr,
 		sock->pico_socket->remote_port);
 
 	if(copied) {
-		task_memcpy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		task_memcpy(task, addr, oaddr, *addrlen, true);
 		kfree(addr);
 	}
 	return r;
@@ -404,7 +404,7 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
 	bool copied = false;
-	struct sockaddr* addr = (struct sockaddr*)sc_map_to_kernel(task, (uintptr_t)oaddr, *addrlen, &copied);
+	struct sockaddr* addr = (struct sockaddr*)task_memmap(task, oaddr, *addrlen, &copied);
 	if(!addr) {
 		sc_errno = EINVAL;
 		return -1;
@@ -414,7 +414,7 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 		sock->pico_socket->local_port);
 
 	if(copied) {
-		task_memcpy(task, addr, (uintptr_t)oaddr, *addrlen, true);
+		task_memcpy(task, addr, oaddr, *addrlen, true);
 		kfree(addr);
 	}
 	return r;
