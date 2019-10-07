@@ -32,7 +32,7 @@ struct pipe {
 	int fd[2];
 };
 
-size_t pipe_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+static size_t pipe_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	struct pipe* pipe = (struct pipe*)ctx->fp->mount_instance;
 
 	if(!pipe->data_size && ctx->fp->flags & O_NONBLOCK) {
@@ -63,7 +63,7 @@ size_t pipe_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return size;
 }
 
-size_t pipe_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
+static size_t pipe_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	struct pipe* pipe = (struct pipe*)ctx->fp->mount_instance;
 	if(pipe->data_size + size > PIPE_BUFFER_SIZE) {
 		sc_errno = EFBIG;
@@ -73,6 +73,19 @@ size_t pipe_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	memcpy(pipe->buffer + pipe->data_size, source, size);
 	pipe->data_size += size;
 	return size;
+}
+
+static int pipe_poll(struct vfs_callback_ctx* ctx, int events) {
+	struct pipe* pipe = (struct pipe*)ctx->fp->mount_instance;
+	if(!pipe) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	if(events & POLLIN && pipe->data_size) {
+		return POLLIN;
+	}
+	return 0;
 }
 
 int vfs_pipe(task_t* task, int fildes[2]) {
@@ -95,7 +108,9 @@ int vfs_pipe(task_t* task, int fildes[2]) {
 	pipe->fd[1] = fd2->num;
 
 	fd1->callbacks.read = pipe_read;
+	fd1->callbacks.poll = pipe_poll;
 	fd2->callbacks.write = pipe_write;
+	fd2->callbacks.poll = pipe_poll;
 	fd1->flags = O_RDONLY;
 	fd2->flags = O_WRONLY;
 	fd1->mount_instance = (void*)pipe;
