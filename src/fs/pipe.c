@@ -75,7 +75,7 @@ size_t pipe_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	return size;
 }
 
-int vfs_pipe(int fildes[2], task_t* task) {
+int vfs_pipe(task_t* task, int fildes[2]) {
 	vfs_file_t* fd1 = vfs_alloc_fileno(task, 3);
 	if(!fd1) {
 		sc_errno = EMFILE;

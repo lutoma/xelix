@@ -20,4 +20,4 @@
 
 #include <tasks/task.h>
 
-int vfs_pipe(int fildes[2], task_t* task);
+int vfs_pipe(task_t* task, int fildes[2]);

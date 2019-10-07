@@ -358,7 +358,7 @@ int task_strace(task_t* task, isf_t* state) {
 	}
 
 	int pipe[2];
-	if(vfs_pipe(pipe, task) != 0) {
+	if(vfs_pipe(task, pipe) != 0) {
 		return -1;
 	}
 
