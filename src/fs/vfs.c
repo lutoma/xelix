@@ -432,7 +432,7 @@ int vfs_fstat(task_t* task, int fd, vfs_stat_t* dest) {
 		return -1;
 	}
 
-	if(!ctx->mp->callbacks.stat) {
+	if(!ctx->fp->callbacks.stat) {
 		free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
