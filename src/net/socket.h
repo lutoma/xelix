@@ -128,3 +128,5 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* addr,
 	socklen_t* addrlen);
 int net_getsockname(task_t* task, int sockfd, struct sockaddr* addr,
 	socklen_t* addrlen);
+int net_getaddr(task_t* task, const char* host, char* result, int result_len);
+int net_getname(task_t* task, const char* ip, char* result, int result_len);

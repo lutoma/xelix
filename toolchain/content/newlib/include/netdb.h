@@ -24,31 +24,31 @@
 
 #define IPPORT_RESERVED 1024
 
-#define AI_PASSIVE 0
-#define AI_CANONNAME 0
-#define AI_NUMERICHOST 0
-#define AI_NUMERICSERV 0
-#define AI_V4MAPPED 0
-#define AI_ALL 0
-#define AI_ADDRCONFIG 0
+#define AI_PASSIVE 1
+#define AI_CANONNAME 2
+#define AI_NUMERICHOST 4
+#define AI_NUMERICSERV 8
+#define AI_V4MAPPED 16
+#define AI_ALL 32
+#define AI_ADDRCONFIG 64
 
-#define NI_NOFQDN 0
-#define NI_NUMERICHOST 0
-#define NI_NAMEREQD 0
-#define NI_NUMERICSERV 0
-#define NI_NUMERICSCOPE 0
-#define NI_DGRAM 0
+#define NI_NOFQDN 1
+#define NI_NUMERICHOST 2
+#define NI_NAMEREQD 4
+#define NI_NUMERICSERV 8
+#define NI_NUMERICSCOPE 16
+#define NI_DGRAM 32
 
-#define EAI_AGAIN 0
-#define EAI_BADFLAGS 1
-#define EAI_FAIL 2
-#define EAI_FAMILY 3
-#define EAI_MEMORY 4
-#define EAI_NONAME 5
-#define EAI_SERVICE 6
-#define EAI_SOCKTYPE 7
-#define EAI_SYSTEM 8
-#define EAI_OVERFLOW 9
+#define EAI_AGAIN 1
+#define EAI_BADFLAGS 2
+#define EAI_FAIL 3
+#define EAI_FAMILY 4
+#define EAI_MEMORY 5
+#define EAI_NONAME 6
+#define EAI_SERVICE 7
+#define EAI_SOCKTYPE 8
+#define EAI_SYSTEM 9
+#define EAI_OVERFLOW 10
 
 /* Possible values left in `h_errno'.  */
 # define HOST_NOT_FOUND	1	/* Authoritative Answer Host not found.  */

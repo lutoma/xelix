@@ -32,7 +32,7 @@
 struct strace_data {
 	uint32_t call;
 	uint32_t result;
-	uint32_t errno;
+	uint32_t eno;
 	uintptr_t args[3];
 	char ptrdata[3][0x50];
 };
@@ -110,8 +110,8 @@ static const char* const usage[] = {
 static void default_handler(struct strace_data* syscall, const char* fmt_string) {
 	fprintf(stderr, fmt_string, syscall->args[0], syscall->args[1], syscall->args[2]);
 	fprintf(stderr, " = %d", syscall->result);
-	if(syscall->errno != 0) {
-		fprintf(stderr, " (%d %s)", syscall->errno, strerror(syscall->errno));
+	if(syscall->eno != 0) {
+		fprintf(stderr, " (%d %s)", syscall->eno, strerror(syscall->eno));
 	}
 	fprintf(stderr, "\n");
 }
@@ -120,8 +120,8 @@ static void str_handler(struct strace_data* syscall, const char* fmt_string) {
 	fprintf(stderr, fmt_string, syscall->ptrdata[0], syscall->args[1], syscall->args[2]);
 	fprintf(stderr, " = %d", syscall->result);
 
-	if(syscall->errno != 0) {
-		fprintf(stderr, " (%d %s)", syscall->errno, strerror(syscall->errno));
+	if(syscall->eno != 0) {
+		fprintf(stderr, " (%d %s)", syscall->eno, strerror(syscall->eno));
 	}
 	fprintf(stderr, "\n");
 }
@@ -138,8 +138,8 @@ static void fd_handler(struct strace_data* syscall, const char* fmt_string) {
 	fprintf(stderr, " = %d", syscall->result);
 	free(file_path);
 
-	if(syscall->errno != 0) {
-		fprintf(stderr, " (%d %s)", syscall->errno, strerror(syscall->errno));
+	if(syscall->eno != 0) {
+		fprintf(stderr, " (%d %s)", syscall->eno, strerror(syscall->eno));
 	}
 	fprintf(stderr, "\n");
 }
@@ -149,8 +149,8 @@ static void sbrk_handler(struct strace_data* syscall, const char* fmt_string) {
 	int size = syscall->args[0] ? syscall->args[0] : syscall->args[1];
 	fprintf(stderr, "sbrk(size=%d) = %#x", size, syscall->result);
 
-	if(syscall->errno != 0) {
-		fprintf(stderr, " (%d %s)", syscall->errno, strerror(syscall->errno));
+	if(syscall->eno != 0) {
+		fprintf(stderr, " (%d %s)", syscall->eno, strerror(syscall->eno));
 	}
 	fprintf(stderr, "\n");
 }
@@ -192,8 +192,8 @@ static void open_handler(struct strace_data* syscall, const char* fmt_string) {
 
 	fprintf(stderr, ") = %d", syscall->result);
 
-	if(syscall->errno != 0) {
-		fprintf(stderr, " (%d %s)", syscall->errno, strerror(syscall->errno));
+	if(syscall->eno != 0) {
+		fprintf(stderr, " (%d %s)", syscall->eno, strerror(syscall->eno));
 	}
 	fprintf(stderr, "\n");
 }

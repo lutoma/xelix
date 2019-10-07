@@ -116,8 +116,6 @@ STUB(struct servent*, getservbyname, (const char *name, const char *proto), NULL
 STUB(struct hostent*, gethostbyname, (const char *name), NULL);
 STUB(int, shutdown, (int socket, int how), -1);
 STUB(void, freeaddrinfo, (struct addrinfo *ai));
-STUB(int, getaddrinfo, (const char *restrict nodename, const char *restrict servname, const struct addrinfo *restrict hints, struct addrinfo **restrict res), -1);
-STUB(int, getnameinfo, (const struct sockaddr *restrict sa, socklen_t salen, char *restrict node, socklen_t nodelen, char *restrict service, socklen_t servicelen, int flags), -1);
 STUB(int, pthread_mutex_destroy, (pthread_mutex_t *mutex), -1);
 STUB(int, pthread_mutex_init, (pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr), -1);
 STUB(int, pthread_sigmask, (int how, const sigset_t *restrict set, sigset_t *restrict oset), -1);

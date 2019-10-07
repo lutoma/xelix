@@ -20,6 +20,7 @@
 #define _SYS_XELIX_H
 
 #include <stdint.h>
+#include <errno.h>
 
 struct _xelix_execdata {
 	uint32_t pid;
@@ -39,5 +40,25 @@ struct _xelix_execdata* _xelix_execdata;
 char* _progname;
 
 int _strace(void);
+
+#define syscall(call, a1, a2, a3) __syscall(__errno(), call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
+static inline uint32_t __syscall(int* errp, uint32_t call, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
+	register uint32_t _call asm("eax") = call;
+	register uint32_t _arg1 asm("ebx") = arg1;
+	register uint32_t _arg2 asm("ecx") = arg2;
+	register uint32_t _arg3 asm("edx") = arg3;
+	register uint32_t result asm("eax");
+	register uint32_t sce asm("ebx");
+
+	asm volatile(
+		"int $0x80;"
+
+		: "=r" (result), "=r" (sce)
+		: "r" (_call), "r" (_arg1), "r" (_arg2), "r" (_arg3)
+		: "memory");
+
+	*errp = sce;
+	return result;
+}
 
 #endif /* _SYS_XELIX_H */

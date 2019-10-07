@@ -23,6 +23,7 @@
 #include <pico_stack.h>
 #include <pico_socket.h>
 #include <pico_dhcp_client.h>
+#include <pico_dns_client.h>
 #include <tasks/task.h>
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
@@ -419,5 +420,71 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 	}
 	return r;
 }
+
+struct dns_cb_state {
+	char* dest;
+	int dest_len;
+	int result;
+};
+
+static void dns_cb(char* data, void* _state) {
+	struct dns_cb_state* state = (struct dns_cb_state*)_state;
+
+	// Not interested anymore
+	if(state->result == -3) {
+		kfree(state);
+		return;
+	}
+
+	if(data) {
+		strncpy(state->dest, data, state->dest_len);
+		//kfree(data);
+		state->result = 0;
+	} else {
+		state->result = -1;
+	}
+}
+
+static int do_resolve(task_t* task, const char* data, char* result, int result_len, int mode) {
+	struct dns_cb_state* state = kmalloc(sizeof(struct dns_cb_state));
+	state->result = -2;
+	state->dest = result;
+	state->dest_len = result_len;
+
+	if((mode ? pico_dns_client_getaddr : pico_dns_client_getname)(data, dns_cb, state) != 0) {
+		sc_errno = pico_err;
+		return -1;
+	}
+
+	uint32_t end_tick = timer_tick + (5 * timer_rate);
+	while(timer_tick < end_tick && state->result == -2) {
+		pico_stack_tick();
+	}
+
+	switch(state->result) {
+		// Timeout - leave deallocation to callback
+		case -2:
+			state->result = -3;
+			return -1;
+		// Success
+		case 0:
+			kfree(state);
+			return 0;
+		// Resolution failure
+		case -1:
+		default:
+			kfree(state);
+			return -1;
+	}
+}
+
+int net_getaddr(task_t* task, const char* host, char* result, int result_len) {
+	return do_resolve(task, host, result, result_len, 1);
+}
+
+int net_getname(task_t* task, const char* ip, char* result, int result_len) {
+	return do_resolve(task, ip, result, result_len, 0);
+}
+
 
 #endif /* ENABLE_PICOTCP */

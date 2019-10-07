@@ -22,6 +22,7 @@
 #include <pico_ipv4.h>
 #include <pico_device.h>
 #include <pico_dhcp_client.h>
+#include <pico_dns_client.h>
 #include <spinlock.h>
 #include <net/i386-rtl8139.h>
 #include <net/i386-ne2k.h>

@@ -276,4 +276,22 @@ const struct syscall_definition syscall_table[] = {
 	// 45
 	{"strace", (syscall_cb)task_strace, SCF_STATE,
 		0, 0, 0, 0},
+
+#ifdef ENABLE_PICOTCP
+	// 46
+	{"getaddr", (syscall_cb)net_getaddr, 0,
+		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT},
+
+	// 47
+	{"getname", (syscall_cb)net_getname, 0,
+		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT},
+#else
+	// 46
+	{"getaddr", NULL, 0,
+		0, 0, 0, 0},
+
+	// 47
+	{"getname", NULL, 0,
+		0, 0, 0, 0},
+#endif
 };
