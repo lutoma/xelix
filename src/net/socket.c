@@ -99,8 +99,9 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 	}
 }
 
-static size_t vfs_read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
-	struct socket* sock = (struct socket*)(ctx->fp->mount_instance);
+// Only does recv() functionality for now
+static int do_recvfrom(struct socket* sock, void* dest, size_t size,
+	int flags, struct sockaddr* src_addr, socklen_t* addrlen) {
 
 	if(sock->state == SOCK_CLOSED) {
 		sc_errno = ENOTCONN;
@@ -111,7 +112,7 @@ static size_t vfs_read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size)
 		return -1;
 	}
 
-	if(!sock->read_buffer_length && ctx->fp->flags & O_NONBLOCK) {
+	if(!sock->read_buffer_length && flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
@@ -133,11 +134,48 @@ static size_t vfs_read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size)
 		size = sock->read_buffer_length;
 	}
 	memcpy(dest, sock->read_buffer, size);
-	sock->read_buffer_length -= size;
-	if(sock->read_buffer_length) {
-		memmove(sock->read_buffer, sock->read_buffer + size, sock->read_buffer_length);
+
+	if(!(flags & MSG_PEEK)) {
+		sock->read_buffer_length -= size;
+		if(sock->read_buffer_length) {
+			memmove(sock->read_buffer, sock->read_buffer + size, sock->read_buffer_length);
+		}
 	}
+
 	return size;
+}
+
+static size_t vfs_read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	struct socket* sock = (struct socket*)(ctx->fp->mount_instance);
+	if(!sock) {
+		sc_errno = EBADF;
+		return -1;
+	}
+
+	return do_recvfrom(sock, dest, size, ctx->fp->flags, NULL, NULL);
+}
+int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size) {
+	struct socket* sock = get_socket(task, data->sockfd);
+	if(!sock) {
+		return -1;
+	}
+
+	bool copied = false;
+	void* dest = (struct sockaddr*)task_memmap(task, data->dest, data->size, &copied);
+	if(!dest) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	int r = do_recvfrom(sock, dest, data->size,
+		data->flags, data->src_addr, data->addrlen);
+
+	if(r > 0 && copied) {
+		task_memcpy(task, data->dest, dest, data->size, true);
+		kfree(dest);
+	}
+
+	return r;
 }
 
 static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t size) {

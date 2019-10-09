@@ -61,14 +61,14 @@
 #define PF_INET6 AF_INET6
 #define PF_UNIX AF_UNIX
 
-#define MSG_CTRUNC 0
-#define MSG_DONTROUTE 0
-#define MSG_EOR 0
-#define MSG_OOB 0
-#define MSG_NOSIGNAL 0
-#define MSG_PEEK 0
-#define MSG_TRUNC 0
-#define MSG_WAITALL 0
+#define MSG_CTRUNC 1
+#define MSG_DONTROUTE 2
+#define MSG_EOR 4
+#define MSG_OOB 8
+#define MSG_NOSIGNAL 16
+#define MSG_PEEK 32
+#define MSG_TRUNC 64
+#define MSG_WAITALL 128
 
 #define SHUT_RD 1
 #define SHUT_RDWR 2

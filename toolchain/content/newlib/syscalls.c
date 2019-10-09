@@ -194,13 +194,31 @@ int bind(int socket, const struct sockaddr *address, socklen_t address_len) {
 	return syscall(25, socket, address, address_len);
 }
 
+struct _recvfrom_data {
+	int sockfd;
+	void* dest;
+	size_t size;
+	int flags;
+	struct sockaddr* src_addr;
+	socklen_t *addrlen;
+};
+
 ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
 	struct sockaddr *address, socklen_t *address_len) {
-	return syscall(2, socket, buffer, length);
+
+	struct _recvfrom_data data = {
+		.sockfd = socket,
+		.dest = buffer,
+		.size = length,
+		.flags = flags,
+		.src_addr = address,
+		.addrlen = address_len,
+	};
+	return syscall(49, &data, sizeof(struct _recvfrom_data), 0);
 }
 
 ssize_t recv(int socket, void *buffer, size_t length, int flags) {
-	return syscall(2, socket, buffer, length);
+	return recvfrom(socket, buffer, length, flags, NULL, NULL);
 }
 
 ssize_t sendto(int socket, const void *message, size_t length, int flags,

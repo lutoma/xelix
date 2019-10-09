@@ -43,6 +43,15 @@
 #define SO_SNDTIMEO 12
 #define SO_REUSEADDR 13
 
+#define MSG_CTRUNC 1
+#define MSG_DONTROUTE 2
+#define MSG_EOR 4
+#define MSG_OOB 8
+#define MSG_NOSIGNAL 16
+#define MSG_PEEK 32
+#define MSG_TRUNC 64
+#define MSG_WAITALL 128
+
 #define AF_UNSPEC 0
 #define AF_INET 1
 #define AF_INET6 2
@@ -117,7 +126,17 @@ typedef	struct {
 #define SOCKSIZE sizeof(struct sockaddr_in)
 #define SOCKSIZE6 sizeof(struct sockaddr_in6)
 
+struct recvfrom_data {
+	int sockfd;
+	void* dest;
+	size_t size;
+	int flags;
+	struct sockaddr* src_addr;
+	socklen_t *addrlen;
+};
+
 int net_vfs_close_cb(vfs_file_t* fp);
+int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size);
 int net_socket(task_t* task, int domain, int type, int protocol);
 int net_bind(task_t* task, int sockfd, const struct sockaddr* addr,
 	socklen_t addrlen);
