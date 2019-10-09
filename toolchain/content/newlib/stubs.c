@@ -111,7 +111,6 @@ STUB(void, funlockfile, (FILE *file));
 STUB(int, fdatasync, (int fildes), -1);
 STUB(void, err, (int eval, const char *fmt, ...));
 STUB(int, nanosleep, (const struct timespec *rqtp, struct timespec *rmtp), -1);
-STUB(int, connect, (int socket, const struct sockaddr *address, socklen_t address_len), -1);
 STUB(struct servent*, getservbyname, (const char *name, const char *proto), NULL);
 STUB(struct hostent*, gethostbyname, (const char *name), NULL);
 STUB(int, shutdown, (int socket, int how), -1);

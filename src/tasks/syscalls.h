@@ -285,6 +285,10 @@ const struct syscall_definition syscall_table[] = {
 	// 47
 	{"getname", (syscall_cb)net_getname, 0,
 		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT},
+
+	// 48
+	{"connect", (syscall_cb)net_connect, 0,
+		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT},
 #else
 	// 46
 	{"getaddr", NULL, 0,
@@ -292,6 +296,10 @@ const struct syscall_definition syscall_table[] = {
 
 	// 47
 	{"getname", NULL, 0,
+		0, 0, 0, 0},
+
+	// 48
+	{"connect", NULL, 0,
 		0, 0, 0, 0},
 #endif
 };

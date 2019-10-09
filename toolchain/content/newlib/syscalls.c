@@ -397,6 +397,11 @@ int _strace(void) {
 	return syscall(45, 0, 0, 0);
 }
 
+int connect(int socket, const struct sockaddr *address, socklen_t address_len) {
+	return syscall(48, socket, address, address_len);
+}
+
+
 int ioctl(int fd, int request, ...) {
 	va_list va;
 	va_start(va, request);

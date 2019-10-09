@@ -486,5 +486,43 @@ int net_getname(task_t* task, const char* ip, char* result, int result_len) {
 	return do_resolve(task, ip, result, result_len, 0);
 }
 
+int net_connect(task_t* task, int sockfd, const struct sockaddr* sa, uint32_t addrlen) {
+	struct socket* sock = get_socket(task, sockfd);
+	if(!sock) {
+		return -1;
+	}
+
+	if(sa->sa_family != AF_INET || addrlen != sizeof(struct sockaddr_in)) {
+		sc_errno = EAFNOSUPPORT;
+		return -1;
+	}
+
+	uint16_t port = net_bsd_to_pico_port(sa, addrlen);
+	if(endian_swap16(port) <= 1024 && task->euid) {
+		sc_errno = EACCES;
+		return -1;
+	}
+
+	union pico_address pico_addr = { .ip4 = { 0 } };
+	if(net_bsd_to_pico_addr(&pico_addr, sa, addrlen) < 0) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	if(!spinlock_get(&net_pico_lock, 200)) {
+		sc_errno = EAGAIN;
+		return -1;
+	}
+
+	if(pico_socket_connect(sock->pico_socket, &pico_addr, port) < 0) {
+		spinlock_release(&net_pico_lock);
+		sc_errno = pico_err;
+		return -1;
+	}
+
+	spinlock_release(&net_pico_lock);
+	sock->state = SOCK_CONNECTED;
+	return 0;
+}
 
 #endif /* ENABLE_PICOTCP */
