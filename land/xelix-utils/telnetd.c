@@ -112,7 +112,7 @@ struct client* accept_connection() {
 
 		char* login_argv[] = { "bash", "-i", NULL };
 		char* login_env[] = { "USER=root", NULL };
-		execve("/usr/bin/bash", login_argv, login_env);
+		execve("/usr/bin/login", login_argv, login_env);
 	}
 
 	return client;

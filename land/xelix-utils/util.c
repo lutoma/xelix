@@ -154,7 +154,7 @@ void run_shell(struct passwd* pwd, bool print_motd) {
 		}
 	}
 
-	char* __argv[] = { pwd->pw_shell, "-l", NULL };
+	char* __argv[] = { pwd->pw_shell, "--rcfile", "/etc/profile", NULL };
 	execv(pwd->pw_shell, __argv);
 	perror("Could not launch shell");
 	return;
