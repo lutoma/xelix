@@ -28,9 +28,10 @@ struct net_device {
 	spinlock_t recv_buf_lock;
 };
 
-typedef size_t (*net_send_callback_t)(struct pico_device* pico_dev, void* data, size_t size);
+typedef int (net_send_callback_t)(struct pico_device* pico_dev, void* data, int size);
 spinlock_t net_pico_lock;
 
+void net_receive(struct net_device* dev, void* data, size_t len);
 struct net_device* net_add_device(char* name, uint8_t mac[13], net_send_callback_t* write_cb);
 void net_tick();
 void net_init();

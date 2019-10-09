@@ -31,6 +31,7 @@
 #include <int/int.h>
 #include <mem/kmalloc.h>
 #include <mem/vmem.h>
+#include <pico_device.h>
 
 #define RECV_BUFFER_SIZE 2048
 
@@ -123,7 +124,7 @@ static void pdma_write(int addr, const void* data, size_t len) {
 	set_dma_la(addr, len);
 	ioutb(R_CR, CR_START | CR_DMA_WRITE);
 
-	uint8_t *p = (uint16_t*)data;
+	uint8_t *p = (uint8_t*)data;
 	for(size_t i = 0; i < len; i++) {
 		ioutb(0x10, p[i]);
 	}
@@ -133,7 +134,7 @@ static void pdma_read(int addr, void* data, size_t len) {
 	set_dma_la(addr, len);
 	ioutb(R_CR, CR_START | CR_DMA_READ);
 
-	uint8_t *p = (uint16_t*)data;
+	uint8_t *p = (uint8_t*)data;
 	for(size_t i = 0; i < len; i++) {
 		p[i] = iinb(0x10);
 	}
@@ -169,7 +170,7 @@ static void receive() {
 	ioutb(R_IMR, 0x3f);
 }
 
-static size_t send(void* pdev, void* data, size_t len) {
+static int send(struct pico_device* pdev, void* data, int len) {
 	if(unlikely(!spinlock_get(&send_lock, 200))) {
 		return -1;
 	}
@@ -259,8 +260,7 @@ static void enable() {
 	net_dev = net_add_device("ne2k", nmac, send);
 }
 
-void ne2k_init()
-{
+void ne2k_init() {
 	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*));
 	uint32_t ndevices = pci_search(devices, vendor_device_combos, 1);
 

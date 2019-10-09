@@ -37,8 +37,6 @@ static struct vfs_callbacks callbacks = {
 
 static struct sysfs_file* sys_files;
 static struct sysfs_file* dev_files;
-static struct ftree_file* sys_root = NULL;
-static struct ftree_file* dev_root = NULL;
 
 static struct sysfs_file* get_file(const char* path, struct sysfs_file* first) {
 	if(!first || !strncmp(path, "/", 2)) {

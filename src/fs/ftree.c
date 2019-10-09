@@ -64,7 +64,7 @@ struct ftree_file* vfs_ftree_insert_path(char* path, vfs_stat_t* stat) {
 	return NULL;
 }
 
-const struct ftree_file* vfs_ftree_find(struct ftree_file* root, char* name) {
+const struct ftree_file* vfs_ftree_find(const struct ftree_file* root, char* name) {
 	kavl_itr_t(my) itr;
 	struct ftree_file* in = kmalloc(sizeof(struct ftree_file));
 	strncpy(in->path, name, ARRAY_SIZE(in->path) - 1);
@@ -87,7 +87,7 @@ const struct ftree_file* vfs_ftree_find_path(char* path) {
 	char* sp;
 	char* path_tmp = strndup(path, 500);
 	char* pch = strtok_r(path_tmp, "/", &sp);
-	struct ftree_file* cur = ftree_root;
+	const struct ftree_file* cur = ftree_root;
 
 	while(pch != NULL) {
 		cur = vfs_ftree_find(cur, pch);

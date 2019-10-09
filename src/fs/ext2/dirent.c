@@ -131,7 +131,7 @@ struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* 
 			goto bye;
 		}
 
-		if(ext2_inode_check_perm(PERM_CHECK_EXEC, dirent->inode, task) < 0) {
+		if(ext2_inode_check_perm(PERM_CHECK_EXEC, inode, task) < 0) {
 			sc_errno = EACCES;
 			goto bye;
 		}

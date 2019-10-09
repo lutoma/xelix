@@ -445,7 +445,7 @@ int vfs_fstat(task_t* task, int fd, vfs_stat_t* dest) {
 
 int vfs_stat(task_t* task, char* orig_path, vfs_stat_t* dest) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
-	struct ftree_file* ft_file = vfs_ftree_find_path(ctx->orig_path);
+	const struct ftree_file* ft_file = vfs_ftree_find_path(ctx->orig_path);
 	if(!ft_file) {
 		if(!ctx->mp->callbacks.build_path_tree || ctx->mp->callbacks.build_path_tree(ctx) != 0) {
 			free_context(ctx);
