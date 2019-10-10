@@ -207,6 +207,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task->egid = to_fork->egid;
 	task->ctty = to_fork->ctty;
 	task->stack_size = to_fork->stack_size;
+	task->sbrk = to_fork->sbrk;
 
 	task_setup_execdata(task);
 
