@@ -403,7 +403,7 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	return new_fd->num;
 }
 
-int net_getpeername(task_t* task, int sockfd, struct sockaddr* oaddr,
+int net_getpeername(task_t* task, int sockfd, struct sockaddr* osa,
 	socklen_t* addrlen) {
 
 	struct socket* sock = get_socket(task, sockfd);
@@ -411,22 +411,33 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* oaddr,
 		return -1;
 	}
 
+	if(*addrlen < SOCKSIZE) {
+		sc_errno = ENOBUFS;
+		return -1;
+	}
+
 	/* Since sockaddr is variable length and the length is passed in a pointer,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
 	bool copied = false;
-	struct sockaddr* addr = (struct sockaddr*)task_memmap(task, oaddr, *addrlen, &copied);
-	if(!addr) {
+	struct sockaddr* sa = (struct sockaddr*)task_memmap(task, osa, SOCKSIZE, &copied);
+	if(!sa) {
 		sc_errno = EINVAL;
 		return -1;
 	}
 
-	int r = net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->remote_addr,
-		sock->pico_socket->remote_port);
+	union pico_address addr;
+	uint16_t port;
+	uint16_t proto;
+	if(pico_socket_getpeername(sock->pico_socket, &addr, &port, &proto) < 0) {
+		sc_errno = pico_err;
+		return -1;
+	}
 
+	int r = net_conv_pico2bsd(sa, SOCKSIZE, &addr, port);
 	if(copied) {
-		task_memcpy(task, addr, oaddr, *addrlen, true);
-		kfree(addr);
+		task_memcpy(task, sa, osa, SOCKSIZE, true);
+		kfree(sa);
 	}
 	return r;
 }
