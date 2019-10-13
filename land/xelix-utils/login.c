@@ -24,7 +24,28 @@
 #include <signal.h>
 #include <limits.h>
 #include <pwd.h>
+#include <utmp.h>
+#include <time.h>
 #include "util.h"
+
+void write_utmp(struct passwd* pwd) {
+	struct utmp ut = {
+		.ut_type = USER_PROCESS,
+		.ut_pid = getpid(),
+		.ut_id = "1",
+		.ut_time = time(NULL),
+		.ut_session = 1,
+	};
+
+	char* tname = ttyname(0);
+	// Skip leading /dev/
+	if(tname && strlen(tname) > 5) {
+		strncpy(ut.ut_line, tname + 5, UT_LINESIZE);
+	}
+
+	strncpy(ut.ut_user, pwd->pw_name, UT_NAMESIZE);
+	pututline(&ut);
+}
 
 int main(int argc, char* argv[], char* env[]) {
 	sigset_t set;
@@ -46,6 +67,7 @@ int main(int argc, char* argv[], char* env[]) {
         printf("\nxelix %s\n\n%s ", tty, sname);
 		struct passwd* pwd = do_auth(NULL);
 		if(pwd) {
+			write_utmp(pwd);
 			run_shell(pwd, true);
 		} else {
 			fprintf(stderr, "Login incorrect.\n");

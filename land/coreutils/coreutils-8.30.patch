@@ -193,17 +193,6 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
 -
 -  return 0;
 -}
---- coreutils-8.30/lib/readutmp.h 2018-05-14 06:20:31.000000000 +0200
-+++ coreutils-8.30-patched/lib/readutmp.h 2019-02-04 02:56:48.868422193 +0100
-@@ -78,7 +78,7 @@
-     struct utmp *getutent (void);
- #  endif
- #  define UTMP_STRUCT_NAME utmp
--#  define UT_TIME_MEMBER(UT_PTR) ((UT_PTR)->ut_time)
-+#  define UT_TIME_MEMBER(UT_PTR) ((UT_PTR))
- #  define SET_UTMP_ENT setutent
- #  define GET_UTMP_ENT getutent
- #  define END_UTMP_ENT endutent
 --- coreutils-8.30/lib/opendir.c  2018-05-14 06:20:31.000000000 +0200
 +++ coreutils-8.30-patched/lib/opendir.c  2019-02-04 21:01:30.771424111 +0100
 @@ -152,7 +152,8 @@
@@ -226,4 +215,29 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
  TERM xterm*
  
  # Below are the color init strings for the basic file types. A color init
-
+--- coreutils-8.30/src/who.c    2018-06-18 02:01:59.000000000 +0200
++++ coreutils-8.30/src/who.c    2019-10-13 04:12:29.396417459 +0200
+@@ -217,6 +217,7 @@ idle_string (time_t when, time_t boottim
+ static const char *
+ time_string (const STRUCT_UTMP *utmp_ent)
+ {
++  return "";
+   static char buf[INT_STRLEN_BOUND (intmax_t) + sizeof "-%m-%d %H:%M"];
+ 
+   /* Don't take the address of UT_TIME_MEMBER directly.
+--- coreutils-8.30/lib/readutmp.c       2018-05-14 06:20:31.000000000 +0200
++++ coreutils-8.30/lib/readutmp.c       2019-10-13 04:12:34.126399765 +0200
+@@ -71,11 +71,12 @@ desirable_utmp_entry (STRUCT_UTMP const
+   bool user_proc = IS_USER_PROCESS (u);
+   if ((options & READ_UTMP_USER_PROCESS) && !user_proc)
+     return false;
+-  if ((options & READ_UTMP_CHECK_PIDS)
++  /*if ((options & READ_UTMP_CHECK_PIDS)
+       && user_proc
+       && 0 < UT_PID (u)
+       && (kill (UT_PID (u), 0) < 0 && errno == ESRCH))
+     return false;
++  */
+   return true;
+ }
+ 
