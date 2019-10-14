@@ -168,6 +168,7 @@
 #define TIOCMSET     0x4013
 #define TIOCGSOFTCAR 0x4014
 #define TIOCSSOFTCAR 0x4015
+#define TIOCGPTN     0x4016
 
 struct termios {
 	uint32_t c_iflag;

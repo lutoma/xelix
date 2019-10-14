@@ -22,6 +22,7 @@
 #include <tty/keyboard.h>
 #include <tty/ecma48.h>
 #include <tty/input.h>
+#include <tty/pty.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
@@ -290,4 +291,6 @@ void tty_init() {
 	sysfs_add_dev("stdin", &tty_cb);
 	sysfs_add_dev("stdout", &tty_cb);
 	sysfs_add_dev("stderr", &tty_cb);
+
+	pty_init();
 }

