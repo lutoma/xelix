@@ -236,13 +236,17 @@ int net_vfs_close_cb(vfs_file_t* fp) {
 	}
 
 	spinlock_release(&net_pico_lock);
+
+	// FIXME Should this actually be set here or via the callback afterwards
 	sock->state = SOCK_CLOSED;
+*/
 	return 0;
 }
 
-vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock) {
+vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock, int state) {
 	struct socket* sock = (struct socket*)zmalloc(sizeof(struct socket));
 	sock->pico_socket = pico_sock;
+	sock->state = state;
 	pico_sock->priv = (void*)sock;
 
 	vfs_file_t* fd = vfs_alloc_fileno(task, 20);
@@ -284,7 +288,7 @@ int net_socket(task_t* task, int domain, int type, int protocol) {
 	}
 
 	spinlock_release(&net_pico_lock);
-	vfs_file_t* fd = new_socket_fd(task, pico_sock);
+	vfs_file_t* fd = new_socket_fd(task, pico_sock, SOCK_OPEN);
 	return fd->num;
 }
 
@@ -396,13 +400,14 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 		return -1;
 	}
 
-	vfs_file_t* new_fd = new_socket_fd(task, pico_sock);
+	vfs_file_t* new_fd = new_socket_fd(task, pico_sock, SOCK_CONNECTED);
 	sock->conn_requests--;
 
 	if(copied) {
 		task_memcpy(task, addr, oaddr, *addrlen, true);
 		kfree(addr);
 	}
+
 	return new_fd->num;
 }
 
