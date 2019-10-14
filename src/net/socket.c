@@ -33,11 +33,13 @@
 
 #ifdef ENABLE_PICOTCP
 
+#define READ_BUFFER_SIZE 0x5000
+
 struct socket {
 	struct pico_socket* pico_socket;
 	int conn_requests;
 	bool can_write;
-	char read_buffer[0x5000];
+	char read_buffer[READ_BUFFER_SIZE];
 	size_t read_buffer_length;
 
 	enum {
@@ -91,13 +93,18 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 	sock->can_write = (ev & PICO_SOCK_EV_WR);
 
 	if((ev & PICO_SOCK_EV_RD) && spinlock_get(&net_pico_lock, 200)) {
-		sock->read_buffer_length += pico_socket_read(sock->pico_socket,
-			(void*)sock->read_buffer + sock->read_buffer_length, 0x5000);
+		int free_bytes = READ_BUFFER_SIZE - sock->read_buffer_length;
+
+		if(free_bytes) {
+			sock->read_buffer_length += pico_socket_read(sock->pico_socket,
+				(void*)sock->read_buffer + sock->read_buffer_length, free_bytes);
+		} else {
+			log(LOG_WARN, "net: Socket %#x read buffer exhausted\n", sock);
+		}
 
 		spinlock_release(&net_pico_lock);
 		sock->can_write = true;
 	}
-
 }
 
 // Only does recv() functionality for now
