@@ -129,7 +129,7 @@ static size_t do_recvfrom(struct socket* sock, void* dest, size_t size,
 			return -1;
 		}
 
-		asm("hlt");
+		halt();
 	}
 
 	if(size > sock->read_buffer_length) {
@@ -194,7 +194,7 @@ static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t si
 			return -1;
 		}
 
-		asm("hlt\n");
+		halt();
 	}
 
 	if(!spinlock_get(&net_pico_lock, 200)) {
@@ -468,7 +468,7 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 		return -1;
 	}
 
-	int r = net_conv_pico2bsd(addr, *addrlen, &sock->pico_socket->local_addr,
+	int r = net_conv_pico2bsd(addr, SOCKSIZE, &sock->pico_socket->local_addr,
 		sock->pico_socket->local_port);
 
 	if(copied) {
