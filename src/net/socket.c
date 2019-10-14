@@ -97,11 +97,13 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 		spinlock_release(&net_pico_lock);
 		sock->can_write = true;
 	}
+
 }
 
 // Only does recv() functionality for now
-static int do_recvfrom(struct socket* sock, void* dest, size_t size,
-	int flags, struct sockaddr* src_addr, socklen_t* addrlen) {
+static size_t do_recvfrom(struct socket* sock, void* dest, size_t size,
+	int fp_flags, int recv_flags, struct sockaddr* src_addr,
+	socklen_t* addrlen) {
 
 	if(sock->state == SOCK_CLOSED) {
 		sc_errno = ENOTCONN;
@@ -112,7 +114,7 @@ static int do_recvfrom(struct socket* sock, void* dest, size_t size,
 		return -1;
 	}
 
-	if(!sock->read_buffer_length && flags & O_NONBLOCK) {
+	if(!sock->read_buffer_length && fp_flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
@@ -135,7 +137,7 @@ static int do_recvfrom(struct socket* sock, void* dest, size_t size,
 	}
 	memcpy(dest, sock->read_buffer, size);
 
-	if(!(flags & MSG_PEEK)) {
+	if(!(recv_flags & MSG_PEEK)) {
 		sock->read_buffer_length -= size;
 		if(sock->read_buffer_length) {
 			memmove(sock->read_buffer, sock->read_buffer + size, sock->read_buffer_length);
@@ -152,8 +154,9 @@ static size_t vfs_read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size)
 		return -1;
 	}
 
-	return do_recvfrom(sock, dest, size, ctx->fp->flags, NULL, NULL);
+	return do_recvfrom(sock, dest, size, ctx->fp->flags, 0, NULL, NULL);
 }
+
 int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size) {
 	struct socket* sock = get_socket(task, data->sockfd);
 	if(!sock) {
@@ -161,21 +164,21 @@ int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size) {
 	}
 
 	bool copied = false;
-	void* dest = (struct sockaddr*)task_memmap(task, data->dest, data->size, &copied);
+	void* dest = task_memmap(task, data->dest, data->size, &copied);
 	if(!dest) {
 		sc_errno = EINVAL;
 		return -1;
 	}
 
-	int r = do_recvfrom(sock, dest, data->size,
-		data->flags, data->src_addr, data->addrlen);
+	size_t read = do_recvfrom(sock, dest, data->size,
+		0, data->flags, data->src_addr, data->addrlen);
 
-	if(r > 0 && copied) {
-		task_memcpy(task, data->dest, dest, data->size, true);
+	if(read > 0 && copied) {
+		task_memcpy(task, dest, data->dest, read, true);
 		kfree(dest);
 	}
 
-	return r;
+	return read;
 }
 
 static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t size) {
