@@ -68,11 +68,11 @@ const struct syscall_definition syscall_table[] = {
 
 	// 2
 	{"read", (syscall_cb)vfs_read, 0,
-		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
+		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2 | SCA_NULLOK, SCA_INT, 0},
 
 	// 3
 	{"write", (syscall_cb)vfs_write, 0,
-		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
+		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2 | SCA_NULLOK, SCA_INT, 0},
 
 	// 4
 	{"access", (syscall_cb)vfs_access, 0,

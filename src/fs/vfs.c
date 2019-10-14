@@ -266,6 +266,12 @@ int vfs_open(task_t* task, const char* orig_path, uint32_t flags) {
 }
 
 size_t vfs_read(task_t* task, int fd, void* dest, size_t size) {
+	// Not checked by syscall code as we want to allow NULL dest if size is 0
+	if(!dest && size) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_WRONLY) {
 		sc_errno = EBADF;
@@ -277,25 +283,35 @@ size_t vfs_read(task_t* task, int fd, void* dest, size_t size) {
 		return -1;
 	}
 
+	if(!size) {
+		return 0;
+	}
+
 	size_t read = ctx->fp->callbacks.read(ctx, dest, size);
 	ctx->fp->offset += read;
 	return read;
 }
 
 size_t vfs_write(task_t* task, int fd, void* source, size_t size) {
+	// Not checked by syscall code as we want to allow NULL dest if size is 0
+	if(!source && size) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
 	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_RDONLY) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
-	if(!size) {
-		return 0;
-	}
-
 	if(!ctx->fp->callbacks.write) {
 		sc_errno = ENOSYS;
 		return -1;
+	}
+
+	if(!size) {
+		return 0;
 	}
 
 	size_t written = ctx->fp->callbacks.write(ctx, source, size);
