@@ -23,6 +23,7 @@
 #include <pico_device.h>
 #include <pico_dhcp_client.h>
 #include <pico_dns_client.h>
+#include <pico_dev_loop.h>
 #include <spinlock.h>
 #include <net/i386-rtl8139.h>
 #include <net/i386-ne2k.h>
@@ -119,6 +120,17 @@ void net_init() {
 	log(LOG_INFO, "net: Initializing PicoTCP\n");
 	pico_stack_init();
 	initialized = true;
+
+	struct pico_ip4 lo_addr;
+	pico_string_to_ipv4("127.0.0.1", &lo_addr.addr);
+	struct pico_ip4 netmask;
+	pico_string_to_ipv4("255.0.0.0", &netmask.addr);
+	struct pico_ip4 subnet;
+	pico_string_to_ipv4("127.0.0.0", &subnet.addr);
+
+	struct pico_device* lo = pico_loop_create();
+	pico_ipv4_link_add(lo, lo_addr, netmask);
+	pico_ipv4_route_add(subnet, netmask, lo_addr, 1000, NULL);
 
 	log(LOG_INFO, "net: Loading device drivers\n");
 	#ifdef ENABLE_NE2K
