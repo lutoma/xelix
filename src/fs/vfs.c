@@ -785,7 +785,7 @@ void vfs_init() {
 	char* root_path = cmdline_get("root");
 	if(!root_path) {
 		panic("vfs: Could not get root device path - Make sure root= "
-			"is set in kernel command line.");
+			"is set in kernel command line.\n");
 	}
 
 	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
@@ -794,12 +794,15 @@ void vfs_init() {
 
 	struct vfs_block_dev* rootdev = vfs_block_get_dev(root_path);
 	if(!rootdev) {
-		panic("vfs: Could not resolve root device path.");
+		panic("vfs: Could not resolve root device path.\n");
 	}
 
 	sysfs_init();
+
 	#ifdef ENABLE_EXT2
-	ext2_init(rootdev);
+	if(ext2_init(rootdev) < 0) {
+		panic("vfs: Could not mount root filesystem\n");
+	}
 	#endif
 
 	bzero(kernel_files, sizeof(kernel_files));

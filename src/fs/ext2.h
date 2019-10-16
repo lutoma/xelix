@@ -20,4 +20,4 @@
 
 #include <fs/block.h>
 
-void ext2_init(struct vfs_block_dev* dev);
+int ext2_init(struct vfs_block_dev* dev);

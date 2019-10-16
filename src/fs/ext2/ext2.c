@@ -51,7 +51,7 @@ struct vfs_callbacks cb = {
 	.build_path_tree = ext2_build_path_tree,
 };
 
-void ext2_init(struct vfs_block_dev* dev) {
+int ext2_init(struct vfs_block_dev* dev) {
 	ext2_block_dev = dev;
 
 	// Main superblock always has an offset of 1024
@@ -59,7 +59,7 @@ void ext2_init(struct vfs_block_dev* dev) {
 	if(vfs_block_read(ext2_block_dev, 2, 2, (uint8_t*)superblock) < 0 ||
 		superblock->magic != SUPERBLOCK_MAGIC) {
 		log(LOG_ERR, "ext2: Invalid magic\n");
-		return;
+		return -1;
 	}
 
 
@@ -71,9 +71,9 @@ void ext2_init(struct vfs_block_dev* dev) {
 		superblock->free_inodes, superblock->inode_count);
 
 	if(superblock->state != SUPERBLOCK_STATE_CLEAN) {
-		log(LOG_ERR, "ext2: File system is not marked as clean.\n"
-			"Please run fsck.ext2 on it.\n");
-		return;
+		log(LOG_ERR, "ext2: File system on /dev/%s is not marked as clean. "
+			"Please run fsck.ext2 on it.\n", dev->name);
+		return -1;
 	}
 
 	// TODO Compare superblocks to each other?
@@ -98,7 +98,7 @@ void ext2_init(struct vfs_block_dev* dev) {
 
 		kfree(superblock);
 		kfree(blockgroup_table);
-		return;
+		return -1;
 	}
 
 	// Cache root inode
@@ -108,7 +108,7 @@ void ext2_init(struct vfs_block_dev* dev) {
 		kfree(superblock);
 		kfree(root_inode_buf);
 		kfree(blockgroup_table);
-		return;
+		return -1;
 	}
 
 	root_inode = root_inode_buf;
@@ -118,6 +118,7 @@ void ext2_init(struct vfs_block_dev* dev) {
 
 	ext2_callbacks = &cb;
 	vfs_mount("/", NULL, dev, "ext2", &cb);
+	return 0;
 }
 
 #endif /* ENABLE_EXT2 */
