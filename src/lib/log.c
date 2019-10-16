@@ -78,6 +78,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 }
 
 
+/*
 void  __attribute__((optimize("O0"))) ltrace() {
 	intptr_t addresses[10];
 	int read = walk_stack(addresses, 10);
@@ -88,6 +89,7 @@ void  __attribute__((optimize("O0"))) ltrace() {
 		store(LOG_ERR, trace, trace_len);
 	}
 }
+*/
 #endif
 
 void log(uint32_t level, const char *fmt, ...) {
@@ -105,9 +107,11 @@ void log(uint32_t level, const char *fmt, ...) {
 	if(level > LOG_DEBUG) {
 		store(level, fmt_string, fmt_len);
 
+		/* Broken at the moment
 		if(level == LOG_ERR) {
 			ltrace();
 		}
+		*/
 	}
 	#else
 	vsnprintf(fmt_string, 500, fmt, va);
