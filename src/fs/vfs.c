@@ -151,7 +151,7 @@ static int get_mountpoint(char* path, char** mount_path) {
 		}
 	}
 
-	if(mount_path) {
+	if(mount_path && mpath) {
 		*mount_path = strdup(mpath);
 	}
 	return mp_num;
