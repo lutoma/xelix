@@ -27,6 +27,7 @@
 #include <spinlock.h>
 #include <net/i386-rtl8139.h>
 #include <net/i386-ne2k.h>
+#include <net/virtio_net.h>
 
 #ifdef ENABLE_PICOTCP
 
@@ -133,6 +134,11 @@ void net_init() {
 	pico_ipv4_route_add(subnet, netmask, lo_addr, 1000, NULL);
 
 	log(LOG_INFO, "net: Loading device drivers\n");
+
+	#ifdef ENABLE_VIRTIO_NET
+	virtio_net_init();
+	#endif
+
 	#ifdef ENABLE_NE2K
 	ne2k_init();
 	#endif
