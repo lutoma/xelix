@@ -229,7 +229,9 @@ static int vfs_poll_cb(struct vfs_callback_ctx* ctx, int events) {
 }
 
 int net_vfs_close_cb(vfs_file_t* fp) {
-	struct socket* sock = (struct socket*)(fp->mount_instance);
+	// Not as simple as that – may still be open in fork. Need to do
+	// refcounting with VFS layer tools
+/*	struct socket* sock = (struct socket*)(fp->mount_instance);
 
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
