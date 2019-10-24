@@ -27,12 +27,22 @@
 #include <tasks/task.h>
 #include <time.h>
 
+static int chmod(struct vfs_callback_ctx* ctx, uint32_t mode) {
+	return 0;
+}
+
+static int chown(struct vfs_callback_ctx* ctx, uint16_t uid, uint16_t gid) {
+	return 0;
+}
+
 static struct vfs_callbacks callbacks = {
 	.open = sysfs_open,
 	.stat = sysfs_stat,
 	.access = sysfs_access,
 	.readlink = sysfs_readlink,
 	.build_path_tree = sysfs_build_path_tree,
+	.chmod = chmod,
+	.chown = chown,
 };
 
 static struct sysfs_file* sys_files;
