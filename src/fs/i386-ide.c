@@ -106,10 +106,7 @@ struct ide_dev* ide_init_device(uint16_t bus) {
 	outb(dev->bus + ATA_REG_CONTROL, 0x02);
 	return dev;
 }
-
-int ide_read_cb(struct vfs_block_dev* block_dev, uint32_t lba, void* buf) {
-	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
-
+static inline int do_read(struct ide_dev* dev, uint64_t lba, void* buf) {
 	int errors = 0;
 try_again:
 	outb(dev->bus + ATA_REG_CONTROL, 0x02);
@@ -138,11 +135,22 @@ try_again:
 	inportsm(dev->bus, buf, size);
 	ata_wait(dev, 0);
 	return 0;
+
 }
 
-int ide_write_cb(struct vfs_block_dev* block_dev, uint32_t lba, void* buf) {
+int ide_read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
 	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
 
+	for(int i = 0; i < num_blocks; i++) {
+		if(do_read(dev, lba + i, buf + i * 512) < 0) {
+			return i;
+		}
+	}
+
+	return num_blocks;
+}
+
+static inline int do_write(struct ide_dev* dev, uint64_t lba, void* buf) {
 	outb(dev->bus + ATA_REG_CONTROL, 0x02);
 
 	ata_wait_ready(dev);
@@ -162,6 +170,18 @@ int ide_write_cb(struct vfs_block_dev* block_dev, uint32_t lba, void* buf) {
 	outb(dev->bus + 0x07, ATA_CMD_CACHE_FLUSH);
 	ata_wait(dev, 0);
 	return 0;
+}
+
+int ide_write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
+	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
+
+	for(int i = 0; i < num_blocks; i++) {
+		if(do_write(dev, lba + i, buf + i * 512) < 0) {
+			return i;
+		}
+	}
+
+	return num_blocks;
 }
 
 void ide_init() {

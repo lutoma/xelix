@@ -26,16 +26,7 @@
 static struct vfs_block_dev* block_devs = NULL;
 
 int vfs_block_read(struct vfs_block_dev* dev, int start_block, int num_blocks, uint8_t* buf) {
-	for(int i = 0; i < num_blocks; i++) {
-		int bnum = start_block + i;
-
-		if(dev->read_cb(dev, bnum + dev->start_offset, buf + i * 512) < 0) {
-			kfree(buf);
-			return 0;
-		}
-	}
-
-	return num_blocks;
+	return dev->read_cb(dev, start_block + dev->start_offset, num_blocks, buf);
 }
 
 static inline int calc_nb(uint64_t offset, uint64_t size) {
@@ -80,7 +71,7 @@ bool vfs_block_swrite(struct vfs_block_dev* dev, uint64_t offset, uint64_t size,
 	memcpy(int_buf + (offset % 512), buf, size);
 	for(int i = 0; i < num_blocks; i++) {
 		int bnum = start_block + i;
-		dev->write_cb(dev, bnum + dev->start_offset, int_buf + i * 512);
+		dev->write_cb(dev, bnum + dev->start_offset, 0, int_buf + i * 512);
 	}
 
 	kfree(int_buf);

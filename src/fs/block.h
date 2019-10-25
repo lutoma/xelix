@@ -21,8 +21,8 @@
 #include <stdbool.h>
 
 struct vfs_block_dev;
-typedef int (*vfs_block_read_cb)(struct vfs_block_dev* dev, uint32_t offset, void* buf);
-typedef int (*vfs_block_write_cb)(struct vfs_block_dev* dev, uint32_t offset, void* buf);
+typedef int (*vfs_block_read_cb)(struct vfs_block_dev* dev, uint64_t lba, uint64_t num_blocks, void* buf);
+typedef int (*vfs_block_write_cb)(struct vfs_block_dev* dev, uint64_t lba, uint64_t num_blocks, void* buf);
 
 struct vfs_block_dev {
 	struct vfs_block_dev* next;
