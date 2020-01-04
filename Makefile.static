@@ -27,7 +27,7 @@ ifeq ($(shell uname -s), Darwin)
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
-MAKE_QEMU_FLAGS = -netdev bridge,id=mnet0,br=br-vms,helper=/usr/lib/qemu/qemu-bridge-helper -device virtio-net,netdev=mnet0 -m 1024 -cpu SandyBridge -serial mon:stdio -no-reboot -soundhw ac97 -d cpu_reset,guest_errors,unimp,page --enable-kvm
+MAKE_QEMU_FLAGS = -accel kvm -vga qxl -m 1024 -cpu SandyBridge -serial mon:stdio -no-reboot -soundhw ac97 -d cpu_reset,guest_errors,unimp,page -drive file=xelix.qcow2,if=ide -netdev bridge,id=mnet0,br=br-vms,helper=/usr/lib/qemu/qemu-bridge-helper -device virtio-net,netdev=mnet0
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
@@ -59,7 +59,7 @@ $(CC):
 run: xelix.bin mount_boot
 	sudo cp xelix.bin mnt/
 	make umount_boot
-	$(QEMU) -hda xelix.qcow2 $(MAKE_QEMU_FLAGS)
+	$(QEMU) $(MAKE_QEMU_FLAGS)
 
 .PHONY: clean
 clean:
