@@ -78,7 +78,7 @@ int virtio_write(struct virtio_dev* dev, uint8_t queue_id, int num_buffers,
 	struct virtqueue* queue = &dev->queues[queue_id];
 	size_t desc_head = write_desc_chain(queue, num_buffers, buffers, lengths, flags);
 	virtio_write_avail(dev, queue, desc_head);
-	return 0;
+	return desc_head;
 }
 
 void virtio_provide_descs(struct virtio_dev* dev, uint8_t queue_id, int num, size_t size) {

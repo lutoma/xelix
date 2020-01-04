@@ -36,6 +36,7 @@
 #include <fs/ext2.h>
 #include <fs/ftree.h>
 #include <fs/i386-ide.h>
+#include <fs/virtio_block.h>
 #include <net/socket.h>
 
 struct vfs_mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
@@ -791,6 +792,7 @@ void vfs_init() {
 	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
 	vfs_ftree_init();
 	ide_init();
+	virtio_block_init();
 
 	struct vfs_block_dev* rootdev = vfs_block_get_dev(root_path);
 	if(!rootdev) {
