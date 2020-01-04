@@ -26,10 +26,6 @@
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC "%{!shared: crtend.o%s} %{shared: crtendS.o%s} crtn.o%s"
 
-/* Don't automatically add extern "C" { } around header files. */
-#undef  NO_IMPLICIT_EXTERN_C
-#define NO_IMPLICIT_EXTERN_C 1
-
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED
 #define USE_LD_AS_NEEDED 1
