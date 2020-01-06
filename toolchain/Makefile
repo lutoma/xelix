@@ -36,18 +36,17 @@ binutils-download:
 	cd download && wget -c ${BINUTILS_URL}/${BINUTILS_PACKAGE}
 	cd download && tar -xf ${BINUTILS_PACKAGE}
 
-binutils-install:
-	make -C build/binutils install
+binutils-patch:
+	patch -p0 -ddownload/binutils-${BINUTILS_VERSION}/ < ../land/binutils/binutils-${BINUTILS_VERSION}.patch
+	cp ../land/binutils/xelix_i386.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
 
 binutils-make:
 	mkdir -p build/binutils
 	cd build/binutils && ../../download/binutils-${BINUTILS_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-werror
 	make -C build/binutils all
 
-binutils-patch:
-	patch -p0 < patch/binutils-${BINUTILS_VERSION}.patch
-	cp content/binutils/xelix_i386.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
-
+binutils-install:
+	make -C build/binutils install
 
 gcc-clean:
 	rm -rf download/gcc-${GCC_VERSION}/
