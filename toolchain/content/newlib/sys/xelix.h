@@ -27,8 +27,8 @@ struct _xelix_execdata {
 	uint32_t ppid;
 	uint32_t argc;
 	uint32_t envc;
-	void** argv;
-	void** env;
+	char** argv;
+	char** env;
 	char binary_path[256];
 	uint16_t uid;
 	uint16_t gid;

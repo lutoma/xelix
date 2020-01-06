@@ -99,7 +99,7 @@ inet_addr(cp)
 	return (INADDR_NONE);
 }
 
-/* 
+/*
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
  * Returns 1 if the address is valid, 0 if not.

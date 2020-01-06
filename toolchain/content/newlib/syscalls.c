@@ -29,6 +29,7 @@
 #include <sys/errno.h>
 #include <sys/xelix.h>
 #include <sys/utsname.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
