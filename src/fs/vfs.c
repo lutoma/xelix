@@ -792,7 +792,10 @@ void vfs_init() {
 	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
 	vfs_ftree_init();
 	ide_init();
+
+	#ifdef ENABLE_VIRTIO_BLOCK
 	virtio_block_init();
+	#endif
 
 	struct vfs_block_dev* rootdev = vfs_block_get_dev(root_path);
 	if(!rootdev) {
