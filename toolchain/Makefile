@@ -15,21 +15,15 @@ NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
 PATH:=$(PATH):$(CURDIR)/local/bin
 
-.PHONY: all install clean binutils gcc newlib
+.PHONY: toolchain install binutils-all gcc-all newlib-all
 
-all: binutils-all gcc-all newlib-all
-
-clean: binutils-clean gcc-clean newlib-clean
-	rm -rf build
-	rm -rf download
-	rm -rf ${PREFIX}
+toolchain: binutils-all gcc-all newlib-all
 
 binutils-all: binutils-download binutils-patch binutils-make binutils-install
 gcc-all: gcc-download gcc-patch gcc-make gcc-install
 newlib-all: newlib-download newlib-patch newlib-make newlib-install
 
-binutils-clean:
-	rm -rf download/binutils-${BINUTILS_VERSION}/
+
 
 binutils-download:
 	mkdir -p download
@@ -48,19 +42,16 @@ binutils-make:
 binutils-install:
 	make -C build/binutils install
 
-gcc-clean:
-	rm -rf download/gcc-${GCC_VERSION}/
+
 
 gcc-download:
 	mkdir -p download
 	cd download && wget -c ${GCC_URL}/${GCC_PACKAGE}
 	cd download && tar -xf ${GCC_PACKAGE}
 
-gcc-install:
-	make -C build/gcc install-gcc
-	make -C build/gcc install-target-libgcc
-	make -C build/gcc install-target-libstdc++-v3
-	ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc
+gcc-patch:
+	patch -p0 -ddownload/ < ../land/gcc/gcc-${GCC_VERSION}.patch
+	cp ../land/gcc/xelix.h download/gcc-${GCC_VERSION}/gcc/config/
 
 gcc-make:
 	rm -r build/gcc
@@ -77,12 +68,13 @@ gcc-make:
 	make -C build/gcc all-target-libgcc
 	make -C build/gcc all-target-libstdc++-v3
 
-gcc-patch:
-	patch -p0 < patch/gcc-${GCC_VERSION}.patch
-	cp content/gcc/xelix.h download/gcc-${GCC_VERSION}/gcc/config/
+gcc-install:
+	make -C build/gcc install-gcc
+	make -C build/gcc install-target-libgcc
+	make -C build/gcc install-target-libstdc++-v3
+	ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc
 
-newlib-clean:
-	rm -rf download/newlib-${NEWLIB_VERSION}/
+
 
 newlib-download:
 	mkdir -p download
@@ -98,9 +90,9 @@ newlib-make:
 
 newlib-patch:
 	-rm -r build/newlib/
-	patch -p0 < patch/newlib-${NEWLIB_VERSION}.patch
+	patch -p0 -ddownload/ < ../land/newlib/newlib-${NEWLIB_VERSION}.patch
 
-	cp -r content/newlib download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix
+	cp -r ../land/newlib/xelix download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/
 
 	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && aclocal-1.11 -I ../../../ -I ../../../../
 	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoconf-2.64

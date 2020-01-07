@@ -1,0 +1,12 @@
+--- gmp-6.1.2/configfsf.sub	2020-01-06 20:57:24.922229112 +0100
++++ gmp-6.1.2/configfsf.sub	2020-01-06 20:57:42.558830195 +0100
+@@ -1399,7 +1399,8 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos* \
++              | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)

@@ -1,0 +1,11 @@
+--- mpfr-4.0.2/config.sub	2019-01-31 21:43:20.000000000 +0100
++++ mpfr-4.0.2/config.sub	2019-02-06 17:06:50.956368522 +0100
+@@ -1390,7 +1390,7 @@ case $os in
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+ 	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme* \
+-	      | -midnightbsd*)
++	      | -midnightbsd* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
