@@ -18,6 +18,7 @@
 
 #ifndef	_MNTENT_H
 #define	_MNTENT_H	1
+_BEGIN_STD_C
 
 #include <paths.h>
 #include <stdio.h>
@@ -89,4 +90,5 @@ extern char *hasmntopt (const struct mntent *__mnt,
 			const char *__opt) __THROW;
 
 
+_END_STD_C
 #endif	/* mntent.h */

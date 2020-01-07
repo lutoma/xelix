@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <errno.h>
 
+_BEGIN_STD_C
+
 struct _xelix_execdata {
 	uint32_t pid;
 	uint32_t ppid;
@@ -61,4 +63,5 @@ static inline uint32_t __syscall(int* errp, uint32_t call, uint32_t arg1, uint32
 	return result;
 }
 
+_END_STD_C
 #endif /* _SYS_XELIX_H */

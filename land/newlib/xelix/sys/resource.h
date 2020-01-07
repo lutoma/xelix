@@ -17,6 +17,8 @@
 #define RLIMIT_STACK 6
 #define RLIMIT_AS 7
 
+_BEGIN_STD_C
+
 struct rusage {
   	struct timeval ru_utime;	/* user time used */
 	struct timeval ru_stime;	/* system time used */
@@ -35,5 +37,7 @@ int  getrlimit(int, struct rlimit *);
 int  getrusage(int, struct rusage *);
 int  setpriority(int, id_t, int);
 int  setrlimit(int, const struct rlimit *);
+
+_END_STD_C
 #endif
 

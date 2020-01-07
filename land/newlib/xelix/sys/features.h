@@ -21,9 +21,7 @@
 #ifndef _SYS_FEATURES_H
 #define _SYS_FEATURES_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+_BEGIN_STD_C
 
 #include <_newlib_version.h>
 
@@ -335,7 +333,5 @@ extern "C" {
 /*# define _POSIX_SAVED_IDS       1*/
 # define _POSIX_VERSION 199309L
 
-#ifdef __cplusplus
-}
-#endif
+_END_STD_C
 #endif /* _SYS_FEATURES_H */

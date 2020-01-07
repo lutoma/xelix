@@ -18,6 +18,7 @@
 
 #ifndef	_SGTTY_H
 #define	_SGTTY_H	1
+_BEGIN_STD_C
 
 //#include <features.h>
 
@@ -33,4 +34,5 @@ extern int gtty (int __fd, struct sgttyb *__params);
 /* Set the terminal parameters associated with FD to *PARAMS.  */
 extern int stty (int __fd, __const struct sgttyb *__params);
 
+_END_STD_C
 #endif /* sgtty.h  */

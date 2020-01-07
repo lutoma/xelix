@@ -33,6 +33,8 @@
 #ifndef _SYS_SYSLOG_H_
 #define _SYS_SYSLOG_H_
 
+_BEGIN_STD_C
+
 #define	_PATH_LOG	"/var/run/log"
 #define	_PATH_LOG_PRIV	"/var/run/logpriv"
 #define	_PATH_OLDLOG	"/dev/log"	/* backward compatibility */
@@ -200,4 +202,5 @@ __END_DECLS
 
 #endif /* !_KERNEL */
 
+_END_STD_C
 #endif

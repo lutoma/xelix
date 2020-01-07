@@ -1,8 +1,6 @@
 #ifndef _SYS_SIGNAL_H
 #define _SYS_SIGNAL_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+_BEGIN_STD_C
 
 #include "_ansi.h"
 #include <sys/cdefs.h>
@@ -250,9 +248,7 @@ int sigqueue (pid_t pid, int signo, const union sigval value);
 #define SIGUSR2 31  /* user defined signal 2 */
 #define NSIG  32      /* signal 0 implied */
 
-#ifdef __cplusplus
-}
-#endif
+_END_STD_C
 
 #ifndef _SIGNAL_H_
 /* Some applications take advantage of the fact that <sys/signal.h>

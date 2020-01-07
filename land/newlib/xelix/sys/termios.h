@@ -21,6 +21,8 @@
 
 #include <sys/types.h>
 
+_BEGIN_STD_C
+
 /* Technically part of ioctl */
 struct winsize {
 	unsigned short ws_row;
@@ -208,4 +210,6 @@ int tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
 int     ioctl(int, int, void*);
 #endif /* ndef _KERNEL_ */
 
+
+_END_STD_C
 #endif /* ndef _SYS_TERMIOS_H */

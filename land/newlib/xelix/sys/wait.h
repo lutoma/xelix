@@ -1,11 +1,9 @@
 #ifndef _SYS_WAIT_H
 #define _SYS_WAIT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <sys/types.h>
+
+_BEGIN_STD_C
 
 #define WNOHANG 1
 #define WUNTRACED 2
@@ -42,4 +40,5 @@ pid_t _wait (int *);
 };
 #endif
 
+_END_STD_C
 #endif

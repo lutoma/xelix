@@ -3,11 +3,14 @@
 /* Some things copied from glibc's /usr/include/bits/utmp.h */
 #ifndef _SYS_UTMP_H
 #define _SYS_UTMP_H
+
 #include <sys/types.h>
 #define UTMP_FILE "/var/run/utmp"
 #define UT_LINESIZE 32
 #define UT_NAMESIZE 32
 #define UT_HOSTSIZE 256
+
+_BEGIN_STD_C
 
 struct exit_status {              /* Type for ut_exit, below */
     short int e_termination;      /* Process termination status */
@@ -60,4 +63,6 @@ void endutent (void);
 void pututline (struct utmp *);
 void setutent (void);
 void utmpname (const char *);
+
+_END_STD_C
 #endif

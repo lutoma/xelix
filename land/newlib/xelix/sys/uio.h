@@ -21,6 +21,8 @@
 
 #include <sys/types.h>
 
+_BEGIN_STD_C
+
 struct iovec {
 	void *iov_base;
 	size_t iov_len;
@@ -29,4 +31,5 @@ struct iovec {
 ssize_t readv(int, const struct iovec *, int);
 ssize_t writev(int, const struct iovec *, int);
 
+_END_STD_C
 #endif /* SYS_UIO_H */

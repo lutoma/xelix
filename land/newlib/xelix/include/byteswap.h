@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+_BEGIN_STD_C
+
 static inline uint16_t bswap_16(uint16_t x)
 {
     return ((((x) & 0xff00) >> 8) | (((x) & 0xff) << 8));
@@ -46,4 +48,5 @@ static inline uint64_t bswap_64(uint64_t x)
      (((x) & 0x00000000000000ffULL) << 56));
 }
 
+_END_STD_C
 #endif /* _BYTESWAP_H */

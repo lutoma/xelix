@@ -18,6 +18,7 @@
 
 #ifndef _SYS_UTSNAME_H
 #define _SYS_UTSNAME_H
+_BEGIN_STD_C
 
 struct utsname {
 	char sysname[50];
@@ -29,4 +30,5 @@ struct utsname {
 
 int uname(struct utsname *);
 
+_END_STD_C
 #endif /* SYS_UTSNAME_H */

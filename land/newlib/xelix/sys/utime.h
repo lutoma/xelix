@@ -3,9 +3,7 @@
 
 #include <sys/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+_BEGIN_STD_C
 
 struct utimbuf
 {
@@ -16,8 +14,5 @@ struct utimbuf
 
 int utime(const char *path, const struct utimbuf *times);
 
-#ifdef __cplusplus
-};
-#endif
-
+_END_STD_C
 #endif /* _SYS_UTIME_H */

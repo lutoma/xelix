@@ -49,6 +49,7 @@
 
 #ifndef _SYS_POLL_H_
 #define	_SYS_POLL_H_
+_BEGIN_STD_C
 
 typedef unsigned int	nfds_t;
 
@@ -91,4 +92,5 @@ __BEGIN_DECLS
 int	poll(struct pollfd *, nfds_t, int);
 __END_DECLS
 
+_END_STD_C
 #endif /* !_SYS_POLL_H_ */

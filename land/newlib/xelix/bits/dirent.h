@@ -20,6 +20,8 @@
 # error "Never use <bits/dirent.h> directly; include <dirent.h> instead."
 #endif
 
+_BEGIN_STD_C
+
 struct dirent
   {
 #ifndef __USE_FILE_OFFSET64
@@ -51,3 +53,5 @@ struct dirent64
 #define _DIRENT_HAVE_D_RECLEN
 #define _DIRENT_HAVE_D_OFF
 #define _DIRENT_HAVE_D_TYPE
+
+_END_STD_C
