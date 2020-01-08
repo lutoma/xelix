@@ -1,0 +1,11 @@
+--- flac-1.3.3/config.sub	2020-01-08 01:33:45.254539277 +0100
++++ flac-1.3.3/config.sub	2020-01-08 01:33:54.567852499 +0100
+@@ -1390,7 +1390,7 @@ case $os in
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+ 	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme* \
+-	      | -midnightbsd*)
++	      | -midnightbsd* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
