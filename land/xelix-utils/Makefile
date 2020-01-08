@@ -14,6 +14,9 @@ clean:
 init: init.c ini.c libutil.a
 	$(CC) $(CFLAGS) -o $@ init.c ini.c -L. -lutil
 
+play: play.c
+	$(CC) $(CFLAGS) -I$(abspath ../../mnt)/usr/include -L$(abspath ../../mnt)/usr/lib -o $@ play.c -L. -lFLAC -lm
+
 libutil.a: util.c argparse.c
 	$(CC) $(CFLAGS) -c -o util.o util.c
 	$(CC) $(CFLAGS) -c -o argparse.o argparse.c
@@ -31,5 +34,5 @@ install:
 	install -d ../../mnt/usr/bin/
 	install -d ../../mnt/etc/init.d/
 	install -D $(TARGETS) ../../mnt/usr/bin/
-	install -D tty1-login tty2-login ../../mnt/etc/init.d
+	install -D tty1-login ../../mnt/etc/init.d
 	chmod u+s ../../mnt/usr/bin/su
