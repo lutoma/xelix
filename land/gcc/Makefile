@@ -10,27 +10,18 @@ all: $(PACKAGE_NAME).tar.gz
 
 	-rm -r build
 	mkdir build
-	cd build && ../${PACKAGE_NAME}/configure \
+	cd build && BOOT_CFLAGS="-D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0" CPPFLAGS="-D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0" CFLAGS="-D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0" ../${PACKAGE_NAME}/configure \
 		--host=i786-pc-xelix \
 		--target=i786-pc-xelix \
 		--disable-shared \
 		--enable-static \
-		--disable-libcpp \
-		--disable-libstdcxx \
-		--disable-shared \
-		--disable-multilib \
-		--disable-decimal-float \
-		--disable-threads \
-		--disable-libatomic \
-		--disable-libgomp \
-		--disable-libitm \
-		--disable-libquadmath \
-		--disable-libsanitizer \
-		--disable-libssp \
-		--disable-libvtv \
-		--disable-libcilkrts \
-		--prefix=$(abspath ../../mnt) \
-		--enable-languages=c \
+		--prefix=/usr \
+		--libdir=/usr/lib \
+		--libexecdir=/usr/lib \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--with-bugurl=https://github.com/lutoma/xelix \
+		--enable-languages=c,c++ \
 		--with-sysroot=$(abspath ../../mnt) \
 		--with-gmp-include=$(abspath ../gmp/gmp-6.1.2) \
 		--with-gmp-lib=$(abspath ../gmp/gmp-6.1.2/.libs) \
@@ -39,17 +30,16 @@ all: $(PACKAGE_NAME).tar.gz
 		--with-mpc-include=$(abspath ../mpc/mpc-1.1.0/src) \
 		--with-mpc-lib=$(abspath ../mpc/mpc-1.1.0/src/.libs)
 
-	make -C build
-#	make -C build all-gcc
-#	make -C build all-target-libgcc
-#	make -C build all-target-libstdc++-v3
-
-
-#	--with-headers=$(abspath ../../toolchain/download/newlib-3.2.0/newlib/libc/include) \
+	BOOT_CFLAGS="-D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0" CPPFLAGS="-D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0" CFLAGS="-D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0" make -C build all-gcc
+	make -C build all-target-libgcc
+	#make -C build all-target-libstdc++-v3
 
 $(PACKAGE_NAME).tar.gz:
 	wget --continue $(PACKAGE_URL) -O $(PACKAGE_NAME).tar.gz
 
 .PHONY: install
 install:
-	make DESTDIR=$(abspath ../../mnt) -C $(PACKAGE_NAME) install
+	make DESTDIR=$(abspath ../../mnt) -C build install-gcc
+	make DESTDIR=$(abspath ../../mnt) -C build install-target-libgcc
+	#make DESTDIR=$(abspath ../../mnt) -C build install-target-libstdc++-v3
+
