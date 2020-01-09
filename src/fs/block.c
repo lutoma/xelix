@@ -71,7 +71,7 @@ bool vfs_block_swrite(struct vfs_block_dev* dev, uint64_t offset, uint64_t size,
 	memcpy(int_buf + (offset % 512), buf, size);
 	for(int i = 0; i < num_blocks; i++) {
 		int bnum = start_block + i;
-		dev->write_cb(dev, bnum + dev->start_offset, 0, int_buf + i * 512);
+		dev->write_cb(dev, bnum + dev->start_offset, 1, int_buf + i * 512);
 	}
 
 	kfree(int_buf);
