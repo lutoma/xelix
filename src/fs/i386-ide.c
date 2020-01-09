@@ -138,7 +138,7 @@ try_again:
 
 }
 
-int ide_read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
+uint64_t ide_read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
 	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
 
 	for(int i = 0; i < num_blocks; i++) {
@@ -172,7 +172,7 @@ static inline int do_write(struct ide_dev* dev, uint64_t lba, void* buf) {
 	return 0;
 }
 
-int ide_write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
+uint64_t ide_write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
 	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
 
 	for(int i = 0; i < num_blocks; i++) {

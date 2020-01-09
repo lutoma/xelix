@@ -87,7 +87,6 @@ struct blockgroup {
 #define EXT2_INDEX_FL 0x00001000
 
 #define inode_to_blockgroup(inode) ((inode - 1) / superblock->inodes_per_group)
-// TODO Should use right shift for negative values (XXX: negative ???)
 #define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
 #define bl_off(block) (uint64_t)((uint64_t)(block) * superblock_to_blocksize(superblock))
 #define bl_size(block) (uint64_t)((uint64_t)(block) / superblock_to_blocksize(superblock))

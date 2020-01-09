@@ -82,8 +82,7 @@ bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
 		return false;
 	}
 
-	uint8_t* ret = vfs_block_sread(ext2_block_dev, inode_off, superblock->inode_size, (uint8_t*)buf);
-	if(!ret) {
+	if(vfs_block_sread(ext2_block_dev, inode_off, superblock->inode_size, (uint8_t*)buf) < superblock->inode_size) {
 		return false;
 	}
 
@@ -259,14 +258,14 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 			wr_size = length - buf_offset;
 		}
 
-		bool res = false;
+		int nread = -1;
 		if(write_inode_num) {
-			res = vfs_block_swrite(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
+			nread = vfs_block_swrite(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
 		} else {
-			res = vfs_block_sread(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
+			nread = vfs_block_sread(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
 		}
 
-		if(!res) {
+		if(nread < wr_size) {
 			ext2_free_blocknum_resolver_cache(res_cache);
 			return NULL;
 		}

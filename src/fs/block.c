@@ -1,5 +1,5 @@
 /* block.c: Block device management
- * Copyright © 2018-2019 Lukas Martini
+ * Copyright © 2018-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -25,57 +25,59 @@
 
 static struct vfs_block_dev* block_devs = NULL;
 
-int vfs_block_read(struct vfs_block_dev* dev, int start_block, int num_blocks, uint8_t* buf) {
+uint64_t vfs_block_read(struct vfs_block_dev* dev, uint64_t start_block, uint64_t num_blocks, uint8_t* buf) {
 	return dev->read_cb(dev, start_block + dev->start_offset, num_blocks, buf);
 }
 
-static inline int calc_nb(uint64_t offset, uint64_t size) {
-	int num_blocks = size / 512;
-
-	if(size % 512) {
-		num_blocks++;
-	}
-
-	// Check if offset makes us cross another block boundary
-	if(size % 512 + offset > 512) { // FIXME Shouldn't this be offset % 512
-		num_blocks++;
-	}
-
-	return num_blocks;
+uint64_t vfs_block_write(struct vfs_block_dev* dev, uint64_t start_block, uint64_t num_blocks, uint8_t* buf) {
+	return dev->write_cb(dev, start_block + dev->start_offset, num_blocks, buf);
 }
 
-uint8_t* vfs_block_sread(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf) {
+uint64_t vfs_block_sread(struct vfs_block_dev* dev, uint64_t position, uint64_t size, uint8_t* buf) {
+	int start_block = position / dev->block_size;
+	uint64_t offset = (position % dev->block_size);
+	int num_blocks = (size + offset + dev->block_size - 1) / dev->block_size;
 
-	int start_block = offset / 512;
-	int num_blocks = calc_nb(offset, size);
-
-	uint8_t* int_buf = kmalloc(num_blocks * 512);
-	if(vfs_block_read(dev, start_block, num_blocks, int_buf) < num_blocks) {
-		return NULL;
+	if(!offset && !(size % dev->block_size)) {
+		return vfs_block_read(dev, start_block, num_blocks, buf) * dev->block_size;
 	}
 
-	memcpy(buf, int_buf + (offset % 512), size);
+	uint8_t* int_buf = kmalloc(num_blocks * dev->block_size);
+	if(vfs_block_read(dev, start_block, num_blocks, int_buf) < num_blocks) {
+		kfree(int_buf);
+		return -1;
+	}
+
+	memcpy(buf, int_buf + offset, size);
 	kfree(int_buf);
-	return buf;
+	return size;
 }
 
-bool vfs_block_swrite(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf) {
-	int start_block = offset / 512;
-	int num_blocks = calc_nb(offset, size);
+uint64_t vfs_block_swrite(struct vfs_block_dev* dev, uint64_t position, uint64_t size, uint8_t* buf) {
+	int start_block = position / dev->block_size;
+	uint64_t offset = (position % dev->block_size);
+	int num_blocks = (size + offset + dev->block_size - 1) / dev->block_size;
 
-	uint8_t* int_buf = kmalloc(num_blocks * 512);
-	if(vfs_block_read(dev, start_block, num_blocks, int_buf) < num_blocks) {
-		return NULL;
+	if(!offset && !(size % dev->block_size)) {
+		return vfs_block_write(dev, start_block, num_blocks, buf) * dev->block_size;
 	}
 
-	memcpy(int_buf + (offset % 512), buf, size);
-	for(int i = 0; i < num_blocks; i++) {
-		int bnum = start_block + i;
-		dev->write_cb(dev, bnum + dev->start_offset, 1, int_buf + i * 512);
+	// FIXME Should only read the required parts at the beginning and end
+	uint8_t* int_buf = kmalloc(num_blocks * dev->block_size);
+	if(vfs_block_read(dev, start_block, num_blocks, int_buf) < num_blocks) {
+		kfree(int_buf);
+		return -1;
+	}
+
+	memcpy(int_buf + offset, buf, size);
+
+	if(vfs_block_write(dev, start_block, num_blocks, int_buf) < num_blocks) {
+		kfree(int_buf);
+		return -1;
 	}
 
 	kfree(int_buf);
-	return true;
+	return size;
 }
 
 static size_t sfs_block_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
@@ -123,6 +125,7 @@ void vfs_block_register_dev(char* name, uint64_t start_offset,
 	struct vfs_block_dev* dev = zmalloc(sizeof(struct vfs_block_dev));
 	strcpy(dev->name, name);
 	dev->start_offset = start_offset;
+	dev->block_size = 512;
 	dev->read_cb = read_cb;
 	dev->write_cb = write_cb;
 	dev->meta = meta;

@@ -96,7 +96,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	queue->available->flags = 0;
 }
 
-static int send_request(struct virtio_dev* dev, int type, uint64_t lba, uint64_t num_blocks, void* buf) {
+static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uint64_t num_blocks, void* buf) {
 	if(num_blocks < 1) {
 		return -1;
 	}
@@ -134,11 +134,11 @@ static int send_request(struct virtio_dev* dev, int type, uint64_t lba, uint64_t
 	return num_blocks;
 }
 
-static int read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
+static uint64_t read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
 	return send_request(dev, VIRTIO_BLK_T_IN, lba, num_blocks, buf);
 }
 
-static int write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
+static uint64_t write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
 	if(dev->features & VIRTIO_BLK_F_RO) {
 		return -1;
 	}

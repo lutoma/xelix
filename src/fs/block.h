@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2018-2019 Lukas Martini
+/* Copyright © 2018-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,12 +21,13 @@
 #include <stdbool.h>
 
 struct vfs_block_dev;
-typedef int (*vfs_block_read_cb)(struct vfs_block_dev* dev, uint64_t lba, uint64_t num_blocks, void* buf);
-typedef int (*vfs_block_write_cb)(struct vfs_block_dev* dev, uint64_t lba, uint64_t num_blocks, void* buf);
+typedef uint64_t (*vfs_block_read_cb)(struct vfs_block_dev* dev, uint64_t lba, uint64_t num_blocks, void* buf);
+typedef uint64_t (*vfs_block_write_cb)(struct vfs_block_dev* dev, uint64_t lba, uint64_t num_blocks, void* buf);
 
 struct vfs_block_dev {
 	struct vfs_block_dev* next;
 	char name[50];
+	int block_size;
 
 	// Used for partitions
 	uint64_t start_offset;
@@ -38,9 +39,12 @@ struct vfs_block_dev {
 	void* meta;
 };
 
-int vfs_block_read(struct vfs_block_dev* dev, int start_block, int num_blocks, uint8_t* buf);
-uint8_t* vfs_block_sread(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
-bool vfs_block_swrite(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
+uint64_t vfs_block_read(struct vfs_block_dev* dev, uint64_t start_block, uint64_t num_blocks, uint8_t* buf);
+uint64_t vfs_block_write(struct vfs_block_dev* dev, uint64_t start_block, uint64_t num_blocks, uint8_t* buf);
+
+uint64_t vfs_block_sread(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
+uint64_t vfs_block_swrite(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
+
 struct vfs_block_dev* vfs_block_get_dev(char* path);
 void vfs_block_register_dev(char* name, uint64_t start_offset,
 	vfs_block_read_cb read_cb, vfs_block_write_cb write_cb, void* meta);
