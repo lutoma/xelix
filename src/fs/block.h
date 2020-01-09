@@ -29,6 +29,9 @@ struct vfs_block_dev {
 	char name[50];
 	int block_size;
 
+	// Used for stat.st_dev
+	int number;
+
 	// Used for partitions
 	uint64_t start_offset;
 

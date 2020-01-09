@@ -28,7 +28,6 @@
 #include <errno.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
-#include <fs/ext2.h>
 
 static vfs_file_t* handle_symlink(struct vfs_callback_ctx* ctx, struct inode* inode, uint32_t flags) {
 	/* For symlinks with up to 60 chars length, the path is stored in the
@@ -57,24 +56,25 @@ static vfs_file_t* handle_symlink(struct vfs_callback_ctx* ctx, struct inode* in
 
 // The public open interface to the virtual file system
 vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
-	if(!ctx || !ctx->path || !strcmp(ctx->path, "")) {
+	struct ext2_fs* fs = ctx->mp->instance;
+	if(!ctx->path || !strcmp(ctx->path, "")) {
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
 		return NULL;
 	}
 
 	uint32_t dir_inode = 0;
-	struct dirent* dirent = ext2_dirent_find(ctx->path, &dir_inode, ctx->task);
+	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, &dir_inode, ctx->task);
 	if(!dirent && (sc_errno != ENOENT || !(flags & O_CREAT))) {
 		return NULL;
 	}
 
 	uint32_t inode_num = dirent ? dirent->inode : 0;
-	struct inode* inode = kmalloc(superblock->inode_size);
+	struct inode* inode = kmalloc(fs->superblock->inode_size);
 
 	if(!inode_num) {
 		debug("ext2_open: Could not find inode, creating one.\n");
-		inode_num = ext2_inode_new(inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-		ext2_dirent_add(dir_inode, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_REG_FILE);
+		inode_num = ext2_inode_new(fs, inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		ext2_dirent_add(fs, dir_inode, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_REG_FILE);
 
 		if(ctx->task) {
 			inode->uid = ctx->task->euid;
@@ -89,7 +89,7 @@ vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 			return NULL;
 		}
 
-		if(!ext2_inode_read(inode, inode_num)) {
+		if(!ext2_inode_read(fs, inode, inode_num)) {
 			kfree(inode);
 			sc_errno = ENOENT;
 			return NULL;
@@ -121,7 +121,7 @@ vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 3);
 	fp->type = ft;
 	fp->inode = inode_num;
-	memcpy(&fp->callbacks, ext2_callbacks, sizeof(struct vfs_callbacks));
+	memcpy(&fp->callbacks, fs->callbacks, sizeof(struct vfs_callbacks));
 
 	sc_errno = 0;
 	return fp;

@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2013 Lukas Martini
+/* Copyright © 2013-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,4 +20,4 @@
 
 #include <fs/block.h>
 
-int ext2_init(struct vfs_block_dev* dev);
+int ext2_mount(struct vfs_block_dev* dev, const char* path);

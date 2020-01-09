@@ -18,6 +18,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ext2_internal.h"
 #include <fs/vfs.h>
 
 #define EXT2_DIRENT_FT_UNKNOWN 0
@@ -44,7 +45,7 @@ struct rd_r {
 	size_t last_len;
 };
 
-struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* task);
-void ext2_dirent_rm(uint32_t inode_num, char* name);
-void ext2_dirent_add(uint32_t dir, uint32_t inode, char* name, uint8_t type);
-vfs_dirent_t* ext2_readdir_r(struct inode* inode, uint64_t* offset, struct rd_r* reent);
+struct dirent* ext2_dirent_find(struct ext2_fs* fs, const char* path, uint32_t* parent_ino, task_t* task);
+void ext2_dirent_rm(struct ext2_fs* fs, uint32_t inode_num, char* name);
+void ext2_dirent_add(struct ext2_fs* fs, uint32_t dir, uint32_t inode, char* name, uint8_t type);
+vfs_dirent_t* ext2_readdir_r(struct ext2_fs* fs, struct inode* inode, uint64_t* offset, struct rd_r* reent);

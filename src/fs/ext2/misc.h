@@ -27,7 +27,7 @@ enum inode_check_op {
 };
 int ext2_inode_check_perm(enum inode_check_op, struct inode* inode, task_t* task);
 
-uint32_t ext2_bitmap_search_and_claim(uint32_t bitmap_block);
-void ext2_bitmap_free(uint32_t bitmap_block, uint32_t bit);
+uint32_t ext2_bitmap_search_and_claim(struct ext2_fs* fs, uint32_t bitmap_block);
+void ext2_bitmap_free(struct ext2_fs* fs, uint32_t bitmap_block, uint32_t bit);
 char* ext2_chop_path(const char* path, char** ent);
 

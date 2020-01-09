@@ -23,6 +23,7 @@
 #include <fs/part.h>
 #include <fs/sysfs.h>
 
+static int num_devs = 0;
 static struct vfs_block_dev* block_devs = NULL;
 
 uint64_t vfs_block_read(struct vfs_block_dev* dev, uint64_t start_block, uint64_t num_blocks, uint8_t* buf) {
@@ -129,6 +130,7 @@ void vfs_block_register_dev(char* name, uint64_t start_offset,
 	dev->read_cb = read_cb;
 	dev->write_cb = write_cb;
 	dev->meta = meta;
+	dev->number = ++num_devs;
 	dev->next = block_devs;
 	block_devs = dev;
 

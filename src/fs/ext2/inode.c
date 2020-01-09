@@ -28,105 +28,96 @@
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <fs/block.h>
-#include <fs/ext2.h>
 
-#define INODE_CACHE_MAX 0x100
-struct inode_cache_entry {
-	uint32_t num;
-	struct inode inode;
-};
-static struct inode_cache_entry inode_cache[INODE_CACHE_MAX];
-static uint32_t inode_cache_end = 0;
-
-static uint64_t find_inode(uint32_t inode_num) {
+static uint64_t find_inode(struct ext2_fs* fs, uint32_t inode_num) {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);
 	debug("Reading inode struct %d in blockgroup %d\n", inode_num, blockgroup_num);
 
 	// Sanity check the blockgroup num
-	if(blockgroup_num > (superblock->block_count / superblock->blocks_per_group))
+	if(blockgroup_num > (fs->superblock->block_count / fs->superblock->blocks_per_group))
 		return 0;
 
-	struct blockgroup* blockgroup = blockgroup_table + blockgroup_num;
+	struct blockgroup* blockgroup = fs->blockgroup_table + blockgroup_num;
 	if(!blockgroup || !blockgroup->inode_table) {
 		log(LOG_ERR, "ext2: Could not locate entry %d in blockgroup table\n", blockgroup_num);
 		return 0;
 	}
 
 	return bl_off(blockgroup->inode_table)
-		+ ((inode_num - 1) % superblock->inodes_per_group * superblock->inode_size);
+		+ ((inode_num - 1) % fs->superblock->inodes_per_group * fs->superblock->inode_size);
 }
 
-static struct inode* check_cache(uint32_t inode_num) {
-	for(int i = 0; i < INODE_CACHE_MAX && inode_cache[i].num; i++) {
-		if(inode_cache[i].num == inode_num) {
-			return &inode_cache[i].inode;
+static struct inode* check_cache(struct ext2_fs* fs, uint32_t inode_num) {
+	for(int i = 0; i < INODE_CACHE_MAX && fs->inode_cache[i].num; i++) {
+		if(fs->inode_cache[i].num == inode_num) {
+			return &fs->inode_cache[i].inode;
 		}
 	}
 	return NULL;
 }
 
-bool ext2_inode_read(struct inode* buf, uint32_t inode_num) {
-	if(inode_num == ROOT_INODE && root_inode) {
-		memcpy(buf, root_inode, superblock->inode_size);
+bool ext2_inode_read(struct ext2_fs* fs, struct inode* buf, uint32_t inode_num) {
+	if(inode_num == ROOT_INODE && fs->root_inode) {
+		memcpy(buf, fs->root_inode, fs->superblock->inode_size);
 		return true;
 	}
 
-	struct inode* cache_in = check_cache(inode_num);
+	struct inode* cache_in = check_cache(fs, inode_num);
 	if(cache_in) {
-		memcpy(buf, cache_in, superblock->inode_size);
+		memcpy(buf, cache_in, fs->superblock->inode_size);
 		return true;
 	}
 
-	uint64_t inode_off = find_inode(inode_num);
+	uint64_t inode_off = find_inode(fs, inode_num);
 	if(!inode_off) {
 		return false;
 	}
 
-	if(vfs_block_sread(ext2_block_dev, inode_off, superblock->inode_size, (uint8_t*)buf) < superblock->inode_size) {
+	if(vfs_block_sread(fs->dev, inode_off, fs->superblock->inode_size, (uint8_t*)buf) < fs->superblock->inode_size) {
 		return false;
 	}
 
-	struct inode_cache_entry cache = inode_cache[inode_cache_end];
-	memcpy(&cache.inode, buf, superblock->inode_size);
+	struct inode_cache_entry cache = fs->inode_cache[fs->inode_cache_end];
+	memcpy(&cache.inode, buf, fs->superblock->inode_size);
 	cache.num = inode_num;
-	inode_cache_end++;
-	inode_cache_end %= INODE_CACHE_MAX;
+	fs->inode_cache_end++;
+	fs->inode_cache_end %= INODE_CACHE_MAX;
 	return true;
 }
 
-bool ext2_inode_write(struct inode* buf, uint32_t inode_num) {
-	if(inode_num == ROOT_INODE && root_inode) {
-		memcpy(root_inode, buf, superblock->inode_size);
+bool ext2_inode_write(struct ext2_fs* fs, struct inode* buf, uint32_t inode_num) {
+	if(inode_num == ROOT_INODE && fs->root_inode) {
+		memcpy(fs->root_inode, buf, fs->superblock->inode_size);
 	}
 
-	uint64_t inode_off = find_inode(inode_num);
+	uint64_t inode_off = find_inode(fs, inode_num);
 	if(!inode_off) {
 		return false;
 	}
 
-	struct inode* cache_in = check_cache(inode_num);
+	struct inode* cache_in = check_cache(fs,inode_num);
 	if(cache_in) {
-		memcpy(cache_in, buf, superblock->inode_size);
+		memcpy(cache_in, buf, fs->superblock->inode_size);
 	}
 
-	return vfs_block_swrite(ext2_block_dev, inode_off, superblock->inode_size, (uint8_t*)buf);
+	return vfs_block_swrite(fs->dev, inode_off, fs->superblock->inode_size, (uint8_t*)buf);
 }
 
-uint32_t ext2_inode_new(struct inode* inode, uint16_t mode) {
-	struct blockgroup* blockgroup = blockgroup_table;
+uint32_t ext2_inode_new(struct ext2_fs* fs, struct inode* inode, uint16_t mode) {
+	struct blockgroup* blockgroup = fs->blockgroup_table;
 	while(!blockgroup->free_inodes) { blockgroup++; }
-	uint32_t inode_num = ext2_bitmap_search_and_claim(blockgroup->inode_bitmap);
+	uint32_t inode_num = ext2_bitmap_search_and_claim(fs, blockgroup->inode_bitmap);
 
-	bzero(inode, superblock->inode_size);
+	bzero(inode, fs->superblock->inode_size);
 	inode->mode = mode;
 
 	uint32_t t = time_get();
 	inode->ctime = t;
 	inode->mtime = t;
 	inode->atime = t;
-	ext2_inode_write(inode, inode_num);
+	ext2_inode_write(fs, inode, inode_num);
 
-	superblock->free_inodes--;
+	fs->superblock->free_inodes--;
 	blockgroup->free_inodes--;
 	write_superblock();
 	write_blockgroup_table();
@@ -150,7 +141,7 @@ void ext2_free_blocknum_resolver_cache(struct ext2_blocknum_resolver_cache* cach
 }
 
 // FIXME This is a mess (and also has no triply-indirect block support).
-uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct ext2_blocknum_resolver_cache* cache) {
+uint32_t ext2_resolve_blocknum(struct ext2_fs* fs, struct inode* inode, uint32_t block_num, struct ext2_blocknum_resolver_cache* cache) {
 	uint32_t real_block_num = 0;
 	const uint32_t entries_per_block = bl_off(1) / sizeof(uint32_t);
 
@@ -163,7 +154,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 
 		if(!cache->indirect_table) {
 			cache->indirect_table = (uint32_t*)zmalloc(bl_off(1));
-			vfs_block_sread(ext2_block_dev, bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)cache->indirect_table);
+			vfs_block_sread(fs->dev, bl_off(inode->blocks[12]), bl_off(1), (uint8_t*)cache->indirect_table);
 		}
 
 		real_block_num = cache->indirect_table[block_num - 12];
@@ -174,7 +165,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 
 		if(!cache->double_table) {
 			cache->double_table = (uint32_t*)zmalloc(bl_off(1));
-			vfs_block_sread(ext2_block_dev, bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)cache->double_table);
+			vfs_block_sread(fs->dev, bl_off(inode->blocks[13]), bl_off(1), (uint8_t*)cache->double_table);
 		}
 
 		uint32_t indir_block_num = cache->double_table[(block_num - entries_per_block - 12) / entries_per_block];
@@ -187,7 +178,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 		}
 
 		if(cache->double_second_block != indir_block_num) {
-			vfs_block_sread(ext2_block_dev, bl_off(indir_block_num), bl_off(1), (uint8_t*)cache->double_second_table);
+			vfs_block_sread(fs->dev, bl_off(indir_block_num), bl_off(1), (uint8_t*)cache->double_second_table);
 			cache->double_second_block = indir_block_num;
 		}
 
@@ -202,7 +193,7 @@ uint32_t ext2_resolve_blocknum(struct inode* inode, uint32_t block_num, struct e
 /* Will write if write_inode_num is set, otherwise read. Use
  * exta_inode_read_data/exta_inode_write_data macros instead.
  */
-uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
+uint8_t* ext2_inode_data_rw(struct ext2_fs* fs, struct inode* inode, uint32_t write_inode_num,
 	uint64_t offset, size_t length, uint8_t* buf) {
 
 
@@ -217,14 +208,14 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 	uint32_t buf_offset = 0;
 	struct ext2_blocknum_resolver_cache* res_cache = zmalloc(sizeof(struct ext2_blocknum_resolver_cache));
 	for(int i = 0; i < num_blocks; i++) {
-		uint32_t block_num = ext2_resolve_blocknum(inode, i + bl_size(offset), res_cache);
+		uint32_t block_num = ext2_resolve_blocknum(fs, inode, i + bl_size(offset), res_cache);
 
 		if(!block_num) {
 			if(!write_inode_num) {
 				return NULL;
 			}
 
-			block_num = ext2_block_new(write_inode_num);
+			block_num = ext2_block_new(fs, write_inode_num);
 			if(!block_num) {
 				ext2_free_blocknum_resolver_cache(res_cache);
 				return NULL;
@@ -242,7 +233,7 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 				return NULL;
 			}
 
-			ext2_inode_write(inode, write_inode_num);
+			ext2_inode_write(fs, inode, write_inode_num);
 		}
 
 		uint64_t wr_offset = bl_off(block_num);
@@ -260,9 +251,9 @@ uint8_t* ext2_inode_data_rw(struct inode* inode, uint32_t write_inode_num,
 
 		int nread = -1;
 		if(write_inode_num) {
-			nread = vfs_block_swrite(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
+			nread = vfs_block_swrite(fs->dev, wr_offset, wr_size, buf + buf_offset);
 		} else {
-			nread = vfs_block_sread(ext2_block_dev, wr_offset, wr_size, buf + buf_offset);
+			nread = vfs_block_sread(fs->dev, wr_offset, wr_size, buf + buf_offset);
 		}
 
 		if(nread < wr_size) {

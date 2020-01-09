@@ -304,6 +304,6 @@ void sysfs_rm_dev(struct sysfs_file* fp) {
 void sysfs_init() {
 	//sys_root = vfs_ftree_insert(NULL, "sys", stat);
 	//dev_root = vfs_ftree_insert(NULL, "dev", stat);
-	vfs_mount("/sys", &sys_files, NULL, "sysfs", &callbacks);
-	vfs_mount("/dev", &dev_files, NULL, "sysfs", &callbacks);
+	vfs_register_fs(NULL, "/sys", &sys_files, "sysfs", &callbacks);
+	vfs_register_fs(NULL, "/dev", &dev_files, "sysfs", &callbacks);
 }

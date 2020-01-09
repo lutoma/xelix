@@ -20,7 +20,6 @@
 
 #include <fs/vfs.h>
 #include <kavl.h>
-#include <fs/ext2/inode.h>
 
 struct ftree_file {
 	KAVL_HEAD(struct ftree_file) head;

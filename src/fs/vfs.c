@@ -33,7 +33,7 @@
 #include <fs/block.h>
 #include <fs/sysfs.h>
 #include <fs/part.h>
-#include <fs/ext2.h>
+#include <fs/ext2/ext2.h>
 #include <fs/ftree.h>
 #include <fs/i386-ide.h>
 #include <fs/virtio_block.h>
@@ -467,24 +467,20 @@ int vfs_fstat(task_t* task, int fd, vfs_stat_t* dest) {
 
 int vfs_stat(task_t* task, char* orig_path, vfs_stat_t* dest) {
 	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
-	const struct ftree_file* ft_file = vfs_ftree_find_path(ctx->orig_path);
-	if(!ft_file) {
-		if(!ctx->mp->callbacks.build_path_tree || ctx->mp->callbacks.build_path_tree(ctx) != 0) {
-			free_context(ctx);
-			return -1;
-		}
-
-		ft_file = vfs_ftree_find_path(ctx->orig_path);
-	}
-
-	if(!ft_file) {
-		sc_errno = ENOENT;
+	if(!ctx) {
+		sc_errno = EBADF;
 		return -1;
 	}
 
-	memcpy(dest, &ft_file->stat, sizeof(vfs_stat_t));
+	if(!ctx->mp->callbacks.stat) {
+		free_context(ctx);
+		sc_errno = ENOSYS;
+		return -1;
+	}
+
+	int r = ctx->mp->callbacks.stat(ctx, dest);
 	free_context(ctx);
-	return 0;
+	return r;
 }
 
 int vfs_close(task_t* task, int fd) {
@@ -734,7 +730,7 @@ int vfs_link(task_t* task, const char* orig_path, const char* orig_new_path) {
 	return r;
 }
 
-int vfs_mount(char* path, void* instance, struct vfs_block_dev* dev, char* type,
+int vfs_register_fs(struct vfs_block_dev* dev, char* path, void* instance, char* type,
 	struct vfs_callbacks* callbacks) {
 
 	if(!path || !strncmp(path, "", 1)) {
@@ -805,7 +801,7 @@ void vfs_init() {
 	sysfs_init();
 
 	#ifdef ENABLE_EXT2
-	if(ext2_init(rootdev) < 0) {
+	if(ext2_mount(rootdev, "/") < 0) {
 		panic("vfs: Could not mount root filesystem\n");
 	}
 	#endif

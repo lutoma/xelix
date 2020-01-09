@@ -236,7 +236,7 @@ int vfs_readlink(struct task* task, const char* orig_path, char* buf, size_t siz
 int vfs_rmdir(struct task* task, const char* orig_path);
 int vfs_poll(struct task* task, struct pollfd* fds, uint32_t nfds, int timeout);
 int vfs_stat(struct task* task, char* path, vfs_stat_t* dest);
-int vfs_mount(char* path, void* instance, struct vfs_block_dev* dev, char* type,
+int vfs_register_fs(struct vfs_block_dev* dev, char* path, void* instance, char* type,
 	struct vfs_callbacks* callbacks);
 void vfs_init();
 

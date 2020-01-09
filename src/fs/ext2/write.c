@@ -27,24 +27,23 @@
 #include <time.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
-#include <fs/ext2.h>
 
-uint32_t ext2_block_new(uint32_t neighbor) {
+uint32_t ext2_block_new(struct ext2_fs* fs, uint32_t neighbor) {
 	uint32_t pref_blockgroup = inode_to_blockgroup(neighbor);
 
-	struct blockgroup* blockgroup = blockgroup_table + pref_blockgroup;
+	struct blockgroup* blockgroup = fs->blockgroup_table + pref_blockgroup;
 	if(!blockgroup || !blockgroup->inode_table) {
 		log(LOG_ERR, "ext2: Could not locate entry %d in blockgroup table\n", pref_blockgroup);
 		return 0;
 	}
 
-	uint32_t block_num = ext2_bitmap_search_and_claim(blockgroup->block_bitmap);
+	uint32_t block_num = ext2_bitmap_search_and_claim(fs, blockgroup->block_bitmap);
 	if(!block_num) {
 		log(LOG_ERR, "ext2: Could not find free block in preferred blockgroup %d.\n", pref_blockgroup);
 		return 0;
 	}
 
-	superblock->free_blocks--;
+	fs->superblock->free_blocks--;
 	blockgroup->free_blocks--;
 	write_superblock();
 	write_blockgroup_table();

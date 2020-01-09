@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2013-2019 Lukas Martini
+/* Copyright © 2013-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,6 +18,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ext2.h"
+#include "inode.h"
 #include <lib/log.h>
 #include <fs/vfs.h>
 #include <fs/block.h>
@@ -79,6 +81,23 @@ struct blockgroup {
 	uint32_t reserved[3];
 } __attribute__((packed));
 
+#define INODE_CACHE_MAX 0x100
+struct inode_cache_entry {
+	uint32_t num;
+	struct inode inode;
+};
+
+struct ext2_fs {
+	struct vfs_block_dev* dev;
+	struct superblock* superblock;
+	struct blockgroup* blockgroup_table;
+	struct inode* root_inode;
+	struct vfs_callbacks* callbacks;
+
+	struct inode_cache_entry inode_cache[INODE_CACHE_MAX];
+	uint32_t inode_cache_end;
+};
+
 #define SUPERBLOCK_MAGIC 0xEF53
 #define SUPERBLOCK_STATE_CLEAN 1
 #define SUPERBLOCK_STATE_DIRTY 2
@@ -86,11 +105,12 @@ struct blockgroup {
 
 #define EXT2_INDEX_FL 0x00001000
 
-#define inode_to_blockgroup(inode) ((inode - 1) / superblock->inodes_per_group)
-#define superblock_to_blocksize(superblock) (1024 << superblock->block_size)
-#define bl_off(block) (uint64_t)((uint64_t)(block) * superblock_to_blocksize(superblock))
-#define bl_size(block) (uint64_t)((uint64_t)(block) / superblock_to_blocksize(superblock))
-#define bl_mod(block) (uint64_t)((uint64_t)(block) % superblock_to_blocksize(superblock))
+#define inode_to_blockgroup(inode) ((inode - 1) / fs->superblock->inodes_per_group)
+
+#define _block_size(fs) (1024 << fs->superblock->block_size)
+#define bl_off(block) (uint64_t)((uint64_t)(block) * _block_size(fs))
+#define bl_size(block) (uint64_t)((uint64_t)(block) / _block_size(fs))
+#define bl_mod(block) (uint64_t)((uint64_t)(block) % _block_size(fs))
 
 /* Blockgroup table is located in the block following the superblock. This
  * is usually the second block, but with a 1k block size, the superblock
@@ -105,16 +125,10 @@ struct blockgroup {
  * to get ext2 blocks. Add 1 since partially used blocks also need to be
  * allocated.
  */
-#define blockgroup_table_size (bl_size(superblock->block_count / superblock->blocks_per_group * sizeof(struct blockgroup)) + 1)
+#define blockgroup_table_size (bl_size(fs->superblock->block_count / fs->superblock->blocks_per_group * sizeof(struct blockgroup)) + 1)
 
-#define write_superblock() vfs_block_swrite(ext2_block_dev, 1024, sizeof(struct superblock), (uint8_t*)superblock)
-#define write_blockgroup_table() vfs_block_swrite(ext2_block_dev, bl_off(blockgroup_table_start), \
-	bl_off(blockgroup_table_size), (uint8_t*)blockgroup_table)
+#define write_superblock() vfs_block_swrite(fs->dev, 1024, sizeof(struct superblock), (uint8_t*)fs->superblock)
+#define write_blockgroup_table() vfs_block_swrite(fs->dev, bl_off(blockgroup_table_start), \
+	bl_off(blockgroup_table_size), (uint8_t*)fs->blockgroup_table)
 
-struct superblock* superblock;
-struct blockgroup* blockgroup_table;
-struct inode* root_inode;
-struct vfs_callbacks* ext2_callbacks;
-struct vfs_block_dev* ext2_block_dev;
-
-uint32_t ext2_block_new();
+uint32_t ext2_block_new(struct ext2_fs* fs, uint32_t neighbor);

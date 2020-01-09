@@ -28,11 +28,10 @@
 #include <errno.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
-#include <fs/ext2.h>
 #include <fs/ftree.h>
 
 #define dirent_off *offset - reent->read_off
-vfs_dirent_t* ext2_readdir_r(struct inode* inode, uint64_t* offset, struct rd_r* reent) {
+vfs_dirent_t* ext2_readdir_r(struct ext2_fs* fs, struct inode* inode, uint64_t* offset, struct rd_r* reent) {
 	while(1) {
 		if(dirent_off + sizeof(struct dirent) >= reent->read_len) {
 			if(*offset >= inode->size) {
@@ -40,7 +39,7 @@ vfs_dirent_t* ext2_readdir_r(struct inode* inode, uint64_t* offset, struct rd_r*
 			}
 
 			size_t rsize = MIN(sizeof(reent->buf), inode->size - *offset);
-			if(!ext2_inode_read_data(inode, *offset, rsize, reent->buf)) {
+			if(!ext2_inode_read_data(fs, inode, *offset, rsize, reent->buf)) {
 				return NULL;
 			}
 			reent->read_off = *offset;
@@ -72,13 +71,13 @@ vfs_dirent_t* ext2_readdir_r(struct inode* inode, uint64_t* offset, struct rd_r*
 }
 
 // Looks for a directory entry with name `search` in a directory inode
-static struct dirent* search_dir(struct inode* inode, const char* search) {
+static struct dirent* search_dir(struct ext2_fs* fs, struct inode* inode, const char* search) {
 	struct dirent* result = NULL;
 	struct rd_r* rd_reent = zmalloc(sizeof(struct rd_r));
 
 	vfs_dirent_t* ent = NULL;
 	uint64_t offset = 0;
-	while((ent = ext2_readdir_r(inode, &offset, rd_reent))) {
+	while((ent = ext2_readdir_r(fs, inode, &offset, rd_reent))) {
 		if(!strcmp(ent->d_name, search)) {
 			result = kmalloc(ent->d_reclen);
 			memcpy(result, ent, ent->d_reclen);
@@ -92,7 +91,7 @@ static struct dirent* search_dir(struct inode* inode, const char* search) {
 	return result;
 }
 
-struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* task) {
+struct dirent* ext2_dirent_find(struct ext2_fs* fs, const char* path, uint32_t* parent_ino, task_t* task) {
 
 	if(unlikely(!strcmp("/", path)))
 		path = "/.";
@@ -104,11 +103,11 @@ struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* 
 	// Throwaway pointer for strtok_r
 	char* path_tmp = strndup(path, 500);
 	pch = strtok_r(path_tmp, "/", &sp);
-	struct inode* inode = kmalloc(superblock->inode_size);
+	struct inode* inode = kmalloc(fs->superblock->inode_size);
 	struct dirent* dirent = NULL;
 	struct dirent* result = NULL;
 	struct ftree_file* ft_root = NULL;
-	ext2_inode_read(inode, ROOT_INODE);
+	ext2_inode_read(fs, inode, ROOT_INODE);
 
 	while(pch != NULL) {
 		int inode_num = dirent ? dirent->inode : ROOT_INODE;
@@ -120,13 +119,13 @@ struct dirent* ext2_dirent_find(const char* path, uint32_t* parent_ino, task_t* 
 			*parent_ino = inode_num;
 		}
 
-		dirent = search_dir(inode, pch);
+		dirent = search_dir(fs, inode, pch);
 		if(!dirent) {
 			sc_errno = ENOENT;
 			goto bye;
 		}
 
-		if(!ext2_inode_read(inode, dirent->inode)) {
+		if(!ext2_inode_read(fs, inode, dirent->inode)) {
 			sc_errno = ENOENT;
 			goto bye;
 		}
@@ -163,15 +162,15 @@ bye:
 	return result;
 }
 
-void ext2_dirent_rm(uint32_t inode_num, char* name) {
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(inode, inode_num)) {
+void ext2_dirent_rm(struct ext2_fs* fs, uint32_t inode_num, char* name) {
+	struct inode* inode = kmalloc(fs->superblock->inode_size);
+	if(!ext2_inode_read(fs, inode, inode_num)) {
 		kfree(inode);
 		return;
 	}
 
 	uint8_t* dirent_block = kmalloc(inode->size);
-	if(!ext2_inode_read_data(inode, 0, inode->size, dirent_block)) {
+	if(!ext2_inode_read_data(fs, inode, 0, inode->size, dirent_block)) {
 		kfree(dirent_block);
 		kfree(inode);
 		return;
@@ -212,7 +211,7 @@ void ext2_dirent_rm(uint32_t inode_num, char* name) {
 		prev->record_len += dirent->record_len;
 	}
 
-	ext2_inode_write_data(inode, inode_num, 0, inode->size, dirent_block);
+	ext2_inode_write_data(fs, inode, inode_num, 0, inode->size, dirent_block);
 	kfree(dirent_block);
 	kfree(inode);
 }
@@ -227,11 +226,11 @@ static inline uint32_t align_dirent_len(uint32_t dlen) {
 	return dlen;
 }
 
-void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
+void ext2_dirent_add(struct ext2_fs* fs, uint32_t dir_num, uint32_t inode_num, char* name, uint8_t type) {
 	debug("ext2_new_dirent dir %d ino %d name %s\n", dir_num, inode_num, name);
 
-	struct inode* dir = kmalloc(superblock->inode_size);
-	if(!ext2_inode_read(dir, dir_num)) {
+	struct inode* dir = kmalloc(fs->superblock->inode_size);
+	if(!ext2_inode_read(fs, dir, dir_num)) {
 		kfree(dir);
 		return;
 	}
@@ -243,7 +242,7 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 	}
 
 	void* dirents = kmalloc(dir->size);
-	if(!ext2_inode_read_data(dir, 0, dir->size, dirents)) {
+	if(!ext2_inode_read_data(fs, dir, 0, dir->size, dirents)) {
 		kfree(dir);
 		kfree(dirents);
 		return;
@@ -287,13 +286,13 @@ void ext2_dirent_add(uint32_t dir_num, uint32_t inode_num, char* name, uint8_t t
 		memcpy((void*)current_ent + current_ent->record_len, new_dirent, dlen);
 	}
 
-	ext2_inode_write_data(dir, dir_num, 0, dir->size, dirents);
+	ext2_inode_write_data(fs, dir, dir_num, 0, dir->size, dirents);
 
 	// Increase inode link count
-	struct inode* inode = kmalloc(superblock->inode_size);
-	if(ext2_inode_read(inode, inode_num)) {
+	struct inode* inode = kmalloc(fs->superblock->inode_size);
+	if(ext2_inode_read(fs, inode, inode_num)) {
 		inode->link_count++;
-		ext2_inode_write(inode, inode_num);
+		ext2_inode_write(fs, inode, inode_num);
 	}
 
 	// FIXME Update parent directory mtime/ctime
