@@ -101,8 +101,7 @@ static void interrupt_handler(task_t* task, isf_t* state, int num) {
 		}
 	}*/
 
-	if(unlikely(card == NULL)) {
-		log(LOG_ERR, "ac97: Could not locate card for interrupt. This shouldn't happen.\n");
+	if(!card) {
 		return;
 	}
 

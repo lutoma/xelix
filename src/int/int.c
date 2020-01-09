@@ -1,5 +1,5 @@
 /* interrupts.c: Initialization of and interface to interrupts.
- * Copyright © 2011-2019 Lukas Martini
+ * Copyright © 2011-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -30,7 +30,7 @@
 
 // Called by i386-interrupts.asm
 isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* state) {
-	struct interrupt_reg reg = interrupt_handlers[intr];
+	struct interrupt_reg* reg = interrupt_handlers[intr];
 	volatile task_t* task = scheduler_get_current();
 
 	#ifdef INTERRUPTS_DEBUG
@@ -38,11 +38,18 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* state) {
 	dump_isf(LOG_DEBUG, state);
 	#endif
 
-	if(reg.handler) {
-		if(reg.can_reent) {
-			interrupts_enable();
+	for(int i = 0; i < 10; i++) {
+		if(!reg[i].handler) {
+			break;
 		}
-		reg.handler((task_t*)task, state, intr);
+
+		if(reg[i].can_reent) {
+			interrupts_enable();
+		} else {
+			interrupts_disable();
+		}
+
+		reg[i].handler((task_t*)task, state, intr);
 	}
 
 	#ifdef ENABLE_PICOTCP

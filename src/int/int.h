@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2019 Lukas Martini
+/* Copyright © 2011-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -64,28 +64,35 @@ struct interrupt_reg {
 	bool can_reent;
 };
 
-struct interrupt_reg interrupt_handlers[512];
+// Can't use kmalloc here as this is used during early boot. 10 should be plenty
+struct interrupt_reg interrupt_handlers[512][10];
 
 static inline void interrupts_register(int n, interrupt_handler_t handler, bool can_reent) {
-	interrupt_handlers[n].handler = handler;
-	interrupt_handlers[n].can_reent = can_reent;
-	log(LOG_INFO, "interrupts: Registered handler for 0x%x.\n", n);
+	struct interrupt_reg* reg = interrupt_handlers[n];
+
+	for(int i = 0; i < 10; i++) {
+		if(reg[i].handler) {
+			continue;
+		}
+
+		reg[i].handler = handler;
+		reg[i].can_reent = can_reent;
+		return;
+	}
+
+	log(LOG_ERR, "int: Could not register handler for %d, too many handlers\n", n);
 }
 
 static inline void interrupts_bulk_register(int start, int end, interrupt_handler_t handler, bool can_reent) {
 		for(int i = start; i <= end; i++) {
-			interrupt_handlers[i].handler = handler;
-			interrupt_handlers[i].can_reent = can_reent;
+			interrupts_register(i, handler, can_reent);
 		}
-
-		log(LOG_INFO, "interrupts: Registered handlers for 0x%x - 0x%x.\n", start, end);
 }
 
 static inline void dump_isf(uint32_t level, isf_t* state) {
 	log(level, "isf_t at 0x%x:\n", state);
 	log(level, "  EAX=0x%-10x EBX=0x%-10x ECX=0x%-10x EDX=0x%-10x\n", state->eax, state->ebx, state->ecx, state->edx);
 	log(level, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
-	//log(level, "  EIP=0x%-10x CR2=0x%-10x CR3=0x%-10x EFLAGS=0x%-10x\n", state->eip, state->cr2, state->cr3, state->eflags);
 }
 
 void interrupts_init();
