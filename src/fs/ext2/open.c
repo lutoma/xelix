@@ -122,6 +122,8 @@ vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	fp->type = ft;
 	fp->inode = inode_num;
 	memcpy(&fp->callbacks, ext2_callbacks, sizeof(struct vfs_callbacks));
+
+	sc_errno = 0;
 	return fp;
 }
 
