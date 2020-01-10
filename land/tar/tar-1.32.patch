@@ -1,0 +1,36 @@
+--- tar-1.32/build-aux/config.sub	2019-01-02 19:15:07.000000000 +0100
++++ tar-1.32/build-aux/config.sub	2020-01-10 09:43:59.005268736 +0100
+@@ -1361,7 +1361,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
++	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+--- tar-1.32/src/list.c	2019-01-02 19:07:48.000000000 +0100
++++ tar-1.32/src/list.c	2020-01-10 09:45:00.472065937 +0100
+@@ -681,9 +681,10 @@ decode_header (union block *header, stru
+ 	{
+ 	case BLKTYPE:
+ 	case CHRTYPE:
+-	  stat_info->stat.st_rdev =
++/*	  stat_info->stat.st_rdev =
+ 	    makedev (MAJOR_FROM_HEADER (header->header.devmajor),
+ 		     MINOR_FROM_HEADER (header->header.devminor));
++*/
+ 	  break;
+ 
+ 	default:
+--- tar-1.32/src/checkpoint.c	2019-01-13 20:44:05.000000000 +0100
++++ tar-1.32/src/checkpoint.c	2020-01-10 09:47:29.799053223 +0100
+@@ -429,7 +429,7 @@ run_checkpoint_actions (bool do_write)
+ 	case cop_wait:
+ 	  {
+ 	    int n;
+-	    sigwait (&sigs, &n);
++	    //sigwait (&sigs, &n);
+ 	  }
+ 	}
+     }
