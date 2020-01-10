@@ -1,6 +1,5 @@
 #ifndef _SYS_SIGNAL_H
 #define _SYS_SIGNAL_H
-_BEGIN_STD_C
 
 #include "_ansi.h"
 #include <sys/cdefs.h>
@@ -8,6 +7,8 @@ _BEGIN_STD_C
 #include <sys/types.h>
 #include <sys/_sigset.h>
 #include <sys/_timespec.h>
+
+_BEGIN_STD_C
 
 #if !defined(_SIGSET_T_DECLARED)
 #define _SIGSET_T_DECLARED

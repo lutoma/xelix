@@ -18,10 +18,11 @@
 
 #ifndef	_MNTENT_H
 #define	_MNTENT_H	1
-_BEGIN_STD_C
 
 #include <paths.h>
 #include <stdio.h>
+
+_BEGIN_STD_C
 
 #define _PATH_MNTTAB "/sys/mnttab"
 #define _PATH_MOUNTED "/sys/mounted"
