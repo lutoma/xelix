@@ -74,125 +74,6 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
  #ifdef NODEV
          if (device == NODEV)
            die (EXIT_FAILURE, 0, _("invalid device %s %s"),
---- coreutils-8.30/lib/getaddrinfo.c  2018-05-14 06:22:33.000000000 +0200
-+++ coreutils-8.30-patched/lib/getaddrinfo.c  2019-02-04 02:58:02.381634107 +0100
-@@ -189,7 +189,7 @@
-
-       if (hints == NULL || !(hints->ai_flags & AI_NUMERICSERV))
-         /* FIXME: Use getservbyname_r if available. */
--        se = getservbyname (servname, proto);
-+        //se = getservbyname (servname, proto);
-
-       if (!se)
-         {
-@@ -199,14 +199,14 @@
-           port = strtoul (servname, &c, 10);
-           if (*c || port > 0xffff)
-             return EAI_NONAME;
--          port = htons (port);
-+          //port = htons (port);
-         }
-       else
-         port = se->s_port;
-     }
-
-   /* FIXME: Use gethostbyname_r if available. */
--  he = gethostbyname (nodename);
-+  //he = gethostbyname (nodename);
-   if (!he || he->h_addr_list[0] == NULL)
-     return EAI_NONAME;
-
-@@ -354,90 +354,3 @@
-       free (cur);
-     }
- }
--
--int
--getnameinfo (const struct sockaddr *restrict sa, socklen_t salen,
--             char *restrict node, socklen_t nodelen,
--             char *restrict service, socklen_t servicelen,
--             int flags)
--{
--#ifdef WINDOWS_NATIVE
--  if (use_win32_p ())
--    return getnameinfo_ptr (sa, salen, node, nodelen,
--                            service, servicelen, flags);
--#endif
--
--  /* FIXME: Support other flags. */
--  if ((node && nodelen > 0 && !(flags & NI_NUMERICHOST)) ||
--      (service && servicelen > 0 && !(flags & NI_NUMERICHOST)) ||
--      (flags & ~(NI_NUMERICHOST|NI_NUMERICSERV)))
--    return EAI_BADFLAGS;
--
--  if (sa == NULL || salen < sizeof (sa->sa_family))
--    return EAI_FAMILY;
--
--  switch (sa->sa_family)
--    {
--#if HAVE_IPV4
--    case AF_INET:
--      if (salen < sizeof (struct sockaddr_in))
--        return EAI_FAMILY;
--      break;
--#endif
--#if HAVE_IPV6
--    case AF_INET6:
--      if (salen < sizeof (struct sockaddr_in6))
--        return EAI_FAMILY;
--      break;
--#endif
--    default:
--      return EAI_FAMILY;
--    }
--
--  if (node && nodelen > 0 && flags & NI_NUMERICHOST)
--    {
--      switch (sa->sa_family)
--        {
--#if HAVE_IPV4
--        case AF_INET:
--          if (!inet_ntop (AF_INET,
--                          &(((const struct sockaddr_in *) sa)->sin_addr),
--                          node, nodelen))
--            return EAI_SYSTEM;
--          break;
--#endif
--
--#if HAVE_IPV6
--        case AF_INET6:
--          if (!inet_ntop (AF_INET6,
--                          &(((const struct sockaddr_in6 *) sa)->sin6_addr),
--                          node, nodelen))
--            return EAI_SYSTEM;
--          break;
--#endif
--
--        default:
--          return EAI_FAMILY;
--        }
--    }
--
--  if (service && servicelen > 0 && flags & NI_NUMERICSERV)
--    switch (sa->sa_family)
--      {
--#if HAVE_IPV4
--      case AF_INET:
--#endif
--#if HAVE_IPV6
--      case AF_INET6:
--#endif
--        {
--          unsigned short int port
--            = ntohs (((const struct sockaddr_in *) sa)->sin_port);
--          if (servicelen <= snprintf (service, servicelen, "%u", port))
--            return EAI_OVERFLOW;
--        }
--        break;
--      }
--
--  return 0;
--}
 --- coreutils-8.30/lib/opendir.c  2018-05-14 06:20:31.000000000 +0200
 +++ coreutils-8.30-patched/lib/opendir.c  2019-02-04 21:01:30.771424111 +0100
 @@ -152,7 +152,8 @@
@@ -213,7 +94,7 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
  TERM vt100
 +TERM xelix
  TERM xterm*
- 
+
  # Below are the color init strings for the basic file types. A color init
 --- coreutils-8.30/src/who.c    2018-06-18 02:01:59.000000000 +0200
 +++ coreutils-8.30/src/who.c    2019-10-13 04:12:29.396417459 +0200
@@ -223,7 +104,7 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
  {
 +  return "";
    static char buf[INT_STRLEN_BOUND (intmax_t) + sizeof "-%m-%d %H:%M"];
- 
+
    /* Don't take the address of UT_TIME_MEMBER directly.
 --- coreutils-8.30/lib/readutmp.c       2018-05-14 06:20:31.000000000 +0200
 +++ coreutils-8.30/lib/readutmp.c       2019-10-13 04:12:34.126399765 +0200
@@ -240,4 +121,4 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
 +  */
    return true;
  }
- 
+
