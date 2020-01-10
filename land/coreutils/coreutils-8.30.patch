@@ -122,3 +122,69 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.30/src/mkn
    return true;
  }
 
+--- coreutils-8.30/src/stat.c	2018-06-25 00:32:14.000000000 +0200
++++ coreutils-8.30/src/stat.c	2020-01-10 07:13:43.378610409 +0100
+@@ -28,6 +28,8 @@
+ # define USE_STATVFS 0
+ #endif
+ 
++#undef USE_STATVFS
++
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdalign.h>
+@@ -230,7 +232,9 @@ static size_t decimal_point_len;
+ static char const * ATTRIBUTE_WARN_UNUSED_RESULT
+ human_fstype (STRUCT_STATVFS const *statfsbuf)
+ {
+-#ifdef STATXFS_FILE_SYSTEM_TYPE_MEMBER_NAME
++#if defined __xelix__
++  return "ext2/ext3";
++#elif defined STATXFS_FILE_SYSTEM_TYPE_MEMBER_NAME
+   return statfsbuf->STATXFS_FILE_SYSTEM_TYPE_MEMBER_NAME;
+ #else
+   switch (statfsbuf->f_type)
+@@ -808,6 +812,7 @@ print_statfs (char *pformat, size_t pref
+               int fd, char const *filename,
+               void const *data)
+ {
++/*
+   STRUCT_STATVFS const *statfsbuf = data;
+   bool fail = false;
+ 
+@@ -828,8 +833,8 @@ print_statfs (char *pformat, size_t pref
+         verify (sizeof statfsbuf->f_fsid % alignof (fsid_word) == 0);
+         fsid_word const *p = (fsid_word *) &statfsbuf->f_fsid;
+ 
+-        /* Assume a little-endian word order, as that is compatible
+-           with glibc's statvfs implementation.  */
++        / * Assume a little-endian word order, as that is compatible
++           with glibc's statvfs implementation.  * /
+         uintmax_t fsid = 0;
+         int words = sizeof statfsbuf->f_fsid / sizeof *p;
+         for (int i = 0; i < words && i * sizeof *p < sizeof fsid; i++)
+@@ -886,6 +891,8 @@ print_statfs (char *pformat, size_t pref
+       break;
+     }
+   return fail;
++
++*/
+ }
+ 
+ /* Return any bind mounted source for a path.
+@@ -1343,6 +1350,7 @@ print_it (char const *format, int fd, ch
+ static bool ATTRIBUTE_WARN_UNUSED_RESULT
+ do_statfs (char const *filename, char const *format)
+ {
++/*
+   STRUCT_STATVFS statfsbuf;
+ 
+   if (STREQ (filename, "-"))
+@@ -1361,6 +1369,7 @@ do_statfs (char const *filename, char co
+ 
+   bool fail = print_it (format, -1, filename, print_statfs, &statfsbuf);
+   return ! fail;
++*/
+ }
+ 
+ /* stat the file and print what we find */

@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 1.29.2
-# Wed Jul 10 04:56:25 2019
+# Fri Jan 10 07:17:29 2020
 #
 CONFIG_HAVE_DOT_CONFIG=y
 
@@ -289,8 +289,8 @@ CONFIG_UNIX2DOS=y
 # CONFIG_FEATURE_SORT_OPTIMIZE_MEMORY is not set
 # CONFIG_SPLIT is not set
 # CONFIG_FEATURE_SPLIT_FANCY is not set
-CONFIG_STAT=y
-CONFIG_FEATURE_STAT_FORMAT=y
+# CONFIG_STAT is not set
+# CONFIG_FEATURE_STAT_FORMAT is not set
 # CONFIG_FEATURE_STAT_FILESYSTEM is not set
 # CONFIG_STTY is not set
 # CONFIG_SUM is not set
