@@ -144,7 +144,7 @@ const struct syscall_definition syscall_table[] = {
 
 	// 21
 	{"utimes", (syscall_cb)vfs_utimes, 0,
-		SCA_STRING, 0, 0, 0},
+		SCA_STRING, SCA_POINTER, 0, sizeof(struct timeval) * 2},
 
 	// 22
 	{"fork", (syscall_cb)task_fork, SCF_STATE,

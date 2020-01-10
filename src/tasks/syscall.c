@@ -129,15 +129,19 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 
 		args[i] = (uint32_t)task_memmap(task, (void*)args[i], ptr_sizes[i], &copied[i]);
 		if(unlikely(!args[i])) {
+
+			#ifdef SYSCALL_DEBUG
+			log(LOG_DEBUG, "%d %s: %s(%#x, %#x, %#x)\n", task->pid, task->name,
+				def.name, oargs[0], oargs[1], oargs[2]);
+			log(LOG_DEBUG, "Result: Call failed - Could not memmap argument %d\n", i);
+			#endif
+
 			call_fail();
 		}
 	}
 
 #ifdef SYSCALL_DEBUG
-	log(LOG_DEBUG, "%d %s: %s(",
-		task->pid, task->name,
-		def.name);
-
+	log(LOG_DEBUG, "%d %s: %s(", task->pid, task->name, def.name);
 	dbg_print_arg(true, flags[0], args[0], oargs[0]);
 	dbg_print_arg(false, flags[1], args[1], oargs[1]);
 	dbg_print_arg(false, flags[2], args[2], oargs[2]);
