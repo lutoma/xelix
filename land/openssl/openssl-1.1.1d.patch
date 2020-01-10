@@ -1,0 +1,74 @@
+--- openssl-1.1.1d/Configurations/10-main.conf	2019-05-28 15:12:21.000000000 +0200
++++ openssl-1.1.1d/Configurations/10-main.conf	2019-10-09 03:00:43.867226129 +0200
+@@ -1572,6 +1572,20 @@ my %targets = (
+         shared_extension => ".so.\$(SHLIB_VERSION_NUMBER)",
+     },
+ 
++    "xelix-x86" => {
++        inherit_from     => [ "BASE_unix" ],
++        inherit_from     => [ asm("x86_elf_asm") ],
++        CC               => "gcc",
++        CFLAGS           => "-O3 -fomit-frame-pointer -Wall",
++        bn_ops           => "BN_LLONG",
++        thread_scheme    => "(unknown)",
++        dso_scheme       => "(unknown)",
++        shared_target    => "gnu-shared",
++        shared_cflag     => "-fPIC",
++        shared_extension => ".so.\$(SHLIB_VERSION_NUMBER)",
++    },
++
++
+ ##### VxWorks for various targets
+     "vxworks-ppc60x" => {
+         inherit_from     => [ "BASE_unix" ],
+--- openssl-1.1.1d/crypto/dso/dso_lib.c	2019-05-28 15:12:21.000000000 +0200
++++ openssl-1.1.1d/crypto/dso/dso_lib.c	2020-01-10 13:13:20.036417430 +0100
+@@ -14,6 +14,7 @@ static DSO_METHOD *default_DSO_meth = NU
+ 
+ static DSO *DSO_new_method(DSO_METHOD *meth)
+ {
++#if 0
+     DSO *ret;
+ 
+     if (default_DSO_meth == NULL) {
+@@ -52,6 +53,8 @@ static DSO *DSO_new_method(DSO_METHOD *m
+     }
+ 
+     return ret;
++#endif
++    return NULL;
+ }
+ 
+ DSO *DSO_new(void)
+@@ -309,6 +312,8 @@ char *DSO_convert_filename(DSO *dso, con
+ 
+ int DSO_pathbyaddr(void *addr, char *path, int sz)
+ {
++    return -1;
++#if 0
+     DSO_METHOD *meth = default_DSO_meth;
+     if (meth == NULL)
+         meth = DSO_METHOD_openssl();
+@@ -317,6 +322,7 @@ int DSO_pathbyaddr(void *addr, char *pat
+         return -1;
+     }
+     return (*meth->pathbyaddr) (addr, path, sz);
++#endif
+ }
+ 
+ DSO *DSO_dsobyaddr(void *addr, int flags)
+@@ -339,6 +345,8 @@ DSO *DSO_dsobyaddr(void *addr, int flags
+ 
+ void *DSO_global_lookup(const char *name)
+ {
++    return NULL;
++#if 0
+     DSO_METHOD *meth = default_DSO_meth;
+     if (meth == NULL)
+         meth = DSO_METHOD_openssl();
+@@ -347,4 +355,5 @@ void *DSO_global_lookup(const char *name
+         return NULL;
+     }
+     return (*meth->globallookup) (name);
++#endif
+ }
