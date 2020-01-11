@@ -8,7 +8,7 @@ all: $(PACKAGE_NAME).tar.xz
 	tar xf $(PACKAGE_NAME).tar.xz
 	patch -p0 < ${PACKAGE_NAME}.patch
 	cd ./$(PACKAGE_NAME) && autoreconf
-	cd ./$(PACKAGE_NAME) && ./configure --host=i786-pc-xelix --prefix=/usr --disable-threads --disable-acl --disable-xattr --disable-largefile --enable-no-install-program=arch,coreutils,dmesg,mount,mknod
+	cd ./$(PACKAGE_NAME) && ./configure --host=i786-pc-xelix --prefix=/usr --disable-threads --disable-acl --disable-xattr --disable-largefile --enable-no-install-program=arch,coreutils,dmesg,mknod
 	patch -p0 < ${PACKAGE_NAME}-patch-two.patch
 	make -C $(PACKAGE_NAME)
 
