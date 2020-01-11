@@ -60,7 +60,7 @@ static inline void send_strace(task_t* task, isf_t* state, int scnum, uintptr_t*
 
 #define call_fail() \
 	state->SCREG_RESULT = -1; \
-	state->SCREG_ERRNO = EINVAL; \
+	state->SCREG_ERRNO = EFAULT; \
 	return
 
 static void int_handler(task_t* task, isf_t* state, int num) {

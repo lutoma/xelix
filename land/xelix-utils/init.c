@@ -27,6 +27,7 @@
 #include <strings.h>
 #include <limits.h>
 #include <sys/wait.h>
+#include <sys/mount.h>
 #include "util.h"
 #include "ini.h"
 
@@ -105,6 +106,10 @@ int main() {
 	sigset_t set;
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
+
+	if(mount("/dev/ide1p1", "/boot", "ext2", 0, NULL) < 0) {
+		perror("Could not mount /boot");
+	}
 
 	if(chdir("/etc/init.d") == -1) {
 		perror("Could not switch to services directory");

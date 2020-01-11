@@ -3,7 +3,7 @@ CC := i786-pc-xelix-gcc
 LD := i786-pc-xelix-ld
 CFLAGS += -std=gnu18 -O3 -g -D_GNU_SOURCE
 
-TARGETS=basictest init ps uptime free login dmesg su play strace host telnetd
+TARGETS=basictest init ps uptime free login dmesg su play strace host telnetd mount
 
 all: $(TARGETS)
 

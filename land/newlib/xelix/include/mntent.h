@@ -25,7 +25,7 @@
 _BEGIN_STD_C
 
 #define _PATH_MNTTAB "/sys/mnttab"
-#define _PATH_MOUNTED "/sys/mounted"
+#define _PATH_MOUNTED "/sys/mounts"
 
 /* File listing canonical interesting mount points.  */
 #define	MNTTAB		_PATH_MNTTAB	/* Deprecated alias.  */

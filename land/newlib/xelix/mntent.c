@@ -73,11 +73,3 @@ free_mem (void)
 }
 
 text_set_element (__libc_subfreeres, free_mem);
-
-
-int mount(const char *source, const char *target,
-  const char *filesystemtype, unsigned long mountflags,
-  const void *data) {
-  errno = ENOSYS;
-  return -1;
-}

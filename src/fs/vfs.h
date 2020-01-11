@@ -137,7 +137,6 @@ struct pollfd {
 	short revents;	/* returned events */
 };
 
-struct vfs_mountpoint;
 struct vfs_callback_ctx {
 	// File descriptor - Only set on vfs calls that take open files
 	struct vfs_file* fp;
@@ -175,15 +174,6 @@ struct vfs_callbacks {
 
 };
 
-struct vfs_mountpoint {
-	int num;
-	char path[265];
-	void* instance;
-	char* type;
-	struct vfs_block_dev* dev;
-	struct vfs_callbacks callbacks;
-};
-
 typedef struct vfs_file {
 	// Reference counter, fd will get reused if 0
 	int refs;
@@ -216,6 +206,10 @@ typedef struct {
 char* vfs_normalize_path(const char* orig_path, char* cwd);
 vfs_file_t* vfs_get_from_id(int id, struct task* task);
 vfs_file_t* vfs_alloc_fileno(struct task* task, int min);
+void vfs_free_context(struct vfs_callback_ctx* ctx);
+struct vfs_callback_ctx* vfs_context_from_fd(int fd, struct task* task);
+struct vfs_callback_ctx* vfs_context_from_path(const char* path, struct task* task);
+
 int vfs_open(struct task* task, const char* orig_path, uint32_t flags);
 size_t vfs_read(struct task* task, int fd, void* dest, size_t size);
 size_t vfs_write(struct task* task, int fd, void* source, size_t size);
@@ -236,8 +230,6 @@ int vfs_readlink(struct task* task, const char* orig_path, char* buf, size_t siz
 int vfs_rmdir(struct task* task, const char* orig_path);
 int vfs_poll(struct task* task, struct pollfd* fds, uint32_t nfds, int timeout);
 int vfs_stat(struct task* task, char* path, vfs_stat_t* dest);
-int vfs_register_fs(struct vfs_block_dev* dev, char* path, void* instance, char* type,
-	struct vfs_callbacks* callbacks);
 void vfs_init();
 
 // legacy

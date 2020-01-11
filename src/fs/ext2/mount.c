@@ -27,6 +27,7 @@
 #include <time.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
+#include <fs/mount.h>
 #include <fs/block.h>
 #include "cb.h"
 
@@ -107,7 +108,7 @@ int ext2_mount(struct vfs_block_dev* dev, const char* path) {
 	fs->superblock->mount_time = time_get();
 	fs->callbacks = &cb;
 	write_superblock();
-	vfs_register_fs(dev, path, (void*)fs, "ext2", &cb);
+	vfs_mount_register(dev, path, (void*)fs, "ext2", &cb);
 	return 0;
 }
 

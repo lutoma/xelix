@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
+#include <fs/mount.h>
 
 static vfs_file_t* handle_symlink(struct vfs_callback_ctx* ctx, struct inode* inode, uint32_t flags) {
 	/* For symlinks with up to 60 chars length, the path is stored in the

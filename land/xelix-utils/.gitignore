@@ -11,3 +11,6 @@ dmesg
 su
 play
 strace
+host
+telnetd
+mount

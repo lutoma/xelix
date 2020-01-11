@@ -28,6 +28,7 @@ struct vfs_block_dev {
 	struct vfs_block_dev* next;
 	char name[50];
 	int block_size;
+	bool mounted;
 
 	// Used for stat.st_dev
 	int number;
@@ -48,6 +49,6 @@ uint64_t vfs_block_write(struct vfs_block_dev* dev, uint64_t start_block, uint64
 uint64_t vfs_block_sread(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
 uint64_t vfs_block_swrite(struct vfs_block_dev* dev, uint64_t offset, uint64_t size, uint8_t* buf);
 
-struct vfs_block_dev* vfs_block_get_dev(char* path);
+struct vfs_block_dev* vfs_block_get_dev(const char* path);
 void vfs_block_register_dev(char* name, uint64_t start_offset,
 	vfs_block_read_cb read_cb, vfs_block_write_cb write_cb, void* meta);

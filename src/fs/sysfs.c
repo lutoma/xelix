@@ -23,6 +23,7 @@
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
+#include <fs/mount.h>
 #include <fs/ftree.h>
 #include <tasks/task.h>
 #include <time.h>
@@ -304,6 +305,6 @@ void sysfs_rm_dev(struct sysfs_file* fp) {
 void sysfs_init() {
 	//sys_root = vfs_ftree_insert(NULL, "sys", stat);
 	//dev_root = vfs_ftree_insert(NULL, "dev", stat);
-	vfs_register_fs(NULL, "/sys", &sys_files, "sysfs", &callbacks);
-	vfs_register_fs(NULL, "/dev", &dev_files, "sysfs", &callbacks);
+	vfs_mount_register(NULL, "/sys", &sys_files, "sysfs", &callbacks);
+	vfs_mount_register(NULL, "/dev", &dev_files, "sysfs", &callbacks);
 }

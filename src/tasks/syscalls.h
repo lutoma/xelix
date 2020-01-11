@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2014-2019 Lukas Martini
+/* Copyright © 2014-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -26,6 +26,7 @@
 #include <net/socket.h>
 #include <fs/vfs.h>
 #include <fs/pipe.h>
+#include <fs/mount.h>
 #include <time.h>
 
 /* Syscall definitions
@@ -280,19 +281,19 @@ const struct syscall_definition syscall_table[] = {
 #ifdef ENABLE_PICOTCP
 	// 46
 	{"getaddr", (syscall_cb)net_getaddr, 0,
-		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT},
+		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 47
 	{"getname", (syscall_cb)net_getname, 0,
-		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT},
+		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 48
 	{"connect", (syscall_cb)net_connect, 0,
-		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT},
+		SCA_INT, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 49
 	{"recvfrom", (syscall_cb)net_recvfrom, 0,
-		SCA_POINTER | SCA_SIZE_IN_1, SCA_INT, 0},
+		SCA_POINTER | SCA_SIZE_IN_1, SCA_INT, 0, 0},
 #else
 	// 46
 	{"getaddr", NULL, 0,
@@ -310,4 +311,12 @@ const struct syscall_definition syscall_table[] = {
 	{"recvfrom", NULL, 0,
 		0, 0, 0, 0},
 #endif
+
+	// 50
+	{"mount", (syscall_cb)vfs_mount, 0,
+		SCA_STRING, SCA_STRING, SCA_INT, 0},
+
+	// 51
+	{"umount", (syscall_cb)vfs_mount, 0,
+		SCA_STRING, SCA_STRING, SCA_INT, 0},
 };

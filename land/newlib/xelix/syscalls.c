@@ -357,6 +357,17 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len) {
 	return syscall(48, socket, address, address_len);
 }
 
+int mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data) {
+	return syscall(50, source, target, mountflags);
+}
+
+int umount2(const char *target, int flags) {
+	return syscall(51, target, flags, 0);
+}
+
+int umount(const char *target) {
+	umount2(target, 0);
+}
 
 int ioctl(int fd, int request, ...) {
 	va_list va;

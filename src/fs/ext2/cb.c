@@ -29,6 +29,7 @@
 #include <time.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
+#include <fs/mount.h>
 #include <fs/block.h>
 
 

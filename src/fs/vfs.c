@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <cmdline.h>
 #include <panic.h>
+#include <fs/mount.h>
 #include <fs/null.h>
 #include <fs/block.h>
 #include <fs/sysfs.h>
@@ -39,10 +40,7 @@
 #include <fs/virtio_block.h>
 #include <net/socket.h>
 
-struct vfs_mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
 vfs_file_t kernel_files[VFS_MAX_OPENFILES];
-uint32_t last_mountpoint = -1;
-uint32_t last_dir = 0;
 
 /* Normalizes orig_path (which may be relative to cwd) into an absolute path,
  * removing all ../. and extraneous slashes in the process. */
@@ -131,34 +129,7 @@ vfs_file_t* vfs_get_from_id(int fd, task_t* task) {
 	return fp->dup_target ? vfs_get_from_id(fp->dup_target, task) : fp;
 }
 
-static int get_mountpoint(char* path, char** mount_path) {
-	size_t longest_match = 0;
-	int mp_num = -1;
-	char* mpath = NULL;
-
-	for(int i = 0; i <= last_mountpoint; i++) {
-		struct vfs_mountpoint cur_mp = mountpoints[i];
-		size_t plen = strlen(cur_mp.path);
-
-		if(!strncmp(path, cur_mp.path, plen - 1) && plen > longest_match) {
-			longest_match = plen;
-			mp_num = i;
-
-			if(strlen(path) - plen > 0) {
-				mpath = path + plen;
-			} else {
-				mpath = "/";
-			}
-		}
-	}
-
-	if(mount_path && mpath) {
-		*mount_path = strdup(mpath);
-	}
-	return mp_num;
-}
-
-static inline void free_context(struct vfs_callback_ctx* ctx) {
+void vfs_free_context(struct vfs_callback_ctx* ctx) {
 	if(ctx->free_paths) {
 		kfree(ctx->orig_path);
 		kfree(ctx->path);
@@ -167,7 +138,7 @@ static inline void free_context(struct vfs_callback_ctx* ctx) {
 	kfree(ctx);
 }
 
-static inline struct vfs_callback_ctx* context_from_fd(int fd, task_t* task) {
+struct vfs_callback_ctx* vfs_context_from_fd(int fd, task_t* task) {
 	struct vfs_callback_ctx* ctx = zmalloc(sizeof(struct vfs_callback_ctx));
 
 	ctx->fp = vfs_get_from_id(fd, task);
@@ -184,25 +155,25 @@ static inline struct vfs_callback_ctx* context_from_fd(int fd, task_t* task) {
 	return ctx;
 }
 
-static inline struct vfs_callback_ctx* context_from_path(const char* path, task_t* task) {
+struct vfs_callback_ctx* vfs_context_from_path(const char* path, task_t* task) {
 	struct vfs_callback_ctx* ctx = zmalloc(sizeof(struct vfs_callback_ctx));
 
 	ctx->orig_path = vfs_normalize_path(path, task ? task->cwd : "/");
 	if(!ctx->orig_path) {
+		kfree(ctx);
 		sc_errno = ENOENT;
 		return NULL;
 	}
 
-	int mp_num = get_mountpoint(ctx->orig_path, &ctx->path);
-	if(mp_num < 0 || !ctx->path) {
+	ctx->mp = vfs_mount_get(ctx->orig_path, &ctx->path);
+	if(ctx->mp->num < 0 || !ctx->path) {
 		kfree(ctx->orig_path);
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOENT;
 		return NULL;
 	}
 
 	ctx->free_paths = true;
-	ctx->mp = &mountpoints[mp_num];
 	ctx->fp = NULL;
 	ctx->task = task;
 	return ctx;
@@ -230,20 +201,20 @@ int vfs_open(task_t* task, const char* orig_path, uint32_t flags) {
 		return -1;
 	}
 
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.open) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	vfs_file_t* fp = ctx->mp->callbacks.open(ctx, flags);
 	if(!fp) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		return -1;
 	}
 
@@ -262,7 +233,7 @@ int vfs_open(task_t* task, const char* orig_path, uint32_t flags) {
 		vfs_seek(task, fp->num, 0, VFS_SEEK_END);
 	}
 
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return fp->num;
 }
 
@@ -273,7 +244,7 @@ size_t vfs_read(task_t* task, int fd, void* dest, size_t size) {
 		return -1;
 	}
 
-	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_WRONLY) {
 		sc_errno = EBADF;
 		return -1;
@@ -300,7 +271,7 @@ size_t vfs_write(task_t* task, int fd, void* source, size_t size) {
 		return -1;
 	}
 
-	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_fd(fd, task);
 	if(!ctx || !ctx->fp || ctx->fp->flags & O_RDONLY) {
 		sc_errno = EBADF;
 		return -1;
@@ -321,7 +292,7 @@ size_t vfs_write(task_t* task, int fd, void* source, size_t size) {
 }
 
 size_t vfs_getdents(task_t* task, int fd, void* dest, size_t size) {
-	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_fd(fd, task);
 	if(!ctx || !ctx->fp) {
 		sc_errno = EBADF;
 		return -1;
@@ -342,7 +313,7 @@ int vfs_seek(task_t* task, int fd, size_t offset, int origin) {
 		return -1;
 	}
 
-	vfs_stat_t* stat;
+	vfs_stat_t stat;
 	switch(origin) {
 		case VFS_SEEK_SET:
 			fp->offset = offset;
@@ -355,10 +326,8 @@ int vfs_seek(task_t* task, int fd, size_t offset, int origin) {
 			}
 			break;
 		case VFS_SEEK_END:
-			stat = kmalloc(sizeof(vfs_stat_t));
-			vfs_fstat(task, fp->num, stat);
-			fp->offset = stat->st_size + offset;
-			kfree(stat);
+			vfs_fstat(task, fp->num, &stat);
+			fp->offset = stat.st_size + offset;
 	}
 
 	return fp->offset;
@@ -433,7 +402,7 @@ int vfs_dup2(task_t* task, int fd1, int fd2) {
 }
 
 int vfs_ioctl(task_t* task, int fd, int request, void* arg) {
-	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_fd(fd, task);
 	if(!ctx || !ctx->fp) {
 		sc_errno = EBADF;
 		return -1;
@@ -448,38 +417,38 @@ int vfs_ioctl(task_t* task, int fd, int request, void* arg) {
 }
 
 int vfs_fstat(task_t* task, int fd, vfs_stat_t* dest) {
-	struct vfs_callback_ctx* ctx = context_from_fd(fd, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_fd(fd, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->fp->callbacks.stat) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->fp->callbacks.stat(ctx, dest);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_stat(task_t* task, char* orig_path, vfs_stat_t* dest) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.stat) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.stat(ctx, dest);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
@@ -512,144 +481,145 @@ int vfs_close(task_t* task, int fd) {
 }
 
 int vfs_unlink(task_t* task, char* orig_path) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.unlink) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.unlink(ctx);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_chmod(task_t* task, const char* orig_path, uint32_t mode) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.chmod) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.chmod(ctx, mode);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_chown(task_t* task, const char* orig_path, uint16_t uid, uint16_t gid) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.chown) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.chown(ctx, uid, gid);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_mkdir(task_t* task, const char* orig_path, uint32_t mode) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.mkdir) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.mkdir(ctx, mode);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_access(task_t* task, const char* orig_path, uint32_t amode) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.access) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.access(ctx, amode);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_utimes(task_t* task, const char* orig_path, struct timeval times[2]) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	serial_printf("vfs_utimes %#x\n", times);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.utimes) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.utimes(ctx, times);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_readlink(task_t* task, const char* path, char* buf, size_t size) {
-	struct vfs_callback_ctx* ctx = context_from_path(path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(path, task);
 	if(!ctx) {
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.readlink) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.readlink(ctx, buf, size);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
 int vfs_rmdir(task_t* task, const char* orig_path) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.rmdir) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.rmdir(ctx);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
 }
 
@@ -663,7 +633,7 @@ int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 	// Build contexts ahead of time to avoid constantly reallocating in the loop
 	struct vfs_callback_ctx** contexts = kmalloc(sizeof(void*) * nfds);
 	for(int i = 0; i < nfds; i++) {
-		contexts[i] = context_from_fd(fds[i].fd, task);
+		contexts[i] = vfs_context_from_fd(fds[i].fd, task);
 
 		if(!contexts[i] || !contexts[i]->fp) {
 			sc_errno = EBADF;
@@ -694,88 +664,40 @@ int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 
 bye:
 	for(int i = 0; i < nfds; i++) {
-		free_context(contexts[i]);
+		vfs_free_context(contexts[i]);
 	}
 	kfree(contexts);
 	return ret;
 }
 
 int vfs_link(task_t* task, const char* orig_path, const char* orig_new_path) {
-	struct vfs_callback_ctx* ctx = context_from_path(orig_path, task);
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
 	if(!ctx->mp->callbacks.link) {
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	char* new_path = vfs_normalize_path(orig_new_path, task ? task->cwd : "/");
 	char* new_mount_path = NULL;
-	int new_mp_num = get_mountpoint(new_path, &new_mount_path);
+	struct vfs_mountpoint* new_mp = vfs_mount_get(new_path, &new_mount_path);
 
-	if(ctx->mp->num != new_mp_num) {
+	if(ctx->mp->num != new_mp->num) {
 		kfree(new_mount_path);
-		free_context(ctx);
+		vfs_free_context(ctx);
 		sc_errno = EXDEV;
 		return -1;
 	}
 
 	int r = ctx->mp->callbacks.link(ctx, new_mount_path);
 	kfree(new_mount_path);
-	free_context(ctx);
+	vfs_free_context(ctx);
 	return r;
-}
-
-int vfs_register_fs(struct vfs_block_dev* dev, char* path, void* instance, char* type,
-	struct vfs_callbacks* callbacks) {
-
-	if(!path || !strncmp(path, "", 1)) {
-		log(LOG_ERR, "vfs: vfs_mount called with empty path.\n");
-		return -1;
-	}
-
-	if(!callbacks) {
-		log(LOG_ERR, "vfs: vfs_mount missing callbacks\n");
-		return -1;
-	}
-
-	uint32_t num;
-	spinlock_cmd(num = ++last_mountpoint, 20, -1);
-
-	strcpy(mountpoints[num].path, path);
-	mountpoints[num].instance = instance;
-	mountpoints[num].dev = dev;
-	mountpoints[num].type = type;
-	mountpoints[num].num = num;
-	memcpy(&mountpoints[num].callbacks, callbacks, sizeof(struct vfs_callbacks));
-
-	if(dev) {
-		log(LOG_DEBUG, "vfs: Mounted /dev/%s (type %s) to %s\n", dev->name, type, path);
-	} else {
-		log(LOG_DEBUG, "vfs: Mounted %s (type %s) to %s\n", type, type, path);
-	}
-	return 0;
-}
-
-static size_t sfs_mounts_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
-	if(ctx->fp->offset) {
-		return 0;
-	}
-
-	size_t rsize = 0;
-	for(int i = 0; i <= last_mountpoint; i++) {
-		struct vfs_mountpoint mp = mountpoints[i];
-		if(mp.dev) {
-			sysfs_printf("/dev/%s %s %s rw,noatime 0 0\n", mp.dev->name, mp.path, mp.type);
-		} else {
-			sysfs_printf("%s %s %s rw,noatime 0 0\n", mp.type, mp.path, mp.type);
-		}
-	}
-	return rsize;
 }
 
 void vfs_init() {
@@ -793,24 +715,9 @@ void vfs_init() {
 	virtio_block_init();
 	#endif
 
-	struct vfs_block_dev* rootdev = vfs_block_get_dev(root_path);
-	if(!rootdev) {
-		panic("vfs: Could not resolve root device path.\n");
-	}
-
 	sysfs_init();
-
-	#ifdef ENABLE_EXT2
-	if(ext2_mount(rootdev, "/") < 0) {
-		panic("vfs: Could not mount root filesystem\n");
-	}
-	#endif
+	vfs_mount_init(root_path);
 
 	bzero(kernel_files, sizeof(kernel_files));
 	vfs_null_init();
-
-	struct vfs_callbacks sfs_cb = {
-		.read = sfs_mounts_read,
-	};
-	sysfs_add_file("mounted", &sfs_cb);
 }

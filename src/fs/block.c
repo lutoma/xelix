@@ -105,7 +105,7 @@ static size_t sfs_block_write(struct vfs_callback_ctx* ctx, void* src, size_t si
 	return size;
 }
 
-struct vfs_block_dev* vfs_block_get_dev(char* path) {
+struct vfs_block_dev* vfs_block_get_dev(const char* path) {
 	if(strlen(path) < 6 || strncmp(path, "/dev/", 5)) {
 		return NULL;
 	}
