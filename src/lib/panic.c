@@ -75,7 +75,7 @@ void __attribute__((optimize("O0"))) panic(char* fmt, ...) {
 
 	va_list va;
 	va_start(va, fmt);
-	interrupts_disable();
+	int_disable();
 
 	char error[500];
 	vsnprintf(error, 500, fmt, va);

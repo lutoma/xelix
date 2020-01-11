@@ -24,6 +24,9 @@
 #ifdef __i386__
 	#define IRQ(n) (n + 0x20)
 	#define EFLAGS_IF 0x200
+
+	#define int_disable() asm volatile("cli")
+	#define int_enable() asm volatile("sti")
 #endif
 
 struct task;
@@ -65,10 +68,10 @@ struct interrupt_reg {
 };
 
 // Can't use kmalloc here as this is used during early boot. 10 should be plenty
-struct interrupt_reg interrupt_handlers[512][10];
+struct interrupt_reg int_handlers[512][10];
 
-static inline void interrupts_register(int n, interrupt_handler_t handler, bool can_reent) {
-	struct interrupt_reg* reg = interrupt_handlers[n];
+static inline void int_register(int n, interrupt_handler_t handler, bool can_reent) {
+	struct interrupt_reg* reg = int_handlers[n];
 
 	for(int i = 0; i < 10; i++) {
 		if(reg[i].handler) {
@@ -83,9 +86,9 @@ static inline void interrupts_register(int n, interrupt_handler_t handler, bool 
 	log(LOG_ERR, "int: Could not register handler for %d, too many handlers\n", n);
 }
 
-static inline void interrupts_bulk_register(int start, int end, interrupt_handler_t handler, bool can_reent) {
+static inline void int_register_bulk(int start, int end, interrupt_handler_t handler, bool can_reent) {
 		for(int i = start; i <= end; i++) {
-			interrupts_register(i, handler, can_reent);
+			int_register(i, handler, can_reent);
 		}
 }
 
@@ -95,4 +98,4 @@ static inline void dump_isf(uint32_t level, isf_t* state) {
 	log(level, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
 }
 
-void interrupts_init();
+void int_init();

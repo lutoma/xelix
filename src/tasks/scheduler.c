@@ -20,6 +20,7 @@
 #include "scheduler.h"
 #include <panic.h>
 #include <fs/sysfs.h>
+#include <int/int.h>
 
 static task_t* current_task = NULL;
 
@@ -72,7 +73,7 @@ static inline void unlink(task_t *t) {
 }
 
 task_t* scheduler_select(isf_t* last_regs) {
-	interrupts_disable();
+	int_disable();
 	if(unlikely(scheduler_state != SCHEDULER_INITIALIZED)) {
 		if(scheduler_state == SCHEDULER_INITIALIZING) {
 			scheduler_state = SCHEDULER_INITIALIZED;

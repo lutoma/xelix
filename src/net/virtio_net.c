@@ -170,7 +170,7 @@ void virtio_net_init()
 
 		dev->queues[QUEUE_TX1].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
 		virtio_provide_descs(dev, QUEUE_RX1, 50, 1500);
-		interrupts_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
+		int_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
 
 		uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
 		if(dev->features & VIRTIO_NET_F_MAC) {

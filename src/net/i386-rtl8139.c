@@ -280,7 +280,7 @@ static void enable(struct rtl8139_card *card)
 		log(LOG_ERR, "rtl8139: Error: Card isn't connected to the PIC.");
 		return;
 	}
-	interrupts_register(IRQ(card->device->interrupt_line), int_handler, false);
+	int_register(IRQ(card->device->interrupt_line), int_handler, false);
 
 	// Enable all interrupt events
 	int_out16(card, REG_INTERRUPT_MASK, 0x0005);

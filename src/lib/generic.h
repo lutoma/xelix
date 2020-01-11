@@ -60,8 +60,6 @@ static inline void __attribute__((noreturn)) freeze(void) {
 }
 
 #ifdef __i386__
-       #define interrupts_disable() asm volatile("cli")
-       #define interrupts_enable() asm volatile("sti")
        #define halt() asm volatile("hlt")
 #endif
 

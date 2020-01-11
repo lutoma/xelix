@@ -164,7 +164,7 @@ void virtio_block_init() {
 
 		//dev->queues[0].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
 		//dev->queues[0].used->flags = VIRTQ_USED_F_NO_NOTIFY;
-		interrupts_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
+		int_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
 
 		dev->status |= VIRTIO_PCI_STATUS_DRIVER_OK;
 		virtio_write_status(dev);

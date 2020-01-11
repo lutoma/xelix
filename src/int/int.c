@@ -1,4 +1,4 @@
-/* interrupts.c: Initialization of and interface to interrupts.
+/* int.c: Interrupt dispatching
  * Copyright © 2011-2020 Lukas Martini
  *
  * This file is part of Xelix.
@@ -28,9 +28,9 @@
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
-// Called by i386-interrupts.asm
-isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* state) {
-	struct interrupt_reg* reg = interrupt_handlers[intr];
+// Called by architecture-specific assembly handlers
+isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
+	struct interrupt_reg* reg = int_handlers[intr];
 	volatile task_t* task = scheduler_get_current();
 
 	#ifdef INTERRUPTS_DEBUG
@@ -44,9 +44,9 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* state) {
 		}
 
 		if(reg[i].can_reent) {
-			interrupts_enable();
+			int_enable();
 		} else {
-			interrupts_disable();
+			int_disable();
 		}
 
 		reg[i].handler((task_t*)task, state, intr);
@@ -83,8 +83,8 @@ isf_t* __fastcall interrupts_callback(uint32_t intr, isf_t* state) {
 	return state;
 }
 
-void interrupts_init() {
+void int_init() {
 	idt_init();
-	bzero(interrupt_handlers, sizeof(interrupt_handlers));
-	interrupts_enable();
+	bzero(int_handlers, sizeof(int_handlers));
+	int_enable();
 }

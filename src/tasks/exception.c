@@ -118,5 +118,5 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 }
 
 void task_exception_init() {
-	interrupts_bulk_register(0, 31, int_handler, true);
+	int_register_bulk(0, 31, int_handler, true);
 }

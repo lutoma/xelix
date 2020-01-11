@@ -175,7 +175,7 @@ static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size)
 }
 
 static void enable_card(struct ac97_card* card) {
-	interrupts_register(IRQ(card->device->interrupt_line), interrupt_handler, false);
+	int_register(IRQ(card->device->interrupt_line), interrupt_handler, false);
 
 	// Enable bus master, disable MSE
 	pci_config_write(card->device, 4, 5);

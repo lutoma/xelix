@@ -1,5 +1,5 @@
-; interrupts.asm: Hardware part of interrupt handling
-; Copyright © 2010-2019 Lukas Martini
+; i386-int.asm: Hardware part of interrupt handling
+; Copyright © 2010-2020 Lukas Martini
 
 ; This file is part of Xelix.
 ;
@@ -16,8 +16,7 @@
 ; You should have received a copy of the GNU General Public License
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
-[EXTERN cpu_fault_handler]
-[EXTERN interrupts_callback]
+[EXTERN int_dispatch]
 [EXTERN vmem_kernel_hwdata]
 
 %define PIT_MASTER	0x20
@@ -26,43 +25,8 @@
 %define IRQ7		39
 %define IRQ15		47
 
-%macro INTERRUPT 1
-	[GLOBAL interrupts_handler%1]
-	interrupts_handler%1:
-		; Push dummy value for exception error code field
-		push dword 0
-		push esp
-
-		; Need to store user esp in the struct, so account for the added field
-		add dword [esp], 4
-		pusha
-		mov ebx, %1
-		jmp interrupts_common_handler
-%endmacro
-
-%macro INTERRUPT_ERRCODE 1
-	[GLOBAL interrupts_handler%1]
-	interrupts_handler%1:
-		; Error code is implicitly pushed by CPU before the exception handler
-		push esp
-		add dword [esp], 4
-		pusha
-		mov ebx, %1
-		jmp interrupts_common_handler
-%endmacro
-
-%assign i 0
-%rep 256
-	%if (i == 8 || i == 17 || i == 30 || (i >= 10 && i <= 14))
-		INTERRUPT_ERRCODE i
-	%else
-		INTERRUPT i
-	%endif
-	%assign i i+1
-%endrep
-
-; Handles interrupt hardware handling. Expects interrupt number in ebx. Returns
-; 1 in eax if the interrupt was spurious, 0 otherwise.
+; Acknowledges interrupts to PIC where necessary. Expects interrupt number in
+; ebx. Returns 1 in eax if the interrupt was spurious, 0 otherwise.
 handle_eoi:
 	; Is this a spurious interrupt on the master PIC? If yes, return
 	cmp ebx, IRQ7
@@ -96,18 +60,18 @@ handle_eoi:
 	mov eax, 1
 	ret
 
-; This is the common interrupt handler. It saves the processor state, sets up
-; for kernel mode segments, handles spurious interrupts, calls the C-level
-; handler, and finally restores the stack frame.
+; This function gets called by the small handlers below that set up the error
+; code. It stores the CPU registers, sets up segments and paging context,
+; then calls the C handler int_dispatch.
+;
+; int_dispatch takes an isf_t struct (int/int.h) as argument. To build the
+; struct, we push all the required values on the stack in reverse order.
+; At this point, the CPU and the handlers above have already pushed
+; eflags, cs, eip, an an error code (or 0 for non-exceptions).
+;
+; Once it's done, it returns a new isf_t that needs to be applied.
 
-interrupts_common_handler:
-	; We have to push all the stuff in isf_t (int/int.h) which
-	; interrupts_callback takes in reversed order.
-	;
-	; The cpu automatically pushes eflags, cs, and eip, and an error code for
-	; some exceptions. Our macros push esp, and the interrupt number. The rest
-	; has to be put into the struct here.
-
+int_i386_dispatch:
 	; push ds, cr2 & cr3
 	xor eax, eax
 	mov ax, ds
@@ -139,9 +103,9 @@ interrupts_common_handler:
 	; Call C handler with fastcall convention
 	mov ecx, ebx
 	mov edx, esp
- 	call interrupts_callback
+ 	call int_dispatch
 
-	; interrupts_callback returns an isf_t interrupt stack frame
+	; int_dispatch returns a new isf_t interrupt stack frame
 	mov esp, eax
 
 .return:
@@ -149,7 +113,7 @@ interrupts_common_handler:
 	pop eax
 	mov cr3, eax
 
-	; Skip cr2
+	; Drop cr2
 	add esp, 4
 
 	; reload segment descriptors
@@ -162,3 +126,46 @@ interrupts_common_handler:
 	popa
 	pop esp
 	iret
+
+
+; These are the actual interrupt handlers that get called by the CPU. Since x86
+; interrupts do not store their number somewhere, we need to have a
+; different handler for each interrupt to figure out which one was called.
+;
+; Some interrupts/exceptions also push an additional error code on the stack.
+; To make sure we can store the data for interrupts that don't push an error
+; code in the same struct, their handlers push an additional 0 here.
+%macro INTERRUPT 1
+	[GLOBAL int_i386_handler%1]
+	int_i386_handler%1:
+		; Push dummy value for exception error code field
+		push dword 0
+		push esp
+
+		; Need to store user esp in the struct, so account for the added field
+		add dword [esp], 4
+		pusha
+		mov ebx, %1
+		jmp int_i386_dispatch
+%endmacro
+
+%macro INTERRUPT_ERRCODE 1
+	[GLOBAL int_i386_handler%1]
+	int_i386_handler%1:
+		; Error code is implicitly pushed by CPU before the exception handler
+		push esp
+		add dword [esp], 4
+		pusha
+		mov ebx, %1
+		jmp int_i386_dispatch
+%endmacro
+
+%assign i 0
+%rep 256
+	%if (i == 8 || i == 17 || i == 30 || (i >= 10 && i <= 14))
+		INTERRUPT_ERRCODE i
+	%else
+		INTERRUPT i
+	%endif
+	%assign i i+1
+%endrep

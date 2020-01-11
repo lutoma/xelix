@@ -52,7 +52,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 // Initialize the PIT
 void timer_init() {
 	// preemptability setting here also affects scheduler, so leave set to false
-	interrupts_register(IRQ(0), &timer_callback, false);
+	int_register(IRQ(0), &timer_callback, false);
 	rate = PIT_RATE;
 
 	// The value we send to the PIT is the value to divide it's input clock

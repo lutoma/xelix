@@ -44,7 +44,7 @@
 
 void (*boot_sequence[])(void) = {
 #ifdef __i386__
-	serial_init, gdt_init, interrupts_init, timer_init, multiboot_init,
+	serial_init, gdt_init, int_init, timer_init, multiboot_init,
 	mem_init, cmdline_init, tty_init, time_init, pci_init, vfs_init,
 	timer_init2, random_init,
 #endif

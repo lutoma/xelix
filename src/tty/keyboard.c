@@ -88,5 +88,5 @@ void tty_keyboard_init() {
 
 	send(0xF4);
 	flush();
-	interrupts_register(IRQ(1), &intr_handler, false);
+	int_register(IRQ(1), &intr_handler, false);
 }
