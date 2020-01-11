@@ -1,0 +1,16 @@
+--- darkhttpd-1.12/darkhttpd.c	2016-01-29 15:21:13.000000000 +0100
++++ darkhttpd-1.12/darkhttpd.c	2020-01-11 01:46:25.995398608 +0100
+@@ -855,11 +855,13 @@ static void init_sockin(void) {
+     if (sockin == -1)
+         err(1, "socket()");
+ 
++#ifndef __xelix__
+     /* reuse address */
+     sockopt = 1;
+     if (setsockopt(sockin, SOL_SOCKET, SO_REUSEADDR,
+                    &sockopt, sizeof(sockopt)) == -1)
+         err(1, "setsockopt(SO_REUSEADDR)");
++#endif
+ 
+ #if 0
+     /* disable Nagle since we buffer everything ourselves */
