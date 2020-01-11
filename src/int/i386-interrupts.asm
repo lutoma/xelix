@@ -131,32 +131,25 @@ interrupts_common_handler:
 	test eax, eax
 	jnz .return
 
+	; Load kernel paging context from global variable set during
+	; early boot in vmem_init
 	mov ecx, [vmem_kernel_hwdata]
-	jecxz .no_paging
-
-	mov edx, cr3
-	cmp ecx, edx
-	je .no_paging
 	mov cr3, ecx
-.no_paging:
 
-	; fastcall
+	; Call C handler with fastcall convention
 	mov ecx, ebx
 	mov edx, esp
  	call interrupts_callback
 
-	; interrupts_callback returns an interrupt stack frame
+	; interrupts_callback returns an isf_t interrupt stack frame
 	mov esp, eax
 
 .return:
-	; reload paging context
+	; Set paging context
 	pop eax
-	cmp eax, [vmem_kernel_hwdata]
-	je isf_return
 	mov cr3, eax
 
-isf_return:
-	; Drop cr2
+	; Skip cr2
 	add esp, 4
 
 	; reload segment descriptors
