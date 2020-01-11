@@ -1,0 +1,22 @@
+--- libedit-20191231-3.1/config.sub	2019-12-31 11:58:29.000000000 +0100
++++ libedit-20191231-3.1/config.sub	2020-01-11 04:49:23.639185758 +0100
+@@ -1390,7 +1390,7 @@ case $os in
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+ 	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme* \
+-	      | -midnightbsd*)
++	      | -midnightbsd* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+--- libedit-20191231-3.1/src/editline/readline.h	2019-10-25 22:12:05.000000000 +0200
++++ libedit-20191231-3.1/src/editline/readline.h	2020-01-11 04:49:16.439196264 +0100
+@@ -76,7 +76,7 @@ typedef KEYMAP_ENTRY *Keymap;
+
+ #ifndef CTRL
+ #include <sys/ioctl.h>
+-#if !defined(__sun) && !defined(__hpux) && !defined(_AIX)
++#if !defined(__sun) && !defined(__hpux) && !defined(_AIX) && !defined(__xelix__)
+ #include <sys/ttydefaults.h>
+ #endif
+ #ifndef CTRL
