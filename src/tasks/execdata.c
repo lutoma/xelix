@@ -31,14 +31,18 @@ struct execdata {
 	uint32_t envc;
 	void** argv;
 	void** env;
-	char binary_path[TASK_PATH_MAX];
+	/* This used to be the binary_path when VFS_PATH_MAX was 256 bytes. To not
+	 * break older binaries, keep it around for now.
+	 */
+	char old_binary_path[256];
 	uint16_t uid;
 	uint16_t gid;
 	uint16_t euid;
 	uint16_t egid;
+	char binary_path[VFS_PATH_MAX];
 };
 
-/* Sets up a single page of runtime data for the program, including PID, argv,
+/* Sets up two pages of runtime data for the program, including PID, argv,
  * environment etc.
  *
  * Page layout:
@@ -49,8 +53,8 @@ struct execdata {
  * - environ strings / free space for new environment variables
  */
 void task_setup_execdata(task_t* task) {
-	void* page = zmalloc_a(PAGE_SIZE);
-	task_add_mem(task, (void*)EXECDATA_LOCATION, page, PAGE_SIZE, TMEM_SECTION_DATA, TASK_MEM_FREE);
+	void* page = zmalloc_a(PAGE_SIZE * 2);
+	task_add_mem(task, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 2, TMEM_SECTION_DATA, TASK_MEM_FREE);
 
 	struct execdata* exc = (struct execdata*)page;
 	char** argv = (char**)exc + sizeof(struct execdata);
@@ -83,5 +87,6 @@ void task_setup_execdata(task_t* task) {
 	exc->envc = task->envc;
 	exc->argv = (void*)vmem_translate(task->vmem_ctx, (intptr_t)argv, true);
 	exc->env = (void*)vmem_translate(task->vmem_ctx, (intptr_t)environ, true);
-	memcpy(exc->binary_path, task->binary_path, TASK_PATH_MAX);
+	memcpy(exc->binary_path, task->binary_path, VFS_PATH_MAX);
+	memcpy(exc->old_binary_path, task->binary_path, 256);
 }

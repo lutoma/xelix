@@ -19,7 +19,7 @@
 #ifndef _SYS_LIMITS_H
 #define _SYS_LIMITS_H
 
-#define PATH_MAX 4096
+#define PATH_MAX 1024
 #define CHAR_BIT 8
 #define SCHAR_MIN -127
 #define SCHAR_MAX 127

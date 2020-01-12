@@ -104,6 +104,10 @@
 #define	POLLHUP		0x0010
 #define	POLLNVAL	0x0020
 
+// Keep in sync with values from limits.h
+#define VFS_NAME_MAX 255
+#define VFS_PATH_MAX 1024
+
 #define vfs_mode_to_filetype(mode) (mode & 0xf000)
 
 // Can't include <tasks/task.h> as that includes us, so use stub struct def.

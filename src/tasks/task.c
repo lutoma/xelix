@@ -42,7 +42,7 @@ static uint32_t highest_pid = 0;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 
-static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
+static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = zmalloc(sizeof(task_t));
@@ -65,7 +65,7 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
 	task->interrupt_yield = false;
 
 	strcpy(task->name, name);
-	memcpy(task->cwd, parent ? parent->cwd : "/", TASK_PATH_MAX);
+	memcpy(task->cwd, parent ? parent->cwd : "/", VFS_PATH_MAX);
 	task->parent = parent;
 
 	task->envc = envc;
@@ -96,7 +96,7 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
  * interrupt stack frame etc. The binary still has to be mapped into the paging
  * context separately (usually in the ELF loader).
  */
-task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
+task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
@@ -195,7 +195,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task_t* task = alloc_task(to_fork, 0, to_fork->name, to_fork->environ,
 		to_fork->envc, to_fork->argv, to_fork->argc);
 
-	memcpy(task->cwd, to_fork->cwd, TASK_PATH_MAX);
+	memcpy(task->cwd, to_fork->cwd, VFS_PATH_MAX);
 	memcpy(task->state, state, sizeof(isf_t));
 	memcpy(task->kernel_stack, to_fork->kernel_stack, KERNEL_STACK_SIZE);
 	memcpy(task->binary_path, to_fork->binary_path, sizeof(task->binary_path));
@@ -296,7 +296,7 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	kfree_array(__argv, __argc);
 	kfree_array(__env, __envc);
 
-	memcpy(new_task->cwd, task->cwd, TASK_PATH_MAX);
+	memcpy(new_task->cwd, task->cwd, VFS_PATH_MAX);
 	new_task->uid = task->uid;
 	new_task->gid = task->gid;
 	new_task->euid = task->euid;

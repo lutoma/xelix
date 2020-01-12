@@ -222,7 +222,7 @@ static int load_file(task_t* task, char* path, bool is_main) {
 
 int elf_load_file(task_t* task, char* path) {
 	char* abs_path = vfs_normalize_path(path, task->cwd);
-	strncpy(task->binary_path, abs_path, TASK_PATH_MAX);
+	strncpy(task->binary_path, abs_path, VFS_PATH_MAX);
 
 	if(load_file(task, abs_path, true) < 0) {
 		kfree(abs_path);

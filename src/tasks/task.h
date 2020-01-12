@@ -23,9 +23,6 @@
 #include <mem/vmem.h>
 #include <tasks/signal.h>
 
-#define TASK_MAXNAME 256
-#define TASK_PATH_MAX 256
-
 struct elf_load_ctx {
 	void* virt_end;
 
@@ -48,7 +45,7 @@ typedef struct task {
 	uint16_t euid;
 	uint16_t egid;
 
-	char name[TASK_MAXNAME];
+	char name[VFS_NAME_MAX];
 	struct task* parent;
 	isf_t* state;
 	struct task* next;
@@ -132,9 +129,8 @@ typedef struct task {
 		int* stat_loc;
 	} wait_context;
 
-	// TODO Is this actually the same as PATH_MAX in our toolchain?
-	char cwd[TASK_PATH_MAX + 1];
-	char binary_path[TASK_PATH_MAX + 1];
+	char cwd[VFS_PATH_MAX + 1];
+	char binary_path[VFS_PATH_MAX + 1];
 
 	/* A task-specific errno variable. After a syscall return, this will be put
 	 * into the ebx register, from where the userland syscall handler will
@@ -161,7 +157,7 @@ typedef struct task {
 	struct sysfs_file* sysfs_file;
 } task_t;
 
-task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
+task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
 void task_set_initial_state(task_t* task);
 int task_fork(task_t* to_fork, isf_t* state);

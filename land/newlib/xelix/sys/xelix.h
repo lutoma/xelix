@@ -1,4 +1,4 @@
-/* Copyright © 2018-2019 Lukas Martini
+/* Copyright © 2018-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <errno.h>
+#include <limits.h>
 
 _BEGIN_STD_C
 
@@ -31,11 +32,13 @@ struct _xelix_execdata {
 	uint32_t envc;
 	char** argv;
 	char** env;
-	char binary_path[256];
+	// binary_path in older versions of execdata
+	char _unused[256];
 	uint16_t uid;
 	uint16_t gid;
 	uint16_t euid;
 	uint16_t egid;
+	char binary_path[PATH_MAX];
 };
 
 struct _xelix_execdata* _xelix_execdata;
