@@ -569,6 +569,17 @@ int vfs_access(task_t* task, const char* orig_path, uint32_t amode) {
 	return r;
 }
 
+int vfs_realpath(task_t* task, const char* orig_path, char* dest) {
+	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
+	if(!ctx) {
+		return -1;
+	}
+
+	strncpy(dest, ctx->orig_path, VFS_PATH_MAX);
+	vfs_free_context(ctx);
+	return 0;
+}
+
 int vfs_utimes(task_t* task, const char* orig_path, struct timeval times[2]) {
 	serial_printf("vfs_utimes %#x\n", times);
 	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);

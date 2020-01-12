@@ -1,4 +1,4 @@
-/* Copyright © 2013-2019 Lukas Martini
+/* Copyright © 2013-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -367,6 +367,20 @@ int umount2(const char *target, int flags) {
 
 int umount(const char *target) {
 	umount2(target, 0);
+}
+
+char* realpath(const char *restrict file_name, char *restrict resolved_name) {
+	char* buf = resolved_name ? resolved_name : malloc(PATH_MAX);
+	if(syscall(52, file_name, buf, 0) < 0) {
+		if(!resolved_name) {
+			int sc_err = errno;
+			free(buf);
+			errno = sc_err;
+		}
+		return NULL;
+	}
+
+	return buf;
 }
 
 int ioctl(int fd, int request, ...) {

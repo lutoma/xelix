@@ -1,4 +1,4 @@
-/* Copyright © 2013-2019 Lukas Martini
+/* Copyright © 2013-2020 Lukas Martini
  * This file is part of Xelix.
  *
  * Xelix is free software: you can redistribute it and/or modify
@@ -100,7 +100,6 @@ STUB(int, lchown, (const char *path, uid_t owner, gid_t group), -1);
 STUB(int, mknod, (const char *path, mode_t mode, dev_t dev), -1);
 STUB(int, lutimes, (const char *path, const struct timeval times[2]), -1);
 STUB(int, sched_yield, (void), -1);
-STUB(char*, realpath, (const char *restrict file_name, char *restrict resolved_name), NULL);
 STUB(int, fsync, (int fildes), -1);
 STUB(int, getgrouplist, (const char *user, gid_t group, gid_t *groups, int *ngroups), -1);
 STUB(int, mkfifo, (const char *path, mode_t mode), -1);

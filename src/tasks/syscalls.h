@@ -319,4 +319,8 @@ const struct syscall_definition syscall_table[] = {
 	// 51
 	{"umount", (syscall_cb)vfs_mount, 0,
 		SCA_STRING, SCA_STRING, SCA_INT, 0},
+
+	// 52
+	{"realpath", (syscall_cb)vfs_realpath, 0,
+		SCA_STRING, SCA_POINTER, 0, VFS_PATH_MAX},
 };

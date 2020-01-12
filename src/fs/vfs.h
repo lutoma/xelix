@@ -228,6 +228,7 @@ int vfs_chmod(struct task* task, const char* orig_path, uint32_t mode);
 int vfs_chown(struct task* task, const char* orig_path, uint16_t uid, uint16_t gid);
 int vfs_mkdir(struct task* task, const char* orig_path, uint32_t mode);
 int vfs_access(struct task* task, const char* orig_path, uint32_t amode);
+int vfs_realpath(struct task* task, const char* orig_path, char* dest);
 int vfs_utimes(struct task* task, const char* orig_path, struct timeval times[2]);
 int vfs_link(struct task* task, const char* orig_path, const char* orig_new_path);
 int vfs_readlink(struct task* task, const char* orig_path, char* buf, size_t size);
