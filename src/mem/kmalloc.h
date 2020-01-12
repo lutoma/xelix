@@ -52,4 +52,4 @@ extern bool kmalloc_ready;
 } while(0)
 
 void kmalloc_init();
-void kmalloc_map_all();
+void kmalloc_get_stats(uint32_t* total, uint32_t* used);

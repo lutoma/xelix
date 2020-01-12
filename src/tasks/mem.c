@@ -20,6 +20,7 @@
 #include <tasks/mem.h>
 #include <tasks/task.h>
 #include <mem/kmalloc.h>
+#include <mem/palloc.h>
 #include <mem/vmem.h>
 #include <errno.h>
 
@@ -144,7 +145,9 @@ void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 	}
 
 	length = ALIGN(length, PAGE_SIZE);
-	void* phys_addr = zmalloc_a(length);
+
+	void* phys_addr = zpalloc(length / PAGE_SIZE);
+	//void* phys_addr = zmalloc_a(length);
 
 	if(!phys_addr) {
 		sc_errno = EAGAIN;
@@ -156,7 +159,7 @@ void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 	task->sbrk += length;
 
 	task_add_mem(task, virt_addr, phys_addr, length, TMEM_SECTION_HEAP,
-		TASK_MEM_FORK | TASK_MEM_FREE);
+		TASK_MEM_FORK | TASK_MEM_FREE | TASK_MEM_PALLOC);
 
 	return virt_addr;
 }

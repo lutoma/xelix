@@ -30,7 +30,7 @@ static const char *const usage[] = {
 
 int main(int argc, const char** argv) {
 	int human;
-	const char* path = "/sys/memfree";
+	const char* path = "/sys/mem_info";
 	struct argparse_option options[] = {
 		OPT_BOOLEAN(0, "help", NULL, "show this help message and exit", argparse_help_cb, 0, OPT_NONEG),
 		OPT_BOOLEAN('h', "human", &human, "show human-readable output"),
@@ -43,7 +43,7 @@ int main(int argc, const char** argv) {
     argparse_describe(&argparse, "\nDisplay amount of free and used memory in the system.",
     	"\nfree displays the total amount of free and used physical and swap "
     	"memory in the system, as well as the buffers and caches used by the "
-    	"kernel. The information is gathered by parsing /sys/memfree.\nfree is "
+    	"kernel. The information is gathered by parsing /sys/mem_info.\nfree is "
     	"part of xelix-utils. Please report bugs to <hello@lutoma.org>.");
     argc = argparse_parse(&argparse, argc, argv);
 
@@ -53,18 +53,65 @@ int main(int argc, const char** argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	uint32_t total;
-	uint32_t free;
-	if(fscanf(fp, "%d %d\n", &total, &free) != 2) {
-		fprintf(stderr, "Matching error.\n");
+	uint32_t mem_total = 0, mem_used = 0;
+	uint32_t mem_shared = 0, mem_cache = 0;
+	uint32_t palloc_total = 0, palloc_used = 0;
+	uint32_t kmalloc_total = 0, kmalloc_used = 0;
+
+	while(!feof(fp)) {
+		char name[100];
+		uint32_t value;
+
+		if(fscanf(fp, "%100[^:]: %u\n", &name, &value) != 2) {
+			fprintf(stderr, "Matching error.\n");
+			break;
+		}
+
+		if(!strcmp(name, "mem_total")) {
+			mem_total = value;
+		} else if(!strcmp(name, "mem_used")) {
+			mem_used = value;
+		} else if(!strcmp(name, "mem_shared")) {
+			mem_shared = value;
+		} else if(!strcmp(name, "mem_cache")) {
+			mem_cache = value;
+		} else if(!strcmp(name, "palloc_total")) {
+			palloc_total = value;
+		} else if(!strcmp(name, "palloc_used")) {
+			palloc_used = value;
+		} else if(!strcmp(name, "kmalloc_total")) {
+			kmalloc_total = value;
+		} else if(!strcmp(name, "kmalloc_used")) {
+			kmalloc_used = value;
+		}
 	}
 
-	printf("%18s%13s%13s\n", "total", "used", "free");
+	uint32_t mem_free = mem_total - mem_used;
+	uint32_t palloc_free = palloc_total - palloc_used;
+	uint32_t kmalloc_free = kmalloc_total - kmalloc_used;
+
+	printf("%25s%13s%13s%13s%13s%13s\n", "total", "used", "free", "shared", "buff/cache", "available");
 
 	if(!human) {
-		printf("Mem: %13d%13d%13d\n", total, total - free, free);
+		printf("Mem:        %13u%13u%13u%13u%13u%13u\n",
+			mem_total / 1024, mem_used / 1024, mem_free / 1024,
+			mem_shared / 1024, mem_cache / 1024, mem_free / 1024);
+
+		printf("palloc:     %13u%13u%13u\n", palloc_total / 1024,
+			palloc_used / 1024, palloc_free / 1024);
+
+		printf("kmalloc:    %13u%13u%13u\n", kmalloc_total / 1024,
+			kmalloc_used / 1024, kmalloc_free / 1024);
 	} else {
-		printf("Mem: %13s%13s%13s\n", readable_fs(total), readable_fs(total - free), readable_fs(free));
+		printf("Mem:        %13s%13s%13s%13s%13s%13s\n", readable_fs(mem_total),
+			readable_fs(mem_used), readable_fs(mem_free),
+			readable_fs(mem_shared), readable_fs(mem_cache), readable_fs(mem_free));
+
+		printf("palloc:     %13s%13s%13s\n", readable_fs(palloc_total),
+			readable_fs(palloc_used), readable_fs(palloc_free));
+
+		printf("kmalloc:    %13s%13s%13s\n", readable_fs(kmalloc_total),
+			readable_fs(kmalloc_used), readable_fs(kmalloc_free));
 	}
 	exit(EXIT_SUCCESS);
 }

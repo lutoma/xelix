@@ -23,6 +23,7 @@
 #define TASK_STACK_LOCATION 0xc0000000
 #define TASK_MEM_FORK	0x1
 #define TASK_MEM_FREE	0x2
+#define TASK_MEM_PALLOC	0x4
 
 enum task_mem_section {
 	TMEM_SECTION_NONE,

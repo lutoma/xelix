@@ -20,6 +20,7 @@
 #include <tasks/task.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
+#include <mem/palloc.h>
 #include <string.h>
 
 #define EXECDATA_LOCATION 0x5000
@@ -53,8 +54,9 @@ struct execdata {
  * - environ strings / free space for new environment variables
  */
 void task_setup_execdata(task_t* task) {
-	void* page = zmalloc_a(PAGE_SIZE * 2);
-	task_add_mem(task, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 2, TMEM_SECTION_DATA, TASK_MEM_FREE);
+	void* page = zpalloc(2);
+	task_add_mem(task, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 2,
+		TMEM_SECTION_DATA, TASK_MEM_FREE | TASK_MEM_PALLOC);
 
 	struct execdata* exc = (struct execdata*)page;
 	char** argv = (char**)exc + sizeof(struct execdata);

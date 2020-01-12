@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2015 Lukas Martini
+/* Copyright © 2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -15,29 +15,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
+ * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define MEMORY_TRACK_MAX_AREAS 256
+void* palloc(uint32_t num);
+void pfree(uint32_t num, uint32_t size);
+void palloc_init();
+void palloc_get_stats(uint32_t* total, uint32_t* used);
 
-typedef enum {
-	MEMORY_TYPE_FREE,
-	MEMORY_TYPE_KERNEL_BINARY,
-	MEMORY_TYPE_INITRD,
-	MEMORY_TYPE_ACPI,
-	MEMORY_TYPE_HIBERNATE,
-	MEMORY_TYPE_DEFECTIVE,
-	MEMORY_TYPE_KMALLOC,
-	MEMORY_TYPE_UNKNOWN
-} memory_track_type_t;
-
-typedef struct {
-	void* addr;
-	size_t size;
-	memory_track_type_t type;
-} memory_track_area_t;
-
-memory_track_area_t memory_track_areas[MEMORY_TRACK_MAX_AREAS];
-uint32_t memory_track_num_areas;
-
-void memory_track_init();
+static inline void* zpalloc(uint32_t num) {
+	void* buf = palloc(num);
+	bzero(buf, num * PAGE_SIZE);
+	return buf;
+}

@@ -18,13 +18,12 @@
  */
 
 #include "kmalloc.h"
-#include "track.h"
 #include "vmem.h"
+#include "palloc.h"
 #include <log.h>
 #include <string.h>
 #include <panic.h>
 #include <spinlock.h>
-#include <fs/sysfs.h>
 
 #define GET_FOOTER(x) ((struct footer*)((intptr_t)x + x->size + sizeof(struct mem_block)))
 #define GET_CONTENT(x) ((void*)((intptr_t)x + sizeof(struct mem_block)))
@@ -354,61 +353,26 @@ void _kfree(void *ptr DEBUGREGS) {
 	spinlock_release(&kmalloc_lock);
 }
 
-static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
-	if(ctx->fp->offset) {
-		return 0;
-	}
-
-	size_t rsize = 0;
-	uint32_t free = alloc_max - alloc_end;
-	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
-		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
-		free += fblock->size;
-	}
-
-	sysfs_printf("%d %d\n", alloc_max - alloc_start, free);
-	return rsize;
-}
-
 void kmalloc_init() {
-	memory_track_area_t* largest_area = NULL;
-	for(int i = 0; i < memory_track_num_areas; i++) {
-		memory_track_area_t* area = &memory_track_areas[i];
-
-		if(area->type == MEMORY_TYPE_FREE &&
-			(!largest_area || largest_area->size < area->size)) {
-
-			largest_area = area;
-		}
-	}
-
-	if(!largest_area) {
-		panic("kmalloc: Could not find suitable memory area");
-	}
-
-	largest_area->type = MEMORY_TYPE_KMALLOC;
-	alloc_start = (intptr_t)largest_area->addr;
+	alloc_start = (intptr_t)palloc(0x10000);
 
 	if(alloc_start % 8) {
 		alloc_start = (alloc_start &~ 7) + 8;
 	}
 
 	alloc_end = alloc_start;
-	alloc_max = (intptr_t)largest_area->addr + largest_area->size;
+	alloc_max = (intptr_t)alloc_start + (0x10000 * PAGE_SIZE);
 	kmalloc_ready = true;
 	log(LOG_DEBUG, "kmalloc: Allocating from %#x - %#x\n", alloc_start, alloc_max);
-
-	struct vfs_callbacks sfs_cb = {
-		.read = sfs_read,
-	};
-	sysfs_add_file("memfree", &sfs_cb);
 }
 
-/* Called by vmem_init to map our pages - can't be done in init() as kmalloc is
- * initialized before vmem.
- */
-void kmalloc_map_all() {
-	vmem_map_flat(NULL, (void*)alloc_start, alloc_max - alloc_start, 0, 0);
+void kmalloc_get_stats(uint32_t* total, uint32_t* used) {
+	*total = alloc_max - alloc_start;
+	*used = alloc_end - alloc_start;
+	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
+		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
+		*used -= fblock->size;
+	}
 }
 
 #ifdef KMALLOC_CHECK

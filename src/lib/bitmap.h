@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010 Christoph Sünderhauf
+/* Copyright © 2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,35 +18,22 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "generic.h"
-
 #define bit_set(num, bit) ((num) | 1 << (bit))
 #define bit_clear(num, bit) ((num) & ~(1 << (bit)))
 #define bit_toggle(num, bit) ((num) ^ 1 << (bit))
 #define bit_get(num, bit) ((num) & (1 << (bit)))
 
-typedef struct {
-	uint32_t numbits;
-	/* an array large enough for numbits to fit in. Might
-	 * (if numbits%8!=0) have some spare bits at the end
-	 */
-	uint32_t* bits;
-} bitmap_t;
+struct bitmap {
+	uint32_t* data;
+	uint32_t size;
+	int first_free;
+};
 
+#define bitmap_index(a) ((a) / (8 * sizeof(uint32_t)))
+#define bitmap_offset(a) ((a) % (8 * sizeof(uint32_t)))
+#define bitmap_size(size) ((size) + (8 * sizeof(uint32_t)) - 1) / (8 * sizeof(uint32_t))
+#define bitmap_get(bm, num) (bit_get((bm)->data[bitmap_index(num)], bitmap_offset(num)))
 
-// creates a new bitmap.
-// CONTENT IS RANDOM!  - use bitmap_clearall() to clear the bitmap.
-bitmap_t bitmap_init(uint32_t numbits);
-
-// returns 1 or 0
-uint8_t bitmap_get(bitmap_t bitmap, uint32_t bitnum);
-// sets a bit (to 1)
-void bitmap_set(bitmap_t bitmap, uint32_t bitnum);
-// clears a bit (to 0)
-void bitmap_clear(bitmap_t bitmap, uint32_t bitnum);
-
-// clears every bit to 0
-void bitmap_clearAll(bitmap_t bitmap);
-
-// finds the first bit set to 0    returns 0 if no cleared bit found (0 is also returned if the first bit is cleared)
-uint32_t bitmap_findFirstClear(bitmap_t bitmap);
+void bitmap_set(struct bitmap* bm, uint32_t pos, uint32_t num);
+void bitmap_clear(struct bitmap* bm, uint32_t pos, uint32_t num);
+uint32_t bitmap_find(struct bitmap* bm, uint32_t num);

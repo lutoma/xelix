@@ -24,6 +24,7 @@
 #include <tasks/elf.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
+#include <mem/palloc.h>
 #include <mem/vmem.h>
 #include <mem/i386-gdt.h>
 #include <int/int.h>
@@ -47,14 +48,16 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	task_t* task = zmalloc(sizeof(task_t));
 	task->vmem_ctx = zmalloc(sizeof(struct vmem_context));
-	task->state = zmalloc_a(PAGE_SIZE);
-	task->kernel_stack = zmalloc_a(KERNEL_STACK_SIZE);
+	task->state = palloc(1);
+	bzero(task->state, sizeof(isf_t));
+
+	task->kernel_stack = palloc(4);
 
 	task_add_mem_flat(task, task->state, PAGE_SIZE,
-		TMEM_SECTION_KERNEL, TASK_MEM_FREE);
+		TMEM_SECTION_KERNEL, TASK_MEM_FREE | TASK_MEM_PALLOC);
 
 	task_add_mem_flat(task, task->kernel_stack, KERNEL_STACK_SIZE,
-		TMEM_SECTION_KERNEL, TASK_MEM_FREE);
+		TMEM_SECTION_KERNEL, TASK_MEM_FREE | TASK_MEM_PALLOC);
 
 	// FIXME Should have TMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
 	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000,
@@ -175,7 +178,11 @@ void task_cleanup(task_t* t) {
 	struct task_mem* alloc = t->mem_allocs;
 	while(alloc) {
 		if(alloc->flags & TASK_MEM_FREE) {
-			kfree(alloc->phys_addr);
+			if(alloc->flags & TASK_MEM_PALLOC) {
+				pfree((uintptr_t)alloc->phys_addr / PAGE_SIZE, alloc->len / PAGE_SIZE);
+			} else {
+				kfree(alloc->phys_addr);
+			}
 		}
 
 		struct task_mem* old_alloc = alloc;

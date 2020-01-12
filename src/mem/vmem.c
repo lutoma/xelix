@@ -93,8 +93,7 @@ void* vmem_get_hwdata(struct vmem_context* ctx) {
 void vmem_init() {
 	// Initialize kernel context
 	kernel_ctx = zmalloc(sizeof(struct vmem_context));
-	vmem_map_flat(NULL, (void*)KERNEL_START, KERNEL_SIZE, 0, 0);
-	kmalloc_map_all();
+	vmem_map_flat(NULL, KERNEL_START, 0xfffff000, 0, 0);
 	vmem_kernel_hwdata = vmem_get_hwdata(kernel_ctx);
 	paging_init();
 }

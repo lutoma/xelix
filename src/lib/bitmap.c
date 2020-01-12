@@ -1,6 +1,5 @@
-/* bitmap.c: Bitset / Bitmap implementation
- * Copyright © 2010 Christoph Sünderhauf
- * Copyright © 2011 Lukas Martini
+/* bitmap.c: Bitmap handling
+ * Copyright © 2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -15,96 +14,93 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bitmap.h"
+#include <bitmap.h>
 
-#include <mem/kmalloc.h>
-#include <log.h>
-#include <string.h>
+void bitmap_set(struct bitmap* bm, uint32_t pos, uint32_t num) {
+	for(int i = 0; i < num; i++) {
+		uint32_t index = bitmap_index(pos + i);
+		uint32_t offset = bitmap_offset(pos + i);
 
-/* returns the index of bitmap->bits[] or the offset in the
- * bitmap->bits[index]. Offset such that offset 0 is the lowest bit,
- * offset 7 is the highest bit.
- */
-#define index(a) (a/(8*4))
-#define offset(a) (a%(8*4))
+		if(!offset && (num - i) >= 32) {
+			bm->data[index] = 0xffffffff;
+			i += 31;
+		} else {
+			bm->data[index] |= 1 << offset;
+		}
+	}
+}
 
-// returns 1 or 0
-uint8_t bitmap_get(bitmap_t bitmap, uint32_t bitnum)
-{
-	if( bitnum >= bitmap.numbits )
-	{
-		log(LOG_ERR, "bitmap: bitmap_get() called on a bit number which exceeds the size of the bitmap!");
-		return 0;
+void bitmap_clear(struct bitmap* bm, uint32_t pos, uint32_t num) {
+	for(int i = 0; i < num; i++) {
+		uint32_t index = bitmap_index(pos + i);
+		uint32_t offset = bitmap_offset(pos + i);
+
+		if(!offset && (num - i) >= 32) {
+			bm->data[index] = 0;
+			i += 31;
+		} else {
+			bm->data[index] &= ~(1 << offset);
+		}
 	}
 
-	if ( bitmap.bits[index(bitnum)] & (0x1 << offset(bitnum)) )
-		return 1;
-	else
-		return 0;
+	bm->first_free = MIN(bm->first_free, pos);
 }
 
-// sets a bit (to 1)
-void bitmap_set(bitmap_t bitmap, uint32_t bitnum)
-{
-	if( bitnum >= bitmap.numbits )
-	{
-		log(LOG_ERR, "bitmap: bitmap_set() called on a bit number which exceeds the size of the bitmap!");
-		return;
-	}
+uint32_t bitmap_find(struct bitmap* bm, uint32_t num) {
+	int contig_start = 0;
+	int contig_num = 0;
+	bool all_nonfree = true;
 
-	bitmap.bits[index(bitnum)] = bitmap.bits[index(bitnum)] | (0x1 << offset(bitnum));
-}
+	for(uint32_t i = bm->first_free; i <= bitmap_size(bm->size); i++) {
+		uint32_t* bits = &bm->data[i];
 
-
-// clears a bit (to 0)
-void bitmap_clear(bitmap_t bitmap, uint32_t bitnum)
-{
-	if( bitnum >= bitmap.numbits )
-	{
-		log(LOG_ERR, "bitmap: bitmap_clear() called on a bit number which exceeds the size of the bitmap!");
-		return;
-	}
-
-	bitmap.bits[index(bitnum)] = bitmap.bits[index(bitnum)] & ~(0x1 << offset(bitnum));
-}
-
-// clears every bit to 0
-void bitmap_clearAll(bitmap_t bitmap)
-{
-	memset(bitmap.bits, 0, sizeof(uint32_t) * (bitmap.numbits-1)/32+1);
-}
-
-uint32_t bitmap_findFirstClear(bitmap_t bitmap)
-{
-	int32_t i;
-	for(i=0; i <= index(bitmap.numbits); i++)
-	{
-		if(bitmap.bits[i] == 0xffffffff)
+		if(*bits == 0xffffffff) {
+			contig_num = 0;
 			continue;
+		}
+		if(all_nonfree) {
+			all_nonfree = false;
+			bm->first_free = i;
+		}
 
-		int j;
-		for(j=0; j < 32; j++)
-			if(! bitmap_get(bitmap, 32*i+j))
-				return 32*i+j;
+		if(!*bits) {
+			if(!contig_num) {
+				contig_start = i*32;
+			}
+			contig_num += 32;
+
+			if(contig_num + 32 >= num) {
+				return contig_start;
+			}
+
+			continue;
+		}
+
+		int tz = __builtin_ctz(*bits);
+		if(contig_num + tz < num) {
+			contig_num = 0;
+			continue;
+		}
+
+		for(int j = 0; j < 32; j++) {
+			if(bit_get(*bits, j)) {
+				contig_num = 0;
+			} else {
+				if(!contig_num) {
+					contig_start = i*32 + j;
+				}
+				contig_num++;
+
+				if(contig_num >= num) {
+					return contig_start;
+				}
+			}
+		}
 	}
 
 	// No free bits left
-	return 0;
-}
-
-bitmap_t bitmap_init(uint32_t numbits)
-{
-	if(numbits == 0)
-	{
-		log(LOG_WARN, "bitmap: Empty bitmap requested! Returning NULL.");
-		return (bitmap_t){0, NULL};
-	}
-
-	bitmap_t bitmap;
-	bitmap.numbits = numbits;
-	bitmap.bits = (uint32_t*)kmalloc(sizeof(uint32_t) * (numbits-1)/32+1);
-	return bitmap;
+	return -1;
 }

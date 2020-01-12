@@ -31,9 +31,9 @@
 /* Since the log is also used before kmalloc is initialized, first use a static
  * buffer, then switch as soon as kmalloc is ready.
  */
-static char early_buffer[0x700];
+static char early_buffer[0x1000];
 static char* buffer = (char*)&early_buffer;
-static size_t buffer_size = 0x700;
+static size_t buffer_size = 0x1000;
 static size_t log_size = 0;
 
 static void append(char* string, size_t len) {

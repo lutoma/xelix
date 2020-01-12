@@ -24,6 +24,7 @@
 #include <tasks/elf.h>
 
 static struct multiboot_tag_mmap* mmap_info = NULL;
+static struct multiboot_tag_basic_meminfo* mem_info = NULL;
 static struct multiboot_tag_framebuffer framebuffer_info;
 
 /* These are set by i386-boot.asm right after boot */
@@ -69,6 +70,10 @@ static char* tag_type_names[] = {
 
 struct multiboot_tag_mmap* multiboot_get_mmap() {
 	return mmap_info;
+}
+
+struct multiboot_tag_basic_meminfo* multiboot_get_meminfo() {
+	return mem_info;
 }
 
 struct multiboot_tag_framebuffer* multiboot_get_framebuffer() {
@@ -151,6 +156,11 @@ void multiboot_init() {
 				 * memory system initialization and won't be erased earlier.
 				 */
 				mmap_info = (struct multiboot_tag_mmap*)tag;
+				break;
+			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
+				// see above
+				mem_info = (struct multiboot_tag_basic_meminfo*)tag;
+				snprintf(strrep, 150, "lower=%#x upper=%#x", mem_info->mem_lower, mem_info->mem_upper);
 				break;
 			case MULTIBOOT_TAG_TYPE_ELF_SECTIONS:
 				if(extract_symtab((struct multiboot_tag_elf_sections*)tag) == 0) {
