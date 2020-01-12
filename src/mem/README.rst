@@ -1,1 +1,0 @@
-../../doc/virtual-memory.rst
