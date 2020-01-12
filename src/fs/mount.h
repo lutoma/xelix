@@ -22,17 +22,18 @@
 
 struct vfs_callback_ctx;
 struct vfs_mountpoint {
-	int num;
+	struct vfs_mountpoint* prev;
+	struct vfs_mountpoint* next;
 	char path[265];
 	void* instance;
-	char* type;
+	char type[50];
 	struct vfs_block_dev* dev;
 	struct vfs_callbacks callbacks;
 };
 
-int vfs_mount_register(struct vfs_block_dev* dev, const char* path, void* instance, char* type,
+int vfs_mount_register(struct vfs_block_dev* dev, const char* path, void* instance, const char* type,
 	struct vfs_callbacks* callbacks);
-struct vfs_mountpoint* vfs_mount_get(char* path, char** mount_path);
+struct vfs_mountpoint* vfs_mount_get(const char* path, char** mount_path);
 int vfs_mount(struct task* task, const char* source, const char* target, int flags);
 int vfs_umount(struct task* task, const char* target, int flags);
 void vfs_mount_init(const char* root_path);

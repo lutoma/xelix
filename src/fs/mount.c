@@ -27,26 +27,30 @@
 #include <errno.h>
 #include <panic.h>
 #include <stdbool.h>
-#include <spinlock.h>
 
-static struct vfs_mountpoint mountpoints[VFS_MAX_MOUNTPOINTS];
-static uint32_t last_mountpoint = -1;
+static struct vfs_mountpoint* mountpoints;
 
-int vfs_mount_register(struct vfs_block_dev* dev, const char* path, void* instance, char* type,
-	struct vfs_callbacks* callbacks) {
+int vfs_mount_register(struct vfs_block_dev* dev, const char* path,
+	void* instance, const char* type, struct vfs_callbacks* callbacks) {
 
 	if(dev) {
 		dev->mounted = true;
 	}
 
-	uint32_t num;
-	spinlock_cmd(num = ++last_mountpoint, 20, -1);
-	strcpy(mountpoints[num].path, path);
-	mountpoints[num].instance = instance;
-	mountpoints[num].dev = dev;
-	mountpoints[num].type = type;
-	mountpoints[num].num = num;
-	memcpy(&mountpoints[num].callbacks, callbacks, sizeof(struct vfs_callbacks));
+	struct vfs_mountpoint* mp = kmalloc(sizeof(struct vfs_mountpoint));
+	strcpy(mp->type, type);
+	strcpy(mp->path, path);
+	memcpy(&mp->callbacks, callbacks, sizeof(struct vfs_callbacks));
+
+	mp->instance = instance;
+	mp->dev = dev;
+	mp->prev = NULL;
+	mp->next = mountpoints;
+	if(mp->next) {
+		mp->next->prev = mp;
+	}
+
+	mountpoints = mp;
 
 	if(dev) {
 		log(LOG_DEBUG, "vfs: Mounted /dev/%s (type %s) to %s\n", dev->name, type, path);
@@ -56,13 +60,13 @@ int vfs_mount_register(struct vfs_block_dev* dev, const char* path, void* instan
 	return 0;
 }
 
-struct vfs_mountpoint* vfs_mount_get(char* path, char** mount_path) {
+struct vfs_mountpoint* vfs_mount_get(const char* path, char** mount_path) {
 	struct vfs_mountpoint* match = NULL;
 	size_t match_len = 0;
-	char* mpath = NULL;
+	const char* mpath = NULL;
 
-	for(int i = 0; i <= last_mountpoint; i++) {
-		struct vfs_mountpoint* cur_mp = &mountpoints[i];
+	struct vfs_mountpoint* cur_mp = mountpoints;
+	for(; cur_mp; cur_mp = cur_mp->next) {
 		size_t plen = strlen(cur_mp->path);
 
 		if(!strncmp(path, cur_mp->path, plen - 1) && plen > match_len) {
@@ -147,8 +151,35 @@ int vfs_umount(task_t* task, const char* target, int flags) {
 		return -1;
 	}
 
-	sc_errno = ENOSYS;
-	return -1;
+	struct vfs_mountpoint* mp =  vfs_mount_get(target, NULL);
+	if(!mp) {
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	if(!strcmp(mp->path, "/")) {
+		sc_errno = EBUSY;
+		return -1;
+	}
+
+	if(mp->prev) {
+		mp->prev->next = mp->next;
+	}
+
+	if(mp->next) {
+		mp->next->prev = mp->prev;
+	}
+
+	if(mountpoints == mp) {
+		mountpoints = mp->next;
+	}
+
+	if(mp->dev) {
+		mp->dev->mounted = false;
+	}
+
+	kfree(mp);
+	return 0;
 }
 
 static size_t sfs_mounts_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
@@ -157,12 +188,12 @@ static size_t sfs_mounts_read(struct vfs_callback_ctx* ctx, void* dest, size_t s
 	}
 
 	size_t rsize = 0;
-	for(int i = 0; i <= last_mountpoint; i++) {
-		struct vfs_mountpoint mp = mountpoints[i];
-		if(mp.dev) {
-			sysfs_printf("/dev/%s %s %s rw,noatime 0 0\n", mp.dev->name, mp.path, mp.type);
+	struct vfs_mountpoint* mp = mountpoints;
+	for(; mp; mp = mp->next) {
+		if(mp->dev) {
+			sysfs_printf("/dev/%s %s %s rw,noatime 0 0\n", mp->dev->name, mp->path, mp->type);
 		} else {
-			sysfs_printf("%s %s %s rw,noatime 0 0\n", mp.type, mp.path, mp.type);
+			sysfs_printf("%s %s %s rw,noatime 0 0\n", mp->type, mp->path, mp->type);
 		}
 	}
 	return rsize;

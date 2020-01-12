@@ -166,7 +166,7 @@ struct vfs_callback_ctx* vfs_context_from_path(const char* path, task_t* task) {
 	}
 
 	ctx->mp = vfs_mount_get(ctx->orig_path, &ctx->path);
-	if(ctx->mp->num < 0 || !ctx->path) {
+	if(!ctx->mp || !ctx->path) {
 		kfree(ctx->orig_path);
 		vfs_free_context(ctx);
 		sc_errno = ENOENT;
@@ -698,7 +698,7 @@ int vfs_link(task_t* task, const char* orig_path, const char* orig_new_path) {
 	char* new_mount_path = NULL;
 	struct vfs_mountpoint* new_mp = vfs_mount_get(new_path, &new_mount_path);
 
-	if(ctx->mp->num != new_mp->num) {
+	if(ctx->mp != new_mp) {
 		kfree(new_mount_path);
 		vfs_free_context(ctx);
 		sc_errno = EXDEV;

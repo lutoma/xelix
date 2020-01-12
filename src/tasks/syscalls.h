@@ -317,8 +317,8 @@ const struct syscall_definition syscall_table[] = {
 		SCA_STRING, SCA_STRING, SCA_INT, 0},
 
 	// 51
-	{"umount", (syscall_cb)vfs_mount, 0,
-		SCA_STRING, SCA_STRING, SCA_INT, 0},
+	{"umount", (syscall_cb)vfs_umount, 0,
+		SCA_STRING, SCA_INT, 0, 0},
 
 	// 52
 	{"realpath", (syscall_cb)vfs_realpath, 0,
