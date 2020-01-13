@@ -37,3 +37,4 @@ struct bitmap {
 void bitmap_set(struct bitmap* bm, uint32_t pos, uint32_t num);
 void bitmap_clear(struct bitmap* bm, uint32_t pos, uint32_t num);
 uint32_t bitmap_find(struct bitmap* bm, uint32_t num);
+uint32_t bitmap_count(struct bitmap* bm);

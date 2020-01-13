@@ -104,3 +104,14 @@ uint32_t bitmap_find(struct bitmap* bm, uint32_t num) {
 	// No free bits left
 	return -1;
 }
+
+uint32_t bitmap_count(struct bitmap* bm) {
+	uint32_t count = 0;
+	count += bm->first_free * 32;
+
+	// popcount counts the number of 1 bits in an integer
+	for(uint32_t i = bm->first_free; i <= bitmap_size(bm->size); i++) {
+		count += __builtin_popcount(bm->data[i]);
+	}
+	return count;
+}

@@ -42,16 +42,6 @@ void pfree(uint32_t num, uint32_t size) {
 	bitmap_clear(&pages_bitmap, num, size);
 }
 
-uint32_t count_used() {
-	uint32_t num = 0;
-	for(int i = 0; i < pages_bitmap.size; i++) {
-		if(bitmap_get(&pages_bitmap, i)) {
-			num++;
-		}
-	}
-	return num;
-}
-
 void palloc_init() {
 	struct multiboot_tag_mmap* mmap = multiboot_get_mmap();
 	struct multiboot_tag_basic_meminfo* mem = multiboot_get_meminfo();
@@ -89,12 +79,12 @@ void palloc_init() {
 	uint32_t mem_kb = (MAX(1024, mem->mem_lower) + mem->mem_upper);
 	pages_bitmap.size = (mem_kb * 1024) / PAGE_SIZE;
 
-	uint32_t used = count_used();
+	uint32_t used = bitmap_count(&pages_bitmap);
 	log(LOG_INFO, "palloc: Ready, %u mb, %u pages, %u used, %u free\n",
 		mem_kb /  1024, pages_bitmap.size, used, pages_bitmap.size - used);
 }
 
 void palloc_get_stats(uint32_t* total, uint32_t* used) {
 	*total = pages_bitmap.size * PAGE_SIZE;
-	*used = count_used() * PAGE_SIZE;
+	*used = bitmap_count(&pages_bitmap) * PAGE_SIZE;
 }
