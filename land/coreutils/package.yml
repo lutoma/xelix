@@ -1,0 +1,24 @@
+name: coreutils
+version: '8.30'
+sources:
+  - url: https://ftp.gnu.org/gnu/coreutils/coreutils-8.30.tar.xz
+patches:
+  - coreutils-8.30.patch
+configure:
+  - autoreconf
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --disable-threads
+    --disable-acl
+    --disable-xattr
+    --disable-largefile
+    --enable-no-install-program=arch,coreutils,dmesg,mknod
+
+  # Needs to be applied after configure
+  - patch -p1 < $PKGDIR/coreutils-8.30-patch-two.patch
+make:
+  - make
+install:
+  - make install

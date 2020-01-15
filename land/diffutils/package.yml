@@ -1,0 +1,15 @@
+name: diffutils
+version: '3.6'
+sources:
+  - url: https://ftp.gnu.org/gnu/diffutils/diffutils-3.6.tar.xz
+patches:
+  - diffutils-3.6.patch
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+  - make install

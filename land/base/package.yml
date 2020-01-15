@@ -1,0 +1,26 @@
+name: base
+version: 1.0.0
+sources:
+  - dir: etc
+install:
+  - install -d $DESTDIR/boot
+  - install -d $DESTDIR/dev
+  - install -d $DESTDIR/etc
+  - install -d $DESTDIR/home
+  - install -d $DESTDIR/home/root -m 700
+  - install -d $DESTDIR/sys
+  - install -d $DESTDIR/tmp
+  - install -d $DESTDIR/usr
+  - install -d $DESTDIR/usr/bin
+  - install -d $DESTDIR/usr/include
+  - install -d $DESTDIR/usr/lib
+  - install -d $DESTDIR/usr/share
+  - install -d $DESTDIR/var
+  - install -d $DESTDIR/var/run
+
+  - rm $DESTDIR/bin || true
+  - ln -s usr/bin $DESTDIR/bin
+
+  - install -D * -m 644 $DESTDIR/etc/
+  - rm $DESTDIR/etc/mtab || true
+  - ln -s ../sys/mounts $DESTDIR/etc/mtab

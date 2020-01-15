@@ -1,0 +1,16 @@
+name: bash
+version: 5.0
+sources:
+  - url: https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz
+patches:
+  - bash-5.0.patch
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --disable-job-control
+make:
+  - make
+install:
+  - make DESTDIR=$DESTDIR install

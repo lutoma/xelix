@@ -1,0 +1,10 @@
+name: zlib
+version: 1.2.11
+sources:
+  - url: https://zlib.net/zlib-1.2.11.tar.xz
+configure:
+  - CC=i786-pc-xelix-gcc ./configure --static --prefix=/usr --sysconfdir=/etc
+make:
+  - make
+install:
+  - make install

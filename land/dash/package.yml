@@ -1,0 +1,14 @@
+name: dash
+version: '0.5.10.2'
+sources:
+  - url: http://gondor.apana.org.au/~herbert/dash/files/dash-0.5.10.2.tar.gz
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+  - patch -p1 < $PKGDIR/dash-0.5.10.2.patch
+make:
+  - make
+install:
+  - make install

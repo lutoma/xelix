@@ -1,0 +1,21 @@
+name: flac
+version: 1.3.3
+sources:
+  - url: https://ftp.osuosl.org/pub/xiph/releases/flac/flac-1.3.3.tar.xz
+patches:
+  - flac-1.3.3.patch
+configure:
+  - CPPFLAGS="-D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0 -mno-sse" CFLAGS="-mno-sse" ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --disable-shared
+    --disable-sse
+    --disable-asm-optimizations
+    --without-ogg
+make:
+  - make
+install:
+  - make install
+  - rm $DESTDIR/usr/lib/libFLAC.la
+  - rm $DESTDIR/usr/lib/libFLAC++.la

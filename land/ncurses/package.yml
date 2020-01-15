@@ -1,0 +1,17 @@
+name: ncurses
+version: 6.1
+sources:
+  - url: ftp://ftp.gnu.org/gnu/ncurses/ncurses-6.1.tar.gz
+patches:
+  - ncurses-6.1.patch
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --without-cxx-binding
+make:
+  - make
+install:
+  - make install
+  - tic -o $DESTDIR/usr/share/terminfo $PKGDIR/xelix.terminfo

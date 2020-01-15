@@ -1,0 +1,279 @@
+--- gettext-0.20.1/build-aux/config.sub	2019-04-27 10:22:42.000000000 +0200
++++ gettext-0.20.1/build-aux/config.sub	2020-01-14 12:35:37.049878081 +0100
+@@ -1368,7 +1368,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi*)
++	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+--- gettext-0.20.1/libtextstyle/build-aux/config.sub	2019-04-27 10:23:12.000000000 +0200
++++ gettext-0.20.1/libtextstyle/build-aux/config.sub	2020-01-14 12:38:10.068438546 +0100
+@@ -1368,7 +1368,8 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi*)
++	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
++	     | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+--- /tmp/spawn_faction_addclose.c	2020-01-14 13:01:18.739709611 +0100
++++ ./gettext-tools/gnulib-lib/spawn_faction_addclose.c	2020-01-14 13:02:02.685373702 +0100
+@@ -43,7 +43,7 @@ posix_spawn_file_actions_addclose (posix
+   if (fd < 0 || fd >= maxfd)
+     return EBADF;
+ 
+-#if !REPLACE_POSIX_SPAWN
++#if !REPLACE_POSIX_SPAWN || __xelix__
+   return posix_spawn_file_actions_addclose (file_actions, fd);
+ #else
+   /* Allocate more memory if needed.  */
+--- /tmp/spawn_faction_adddup2.c	2020-01-14 13:02:43.007788267 +0100
++++ ./gettext-tools/gnulib-lib/spawn_faction_adddup2.c	2020-01-14 13:02:54.227532811 +0100
+@@ -43,7 +43,7 @@ posix_spawn_file_actions_adddup2 (posix_
+   if (fd < 0 || newfd < 0 || fd >= maxfd || newfd >= maxfd)
+     return EBADF;
+ 
+-#if !REPLACE_POSIX_SPAWN
++#if !REPLACE_POSIX_SPAWN | __xelix__
+   return posix_spawn_file_actions_adddup2 (file_actions, fd, newfd);
+ #else
+   /* Allocate more memory if needed.  */
+--- /tmp/spawn_faction_addopen.c	2020-01-14 13:03:37.059891690 +0100
++++ ./gettext-tools/gnulib-lib/spawn_faction_addopen.c	2020-01-14 13:04:02.329317374 +0100
+@@ -44,7 +44,7 @@ posix_spawn_file_actions_addopen (posix_
+   if (fd < 0 || fd >= maxfd)
+     return EBADF;
+ 
+-#if !REPLACE_POSIX_SPAWN
++#if !REPLACE_POSIX_SPAWN || __xelix__
+   return posix_spawn_file_actions_addopen (file_actions, fd, path, oflag, mode);
+ #else
+   /* Allocate more memory if needed.  */
+--- /tmp/spawn_faction_destroy.c	2020-01-14 13:04:47.321629165 +0100
++++ ./gettext-tools/gnulib-lib/spawn_faction_destroy.c	2020-01-14 13:05:10.604434392 +0100
+@@ -26,6 +26,8 @@ int
+ posix_spawn_file_actions_destroy (posix_spawn_file_actions_t *file_actions)
+ {
+   /* Free the memory allocated.  */
++#ifndef __xelix__
+   free (file_actions->_actions);
++#endif
+   return 0;
+ }
+--- /tmp/spawn_faction_init.c	2020-01-14 13:04:50.858215592 +0100
++++ ./gettext-tools/gnulib-lib/spawn_faction_init.c	2020-01-14 13:05:38.307139826 +0100
+@@ -31,6 +31,7 @@
+ int
+ __posix_spawn_file_actions_realloc (posix_spawn_file_actions_t *file_actions)
+ {
++#ifndef __xelix__
+   int newalloc = file_actions->_allocated + 8;
+   void *newmem = realloc (file_actions->_actions,
+                           newalloc * sizeof (struct __spawn_action));
+@@ -42,6 +43,7 @@ __posix_spawn_file_actions_realloc (posi
+   file_actions->_actions = (struct __spawn_action *) newmem;
+   file_actions->_allocated = newalloc;
+ 
++#endif
+   return 0;
+ }
+ 
+@@ -50,7 +52,9 @@ __posix_spawn_file_actions_realloc (posi
+ int
+ posix_spawn_file_actions_init (posix_spawn_file_actions_t *file_actions)
+ {
++#ifndef __xelix__
+   /* Simply clear all the elements.  */
+   memset (file_actions, '\0', sizeof (*file_actions));
++#endif
+   return 0;
+ }
+--- /tmp/spawnattr_setflags.c	2020-01-14 13:06:28.502669993 +0100
++++ ./gettext-tools/gnulib-lib/spawnattr_setflags.c	2020-01-14 13:07:42.810990451 +0100
+@@ -28,7 +28,7 @@
+                    | POSIX_SPAWN_SETSIGMASK                                   \
+                    | POSIX_SPAWN_SETSCHEDPARAM                                \
+                    | POSIX_SPAWN_SETSCHEDULER                                 \
+-                   | POSIX_SPAWN_USEVFORK)
++                   /*| POSIX_SPAWN_USEVFORK*/)
+ 
+ /* Store flags in the attribute structure.  */
+ int
+@@ -39,7 +39,7 @@ posix_spawnattr_setflags (posix_spawnatt
+     return EINVAL;
+ 
+   /* Store the flag word.  */
+-  attr->_flags = flags;
++//  attr->_flags = flags;
+ 
+   return 0;
+ }
+--- /tmp/spawnattr_setsigmask.c	2020-01-14 13:08:18.763512407 +0100
++++ ./gettext-tools/gnulib-lib/spawnattr_setsigmask.c	2020-01-14 13:08:27.143323401 +0100
+@@ -27,7 +27,7 @@ posix_spawnattr_setsigmask (posix_spawna
+                             const sigset_t *sigmask)
+ {
+   /* Copy the sigset_t data to the user buffer.  */
+-  memcpy (&attr->_ss, sigmask, sizeof (sigset_t));
++//  memcpy (&attr->_ss, sigmask, sizeof (sigset_t));
+ 
+   return 0;
+ }
+--- /tmp/spawni.c	2020-01-14 13:09:03.299175093 +0100
++++ ./gettext-tools/gnulib-lib/spawni.c	2020-01-14 13:12:13.994889690 +0100
+@@ -146,15 +146,18 @@ __spawni (pid_t *pid, const char *file,
+   size_t len;
+   size_t pathlen;
+ 
++#ifdef __xelix__
++  short int flags = 0;
++#else
+   /* Do this once.  */
+   short int flags = attrp == NULL ? 0 : attrp->_flags;
+ 
+   /* Avoid gcc warning
+        "variable 'flags' might be clobbered by 'longjmp' or 'vfork'"  */
+   (void) &flags;
+-
++#endif
+   /* Generate the new process.  */
+-#if HAVE_VFORK
++#if HAVE_VFORK && !__xelix__
+   if ((flags & POSIX_SPAWN_USEVFORK) != 0
+       /* If no major work is done, allow using vfork.  Note that we
+          might perform the path searching.  But this would be done by
+@@ -181,6 +184,7 @@ __spawni (pid_t *pid, const char *file,
+       return 0;
+     }
+ 
++#ifndef __xelix__
+   /* Set signal mask.  */
+   if ((flags & POSIX_SPAWN_SETSIGMASK) != 0
+       && sigprocmask (SIG_SETMASK, &attrp->_ss, NULL) != 0)
+@@ -205,7 +209,7 @@ __spawni (pid_t *pid, const char *file,
+           _exit (SPAWN_ERROR);
+ 
+     }
+-
++#endif
+ #if (_LIBC ? defined _POSIX_PRIORITY_SCHEDULING : HAVE_SCHED_SETPARAM && HAVE_SCHED_SETSCHEDULER)
+   /* Set the scheduling algorithm and parameters.  */
+   if ((flags & (POSIX_SPAWN_SETSCHEDPARAM | POSIX_SPAWN_SETSCHEDULER))
+@@ -222,24 +226,23 @@ __spawni (pid_t *pid, const char *file,
+         _exit (SPAWN_ERROR);
+     }
+ #endif
+-
++#ifndef __xelix__
+   /* Set the process group ID.  */
+   if ((flags & POSIX_SPAWN_SETPGROUP) != 0
+       && setpgid (0, attrp->_pgrp) != 0)
+     _exit (SPAWN_ERROR);
+-
++#endif
+   /* Set the effective user and group IDs.  */
+   if ((flags & POSIX_SPAWN_RESETIDS) != 0
+       && (local_seteuid (getuid ()) != 0
+           || local_setegid (getgid ()) != 0))
+     _exit (SPAWN_ERROR);
+-
++#ifndef __xelix__
+   /* Execute the file actions.  */
+   if (file_actions != NULL)
+     {
+       int cnt;
+-
+-      for (cnt = 0; cnt < file_actions->_used; ++cnt)
++      for (cnt = 0; cnt < 0; ++cnt)
+         {
+           struct __spawn_action *action = &file_actions->_actions[cnt];
+ 
+@@ -293,7 +296,7 @@ __spawni (pid_t *pid, const char *file,
+             }
+         }
+     }
+-
++#endif
+   if (! use_path || strchr (file, '/') != NULL)
+     {
+       /* The FILE parameter is actually a path.  */
+--- /tmp/plural-eval.h	2020-01-14 13:14:26.559106906 +0100
++++ ./gettext-tools/src/plural-eval.h	2020-01-14 13:15:28.595133081 +0100
+@@ -46,8 +46,10 @@
+ extern "C" {
+ #endif
+ 
++#ifndef __xelix__
+ /* Exit point.  Must be set before calling install_sigfpe_handler().  */
+ extern sigjmp_buf sigfpe_exit;
++#endif
+ 
+ #if USE_SIGINFO
+ /* Additional information that is set before sigfpe_exit is invoked.  */
+--- /tmp/plural-eval.c	2020-01-14 13:14:29.389077884 +0100
++++ ./gettext-tools/src/plural-eval.c	2020-01-14 13:15:21.415207669 +0100
+@@ -36,7 +36,9 @@
+ 
+ 
+ /* Exit point.  Must be set before calling install_sigfpe_handler().  */
++#ifndef __xelix__
+ sigjmp_buf sigfpe_exit;
++#endif
+ 
+ #if USE_SIGINFO
+ 
+@@ -49,7 +51,9 @@ static _GL_ASYNC_SAFE void
+ sigfpe_handler (int sig, siginfo_t *sip, void *scp)
+ {
+   sigfpe_code = sip->si_code;
++  #ifndef __xelix__
+   siglongjmp (sigfpe_exit, 1);
++  #endif
+ }
+ 
+ #else
+@@ -59,7 +63,9 @@ sigfpe_handler (int sig, siginfo_t *sip,
+ static _GL_ASYNC_SAFE void
+ sigfpe_handler (int sig)
+ {
++  #ifndef __xelix__
+   siglongjmp (sigfpe_exit, 1);
++  #endif
+ }
+ 
+ #endif
+@@ -74,7 +80,9 @@ install_sigfpe_handler (void)
+   sigemptyset (&action.sa_mask);
+   sigaction (SIGFPE, &action, (struct sigaction *) NULL);
+ #else
++  #ifndef __xelix__
+   signal (SIGFPE, sigfpe_handler);
++  #endif
+ #endif
+ }
+ 
+@@ -88,6 +96,8 @@ uninstall_sigfpe_handler (void)
+   sigemptyset (&action.sa_mask);
+   sigaction (SIGFPE, &action, (struct sigaction *) NULL);
+ #else
++  #ifndef __xelix__
+   signal (SIGFPE, SIG_DFL);
++  #endif
+ #endif
+ }
+--- /tmp/msgl-check.c	2020-01-14 13:15:57.124835534 +0100
++++ ./gettext-tools/src/msgl-check.c	2020-01-14 13:16:14.161323615 +0100
+@@ -114,7 +114,7 @@ check_plural_eval (const struct expressi
+     /* nplurals_value is nonsense.  Don't risk an out-of-memory.  */
+     array = NULL;
+ 
+-  if (sigsetjmp (sigfpe_exit, 1) == 0)
++  if (1)
+     {
+       unsigned long n;
+ 

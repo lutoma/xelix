@@ -1,0 +1,11 @@
+name: bzip2
+version: 1.0.2
+sources:
+  - url: ftp://sources.redhat.com/pub/bzip2/v102/bzip2-1.0.2.tar.gz
+make:
+  - make CC=i786-pc-xelix-gcc libbz2.a bzip2
+install:
+  # make install fails if these hard links already exist…
+  - rm $DESTDIR/usr/bin/bzegrep $DESTDIR/usr/bin/bzless || true
+  - rm $DESTDIR/usr/bin/bzfgrep $DESTDIR/usr/bin/bzcmp || true
+  - make PREFIX=$DESTDIR/usr install

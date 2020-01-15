@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+
+# This file is part of Xelix.
+#
+# Xelix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Xelix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Xelix. If not, see <http://www.gnu.org/licenses/>.
+
+import click
+from package import load_packages
+from operator import attrgetter
+
+
+@click.command()
+@click.argument('package_names', nargs=-1)
+@click.option('-a', '--all', is_flag=True, help='Select all available packages.')
+@click.option('-e', '--exclude', multiple=True,
+	help='When using --all, a list of packages not to compile.')
+@click.option('-f', '--force', is_flag=True,
+	help='Force rebuild of package(s) even if they are up to date.')
+@click.option('-n', '--no-install-stale', is_flag=True,
+	help='Don\'t (re)install packages that have not been updated.')
+@click.option('-t', '--toolchain', is_flag=True,
+	help='Compile for local toolchain instead of cross-compiling')
+def build(package_names, all, exclude, force, no_install_stale, toolchain):
+
+	if not package_names and not all:
+		click.echo('Please provide the names of packages to build or use --all.', err=True)
+		exit(1)
+
+	pkgs = load_packages()
+	if not all:
+		pkgs = filter(lambda x: x.name in package_names, pkgs)
+
+	pkgs = filter(lambda x: x.name not in exclude, pkgs)
+	pkgs = list(pkgs)
+
+	if(len(pkgs) < 1):
+		click.echo('Found no packages to install.', err=True)
+		exit(1)
+
+	print(f'Installing {len(pkgs)} packages:')
+	print(', '.join(map(attrgetter('name'), pkgs)))
+	print()
+
+	for pkg in pkgs:
+		if not pkg.config.get('disabled', False) \
+			and (pkg.has_changed or force):
+			pkg.download()
+
+	for pkg in pkgs:
+		if not pkg.config.get('disabled', False):
+			has_changed = pkg.has_changed
+			rebuilt = False
+
+			if has_changed or force:
+				pkg.build(force_build=force)
+				rebuilt = True
+
+			if rebuilt or not no_install_stale or pkg.has_changed:
+				pkg.install()
+
+
+if __name__ == '__main__':
+	build()

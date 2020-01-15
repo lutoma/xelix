@@ -1,0 +1,19 @@
+name: mpfr
+version: 4.0.2
+sources:
+  - url: https://www.mpfr.org/mpfr-current/mpfr-4.0.2.tar.xz
+dependencies:
+  - gmp
+patches:
+  - mpfr-4.0.2.patch
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --disable-shared
+make:
+  - make
+install:
+  - make install
+  - rm $DESTDIR/usr/lib/libmpfr.la

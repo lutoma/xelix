@@ -2,28 +2,34 @@
 set -e
 set -x
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <destname>"
-    return 1
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <image_dir> <image_name>"
+    exit 1
 fi
 
-dest=$1
+image_dir=$1
+dest=$2
 
 sudo modprobe nbd max_part=8
 
-if [ -f "$dest" ]; then
-	sudo qemu-nbd --connect=/dev/nbd0 "$dest"
-	sudo mount /dev/nbd0p1 mnt
-else
-	qemu-img create -f qcow2 "$dest" 3G
-	sudo qemu-nbd --connect=/dev/nbd0 "$dest"
+qemu-img create -f qcow2 "$dest" 3G
+sudo qemu-nbd --connect=/dev/nbd2 "$dest"
 
-	echo "/dev/nbd0p1 : start=2048, type=83" | sudo sfdisk /dev/nbd0
-	sudo mkfs.ext2 /dev/nbd0p1
-	sudo mount /dev/nbd0p1 mnt
+cat <<EOF | sudo sfdisk /dev/nbd2
+/dev/nbd0p1 : start=2048, size=1024000, type=83
+/dev/nbd0p2 : start=1026048, type=83
+EOF
 
-	sudo grub-install /dev/nbd0 --boot-directory=mnt/boot --modules="normal part_msdos ext2 multiboot" --no-floppy --target=i386-pc
-	cat <<EOF | sudo sponge mnt/boot/grub/grub.cfg
+sudo mkfs.ext2 /dev/nbd2p1
+sudo mkfs.ext2 /dev/nbd2p2
+
+mkdir -p mnt
+sudo mount /dev/nbd2p2 mnt
+sudo mkdir -p mnt/boot
+sudo mount /dev/nbd2p1 mnt/boot
+
+sudo grub-install /dev/nbd2 --boot-directory=mnt/boot --modules="normal part_msdos ext2 multiboot" --no-floppy --target=i386-pc
+cat <<EOF | sudo sponge mnt/boot/grub/grub.cfg
 set root='hd0,msdos1'
 
 if [ "x\${timeout}" != "x-1" ]; then
@@ -35,18 +41,12 @@ if [ "x\${timeout}" != "x-1" ]; then
 fi
 
 menuentry 'Xelix' {
-	multiboot2 "(\$root)/boot/xelix.bin"
+	multiboot2 /xelix.bin root=/dev/ide1p2
 }
 EOF
 
-fi
-
-
-for i in land/*; do
-	echo "Building $i"
-	make -C "$i"
-	sudo make -C "$i" install
-done
-
+sudo cp -r "$image_dir"/* mnt/
+sudo cp xelix.bin mnt/boot/
+sudo umount mnt/boot
 sudo umount mnt
-sudo qemu-nbd --disconnect /dev/nbd0
+sudo qemu-nbd --disconnect /dev/nbd2

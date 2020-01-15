@@ -1,0 +1,16 @@
+name: gettext
+disabled: true
+version: 0.20.1
+sources:
+  - url: https://ftp.gnu.org/gnu/gettext/gettext-0.20.1.tar.gz
+patches:
+  - gettext-0.20.1.patch
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+  - make install

@@ -1,0 +1,16 @@
+name: xz
+version: '5.2.4'
+sources:
+  - url: https://tukaani.org/xz/xz-5.2.4.tar.xz
+patches:
+  - xz-5.2.4.patch
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+  - make install
+  - rm $DESTDIR/usr/lib/liblzma.la

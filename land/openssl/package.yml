@@ -1,0 +1,13 @@
+name: openssl
+version: 1.1.1d
+sources:
+  - url: https://www.openssl.org/source/openssl-1.1.1d.tar.gz
+patches:
+  - openssl-1.1.1d.patch
+configure:
+  - CROSS_COMPILE=i786-pc-xelix- ./Configure xelix-x86 no-shared no-threads no-hw no-dso no-asm 386 no-sse2 no-zlib no-tests --prefix=/usr
+make:
+  - make
+install:
+  # wtf openssl
+  - make DESTDIR=$DESTDIR install

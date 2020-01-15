@@ -1,0 +1,35 @@
+name: pciutils
+version: 3.6.2
+sources:
+  - url: https://github.com/pciutils/pciutils/archive/v3.6.2.tar.gz
+dependencies:
+  - zlib
+patches:
+  - pciutils-3.6.2.patch
+configure:
+  - cp $PKGDIR/xelix-device.c lib/
+make:
+  - make
+    CROSS_COMPILE=i786-pc-xelix-
+    HOST=pc-xelix
+    CFLAGS="$CFLAGS"
+    LDFLAGS="$LDFLAGS"
+    DNS=no
+    ZLIB=yes
+    PREFIX=/usr
+    BINDIR=/usr/bin
+    SBINDIR=/usr/bin
+    DESTDIR=$DESTDIR
+install:
+  - make
+    CROSS_COMPILE=i786-pc-xelix-
+    HOST=pc-xelix
+    CFLAGS="$CFLAGS"
+    LDFLAGS="$LDFLAGS"
+    DNS=no
+    ZLIB=yes
+    PREFIX=/usr
+    BINDIR=/usr/bin
+    SBINDIR=/usr/bin
+    DESTDIR=$DESTDIR
+    install

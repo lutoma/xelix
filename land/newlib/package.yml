@@ -1,0 +1,31 @@
+name: newlib
+version: 3.2.0
+sources:
+  - url: http://sourceware.org/pub/newlib/newlib-3.2.0.tar.gz
+patches:
+  - newlib-3.2.0.patch
+configure:
+  - cp -r $PKGDIR/xelix newlib/libc/sys/
+
+  - cd newlib/libc/sys/xelix/ && aclocal-1.11 -I ../../../ -I ../../../../
+  - cd newlib/libc/sys/xelix/ && autoconf-2.64
+  - cd newlib/libc/sys/xelix/ && automake-1.11 --cygnus Makefile
+
+  - cd newlib/libc/sys/ && aclocal-1.11 -I ../.. -I ../../..
+  - cd newlib/libc/sys/ && autoconf-2.64
+  - cd newlib/libc/sys/ && automake-1.11 --cygnus Makefile
+
+  - ./configure
+    --target=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+#  # Work around autoconf issues
+#  make DESTDIR=$(abspath build/cache) -C build install
+#  cp -r build/cache/usr/i786-pc-xelix/* ../../mnt/usr/
+
+  - make install
+  - cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/xelix/crtn.o $DESTDIR/usr/lib/
+

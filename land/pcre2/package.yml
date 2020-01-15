@@ -1,0 +1,14 @@
+name: pcre2
+version: 10.32
+sources:
+  - url: https://ftp.pcre.org/pub/pcre/pcre2-10.32.tar.gz
+patches:
+  - pcre2-10.32.patch
+configure:
+  - ./configure --host=i786-pc-xelix --prefix=/usr --sysconfdir=/etc
+make:
+  - make
+install:
+  - make install
+  - rm $DESTDIR/usr/lib/libpcre2-8.la
+  - rm $DESTDIR/usr/lib/libpcre2-posix.la

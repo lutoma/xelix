@@ -1,0 +1,13 @@
+name: which
+version: 2.21
+sources:
+  - url: https://ftp.gnu.org/gnu/which/which-2.21.tar.gz
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+  - make install

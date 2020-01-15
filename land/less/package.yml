@@ -1,0 +1,13 @@
+name: less
+version: 551
+sources:
+  - url: http://www.greenwoodsoftware.com/less/less-551.tar.gz
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+  - make DESTDIR=$DESTDIR install
