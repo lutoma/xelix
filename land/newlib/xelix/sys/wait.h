@@ -3,7 +3,9 @@
 
 #include <sys/types.h>
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define WNOHANG 1
 #define WUNTRACED 2
@@ -40,5 +42,7 @@ pid_t _wait (int *);
 };
 #endif
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif

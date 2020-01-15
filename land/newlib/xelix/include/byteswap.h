@@ -21,7 +21,9 @@
 
 #include <stdint.h>
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 static inline uint16_t bswap_16(uint16_t x)
 {
@@ -48,5 +50,7 @@ static inline uint64_t bswap_64(uint64_t x)
      (((x) & 0x00000000000000ffULL) << 56));
 }
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif /* _BYTESWAP_H */

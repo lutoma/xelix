@@ -77,7 +77,9 @@
 #define SOMAXCONN 128
 #define SCM_RIGHTS -1
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef uint32_t socklen_t;
 typedef uint32_t sa_family_t;
@@ -127,5 +129,7 @@ int sockatmark(int);
 int socket(int, int, int);
 int socketpair(int, int, int, int [2]);
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif /* _SYS_SOCKET_H */

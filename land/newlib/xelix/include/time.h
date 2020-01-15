@@ -32,7 +32,9 @@
 #include <xlocale.h>
 #endif
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct tm
 {
@@ -83,7 +85,9 @@ struct tm *gmtime_r 	(const time_t *__restrict,
 struct tm *localtime_r 	(const time_t *__restrict,
 				 struct tm *__restrict);
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 
 #ifdef __cplusplus
 extern "C" {

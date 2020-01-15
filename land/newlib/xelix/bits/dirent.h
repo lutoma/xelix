@@ -20,7 +20,9 @@
 # error "Never use <bits/dirent.h> directly; include <dirent.h> instead."
 #endif
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct dirent
   {
@@ -54,4 +56,6 @@ struct dirent64
 #define _DIRENT_HAVE_D_OFF
 #define _DIRENT_HAVE_D_TYPE
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif

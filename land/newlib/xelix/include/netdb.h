@@ -18,7 +18,9 @@
 
 #ifndef _NETDB_H
 #define _NETDB_H
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <inttypes.h>
 #include <sys/socket.h>
@@ -140,5 +142,7 @@ void setnetent(int);
 void setprotoent(int);
 void setservent(int);
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif /* _NETDB_H */

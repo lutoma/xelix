@@ -22,7 +22,9 @@
 #define DT_SOCK 6
 #define DT_LNK 7
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     int dd_fd;      /* directory file */
@@ -34,7 +36,9 @@ typedef struct {
     _LOCK_RECURSIVE_T dd_lock;
 } DIR;
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 
 #define __dirfd(dir) (dir)->dd_fd
 

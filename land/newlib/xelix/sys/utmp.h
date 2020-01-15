@@ -10,7 +10,9 @@
 #define UT_NAMESIZE 32
 #define UT_HOSTSIZE 256
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct exit_status {              /* Type for ut_exit, below */
     short int e_termination;      /* Process termination status */
@@ -64,5 +66,7 @@ void pututline (struct utmp *);
 void setutent (void);
 void utmpname (const char *);
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif

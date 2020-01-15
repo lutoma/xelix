@@ -17,7 +17,9 @@
 #define RLIMIT_STACK 6
 #define RLIMIT_AS 7
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct rusage {
   	struct timeval ru_utime;	/* user time used */
@@ -38,6 +40,8 @@ int  getrusage(int, struct rusage *);
 int  setpriority(int, id_t, int);
 int  setrlimit(int, const struct rlimit *);
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif
 

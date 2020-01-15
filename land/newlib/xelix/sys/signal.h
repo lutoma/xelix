@@ -8,7 +8,9 @@
 #include <sys/_sigset.h>
 #include <sys/_timespec.h>
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if !defined(_SIGSET_T_DECLARED)
 #define _SIGSET_T_DECLARED
@@ -249,7 +251,9 @@ int sigqueue (pid_t pid, int signo, const union sigval value);
 #define SIGUSR2 31  /* user defined signal 2 */
 #define NSIG  32      /* signal 0 implied */
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 
 #ifndef _SIGNAL_H_
 /* Some applications take advantage of the fact that <sys/signal.h>

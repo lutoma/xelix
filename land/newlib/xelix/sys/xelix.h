@@ -23,7 +23,9 @@
 #include <errno.h>
 #include <limits.h>
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct _xelix_execdata {
 	uint32_t pid;
@@ -66,5 +68,7 @@ static inline uint32_t __syscall(int* errp, uint32_t call, uint32_t arg1, uint32
 	return result;
 }
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif /* _SYS_XELIX_H */

@@ -35,12 +35,16 @@
 #define MS_RDONLY		0x0080
 #define MS_REMOUNT		0x0100
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data);
 int umount(const char *target);
 int umount2(const char *target, int flags);
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 
 #endif

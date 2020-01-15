@@ -22,7 +22,9 @@
 #include <paths.h>
 #include <stdio.h>
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define _PATH_MNTTAB "/sys/mnttab"
 #define _PATH_MOUNTED "/sys/mounts"
@@ -91,5 +93,7 @@ extern char *hasmntopt (const struct mntent *__mnt,
 			const char *__opt) __THROW;
 
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif	/* mntent.h */

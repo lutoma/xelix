@@ -18,7 +18,9 @@
 
 #ifndef _PTY_H
 #define _PTY_H
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <termios.h>
 
@@ -28,5 +30,7 @@ int openpty(int *amaster, int *aslave, char *name,
                    const struct termios *termp,
                    const struct winsize *winp);
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif /* _PTY_H */

@@ -21,7 +21,9 @@
 
 #include <sys/types.h>
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Technically part of ioctl */
 struct winsize {
@@ -211,5 +213,7 @@ int     ioctl(int, int, void*);
 #endif /* ndef _KERNEL_ */
 
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif /* ndef _SYS_TERMIOS_H */

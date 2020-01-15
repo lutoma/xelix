@@ -21,12 +21,16 @@
 
 #include <sys/socket.h>
 
-_BEGIN_STD_C
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct sockaddr_un {
 	sa_family_t sun_family;
 	char sun_path[200];
 };
 
-_END_STD_C
+#ifdef __cplusplus
+}       /* C++ */
+#endif
 #endif /* _SYS_UN_H */
