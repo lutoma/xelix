@@ -9,6 +9,7 @@ configure:
     --host=i786-pc-xelix
     --prefix=/usr
     --sysconfdir=/etc
+    --without-bash-malloc
     --disable-job-control
 make:
   - make
