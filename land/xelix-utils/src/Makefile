@@ -16,7 +16,7 @@ init: init.c ini.c libutil.a
 	$(CC) $(CFLAGS) -o $@ init.c ini.c -L. -lutil
 
 play: play.c
-	$(CC) $(CFLAGS) -I$(abspath ../../mnt)/usr/include -L$(abspath ../../mnt)/usr/lib -o $@ play.c -L. -lFLAC -lm
+	$(CC) $(CFLAGS) -o $@ play.c -lFLAC -lm
 
 libutil.a: util.c argparse.c
 	$(CC) $(CFLAGS) -c -o util.o util.c

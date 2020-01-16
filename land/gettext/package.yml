@@ -3,6 +3,9 @@ disabled: true
 version: 0.20.1
 sources:
   - url: https://ftp.gnu.org/gnu/gettext/gettext-0.20.1.tar.gz
+dependencies:
+  - ncurses
+  - libxml2
 patches:
   - gettext-0.20.1.patch
 configure:
@@ -10,6 +13,9 @@ configure:
     --host=i786-pc-xelix
     --prefix=/usr
     --sysconfdir=/etc
+
+  # Needs to be applied after configure
+  - patch -p0 < $PKGDIR/gettext-0.20.1-two.patch
 make:
   - make
 install:

@@ -1,4 +1,4 @@
---- /tmp/Makefile	2020-01-14 12:50:59.938818527 +0100
+--- libtextstyle/lib/Makefile	2020-01-14 12:50:59.938818527 +0100
 +++ libtextstyle/lib/Makefile	2020-01-14 12:51:18.709274361 +0100
 @@ -3631,35 +3631,7 @@ $(srcdir)/ostream.c $(srcdir)/ostream.pr
  # We need the following in order to create <signal.h> when the system
@@ -34,10 +34,10 @@
 -	} > $@-t && \
 -	mv $@-t $@
 +	true
- 
+
  # We need the following in order to create <stdarg.h> when the system
  # doesn't have one that works with the given compiler.
---- /tmp/gettext-tools-Makefile	2020-01-14 12:53:56.835358355 +0100
+--- gettext-tools/gnulib-lib/Makefile	2020-01-14 12:53:56.835358355 +0100
 +++ gettext-tools/gnulib-lib/Makefile	2020-01-14 12:56:20.183146651 +0100
 @@ -4396,84 +4396,12 @@ sched.h: $(top_builddir)/config.status
  # We need the following in order to create <signal.h> when the system
@@ -73,7 +73,7 @@
 -	} > $@-t && \
 -	mv $@-t $@
 +	true
- 
+
  # We need the following in order to create a replacement for <spawn.h> when
  # the system doesn't have one.
  spawn.h: spawn.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) $(WARN_ON_USE_H)
@@ -123,7 +123,7 @@
 -	} > $@-t && \
 -	mv $@-t $@
 +	true
- 
+
  # We need the following in order to create <stdarg.h> when the system
  # doesn't have one that works with the given compiler.
 @@ -4886,26 +4814,7 @@ string.h: string.in.h $(top_builddir)/co
@@ -151,6 +151,6 @@
 -	} > $@-t && \
 -	mv $@-t $@
 +	true
- 
+
  # We need the following in order to create <sys/stat.h> when the system
  # has one that is incomplete.
