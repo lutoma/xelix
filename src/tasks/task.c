@@ -225,7 +225,13 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	struct task_mem* alloc = to_fork->mem_allocs;
 	for(; alloc; alloc = alloc->next) {
 		if(alloc->flags & TASK_MEM_FORK) {
-			void* phys_addr = zmalloc_a(alloc->len);
+			void* phys_addr;
+
+			if(alloc->flags & TASK_MEM_PALLOC) {
+				phys_addr = zpalloc(alloc->len / PAGE_SIZE);
+			} else {
+				phys_addr = zmalloc_a(alloc->len);
+			}
 			memcpy(phys_addr, alloc->phys_addr, alloc->len);
 			task_add_mem(task, alloc->virt_addr, phys_addr, alloc->len, alloc->section, alloc->flags);
 		}
@@ -422,9 +428,10 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	sysfs_printf("\nTask memory:\n");
 	struct task_mem* alloc = task->mem_allocs;
 	for(; alloc; alloc = alloc->next) {
-		sysfs_printf("0x%-8x -> 0x%-8x length 0x%-6x %-10s\n",
+		sysfs_printf("0x%-8x -> 0x%-8x length 0x%-6x %-10s (%salloc)\n",
 			alloc->virt_addr, alloc->phys_addr, alloc->len,
-			task_mem_section_verbose(alloc->section));
+			task_mem_section_verbose(alloc->section),
+			alloc->flags & TASK_MEM_PALLOC ? "p" : "km");
 	}
 
 
