@@ -133,13 +133,7 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 	return fmb;
 }
 
-void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
-	// Legacy support: Length used to be passed in second parameter
-	if(!length && l2) {
-		length = l2;
-	}
-	length = length ? length : l2;
-
+void* task_sbrk(task_t* task, int32_t length) {
 	if(length <= 0) {
 		return task->sbrk;
 	}
@@ -147,14 +141,11 @@ void* task_sbrk(task_t* task, int32_t length, int32_t l2) {
 	length = ALIGN(length, PAGE_SIZE);
 
 	void* phys_addr = zpalloc(length / PAGE_SIZE);
-	//void* phys_addr = zmalloc_a(length);
-
 	if(!phys_addr) {
-		sc_errno = EAGAIN;
+		sc_errno = ENOMEM;
 		return (void*)-1;
 	}
 
-	// FIXME sbrk is not set properly in elf.c (?)
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 

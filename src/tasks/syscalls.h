@@ -89,7 +89,7 @@ const struct syscall_definition syscall_table[] = {
 
 	// 7
 	{"sbrk", (syscall_cb)task_sbrk, 0,
-		SCA_INT, SCA_INT, 0, 0},
+		SCA_INT, 0, 0, 0},
 
 	// 8
 	{"symlink", NULL, 0,

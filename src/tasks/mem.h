@@ -47,7 +47,7 @@ int task_page_fault_cb(task_t* task, uintptr_t addr);
 void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool user_to_kernel);
 void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied);
 char** task_copy_strings(task_t* task, char** array, uint32_t* count);
-void* task_sbrk(task_t* task, int32_t length, int32_t l2);
+void* task_sbrk(task_t* task, int32_t length);
 
 #define task_add_mem_flat(task, start, size, section, flags) \
 	task_add_mem(task, start, start, size, section, flags)
