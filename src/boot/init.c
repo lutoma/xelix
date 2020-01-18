@@ -70,13 +70,19 @@ void xelix_main(void) {
 	version_init();
 	serial_init2();
 
-	char* __env[] = { NULL };
-	char* __argv[] = { vfs_basename(INIT_PATH), NULL };
+	char* init_path = cmdline_get("init");
+	if(!init_path) {
+		init_path = INIT_PATH;
+	}
 
-	task_t* init = task_new(NULL, 0, INIT_PATH, __env, 0, __argv, 1);
-	if(elf_load_file(init, INIT_PATH) == -1) {
-		panic("Could not start init (Tried " INIT_PATH ").\n");
+	char* __env[] = { NULL };
+	char* __argv[] = { vfs_basename(init_path), NULL };
+
+	task_t* init = task_new(NULL, 0, init_path, __env, 0, __argv, 1);
+	if(elf_load_file(init, init_path) == -1) {
+		panic("Could not start init (Tried %s).\n", init_path);
 	}
 	scheduler_add(init);
+	vfs_open(init, "/dev/tty1", 0);
 	scheduler_init();
 }
