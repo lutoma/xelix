@@ -81,10 +81,9 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			log(LOG_ERR, "virtio_block: Missing request buffer\n");
 		}
 
-		struct virtio_blk_req* hdr = (struct virtio_blk_req*)hdr_desc->addr;
 		struct virtq_desc* data_desc = &queue->descriptors[hdr_desc->next];
 
-		uint8_t status = *(uint8_t*)(data_desc->addr + 512);
+		uint8_t status = *(uint8_t*)((uintptr_t)data_desc->addr + 512);
 		if(status == VIRTIO_BLK_S_IOERR) {
 			continue;
 		}

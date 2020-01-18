@@ -28,6 +28,7 @@
 #include <bitmap.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
+#include <pico_device.h>
 
 #define QUEUE_RX1 0
 #define QUEUE_TX1 1
@@ -91,7 +92,7 @@ static char* feature_flags_verbose[] = {
 	"RX mode control"
 };
 
-static size_t send(void* pdev, void* data, size_t len) {
+static int send(struct pico_device* pdev, void* data, int len) {
 	if(!(dev->status & VIRTIO_PCI_STATUS_DRIVER_OK)) {
 		return -1;
 	}

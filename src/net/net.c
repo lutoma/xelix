@@ -122,12 +122,17 @@ void net_init() {
 	pico_stack_init();
 	initialized = true;
 
-	struct pico_ip4 lo_addr;
-	pico_string_to_ipv4("127.0.0.1", &lo_addr.addr);
-	struct pico_ip4 netmask;
-	pico_string_to_ipv4("255.0.0.0", &netmask.addr);
-	struct pico_ip4 subnet;
-	pico_string_to_ipv4("127.0.0.0", &subnet.addr);
+	uint32_t ilo_addr;
+	pico_string_to_ipv4("127.0.0.1", &ilo_addr);
+	struct pico_ip4 lo_addr = {.addr = ilo_addr};
+
+	uint32_t inetmask;
+	pico_string_to_ipv4("255.0.0.0", &inetmask);
+	struct pico_ip4 netmask = {.addr = inetmask};
+
+	uint32_t isubnet;
+	pico_string_to_ipv4("127.0.0.0", &isubnet);
+	struct pico_ip4 subnet = {.addr = isubnet};
 
 	struct pico_device* lo = pico_loop_create();
 	pico_ipv4_link_add(lo, lo_addr, netmask);

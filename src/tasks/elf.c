@@ -83,7 +83,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	}
 
 	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, phys + phys_offset, task))) {
-		pfree(phys, size / PAGE_SIZE);
+		pfree((uint32_t)phys / PAGE_SIZE, size / PAGE_SIZE);
 		return -1;
 	}
 
