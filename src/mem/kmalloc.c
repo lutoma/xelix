@@ -354,14 +354,14 @@ void _kfree(void *ptr DEBUGREGS) {
 }
 
 void kmalloc_init() {
-	alloc_start = (intptr_t)palloc(0x10000);
+	alloc_start = (intptr_t)palloc(0x6400);
 
 	if(alloc_start % 8) {
 		alloc_start = (alloc_start &~ 7) + 8;
 	}
 
 	alloc_end = alloc_start;
-	alloc_max = (intptr_t)alloc_start + (0x10000 * PAGE_SIZE);
+	alloc_max = (intptr_t)alloc_start + (0x6400 * PAGE_SIZE);
 	kmalloc_ready = true;
 	log(LOG_DEBUG, "kmalloc: Allocating from %#x - %#x\n", alloc_start, alloc_max);
 }

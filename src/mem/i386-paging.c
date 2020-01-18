@@ -19,6 +19,7 @@
 
 #include "paging.h"
 #include <mem/kmalloc.h>
+#include <mem/palloc.h>
 #include <log.h>
 #include <string.h>
 #include <mem/vmem.h>
@@ -36,7 +37,7 @@ void paging_set_range(struct paging_context* ctx, struct vmem_range* range) {
 
 		struct page* page_table;
 		if(!page_dir->present) {
-			page_table = zmalloc_a(sizeof(struct page) * 1024);
+			page_table = zpalloc(1);
 
 			page_dir->present = true;
 			page_dir->rw = 1;
@@ -57,10 +58,10 @@ void paging_set_range(struct paging_context* ctx, struct vmem_range* range) {
 void paging_rm_context(struct paging_context* ctx) {
 	for(int i = 0; i < 1024; i++) {
 		if(ctx->dir_entries[i].present) {
-			kfree((void*)(ctx->dir_entries[i].frame << 12));
+			pfree((ctx->dir_entries[i].frame << 12) / PAGE_SIZE, 1);
 		}
 	}
-	kfree(ctx);
+	pfree((uintptr_t)ctx / PAGE_SIZE, 1);
 }
 
 void paging_init() {

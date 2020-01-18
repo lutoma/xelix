@@ -26,6 +26,7 @@
 #include <tasks/task.h>
 #include <fs/vfs.h>
 #include <mem/kmalloc.h>
+#include <mem/palloc.h>
 #include <mem/vmem.h>
 
 #ifdef ELF_DEBUG
@@ -64,7 +65,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	}
 
 	size_t size = ALIGN(phead->memsz, PAGE_SIZE);
-	void* phys = zmalloc_a(size);
+	void* phys = zpalloc(size / PAGE_SIZE);
 	if(unlikely(!phys)) {
 		return -1;
 	}
@@ -82,11 +83,11 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	}
 
 	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, phys + phys_offset, task))) {
-		kfree(phys);
+		pfree(phys, size / PAGE_SIZE);
 		return -1;
 	}
 
-	task_add_mem(task, virt, phys, size, section, TASK_MEM_FORK | TASK_MEM_FREE);
+	task_add_mem(task, virt, phys, size, section, TASK_MEM_FORK | TASK_MEM_FREE | TASK_MEM_PALLOC);
 
 	debug("  phys %#-8x-%#-8x virt %#-8x-%#-8x\n",
 		phys, (intptr_t)phys + size, virt, (intptr_t)virt + size);

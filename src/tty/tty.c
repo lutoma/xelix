@@ -25,7 +25,7 @@
 #include <tty/pty.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
-#include <mem/kmalloc.h>
+#include <mem/palloc.h>
 #include <panic.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -278,9 +278,10 @@ void tty_init() {
 		panic("tty: Could not initialize fbtext driver");
 	}
 
+	uint32_t buf_pages = ALIGN(fbtext_drv->buf_size, PAGE_SIZE) / PAGE_SIZE;
 	for(int i = 0; i < 10; i++) {
 		ttys[i].drv = fbtext_drv;
-		ttys[i].drv_buf = kmalloc_a(fbtext_drv->buf_size);
+		ttys[i].drv_buf = palloc(buf_pages);
 		fbtext_drv->clear(&ttys[i], 0, 0, fbtext_drv->cols, fbtext_drv->rows);
 	}
 

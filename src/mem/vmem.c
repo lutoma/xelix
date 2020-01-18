@@ -20,6 +20,7 @@
 #include "vmem.h"
 #include <log.h>
 #include <mem/kmalloc.h>
+#include <mem/palloc.h>
 #include <mem/paging.h>
 #include <panic.h>
 #include <string.h>
@@ -80,7 +81,7 @@ void vmem_rm_context(struct vmem_context* ctx) {
 
 void* vmem_get_hwdata(struct vmem_context* ctx) {
 	if(!ctx->hwdata) {
-		ctx->hwdata = zmalloc_a(sizeof(struct paging_context));
+		ctx->hwdata = zpalloc(1);
 		struct vmem_range* range = ctx->ranges;
 
 		for(; range; range = range->next) {

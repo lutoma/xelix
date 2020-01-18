@@ -55,9 +55,9 @@ int task_page_fault_cb(task_t* task, uintptr_t addr) {
 	}
 
 	int alloc_size = MAX(PAGE_SIZE * 2, stack_lower - addr);
-	void* page = zmalloc_a(alloc_size);
+	void* page = zpalloc(alloc_size / PAGE_SIZE);
 	task_add_mem(task, (void*)(stack_lower - alloc_size), page, alloc_size,
-		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
+		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_PALLOC | TASK_MEM_FORK);
 
 	task->stack_size += alloc_size;
 	return 0;

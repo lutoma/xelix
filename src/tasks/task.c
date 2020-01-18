@@ -106,9 +106,10 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
-	task->stack = zmalloc_a(task->stack_size);
+	task->stack = zpalloc(task->stack_size / PAGE_SIZE);
 	task_add_mem(task, (void*)TASK_STACK_LOCATION - task->stack_size, task->stack,
-		task->stack_size, TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_FORK);
+		task->stack_size, TMEM_SECTION_STACK,
+		TASK_MEM_FREE | TASK_MEM_PALLOC | TASK_MEM_FORK);
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
@@ -195,7 +196,7 @@ void task_cleanup(task_t* t) {
 
 	kfree_array(t->environ, t->envc);
 	kfree_array(t->argv, t->argc);
-	//kfree(t);
+	kfree(t);
 }
 
 static task_t* _fork(task_t* to_fork, isf_t* state) {
