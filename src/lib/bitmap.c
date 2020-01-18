@@ -34,6 +34,10 @@ void bitmap_set(struct bitmap* bm, uint32_t pos, uint32_t num) {
 }
 
 void bitmap_clear(struct bitmap* bm, uint32_t pos, uint32_t num) {
+	if(unlikely(pos + num > bm->size)) {
+		return;
+	}
+
 	for(int i = 0; i < num; i++) {
 		uint32_t index = bitmap_index(pos + i);
 		uint32_t offset = bitmap_offset(pos + i);

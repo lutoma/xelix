@@ -7,7 +7,7 @@ ifeq ($(ARCH),arm)
 	AS := $(PREFIX)-gcc
 else
 	PREFIX = i786-pc-xelix
-	MAKE_CFLAGS = -mtune=sandybridge -mgeneral-regs-only -mhard-float
+	MAKE_CFLAGS = -mtune=sandybridge -mgeneral-regs-only -mhard-float -mno-sse -mpopcnt
 	MAKE_NASMFLAGS = -g -f elf
 	MAKE_ASFLAGS := $(MAKE_CFLAGS) -ffreestanding
 	AS = nasm
@@ -19,7 +19,7 @@ OBJCOPY := $(PREFIX)-objcopy
 QEMU := qemu-system-$(ARCH)
 LD := $(CC)
 
-MAKE_CFLAGS += -std=gnu18 -ffreestanding -g -O3 -pipe -fstack-protector-strong -Wall -Wframe-larger-than=1024 -Wcast-align -mno-sse $(INCLUDE)
+MAKE_CFLAGS += -std=gnu18 -ffreestanding -g -O3 -pipe -fstack-protector-strong -Wall -Wframe-larger-than=1024 -Wcast-align $(INCLUDE)
 MAKE_LDFLAGS := -T src/boot/$(ARCH)-linker.ld -nostdlib -lgcc
 
 ifeq ($(shell uname -s), Darwin)
