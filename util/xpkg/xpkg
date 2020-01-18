@@ -29,9 +29,13 @@ from operator import attrgetter
 	help='Force rebuild of package(s) even if they are up to date.')
 @click.option('-n', '--no-install-stale', is_flag=True,
 	help='Don\'t (re)install packages that have not been updated.')
-@click.option('-t', '--toolchain', is_flag=True,
-	help='Compile for local toolchain instead of cross-compiling')
-def build(package_names, all, exclude, force, no_install_stale, toolchain):
+@click.option('-k', '--keep-builddir', is_flag=True,
+	help='Don\'t delete build directory of previous build.')
+@click.option('-c', '--skip-configure', is_flag=True,
+	help='Skip configure step (mostly useful with --keep_builddir).')
+#@click.option('-t', '--toolchain', is_flag=True,
+#	help='Compile for local toolchain instead of cross-compiling')
+def build(package_names, all, exclude, force, no_install_stale, keep_builddir, skip_configure):
 
 	if not package_names and not all:
 		click.echo('Please provide the names of packages to build or use --all.', err=True)
@@ -54,16 +58,22 @@ def build(package_names, all, exclude, force, no_install_stale, toolchain):
 
 	for pkg in pkgs:
 		if not pkg.config.get('disabled', False) \
-			and (pkg.has_changed or force):
+			and (pkg.has_changed or force) and not keep_builddir:
 			pkg.download()
 
 	for pkg in pkgs:
 		if not pkg.config.get('disabled', False):
+			if not keep_builddir:
+				pkg.patch()
+
 			has_changed = pkg.has_changed
 			rebuilt = False
 
 			if has_changed or force:
-				pkg.build(force_build=force)
+				if not skip_configure:
+					pkg.configure()
+
+				pkg.build()
 				rebuilt = True
 
 			if rebuilt or not no_install_stale or pkg.has_changed:

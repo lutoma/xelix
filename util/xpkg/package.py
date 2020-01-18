@@ -106,7 +106,8 @@ class Package:
 		env['PKG_CONFIG_LIBDIR'] = f'{image_dir / "usr" / "lib"/ "pkgconfig"}:{image_dir / "usr" / "share" / "pkgconfig"}'
 		env['PKG_CONFIG_SYSROOT_DIR'] = image_dir
 		env['PATH'] = f'/home/lutoma/code/xelix/toolchain/local/bin/:{os.environ.get("PATH", "")}'
-		env['CFLAGS'] = f'-O3 --sysroot {image_dir} -D__STDC_ISO_10646__'
+		env['CFLAGS'] = f'-O3 --sysroot {image_dir}'
+		env['CPPFLAGS'] = '-D__STDC_ISO_10646__ -D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0'
 		env['LDFLAGS'] = f'-L{image_dir / "usr" / "lib"}'
 
 		if 'cwd' not in kwargs:
@@ -146,7 +147,7 @@ class Package:
 			elif 'dir' in source.keys():
 				self.run_cmds([f'cp -r {self.pkg_dir / source["dir"]}/* {dest}'], cwd=sources_dir)
 
-	def build(self, force_build=False):
+	def patch(self):
 		if self.patches:
 			self.info(f'Applying patches')
 			skip_path = self.config.get('patch_skip_path', 1)
@@ -154,10 +155,12 @@ class Package:
 			patch_cmds = map(lambda x: f'patch -p{skip_path} < {self.pkg_dir}/{x}', self.patches)
 			self.run_cmds(patch_cmds)
 
+	def configure(self):
 		if self.cmds_configure:
 			self.info(f'Configuring')
 			self.run_cmds(self.cmds_configure)
 
+	def build(self):
 		if self.cmds_make:
 			self.info(f'Compiling')
 			self.run_cmds(self.cmds_make)
