@@ -1,5 +1,5 @@
 /* task.c: Userland tasks
- * Copyright © 2011-2019 Lukas Martini
+ * Copyright © 2011-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -176,27 +176,7 @@ void task_cleanup(task_t* t) {
 		sysfs_rm_file(t->sysfs_file);
 	}
 
-	struct task_mem* alloc = t->mem_allocs;
-	while(alloc) {
-		if(alloc->flags & TASK_MEM_FREE) {
-			if(alloc->flags & TASK_MEM_PALLOC) {
-				pfree((uintptr_t)alloc->phys_addr / PAGE_SIZE, alloc->len / PAGE_SIZE);
-			} else {
-				kfree(alloc->phys_addr);
-			}
-		}
-
-		struct task_mem* old_alloc = alloc;
-		alloc = alloc->next;
-		kfree(old_alloc);
-	}
-
-	t->mem_allocs = NULL;
-	vmem_rm_context(t->vmem_ctx);
-
-	kfree_array(t->environ, t->envc);
-	kfree_array(t->argv, t->argc);
-	kfree(t);
+	task_free(t);
 }
 
 static task_t* _fork(task_t* to_fork, isf_t* state) {

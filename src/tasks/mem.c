@@ -1,5 +1,5 @@
-/* task.c: Task memory allocation & management
- * Copyright © 2011-2019 Lukas Martini
+/* mem.c: Task memory allocation & management
+ * Copyright © 2011-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -131,6 +131,31 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 	task_memcpy(task, fmb, addr, ptr_size, false);
 	*copied = true;
 	return fmb;
+}
+
+// Free a task and all associated memory
+void task_free(task_t* t) {
+	struct task_mem* alloc = t->mem_allocs;
+	while(alloc) {
+		if(alloc->flags & TASK_MEM_FREE) {
+			if(alloc->flags & TASK_MEM_PALLOC) {
+				pfree((uintptr_t)alloc->phys_addr / PAGE_SIZE, alloc->len / PAGE_SIZE);
+			} else {
+				kfree(alloc->phys_addr);
+			}
+		}
+
+		struct task_mem* old_alloc = alloc;
+		alloc = alloc->next;
+		kfree(old_alloc);
+	}
+
+	t->mem_allocs = NULL;
+	vmem_rm_context(t->vmem_ctx);
+
+	kfree_array(t->environ, t->envc);
+	kfree_array(t->argv, t->argc);
+	kfree(t);
 }
 
 void* task_sbrk(task_t* task, int32_t length) {
