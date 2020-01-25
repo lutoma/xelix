@@ -1,0 +1,27 @@
+site_name: Xelix documentation
+repo_name: 'lutoma/xelix'
+repo_url: 'https://github.com/lutoma/xelix'
+markdown_extensions:
+  - smarty
+  - tables
+  - admonition
+  - def_list
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+theme:
+  name: 'material'
+  logo: 'images/92014.svg'
+  feature:
+    tabs: false
+nav:
+- Home: 'index.md'
+- 'compiling.md'
+- boot.md
+- fs.md
+- int.md
+- lib.md
+- mem.md
+- tasks.md
+#- 'xelix-utils.md'
