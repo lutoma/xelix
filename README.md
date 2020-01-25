@@ -1,56 +1,14 @@
-# 💻 Xelix
+# Xelix kernel
 
-Xelix is a hobbyist monolithic x86 kernel, mainly written for learning
-purposes. It aims to conform to the POSIX specification.
+Xelix is a hobby POSIX kernel and operating system for x86. It has a largely GNU-based userland and can run many common \*nix programs.
 
-![](https://fnord.cloud/s/E63wpFwEzBBSr9G/preview)
+Releases, build instructions and code documentation can be found at https://xelix.org (or in the `docs` folder).
 
-## ✨ Features
+## Features
 
-  * Preemptive multitasking with privilege and memory separation
-  * POSIX process API with fork/execve/wait and signal handling
-  * Read/write ext2 implementation
-  * TCP/IP support using the [PicoTCP](https://github.com/tass-belgium/picotcp) network stack
-  * TTY framework with support for ECMA48 escape sequences
-
-Ported software: GNU coreutils, bash, dash, pciutils, bzip2/zlib/gzip, ncurses, dialog,
-nano, darkhttpd, [and more](https://github.com/lutoma/xelix/tree/master/land).
-
-## 🏃 Running Xelix
-
-A disk image containing Xelix and a number of utilities is available [on the
-releases page](https://github.com/lutoma/xelix/releases/download/v20190126/xelix-2019-01-26.qcow2).
-
-You should be able to run it using any common x86 emulator/hypervisor.
-QEMU/KVM, Bochs, VirtualBox and VMWare Player are known to work, with the last
-two offering the best performance (Most testing is done on QEMU however).
-
-Sample QEMU invocation:
-
-	qemu-system-i386 -accel kvm -hda xelix.img -m 512 -cpu SandyBridge -soundhw ac97
-
-## ⚙ Compiling
-
-Compiling Xelix requires a Xelix toolchain with versions of GCC, binutils
-and newlib that accept the `i786-pc-xelix` target and have the correct
-syscall bindings.
-
-You can build the toolchain using
-
-	make -C toolchain
-
-Depending on your hardware, this is going to take a _long_ time. In addition to
-the toolchain, [NASM](https://www.nasm.us/) also needs to be installed.
-Afterwards you should be able to compile xelix using:
-
-    make gconfig
-    ./configure
-    make
-
-You should now see a binary called `xelix.bin`. 🎉
-
-## 🖼 Building an image
-
-You can build a full Xelix system image using `make image`. This requires an
-existing Xelix kernel binary and toolchain. Since this compiles all userland
-libraries and executables, this will also take a long time.
+* Preemptive multitasking with privilege and memory separation
+* POSIX process API with fork/execve/wait and signal handling
+* VFS with support for dynamic mount points, poll, pipes, and in-memory file trees
+* Read/write ext2 implementation, IDE and virtio-block drivers
+* BSD socket API for TCP/IP support using the [PicoTCP network stack](https://github.com/tass-belgium/picotcp)
+* Terminal framework with support for multiple TTYs, pseudo terminals & ECMA48 escape sequences
