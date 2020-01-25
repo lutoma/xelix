@@ -27,7 +27,7 @@
 #include <time.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
-#include <fs/block.h>
+#include <block/block.h>
 
 static uint64_t find_inode(struct ext2_fs* fs, uint32_t inode_num) {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);

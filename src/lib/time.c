@@ -21,7 +21,7 @@
  */
 
 #include <portio.h>
-#include <random.h>
+#include <block/random.h>
 #include <bsp/timer.h>
 #include <fs/sysfs.h>
 #include <tasks/task.h>
@@ -185,7 +185,7 @@ void time_init() {
 	last_timestamp = read_rtc();
 	last_tick = timer_tick;
 	log(LOG_INFO, "time: Initial last_timestamp is %u at tick %llu\n", last_timestamp, last_tick);
-	random_seed(last_timestamp + last_tick);
+	block_random_seed(last_timestamp + last_tick);
 
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,

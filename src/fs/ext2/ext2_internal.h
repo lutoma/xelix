@@ -22,7 +22,7 @@
 #include "inode.h"
 #include <lib/log.h>
 #include <fs/vfs.h>
-#include <fs/block.h>
+#include <block/block.h>
 #include <tasks/task.h>
 
 #ifdef EXT2_DEBUG

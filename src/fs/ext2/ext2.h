@@ -18,6 +18,6 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <fs/block.h>
+#include <block/block.h>
 
 int ext2_mount(struct vfs_block_dev* dev, const char* path);

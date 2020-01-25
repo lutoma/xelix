@@ -22,7 +22,7 @@
 #include "ext2_internal.h"
 #include "misc.h"
 #include <mem/kmalloc.h>
-#include <fs/block.h>
+#include <block/block.h>
 #include <bitmap.h>
 
 uint32_t ext2_bitmap_search_and_claim(struct ext2_fs* fs, uint32_t bitmap_block) {

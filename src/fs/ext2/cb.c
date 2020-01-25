@@ -30,7 +30,7 @@
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <fs/mount.h>
-#include <fs/block.h>
+#include <block/block.h>
 
 
 static struct inode* get_inode_and_check_owner(struct ext2_fs* fs, struct vfs_callback_ctx* ctx, struct dirent** dirent) {

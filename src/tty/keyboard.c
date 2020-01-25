@@ -22,7 +22,7 @@
 #include <tty/tty.h>
 #include <tty/input.h>
 #include <portio.h>
-#include <random.h>
+#include <block/random.h>
 
 #define flush() { while(inb(0x64) & 1) { inb(0x60); }}
 #define send(c) { while((inb(0x64) & 0x2)); outb(0x60, (c)); }
@@ -30,7 +30,7 @@
 static void intr_handler(task_t* task, isf_t* isf_state, int num) {
 	static struct tty_input_state state;
 	state.code = (uint16_t)inb(0x60);
-	random_seed(state.code + timer_tick);
+	block_random_seed(state.code + timer_tick);
 
 	// Escape sequences consist of two scancodes: One first that tells us
 	// we're now in an escape sequence, and the second one with the actual

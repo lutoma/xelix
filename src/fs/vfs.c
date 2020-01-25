@@ -30,14 +30,11 @@
 #include <cmdline.h>
 #include <panic.h>
 #include <fs/mount.h>
-#include <fs/null.h>
-#include <fs/block.h>
+#include <block/block.h>
 #include <fs/sysfs.h>
-#include <fs/part.h>
+#include <block/part.h>
 #include <fs/ext2/ext2.h>
 #include <fs/ftree.h>
-#include <fs/i386-ide.h>
-#include <fs/virtio_block.h>
 #include <net/socket.h>
 
 vfs_file_t kernel_files[VFS_MAX_OPENFILES];
@@ -720,15 +717,8 @@ void vfs_init() {
 
 	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
 	vfs_ftree_init();
-	ide_init();
-
-	#ifdef ENABLE_VIRTIO_BLOCK
-	virtio_block_init();
-	#endif
-
 	sysfs_init();
 	vfs_mount_init(root_path);
 
 	bzero(kernel_files, sizeof(kernel_files));
-	vfs_null_init();
 }

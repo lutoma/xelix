@@ -19,7 +19,7 @@
 
 #include <fs/mount.h>
 #include <fs/vfs.h>
-#include <fs/block.h>
+#include <block/block.h>
 #include <fs/sysfs.h>
 #include <fs/ext2/ext2.h>
 #include <tasks/task.h>

@@ -29,7 +29,7 @@
 static uint64_t mt[STATE_VECTOR_LENGTH];
 static int index;
 
-void random_seed(uint64_t seed) {
+void block_random_seed(uint64_t seed) {
 	mt[0] = seed & 0xffffffff;
 	for(index=1; index<STATE_VECTOR_LENGTH; index++) {
 		mt[index] = (6069 * mt[index-1]) & 0xffffffff;
@@ -45,7 +45,7 @@ static inline uint64_t getnum() {
 		// generate STATE_VECTOR_LENGTH words at a time
 		int kk;
 		if(index >= STATE_VECTOR_LENGTH+1 || index < 0) {
-			random_seed(4357);
+			block_random_seed(4357);
 		}
 
 		for(kk=0; kk<STATE_VECTOR_LENGTH - STATE_VECTOR_M; kk++) {
@@ -87,7 +87,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return size;
 }
 
-void random_init() {
+void block_random_init() {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

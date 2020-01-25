@@ -18,5 +18,5 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-void random_seed(uint64_t seed);
-void random_init();
+void block_random_seed(uint64_t seed);
+void block_random_init();

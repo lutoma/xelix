@@ -17,10 +17,14 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <fs/block.h>
+#include <block/block.h>
 #include <string.h>
 #include <mem/kmalloc.h>
-#include <fs/part.h>
+#include <block/i386-ide.h>
+#include <block/virtio.h>
+#include <block/part.h>
+#include <block/null.h>
+#include <block/random.h>
 #include <fs/sysfs.h>
 
 static int num_devs = 0;
@@ -146,4 +150,15 @@ void vfs_block_register_dev(char* name, uint64_t start_offset,
 	if(!dev->start_offset) {
 		vfs_part_probe(dev);
 	}
+}
+
+void block_init() {
+	ide_init();
+
+	#ifdef ENABLE_VIRTIO_BLOCK
+	virtio_block_init();
+	#endif
+
+	block_null_init();
+	block_random_init();
 }

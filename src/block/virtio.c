@@ -25,7 +25,7 @@
 #include <log.h>
 #include <portio.h>
 #include <fs/vfs.h>
-#include <fs/block.h>
+#include <block/block.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
 

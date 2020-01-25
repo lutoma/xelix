@@ -19,8 +19,8 @@
 
 #include <string.h>
 #include <mem/kmalloc.h>
-#include <fs/i386-ide.h>
-#include <fs/block.h>
+#include <block/i386-ide.h>
+#include <block/block.h>
 
 struct mbr_partition {
 	uint8_t bootable;

@@ -25,8 +25,8 @@
 #include <mem/kmalloc.h>
 #include <int/int.h>
 #include <portio.h>
-#include <fs/i386-ide.h>
-#include <fs/block.h>
+#include <block/i386-ide.h>
+#include <block/block.h>
 
 struct ata_identify {
 	uint16_t flags;
