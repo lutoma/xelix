@@ -4,6 +4,7 @@ sources:
   - url: http://sourceware.org/pub/newlib/newlib-3.2.0.tar.gz
 patches:
   - newlib-3.2.0.patch
+set_cflags_sysroot: false
 configure:
   - cp -r $PKGDIR/xelix newlib/libc/sys/
 

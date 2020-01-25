@@ -94,21 +94,26 @@ class Package:
 		print(f'\n\033[33m{self.name}: {str}\033[m')
 
 	def write_status(self, status):
-		with open(self.pkg_dir / '.xpkg-status', 'w') as file:
+		with open(self.build_dir / '.xpkg-status', 'w') as file:
 			yaml.dump(status, file)
 
 	def run_cmds(self, cmds, **kwargs):
 		env = copy(self.env)
 		env['PKGDIR'] = self.pkg_dir
 		env['DESTDIR'] = image_dir
+
 		env['SYSROOT'] = image_dir
 		env['PKG_CONFIG_DIR'] = image_dir
 		env['PKG_CONFIG_LIBDIR'] = f'{image_dir / "usr" / "lib"/ "pkgconfig"}:{image_dir / "usr" / "share" / "pkgconfig"}'
 		env['PKG_CONFIG_SYSROOT_DIR'] = image_dir
+
 		env['PATH'] = f'/home/lutoma/code/xelix/toolchain/local/bin/:{os.environ.get("PATH", "")}'
-		env['CFLAGS'] = f'-O3 --sysroot {image_dir}'
+		env['CFLAGS'] = f'-O3'
 		env['CPPFLAGS'] = '-D__STDC_ISO_10646__ -D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0'
 		env['LDFLAGS'] = f'-L{image_dir / "usr" / "lib"}'
+
+		if self.config.get('set_cflags_sysroot', True):
+			env['CFLAGS'] += f' --sysroot {image_dir}'
 
 		if 'cwd' not in kwargs:
 			kwargs['cwd'] = str(self.build_dir)
