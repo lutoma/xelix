@@ -1,0 +1,84 @@
+--- config/config.sub	2020-01-25 19:01:02.364157530 +0100
++++ config/config.sub	2020-01-25 19:01:13.760327870 +0100
+@@ -1366,7 +1366,7 @@ case $os in
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+-	     | nsk* | powerunix)
++	     | nsk* | powerunix | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+--- configure.ac	2020-01-25 19:15:00.810628325 +0100
++++ configure.ac	2020-01-25 19:15:10.556976130 +0100
+@@ -102,7 +102,7 @@ AC_MSG_ERROR([--with-ldopts no longer su
+ dnl
+ AC_PROG_CC
+ if test "$GCC" = yes; then
+-   RDYNAMIC="-rdynamic"
++   RDYNAMIC=""
+    AC_SUBST(RDYNAMIC)
+ fi
+ AC_PROG_CPP
+--- lib/uuid/gen_uuid.c	2020-01-25 19:05:37.608918348 +0100
++++ lib/uuid/gen_uuid.c	2020-01-25 19:05:40.592123426 +0100
+@@ -40,6 +40,7 @@
+ #define _DEFAULT_SOURCE	  /* since glibc 2.20 _SVID_SOURCE is deprecated */
+
+ #include "config.h"
++#undef HAVE_NET_IF_H
+
+ #ifdef _WIN32
+ #define _WIN32_WINNT 0x0500
+--- e2fsck/sigcatcher.c	2020-01-25 19:08:00.232800908 +0100
++++ e2fsck/sigcatcher.c	2020-01-25 19:08:59.196945982 +0100
+@@ -338,8 +338,11 @@ static void die_signal_handler(int signu
+
+        fprintf(stderr, "Signal (%d) %s ", signum,
+ 	       lookup_table_fallback(signum, sig_table));
++       #ifndef __xelix__
+        if (siginfo->si_code == SI_USER)
+ 	       fprintf(stderr, "(sent from pid %u) ", siginfo->si_pid);
++       #endif
++
+        cp = lookup_table(siginfo->si_code, generic_code_table);
+        if (cp)
+ 	       fprintf(stderr, "si_code=%s ", cp);
+@@ -365,10 +368,14 @@ static void die_signal_handler(int signu
+ 					     sigcld_code_table));
+        else
+ 	       fprintf(stderr, "si code=%d ", siginfo->si_code);
++
++       #ifndef __xelix__
+        if ((siginfo->si_code != SI_USER) &&
+ 	   (signum == SIGILL || signum == SIGFPE ||
+ 	    signum == SIGSEGV || signum == SIGBUS))
+ 	       fprintf(stderr, "fault addr=%p", siginfo->si_addr);
++       #endif
++
+        fprintf(stderr, "\n");
+
+ #if defined(HAVE_BACKTRACE) && !defined(DISABLE_BACKTRACE)
+--- debugfs/util.c	2020-01-25 19:23:04.817875239 +0100
++++ debugfs/util.c	2020-01-25 19:23:33.920225627 +0100
+@@ -22,6 +22,9 @@
+ extern int optind;
+ extern char *optarg;
+ #endif
++
++#undef HAVE_OPTRESET
++
+ #ifdef HAVE_OPTRESET
+ extern int optreset;		/* defined by BSD, but not others */
+ #endif
+--- lib/ext2fs/tst_bitmaps.c	2020-01-25 19:23:13.760906700 +0100
++++ lib/ext2fs/tst_bitmaps.c	2020-01-25 19:23:26.560474367 +0100
+@@ -27,6 +27,8 @@
+ #include "ext2fs.h"
+ #include "ext2fsP.h"
+
++#undef HAVE_OPTRESET
++
+ extern ss_request_table tst_bitmaps_cmds;
+
+ static char subsystem_name[] = "tst_bitmaps";

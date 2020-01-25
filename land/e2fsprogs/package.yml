@@ -1,0 +1,19 @@
+name: e2fsprogs
+version: '1.45.5'
+sources:
+  - url: https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.45.5/e2fsprogs-1.45.5.tar.xz
+patch_skip_path: 0
+patches:
+  - e2fsprogs.patch
+configure:
+  - autoconf
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --sbindir=/usr/bin
+    --disable-nls
+make:
+  - make
+install:
+  - make DESTDIR=$DESTDIR install

@@ -139,3 +139,5 @@ STUB(int, initgroups, (const char *user, gid_t group), -1);
 STUB(void, sync, (void));
 STUB(int, getsockopt, (int sockfd, int level, int optname, void* optval, socklen_t* optlen), -1);
 STUB(ssize_t, recvmsg, (int sockfd, struct msghdr *msg, int flags), -1);
+STUB(dev_t, makedev, (unsigned int maj, unsigned int min), NULL);
+STUB(int, daemon, (int nochdir, int noclose), -1);
