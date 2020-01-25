@@ -26,9 +26,25 @@
 #include <block/null.h>
 #include <block/random.h>
 #include <fs/sysfs.h>
+#include <fs/mount.h>
 
 static int num_devs = 0;
 static struct vfs_block_dev* block_devs = NULL;
+
+struct vfs_block_dev* vfs_block_get_dev(const char* path) {
+	if(strlen(path) < 6 || strncmp(path, "/dev/", 5)) {
+		return NULL;
+	}
+
+	struct vfs_block_dev* dev = block_devs;
+	while(dev) {
+		if(!strcmp(dev->name, path + 5)) {
+			return dev;
+		}
+		dev = dev->next;
+	}
+	return NULL;
+}
 
 uint64_t vfs_block_read(struct vfs_block_dev* dev, uint64_t start_block, uint64_t num_blocks, uint8_t* buf) {
 	return dev->read_cb(dev, start_block + dev->start_offset, num_blocks, buf);
@@ -109,19 +125,29 @@ static size_t sfs_block_write(struct vfs_callback_ctx* ctx, void* src, size_t si
 	return size;
 }
 
-struct vfs_block_dev* vfs_block_get_dev(const char* path) {
-	if(strlen(path) < 6 || strncmp(path, "/dev/", 5)) {
-		return NULL;
+static int sfs_block_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
+	struct vfs_block_dev* dev = vfs_block_get_dev(ctx->orig_path);
+	if(!dev) {
+		return -1;
 	}
 
-	struct vfs_block_dev* dev = block_devs;
-	while(dev) {
-		if(!strcmp(dev->name, path + 5)) {
-			return dev;
-		}
-		dev = dev->next;
-	}
-	return NULL;
+	dest->st_dev = 2;
+	dest->st_ino = 1;
+	dest->st_mode = FT_IFBLK;
+	dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+	dest->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+	dest->st_nlink = 1;
+	dest->st_blocks = 0;
+	dest->st_blksize = dev->block_size;
+	dest->st_uid = 0;
+	dest->st_gid = 0;
+	dest->st_rdev = 0;
+	dest->st_size = 0;
+	uint32_t t = time_get();
+	dest->st_atime = t;
+	dest->st_mtime = t;
+	dest->st_ctime = t;
+	return 0;
 }
 
 void vfs_block_register_dev(char* name, uint64_t start_offset,
@@ -142,6 +168,7 @@ void vfs_block_register_dev(char* name, uint64_t start_offset,
 	struct vfs_callbacks sfs_block_cb = {
 		.read = sfs_block_read,
 		.write = sfs_block_write,
+		.stat = sfs_block_stat,
 	};
 	struct sysfs_file* sfp = sysfs_add_dev(name, &sfs_block_cb);
 	sfp->meta = (void*)dev;

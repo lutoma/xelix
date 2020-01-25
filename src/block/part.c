@@ -33,7 +33,7 @@ struct mbr_partition {
 
 void vfs_part_probe(struct vfs_block_dev* dev) {
 	uint8_t* buf = kmalloc(512);
-	if(dev->read_cb(dev, 0, 1, buf) < 0) {
+	if(dev->read_cb(dev, 0, 1, buf) < 1) {
 		kfree(buf);
 		return;
 	}
