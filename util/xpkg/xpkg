@@ -63,13 +63,13 @@ def build(package_names, all, exclude, force, no_install_stale, keep_builddir, s
 
 	for pkg in pkgs:
 		if not pkg.config.get('disabled', False):
-			if not keep_builddir:
-				pkg.patch()
-
 			has_changed = pkg.has_changed
 			rebuilt = False
 
 			if has_changed or force:
+				if not keep_builddir:
+					pkg.patch()
+
 				if not skip_configure:
 					pkg.configure()
 

@@ -80,7 +80,7 @@ class Package:
 	@property
 	def last_build(self):
 		try:
-			with open(self.pkg_dir / '.xpkg-status', 'r') as file:
+			with open(self.build_dir / '.xpkg-status', 'r') as file:
 				return yaml.safe_load(file)['last_build']
 		except FileNotFoundError:
 			return 0
