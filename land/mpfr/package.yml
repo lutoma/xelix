@@ -12,6 +12,8 @@ configure:
     --prefix=/usr
     --sysconfdir=/etc
     --disable-shared
+    --with-gmp-include=$DESTDIR/usr/include
+    --with-gmp-lib=$DESTDIR/usr/lib
 make:
   - make
 install:

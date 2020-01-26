@@ -12,8 +12,8 @@ make:
   - make
     CROSS_COMPILE=i786-pc-xelix-
     HOST=pc-xelix
-    CFLAGS="$CFLAGS"
-    LDFLAGS="$LDFLAGS"
+    CFLAGS="$CFLAGS -I$DESTDIR/usr/include"
+    LDFLAGS="$LDFLAGS -L$DESTDIR/usr/lib"
     DNS=no
     ZLIB=yes
     PREFIX=/usr
