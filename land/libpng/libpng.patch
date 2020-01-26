@@ -1,0 +1,11 @@
+--- config.sub	2020-01-26 02:29:15.016380282 +0100
++++ config.sub	2020-01-26 02:29:22.063092942 +0100
+@@ -1390,7 +1390,7 @@ case $os in
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+ 	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox* | -bme* \
+-	      | -midnightbsd*)
++	      | -midnightbsd* | -xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)

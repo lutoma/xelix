@@ -1,0 +1,19 @@
+name: libpng
+version: '1.6.37'
+sources:
+  - url: http://prdownloads.sourceforge.net/libpng/libpng-1.6.37.tar.xz?download
+dependencies:
+  - libz
+patch_skip_path: 0
+patches:
+  - libpng.patch
+configure:
+  - CPPFLAGS="$CPPFLAGS -I$DESTDIR/usr/include" ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+  - make DESTDIR=$DESTDIR install
+  - rm $DESTDIR/usr/lib/libpng16.la $DESTDIR/usr/lib/libpng.la

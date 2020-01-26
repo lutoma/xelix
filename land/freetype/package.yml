@@ -1,0 +1,19 @@
+name: freetype
+version: '2.9'
+sources:
+  - url: https://download.savannah.gnu.org/releases/freetype/freetype-2.9.tar.gz
+dependencies:
+  - libz
+  - libpng
+patches:
+  - freetype-2.9.patch
+configure:
+  - ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+make:
+  - make
+install:
+  - make DESTDIR=$DESTDIR install
+  -   - rm $DESTDIR/usr/lib/libfreetype.la

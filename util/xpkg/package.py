@@ -114,6 +114,7 @@ class Package:
 
 		if self.config.get('set_cflags_sysroot', True):
 			env['CFLAGS'] += f' --sysroot {image_dir}'
+			env['CPPFLAGS'] += f' --sysroot {image_dir}'
 
 		if 'cwd' not in kwargs:
 			kwargs['cwd'] = str(self.build_dir)
