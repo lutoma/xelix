@@ -21,6 +21,8 @@
 #include <tty/tty.h>
 #include <mem/kmalloc.h>
 #include <boot/multiboot.h>
+#include <fs/sysfs.h>
+#include <errno.h>
 #include <string.h>
 #include <log.h>
 #include <bitmap.h>
@@ -118,6 +120,10 @@ static inline uintptr_t get_fb_buf(struct terminal* term) {
 }
 
 static void write_char(struct terminal* term, uint32_t x, uint32_t y, char chr, bool bdc) {
+	if(drv->direct_access) {
+		return;
+	}
+
 	x *= tty_font.width;
 	y *= tty_font.height;
 
@@ -139,6 +145,10 @@ static void write_char(struct terminal* term, uint32_t x, uint32_t y, char chr, 
 }
 
 static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
+	if(drv->direct_access) {
+		return;
+	}
+
 	uint32_t color = convert_color(term->bg_color, true);
 	uintptr_t dest = get_fb_buf(term);
 
@@ -166,6 +176,10 @@ static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uin
 }
 
 static void scroll_line(struct terminal* term) {
+	if(drv->direct_access) {
+		return;
+	}
+
 	size_t size = fb_desc->common.framebuffer_width
 		* fb_desc->common.framebuffer_height
 		* (fb_desc->common.framebuffer_bpp / 8)
@@ -182,6 +196,10 @@ static void scroll_line(struct terminal* term) {
 }
 
 static void set_cursor(struct terminal* term, uint32_t x, uint32_t y, bool restore) {
+	if(drv->direct_access) {
+		return;
+	}
+
 	uintptr_t dest = get_fb_buf(term);
 
 	x *= tty_font.width;
@@ -209,12 +227,45 @@ static void set_cursor(struct terminal* term, uint32_t x, uint32_t y, bool resto
 }
 
 static void rerender(struct terminal* tty_old, struct terminal* tty_new) {
+	if(drv->direct_access) {
+		return;
+	}
+
 	if(!tty_old->drv_buf || !tty_new->drv_buf) {
 		return;
 	}
 
 	memcpy(tty_old->drv_buf, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, tty_old->drv->buf_size);
 	memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, tty_new->drv_buf, tty_new->drv->buf_size);
+}
+
+static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
+	uint32_t size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
+	switch(request) {
+		case 0x2f01:
+			return fb_desc->common.framebuffer_addr;
+		case 0x2f02:
+			return fb_desc->common.framebuffer_bpp;
+		case 0x2f03:
+			drv->direct_access = 1;
+			task_add_mem_flat(ctx->task, (void*)(uintptr_t)fb_desc->common.framebuffer_addr,
+				size, TMEM_SECTION_DATA, 0);
+
+			return 0;
+		case 0x2f04:
+			drv->direct_access = 0;
+			// FIXME unmap
+			return 0;
+		case 0x2f05:
+			return fb_desc->common.framebuffer_width;
+		case 0x2f06:
+			return fb_desc->common.framebuffer_height;
+		case 0x2f07:
+			return fb_desc->common.framebuffer_pitch;
+		default:
+			sc_errno = ENOSYS;
+			return -1;
+	}
 }
 
 struct tty_driver* tty_fbtext_init() {
@@ -245,9 +296,17 @@ struct tty_driver* tty_fbtext_init() {
 	drv->ypixel = fb_desc->common.framebuffer_height;
 	drv->buf_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 	drv->write = write_char;
+	drv->direct_access = 0;
 	drv->scroll_line = scroll_line;
 	drv->clear = clear;
 	drv->set_cursor = set_cursor;
 	drv->rerender = rerender;
+
+
+	struct vfs_callbacks sfs_cb = {
+		.ioctl = sfs_ioctl,
+	};
+
+	sysfs_add_dev("gfx1", &sfs_cb);
 	return drv;
 }

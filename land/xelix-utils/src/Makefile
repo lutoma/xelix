@@ -4,8 +4,9 @@ LD := i786-pc-xelix-ld
 CFLAGS += -std=gnu18 -O3 -g -D_GNU_SOURCE
 DESTDIR ?= ../../mnt
 
-TARGETS=basictest init ps uptime free login dmesg su play strace host telnetd mount umount
+TARGETS=basictest init ps uptime free login dmesg su play strace host telnetd mount umount gfxterm
 
+.PHONY: all
 all: $(TARGETS)
 
 .PHONY: clean
@@ -17,6 +18,9 @@ init: init.c ini.c libutil.a
 
 play: play.c
 	$(CC) $(CFLAGS) -o $@ play.c -lFLAC -lm
+
+gfxterm: gfxterm.c tmt.c tmt.h
+	$(CC) $(CFLAGS) -o $@ tmt.c gfxterm.c -I$(DESTDIR)/usr/include -I$(DESTDIR)/usr/include/freetype2 -lfreetype -lpng -lz -lm
 
 libutil.a: util.c argparse.c
 	$(CC) $(CFLAGS) -c -o util.o util.c

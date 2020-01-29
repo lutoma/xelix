@@ -35,6 +35,10 @@ struct tty_driver {
 	uint32_t xpixel;
 	uint32_t ypixel;
 	uint32_t buf_size;
+
+	// Userland program has directly opened device, disable all drawing
+	int direct_access;
+
 	void (*write)(struct terminal* term, uint32_t x, uint32_t y, char chr, bool bdc);
 	void (*scroll_line)(struct terminal* term);
 	void (*clear)(struct terminal* term, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);

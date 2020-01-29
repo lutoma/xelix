@@ -3,7 +3,7 @@ version: '1.6.37'
 sources:
   - url: http://prdownloads.sourceforge.net/libpng/libpng-1.6.37.tar.xz?download
 dependencies:
-  - libz
+  - zlib
 patch_skip_path: 0
 patches:
   - libpng.patch

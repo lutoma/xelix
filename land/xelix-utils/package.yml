@@ -4,6 +4,8 @@ sources:
   - dir: src
 dependencies:
   - flac
+  - freetype
+  - libpng
 make:
   - make
 install:
