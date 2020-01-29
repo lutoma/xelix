@@ -1,0 +1,8 @@
+name: font-fira-code
+version: '2'
+sources:
+  - url: https://github.com/tonsky/FiraCode/releases/download/2/FiraCode_2.zip
+    type: zip
+install:
+  - install -D ttf/*.ttf -m 644 $DESTDIR/usr/share/fonts
+  - install -d -m 755 $DESTDIR/usr/share/fonts
