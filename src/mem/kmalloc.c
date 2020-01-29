@@ -1,5 +1,5 @@
 /* kmalloc.c: Kernel memory allocator
- * Copyright © 2016-2019 Lukas Martini
+ * Copyright © 2016-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -25,14 +25,14 @@
 #include <panic.h>
 #include <spinlock.h>
 
-#define GET_FOOTER(x) ((struct footer*)((intptr_t)x + x->size + sizeof(struct mem_block)))
-#define GET_CONTENT(x) ((void*)((intptr_t)x + sizeof(struct mem_block)))
+#define GET_FOOTER(x) ((struct footer*)((uintptr_t)x + x->size + sizeof(struct mem_block)))
+#define GET_CONTENT(x) ((void*)((uintptr_t)x + sizeof(struct mem_block)))
 #define GET_FB(x) ((struct free_block*)GET_CONTENT(x))
-#define GET_HEADER_FROM_FB(x) ((struct mem_block*)((intptr_t)(x) - sizeof(struct mem_block)))
-#define PREV_FOOTER(x) ((uint32_t*)((intptr_t)x - sizeof(struct footer)))
-#define PREV_BLOCK(x) ((struct mem_block*)((intptr_t)PREV_FOOTER(x) \
+#define GET_HEADER_FROM_FB(x) ((struct mem_block*)((uintptr_t)(x) - sizeof(struct mem_block)))
+#define PREV_FOOTER(x) ((uint32_t*)((uintptr_t)x - sizeof(struct footer)))
+#define PREV_BLOCK(x) ((struct mem_block*)((uintptr_t)PREV_FOOTER(x) \
 	- (*PREV_FOOTER(x)) - sizeof(struct mem_block)))
-#define NEXT_BLOCK(x) ((struct mem_block*)((intptr_t)GET_FOOTER(x) + sizeof(struct footer)))
+#define NEXT_BLOCK(x) ((struct mem_block*)((uintptr_t)GET_FOOTER(x) + sizeof(struct footer)))
 #define FULL_SIZE(x) (x->size + sizeof(struct footer) + sizeof(struct mem_block))
 
 /* Enable debugging. This will send out cryptic debug codes to the serial line
@@ -52,11 +52,13 @@
  */
 #ifdef KMALLOC_CHECK
 	#define KMALLOC_CANARY 0xCAFE
-	#define SET_CANARIES(x) (x)->canary1 = KMALLOC_CANARY; \
-		(x)->canary2 = KMALLOC_CANARY
+	#define _SET_CANARIES(x, y) (x)->canary1 = y; (x)->canary2 = y
+	#define SET_CANARIES(x) _SET_CANARIES(x, KMALLOC_CANARY)
+	#define CLEAR_CANARIES(x) _SET_CANARIES(x, 0)
 	#define CANARY(x) uint16_t canary ## x
 #else
 	#define SET_CANARIES(x)
+	#define CLEAR_CANARIES(x)
 	#define CANARY(x)
 #endif
 
@@ -96,14 +98,16 @@ struct footer {
 
 #ifdef KMALLOC_CHECK
 	static void check_header(struct mem_block* header, bool recurse);
+#else
+	#define check_header(...)
 #endif
 
 bool kmalloc_ready = false;
 static spinlock_t kmalloc_lock;
 static struct free_block* last_free = (struct free_block*)NULL;
-static intptr_t alloc_start;
-static intptr_t alloc_end;
-static intptr_t alloc_max;
+static uintptr_t alloc_start;
+static uintptr_t alloc_end;
+static uintptr_t alloc_max;
 
 static inline void unlink_free_block(struct free_block* fb) {
 	if(fb->next) {
@@ -135,12 +139,8 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 	/* If previous block is free, just increase the size of that block to also
 	 * cover this area. Otherwise write free block metadata and add block.
 	 */
-	if((intptr_t)header > alloc_start && prev->type == TYPE_FREE) {
-		#ifdef KMALLOC_CHECK
-		header->canary1 = 0;
-		header->canary2 = 0;
-		#endif
-
+	if((uintptr_t)header > alloc_start && prev->type == TYPE_FREE) {
+		CLEAR_CANARIES(header);
 		header = set_block(prev->size + FULL_SIZE(header), prev);
 	} else {
 		header->type = TYPE_FREE;
@@ -158,13 +158,10 @@ static struct mem_block* free_block(struct mem_block* header, bool check_next) {
 
 	// If next block is free, increase block size and unlink the next fb.
 	struct mem_block* next = NEXT_BLOCK(header);
-	if(check_next && alloc_end > (intptr_t)next && next->type == TYPE_FREE) {
+	if(check_next && alloc_end > (uintptr_t)next && next->type == TYPE_FREE) {
 		set_block(header->size + FULL_SIZE(next), header);
 		unlink_free_block(GET_FB(next));
-		#ifdef KMALLOC_CHECK
-		next->canary1 = 0;
-		next->canary2 = 0;
-		#endif
+		CLEAR_CANARIES(next);
 	}
 
 	return header;
@@ -186,7 +183,7 @@ static inline struct mem_block* split_block(struct mem_block* header, size_t sz)
 
 static size_t get_alignment_offset(void* address) {
 	size_t offset = 0;
-	intptr_t content_addr = (intptr_t)GET_CONTENT(address);
+	uintptr_t content_addr = (uintptr_t)GET_CONTENT(address);
 
 	// Check if page is not already page aligned by circumstance
 	if(content_addr & (PAGE_SIZE - 1)) {
@@ -209,10 +206,7 @@ static inline struct mem_block* get_free_block(size_t sz, bool align) {
 
 	for(struct free_block* fb = last_free; fb; fb = fb->prev) {
 		struct mem_block* fblock = GET_HEADER_FROM_FB(fb);
-
-		#ifdef KMALLOC_CHECK
 		check_header(fblock, true);
-		#endif
 
 		if(unlikely(fblock->type != TYPE_FREE)) {
 			log(LOG_ERR, "kmalloc: Non-free block in free blocks linked list?\n");
@@ -315,11 +309,8 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero D
 		bzero((void*)GET_CONTENT(header), sz);
 	}
 
-	#ifdef KMALLOC_CHECK
 	check_header(header, true);
-	#endif
-
-	debug("RESULT 0x%x\n", (intptr_t)GET_CONTENT(header));
+	debug("RESULT 0x%x\n", (uintptr_t)GET_CONTENT(header));
 	return (void*)GET_CONTENT(header);
 }
 
@@ -328,22 +319,19 @@ void _kfree(void *ptr DEBUGREGS) {
 		return;
 	}
 
-	struct mem_block* header = (struct mem_block*)((intptr_t)ptr
+	struct mem_block* header = (struct mem_block*)((uintptr_t)ptr
 		- sizeof(struct mem_block));
 
 	debug("kfree: %s:%d %s 0x%x size 0x%x\n", _debug_file, _debug_line,
 		_debug_func, ptr, header->size);
-	if(unlikely((intptr_t)header < alloc_start ||
-		(intptr_t)ptr >= alloc_end || header->type == TYPE_FREE)) {
+	if(unlikely((uintptr_t)header < alloc_start ||
+		(uintptr_t)ptr >= alloc_end || header->type == TYPE_FREE)) {
 
 		log(LOG_ERR, "kmalloc: Attempt to free invalid block\n");
 		return;
 	}
 
-	#ifdef KMALLOC_CHECK
 	check_header(header, true);
-	#endif
-
 	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
 		debug("Could not get spinlock\n");
 		return;
@@ -354,14 +342,9 @@ void _kfree(void *ptr DEBUGREGS) {
 }
 
 void kmalloc_init() {
-	alloc_start = (intptr_t)palloc(0x6400);
-
-	if(alloc_start % 8) {
-		alloc_start = (alloc_start &~ 7) + 8;
-	}
-
+	alloc_start = (uintptr_t)palloc(0x6400);
 	alloc_end = alloc_start;
-	alloc_max = (intptr_t)alloc_start + (0x6400 * PAGE_SIZE);
+	alloc_max = (uintptr_t)alloc_start + (0x6400 * PAGE_SIZE);
 	kmalloc_ready = true;
 	log(LOG_DEBUG, "kmalloc: Allocating from %#x - %#x\n", alloc_start, alloc_max);
 }
@@ -413,11 +396,11 @@ static void check_header(struct mem_block* header, bool recurse) {
 			header->size, footer->size);
 	}
 
-	if(likely((intptr_t)header != alloc_start) && recurse) {
+	if(likely((uintptr_t)header != alloc_start) && recurse) {
 		check_header(PREV_BLOCK(header), false);
 	}
 
-	if(likely(alloc_end > (intptr_t)header + FULL_SIZE(header)) && recurse) {
+	if(likely(alloc_end > (uintptr_t)header + FULL_SIZE(header)) && recurse) {
 		check_header(NEXT_BLOCK(header), false);
 	}
 }
@@ -427,16 +410,13 @@ static void check_header(struct mem_block* header, bool recurse) {
 void kmalloc_stats() {
 	struct mem_block* header = (struct mem_block*)alloc_start;
 	log(LOG_DEBUG, "\nkmalloc_stats():\n");
-	for(; (intptr_t)header < alloc_end; header = NEXT_BLOCK(header)) {
-
-		#ifdef KMALLOC_CHECK
+	for(; (uintptr_t)header < alloc_end; header = NEXT_BLOCK(header)) {
 		check_header(header, false);
-		#endif
 
 		log(LOG_DEBUG, "0x%x\tsize 0x%x\tres 0x%x\t", header, header->size,
-				(intptr_t)header + sizeof(struct mem_block));
+				(uintptr_t)header + sizeof(struct mem_block));
 		log(LOG_DEBUG, "fsz 0x%x\tend 0x%x\t ", FULL_SIZE(header),
-			(intptr_t)header + FULL_SIZE(header));
+			(uintptr_t)header + FULL_SIZE(header));
 
 		if(header->type == TYPE_FREE) {
 			struct free_block* fb = GET_FB(header);
