@@ -148,8 +148,15 @@ class Package:
 				else:
 					self.run_cmds([f'wget --continue "{source["url"]}"'], cwd=sources_dir)
 
-				tar_cmd = f'tar xf "{sources_dir / filename}" -C {dest} --strip-components=1'
-				self.run_cmds([tar_cmd], cwd=sources_dir)
+				source_type = source.get('type', 'tar.xz')
+				if source_type == 'tar.xz':
+					extract_cmd = f'tar xf "{sources_dir / filename}" -C {dest} --strip-components=1'
+				elif source_type == 'zip':
+					extract_cmd = f'unzip "{sources_dir / filename}" -d {dest}'
+				else:
+					Exception('Unknown source type')
+
+				self.run_cmds([extract_cmd], cwd=sources_dir)
 			elif 'dir' in source.keys():
 				self.run_cmds([f'cp -r {self.pkg_dir / source["dir"]}/* {dest}'], cwd=sources_dir)
 
