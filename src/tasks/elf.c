@@ -64,22 +64,25 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 		section = TMEM_SECTION_CODE;
 	}
 
-	size_t size = ALIGN(phead->memsz, PAGE_SIZE);
+	size_t phys_offset = 0;
+	void* virt;
+	if(is_main) {
+		virt = ALIGN_DOWN(phead->vaddr, PAGE_SIZE);
+		phys_offset = phead->vaddr - virt;
+	}
+
+	size_t size = ALIGN(phead->memsz + phys_offset, PAGE_SIZE);
 	void* phys = zpalloc(size / PAGE_SIZE);
 	if(unlikely(!phys)) {
 		return -1;
 	}
 
-	void* virt = phys;
-	size_t phys_offset = 0;
-
 	if(is_main) {
-		virt = ALIGN_DOWN(phead->vaddr, PAGE_SIZE);
-		phys_offset = phead->vaddr - virt;
-
 		if(virt + size > task->sbrk) {
 			task->sbrk = virt + size;
 		}
+	} else {
+		virt = phys;
 	}
 
 	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, phys + phys_offset, task))) {
