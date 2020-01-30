@@ -1,4 +1,4 @@
-/* Copyright © 2015 Lukas Martini
+/* Copyright © 2015-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -15,27 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #ifndef _ARPA_INET_H
 #define _ARPA_INET_H
 
 #include <stdint.h>
 #include <netinet/in.h>
-#include <byteswap.h>
+#include <endian.h>
 
-#if BYTE_ORDER == BIG_ENDIAN
-	#define htonl(x) (x)
-	#define ntohl(x) (x)
-	#define htons(x) (x)
-	#define ntohs(x) (x)
-#elif BYTE_ORDER == LITTLE_ENDIAN
-	#define htonl(x) bswap_32(x)
-	#define ntohl(x) bswap_32(x)
-	#define htons(x) bswap_16(x)
-	#define ntohs(x) bswap_16(x)
-#endif
-
-in_addr_t  inet_addr(const char *cp);
+in_addr_t inet_addr(const char *cp);
 in_addr_t inet_lnaof(struct in_addr in);
 struct in_addr inet_makeaddr(in_addr_t net, in_addr_t lna);
 in_addr_t inet_netof(struct in_addr in);
