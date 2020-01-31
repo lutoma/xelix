@@ -118,7 +118,7 @@ vfs_file_t* vfs_get_from_id(int fd, task_t* task) {
 		return NULL;
 	}
 
-	vfs_file_t* fp = task? &task->files[fd] : &kernel_files[fd];
+	vfs_file_t* fp = task ? &task->files[fd] : &kernel_files[fd];
 	if(!fp->refs) {
 		return NULL;
 	}
@@ -578,7 +578,6 @@ int vfs_realpath(task_t* task, const char* orig_path, char* dest) {
 }
 
 int vfs_utimes(task_t* task, const char* orig_path, struct timeval times[2]) {
-	serial_printf("vfs_utimes %#x\n", times);
 	struct vfs_callback_ctx* ctx = vfs_context_from_path(orig_path, task);
 	if(!ctx) {
 		sc_errno = EBADF;

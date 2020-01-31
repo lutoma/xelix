@@ -43,6 +43,7 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define RDIV(x, y) ((x) + ((y) - 1)) / (y)
 #define ALIGN_DOWN(val, to) (typeof(val))((uintptr_t)(val) &~ ((to) - 1))
 #define ALIGN(val, to) ((uintptr_t)(val) % (to) \
 	? (typeof(val))((intptr_t)ALIGN_DOWN(val, to) + (to)) : (val))
