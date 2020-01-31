@@ -26,12 +26,14 @@
 #include <poll.h>
 #include <pty.h>
 #include <sys/termios.h>
+#include <sys/param.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include "util.h"
 #include "tmt.h"
 
 #define BLOCK_HEIGHT 15
-#define BLOCK_WIDTH 9
+#define BLOCK_WIDTH 8
 #define BLOCK_TEXTOFFSET 3
 
 #define block_ptr(row, col) (&fb_addr[row * BLOCK_HEIGHT * (fb_pitch / 4) + \
@@ -49,18 +51,10 @@ int pty_master;
 int pty_slave;
 int cursor_row = 0;
 int cursor_col = 0;
-uint8_t* glyph_cache[255];
-uint8_t* glyph_cache_bold[255];
+uint8_t* glyph_cache[256];
+uint8_t* glyph_cache_bold[256];
+FILE* serial_fd;
 
-
-static inline void *memset32(uint32_t *s, uint32_t v, size_t n) {
-	long d0, d1;
-	asm volatile("rep stosl"
-		: "=&c" (d0), "=&D" (d1)
-		: "a" (v), "1" (s), "0" (n)
-		: "memory");
-	return s;
-}
 
 static uint32_t convert_color(int color, int bg) {
 	if(color == -1 || color >= 9) {
@@ -76,21 +70,7 @@ static uint32_t convert_color(int color, int bg) {
 	return (bg ? colors_bg : colors_fg)[color];
 }
 
-static inline uint32_t blend(unsigned char fg[4], unsigned char bg[4]) {
-	unsigned int alpha = fg[3] + 1;
-	unsigned int inv_alpha = 256 - fg[3];
-	uint32_t result = 0;
-	result |= (unsigned char)((alpha * fg[0] + inv_alpha * bg[0]) >> 8) << 16;
-	result |= (unsigned char)((alpha * fg[1] + inv_alpha * bg[1]) >> 8) << 8;
-	result |= (unsigned char)((alpha * fg[2] + inv_alpha * bg[2]) >> 8);
-	return result;
-}
-
 uint8_t* render_glyph(char chr, int bold) {
-	if(chr < 0 || chr > 255) {
-		return NULL;
-	}
-
 	uint8_t** cache = bold ? glyph_cache_bold : glyph_cache;
 	if(cache[chr]) {
 		return cache[chr];
@@ -101,11 +81,11 @@ uint8_t* render_glyph(char chr, int bold) {
 		return NULL;
 	}
 
-	uint8_t* glyph = calloc(1, BLOCK_HEIGHT * BLOCK_WIDTH * 5);
-
 	FT_GlyphSlot slot = cface->glyph;
-	for (int y = 0; y < slot->bitmap.rows; y++) {
-		for (int x = 0; x < slot->bitmap.width; x++) {
+	uint8_t* glyph = calloc(1, BLOCK_HEIGHT * BLOCK_WIDTH);
+
+	for (int y = 0; y < MIN(slot->bitmap.rows, BLOCK_HEIGHT); y++) {
+		for (int x = 0; x < MIN(slot->bitmap.width, BLOCK_WIDTH); x++) {
 			int y_offset = y + BLOCK_HEIGHT - BLOCK_TEXTOFFSET - slot->bitmap_top;
 			int x_offset = x + slot->bitmap_left;
 
@@ -182,7 +162,7 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 			break;
 
 		case TMT_MSG_MOVED:
-			// redraw cursor
+			// draw new cursor, redraw previous cursor position
 			for(int i = 0; i < BLOCK_HEIGHT; i++) {
 				*(block_ptr(c->r, c->c) + (i * fb_pitch/4)) = 0xfd971f;
 			}
@@ -223,21 +203,6 @@ static inline void launch_child() {
 	}
 }
 
-static inline int copy(int from, int to) {
-	char buf[1024];
-	int nread = read(from, buf, 1024);
-	if(nread < 0 && errno != EAGAIN) {
-		return -1;
-	}
-
-	if(nread > 0) {
-		if(write(to, buf, nread) < 0) {
-			return -1;
-		}
-	}
-	return 0;
-}
-
 void main_loop(TMT* vt) {
 	struct termios termios;
 	tcgetattr(0, &termios);
@@ -273,7 +238,6 @@ void main_loop(TMT* vt) {
 				int nread = read(0, input, 0x5000);
 				if(nread) {
 					write(pty_master, input, nread);
-					tmt_write(vt, input, nread);
 				}
 			}
 		}
@@ -283,27 +247,27 @@ void main_loop(TMT* vt) {
 static inline void freetype_init() {
 	FT_Library library;
 	if(FT_Init_FreeType( &library )) {
-		fprintf(stderr, "Could not initialize freetype library\n");
+		fprintf(serial_fd, "Could not initialize freetype library\n");
 		exit(EXIT_FAILURE);
 	}
 
-	if(FT_New_Face(library, "/usr/share/fonts/FiraCode-Regular.ttf", 0, &face)) {
-		fprintf(stderr, "Could not read font\n");
+	if(FT_New_Face(library, "/usr/share/fonts/DejaVuSansMono.ttf", 0, &face)) {
+		fprintf(serial_fd, "Could not read font\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if(FT_Set_Char_Size(face, 600, 0, 100, 0 )) {
-		fprintf(stderr, "Could not set char size\n");
+		fprintf(serial_fd, "Could not set char size\n");
 		exit(EXIT_FAILURE);
 	}
 
-	if(FT_New_Face(library, "/usr/share/fonts/FiraCode-Bold.ttf", 0, &face_bold)) {
-		fprintf(stderr, "Could not read font\n");
+	if(FT_New_Face(library, "/usr/share/fonts/DejaVuSansMono-Bold.ttf", 0, &face_bold)) {
+		fprintf(serial_fd, "Could not read font\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if(FT_Set_Char_Size(face_bold, 600, 0, 100, 0 )) {
-		fprintf(stderr, "Could not set char size\n");
+		fprintf(serial_fd, "Could not set char size\n");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -332,8 +296,16 @@ static inline void* gfx_init() {
 }
 
 int main() {
+	serial_fd = fopen("/dev/ttyS0", "w");
+	setvbuf(serial_fd, (char*)NULL, _IONBF, 0);
+
 	freetype_init();
 	gfx_init();
+
+	for(char c = 1; c <= '~'; c++) {
+		render_glyph(c, 0);
+		render_glyph(c, 1);
+	}
 
 	int rows = (fb_height / BLOCK_HEIGHT) - 1;
 	int cols = fb_width / BLOCK_WIDTH;
@@ -343,10 +315,11 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
+	fprintf(serial_fd, "gfxterm starting, %d rows %d cols\n", rows, cols);
 	launch_child();
 	main_loop(vt);
 
 	tmt_close(vt);
-	ioctl(fp, 0x2f04);
-	close(fp);
+//	ioctl(fp, 0x2f04);
+//	close(fp);
 }
