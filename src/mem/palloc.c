@@ -23,6 +23,7 @@
 #include <string.h>
 #include <bitmap.h>
 #include <panic.h>
+#include <spinlock.h>
 
 #define BITMAP_SIZE 0xfffff000 / PAGE_SIZE
 static uint32_t pages_bitmap_data[bitmap_size(BITMAP_SIZE)];
@@ -32,9 +33,16 @@ static struct bitmap pages_bitmap = {
 	.first_free = 0,
 };
 
+static spinlock_t palloc_lock = 0;
+
 void* palloc(uint32_t size) {
+	if(!spinlock_get(&palloc_lock, 1000)) {
+		return NULL;
+	}
+
 	uint32_t num = bitmap_find(&pages_bitmap, size);
 	bitmap_set(&pages_bitmap, num, size);
+	spinlock_release(&palloc_lock);
 	return (void*)(num * PAGE_SIZE);
 }
 
