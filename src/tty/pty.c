@@ -22,25 +22,44 @@
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
+#include <mem/palloc.h>
+#include <buffer.h>
 #include <errno.h>
+#include <spinlock.h>
 #include <log.h>
 
 /* FIXME
- * A lot of thise code is nearly identical to that in fs/pipe.c - Should be generalized
+ * A lot of this code is nearly identical to that in fs/pipe.c - Should be generalized
  * This should get properly integrated with tty.c code and use struct terminal*
- * Buffer should dynamically grow
  * Proper close handling
  */
 
-#define PTY_BUFFER_SIZE 0x5000
-
 struct pty {
+	uint32_t num;
+
 	// 0 = master, 1 = slave
-	void* buffer[2];
-	uint32_t data_size[2];
+	struct buffer* buf[2];
 	int fds[2];
+	struct termios termios;
 };
 
+
+static uint8_t default_c_cc[NCCS] = {
+	0,
+	4, // VEOF
+	'\n', // VEOL
+	'\b', // VERASE
+	3, // VINTR
+	21, // VKILL
+	0,  // VMIN
+	28, // VQUIT
+	17, // VSTART
+	19, // VSTOP
+	26, // VSUSP
+	0,
+};
+
+uint32_t max_pty = -1;
 
 static size_t read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	struct pty* pty = (struct pty*)ctx->fp->mount_instance;
@@ -51,7 +70,7 @@ static size_t read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 		bno = 0;
 	}
 
-	if(!pty->data_size[bno] && ctx->fp->flags & O_NONBLOCK) {
+	if(!pty->buf[bno]->size && ctx->fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
@@ -62,21 +81,34 @@ static size_t read_cb(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 		return -1;
 	}
 */
-	while(!pty->data_size[bno]) {
+	while(!pty->buf[bno]->size) {
 		halt();
 	}
 
-	if(size > pty->data_size[bno]) {
-		size = pty->data_size[bno];
-	}
+	if(bno) {
+		return buffer_pop(pty->buf[bno], dest, size);
+	} else {
+		// FIXME should only be done for canon reads
+		size_t nread = 0;
+		for(; nread < size; nread++) {
+			char c;
+			if(buffer_pop(pty->buf[0], &c, 1) < 1) {
+				break;
+			}
 
-	memcpy(dest, pty->buffer[bno], size);
-	pty->data_size[bno] -= MIN(pty->data_size[bno], size);
-	if(pty->data_size[bno]) {
-		memmove(pty->buffer[bno], pty->buffer[bno] + size, pty->data_size[bno]);
-	}
+			if(c == '\n') {
+				if(nread + 2 >= size) {
+					return nread;
+				}
 
-	return size;
+				((char*)dest)[nread++] = '\r';
+			}
+
+			((char*)dest)[nread] = c;
+		}
+
+		return nread;
+	}
 }
 
 static size_t write_cb(struct vfs_callback_ctx* ctx, void* source, size_t size) {
@@ -88,13 +120,12 @@ static size_t write_cb(struct vfs_callback_ctx* ctx, void* source, size_t size) 
 		bno = 1;
 	}
 
-	if(pty->data_size[bno] + size > PTY_BUFFER_SIZE) {
-		sc_errno = EFBIG;
-		return -1;
+	// Loop back input if ECHO is enabled
+	if(bno == 1 && pty->termios.c_lflag & ECHO) {
+		buffer_write(pty->buf[0], source, size);
 	}
 
-	memcpy(pty->buffer[bno] + pty->data_size[bno], source, size);
-	pty->data_size[bno] += size;
+	buffer_write(pty->buf[bno], source, size);
 	return size;
 }
 
@@ -107,33 +138,79 @@ static int poll_cb(struct vfs_callback_ctx* ctx, int events) {
 		bno = 0;
 	}
 
-	if(events & POLLIN && pty->data_size[bno]) {
+	if(!spinlock_get(&pty->buf[bno]->lock, 1000)) {
+		return 0;
+	}
+
+	if(events & POLLIN && pty->buf[bno]->size) {
+		spinlock_release(&pty->buf[bno]->lock);
 		return POLLIN;
 	}
+
+	spinlock_release(&pty->buf[bno]->lock);
 	return 0;
 }
 
 int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
-	if(request != TIOCGPTN) {
-		sc_errno = ENOSYS;
-		return -1;
+	struct pty* pty = (struct pty*)ctx->fp->mount_instance;
+
+	switch(request) {
+		case TIOCGPTN:
+			*(int*)arg = pty->fds[1];
+			return 0;
+		case TIOCGWINSZ:;
+			struct winsize* ws = (struct winsize*)arg;
+			// FIXME
+			ws->ws_row = 50;
+			ws->ws_col = 128;
+			ws->ws_xpixel = 0;
+			ws->ws_ypixel = 0;
+			return 0;
+		case TCGETS:
+			memcpy(arg, &pty->termios, sizeof(struct termios));
+			return 0;
+		case TCSETS:
+		case TCSETSW:;
+			memcpy(&pty->termios, arg, sizeof(struct termios));
+			return 0;
+		default:
+			sc_errno = ENOSYS;
+			return -1;
 	}
 
-	struct pty* pty = (struct pty*)ctx->fp->mount_instance;
-	*(int*)arg = pty->fds[1];
 	return 0;
 }
 
-static vfs_file_t* pty_open(struct vfs_callback_ctx* ctx, uint32_t flags);
-struct vfs_callbacks pty_cb = {
-	.open = pty_open,
+static int pty_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
+	dest->st_dev = 2;
+	dest->st_ino = 8;
+	dest->st_mode = FT_IFCHR;
+	dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+	dest->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+	dest->st_nlink = 1;
+	dest->st_blocks = 0;
+	dest->st_blksize = 0x1000;
+	dest->st_uid = 0;
+	dest->st_gid = 0;
+	dest->st_rdev = 0;
+	dest->st_size = 0;
+	uint32_t t = time_get();
+	dest->st_atime = t;
+	dest->st_mtime = t;
+	dest->st_ctime = t;
+	return 0;
+}
+
+static struct vfs_callbacks pty_cb = {
 	.read = read_cb,
 	.write = write_cb,
 	.poll = poll_cb,
 	.ioctl = pty_ioctl,
+	.stat = pty_stat,
+	.access = sysfs_access,
 };
 
-static vfs_file_t* pty_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
+static vfs_file_t* ptmx_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	vfs_file_t* fd1 = vfs_alloc_fileno(ctx->task, 3);
 	if(!fd1) {
 		sc_errno = EMFILE;
@@ -160,17 +237,28 @@ static vfs_file_t* pty_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	fd2->flags = flags;
 
 	struct pty* pty = zmalloc(sizeof(struct pty));
-	pty->buffer[0] = zmalloc(PTY_BUFFER_SIZE);
-	pty->buffer[1] = zmalloc(PTY_BUFFER_SIZE);
+	pty->num = __sync_add_and_fetch(&max_pty, 1);;
+	pty->termios.c_lflag = ECHO | ICANON | ISIG;
 
+	pty->buf[0] = buffer_new(150);
 	pty->fds[0] = fd1->num;
+	pty->buf[1] = buffer_new(150);
 	pty->fds[1] = fd2->num;
+
+	memcpy(&pty->termios.c_cc, default_c_cc, sizeof(default_c_cc));
 
 	fd1->mount_instance = (void*)pty;
 	fd2->mount_instance = (void*)pty;
+
+	char name[6];
+	snprintf(&name[0], 6, "pts%d", pty->num + 1);
+	sysfs_add_dev(&name[0], &pty_cb);
 	return fd1;
 }
 
 void pty_init() {
-	sysfs_add_dev("ptmx", &pty_cb);
+	struct vfs_callbacks ptmx_cb = {
+		.open = ptmx_open,
+	};
+	sysfs_add_dev("ptmx", &ptmx_cb);
 }
