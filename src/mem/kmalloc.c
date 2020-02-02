@@ -258,14 +258,16 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero D
 		panic("Attempt to kmalloc before allocator is kmalloc_ready.\n");
 	}
 
+	int_disable();
 	debug("kmalloc: %s:%d %s %#x ", _debug_file, _debug_line, _debug_func, sz);
 
 	// Ensure size is byte-aligned and no smaller than minimum
 	size_t sz_needed = ALIGN(sz, 8);
 	sz_needed = MAX(sz_needed, sizeof(struct free_block));
 
-	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
+	if(unlikely(!spinlock_get(&kmalloc_lock, -1))) {
 		debug("Could not get spinlock\n");
+		int_enable();
 		return NULL;
 	}
 
@@ -311,6 +313,7 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero D
 
 	check_header(header, true);
 	debug("RESULT 0x%x\n", (uintptr_t)GET_CONTENT(header));
+	int_enable();
 	return (void*)GET_CONTENT(header);
 }
 
@@ -332,7 +335,7 @@ void _kfree(void *ptr DEBUGREGS) {
 	}
 
 	check_header(header, true);
-	if(unlikely(!spinlock_get(&kmalloc_lock, 30))) {
+	if(unlikely(!spinlock_get(&kmalloc_lock, -1))) {
 		debug("Could not get spinlock\n");
 		return;
 	}

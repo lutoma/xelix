@@ -33,7 +33,7 @@
 
 typedef uint8_t spinlock_t;
 static inline bool spinlock_get(spinlock_t* lock, uint32_t retries) {
-	for(int i = 0; i < retries; i++) {
+	for(int i = 0; i < retries || retries == -1; i++) {
 		if(!__sync_lock_test_and_set(lock, 1)) {
 			return true;
 		}
