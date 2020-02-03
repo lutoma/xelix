@@ -386,7 +386,9 @@ int vfs_dup2(task_t* task, int fd1, int fd2) {
 
 		// Attempt to close and try again
 		vfs_close(task, fd2);
-		if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1)) {
+
+		// stdout, stderr & stdin cannot properly be closed rn, ignore them here
+		if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1) && fd2 > 2) {
 			sc_errno = EIO;
 			return -1;
 		}

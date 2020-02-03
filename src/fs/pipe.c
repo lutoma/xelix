@@ -1,5 +1,5 @@
 /* pipe.c: Inter-process pipes
- * Copyright © 2019 Lukas Martini
+ * Copyright © 2019-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,57 +22,37 @@
 #include <errno.h>
 #include <tasks/task.h>
 #include <mem/kmalloc.h>
-
-// FIXME Should dynamically grow
-#define PIPE_BUFFER_SIZE 0x5000
+#include <buffer.h>
 
 struct pipe {
-	void* buffer;
-	uint32_t data_size;
+	struct buffer* buf;
 	int fd[2];
 };
 
 static size_t pipe_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	struct pipe* pipe = (struct pipe*)ctx->fp->mount_instance;
 
-	if(!pipe->data_size && ctx->fp->flags & O_NONBLOCK) {
+	if(!pipe->buf->size && ctx->fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
 
 	vfs_file_t* write_fp = vfs_get_from_id(pipe->fd[1], ctx->task);
-	if(!pipe->data_size && !write_fp) {
+	if(!pipe->buf->size && !write_fp) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
-	while(!pipe->data_size) {
+	while(!pipe->buf->size) {
 		halt();
 	}
 
-	if(size > pipe->data_size) {
-		size = pipe->data_size;
-	}
-
-	memcpy(dest, pipe->buffer, size);
-	pipe->data_size -= MIN(pipe->data_size, size);
-	if(pipe->data_size) {
-		memmove(pipe->buffer, pipe->buffer + size, pipe->data_size);
-	}
-
-	return size;
+	return buffer_pop(pipe->buf, dest, size);
 }
 
 static size_t pipe_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	struct pipe* pipe = (struct pipe*)ctx->fp->mount_instance;
-	if(pipe->data_size + size > PIPE_BUFFER_SIZE) {
-		sc_errno = EFBIG;
-		return -1;
-	}
-
-	memcpy(pipe->buffer + pipe->data_size, source, size);
-	pipe->data_size += size;
-	return size;
+	return buffer_write(pipe->buf, source, size);
 }
 
 static int pipe_poll(struct vfs_callback_ctx* ctx, int events) {
@@ -82,7 +62,7 @@ static int pipe_poll(struct vfs_callback_ctx* ctx, int events) {
 		return -1;
 	}
 
-	if(events & POLLIN && pipe->data_size) {
+	if(events & POLLIN && pipe->buf->size) {
 		return POLLIN;
 	}
 	return 0;
@@ -103,7 +83,7 @@ int vfs_pipe(task_t* task, int fildes[2]) {
 	}
 
 	struct pipe* pipe = zmalloc(sizeof(struct pipe));
-	pipe->buffer = zmalloc(PIPE_BUFFER_SIZE);
+	pipe->buf = buffer_new(150);
 	pipe->fd[0] = fd1->num;
 	pipe->fd[1] = fd2->num;
 
