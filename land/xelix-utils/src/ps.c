@@ -36,8 +36,7 @@ int main(int argc, char* argv[]) {
 	fgets(data, 1024, fp);
 	free(data);
 
-	int hdr_len = printf("PID   User     State    PPID  TTY   Mem\n");
-	printf("\033(0q\033[%db\033(B\n", hdr_len);
+	printf("  PID User     State     PPID TTY   Mem\n");
 
 	while(true) {
 		if(feof(fp)) {
@@ -85,7 +84,7 @@ int main(int argc, char* argv[]) {
 			tty = basename(tty);
 		}
 
-		printf("%-5d %-8s \033[%-11s\033[m %-5d %-5s %-10s %-15s\n", pid, user, state, ppid, tty, rfs, name);
+		printf("%5d %-8s \033[%-11s\033[m %5d %-5s %-10s %-15s\n", pid, user, state, ppid, tty, rfs, name);
 		free(rfs);
 	}
 
