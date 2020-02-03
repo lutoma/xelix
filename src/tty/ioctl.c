@@ -50,6 +50,5 @@ int tty_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
 			sc_errno = ENOSYS;
 			return -1;
 	}
-	serial_printf("tty_ioctl done.\n");
 }
 

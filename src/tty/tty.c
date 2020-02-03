@@ -263,7 +263,7 @@ void tty_init() {
 		tty->bg_color = BG_COLOR_DEFAULT;
 
 		tty->termios.c_lflag = ECHO | ICANON | ISIG;
-		memcpy(tty->termios.c_cc, default_c_cc, sizeof(default_c_cc));
+		memcpy(&tty->termios.c_cc, default_c_cc, sizeof(default_c_cc));
 		snprintf(tty->path, 30, "/dev/tty%d", i + 1);
 
 		char name[6];

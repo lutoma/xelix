@@ -131,7 +131,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		if(unlikely(!args[i])) {
 
 			#ifdef SYSCALL_DEBUG
-			log(LOG_DEBUG, "%d %s: %s(%#x, %#x, %#x)\n", task->pid, task->name,
+			log(LOG_DEBUG, "%2d %-20s %s(%#x, %#x, %#x)\n", task->pid, task->name,
 				def.name, oargs[0], oargs[1], oargs[2]);
 			log(LOG_DEBUG, "Result: Call failed - Could not memmap argument %d\n", i);
 			#endif
@@ -141,7 +141,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 
 #ifdef SYSCALL_DEBUG
-	log(LOG_DEBUG, "%d %s: %s(", task->pid, task->name, def.name);
+	log(LOG_DEBUG, "%2d %-20s %s(", task->pid, task->name, def.name);
 	dbg_print_arg(true, flags[0], args[0], oargs[0]);
 	dbg_print_arg(false, flags[1], args[1], oargs[1]);
 	dbg_print_arg(false, flags[2], args[2], oargs[2]);
@@ -183,7 +183,8 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 
 #ifdef SYSCALL_DEBUG
-	log(LOG_DEBUG, "Result: 0x%x, errno: %d\n", state->SCREG_RESULT, state->SCREG_ERRNO);
+	log(LOG_DEBUG, "%2d %-20s %s = %d, errno %d\n", task->pid, task->name, def.name,
+		state->SCREG_RESULT, state->SCREG_ERRNO);
 #endif
 
 	if(unlikely(task->strace_observer && task->strace_fd)) {

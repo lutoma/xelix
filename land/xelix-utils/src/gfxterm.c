@@ -197,7 +197,7 @@ static inline void launch_child() {
 		dup2(pty_slave, 0);
 
 		char* login_argv[] = { "bash", "-l", NULL };
-		char* login_env[] = { "TERM=xelix", NULL };
+		char* login_env[] = { "TERM=ansi", NULL };
 		execve("/usr/bin/bash", login_argv, login_env);
 	}
 }
