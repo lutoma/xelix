@@ -53,7 +53,6 @@ int cursor_row = 0;
 int cursor_col = 0;
 uint8_t* glyph_cache[256];
 uint8_t* glyph_cache_bold[256];
-FILE* serial_fd;
 
 
 static uint32_t convert_color(int color, int bg) {
@@ -78,6 +77,7 @@ uint8_t* render_glyph(char chr, int bold) {
 
 	FT_Face cface = bold ? face_bold : face;
 	if(FT_Load_Char(cface, chr, FT_LOAD_RENDER)) {
+		fprintf(stderr, "FT_Load_Char error\n");
 		return NULL;
 	}
 
@@ -113,6 +113,7 @@ void write_char(const TMTSCREEN* screen, int row, int col) {
 
 	uint8_t* glyph = render_glyph(chr.c, chr.a.bold);
 	if(!glyph) {
+		fprintf(stderr, "render_glyph %d error\n", chr.c);
 		return;
 	}
 
@@ -156,11 +157,9 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 			}
 			tmt_clean(vt);
 			break;
-
 		case TMT_MSG_ANSWER:
 			write(pty_master, a, strlen(a));
 			break;
-
 		case TMT_MSG_MOVED:
 			// draw new cursor, redraw previous cursor position
 			for(int i = 0; i < BLOCK_HEIGHT; i++) {
@@ -209,65 +208,66 @@ void main_loop(TMT* vt) {
 	termios.c_lflag &= ~(ECHO | ICANON);
 	tcsetattr(0, TCSANOW, &termios);
 
+	int flags = fcntl(0, F_GETFL);
+	fcntl(0, F_SETFL, flags | O_NONBLOCK);
+
 	struct pollfd pfds[2];
 	pfds[0].fd = 0;
 	pfds[0].events = POLLIN;
 	pfds[1].fd = pty_master;
 	pfds[1].events = POLLIN;
 
+	char* input = malloc(0x1000);
 	while(1) {
+		pfds[0].revents = 0;
+		pfds[1].revents = 0;
+
 		if(poll(pfds, 2, -1) < 1) {
 			continue;
 		}
 
-		for(int i = 0; i < 2; i++) {
-			if(!(pfds[i].revents & POLLIN)) {
-				continue;
+		if(pfds[0].revents & POLLIN) {
+			int nread = read(0, input, 0x1000);
+			if(nread) {
+				write(pty_master, input, nread);
 			}
+		}
 
-			pfds[i].revents = 0;
-			int fd = pfds[i].fd;
-
-			char input[0x5000];
-			if(fd == pty_master) {
-				int nread = read(pty_master, input, 0x5000);
-				if(nread) {
-					tmt_write(vt, input, nread);
-				}
-			} else if(fd == 0) {
-				int nread = read(0, input, 0x5000);
-				if(nread) {
-					write(pty_master, input, nread);
-				}
+		if(pfds[1].revents & POLLIN) {
+			int nread = read(pty_master, input, 0x1000);
+			if(nread) {
+				tmt_write(vt, input, nread);
 			}
 		}
 	}
+
+	free(input);
 }
 
 static inline void freetype_init() {
 	FT_Library library;
 	if(FT_Init_FreeType( &library )) {
-		fprintf(serial_fd, "Could not initialize freetype library\n");
+		fprintf(stderr, "Could not initialize freetype library\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if(FT_New_Face(library, "/usr/share/fonts/DejaVuSansMono.ttf", 0, &face)) {
-		fprintf(serial_fd, "Could not read font\n");
+		fprintf(stderr, "Could not read font\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if(FT_Set_Char_Size(face, 600, 0, 100, 0 )) {
-		fprintf(serial_fd, "Could not set char size\n");
+		fprintf(stderr, "Could not set char size\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if(FT_New_Face(library, "/usr/share/fonts/DejaVuSansMono-Bold.ttf", 0, &face_bold)) {
-		fprintf(serial_fd, "Could not read font\n");
+		fprintf(stderr, "Could not read font\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if(FT_Set_Char_Size(face_bold, 600, 0, 100, 0 )) {
-		fprintf(serial_fd, "Could not set char size\n");
+		fprintf(stderr, "Could not set char size\n");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -296,9 +296,6 @@ static inline void* gfx_init() {
 }
 
 int main() {
-	serial_fd = fopen("/dev/ttyS0", "w");
-	setvbuf(serial_fd, (char*)NULL, _IONBF, 0);
-
 	freetype_init();
 	gfx_init();
 
@@ -315,11 +312,10 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	fprintf(serial_fd, "gfxterm starting, %d rows %d cols\n", rows, cols);
 	launch_child();
 	main_loop(vt);
-
 	tmt_close(vt);
+
 //	ioctl(fp, 0x2f04);
 //	close(fp);
 }

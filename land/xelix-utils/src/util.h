@@ -24,3 +24,12 @@ char* readable_fs(uint64_t size);
 char* time2str(time_t rtime, char* fmt);
 struct passwd* do_auth(char* user);
 void run_shell(struct passwd* pwd, bool print_motd);
+
+static inline void *memset32(uint32_t *s, uint32_t v, size_t n) {
+	long d0, d1;
+	asm volatile("rep stosl"
+		: "=&c" (d0), "=&D" (d1)
+		: "a" (v), "1" (s), "0" (n)
+		: "memory");
+	return s;
+}
