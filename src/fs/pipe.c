@@ -32,18 +32,18 @@ struct pipe {
 static size_t pipe_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	struct pipe* pipe = (struct pipe*)ctx->fp->mount_instance;
 
-	if(!pipe->buf->size && ctx->fp->flags & O_NONBLOCK) {
+	if(!buffer_size(pipe->buf) && ctx->fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
 		return -1;
 	}
 
 	vfs_file_t* write_fp = vfs_get_from_id(pipe->fd[1], ctx->task);
-	if(!pipe->buf->size && !write_fp) {
+	if(!buffer_size(pipe->buf) && !write_fp) {
 		sc_errno = EBADF;
 		return -1;
 	}
 
-	while(!pipe->buf->size) {
+	while(!buffer_size(pipe->buf)) {
 		halt();
 	}
 
@@ -62,7 +62,7 @@ static int pipe_poll(struct vfs_callback_ctx* ctx, int events) {
 		return -1;
 	}
 
-	if(events & POLLIN && pipe->buf->size) {
+	if(events & POLLIN && buffer_size(pipe->buf)) {
 		return POLLIN;
 	}
 	return 0;

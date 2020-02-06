@@ -30,7 +30,7 @@ struct buffer* buffer_new(size_t max_pages) {
 	return buf;
 }
 
-int buffer_write(struct buffer* buf, void* src, size_t size) {
+size_t buffer_write(struct buffer* buf, void* src, size_t size) {
 	if(!spinlock_get(&buf->lock, 1000)) {
 		return -1;
 	}
@@ -63,7 +63,7 @@ int buffer_write(struct buffer* buf, void* src, size_t size) {
 	return size;
 }
 
-static inline int do_read(struct buffer* buf, void* dest, size_t size, size_t offset) {
+static inline size_t do_read(struct buffer* buf, void* dest, size_t size, size_t offset) {
 	if(offset >= buf->size) {
 		return 0;
 	}
@@ -73,7 +73,7 @@ static inline int do_read(struct buffer* buf, void* dest, size_t size, size_t of
 	return size;
 }
 
-int buffer_read(struct buffer* buf, void* dest, size_t size, size_t offset) {
+size_t buffer_read(struct buffer* buf, void* dest, size_t size, size_t offset) {
 	if(!spinlock_get(&buf->lock, 1000)) {
 		return -1;
 	}
@@ -83,7 +83,7 @@ int buffer_read(struct buffer* buf, void* dest, size_t size, size_t offset) {
 	return nread;
 }
 
-int buffer_pop(struct buffer* buf, void* dest, size_t size) {
+size_t buffer_pop(struct buffer* buf, void* dest, size_t size) {
 	if(!spinlock_get(&buf->lock, 1000)) {
 		return -1;
 	}
@@ -96,6 +96,16 @@ int buffer_pop(struct buffer* buf, void* dest, size_t size) {
 
 	spinlock_release(&buf->lock);
 	return nread;
+}
+
+size_t buffer_size(struct buffer* buf) {
+	if(!spinlock_get(&buf->lock, 1000)) {
+		return -1;
+	}
+
+	size_t sz = buf->size;
+	spinlock_release(&buf->lock);
+	return sz;
 }
 
 void buffer_free(struct buffer* buf) {
