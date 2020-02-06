@@ -305,7 +305,10 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 
 	for(int i = 0; i < VFS_MAX_OPENFILES; i++) {
 		struct vfs_file* file = &task->files[i];
-		if(file->refs && !(file->flags & O_CLOEXEC)) {
+
+		// FIXME flags seem to get mangled during fork/execve
+		//if(file->refs && !(file->flags & O_CLOEXEC)) {
+		if(file->refs) {
 			memcpy(&new_task->files[i], file, sizeof(struct vfs_file));
 		}
 	}
