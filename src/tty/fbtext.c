@@ -240,7 +240,10 @@ static void rerender(struct terminal* tty_old, struct terminal* tty_new) {
 }
 
 static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
-	uint32_t size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
+	size_t size = fb_desc->common.framebuffer_width
+		* fb_desc->common.framebuffer_height
+		* fb_desc->common.framebuffer_bpp;
+
 	switch(request) {
 		case 0x2f01:
 			return fb_desc->common.framebuffer_addr;

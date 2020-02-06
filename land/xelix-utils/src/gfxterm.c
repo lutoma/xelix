@@ -25,6 +25,7 @@
 #include <sys/ioctl.h>
 #include <poll.h>
 #include <pty.h>
+#include <signal.h>
 #include <sys/termios.h>
 #include <sys/param.h>
 #include <ft2build.h>
@@ -39,6 +40,7 @@
 #define block_ptr(row, col) (&fb_addr[row * BLOCK_HEIGHT * (fb_pitch / 4) + \
 	 col * BLOCK_WIDTH])
 
+TMT* vt;
 FT_Face face;
 FT_Face face_bold;
 uint32_t* fb_addr = NULL;
@@ -49,6 +51,8 @@ uint32_t fb_pitch = 0;
 uint32_t fb_size = 0;
 int pty_master;
 int pty_slave;
+int fb_fd;
+int kbd_fd;
 int cursor_row = 0;
 int cursor_col = 0;
 uint8_t* glyph_cache[256];
@@ -179,8 +183,8 @@ static inline void launch_child() {
 		exit(EXIT_FAILURE);
 	}
 
-	int flags = fcntl(pty_slave, F_GETFL);
-	fcntl(pty_slave, F_SETFL, flags | O_NONBLOCK);
+	int flags = fcntl(pty_master, F_GETFL);
+	fcntl(pty_master, F_SETFL, flags | O_NONBLOCK);
 
 	int pid = fork();
 	if(pid < 0) {
@@ -196,23 +200,15 @@ static inline void launch_child() {
 		dup2(pty_slave, 2);
 		dup2(pty_slave, 0);
 
-		char* login_argv[] = { "bash", "-l", NULL };
+		char* login_argv[] = { "login", NULL };
 		char* login_env[] = { "TERM=ansi", NULL };
-		execve("/usr/bin/bash", login_argv, login_env);
+		execve("/usr/bin/login", login_argv, login_env);
 	}
 }
 
-void main_loop(TMT* vt) {
-	struct termios termios;
-	tcgetattr(0, &termios);
-	termios.c_lflag &= ~(ECHO | ICANON);
-	tcsetattr(0, TCSANOW, &termios);
-
-	int flags = fcntl(0, F_GETFL);
-	fcntl(0, F_SETFL, flags | O_NONBLOCK);
-
+void main_loop(TMT* vt, int kbd_fd) {
 	struct pollfd pfds[2];
-	pfds[0].fd = 0;
+	pfds[0].fd = kbd_fd;
 	pfds[0].events = POLLIN;
 	pfds[1].fd = pty_master;
 	pfds[1].events = POLLIN;
@@ -227,7 +223,7 @@ void main_loop(TMT* vt) {
 		}
 
 		if(pfds[0].revents & POLLIN) {
-			int nread = read(0, input, 0x1000);
+			int nread = read(kbd_fd, input, 0x1000);
 			if(nread) {
 				write(pty_master, input, nread);
 			}
@@ -272,50 +268,75 @@ static inline void freetype_init() {
 	}
 }
 
-static inline void* gfx_init() {
-	int fp = open("/dev/gfx1", O_WRONLY);
-	if(!fp) {
-		perror("Could not open /dev/gfx1");
-		exit(EXIT_FAILURE);
-	}
-
-	fb_bpp = ioctl(fp, 0x2f02);
-	fb_width = ioctl(fp, 0x2f05);
-	fb_height = ioctl(fp, 0x2f06);
-	fb_pitch = ioctl(fp, 0x2f07);
-	fb_size = fb_height * fb_pitch;
-
-	fb_addr = (uint32_t*)ioctl(fp, 0x2f01);
-	if(!fb_addr || !fb_size) {
-		perror("Could not get memory mapping");
-		exit(EXIT_FAILURE);
-	}
-
-	ioctl(fp, 0x2f03);
-	memset32(fb_addr, 0x1e1e1e, fb_size / 4);
+void do_exit(int signum) {
+	close(kbd_fd);
+	close(pty_master);
+	tmt_close(vt);
+	ioctl(fb_fd, 0x2f04, (uint32_t)0);
+	close(fb_fd);
+	exit(0);
 }
 
 int main() {
-	freetype_init();
-	gfx_init();
+	struct sigaction act = {
+		.sa_handler = do_exit
+	};
 
+	if(sigaction(SIGCHLD, &act, NULL) < 0) {
+		perror("Could not set signal handler");
+		exit(EXIT_FAILURE);
+	}
+
+	// initialize freetype, prerender frequent characters
+	freetype_init();
 	for(char c = 1; c <= '~'; c++) {
 		render_glyph(c, 0);
 		render_glyph(c, 1);
 	}
 
+	// Get framebuffer
+	fb_fd = open("/dev/gfx1", O_WRONLY);
+	if(!fb_fd) {
+		perror("Could not open /dev/gfx1");
+		exit(EXIT_FAILURE);
+	}
+
+	fb_bpp = ioctl(fb_fd, 0x2f02, (uint32_t)0);
+	fb_width = ioctl(fb_fd, 0x2f05, (uint32_t)0);
+	fb_height = ioctl(fb_fd, 0x2f06, (uint32_t)0);
+	fb_pitch = ioctl(fb_fd, 0x2f07, (uint32_t)0);
+	fb_size = fb_height * fb_pitch;
+
+	// Get framebuffer address
+	fb_addr = (uint32_t*)ioctl(fb_fd, 0x2f01, (uint32_t)0);
+	if(!fb_addr || !fb_size) {
+		perror("Could not get memory mapping");
+		exit(EXIT_FAILURE);
+	}
+
+	// Map framebuffer into our address space and clear it
+	ioctl(fb_fd, 0x2f03, (uint32_t)0);
+	memset32(fb_addr, 0x1e1e1e, fb_size / 4);
+
+	// Open keyboard device
+	kbd_fd = open("/dev/keyboard1", O_RDONLY | O_NONBLOCK);
+	if(!kbd_fd) {
+		perror("Could not open /dev/keyboard1");
+		exit(EXIT_FAILURE);
+	}
+
+	char buf[100];
+	while(read(kbd_fd, buf, 100) >= 1);
+
 	int rows = (fb_height / BLOCK_HEIGHT) - 1;
 	int cols = fb_width / BLOCK_WIDTH;
 
-	TMT *vt = tmt_open(rows, cols, tmt_callback, NULL, NULL);
-	if (!vt) {
+	vt = tmt_open(rows, cols, tmt_callback, NULL, NULL);
+	if(!vt) {
+		fprintf(stderr, "Could not open TMT virtual terminal.\n");
 		exit(EXIT_FAILURE);
 	}
 
 	launch_child();
-	main_loop(vt);
-	tmt_close(vt);
-
-//	ioctl(fp, 0x2f04);
-//	close(fp);
+	main_loop(vt, kbd_fd);
 }
