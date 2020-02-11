@@ -32,7 +32,7 @@ diff -ruPN -x docs picotcp-1.7.0/include/pico_config.h ../../../picotcp-1.7.0/in
 -SNTP_CLIENT?=1
 -IPFILTER?=1
 +DHCP_SERVER?=0
-+DNS_CLIENT?=0
++DNS_CLIENT?=1
 +MDNS?=0
 +DNS_SD?=0
 +SNTP_CLIENT?=0
