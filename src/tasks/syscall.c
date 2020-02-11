@@ -136,6 +136,9 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			log(LOG_DEBUG, "Result: Call failed - Could not memmap argument %d\n", i);
 			#endif
 
+			log(LOG_WARN, "tasks: %d %s: Invalid memory pointer in argument %d to syscall %d %s\n",
+				task->pid, task->name, i, scnum, def.name);
+			task_signal(task, NULL, SIGSEGV, NULL);
 			call_fail();
 		}
 	}
