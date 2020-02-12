@@ -18,26 +18,5 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bsp/i386-pci.h>
-#include <stdbool.h>
-
-#define AC97_MAX_CARDS 10
-
-struct ac97_card {
-	pci_device_t *device;
-	int nambar;
-	int nabmbar;
-	struct buf_desc* descs;
-	uint16_t sample_rate;
-	uint32_t last_buffer;
-	uint32_t last_written_buffer;
-
-	bool is_playing;
-	int playing_buffer;
-	int last_wr_buffer;
-};
-
-struct ac97_card ac97_cards[AC97_MAX_CARDS];
-
 void ac97_play(char* file);
 void ac97_init();

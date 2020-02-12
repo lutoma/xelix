@@ -1,5 +1,5 @@
 /* ac97.c: Driver for the AC97 sound chip
- * Copyright © 2015-2019 Lukas Martini
+ * Copyright © 2015-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,21 +20,21 @@
 #ifdef ENABLE_AC97
 
 #include <sound/i386-ac97.h>
-#include <bsp/i386-pci.h>
 #include <log.h>
 #include <portio.h>
-#include <int/int.h>
-#include <mem/kmalloc.h>
-#include <boot/multiboot.h>
 #include <string.h>
+#include <stdbool.h>
+#include <int/int.h>
+#include <bsp/i386-pci.h>
+#include <mem/kmalloc.h>
+#include <mem/palloc.h>
+#include <boot/multiboot.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 
-// Number of buffers to cache. More buffers = more latency. Maximum is 31.
+// Number of buffers to cache. More buffers = more latency. Maximum is 32.
 #define NUM_BUFFERS 32
-
-// Maximum hardware supported length is 0xFFFE (*2 for stereo)
-#define MAX_BUFFER_LENGTH (0xFFFE * 2)
+#define AC97_MAX_CARDS 10
 
 #define PORT_NAM_RESET				0x0000
 #define PORT_NAM_MASTER_VOLUME		0x0002
@@ -85,11 +85,27 @@ static uint32_t vendor_device_combos[][2] = {
 struct buf_desc {
 	void* buf;
 	uint16_t len;
-	uint16_t reserve :14;
+	uint16_t _unused:14;
 	uint8_t bup:1;
 	uint8_t ioc:1;
 } __attribute__((packed));
 
+struct ac97_card {
+	pci_device_t *device;
+	uint16_t nambar;
+	uint16_t nabmbar;
+	uint16_t sample_rate;
+
+	struct buf_desc* descs;
+
+	// Currently playing buffer, -1 if not playing anything
+	int playing_buffer;
+
+	// Number of next buf_desc  to write to
+	int buf_next_write;
+};
+
+static struct ac97_card ac97_cards[AC97_MAX_CARDS];
 static int cards = 0;
 
 static void interrupt_handler(task_t* task, isf_t* state, int num) {
@@ -101,19 +117,22 @@ static void interrupt_handler(task_t* task, isf_t* state, int num) {
 		}
 	}*/
 
-	if(!card) {
+	if(unlikely(!card)) {
 		return;
 	}
 
 	uint16_t sr = inw(card->nabmbar + PORT_NABM_POSTATUS);
 	if(sr & AC97_X_SR_LVBCI) {
-		card->is_playing = false;
+		card->playing_buffer = -1;
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_LVBCI);
 	} else if(sr & AC97_X_SR_BCIS) {
-		card->playing_buffer = inb(card->nabmbar + PORT_NABM_POCIV);
+		if(card->playing_buffer != -1) {
+			card->playing_buffer = inb(card->nabmbar + PORT_NABM_POCIV);
+		}
+
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_BCIS);
 	} else if(sr & AC97_X_SR_FIFOE) {
-		card->is_playing = false;
+		card->playing_buffer = -1;
 		outw(card->nabmbar + PORT_NABM_POSTATUS, AC97_X_SR_FIFOE);
 	}
 }
@@ -130,8 +149,7 @@ void ac97_set_volume(struct ac97_card* card, int volume) {
 
 static void set_sample_rate(struct ac97_card* card) {
 	// Check if we can set the sample rate, and if so set it to 44.1 kHz
-	if(inw(card->nambar + PORT_NAM_EXT_AUDIO_ID) & 1)
-	{
+	if(inw(card->nambar + PORT_NAM_EXT_AUDIO_ID) & 1) {
 		outw(card->nambar + PORT_NAM_EXT_AUDIO_STC, inw(card->nambar + PORT_NAM_EXT_AUDIO_STC) | 1);
 		sleep_ticks(20);
 		outw(card->nambar + PORT_NAM_FRONT_SPLRATE, 44100);
@@ -146,31 +164,30 @@ static void set_sample_rate(struct ac97_card* card) {
 
 static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	struct ac97_card* card = &ac97_cards[0];
-	int bno = card->last_wr_buffer++;
-	if(bno >= NUM_BUFFERS) {
-		card->last_wr_buffer = 1;
-		bno = 0;
+
+	int bno = card->buf_next_write;
+	card->buf_next_write = (card->buf_next_write + 1) % NUM_BUFFERS;
+
+	int_enable();
+	while(bno == card->playing_buffer) {
+		halt();
 	}
+	int_disable();
 
-	while(card->is_playing && bno == card->playing_buffer) {
-		asm("hlt");
-	}
-
-	size = MIN(size, MAX_BUFFER_LENGTH);
-	void* buf = zmalloc(size);
-	memcpy(buf, source, size);
-
-	kfree(card->descs[bno].buf);
-	card->descs[bno].buf = buf;
-	card->descs[bno].len = size / 2;
-	card->descs[bno].ioc = 1;
-	card->descs[bno].bup = 0;
+	struct buf_desc* desc = &card->descs[bno];
+	size = MIN(size, PAGE_SIZE * 4);
+	memcpy(desc->buf, source, size);
+	desc->len = size / 2;
+	desc->ioc = 1;
+	desc->bup = 0;
 	outb(card->nabmbar + PORT_NABM_POLVI, bno);
 
-	if(!card->is_playing) {
-		card->is_playing = true;
-		outb(card->nabmbar + PORT_NABM_POCONTROL, AC97_X_CR_RPBM | AC97_X_CR_FEIE | AC97_X_CR_IOCE);
+	if(card->playing_buffer == -1) {
+		card->playing_buffer = bno;
+		outb(card->nabmbar + PORT_NABM_POCONTROL,
+			AC97_X_CR_RPBM | AC97_X_CR_FEIE | AC97_X_CR_IOCE | AC97_X_CR_LVBIE);
 	}
+
 	return size;
 }
 
@@ -184,6 +201,7 @@ static void enable_card(struct ac97_card* card) {
 	// Get correct PCI bars for the sound chip control io ports
 	card->nambar = pci_get_BAR(card->device, 0) & 0xFFFFFFFC;
 	card->nabmbar = pci_get_BAR(card->device, 1) & 0xFFFFFFFC;
+	card->playing_buffer = -1;
 
 	// Turn power on / disable cold reset
 	outl(card->nabmbar + 0x2c, inl(card->nabmbar + 0x2c) | 1 << 1);
@@ -213,17 +231,21 @@ static void enable_card(struct ac97_card* card) {
 
 	sleep_ticks(20);
 
-	ac97_set_volume(card, 10);
+	ac97_set_volume(card, 5);
 	sleep_ticks(20);
 
 	set_sample_rate(card);
-	card->descs = zmalloc_a(sizeof(struct buf_desc) * 32);
-	outl(card->nabmbar + PORT_NABM_POBDBAR, (intptr_t)card->descs);
+	card->descs = zmalloc_a(sizeof(struct buf_desc) * NUM_BUFFERS);
+	for(int i = 0; i < NUM_BUFFERS; i++) {
+		card->descs[i].buf = palloc(4);
+	}
+
+	outl(card->nabmbar + PORT_NABM_POBDBAR, (uintptr_t)card->descs);
 
 	struct vfs_callbacks sfs_cb = {
 		.write = sfs_write,
 	};
-	sysfs_add_dev("dsp", &sfs_cb);
+	sysfs_add_dev("dsp1", &sfs_cb);
 }
 
 void ac97_init() {

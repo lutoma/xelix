@@ -17,7 +17,7 @@ init: init.c ini.c libutil.a
 	$(CC) $(CFLAGS) -o $@ init.c ini.c -L. -lutil
 
 play: play.c
-	$(CC) $(CFLAGS) -o $@ play.c -lFLAC -lm
+	$(CC) $(CFLAGS) -o $@ play.c -L. -lFLAC -lm -lutil
 
 gfxterm: gfxterm.c tmt.c tmt.h
 	$(CC) $(CFLAGS) -o $@ tmt.c gfxterm.c -I$(DESTDIR)/usr/include -I$(DESTDIR)/usr/include/freetype2 -lfreetype -lpng -lz -lm
