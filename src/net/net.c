@@ -1,5 +1,5 @@
 /* net.c: PicoTCP integration
- * Copyright © 2019 Lukas Martini
+ * Copyright © 2019-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,20 +18,18 @@
  */
 
 #include "net.h"
+#include <buffer.h>
 #include <pico_stack.h>
 #include <pico_ipv4.h>
 #include <pico_device.h>
 #include <pico_dhcp_client.h>
 #include <pico_dns_client.h>
 #include <pico_dev_loop.h>
-#include <spinlock.h>
 #include <net/i386-rtl8139.h>
 #include <net/i386-ne2k.h>
 #include <net/virtio_net.h>
 
 #ifdef ENABLE_PICOTCP
-
-#define RECV_BUFFER_SIZE 2048
 
 static bool initialized = false;
 static uint32_t dhcp_xid;
@@ -56,18 +54,16 @@ void net_tick() {
 
 static int pico_dsr_cb(struct pico_device* pico_dev, int loop_score) {
 	struct net_device* dev = (struct net_device*)pico_dev;
-	if(unlikely(!spinlock_get(&dev->recv_buf_lock, 200))) {
-		return loop_score;
-	}
 
-	if(likely(dev->recv_buf_len)) {
-		pico_stack_recv(pico_dev, dev->recv_buf, dev->recv_buf_len);
-		dev->recv_buf_len = 0;
+	size_t sz = buffer_size(dev->recv_buf);
+	if(likely(sz)) {
+		void* buf = kmalloc(sz);
+		buffer_pop(dev->recv_buf, buf, sz);
+		pico_stack_recv_zerocopy(pico_dev, buf, sz);
 		loop_score--;
 	}
 
 	pico_dev->__serving_interrupt = 0;
-	spinlock_release(&dev->recv_buf_lock);
 	return loop_score;
 }
 
@@ -77,19 +73,11 @@ void net_receive(struct net_device* dev, void* data, size_t len) {
 		return;
 	}
 
-	if(unlikely(dev->recv_buf_len + len > RECV_BUFFER_SIZE)) {
+	if(buffer_write(dev->recv_buf, data, len) < len) {
 		log(LOG_WARN, "net: Receive buffer overflow, discarding incoming packets\n");
-		return;
 	}
 
-	if(unlikely(!spinlock_get(&dev->recv_buf_lock, 200))) {
-		return;
-	}
-
-	memcpy(dev->recv_buf + dev->recv_buf_len, data, len);
-	dev->recv_buf_len += len;
 	dev->pico_dev.__serving_interrupt = 1;
-	spinlock_release(&dev->recv_buf_lock);
 }
 
 struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_t* send_cb) {
@@ -104,7 +92,7 @@ struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_
 	}
 
 	memcpy(eth->mac.addr, mac, sizeof(uint8_t) + 6);
-	dev->recv_buf = zmalloc(RECV_BUFFER_SIZE);
+	dev->recv_buf = buffer_new(40);
 	dev->pico_dev.eth = eth;
 	dev->pico_dev.send = send_cb;
 	dev->pico_dev.dsr = pico_dsr_cb;

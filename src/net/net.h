@@ -19,13 +19,11 @@
  */
 
 #include <pico_device.h>
-#include <spinlock.h>
+#include <buffer.h>
 
 struct net_device {
 	struct pico_device pico_dev;
-	void* recv_buf;
-	size_t recv_buf_len;
-	spinlock_t recv_buf_lock;
+	struct buffer* recv_buf;
 };
 
 typedef int (net_send_callback_t)(struct pico_device* pico_dev, void* data, int size);
