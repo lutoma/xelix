@@ -1,0 +1,11 @@
+--- zic.c	2019-07-19 18:19:46.000000000 +0200
++++ zic.c	2020-02-14 22:22:08.441814330 +0100
+@@ -146,7 +146,7 @@ extern int	optind;
+ # define symlink(from, to) (errno = ENOTSUP, -1)
+ # define S_ISLNK(m) 0
+ #endif
+-#ifndef AT_SYMLINK_FOLLOW
++#if !defined(AT_SYMLINK_FOLLOW) || defined(__xelix__)
+ # define linkat(fromdir, from, todir, to, flag) \
+     (itssymlink(from) ? (errno = ENOTSUP, -1) : link(from, to))
+ #endif

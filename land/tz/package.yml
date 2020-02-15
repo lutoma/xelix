@@ -1,0 +1,11 @@
+name: tz
+version: '2019c'
+sources:
+  - url: https://data.iana.org/time-zones/releases/tzdb-2019c.tar.lz
+patch_skip_path: 0
+patches:
+  - tz.patch
+make:
+  - make CC=i786-pc-xelix-gcc
+install:
+  - make CC=i786-pc-xelix-gcc ZIC=zic DESTDIR=$DESTDIR install
