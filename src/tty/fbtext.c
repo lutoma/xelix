@@ -251,8 +251,9 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
 			return fb_desc->common.framebuffer_bpp;
 		case 0x2f03:
 			drv->direct_access = 1;
-			task_add_mem_flat(ctx->task, (void*)(uintptr_t)fb_desc->common.framebuffer_addr,
-				size, TMEM_SECTION_DATA, 0);
+			vmem_map_flat(ctx->task->vmem_ctx,
+				(void*)(uintptr_t)fb_desc->common.framebuffer_addr,
+				size, VM_USER | VM_RW);
 
 			return 0;
 		case 0x2f04:
@@ -290,7 +291,7 @@ struct tty_driver* tty_fbtext_init() {
 	size_t vmem_size = fb_desc->common.framebuffer_width
 		* fb_desc->common.framebuffer_height
 		* fb_desc->common.framebuffer_bpp;
-	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, 0, 0);
+	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, VM_RW);
 
 	drv = kmalloc(sizeof(struct tty_driver));
 	drv->cols = fb_desc->common.framebuffer_width / tty_font.width;

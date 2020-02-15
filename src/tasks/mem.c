@@ -24,30 +24,13 @@
 #include <mem/vmem.h>
 #include <errno.h>
 
-void task_add_mem(task_t* task, void* virt_start, void* phys_start,
-	uint32_t size, enum task_mem_section section, int flags) {
-	bool user = section != TMEM_SECTION_KERNEL;
-	bool ro = section == TMEM_SECTION_CODE;
-	if(section) {
-		vmem_map(task->vmem_ctx, virt_start, phys_start, size, user, ro);
-	}
-
-	struct task_mem* alloc = zmalloc(sizeof(struct task_mem));
-	alloc->phys_addr = phys_start;
-	alloc->virt_addr = virt_start;
-	alloc->len = size;
-	alloc->section = section;
-	alloc->flags = flags;
-
-	alloc->next = task->mem_allocs;
-	task->mem_allocs = alloc;
-}
-
 /* Called on task page faults. If the fault is in the pages below the current
  * lower end of the stack, expand the stack (up to 512 pages total), and return
  * control to the task. otherwise, return -1 so the fault gets raised.
  */
-int task_page_fault_cb(task_t* task, uintptr_t addr) {
+int task_page_fault_cb(task_t* task, void* _addr) {
+	uintptr_t addr = (uintptr_t)_addr;
+
 	addr = ALIGN_DOWN(addr, PAGE_SIZE);
 	uintptr_t stack_lower = TASK_STACK_LOCATION - task->stack_size;
 	if(addr >= stack_lower || addr <= TASK_STACK_LOCATION - PAGE_SIZE * 512) {
@@ -56,8 +39,8 @@ int task_page_fault_cb(task_t* task, uintptr_t addr) {
 
 	int alloc_size = MAX(PAGE_SIZE * 2, stack_lower - addr);
 	void* page = zpalloc(alloc_size / PAGE_SIZE);
-	task_add_mem(task, (void*)(stack_lower - alloc_size), page, alloc_size,
-		TMEM_SECTION_STACK, TASK_MEM_FREE | TASK_MEM_PALLOC | TASK_MEM_FORK);
+	vmem_map(task->vmem_ctx, (void*)(stack_lower - alloc_size), page,
+		alloc_size, VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK);
 
 	task->stack_size += alloc_size;
 	return 0;
@@ -71,17 +54,19 @@ void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool us
 	struct vmem_range* cr;
 
 	while(off < ptr_size) {
-		cr = vmem_get_range(task->vmem_ctx, (uintptr_t)addr + off, false);
-		uintptr_t paddr = vmem_translate_ptr(cr, (uintptr_t)addr + off, false);
-		size_t copy_size = MIN(ptr_size - off, cr->length - (paddr - cr->phys_start));
+		cr = vmem_get_range(task->vmem_ctx, addr + off, false);
+		void* paddr = vmem_translate_ptr(cr, addr + off, false);
+		size_t copy_size = MIN(ptr_size - off,
+			(void*)cr->size - (paddr - (uintptr_t)cr->phys_addr));
+
 		if(!copy_size) {
 			break;
 		}
 
 		if(user_to_kernel) {
-			memcpy((void*)paddr, kaddr + off, copy_size);
+			memcpy(paddr, kaddr + off, copy_size);
 		} else {
-			memcpy(kaddr + off, (void*)paddr, copy_size);
+			memcpy(kaddr + off, paddr, copy_size);
 		}
 
 		off += copy_size;
@@ -96,7 +81,7 @@ void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool us
  * manually copy them back using task_memcpy).
  */
 void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
-	struct vmem_range* vmem_range = vmem_get_range(task->vmem_ctx, (uintptr_t)addr, false);
+	struct vmem_range* vmem_range = vmem_get_range(task->vmem_ctx, addr, false);
 	if(!vmem_range) {
 		return 0;
 	}
@@ -105,14 +90,14 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 	struct vmem_range* cr = vmem_range;
 
 	for(int i = 1;; i++) {
-		uintptr_t virt_end = cr->virt_start + cr->length;
-		uintptr_t phys_end = cr->phys_start + cr->length;
+		void* virt_end = cr->virt_addr + cr->size;
+		void* phys_end = cr->phys_addr + cr->size;
 
 		/* We've reached the end of the pointer and the buffer is contiguous in
 		 * physical memory, so just pass it directly.
 		 */
-		if(ptr_end <= virt_end) {
-			return (void*)vmem_translate_ptr(vmem_range, (uintptr_t)addr, false);
+		if(ptr_end <= (uintptr_t)virt_end) {
+			return vmem_translate_ptr(vmem_range, addr, false);
 		}
 
 		// Get next vmem range
@@ -122,7 +107,7 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 		}
 
 		// Check if next range is in adjacent physical pages
-		if(cr->phys_start != phys_end) {
+		if(cr->phys_addr != phys_end) {
 			break;
 		}
 	}
@@ -135,24 +120,7 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 
 // Free a task and all associated memory
 void task_free(task_t* t) {
-	struct task_mem* alloc = t->mem_allocs;
-	while(alloc) {
-		if(alloc->flags & TASK_MEM_FREE) {
-			if(alloc->flags & TASK_MEM_PALLOC) {
-				pfree((uintptr_t)alloc->phys_addr / PAGE_SIZE, alloc->len / PAGE_SIZE);
-			} else {
-				kfree(alloc->phys_addr);
-			}
-		}
-
-		struct task_mem* old_alloc = alloc;
-		alloc = alloc->next;
-		kfree(old_alloc);
-	}
-
-	t->mem_allocs = NULL;
 	vmem_rm_context(t->vmem_ctx);
-
 	kfree_array(t->environ, t->envc);
 	kfree_array(t->argv, t->argc);
 	kfree(t);
@@ -174,9 +142,8 @@ void* task_sbrk(task_t* task, int32_t length) {
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	task_add_mem(task, virt_addr, phys_addr, length, TMEM_SECTION_HEAP,
-		TASK_MEM_FORK | TASK_MEM_FREE | TASK_MEM_PALLOC);
-
+	vmem_map(task->vmem_ctx, virt_addr, phys_addr, length,
+		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE);
 	return virt_addr;
 }
 
@@ -200,7 +167,7 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		new_array[i] = strndup((char*)vmem_translate(task->vmem_ctx, (intptr_t)array[i], false), 200);
+		new_array[i] = strndup((char*)vmem_translate(task->vmem_ctx, array[i], false), 200);
 	}
 
 	new_array[i] = NULL;

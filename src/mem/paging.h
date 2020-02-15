@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2019 Lukas Martini
+/* Copyright © 2011-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,7 +18,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <mem/vmem.h>
+#define PAGE_SIZE 0x1000
 
 struct page {
 	bool present    : 1;
@@ -37,6 +37,7 @@ struct paging_context {
 	struct page dir_entries[1024];
 };
 
+struct vmem_range;
 void paging_set_range(struct paging_context* ctx, struct vmem_range* range);
 void paging_rm_context(struct paging_context* ctx);
-void paging_init();
+void paging_init(void* hwdata);

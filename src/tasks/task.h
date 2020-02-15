@@ -51,9 +51,9 @@ typedef struct task {
 	struct task* next;
 	struct task* previous;
 
+	struct vmem_context* vmem_ctx;
 	void* entry;
 	void* sbrk;
-
 	void* stack;
 	size_t stack_size;
 
@@ -63,8 +63,6 @@ typedef struct task {
 	// Kernel stack used for interrupts. This will be loaded into the TSS.
 	void* kernel_stack;
 
-	struct vmem_context* vmem_ctx;
-	struct task_mem* mem_allocs;
 
 	// Current task state
 	enum {

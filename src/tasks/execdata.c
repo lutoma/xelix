@@ -55,14 +55,14 @@ struct execdata {
  */
 void task_setup_execdata(task_t* task) {
 	void* page = zpalloc(2);
-	task_add_mem(task, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 2,
-		TMEM_SECTION_DATA, TASK_MEM_FREE | TASK_MEM_PALLOC);
+	vmem_map(task->vmem_ctx, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 2,
+		VM_USER | VM_RW | VM_FREE);
 
 	struct execdata* exc = (struct execdata*)page;
 	char** argv = (char**)exc + sizeof(struct execdata);
-	intptr_t args = (intptr_t)argv + sizeof(char*) * (task->argc + 1);
+	void* args = argv + sizeof(char*) * (task->argc + 1);
 
-	uint32_t offset = 0;
+	size_t offset = 0;
 	for(int i = 0; i < task->argc; i++) {
 		strncpy((char*)(args + offset), task->argv[i], 200);
 		argv[i] = (char*)vmem_translate(task->vmem_ctx, args + offset, true);
@@ -70,7 +70,7 @@ void task_setup_execdata(task_t* task) {
 	}
 
 	char** environ = (char**)args + offset;
-	intptr_t env = (intptr_t)environ + sizeof(char*) * (task->envc + 1);
+	void* env = environ + sizeof(char*) * (task->envc + 1);
 
 	offset = 0;
 	for(int i = 0; i < task->envc; i++) {
@@ -87,8 +87,8 @@ void task_setup_execdata(task_t* task) {
 	exc->ppid = task->parent ? task->parent->pid : 0;
 	exc->argc = task->argc;
 	exc->envc = task->envc;
-	exc->argv = (void*)vmem_translate(task->vmem_ctx, (intptr_t)argv, true);
-	exc->env = (void*)vmem_translate(task->vmem_ctx, (intptr_t)environ, true);
+	exc->argv = vmem_translate(task->vmem_ctx, argv, true);
+	exc->env = vmem_translate(task->vmem_ctx, environ, true);
 	memcpy(exc->binary_path, task->binary_path, VFS_PATH_MAX);
 	memcpy(exc->old_binary_path, task->binary_path, 256);
 }

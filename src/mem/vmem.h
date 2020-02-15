@@ -1,7 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Fritz Grimpen
- * Copyright © 2013-2019 Lukas Martini
+/* Copyright © 2013-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -20,25 +19,53 @@
  */
 
 #include <int/int.h>
+#include <mem/paging.h>
 #include <stdbool.h>
 
-#define PAGE_SIZE 0x1000
+
+// Writable
+#define VM_RW 1
+
+// Readable by user space
+#define VM_USER 2
+
+// pfree() physical memory after context/range is unmapped
+#define VM_FREE 4
+
+/* This flag is used internally in task code to indicate the range should be
+ * copied in fork() commands
+ */
+#define VM_TFORK 8
+
+// Allocate on write
+#define VM_AOW 16
+
+// Copy on write - implies VM_AOW
+#define VM_COW 32
+
+#define VM_NOCOW 64
+
+
 
 #define vmem_translate_ptr(range, addr, phys)					\
-	(phys ? range->virt_start : range->phys_start)				\
-	+ (addr - (phys ? range->phys_start : range->virt_start))
+	(phys ? range->virt_addr : range->phys_addr)				\
+	+ (addr - (phys ? range->phys_addr : range->virt_addr))
 
-/* Internal representation of a page allocation. This will get mapped to the
- * hardware form by <arch>-paging.c.
+/* Internal representation of a virtual page allocation. This will get mapped to
+ * the hardware form by <arch>-paging.c.
  */
 struct vmem_range {
 	struct vmem_range* next;
-	bool readonly:1;
-	bool user:1;
+	int flags;
+	int cow_flags;
+	void* virt_addr;
+	void* phys_addr;
+	size_t size;
 
-	uintptr_t virt_start;
-	uintptr_t phys_start;
-	uintptr_t length;
+	/* Reference counter for physical allocation in cases where VM_COW and
+	 * VM_FREE are set and at least one COW dependent exists.
+	 */
+	uint16_t* ref_count;
 };
 
 struct vmem_context {
@@ -48,17 +75,14 @@ struct vmem_context {
 	struct paging_context* hwdata;
 };
 
-/* Used in interrupt handlers to return to kernel paging context */
-void* vmem_kernel_hwdata;
-
-void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uintptr_t size, bool user, bool ro);
-#define vmem_map_flat(ctx, start, size, user, ro) vmem_map(ctx, start, start, size, user, ro)
-struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintptr_t addr, bool phys);
+struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, size_t size, int flags);
+#define vmem_map_flat(ctx, start, size, flags) vmem_map(ctx, start, start, size, flags)
+struct vmem_range* vmem_get_range(struct vmem_context* ctx, void* addr, bool phys);
 void* vmem_get_hwdata(struct vmem_context* ctx);
 void vmem_rm_context(struct vmem_context* ctx);
 void vmem_init();
 
-static inline uintptr_t vmem_translate(struct vmem_context* ctx, uintptr_t raddress, bool phys) {
+static inline void* vmem_translate(struct vmem_context* ctx, void* raddress, bool phys) {
 	struct vmem_range* range = vmem_get_range(ctx, raddress, phys);
 	if(!range) {
 		return 0;

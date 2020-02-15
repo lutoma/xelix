@@ -26,9 +26,9 @@
 #include <int/int.h>
 
 void paging_set_range(struct paging_context* ctx, struct vmem_range* range) {
-	for(uintptr_t off = 0; off < range->length; off += PAGE_SIZE) {
-		uintptr_t virt_addr = range->virt_start + off;
-		uintptr_t phys_addr = range->phys_start + off;
+	for(uintptr_t off = 0; off < range->size; off += PAGE_SIZE) {
+		uintptr_t virt_addr = (uintptr_t)range->virt_addr + off;
+		uintptr_t phys_addr = (uintptr_t)range->phys_addr + off;
 
 		uint32_t page_dir_offset = virt_addr >> 22;
 		uint32_t page_table_offset = (virt_addr >> 12) % 1024;
@@ -49,8 +49,8 @@ void paging_set_range(struct paging_context* ctx, struct vmem_range* range) {
 
 		struct page* page = page_table  + page_table_offset;
 		page->present = 1;
-		page->rw = !range->readonly;
-		page->user = range->user;
+		page->rw = range->flags & VM_RW;
+		page->user = range->flags & VM_USER;
 		page->frame = phys_addr >> 12;
 	}
 }
@@ -64,8 +64,8 @@ void paging_rm_context(struct paging_context* ctx) {
 	pfree((uintptr_t)ctx / PAGE_SIZE, 1);
 }
 
-void paging_init() {
-	log(LOG_INFO, "vmem: Enabling paging bit, cr3=0x%x\n", vmem_kernel_hwdata);
+void paging_init(void* hwdata) {
+	log(LOG_INFO, "vmem: Enabling paging bit, cr3=0x%x\n", hwdata);
 	asm volatile(
 		"cli;"
 		"mov %0, %%cr3;"
@@ -73,5 +73,5 @@ void paging_init() {
 		"or $0x80000000, %%eax;"
 		"mov %%eax, %%cr0;"
 		"sti;"
-	:: "r"(vmem_kernel_hwdata) : "memory", "eax");
+	:: "r"(hwdata) : "memory", "eax");
 }

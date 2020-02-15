@@ -55,13 +55,9 @@ static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf, ta
 }
 
 static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is_main) {
-	int section = TMEM_SECTION_DATA;
-	if(phead->flags & PF_X) {
-		// Can't be both executable and writable w/ current vmem setup
-		if(phead->flags & PF_W) {
-			return -1;
-		}
-		section = TMEM_SECTION_CODE;
+	if(phead->flags & PF_X && phead->flags & PF_W) {
+		log(LOG_WARN, "elf: Program header marked as both executable and writable - refusing.\n");
+		return -1;
 	}
 
 	size_t phys_offset = 0;
@@ -90,7 +86,12 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 		return -1;
 	}
 
-	task_add_mem(task, virt, phys, size, section, TASK_MEM_FORK | TASK_MEM_FREE | TASK_MEM_PALLOC);
+
+	int vmem_flags = VM_USER | VM_TFORK | VM_NOCOW | VM_FREE;
+	if(phead->flags & PF_W) {
+		vmem_flags |= VM_RW;
+	}
+	vmem_map(task->vmem_ctx, virt, phys, size, vmem_flags);
 
 	debug("  phys %#-8x-%#-8x virt %#-8x-%#-8x\n",
 		phys, (intptr_t)phys + size, virt, (intptr_t)virt + size);

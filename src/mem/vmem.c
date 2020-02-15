@@ -1,5 +1,5 @@
 /* vmem.c: Virtual memory management
- * Copyright © 2013-2019 Lukas Martini
+ * Copyright © 2013-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -28,38 +28,51 @@
 
 static struct vmem_context* kernel_ctx = NULL;
 
-void vmem_map(struct vmem_context* ctx, void* virt_start, void* phys_start, uintptr_t size, bool user, bool ro) {
-	if(!ctx) {
-		if(!kernel_ctx) {
-			return;
-		}
-		ctx = kernel_ctx;
+/* Used in interrupt handlers to return to kernel paging context */
+void* vmem_kernel_hwdata __attribute__((section(".ul_visible")));
+
+struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, size_t size, int flags) {
+	ctx = ctx ? ctx : kernel_ctx;
+	if(unlikely(!ctx || ((flags & VM_COW) && !phys))) {
+		return NULL;
 	}
 
 	struct vmem_range* range = zmalloc(sizeof(struct vmem_range));
-	range->readonly = ro;
-	range->user = user;
-	range->virt_start = ALIGN_DOWN((uintptr_t)virt_start, PAGE_SIZE);
-	range->phys_start = ALIGN_DOWN((uintptr_t)phys_start, PAGE_SIZE);
-	range->length = ALIGN(size, PAGE_SIZE);
+	range->flags = flags;
+	range->size = ALIGN(size, PAGE_SIZE);
+
+	if(!phys && !(flags & VM_AOW)) {
+		phys = palloc(range->size / PAGE_SIZE);
+	}
+
+	range->virt_addr = ALIGN_DOWN(virt, PAGE_SIZE);
+	range->phys_addr = ALIGN_DOWN(phys, PAGE_SIZE);
+
+	if(flags & (VM_COW | VM_AOW)) {
+		range->cow_flags = flags & ~(VM_COW | VM_AOW);
+		range->flags &= ~VM_RW;
+	}
+
 	range->next = ctx->ranges;
 	ctx->ranges = range;
 
 	if(ctx->hwdata) {
 		paging_set_range(ctx->hwdata, range);
 	}
+
+	return range;
 }
 
-struct vmem_range* vmem_get_range(struct vmem_context* ctx, uintptr_t addr, bool phys) {
+struct vmem_range* vmem_get_range(struct vmem_context* ctx, void* addr, bool phys) {
 	if(!ctx) {
 		ctx = kernel_ctx;
 	}
 
 	struct vmem_range* range = ctx->ranges;
 	for(; range; range = range->next) {
-		uintptr_t start = (phys ? range->phys_start : range->virt_start);
+		void* start = (phys ? range->phys_addr : range->virt_addr);
 
-		if(addr >= start && addr <= (start + range->length)) {
+		if(addr >= start && addr <= (start + range->size)) {
 			return range;
 		}
 	}
@@ -71,6 +84,16 @@ void vmem_rm_context(struct vmem_context* ctx) {
 
 	struct vmem_range* range = ctx->ranges;
 	while(range) {
+		if(range->flags & VM_FREE &&
+			(!range->ref_count || __sync_fetch_and_sub(range->ref_count, 1) <= 1)) {
+
+			if(range->ref_count) {
+				kfree(range->ref_count);
+			}
+
+			pfree((uintptr_t)range->phys_addr / PAGE_SIZE, range->size / PAGE_SIZE);
+		}
+
 		struct vmem_range* old_range = range;
 		range = range->next;
 		kfree(old_range);
@@ -94,7 +117,7 @@ void* vmem_get_hwdata(struct vmem_context* ctx) {
 void vmem_init() {
 	// Initialize kernel context
 	kernel_ctx = zmalloc(sizeof(struct vmem_context));
-	vmem_map_flat(NULL, KERNEL_START, 0xfffff000, 0, 0);
+	vmem_map_flat(NULL, KERNEL_START, 0xfffff000, VM_RW);
 	vmem_kernel_hwdata = vmem_get_hwdata(kernel_ctx);
-	paging_init();
+	paging_init(vmem_kernel_hwdata);
 }

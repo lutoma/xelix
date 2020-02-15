@@ -34,7 +34,7 @@ struct task;
 /* Interrupt stack frame */
 typedef struct {
 	uint32_t cr3;
-	uint32_t cr2;
+	void* cr2;
 	uint32_t ds;
 
 	uint32_t edi;
@@ -57,7 +57,7 @@ typedef struct {
 	void* eip;
 	uint32_t cs;
 	uint32_t eflags;
-	uint32_t user_esp;
+	void* user_esp;
 	uint32_t ss;
 } __attribute__((__packed__)) iret_t;
 

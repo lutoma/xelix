@@ -50,18 +50,13 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task->vmem_ctx = zmalloc(sizeof(struct vmem_context));
 	task->state = palloc(1);
 	bzero(task->state, sizeof(isf_t));
+	vmem_map_flat(task->vmem_ctx, task->state, PAGE_SIZE, VM_FREE);
 
 	task->kernel_stack = palloc(4);
-
-	task_add_mem_flat(task, task->state, PAGE_SIZE,
-		TMEM_SECTION_KERNEL, TASK_MEM_FREE | TASK_MEM_PALLOC);
-
-	task_add_mem_flat(task, task->kernel_stack, KERNEL_STACK_SIZE,
-		TMEM_SECTION_KERNEL, TASK_MEM_FREE | TASK_MEM_PALLOC);
+	vmem_map_flat(task->vmem_ctx, task->kernel_stack, KERNEL_STACK_SIZE, VM_FREE);
 
 	// FIXME Should have TMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
-	task_add_mem_flat(task, KERNEL_START, KERNEL_SIZE + 0x5000,
-		TMEM_SECTION_CODE, 0);
+	vmem_map_flat(task->vmem_ctx, KERNEL_START, KERNEL_SIZE + 0x5000, VM_USER);
 
 	task->pid = pid ? pid : __sync_add_and_fetch(&highest_pid, 1);
 	task->task_state = TASK_STATE_RUNNING;
@@ -107,16 +102,14 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
 	task->stack = zpalloc(task->stack_size / PAGE_SIZE);
-	task_add_mem(task, (void*)TASK_STACK_LOCATION - task->stack_size, task->stack,
-		task->stack_size, TMEM_SECTION_STACK,
-		TASK_MEM_FREE | TASK_MEM_PALLOC | TASK_MEM_FORK);
+	vmem_map(task->vmem_ctx, (void*)TASK_STACK_LOCATION - task->stack_size, task->stack,
+		task->stack_size, VM_USER | VM_RW | VM_FREE | VM_TFORK);
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
 	vfs_open(task, "/dev/stderr", O_WRONLY);
 	return task;
 }
-
 
 void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
@@ -131,7 +124,7 @@ void task_set_initial_state(task_t* task) {
 	iret->eip = task->entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
-	iret->user_esp = TASK_STACK_LOCATION;
+	iret->user_esp = (void*)TASK_STACK_LOCATION;
 	iret->ss = GDT_SEG_DATA_PL3;
 }
 
@@ -197,25 +190,42 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task->stack_size = to_fork->stack_size;
 	task->sbrk = to_fork->sbrk;
 
+	// FIXME transfer potentially updated environ
 	task_setup_execdata(task);
 
 	// Adjust kernel esp
 	intptr_t diff = state->esp - to_fork->kernel_stack;
 	task->state->esp = task->kernel_stack + diff;
 
-	struct task_mem* alloc = to_fork->mem_allocs;
-	for(; alloc; alloc = alloc->next) {
-		if(alloc->flags & TASK_MEM_FORK) {
-			void* phys_addr;
-
-			if(alloc->flags & TASK_MEM_PALLOC) {
-				phys_addr = zpalloc(alloc->len / PAGE_SIZE);
-			} else {
-				phys_addr = zmalloc_a(alloc->len);
-			}
-			memcpy(phys_addr, alloc->phys_addr, alloc->len);
-			task_add_mem(task, alloc->virt_addr, phys_addr, alloc->len, alloc->section, alloc->flags);
+	struct vmem_range* range = to_fork->vmem_ctx->ranges;
+	for(; range; range = range->next) {
+		if(!(range->flags & VM_TFORK)) {
+			continue;
 		}
+
+		// Can't do copy on write/merging with pages where we don't control deallocation
+		//if(range->flags & VM_NOCOW || !(range->flags & (VM_FREE | VM_COW))) {
+		if(range->flags & VM_RW) {
+			void* phys_addr = zpalloc(range->size / PAGE_SIZE);
+			memcpy(phys_addr, range->phys_addr, range->size);
+			vmem_map(task->vmem_ctx, range->virt_addr, phys_addr, range->size, range->flags);
+			continue;
+		}
+
+		if(!range->ref_count) {
+			range->ref_count = kmalloc(sizeof(uint16_t));
+			*range->ref_count = 1;
+		}
+
+		int flags = range->flags;
+		if(range->flags & VM_RW) {
+			range->flags |= VM_COW;
+			flags |= VM_COW;
+		}
+
+		struct vmem_range* new_range = vmem_map(task->vmem_ctx, range->virt_addr, range->phys_addr, range->size, flags);
+		__sync_add_and_fetch(range->ref_count, 1);
+		new_range->ref_count = range->ref_count;
 	}
 
 	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
@@ -410,12 +420,10 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	sysfs_printf("\nTask memory:\n");
-	struct task_mem* alloc = task->mem_allocs;
-	for(; alloc; alloc = alloc->next) {
-		sysfs_printf("0x%-8x -> 0x%-8x length 0x%-6x %-10s (%salloc)\n",
-			alloc->virt_addr, alloc->phys_addr, alloc->len,
-			task_mem_section_verbose(alloc->section),
-			alloc->flags & TASK_MEM_PALLOC ? "p" : "km");
+	struct vmem_range* range = task->vmem_ctx->ranges;
+	for(; range; range = range->next) {
+		sysfs_printf("0x%-8x -> 0x%-8x length 0x%-6x\n",
+			range->virt_addr, range->phys_addr, range->size);
 	}
 
 

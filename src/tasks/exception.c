@@ -68,8 +68,9 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 		state->err_code & PFE_RES ? " (reserved write)" : "",
 		state->err_code & PFE_INST ? " (instruction fetch)" : "");
 
-	if(state->err_code & PFE_USER) {
-		// Some task page faults can be gracefully handled (stack allocations)
+	if(task && (state->err_code & PFE_USER)) {
+		// Some task page faults can be handled gracefully
+		// (Copy on write, stack allocations)
 		if(task_page_fault_cb(task, state->cr2) == 0) {
 			return;
 		}
@@ -79,13 +80,13 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 
 		struct vmem_range* range = vmem_get_range(task->vmem_ctx, state->cr2, false);
 		if(range) {
-			log(LOG_WARN, "  phys: %#x, flags: ro %d, user %d\n",
+			log(LOG_WARN, "  phys: %#x, flags: rw %d, user %d\n",
 				vmem_translate_ptr(range, state->cr2, false),
-				range->readonly, range->user);
+				range->flags & VM_RW, range->flags & VM_USER);
 
 			log(LOG_WARN, "  vmem range: virt %#x -> %#x  phys %#x -> %#x\n",
-				range->virt_start, range->virt_start + range->length,
-				range->phys_start, range->phys_start + range->length);
+				range->virt_addr, range->virt_addr + range->size,
+				range->phys_addr, range->phys_addr + range->size);
 		} else {
 			log(LOG_WARN, "  No matching vmem range found.\n");
 		}
