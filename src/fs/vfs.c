@@ -256,6 +256,7 @@ size_t vfs_read(task_t* task, int fd, void* dest, size_t size) {
 		return 0;
 	}
 
+	int_enable();
 	size_t read = ctx->fp->callbacks.read(ctx, dest, size);
 	ctx->fp->offset += read;
 	return read;
@@ -655,6 +656,7 @@ int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 		}
 	}
 
+	int_enable();
 	while(1) {
 		for(uint32_t i = 0; i < nfds; i++) {
 			int r = contexts[i]->fp->callbacks.poll(contexts[i], fds[i].events);

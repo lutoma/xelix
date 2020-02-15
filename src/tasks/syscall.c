@@ -246,7 +246,7 @@ void syscall_init() {
 		.read = sfs_read,
 	};
 	sysfs_add_file("syscalls", &sfs_cb);
-	int_register(SYSCALL_INTERRUPT, int_handler, true);
+	int_register(SYSCALL_INTERRUPT, int_handler, false);
 }
 
 #ifdef SYSCALL_DEBUG

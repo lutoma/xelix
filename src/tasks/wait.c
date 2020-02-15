@@ -56,6 +56,7 @@ int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options) {
 	task->wait_context.wait_res_pid = 0;
 
 	// Wait until wait_finish is called
+	int_enable();
 	while((volatile int)task->task_state == TASK_STATE_WAITING) {
 		// FIXME Should scheduler yield immediately instead of waiting for tick
 		halt();

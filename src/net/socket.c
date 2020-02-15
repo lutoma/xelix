@@ -126,6 +126,7 @@ static size_t do_recvfrom(struct socket* sock, void* dest, size_t size,
 		return -1;
 	}
 
+	int_enable();
 	while(!sock->read_buffer_length) {
 		if(sock->state == SOCK_CLOSED) {
 			sc_errno = ENOTCONN;
@@ -138,6 +139,7 @@ static size_t do_recvfrom(struct socket* sock, void* dest, size_t size,
 
 		halt();
 	}
+	int_disable();
 
 	if(size > sock->read_buffer_length) {
 		size = sock->read_buffer_length;
@@ -191,6 +193,7 @@ int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size) {
 static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	struct socket* sock = (struct socket*)(ctx->fp->mount_instance);
 
+	int_enable();
 	while(!sock->can_write) {
 		if(sock->state == SOCK_CLOSED) {
 			sc_errno = ENOTCONN;
@@ -203,6 +206,7 @@ static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t si
 
 		halt();
 	}
+	int_disable();
 
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;
@@ -523,9 +527,11 @@ static int do_resolve(task_t* task, const char* data, char* result, int result_l
 	}
 
 	uint32_t end_tick = timer_tick + (5 * timer_rate);
+	int_enable();
 	while(timer_tick < end_tick && state->result == -2) {
-		pico_stack_tick();
+		halt();
 	}
+	int_disable();
 
 	switch(state->result) {
 		// Timeout - leave deallocation to callback
