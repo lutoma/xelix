@@ -110,7 +110,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		return;
 	}
 
-	if(!exc.signal || !task) {
+	if(!exc.signal || !task || task->task_state == TASK_STATE_SYSCALL) {
 		panic(exc.name);
 	}
 
