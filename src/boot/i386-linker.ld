@@ -1,33 +1,52 @@
 ENTRY(_start)
-PROVIDE(tty_font = _binary_src_tty_teru16n_psf_start);
+tty_font = _binary_src_tty_teru16n_psf_start;
 
-SECTIONS
-{
+PHDRS {
+	headers PT_PHDR PHDRS ;
+	multiboot PT_LOAD FILEHDR PHDRS;
+	text PT_LOAD ;
+	data PT_LOAD ;
+	rodata PT_LOAD ;
+	ul_visible PT_LOAD ;
+}
+
+SECTIONS {
 	/* The first section should be at 0x100000 */
 	. = 0x100000;
-	PROVIDE(__kernel_start = .);
+	__kernel_start = .;
 
 	/* The multiboot header has to be in the first 8kb */
-	.text : {
+	.multiboot : {
 		*(.multiboot)
+	} :multiboot
+
+	.text ALIGN(4096) : {
 		*(.text*)
-	}
+	} :text
 
 	.data ALIGN(4096) : {
 		*(.data)
-	}
-
-	.rodata ALIGN(4096) : {
-		*(.rodata*)
-	}
+	} :data
 
 	.bss ALIGN(4096) : {
 		*(.bss)
-	}
+	} :data
+
+	.rodata ALIGN(4096) : {
+		*(.rodata*)
+	} :rodata
 
 	.eh_frame ALIGN(4096) : {
 		*(.eh_frame)
-	}
+	} :rodata
 
-	PROVIDE(__kernel_end = .);
+	__kernel_end = .;
+
+	/* Userland visible kernel functions */
+	.ul_visible ALIGN(4096) : {
+		__ul_visible_start = .;
+		*(.ul_visible)
+		. = ALIGN(4096);
+		__ul_visible_end = .;
+	} :ul_visible
 }

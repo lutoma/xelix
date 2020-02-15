@@ -40,6 +40,8 @@
 #define KERNEL_STACK_SIZE PAGE_SIZE * 4
 
 static uint32_t highest_pid = 0;
+extern void* __ul_visible_start;
+extern void* __ul_visible_end;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 
@@ -55,8 +57,9 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task->kernel_stack = palloc(4);
 	vmem_map_flat(task->vmem_ctx, task->kernel_stack, KERNEL_STACK_SIZE, VM_FREE);
 
-	// FIXME Should have TMEM_SECTION_KERNEL, but that would break task_sigjmp_crt0
-	vmem_map_flat(task->vmem_ctx, KERNEL_START, KERNEL_SIZE + 0x5000, VM_USER);
+	vmem_map_flat(task->vmem_ctx, KERNEL_START, KERNEL_SIZE, 0);
+	vmem_map_flat(task->vmem_ctx, &__ul_visible_start,
+		(void*)&__ul_visible_end - (void*)&__ul_visible_start, VM_USER);
 
 	task->pid = pid ? pid : __sync_add_and_fetch(&highest_pid, 1);
 	task->task_state = TASK_STATE_RUNNING;
