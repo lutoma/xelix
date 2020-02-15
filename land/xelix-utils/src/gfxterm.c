@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <poll.h>
@@ -49,28 +50,31 @@ uint32_t fb_width = 0;
 uint32_t fb_height = 0;
 uint32_t fb_pitch = 0;
 uint32_t fb_size = 0;
-int pty_master;
-int pty_slave;
+int ptm_fd;
 int fb_fd;
 int kbd_fd;
 int cursor_row = 0;
 int cursor_col = 0;
 uint8_t* glyph_cache[256];
 uint8_t* glyph_cache_bold[256];
+FT_Library ft_library;
 
+static void deallocate(bool release_fb) {
+	close(kbd_fd);
+	close(ptm_fd);
+	tmt_close(vt);
+	FT_Done_FreeType(ft_library);
 
-static uint32_t convert_color(int color, int bg) {
-	if(color == -1 || color >= 9) {
-		color = 0;
+	if(release_fb) {
+		ioctl(fb_fd, 0x2f04, (uint32_t)0);
 	}
 
-	// RGB colors: Default, Black, red, green, yellow, blue, magenta, cyan, white, max
-	const uint32_t colors_fg[] = {0xffffff, 0x646464, 0xff453a, 0x32d74b, 0xffd60a,
-		0x0a84ff, 0xbf5af2, 0x5ac8fa, 0xffffff, 0xffffff};
-	const uint32_t colors_bg[] = {0x1e1e1e, 0x1e1e1e, 0xff453a, 0x32d74b, 0xffd60a,
-		0x0a84ff, 0xbf5af2, 0x5ac8fa, 0xffffff, 0xffffff};
+	close(fb_fd);
+}
 
-	return (bg ? colors_bg : colors_fg)[color];
+void do_exit(int signum) {
+	deallocate(true);
+	exit(0);
 }
 
 uint8_t* render_glyph(char chr, int bold) {
@@ -100,6 +104,20 @@ uint8_t* render_glyph(char chr, int bold) {
 
 	cache[chr] = glyph;
 	return glyph;
+}
+
+static inline uint32_t convert_color(int color, int bg) {
+	if(color == -1 || color >= 9) {
+		color = 0;
+	}
+
+	// RGB colors: Default, Black, red, green, yellow, blue, magenta, cyan, white, max
+	const uint32_t colors_fg[] = {0xffffff, 0x646464, 0xff453a, 0x32d74b, 0xffd60a,
+		0x0a84ff, 0xbf5af2, 0x5ac8fa, 0xffffff, 0xffffff};
+	const uint32_t colors_bg[] = {0x1e1e1e, 0x1e1e1e, 0xff453a, 0x32d74b, 0xffd60a,
+		0x0a84ff, 0xbf5af2, 0x5ac8fa, 0xffffff, 0xffffff};
+
+	return (bg ? colors_bg : colors_fg)[color];
 }
 
 void write_char(const TMTSCREEN* screen, int row, int col) {
@@ -162,7 +180,7 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 			tmt_clean(vt);
 			break;
 		case TMT_MSG_ANSWER:
-			write(pty_master, a, strlen(a));
+			write(ptm_fd, a, strlen(a));
 			break;
 		case TMT_MSG_MOVED:
 			// draw new cursor, redraw previous cursor position
@@ -178,13 +196,15 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 }
 
 static inline void launch_child() {
-	if(openpty(&pty_master, &pty_slave, NULL, NULL, NULL) < 0) {
+	int pts_fd;
+
+	if(openpty(&ptm_fd, &pts_fd, NULL, NULL, NULL) < 0) {
 		perror("openpty");
 		exit(EXIT_FAILURE);
 	}
 
-	int flags = fcntl(pty_master, F_GETFL);
-	fcntl(pty_master, F_SETFL, flags | O_NONBLOCK);
+	int flags = fcntl(ptm_fd, F_GETFL);
+	fcntl(ptm_fd, F_SETFL, flags | O_NONBLOCK);
 
 	int pid = fork();
 	if(pid < 0) {
@@ -192,13 +212,19 @@ static inline void launch_child() {
 		exit(EXIT_FAILURE);
 	}
 
-	if(!pid) {
+	if(pid) {
+		close(pts_fd);
+	} else {
+		// Close all our open files and free memory
+		deallocate(false);
+
+		// Map stdin/out to pts
 		close(1);
 		close(2);
 		close(0);
-		dup2(pty_slave, 1);
-		dup2(pty_slave, 2);
-		dup2(pty_slave, 0);
+		dup2(pts_fd, 1);
+		dup2(pts_fd, 2);
+		dup2(pts_fd, 0);
 
 		char* login_argv[] = { "login", NULL };
 		char* login_env[] = { "TERM=ansi", NULL };
@@ -210,7 +236,7 @@ void main_loop(TMT* vt, int kbd_fd) {
 	struct pollfd pfds[2];
 	pfds[0].fd = kbd_fd;
 	pfds[0].events = POLLIN;
-	pfds[1].fd = pty_master;
+	pfds[1].fd = ptm_fd;
 	pfds[1].events = POLLIN;
 
 	char* input = malloc(0x1000);
@@ -225,12 +251,12 @@ void main_loop(TMT* vt, int kbd_fd) {
 		if(pfds[0].revents & POLLIN) {
 			int nread = read(kbd_fd, input, 0x1000);
 			if(nread) {
-				write(pty_master, input, nread);
+				write(ptm_fd, input, nread);
 			}
 		}
 
 		if(pfds[1].revents & POLLIN) {
-			int nread = read(pty_master, input, 0x1000);
+			int nread = read(ptm_fd, input, 0x1000);
 			if(nread) {
 				tmt_write(vt, input, nread);
 			}
@@ -241,13 +267,12 @@ void main_loop(TMT* vt, int kbd_fd) {
 }
 
 static inline void freetype_init() {
-	FT_Library library;
-	if(FT_Init_FreeType( &library )) {
+	if(FT_Init_FreeType(&ft_library)) {
 		fprintf(stderr, "Could not initialize freetype library\n");
 		exit(EXIT_FAILURE);
 	}
 
-	if(FT_New_Face(library, "/usr/share/fonts/DejaVuSansMono.ttf", 0, &face)) {
+	if(FT_New_Face(ft_library, "/usr/share/fonts/DejaVuSansMono.ttf", 0, &face)) {
 		fprintf(stderr, "Could not read font\n");
 		exit(EXIT_FAILURE);
 	}
@@ -257,7 +282,7 @@ static inline void freetype_init() {
 		exit(EXIT_FAILURE);
 	}
 
-	if(FT_New_Face(library, "/usr/share/fonts/DejaVuSansMono-Bold.ttf", 0, &face_bold)) {
+	if(FT_New_Face(ft_library, "/usr/share/fonts/DejaVuSansMono-Bold.ttf", 0, &face_bold)) {
 		fprintf(stderr, "Could not read font\n");
 		exit(EXIT_FAILURE);
 	}
@@ -266,15 +291,6 @@ static inline void freetype_init() {
 		fprintf(stderr, "Could not set char size\n");
 		exit(EXIT_FAILURE);
 	}
-}
-
-void do_exit(int signum) {
-	close(kbd_fd);
-	close(pty_master);
-	tmt_close(vt);
-	ioctl(fb_fd, 0x2f04, (uint32_t)0);
-	close(fb_fd);
-	exit(0);
 }
 
 int main() {
@@ -325,12 +341,8 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	char buf[100];
-	while(read(kbd_fd, buf, 100) >= 1);
-
 	int rows = (fb_height / BLOCK_HEIGHT) - 1;
 	int cols = fb_width / BLOCK_WIDTH;
-
 	vt = tmt_open(rows, cols, tmt_callback, NULL, NULL);
 	if(!vt) {
 		fprintf(stderr, "Could not open TMT virtual terminal.\n");

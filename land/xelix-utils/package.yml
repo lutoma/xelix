@@ -7,6 +7,6 @@ dependencies:
   - freetype
   - libpng
 make:
-  - make
+  - CFLAGS="$CFLAGS -I$DESTDIR/usr/include" make
 install:
   - make install

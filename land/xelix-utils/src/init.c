@@ -40,6 +40,7 @@ struct service {
 };
 
 struct service* services;
+DIR* svd_dir;
 
 static void launch_service(struct service* service) {
 	char* argv[40];
@@ -69,6 +70,8 @@ static void launch_service(struct service* service) {
 		service->next = services;
 		services = service;
 	} else {
+		closedir(svd_dir);
+
 		if(*service->tty) {
 			if(open(service->tty, O_RDONLY) < 0) {
 				perror("Could not open tty");
@@ -76,7 +79,10 @@ static void launch_service(struct service* service) {
 			}
 		}
 
-		execv(argv[0], argv);
+		if(execv(argv[0], argv) < 0) {
+			perror("execv failed");
+			exit(-1);
+		}
 	}
 }
 
@@ -116,7 +122,7 @@ int main() {
 		return -1;
 	}
 
-	DIR* svd_dir = opendir(".");
+	svd_dir = opendir(".");
 	if(!svd_dir) {
 		perror("Could not open services directory");
 		return -1;
@@ -145,6 +151,10 @@ int main() {
 	while(1) {
 		int wstat;
 		pid_t pid = waitpid(-1, &wstat, 0);
+		if(pid < 1) {
+			perror("init: waitpid failed");
+			exit(EXIT_FAILURE);
+		}
 
 		if(!pid || WIFSTOPPED(wstat) || (WIFSIGNALED(wstat) &&
 			(WTERMSIG(wstat) == SIGKILL || WTERMSIG(wstat) == SIGTERM))) {

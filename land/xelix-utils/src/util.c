@@ -133,14 +133,17 @@ void run_shell(struct passwd* pwd, bool print_motd) {
 	chdir(pwd->pw_dir);
 	if(print_motd) {
 		printf("\033[H\033[J");
+
 		FILE* motd_fp = fopen("/etc/motd", "r");
 		if(motd_fp) {
 			char* motd = (char*)malloc(1024);
-			size_t read = fread(motd, 1024, 1, motd_fp);
+			fread(motd, 1024, 1, motd_fp);
 			puts(motd);
-			fflush(stdout);
 			free(motd);
+			fclose(motd_fp);
 		}
+
+		fflush(stdout);
 	}
 
 	char* __argv[] = { pwd->pw_shell, "-l", NULL };
