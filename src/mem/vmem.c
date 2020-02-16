@@ -29,7 +29,7 @@
 static struct vmem_context* kernel_ctx = NULL;
 
 /* Used in interrupt handlers to return to kernel paging context */
-void* vmem_kernel_hwdata __attribute__((section(".ul_visible")));
+void* vmem_kernel_hwdata UL_VISIBLE("bss");
 
 struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, size_t size, int flags) {
 	ctx = ctx ? ctx : kernel_ctx;

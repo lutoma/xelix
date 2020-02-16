@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010-2019 Lukas Martini
+/* Copyright © 2010-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -51,9 +51,15 @@
 // Symbols provided by LD in linker.ld
 extern void* __kernel_start;
 extern void* __kernel_end;
+extern void* __ul_visible_start;
+extern void* __ul_visible_end;
 #define KERNEL_START ALIGN_DOWN((void*)&__kernel_start, PAGE_SIZE)
 #define KERNEL_END ((void*)&__kernel_end)
 #define KERNEL_SIZE (KERNEL_END - KERNEL_START)
+#define UL_VISIBLE_START ALIGN_DOWN((void*)&__ul_visible_start, PAGE_SIZE)
+#define UL_VISIBLE_END ((void*)&__ul_visible_end)
+#define UL_VISIBLE_SIZE (UL_VISIBLE_END - UL_VISIBLE_START)
+#define UL_VISIBLE(x) __attribute__((section("." x ".ul_visible")))
 
 static inline void __attribute__((noreturn)) freeze(void) {
 	asm volatile("cli; hlt");

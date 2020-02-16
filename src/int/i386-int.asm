@@ -25,6 +25,8 @@
 %define IRQ7		39
 %define IRQ15		47
 
+[section .text.ul_visible]
+
 ; Acknowledges interrupts to PIC where necessary. Expects interrupt number in
 ; ebx. Returns 1 in eax if the interrupt was spurious, 0 otherwise.
 handle_eoi:

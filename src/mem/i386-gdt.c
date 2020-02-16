@@ -66,15 +66,16 @@
 
 extern void gdt_flush(void*);
 extern void* stack_end;
-static uint8_t initial_tss[0x60];
+static uint8_t initial_tss[0x60] UL_VISIBLE("bss");
 static uint32_t* tss = (uint32_t*)&initial_tss;
+static uint64_t descs[6] UL_VISIBLE("bss");
 
-static struct pointer {
+static struct {
 	// The upper 16 bits of all selector limits.
 	uint16_t limit;
 	void* base;
 } __attribute__((packed)) pointer;
-static uint64_t descs[6];
+
 
 static void create_descriptor(uint32_t num, uint32_t base, uint32_t limit, uint16_t flag) {
     // Create the high 32 bit segment

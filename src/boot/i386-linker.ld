@@ -21,7 +21,7 @@ SECTIONS {
 	} :multiboot
 
 	.text ALIGN(4096) : {
-		*(.text*)
+		*(.text)
 	} :text
 
 	.data ALIGN(4096) : {
@@ -40,13 +40,16 @@ SECTIONS {
 		*(.eh_frame)
 	} :rodata
 
-	__kernel_end = .;
-
-	/* Userland visible kernel functions */
-	.ul_visible ALIGN(4096) : {
+	/* Userland visible kernel functions and data */
+	.text.ul_visible ALIGN(4096) : {
 		__ul_visible_start = .;
-		*(.ul_visible)
-		. = ALIGN(4096);
-		__ul_visible_end = .;
+		*(.text.ul_visible)
 	} :ul_visible
+
+	.bss.ul_visible ALIGN(4096) : {
+		*(.bss.ul_visible)
+	} :ul_visible
+
+	__ul_visible_end = .;
+	__kernel_end = .;
 }
