@@ -2,9 +2,9 @@
 
 export PATH="/usr/bin"
 export PS1='[\u@\h \W]\$ '
-export TERM='xelix'
+export TERM='ansi'
 export HOME=~
-export TZ="Europe/Berlin"
+export TZ='Europe/Brussels'
 
 alias ls='ls --color=auto'
 alias ssh='dbclient'

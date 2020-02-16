@@ -6,6 +6,7 @@ install:
   - install -d $DESTDIR/boot
   - install -d $DESTDIR/dev
   - install -d $DESTDIR/etc
+  - install -d $DESTDIR/etc/init.d
   - install -d $DESTDIR/home
   - install -d $DESTDIR/home/root -m 700
   - install -d $DESTDIR/sys
@@ -21,6 +22,6 @@ install:
   - rm $DESTDIR/bin || true
   - ln -s usr/bin $DESTDIR/bin
 
-  - install -D * -m 644 $DESTDIR/etc/
+  - cp -r * $DESTDIR/etc/
   - rm $DESTDIR/etc/mtab || true
-  - ln -s ../sys/mounts $DESTDIR/etc/mtab
+  - ln -s /sys/mounts $DESTDIR/etc/mtab

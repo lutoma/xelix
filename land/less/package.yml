@@ -2,6 +2,8 @@ name: less
 version: 551
 sources:
   - url: http://www.greenwoodsoftware.com/less/less-551.tar.gz
+dependencies:
+  - ncurses
 configure:
   - ./configure
     --host=i786-pc-xelix

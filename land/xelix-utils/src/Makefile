@@ -37,7 +37,5 @@ libutil.a: util.c argparse.c
 .PHONY: install
 install:
 	install -d $(DESTDIR)/usr/bin/
-	install -d $(DESTDIR)/etc/init.d/
 	install -D $(TARGETS) $(DESTDIR)/usr/bin/
-	install -D tty1-login $(DESTDIR)/etc/init.d
 	chmod u+s $(DESTDIR)/usr/bin/su

@@ -2,6 +2,8 @@ name: coreutils
 version: '8.30'
 sources:
   - url: https://ftp.gnu.org/gnu/coreutils/coreutils-8.30.tar.xz
+dependencies:
+  - libiconv
 patches:
   - coreutils-8.30.patch
 configure:
