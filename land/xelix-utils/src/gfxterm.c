@@ -38,20 +38,23 @@
 #define BLOCK_WIDTH 8
 #define BLOCK_TEXTOFFSET 3
 
-#define block_ptr(row, col) (&fb_addr[row * BLOCK_HEIGHT * (fb_pitch / 4) + \
+#define block_ptr(row, col) (&fb.addr[row * BLOCK_HEIGHT * (fb.pitch / 4) + \
 	 col * BLOCK_WIDTH])
+
+struct {
+	int fd;
+	uint32_t* addr;
+	uint32_t bpp;
+	uint32_t width;
+	uint32_t height;
+	uint32_t pitch;
+	uint32_t size;
+} fb;
 
 TMT* vt;
 FT_Face face;
 FT_Face face_bold;
-uint32_t* fb_addr = NULL;
-uint32_t fb_bpp = 0;
-uint32_t fb_width = 0;
-uint32_t fb_height = 0;
-uint32_t fb_pitch = 0;
-uint32_t fb_size = 0;
 int ptm_fd;
-int fb_fd;
 int kbd_fd;
 int cursor_row = 0;
 int cursor_col = 0;
@@ -66,10 +69,10 @@ static void deallocate(bool release_fb) {
 	FT_Done_FreeType(ft_library);
 
 	if(release_fb) {
-		ioctl(fb_fd, 0x2f04, (uint32_t)0);
+		ioctl(fb.fd, 0x2f04, (uint32_t)0);
 	}
 
-	close(fb_fd);
+	close(fb.fd);
 }
 
 void do_exit(int signum) {
@@ -126,7 +129,7 @@ void write_char(const TMTSCREEN* screen, int row, int col) {
 	uint32_t bg_col = convert_color(chr.a.bg, 1);
 
 	for(int i = 0; i < BLOCK_HEIGHT; i++) {
-		memset32(block_ptr(row, col) + i * fb_pitch/4, bg_col, BLOCK_WIDTH);
+		memset32(block_ptr(row, col) + i * fb.pitch/4, bg_col, BLOCK_WIDTH);
 	}
 
 	if(!chr.c || chr.c == ' ') {
@@ -150,7 +153,7 @@ void write_char(const TMTSCREEN* screen, int row, int col) {
 			uint32_t alpha = fg[3] + 1;
 			uint32_t inv_alpha = 256 - fg[3];
 
-			*(addr + y * fb_pitch/4 + x) = ((alpha * fg[0] + inv_alpha * bg[0]) >> 8) << 16 |
+			*(addr + y * fb.pitch/4 + x) = ((alpha * fg[0] + inv_alpha * bg[0]) >> 8) << 16 |
 				((alpha * fg[1] + inv_alpha * bg[1]) >> 8) << 8 |
 				((alpha * fg[2] + inv_alpha * bg[2]) >> 8);
 
@@ -185,50 +188,13 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 		case TMT_MSG_MOVED:
 			// draw new cursor, redraw previous cursor position
 			for(int i = 0; i < BLOCK_HEIGHT; i++) {
-				*(block_ptr(c->r, c->c) + (i * fb_pitch/4)) = 0xfd971f;
+				*(block_ptr(c->r, c->c) + (i * fb.pitch/4)) = 0xfd971f;
 			}
 
 			write_char(s, cursor_row, cursor_col);
 			cursor_row = c->r;
 			cursor_col = c->c;
 			break;
-	}
-}
-
-static inline void launch_child() {
-	int pts_fd;
-
-	if(openpty(&ptm_fd, &pts_fd, NULL, NULL, NULL) < 0) {
-		perror("openpty");
-		exit(EXIT_FAILURE);
-	}
-
-	int flags = fcntl(ptm_fd, F_GETFL);
-	fcntl(ptm_fd, F_SETFL, flags | O_NONBLOCK);
-
-	int pid = fork();
-	if(pid < 0) {
-		perror("fork");
-		exit(EXIT_FAILURE);
-	}
-
-	if(pid) {
-		close(pts_fd);
-	} else {
-		// Close all our open files and free memory
-		deallocate(false);
-
-		// Map stdin/out to pts
-		close(1);
-		close(2);
-		close(0);
-		dup2(pts_fd, 1);
-		dup2(pts_fd, 2);
-		dup2(pts_fd, 0);
-
-		char* login_argv[] = { "login", NULL };
-		char* login_env[] = { "TERM=ansi", NULL };
-		execve("/usr/bin/login", login_argv, login_env);
 	}
 }
 
@@ -239,7 +205,8 @@ void main_loop(TMT* vt, int kbd_fd) {
 	pfds[1].fd = ptm_fd;
 	pfds[1].events = POLLIN;
 
-	char* input = malloc(0x1000);
+	size_t buf_size = getpagesize();
+	char* input = malloc(buf_size);
 	while(1) {
 		pfds[0].revents = 0;
 		pfds[1].revents = 0;
@@ -249,14 +216,14 @@ void main_loop(TMT* vt, int kbd_fd) {
 		}
 
 		if(pfds[0].revents & POLLIN) {
-			int nread = read(kbd_fd, input, 0x1000);
+			int nread = read(kbd_fd, input, buf_size);
 			if(nread) {
 				write(ptm_fd, input, nread);
 			}
 		}
 
 		if(pfds[1].revents & POLLIN) {
-			int nread = read(ptm_fd, input, 0x1000);
+			int nread = read(ptm_fd, input, buf_size);
 			if(nread) {
 				tmt_write(vt, input, nread);
 			}
@@ -311,28 +278,28 @@ int main() {
 	}
 
 	// Get framebuffer
-	fb_fd = open("/dev/gfx1", O_WRONLY);
-	if(!fb_fd) {
+	fb.fd = open("/dev/gfx1", O_WRONLY);
+	if(!fb.fd) {
 		perror("Could not open /dev/gfx1");
 		exit(EXIT_FAILURE);
 	}
 
-	fb_bpp = ioctl(fb_fd, 0x2f02, (uint32_t)0);
-	fb_width = ioctl(fb_fd, 0x2f05, (uint32_t)0);
-	fb_height = ioctl(fb_fd, 0x2f06, (uint32_t)0);
-	fb_pitch = ioctl(fb_fd, 0x2f07, (uint32_t)0);
-	fb_size = fb_height * fb_pitch;
+	fb.bpp = ioctl(fb.fd, 0x2f02, (uint32_t)0);
+	fb.width = ioctl(fb.fd, 0x2f05, (uint32_t)0);
+	fb.height = ioctl(fb.fd, 0x2f06, (uint32_t)0);
+	fb.pitch = ioctl(fb.fd, 0x2f07, (uint32_t)0);
+	fb.size = fb.height * fb.pitch;
 
 	// Get framebuffer address
-	fb_addr = (uint32_t*)ioctl(fb_fd, 0x2f01, (uint32_t)0);
-	if(!fb_addr || !fb_size) {
+	fb.addr = (uint32_t*)ioctl(fb.fd, 0x2f01, (uint32_t)0);
+	if(!fb.addr || !fb.size) {
 		perror("Could not get memory mapping");
 		exit(EXIT_FAILURE);
 	}
 
 	// Map framebuffer into our address space and clear it
-	ioctl(fb_fd, 0x2f03, (uint32_t)0);
-	memset32(fb_addr, 0x1e1e1e, fb_size / 4);
+	ioctl(fb.fd, 0x2f03, (uint32_t)0);
+	memset32(fb.addr, 0x1e1e1e, fb.size / 4);
 
 	// Open keyboard device
 	kbd_fd = open("/dev/keyboard1", O_RDONLY | O_NONBLOCK);
@@ -341,14 +308,43 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	int rows = (fb_height / BLOCK_HEIGHT) - 1;
-	int cols = fb_width / BLOCK_WIDTH;
+	unsigned int rows = (fb.height / BLOCK_HEIGHT) - 1;
+	unsigned int cols = fb.width / BLOCK_WIDTH;
+
 	vt = tmt_open(rows, cols, tmt_callback, NULL, NULL);
 	if(!vt) {
 		fprintf(stderr, "Could not open TMT virtual terminal.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	launch_child();
+	// Get a pty and launch process
+	struct winsize ws = {
+		.ws_row = rows,
+		.ws_col = cols,
+		.ws_xpixel = fb.width,
+		.ws_ypixel = fb.height,
+	};
+
+	pid_t pid = forkpty(&ptm_fd, NULL, NULL, &ws);
+	if(pid < 0) {
+		perror("Could not forkpty");
+		exit(EXIT_FAILURE);
+	}
+
+	if(pid) {
+		int flags = fcntl(ptm_fd, F_GETFL);
+		fcntl(ptm_fd, F_SETFL, flags | O_NONBLOCK);
+	} else {
+		// Close all our open files and free memory
+		deallocate(false);
+
+		char* login_argv[] = { "login", NULL };
+		char* login_env[] = { "TERM=ansi", NULL };
+		if(execve("/usr/bin/login", login_argv, login_env) < 0) {
+			perror("Could not execute subprocess");
+			exit(EXIT_FAILURE);
+		}
+	}
+
 	main_loop(vt, kbd_fd);
 }

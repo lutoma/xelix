@@ -1,4 +1,4 @@
-/* Copyright © 2019 Lukas Martini
+/* Copyright © 2019-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,19 +21,61 @@
 #include <fcntl.h>
 #include <termios.h>
 
-int openpty(int *amaster, int *aslave, char *name,
-                   const struct termios *termp,
-                   const struct winsize *winp) {
+int openpty(int* ptm, int* pts, char *name, const struct termios* termios,
+	const struct winsize* winsize) {
 
-	*amaster = open("/dev/ptmx", O_RDWR | O_NOCTTY);
-	if(*amaster < 0) {
+	*ptm = open("/dev/ptmx", O_RDWR | O_NOCTTY);
+	if(*ptm < 0) {
 		return -1;
 	}
 
-	if(ioctl(*amaster, TIOCGPTN, aslave) < 0) {
+	if(ioctl(*ptm, TIOCGPTN, pts) < 0) {
 		return -1;
 	}
 
-	// FIXME handle termp and winp
+	if(termios) {
+		if(ioctl(*pts, TCSETS, termios) < 0) {
+			return -1;
+		}
+	}
+
+	if(winsize) {
+		if(ioctl(*pts, TIOCSWINSZ, winsize) < 0) {
+			return -1;
+		}
+	}
+
+	if(name) {
+		sprintf("/dev/pts%u", *pts);
+	}
+
 	return 0;
+}
+
+pid_t forkpty(int* ptm, char* name, const struct termios* termios,
+	const struct winsize* winsize) {
+
+	int pts;
+	if(openpty(ptm, &pts, name, termios, winsize) < 0) {
+		return -1;
+	}
+
+	int pid = fork();
+	if(pid < 0) {
+		return -1;
+	}
+
+	if(pid) {
+		close(pts);
+		return pid;
+	} else {
+		// Map stdin/out to pts
+		close(1);
+		close(2);
+		close(0);
+		dup2(pts, 1);
+		dup2(pts, 2);
+		dup2(pts, 0);
+		return 0;
+	}
 }

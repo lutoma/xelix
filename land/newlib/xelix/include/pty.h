@@ -1,4 +1,4 @@
-/* Copyright © 2019 Lukas Martini
+/* Copyright © 2019-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -26,9 +26,11 @@ extern "C" {
 
 #define TIOCGPTN 0x4016
 
-int openpty(int *amaster, int *aslave, char *name,
-                   const struct termios *termp,
-                   const struct winsize *winp);
+int openpty(int* ptm, int* pts, char *name, const struct termios* termios,
+	const struct winsize* winsize);
+
+pid_t forkpty(int* ptm, char* name, const struct termios* termios,
+	const struct winsize* winsize);
 
 #ifdef __cplusplus
 }       /* C++ */
