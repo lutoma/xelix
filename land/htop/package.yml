@@ -1,0 +1,23 @@
+name: htop
+version: 3.0.0beta5
+sources:
+  - url: https://github.com/hishamhm/htop/archive/3.0.0beta5.tar.gz
+patch_skip_path: 0
+patches:
+  - htop.patch
+configure:
+  - cp -r $PKGDIR/xelix .
+  - ./autogen.sh
+  - 'echo -e "#!/bin/sh\necho i786-pc-xelix" > config.sub'
+  - CFLAGS="$CFLAGS -I$DESTDIR/usr/include"
+    ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --program-transform-name=
+    --disable-unicode
+    --disable-linux_affinity
+make:
+  - make
+install:
+  - make DESTDIR=$DESTDIR install

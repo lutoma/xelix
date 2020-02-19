@@ -1,0 +1,81 @@
+y--- configure.ac	2018-08-25 03:55:24.000000000 +0200
++++ configure.ac	2020-02-19 01:55:29.660935649 +0100
+@@ -46,6 +46,9 @@ darwin*)
+ solaris*)
+    my_htop_platform=solaris
+    ;;
++xelix*)
++   my_htop_platform=xelix
++   ;;
+ *)
+    my_htop_platform=unsupported
+    ;;
+@@ -368,6 +371,7 @@ AM_CONDITIONAL([HTOP_DRAGONFLYBSD], [tes
+ AM_CONDITIONAL([HTOP_OPENBSD], [test "$my_htop_platform" = openbsd])
+ AM_CONDITIONAL([HTOP_DARWIN], [test "$my_htop_platform" = darwin])
+ AM_CONDITIONAL([HTOP_SOLARIS], [test "$my_htop_platform" = solaris])
++AM_CONDITIONAL([HTOP_XELIX], [test "$my_htop_platform" = xelix])
+ AM_CONDITIONAL([HTOP_UNSUPPORTED], [test "$my_htop_platform" = unsupported])
+ AC_SUBST(my_htop_platform)
+ AC_CONFIG_FILES([Makefile htop.1])
+--- Makefile.am	2018-08-25 03:55:24.000000000 +0200
++++ Makefile.am	2019-05-24 22:43:46.996106639 +0200
+@@ -160,6 +160,27 @@ solaris/SolarisCRT.c solaris/Battery.c
+ myhtopplatheaders = $(solaris_platform_headers)
+ endif
+
++# Xelix
++# -----------
++
++xelix_platform_headers = \
++	xelix/Platform.h \
++	xelix/XelixProcess.h \
++	xelix/XelixProcessList.h \
++	xelix/XelixCRT.h \
++	xelix/Battery.h
++
++all_platform_headers += $(xelix_platform_headers)
++
++if HTOP_XELIX
++myhtopplatsources = xelix/Platform.c \
++xelix/XelixProcess.c xelix/XelixProcessList.c \
++xelix/XelixCRT.c xelix/Battery.c
++
++myhtopplatheaders = $(xelix_platform_headers)
++endif
++
++
+ # Unsupported
+ # -----------
+
+--- Process.c	2018-08-25 03:55:24.000000000 +0200
++++ Process.c	2020-02-19 02:11:38.587228530 +0100
+@@ -535,6 +535,9 @@ void Process_toggleTag(Process* this) {
+ }
+
+ bool Process_setPriority(Process* this, int priority) {
++#ifdef __xelix__
++   return false;
++#else
+    CRT_dropPrivileges();
+    int old_prio = getpriority(PRIO_PROCESS, this->pid);
+    int err = setpriority(PRIO_PROCESS, this->pid, priority);
+@@ -543,6 +546,7 @@ bool Process_setPriority(Process* this,
+       this->nice = priority;
+    }
+    return (err == 0);
++#endif
+ }
+
+ bool Process_changePriorityBy(Process* this, int delta) {
+--- htop.c    2018-08-25 03:55:24.000000000 +0200
++++ htop.c    2019-05-25 03:21:25.096124145 +0200
+@@ -234,7 +234,7 @@ int main(int argc, char** argv) {
+    ScreenManager_add(scr, (Panel*) panel, -1);
+
+    ProcessList_scan(pl);
+-   millisleep(75);
++   //millisleep(75);
+    ProcessList_scan(pl);
+
+    ScreenManager_run(scr, NULL, NULL, NULL);
