@@ -1,0 +1,11 @@
+--- /tmp/config.sub	2020-02-20 19:27:04.210636154 +0100
++++ config.sub	2020-02-20 19:27:09.993967526 +0100
+@@ -1360,7 +1360,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd*)
++	     | midnightbsd* | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)

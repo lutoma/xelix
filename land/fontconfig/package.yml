@@ -1,0 +1,21 @@
+name: fontconfig
+version: '2.13.92'
+sources:
+  - url: https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.xz
+dependencies:
+  - libexpat
+  - freetype
+patch_skip_path: 0
+patches:
+  - fontconfig.patch
+configure:
+  - FREETYPE_LIBS="-lfreetype -lpng -lz -lm" ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --localstatedir=/var
+make:
+  - make
+install:
+  - make DESTDIR=$DESTDIR install
+  - rm $DESTDIR/usr/lib/libfontconfig.la
