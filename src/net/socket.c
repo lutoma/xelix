@@ -105,6 +105,7 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 		spinlock_release(&net_pico_lock);
 		sock->can_write = true;
 	}
+	int_enable();
 }
 
 // Only does recv() functionality for now
@@ -389,9 +390,11 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 		return -1;
 	}
 
+	int_enable();
 	while(!sock->conn_requests) {
 		asm("hlt\n");
 	}
+	int_disable();
 
 	if(!spinlock_get(&net_pico_lock, 200)) {
 		sc_errno = EAGAIN;

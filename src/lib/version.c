@@ -25,7 +25,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	size_t rsize = 0;
-	sysfs_printf("Xelix 0.0.1 \"PREEMPT " __DATE__ " " __TIME__ "\" i786\n");
+	sysfs_printf("Xelix 0.3.0 \"" __DATE__ " " __TIME__ "\" i786\n");
 	return rsize;
 }
 

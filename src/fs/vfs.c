@@ -659,12 +659,14 @@ int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 	int_enable();
 	while(1) {
 		for(uint32_t i = 0; i < nfds; i++) {
+			int_disable();
 			int r = contexts[i]->fp->callbacks.poll(contexts[i], fds[i].events);
 			if(r > 0) {
 				fds[i].revents = r;
 				ret = 1;
 				goto bye;
 			}
+			int_enable();
 		}
 
 		if(timeout_end && timer_get_tick() > timeout_end) {
@@ -674,6 +676,7 @@ int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 	}
 
 bye:
+	int_disable();
 	for(int i = 0; i < nfds; i++) {
 		vfs_free_context(contexts[i]);
 	}

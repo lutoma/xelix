@@ -38,6 +38,14 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	dump_isf(LOG_DEBUG, state);
 	#endif
 
+	int_disable();
+	#ifdef ENABLE_PICOTCP
+	if(intr == IRQ(0)) {
+		net_tick();
+	}
+	#endif
+
+
 	for(int i = 0; i < 10; i++) {
 		if(!reg[i].handler) {
 			break;
@@ -45,18 +53,10 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 
 		if(reg[i].can_reent) {
 			int_enable();
-		} else {
-			int_disable();
 		}
 
 		reg[i].handler((task_t*)task, state, intr);
 	}
-
-	#ifdef ENABLE_PICOTCP
-	if(intr == IRQ(0)) {
-		net_tick();
-	}
-	#endif
 
 	// Run scheduler every 100th tick, or when task yields
 	if(intr == IRQ(0) || (task && task->interrupt_yield)) {

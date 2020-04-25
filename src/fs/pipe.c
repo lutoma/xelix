@@ -62,9 +62,11 @@ static int pipe_poll(struct vfs_callback_ctx* ctx, int events) {
 		return -1;
 	}
 
+	int_enable();
 	if(events & POLLIN && buffer_size(pipe->buf)) {
 		return POLLIN;
 	}
+	int_disable();
 	return 0;
 }
 
