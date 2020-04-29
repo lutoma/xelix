@@ -1,5 +1,5 @@
 name: nano
-version: 4.2
+version: '4.2'
 sources:
   - url: https://www.nano-editor.org/dist/v4/nano-4.2.tar.xz
 dependencies:
@@ -7,7 +7,7 @@ dependencies:
 patches:
   - nano-4.2.patch
 configure:
-  - ./configure
+  - CFLAGS="$CFLAGS -I$DESTDIR/usr/include" ./configure
     --host=i786-pc-xelix
     --prefix=/usr
     --sysconfdir=/etc
@@ -15,7 +15,6 @@ configure:
     --disable-threads
     --disable-speller
     --disable-mouse
-    --disable-utf8
 make:
   - make
 install:

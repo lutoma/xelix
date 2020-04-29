@@ -21,6 +21,8 @@ configure:
     --prefix=/usr
     --exec-prefix=/usr
     --sysconfdir=/etc
+    --enable-newlib-mb
+    --enable-newlib-iconv
 make:
   - make
 install:

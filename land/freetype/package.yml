@@ -16,4 +16,4 @@ make:
   - make
 install:
   - make DESTDIR=$DESTDIR install
-  -   - rm $DESTDIR/usr/lib/libfreetype.la
+  - rm $DESTDIR/usr/lib/libfreetype.la
