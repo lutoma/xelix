@@ -20,6 +20,8 @@
 #include <tty/tty.h>
 #include <tty/fbtext.h>
 #include <tty/keyboard.h>
+#include <tty/mouse.h>
+#include <tty/gfxbus.h>
 #include <tty/ecma48.h>
 #include <tty/input.h>
 #include <tty/pty.h>
