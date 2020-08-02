@@ -30,8 +30,8 @@ header_start:
 	dw 5	; type
 	dw 1	; flags - optional tag
 	dd 24	; size
-	dd 1024	; width
-	dd 768	; height
+	dd 1920	; width
+	dd 1080	; height
 	dd 32	; depth
 	dd 0	; alignment filler
 
