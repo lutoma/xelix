@@ -31,7 +31,7 @@
 #define flush() { while(inb(0x64) & 1) { inb(0x60); }}
 #define send(c) { while((inb(0x64) & 0x2)); outb(0x60, (c)); }
 
-struct buffer* buf = NULL;
+static struct buffer* buf = NULL;
 
 /* Convert tty_input_state/keycodes to ASCII character. Also converts a number of
  * single-byte escape sequences that are used in both canonical and non-canonical
@@ -77,14 +77,15 @@ static void handle_noncanon(struct tty_input_state* input) {
 		case 0x4b: inputlen=3; inputseq = "\e[D"; break;   // Left arrow
 		case 0x4f: inputlen=3; inputseq = "\e[F"; break;   // End
 		case 0x47: inputlen=3; inputseq = "\e[H"; break;   // Home
-		case 0x49: inputlen=3; inputseq = "\e[5"; break;   // Page up
-		case 0x51: inputlen=3; inputseq = "\e[6"; break;   // Page down
+		case 0xd2: inputlen=3; inputseq = "\e[L"; break; // Insert
+		case 0x49: inputlen=4; inputseq = "\e[5~"; break;   // Page up
+		case 0x51: inputlen=4; inputseq = "\e[6~"; break;   // Page down
 		case 0x52: inputlen=4; inputseq = "\e[2~"; break;  // Insert
 		case 0x53: inputlen=4; inputseq = "\e[3~"; break;  // Del
-		case 0xbb: inputlen=3; inputseq = "\217[P"; break; // F1
-		case 0xbc: inputlen=3; inputseq = "\217[Q"; break; // F2
-		case 0xbd: inputlen=3; inputseq = "\217[R"; break; // F3
-		case 0xbe: inputlen=3; inputseq = "\217[S"; break; // F4
+		case 0xbb: inputlen=5; inputseq = "\e[11~"; break; // F1
+		case 0xbc: inputlen=5; inputseq = "\e[12~"; break; // F2
+		case 0xbd: inputlen=5; inputseq = "\e[13~"; break; // F3
+		case 0xbe: inputlen=5; inputseq = "\e[14~"; break; // F4
 		case 0xbf: inputlen=5; inputseq = "\e[15~"; break; // F5
 		case 0xc0: inputlen=5; inputseq = "\e[17~"; break; // F6
 		case 0xc1: inputlen=5; inputseq = "\e[18~"; break; // F7
