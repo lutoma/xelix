@@ -32,7 +32,11 @@ binutils-download:
 
 binutils-patch:
 	patch -p0 -ddownload/binutils-${BINUTILS_VERSION}/ < ../land/binutils/binutils-${BINUTILS_VERSION}.patch
-	cp ../land/binutils/xelix_i386.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
+	find download/binutils-${BINUTILS_VERSION} -name "config.cache" -delete
+	cp ../land/binutils/elf_i386_xelix.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
+	cd download/binutils-${BINUTILS_VERSION}/ld && aclocal
+	cd download/binutils-${BINUTILS_VERSION}/ld && automake
+	cd download/binutils-${BINUTILS_VERSION} && autoreconf
 
 binutils-make:
 	mkdir -p build/binutils
