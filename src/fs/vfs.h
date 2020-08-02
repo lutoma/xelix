@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2010-2019 Lukas Martini
+/* Copyright © 2010-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *

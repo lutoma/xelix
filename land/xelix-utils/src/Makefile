@@ -2,9 +2,9 @@ PATH += :../../toolchain/local/bin/
 CC := i786-pc-xelix-gcc
 LD := i786-pc-xelix-ld
 CFLAGS += -std=gnu18 -O3 -g -D_GNU_SOURCE
-DESTDIR ?= ../../mnt
+DESTDIR ?= ../../../mnt
 
-TARGETS=basictest init ps uptime free login dmesg su play strace host telnetd mount umount gfxterm
+TARGETS=basictest init ps uptime free login dmesg su play strace host telnetd mount umount gfxterm png
 
 .PHONY: all
 all: $(TARGETS)
@@ -21,6 +21,9 @@ play: play.c
 
 gfxterm: gfxterm.c tmt.c tmt.h
 	$(CC) $(CFLAGS) -o $@ tmt.c gfxterm.c -I$(DESTDIR)/usr/include -I$(DESTDIR)/usr/include/freetype2 -lfreetype -lpng -lz -lm
+
+png: png.c
+	$(CC) $(CFLAGS) -o $@ png.c -lpng -lz -lm
 
 libutil.a: util.c argparse.c
 	$(CC) $(CFLAGS) -c -o util.o util.c

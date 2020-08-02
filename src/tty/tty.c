@@ -47,6 +47,7 @@ uint8_t default_c_cc[NCCS] = {
 };
 
 struct terminal* tty_from_path(const char* path, task_t* task, int* is_link) {
+	#if 0
 	if(!strcmp(path, "/console")) {
 		return &ttys[0];
 	}
@@ -72,6 +73,8 @@ struct terminal* tty_from_path(const char* path, task_t* task, int* is_link) {
 	}
 
 	return &ttys[n];
+	#endif
+	return NULL;
 }
 
 void tty_switch(int n) {
@@ -80,6 +83,7 @@ void tty_switch(int n) {
 		active_tty = new_tty;
 }
 
+#if 0
 static inline void handle_nonprintable(struct terminal* term, char chr) {
 	if(chr == term->termios.c_cc[VEOL]) {
 		term->cur_row++;
@@ -108,8 +112,10 @@ static inline void handle_nonprintable(struct terminal* term, char chr) {
 		_tty_write(NULL, "^C\n", 3);
 	}
 }
+#endif
 
 size_t _tty_write(struct terminal* term, char* source, size_t size) {
+	#if 0
 	if(!term || !term->drv) {
 		return 0;
 	}
@@ -145,9 +151,11 @@ size_t _tty_write(struct terminal* term, char* source, size_t size) {
 	}
 
 	term->drv->set_cursor(term, term->cur_col, term->cur_row, remove_cursor);
+	#endif
 	return size;
 }
 
+#if 0
 static size_t tty_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	return _tty_write(ctx->task ? ctx->task->ctty : &ttys[0], (char*)source, size);
 }
@@ -249,14 +257,16 @@ static vfs_file_t* tty_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	fp->type = is_link ? FT_IFLNK : FT_IFCHR;
 	memcpy(&fp->callbacks, &tty_cb, sizeof(struct vfs_callbacks));
 
-	if(!is_link && ctx->task && !(flags & O_NOCTTY)) {
+	/*if(!is_link && ctx->task && !(flags & O_NOCTTY)) {
 		ctx->task->ctty = term;
-	}
+	}*/
 	return fp;
 }
+#endif
 
 void tty_init() {
-	for(int i = 0; i < 10; i++) {
+	#if 0
+	for(int i = 0; i < 1; i++) {
 		struct terminal* tty = &ttys[i];
 		tty->num = i;
 		tty->fg_color = FG_COLOR_DEFAULT;
@@ -287,11 +297,8 @@ void tty_init() {
 
 	log(LOG_INFO, "tty: Can render %d columns, %d rows\n", fbtext_drv->cols, fbtext_drv->rows);
 	sysfs_add_dev("console", &tty_cb);
-	sysfs_add_dev("tty", &tty_cb);
-	sysfs_add_dev("tty0", &tty_cb);
 	sysfs_add_dev("stdin", &tty_cb);
 	sysfs_add_dev("stdout", &tty_cb);
 	sysfs_add_dev("stderr", &tty_cb);
-
-	pty_init();
+	#endif
 }

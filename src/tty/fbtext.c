@@ -239,7 +239,7 @@ static void rerender(struct terminal* tty_old, struct terminal* tty_new) {
 	memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, tty_new->drv_buf, tty_new->drv->buf_size);
 }
 
-static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
+static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	size_t size = fb_desc->common.framebuffer_width
 		* fb_desc->common.framebuffer_height
 		* fb_desc->common.framebuffer_bpp;

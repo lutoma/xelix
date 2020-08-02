@@ -68,5 +68,5 @@ void serial_init2() {
 		.write = sfs_write,
 	};
 
-	sysfs_add_dev("ttyS0", &sfs_cb);
+	sysfs_add_dev("serial1", &sfs_cb);
 }

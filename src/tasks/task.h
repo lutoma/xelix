@@ -22,6 +22,7 @@
 #include <fs/vfs.h>
 #include <mem/vmem.h>
 #include <tasks/signal.h>
+#include <tty/term.h>
 
 struct elf_load_ctx {
 	void* virt_end;
@@ -57,12 +58,11 @@ typedef struct task {
 	void* stack;
 	size_t stack_size;
 
-	// Controlling terminal
-	struct terminal* ctty;
-
 	// Kernel stack used for interrupts. This will be loaded into the TSS.
 	void* kernel_stack;
 
+	// Controlling terminal
+	struct term* ctty;
 
 	// Current task state
 	enum {

@@ -1,9 +1,9 @@
 # Compiling
 ## Toolchain
 
-To compile Xelix, you first need the Xelix toolchain. It consists of binutils,
-a GCC cross-compiler and the newlib C standard library, all with configuration
-and patches to support the i786-pc-xelix target.
+To compile Xelix, you first need the Xelix toolchain. It consists of binutils, a GCC cross-compiler and the newlib C standard library, all with configuration and patches to support the i786-pc-xelix target.
+
+Please check [Prerequisites for GCC](https://gcc.gnu.org/install/prerequisites.html) for GCC build dependencies. You will also need autoconf/automake. On Debian-based systems, you can install the dependencies using `àpt install build-essential autoconf automake`.
 
 You can build the toolchain using
 
@@ -22,8 +22,7 @@ Once it is done, you should find Xelix-specific binaries of GCC, g++, ld, etc. i
 
 ## Compiling
 
-In addition to the toolchain, the [NASM](https://www.nasm.us/) assembler
-also needs to be installed.
+In addition to the toolchain, the [NASM](https://www.nasm.us/) assembler is also required. Since no Xelix-specific patches are needed, you can just use the one from your distribution's package sources (Arch Linux: `pacman -S nasm`, Debian/Ubuntun: `Apt install nasm`).
 
 Once you have that in place, you can compile Xelix using:
 

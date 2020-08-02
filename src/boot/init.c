@@ -29,7 +29,7 @@
 #include <bsp/timer.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
-#include <tty/tty.h>
+#include <tty/term.h>
 #include <bsp/i386-pci.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
@@ -46,7 +46,7 @@
 void (*boot_sequence[])(void) = {
 #ifdef __i386__
 	serial_init, gdt_init, int_init, timer_init, multiboot_init,
-	mem_init, cmdline_init, tty_init, time_init, pci_init, block_init,
+	mem_init, cmdline_init, term_init, time_init, pci_init, block_init,
 	vfs_init, timer_init2,
 #endif
 };
@@ -84,6 +84,11 @@ void xelix_main(void) {
 		panic("Could not start init (Tried %s).\n", init_path);
 	}
 	scheduler_add(init);
-	vfs_open(init, "/dev/tty1", 0);
+
+	// FIXME
+	struct term* init_term = zmalloc(sizeof(struct term));
+	strcpy(init_term->path, "/dev/console");
+	init->ctty = init_term;
+	//vfs_open(init, "/dev/tty1", 0);
 	scheduler_init();
 }

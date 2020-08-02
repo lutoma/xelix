@@ -156,7 +156,14 @@ int kill (pid_t, int);
 
 #if __BSD_VISIBLE || __XSI_VISIBLE >= 4
 int killpg (pid_t, int);
+
+/* Legacy functions */
+int sigblock(int mask);
+int siggetmask(void);
+int sigsetmask(int mask);
+int sigmask(int signum);
 #endif
+
 #if __POSIX_VISIBLE
 int sigaction (int, const struct sigaction *, struct sigaction *);
 int sigaddset (sigset_t *, const int);

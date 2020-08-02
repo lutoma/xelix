@@ -23,8 +23,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <printf.h>
-
+/*
 int tty_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
+	// FIXME translate arg* pointer from userspace ctx
 	struct terminal* term = tty_from_path(ctx->path, ctx->task, NULL);
 	if(!term) {
 		sc_errno = EINVAL;
@@ -52,3 +53,4 @@ int tty_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
 	}
 }
 
+*/

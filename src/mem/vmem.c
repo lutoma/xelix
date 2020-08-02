@@ -79,6 +79,29 @@ struct vmem_range* vmem_get_range(struct vmem_context* ctx, void* addr, bool phy
 	return NULL;
 }
 
+#if 0
+int vmem_page_fault_cb(task_t* task, void* addr) {
+	struct vmem_range* range = vmem_get_range(task->vmem_ctx, addr, false);
+	if(!range || !(range->flags & (VM_COW | VM_AOW))) {
+		serial_printf("%s: no range for %#x\n", task->binary_path, addr);
+		return -1;
+	}
+
+	// FIXME check if all other refs of the phys page have gone
+
+	// FIXME only map the requested page, not entire range
+	void* page = palloc(range->size / PAGE_SIZE);
+	serial_printf("%s: have range %#x -> %#x size %#x, new location %#x\n",
+		task->binary_path, range->virt_addr, range->phys_addr, range->size, page);
+
+	memcpy(page, range->phys_addr, range->size);
+	range->phys_addr = page;
+	range->flags = range->cow_flags;
+	paging_set_range(task->vmem_ctx->hwdata, range);
+	return 0;
+}
+#endif
+
 void vmem_rm_context(struct vmem_context* ctx) {
 	paging_rm_context(ctx->hwdata);
 

@@ -174,9 +174,8 @@ const struct syscall_definition syscall_table[] = {
 #endif
 
 	// 26
-	/* FIXME Size incorrect */
 	{"ioctl", (syscall_cb)vfs_ioctl, 0,
-		SCA_INT, SCA_INT, SCA_POINTER | SCA_NULLOK, 0x1},
+		SCA_INT, SCA_INT, SCA_INT, 0x1},
 
 	// 27
 	{"", NULL, 0,

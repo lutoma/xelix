@@ -29,6 +29,7 @@
 #define FG_COLOR_DEFAULT 9
 #define BG_COLOR_DEFAULT 9
 
+struct terminal;
 struct tty_driver {
 	uint32_t cols;
 	uint32_t rows;

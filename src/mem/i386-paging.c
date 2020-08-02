@@ -52,6 +52,7 @@ void paging_set_range(struct paging_context* ctx, struct vmem_range* range) {
 		page->rw = range->flags & VM_RW;
 		page->user = range->flags & VM_USER;
 		page->frame = phys_addr >> 12;
+		asm volatile("invlpg (%0)":: "r" (virt_addr));
 	}
 }
 

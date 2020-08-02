@@ -33,6 +33,8 @@
  */
 
 struct pty {
+	struct term term;
+
 	uint32_t num;
 	int ptm_fd;
 	int pts_fd;
@@ -42,6 +44,7 @@ struct pty {
 	struct buffer* pts_buf;
 
 	struct termios termios;
+	struct winsize winsize;
 	int read_done;
 };
 
@@ -49,7 +52,7 @@ static uint8_t default_c_cc[NCCS] = {
 	0,
 	4, // VEOF
 	'\n', // VEOL
-	'\b', // VERASE
+	0177, // VERASE
 	3, // VINTR
 	21, // VKILL
 	0,  // VMIN
@@ -138,19 +141,34 @@ static void handle_canon(struct pty* pty, char chr) {
 	}
 }
 
+static inline size_t write_ptm_buf(struct pty* pty, const char* source, size_t size) {
+	if(pty->termios.c_oflag & ONLCR) {
+		size_t i = 0;
+		for(; i < size; i++, source++) {
+			if(*source == '\n') {
+				if(buffer_write(pty->ptm_buf, "\r\n", 2) != 2) {
+					break;
+				}
+			} else {
+				if(!buffer_write(pty->ptm_buf, source, 1)) {
+					break;
+				}
+			}
+		}
+
+		return i;
+	} else {
+		return buffer_write(pty->ptm_buf, source, size);
+	}
+}
+
 static size_t ptm_write(struct vfs_callback_ctx* ctx, void* _source, size_t size) {
 	char* source = (char*)_source;
 	struct pty* pty = (struct pty*)ctx->fp->mount_instance;
 
 	// Loop back input if ECHO is enabled
 	if(pty->termios.c_lflag & ECHO) {
-		for(size_t i = 0; i < size; i++) {
-			if(source[i] == '\n') {
-				buffer_write(pty->ptm_buf, "\r\n", 2);
-			} else {
-				buffer_write(pty->ptm_buf, &source[i], 1);
-			}
-		}
+		write_ptm_buf(pty, source, size);
 	}
 
 	if(pty->termios.c_lflag & ICANON) {
@@ -164,62 +182,82 @@ static size_t ptm_write(struct vfs_callback_ctx* ctx, void* _source, size_t size
 	return size;
 }
 
-static size_t pts_write(struct vfs_callback_ctx* ctx, void* _source, size_t size) {
-	char* source = (char*)_source;
-	struct pty* pty = (struct pty*)ctx->fp->mount_instance;
-
-	size_t i = 0;
-	for(; i < size; i++, source++) {
-		if(*source == '\n') {
-			if(buffer_write(pty->ptm_buf, "\r\n", 2) != 2) {
-				break;
-			}
-		} else {
-			if(!buffer_write(pty->ptm_buf, source, 1)) {
-				break;
-			}
-		}
-	}
-
-	return i;
+static size_t pts_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
+	return write_ptm_buf((struct pty*)ctx->fp->mount_instance, (char*)source, size);
 }
 
 static int poll_cb(struct vfs_callback_ctx* ctx, int events) {
 	struct pty* pty = (struct pty*)ctx->fp->mount_instance;
 	struct buffer* buf = ctx->fp->num == pty->ptm_fd ? pty->ptm_buf : pty->pts_buf;
 
+//	int r = events & POLLOUT;
+	int r = 0;
 	if(events & POLLIN && buffer_size(buf)) {
-		return POLLIN;
+		r |= POLLIN;
 	}
 
-	return 0;
+	return r;
 }
 
-int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* arg) {
+int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	struct pty* pty = (struct pty*)ctx->fp->mount_instance;
+	size_t arg_size = 0;
+
+	/* Because arg can be a buffer of varying width, we can't use the automatic
+	 * syscall pointer mapping code. So do that manually here.
+	 */
+	switch(request) {
+		case TIOCGPTN:
+			arg_size = sizeof(int);
+			break;
+		case TIOCGWINSZ:
+		case TIOCSWINSZ:
+			arg_size = sizeof(struct winsize);
+			break;
+		case TCGETS:
+		case TCSETS:
+		case TCSETSW:
+			arg_size = sizeof(struct termios);
+			break;
+		default:
+			sc_errno = ENOSYS;
+			return -1;
+	}
+
+	bool copied;
+	void* arg = task_memmap(ctx->task, _arg, arg_size, &copied);
+	if(!arg) {
+		sc_errno = EFAULT;
+		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		return -1;
+	}
 
 	switch(request) {
 		case TIOCGPTN:
 			*(int*)arg = pty->pts_fd;
-			return 0;
-		case TIOCGWINSZ:;
-			struct winsize* ws = (struct winsize*)arg;
-			// FIXME
-			ws->ws_row = 50;
-			ws->ws_col = 128;
-			ws->ws_xpixel = 0;
-			ws->ws_ypixel = 0;
-			return 0;
+			break;
 		case TCGETS:
 			memcpy(arg, &pty->termios, sizeof(struct termios));
-			return 0;
+			break;
 		case TCSETS:
-		case TCSETSW:;
+		case TCSETSW:
 			memcpy(&pty->termios, arg, sizeof(struct termios));
-			return 0;
-		default:
-			sc_errno = ENOSYS;
-			return -1;
+			// Allow only supported flags - can't chance c_cflag
+			pty->termios.c_iflag &= ICRNL | BRKINT | IGNBRK | IEXTEN;
+			pty->termios.c_oflag &= OPOST | ONLCR;
+			pty->termios.c_lflag &= ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK;
+			break;
+		case TIOCGWINSZ:
+			memcpy(arg, &pty->winsize, sizeof(struct winsize));
+			break;
+		case TIOCSWINSZ:
+			memcpy(&pty->winsize, arg, sizeof(struct winsize));
+			break;
+	}
+
+	if(copied) {
+		task_memcpy(ctx->task, _arg, arg, arg_size, true);
+		kfree(arg);
 	}
 
 	return 0;
@@ -290,8 +328,24 @@ static vfs_file_t* ptmx_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	fd2->flags = flags;
 
 	struct pty* pty = zmalloc(sizeof(struct pty));
-	pty->num = __sync_add_and_fetch(&max_pty, 1);;
-	pty->termios.c_lflag = ECHO | ICANON | ISIG;
+	pty->num = __sync_add_and_fetch(&max_pty, 1);
+	memcpy(&pty->term.vfs_cb, &pts_cb, sizeof(struct vfs_callbacks));
+	snprintf(pty->term.path, 30, "/dev/pts%d", pty->num + 1);
+	snprintf(fd1->path, 30, "/dev/ptm%d", pty->num + 1);
+	snprintf(fd2->path, 30, "/dev/pts%d", pty->num + 1);
+
+	/* Linux defaults:
+	#define TTYDEF_IFLAG    (BRKINT | ISTRIP | ICRNL | IMAXBEL | IXON | IXANY)
+	#define TTYDEF_OFLAG    (OPOST | ONLCR | XTABS)
+	#define TTYDEF_LFLAG    (ECHO | ICANON | ISIG | IEXTEN | ECHOE | ECHOKE | ECHOCTL)
+	#define TTYDEF_CFLAG    (CREAD | CS7 | PARENB | HUPCL)
+	#define TTYDEF_SPEED    (B9600)
+	*/
+
+	pty->termios.c_iflag = ICRNL;
+	pty->termios.c_oflag = OPOST | ONLCR;
+	pty->termios.c_cflag = CREAD | B38400;
+	pty->termios.c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK;
 
 	pty->ptm_buf = buffer_new(150);
 	pty->ptm_fd = fd1->num;

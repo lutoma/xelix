@@ -377,6 +377,11 @@ int vfs_dup2(task_t* task, int fd1, int fd2) {
 		return -1;
 	}
 
+	// FIXME
+	if(fd2 <= 2 && !strncmp(fp1->path, "/dev/pts", 8)) {
+		task->ctty = fp1->mount_instance;
+	}
+
 	vfs_file_t* fp2 = task? &task->files[fd2] : &kernel_files[fd2];
 	if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1)) {
 		// Can't use fd as dup target that is already a duplication source
@@ -388,7 +393,7 @@ int vfs_dup2(task_t* task, int fd1, int fd2) {
 		// Attempt to close and try again
 		vfs_close(task, fd2);
 
-		// stdout, stderr & stdin cannot properly be closed rn, ignore them here
+		// FIXME stdout, stderr & stdin cannot properly be closed rn, ignore them here
 		if(!__sync_bool_compare_and_swap(&fp2->refs, 0, 1) && fd2 > 2) {
 			sc_errno = EIO;
 			return -1;
