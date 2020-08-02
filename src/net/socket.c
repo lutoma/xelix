@@ -32,8 +32,14 @@
 #include <spinlock.h>
 
 #ifdef ENABLE_PICOTCP
-
 #define READ_BUFFER_SIZE 0x5000
+//#define SOCKET_DEBUG // FIXME Move to Kconfig
+
+#ifdef SOCKET_DEBUG
+ #define debug(args...) log(LOG_DEBUG, "socket: " args)
+#else
+ #define debug(args...)
+#endif
 
 struct socket {
 	struct pico_socket* pico_socket;
@@ -55,12 +61,12 @@ struct socket {
 
 static inline struct socket* get_socket(task_t* task, int sockfd) {
 	vfs_file_t* fp = vfs_get_from_id(sockfd, task);
-	if(!fp) {
+	if(unlikely(!fp)) {
 		sc_errno = EBADF;
 		return NULL;
 	}
 
-	if(fp->type != FT_IFSOCK) {
+	if(unlikely(fp->type != FT_IFSOCK)) {
 		sc_errno = ENOTSOCK;
 		return NULL;
 	}
@@ -69,30 +75,40 @@ static inline struct socket* get_socket(task_t* task, int sockfd) {
 }
 
 static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
+	int_disable();
+
 	struct socket* sock = (struct socket*)pico_sock->priv;
-	if(!sock) {
+	if(unlikely(!sock)) {
+		//log(LOG_WARN, "net: socket_cb called without socket\n");
 		return;
 	}
 
 	if(ev & PICO_SOCK_EV_CONN) {
 		if(sock->state == SOCK_LISTEN) {
+			debug("New client connection\n");
 			sock->conn_requests++;
 		} else {
+			debug("Connection established\n");
 			sock->state = SOCK_CONNECTED;
 		}
 	}
 
 	if(ev & PICO_SOCK_EV_ERR) {
+		debug("PICO_SOCK_EV_ERR, connection reset\n");
 		sock->state = SOCK_RESET_BY_PEER;
 	}
 
 	if(ev & PICO_SOCK_EV_FIN || ev & PICO_SOCK_EV_CLOSE) {
+		debug("Connection closed\n");
 		sock->state = SOCK_CLOSED;
 	}
 
 	sock->can_write = (ev & PICO_SOCK_EV_WR);
 
 	if((ev & PICO_SOCK_EV_RD) && spinlock_get(&net_pico_lock, 200)) {
+			debug("cb sock %#x pico %#x\n", pico_sock->priv, pico_sock);
+
+		debug("Socket read\n");
 		int free_bytes = READ_BUFFER_SIZE - sock->read_buffer_length;
 
 		if(free_bytes) {
@@ -104,6 +120,7 @@ static void socket_cb(uint16_t ev, struct pico_socket* pico_sock) {
 
 		spinlock_release(&net_pico_lock);
 		sock->can_write = true;
+		debug("Read done, buffer size %#x\n", sock->read_buffer_length);
 	}
 	int_enable();
 }
@@ -220,16 +237,33 @@ static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t si
 	return written;
 }
 
+void* lp = 0;
+
 static int vfs_poll_cb(struct vfs_callback_ctx* ctx, int events) {
 	struct socket* sock = (struct socket*)(ctx->fp->mount_instance);
 	int ret = 0;
 
-	if((events & POLLIN && sock->conn_requests) || sock->read_buffer_length) {
+	//if(lp != sock) {
+	//	lp = sock;
+	//	debug("polling %#x pico %#x\n", sock, sock->pico_socket);
+	//}
+
+	//debug("poll %#x pico %#x\n", sock, sock->pico_socket);
+	if(!spinlock_get(&net_pico_lock, 200)) {
+		sc_errno = EAGAIN;
+		return -1;
+	}
+
+	if(events & POLLIN && (sock->conn_requests || sock->read_buffer_length)) {
+		debug("POLLIN %#x\n", sock->read_buffer_length);
 		ret |= POLLIN;
 	}
 	if(events & POLLOUT && sock->can_write) {
+		debug("POLLOUT\n");
 		ret |= POLLOUT;
 	}
+
+	spinlock_release(&net_pico_lock);
 	return ret;
 }
 
@@ -270,6 +304,7 @@ vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock, int state
 	fd->callbacks.write = vfs_write_cb;
 	fd->callbacks.poll = vfs_poll_cb;
 	fd->mount_instance = (void*)sock;
+	debug("new_socket_fd, set up %#x pico %#x\n", pico_sock->priv, pico_sock);
 	return fd;
 }
 
@@ -412,11 +447,13 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	pico_socket_setoption(pico_sock, PICO_TCP_NODELAY, &yes);
 
 	if(!pico_sock) {
+		debug("accept done, but no pico sock\n");
 		sc_errno = pico_err;
 		return -1;
 	}
 
 	vfs_file_t* new_fd = new_socket_fd(task, pico_sock, SOCK_CONNECTED);
+	debug("accept %#x, pico %#x\n", pico_sock->priv, pico_sock);
 	sock->conn_requests--;
 
 	if(copied) {
