@@ -13,7 +13,7 @@
 static cairo_surface_t* main_surface;
 static cairo_surface_t* bg_surface;
 static cairo_t* cr;
-
+static bool initial_render_done = false;
 
 void render() {
 	cairo_set_source_surface(cr, bg_surface, 0, 0);
@@ -35,7 +35,13 @@ void render() {
 
 	mouse_render_cursor(cr);
 	cairo_surface_flush(main_surface);
-	memcpy(fb.addr, fb.buf, fb.width * fb.pitch);
+	memcpy(fb.gfx_handle.addr, fb.buf, fb.gfx_handle.width * fb.gfx_handle.pitch);
+
+	if(!initial_render_done) {
+		// Display gfx handle
+		ioctl(fb.fd, 0x2f02, fb.gfx_handle.id);
+		initial_render_done = true;
+	}
 }
 
 void render_init() {
@@ -46,28 +52,16 @@ void render_init() {
 		exit(EXIT_FAILURE);
 	}
 
-	fb.bpp = ioctl(fb.fd, 0x2f02, (uint32_t)0);
-	fb.width = ioctl(fb.fd, 0x2f05, (uint32_t)0);
-	fb.height = ioctl(fb.fd, 0x2f06, (uint32_t)0);
-	fb.pitch = ioctl(fb.fd, 0x2f07, (uint32_t)0);
-	fb.size = fb.height * fb.pitch;
-
-	// Get framebuffer address
-	fb.addr = (uint32_t*)ioctl(fb.fd, 0x2f01, (uint32_t)0);
-	if(!fb.addr || !fb.size) {
-		perror("Could not get memory mapping");
+	if(ioctl(fb.fd, 0x2f01, &fb.gfx_handle) < 0) {
+		perror("Could not get GFX handle");
 		exit(EXIT_FAILURE);
 	}
 
-	// Map framebuffer into our address space
-	ioctl(fb.fd, 0x2f03, (uint32_t)0);
 
-	fb.buf = malloc(fb.pitch * fb.width);
+	fb.buf = malloc(fb.gfx_handle.size);
 	main_surface = cairo_image_surface_create_for_data(
-		(unsigned char*)fb.buf, CAIRO_FORMAT_ARGB32, fb.width, fb.height, fb.pitch);
-
-	//main_surface = cairo_image_surface_create_for_data(
-	//	(unsigned char*)fb.addr, CAIRO_FORMAT_ARGB32, fb.width, fb.height, fb.pitch);
+		(unsigned char*)fb.buf, CAIRO_FORMAT_ARGB32, fb.gfx_handle.width,
+		fb.gfx_handle.height, fb.gfx_handle.pitch);
 
 	cr = cairo_create(main_surface);
 	bg_surface = cairo_image_surface_create_from_png("/usr/share/gfxcompd/bg.png");

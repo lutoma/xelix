@@ -18,4 +18,23 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mem/vmem.h>
+
+struct gfx_handle {
+	unsigned int id;
+	bool used;
+
+	struct vmem_context* ctx;
+	void* addr;
+	void* buf_addr;
+
+	int bpp;
+	int width;
+	int height;
+	int pitch;
+	size_t size;
+};
+
+void gfx_handle_enable(int which);
+struct gfx_handle* gfx_handle_init(struct vmem_context* ctx);
 void gfx_init();

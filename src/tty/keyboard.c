@@ -153,6 +153,15 @@ static void intr_handler(task_t* task, isf_t* isf_state, int num) {
 			state.alt_right = false; return;
 	}
 
+	// Check for ctrl-alt-f1 etc
+	if((state.control_left || state.control_right) &&
+		(state.alt_left || state.alt_right) &&
+		state.code >= 0xbb && state.code <= 0xc4) {
+
+		gfx_handle_enable(state.code - 0xbb);
+		return;
+	}
+
 	handle_noncanon(&state);
 	tty_input_cb(&state);
 }

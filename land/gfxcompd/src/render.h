@@ -1,17 +1,27 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "window.h"
 
 struct {
 	int fd;
-	uint32_t* addr;
 	uint32_t* buf;
-	uint32_t bpp;
-	size_t width;
-	size_t height;
-	size_t pitch;
-	size_t size;
+
+	struct {
+		unsigned int id;
+		bool used;
+
+		uintptr_t _kernel_int;
+		void* addr;
+		uintptr_t _kernel_int2;
+
+		int bpp;
+		int width;
+		int height;
+		int pitch;
+		size_t size;
+	} gfx_handle;
 } fb;
 
 void render();

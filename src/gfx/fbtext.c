@@ -18,6 +18,7 @@
  */
 
 #include <gfx/fbtext.h>
+#include <gfx/gfx.h>
 #include <tty/tty.h>
 #include <mem/kmalloc.h>
 #include <boot/multiboot.h>
@@ -31,8 +32,8 @@
 
 #define PIXEL_PTR(dbuf, x, y) 									\
 	((uint32_t*)((uintptr_t)(dbuf)								\
-		+ (y)*fb_desc->common.framebuffer_pitch					\
-		+ (x)*(fb_desc->common.framebuffer_bpp / 8)))
+		+ (y)*gfx_handle->pitch					\
+		+ (x)*(gfx_handle->bpp / 8)))
 
 #define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * gfx_font.width, y * gfx_font.height)
 
@@ -75,8 +76,8 @@ const uint8_t tty_fbtext_bdc_font[][16] = {
 	 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08}
 };
 
-static struct multiboot_tag_framebuffer* fb_desc;
 static struct tty_driver* drv;
+static struct gfx_handle* gfx_handle;
 
 static uint32_t convert_color(int color, bool bg) {
 	// RGB colors: Black, red, green, yellow, blue, magenta, cyan, white, default
@@ -112,7 +113,7 @@ static inline const uint8_t* get_char_bitmap(char chr, bool bdc) {
 
 static inline uintptr_t get_fb_buf(struct terminal* term) {
 	if(term == active_tty) {
-		return fb_desc->common.framebuffer_addr;
+		return gfx_handle->addr;
 	} else {
 		return (uintptr_t)term->drv_buf;
 	}
@@ -158,7 +159,7 @@ static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uin
 	// memset32 entire area for full line clears
 	if(start_x == 0 && end_x == drv->cols) {
 		size_t clear_size = lines * gfx_font.height
-			* fb_desc->common.framebuffer_pitch;
+			* gfx_handle->pitch;
 
 		memset32(CHAR_PTR(dest, start_x, start_y), color, clear_size / 4);
 		return;
@@ -167,7 +168,7 @@ static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uin
 	// Partial clear, do individual memset32 for each line
 	int chars = MAX(1, end_x - start_x);
 	size_t clear_size = chars * gfx_font.width
-		* (fb_desc->common.framebuffer_bpp / 8);
+		* (gfx_handle->bpp / 8);
 
 	for(int i = 0; i < lines * gfx_font.height; i++) {
 		void* mdest = PIXEL_PTR(dest, start_x * gfx_font.width, start_y * gfx_font.height + i);
@@ -180,12 +181,12 @@ static void scroll_line(struct terminal* term) {
 		return;
 	}
 
-	size_t size = fb_desc->common.framebuffer_width
-		* fb_desc->common.framebuffer_height
-		* (fb_desc->common.framebuffer_bpp / 8)
-		- fb_desc->common.framebuffer_pitch;
+	size_t size = gfx_handle->width
+		* gfx_handle->height
+		* (gfx_handle->bpp / 8)
+		- gfx_handle->pitch;
 
-	size_t offset = fb_desc->common.framebuffer_pitch * gfx_font.height;
+	size_t offset = gfx_handle->pitch * gfx_font.height;
 	uintptr_t dest = get_fb_buf(term);
 
 	memmove((void*)dest, (void*)(dest + offset), size);
@@ -235,70 +236,27 @@ static void rerender(struct terminal* tty_old, struct terminal* tty_new) {
 		return;
 	}
 
-	memcpy(tty_old->drv_buf, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, tty_old->drv->buf_size);
-	memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, tty_new->drv_buf, tty_new->drv->buf_size);
+	memcpy(tty_old->drv_buf, (void*)(uintptr_t)gfx_handle->addr, tty_old->drv->buf_size);
+	memcpy((void*)(uintptr_t)gfx_handle->addr, tty_new->drv_buf, tty_new->drv->buf_size);
 }
 
-static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
-	size_t size = fb_desc->common.framebuffer_width
-		* fb_desc->common.framebuffer_height
-		* fb_desc->common.framebuffer_bpp;
-
-	switch(request) {
-		case 0x2f01:
-			return fb_desc->common.framebuffer_addr;
-		case 0x2f02:
-			return fb_desc->common.framebuffer_bpp;
-		case 0x2f03:
-			drv->direct_access = 1;
-			vmem_map_flat(ctx->task->vmem_ctx,
-				(void*)(uintptr_t)fb_desc->common.framebuffer_addr,
-				size, VM_USER | VM_RW);
-
-			return 0;
-		case 0x2f04:
-			drv->direct_access = 0;
-			// FIXME unmap
-			return 0;
-		case 0x2f05:
-			return fb_desc->common.framebuffer_width;
-		case 0x2f06:
-			return fb_desc->common.framebuffer_height;
-		case 0x2f07:
-			return fb_desc->common.framebuffer_pitch;
-		default:
-			sc_errno = ENOSYS;
-			return -1;
-	}
-}
 
 struct tty_driver* gfx_fbtext_init() {
-	fb_desc = multiboot_get_framebuffer();
-	if(!fb_desc || gfx_font.magic != PSF_FONT_MAGIC) {
+	gfx_handle = gfx_handle_init(NULL);
+	if(!gfx_handle) {
+		log(LOG_ERR, "fbtext: Could not get gfx handle\n");
 		return NULL;
 	}
 
-	log(LOG_DEBUG, "fbtext: %dx%d bpp %d pitch 0x%x at 0x%x\n",
-		fb_desc->common.framebuffer_width,
-		fb_desc->common.framebuffer_height,
-		fb_desc->common.framebuffer_bpp,
-		fb_desc->common.framebuffer_pitch,
-		(uint32_t)fb_desc->common.framebuffer_addr);
-
 	log(LOG_DEBUG, "fbtext: font width %d height %d flags %d\n", gfx_font.width, gfx_font.height, gfx_font.flags);
-
-	// Map the framebuffer into the kernel paging context
-	size_t vmem_size = fb_desc->common.framebuffer_width
-		* fb_desc->common.framebuffer_height
-		* fb_desc->common.framebuffer_bpp;
-	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, VM_RW);
+	memset32(gfx_handle->addr, 0x0000ff, gfx_handle->size / 4);
 
 	drv = kmalloc(sizeof(struct tty_driver));
-	drv->cols = fb_desc->common.framebuffer_width / gfx_font.width;
-	drv->rows = fb_desc->common.framebuffer_height / gfx_font.height;
-	drv->xpixel = fb_desc->common.framebuffer_width;
-	drv->ypixel = fb_desc->common.framebuffer_height;
-	drv->buf_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
+	drv->cols = gfx_handle->width / gfx_font.width;
+	drv->rows = gfx_handle->height / gfx_font.height;
+	drv->xpixel = gfx_handle->width;
+	drv->ypixel = gfx_handle->height;
+	drv->buf_size = gfx_handle->height * gfx_handle->pitch;
 	drv->write = write_char;
 	drv->direct_access = 0;
 	drv->scroll_line = scroll_line;
@@ -306,11 +264,6 @@ struct tty_driver* gfx_fbtext_init() {
 	drv->set_cursor = set_cursor;
 	drv->rerender = rerender;
 
-
-	struct vfs_callbacks sfs_cb = {
-		.ioctl = sfs_ioctl,
-	};
-
-	sysfs_add_dev("gfx1", &sfs_cb);
+	gfx_handle_enable(gfx_handle->id);
 	return drv;
 }

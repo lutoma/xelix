@@ -24,16 +24,16 @@ int handle_mouse() {
 
 	if(ev.x < 0 && pos_x < ev.x * -1) {
 		pos_x = 0;
-	} else if(pos_x + ev.x > fb.width) {
-		pos_x = fb.width;
+	} else if(pos_x + ev.x > fb.gfx_handle.width) {
+		pos_x = fb.gfx_handle.width;
 	} else {
 		pos_x += ev.x;
 	}
 
 	if(ev.y < 0 && pos_y < ev.y * -1) {
 		pos_y = 0;
-	} else if(pos_y + ev.y > fb.height) {
-		pos_y = fb.height;
+	} else if(pos_y + ev.y > fb.gfx_handle.height) {
+		pos_y = fb.gfx_handle.height;
 	} else {
 		pos_y += ev.y;
 	}
@@ -69,7 +69,7 @@ int mouse_init() {
 	}
 
 	surface = cairo_image_surface_create_from_png("/usr/share/gfxcompd/cursor.png");
-	pos_x = fb.width / 2 + cairo_image_surface_get_width(surface) / 2;
-	pos_x = fb.height / 2 + cairo_image_surface_get_height(surface) / 2;
+	pos_x = fb.gfx_handle.width / 2 + cairo_image_surface_get_width(surface) / 2;
+	pos_x = fb.gfx_handle.height / 2 + cairo_image_surface_get_height(surface) / 2;
 	return mouse_fd;
 }
