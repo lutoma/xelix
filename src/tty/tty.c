@@ -18,7 +18,7 @@
  */
 
 #include <tty/tty.h>
-#include <tty/fbtext.h>
+//#include <tty/fbtext.h>
 #include <tty/keyboard.h>
 #include <tty/ecma48.h>
 #include <tty/input.h>

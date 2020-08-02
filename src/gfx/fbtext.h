@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2020 Lukas Martini
+/* Copyright © 2019 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,4 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-void tty_mouse_init();
+#include <tty/tty.h>
+
+struct tty_driver* gfx_fbtext_init();

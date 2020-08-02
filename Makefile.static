@@ -47,7 +47,7 @@ ext/picotcp/build/lib/libpicotcp.a:
 	$(CC) $(MAKE_ASFLAGS) -o $@ -c $<
 
 %-psf.o: %.psf
-	$(OBJCOPY) -O $(PREFIX) -B $(ARCH) -I binary -SK _binary_src_tty_teru16n_psf_start $< $@
+	$(OBJCOPY) -O $(PREFIX) -B $(ARCH) -I binary -SK _binary_src_gfx_teru16n_psf_start $< $@
 
 kernel7.img: xelix.bin
 	arm-none-eabi-objcopy xelix.bin -O binary kernel7.img

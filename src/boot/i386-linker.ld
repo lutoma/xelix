@@ -1,5 +1,5 @@
 ENTRY(_start)
-tty_font = _binary_src_tty_teru16n_psf_start;
+gfx_font = _binary_src_gfx_teru16n_psf_start;
 
 PHDRS {
 	headers PT_PHDR PHDRS ;

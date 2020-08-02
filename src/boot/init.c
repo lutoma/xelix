@@ -29,6 +29,7 @@
 #include <bsp/timer.h>
 #include <fs/vfs.h>
 #include <tasks/scheduler.h>
+#include <gfx/gfx.h>
 #include <tty/term.h>
 #include <bsp/i386-pci.h>
 #include <tasks/elf.h>
@@ -46,7 +47,7 @@
 void (*boot_sequence[])(void) = {
 #ifdef __i386__
 	serial_init, gdt_init, int_init, timer_init, multiboot_init,
-	mem_init, cmdline_init, term_init, time_init, pci_init, block_init,
+	mem_init, cmdline_init, gfx_init, term_init, time_init, pci_init, block_init,
 	vfs_init, timer_init2,
 #endif
 };

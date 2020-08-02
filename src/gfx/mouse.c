@@ -112,7 +112,7 @@ static int sfs_poll(struct vfs_callback_ctx* ctx, int events) {
 	return 0;
 }
 
-void tty_mouse_init() {
+void gfx_mouse_init() {
 	buf = buffer_new(10);
 
 	// Enable auxiliary mouse device

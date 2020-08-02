@@ -18,10 +18,7 @@
  */
 
 #include <tty/tty.h>
-#include <tty/fbtext.h>
 #include <tty/keyboard.h>
-#include <tty/mouse.h>
-#include <tty/gfxbus.h>
 #include <tty/ecma48.h>
 #include <tty/input.h>
 #include <tty/pty.h>
@@ -94,13 +91,6 @@ static vfs_file_t* term_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 
 void term_init() {
 	tty_keyboard_init();
-	tty_mouse_init();
-
-	struct tty_driver* fbtext_drv = tty_fbtext_init();
-	if(!fbtext_drv) {
-		panic("tty: Could not initialize fbtext driver");
-	}
-
 	tty_init();
 
 	sysfs_add_dev("tty", &term_cb);
@@ -109,5 +99,4 @@ void term_init() {
 	sysfs_add_dev("stderr", &term_cb);
 
 	pty_init();
-	tty_gfxbus_init();
 }

@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tty/fbtext.h>
+#include <gfx/fbtext.h>
 #include <tty/tty.h>
 #include <mem/kmalloc.h>
 #include <boot/multiboot.h>
@@ -34,7 +34,7 @@
 		+ (y)*fb_desc->common.framebuffer_pitch					\
 		+ (x)*(fb_desc->common.framebuffer_bpp / 8)))
 
-#define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * tty_font.width, y * tty_font.height)
+#define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * gfx_font.width, y * gfx_font.height)
 
 // Font from ter-u16n.psf gets linked into the binary
 extern struct {
@@ -47,7 +47,7 @@ extern struct {
 	uint32_t bytes_per_glyph;
 	uint32_t height;
 	uint32_t width;
-} tty_font;
+} gfx_font;
 
 // Special block drawing characters - Should get merged into main font
 const uint8_t tty_fbtext_bdc_font[][16] = {
@@ -93,9 +93,9 @@ static uint32_t convert_color(int color, bool bg) {
 
 static inline const uint8_t* get_char_bitmap(char chr, bool bdc) {
 	if(likely(!bdc)) {
-		return (uint8_t*)&tty_font
-			+ tty_font.header_size
-			+ chr * tty_font.bytes_per_glyph;
+		return (uint8_t*)&gfx_font
+			+ gfx_font.header_size
+			+ chr * gfx_font.bytes_per_glyph;
 	}
 
 	if(chr >= 'j' && chr <= 'n') {
@@ -124,8 +124,8 @@ static void write_char(struct terminal* term, uint32_t x, uint32_t y, char chr, 
 		return;
 	}
 
-	x *= tty_font.width;
-	y *= tty_font.height;
+	x *= gfx_font.width;
+	y *= gfx_font.height;
 
 	const uint8_t* bitmap = get_char_bitmap(chr, bdc);
 	if(unlikely(!bitmap)) {
@@ -136,9 +136,9 @@ static void write_char(struct terminal* term, uint32_t x, uint32_t y, char chr, 
 	const uint32_t fg_color = convert_color(term->fg_color, false);
 	const uint32_t bg_color = convert_color(term->bg_color, true);
 
-	for(int i = 0; i < tty_font.height; i++) {
-		for(int j = 0; j < tty_font.width; j++) {
-			int fg = bitmap[i] & (1 << (tty_font.width - j - 1));
+	for(int i = 0; i < gfx_font.height; i++) {
+		for(int j = 0; j < gfx_font.width; j++) {
+			int fg = bitmap[i] & (1 << (gfx_font.width - j - 1));
 			*PIXEL_PTR(dest, x + j, y + i) = fg ? fg_color : bg_color;
 		}
 	}
@@ -157,7 +157,7 @@ static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uin
 
 	// memset32 entire area for full line clears
 	if(start_x == 0 && end_x == drv->cols) {
-		size_t clear_size = lines * tty_font.height
+		size_t clear_size = lines * gfx_font.height
 			* fb_desc->common.framebuffer_pitch;
 
 		memset32(CHAR_PTR(dest, start_x, start_y), color, clear_size / 4);
@@ -166,11 +166,11 @@ static void clear(struct terminal* term, uint32_t start_x, uint32_t start_y, uin
 
 	// Partial clear, do individual memset32 for each line
 	int chars = MAX(1, end_x - start_x);
-	size_t clear_size = chars * tty_font.width
+	size_t clear_size = chars * gfx_font.width
 		* (fb_desc->common.framebuffer_bpp / 8);
 
-	for(int i = 0; i < lines * tty_font.height; i++) {
-		void* mdest = PIXEL_PTR(dest, start_x * tty_font.width, start_y * tty_font.height + i);
+	for(int i = 0; i < lines * gfx_font.height; i++) {
+		void* mdest = PIXEL_PTR(dest, start_x * gfx_font.width, start_y * gfx_font.height + i);
 		memset32(mdest, color, clear_size / 4);
 	}
 }
@@ -185,13 +185,13 @@ static void scroll_line(struct terminal* term) {
 		* (fb_desc->common.framebuffer_bpp / 8)
 		- fb_desc->common.framebuffer_pitch;
 
-	size_t offset = fb_desc->common.framebuffer_pitch * tty_font.height;
+	size_t offset = fb_desc->common.framebuffer_pitch * gfx_font.height;
 	uintptr_t dest = get_fb_buf(term);
 
 	memmove((void*)dest, (void*)(dest + offset), size);
 	clear(term, 0, drv->rows - 1, drv->cols, drv->rows - 1);
-	if(term->cursor_data.last_y >= tty_font.height) {
-		term->cursor_data.last_y -= tty_font.height;
+	if(term->cursor_data.last_y >= gfx_font.height) {
+		term->cursor_data.last_y -= gfx_font.height;
 	}
 }
 
@@ -202,26 +202,26 @@ static void set_cursor(struct terminal* term, uint32_t x, uint32_t y, bool resto
 
 	uintptr_t dest = get_fb_buf(term);
 
-	x *= tty_font.width;
-	y *= tty_font.height;
+	x *= gfx_font.width;
+	y *= gfx_font.height;
 
 	if(!term->cursor_data.last_data) {
-		term->cursor_data.last_data = zmalloc(tty_font.height * sizeof(uint32_t));
+		term->cursor_data.last_data = zmalloc(gfx_font.height * sizeof(uint32_t));
 	} else {
 		if(restore) {
-			for(int i = 0; i < tty_font.height; i++) {
+			for(int i = 0; i < gfx_font.height; i++) {
 				*PIXEL_PTR(dest, term->cursor_data.last_x, term->cursor_data.last_y + i) = term->cursor_data.last_data[i];
 			}
 		}
 	}
 
-	for(int i = 0; i < tty_font.height; i++) {
+	for(int i = 0; i < gfx_font.height; i++) {
 		term->cursor_data.last_data[i] = *PIXEL_PTR(dest, x, y + i);
 	}
 
 	term->cursor_data.last_x = x;
 	term->cursor_data.last_y = y;
-	for(int i = 0; i < tty_font.height; i++) {
+	for(int i = 0; i < gfx_font.height; i++) {
 		*PIXEL_PTR(dest, x, y + i) = 0xfd971f;
 	}
 }
@@ -272,9 +272,9 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	}
 }
 
-struct tty_driver* tty_fbtext_init() {
+struct tty_driver* gfx_fbtext_init() {
 	fb_desc = multiboot_get_framebuffer();
-	if(!fb_desc || tty_font.magic != PSF_FONT_MAGIC) {
+	if(!fb_desc || gfx_font.magic != PSF_FONT_MAGIC) {
 		return NULL;
 	}
 
@@ -285,7 +285,7 @@ struct tty_driver* tty_fbtext_init() {
 		fb_desc->common.framebuffer_pitch,
 		(uint32_t)fb_desc->common.framebuffer_addr);
 
-	log(LOG_DEBUG, "fbtext: font width %d height %d flags %d\n", tty_font.width, tty_font.height, tty_font.flags);
+	log(LOG_DEBUG, "fbtext: font width %d height %d flags %d\n", gfx_font.width, gfx_font.height, gfx_font.flags);
 
 	// Map the framebuffer into the kernel paging context
 	size_t vmem_size = fb_desc->common.framebuffer_width
@@ -294,8 +294,8 @@ struct tty_driver* tty_fbtext_init() {
 	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, VM_RW);
 
 	drv = kmalloc(sizeof(struct tty_driver));
-	drv->cols = fb_desc->common.framebuffer_width / tty_font.width;
-	drv->rows = fb_desc->common.framebuffer_height / tty_font.height;
+	drv->cols = fb_desc->common.framebuffer_width / gfx_font.width;
+	drv->rows = fb_desc->common.framebuffer_height / gfx_font.height;
 	drv->xpixel = fb_desc->common.framebuffer_width;
 	drv->ypixel = fb_desc->common.framebuffer_height;
 	drv->buf_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
