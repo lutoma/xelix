@@ -39,7 +39,7 @@ struct buffer* buffer_new(size_t max_pages);
 void buffer_free(struct buffer* buf);
 
 // Write to end of buffer
-size_t buffer_write(struct buffer* buf, void* src, size_t size);
+size_t buffer_write(struct buffer* buf, const void* src, size_t size);
 
 // Read from arbitrary location in buffer, leaving content intact
 size_t buffer_read(struct buffer* buf, void* dest, size_t size, size_t offset);
