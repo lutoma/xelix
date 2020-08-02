@@ -7,7 +7,7 @@ dependencies:
 patches:
   - libedit-20191231-3.1.patch
 configure:
-  - ./configure
+  - CFLAGS="$CFLAGS -I$DESTDIR/usr/include" ./configure
     --host=i786-pc-xelix
     --prefix=/usr
     --sysconfdir=/etc

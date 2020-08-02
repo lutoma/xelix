@@ -6,11 +6,15 @@ patch_skip_path: 0
 patches:
   - pixman.patch
 configure:
-  - ./configure
+  - CFLAGS="-g -DPIXMAN_NO_TLS" LDFLAGS="-g" ./configure
     --host=i786-pc-xelix
     --prefix=/usr
     --sysconfdir=/etc
     --localstatedir=/var
+    --disable-mmx
+    --disable-sse2
+    --disable-sse3
+    --disable-vmx
 make:
   - make
 install:
