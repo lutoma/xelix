@@ -2,6 +2,8 @@ name: htop
 version: 3.0.0beta5
 sources:
   - url: https://github.com/hishamhm/htop/archive/3.0.0beta5.tar.gz
+dependencies:
+  - ncurses
 patch_skip_path: 0
 patches:
   - htop.patch

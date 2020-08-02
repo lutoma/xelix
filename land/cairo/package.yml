@@ -12,8 +12,8 @@ patch_skip_path: 0
 patches:
   - cairo.patch
 configure:
-  - CFLAGS="$CFLAGS -DCAIRO_NO_MUTEX=1 -I$DESTDIR/usr/include"
-    LDFLAGS="$LDFLAGS -I$DESTDIR/usr/lib"
+  - CFLAGS="$CFLAGS -DCAIRO_NO_MUTEX=1 -g -I$DESTDIR/usr/include"
+    LDFLAGS="$LDFLAGS -I$DESTDIR/usr/lib -g"
     ./configure
     --host=i786-pc-xelix
     --prefix=/usr
@@ -24,6 +24,7 @@ configure:
     --disable-xlib
     --disable-xlib-xrender
     --disable-gobject
+    --disable-fc
 
   - echo -e 'all:\n\ttrue\ninstall:\n\ttrue' > test/Makefile
   - echo -e 'all:\n\ttrue\ninstall:\n\ttrue' > perf/Makefile
