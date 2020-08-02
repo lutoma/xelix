@@ -1,4 +1,4 @@
-/* Copyright © 2019 Lukas Martini
+/* Copyright © 2019-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -26,12 +26,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 #include <pty.h>
 
 struct client {
 	int fd;
-	int pty_master;
-	int pty_slave;
+	int pty_fd;
 	struct sockaddr_in saddr;
 	char ip_str[50];
 	struct client* next;
@@ -43,15 +43,10 @@ int server_fd = 0;
 int n_clients = 0;
 int n_fds = 0;
 
-static inline void nonblock(const int fileno) {
-    int flags = fcntl(fileno, F_GETFL);
-    fcntl(fileno, F_SETFL, flags | O_NONBLOCK);
-}
-
 struct client* search_client(int fd) {
 	struct client* client = clients;
 	while(client) {
-		if(client->fd == fd || client->pty_master == fd) {
+		if(client->fd == fd || client->pty_fd == fd) {
 			return client;
 		}
 		client = client->next;
@@ -71,7 +66,7 @@ void rebuild_fds() {
 	for(int i = 0; i < n_clients && client; i++) {
 		new_fds[i*2 + 1].fd = client->fd;
 		new_fds[i*2 + 1].events = POLLIN;
-		new_fds[i*2 + 2].fd = client->pty_master;
+		new_fds[i*2 + 2].fd = client->pty_fd;
 		new_fds[i*2 + 2].events = POLLIN;
 		client = client->next;
 	}
@@ -91,47 +86,54 @@ struct client* accept_connection() {
 		return NULL;
 	}
 
-	getnameinfo((struct sockaddr*)&client->saddr, sizeof(client->saddr),
-		client->ip_str, 50, NULL, 0, NI_NUMERICHOST);
-
-	if(openpty(&client->pty_master, &client->pty_slave, NULL, NULL, NULL) < 0) {
-		perror("openpty");
+	if(getnameinfo((struct sockaddr*)&client->saddr, sizeof(client->saddr),
+		client->ip_str, 50, NULL, 0, NI_NUMERICHOST) < 0) {
+		perror("getnameinfo failed");
+		free(client);
 		return NULL;
 	}
 
-	printf("Connection from %s:%d, PTM %d, PTY %d\n", client->ip_str,
-		client->saddr.sin_port, client->pty_master, client->pty_slave);
+	struct winsize ws = {
+		.ws_row = 25,
+		.ws_col = 100,
+		.ws_xpixel = 0,
+		.ws_ypixel = 0,
+	};
 
+	char sname[PATH_MAX];
+	pid_t pid = forkpty(&client->pty_fd, sname, NULL, &ws);
+	if(pid < 0) {
+		perror("forkpty failed");
+		free(client);
+		return NULL;
+	}
+
+	printf("Connection from %s:%d %s\n", client->ip_str,
+		client->saddr.sin_port, sname);
 	fflush(stdout);
 
-	nonblock(client->fd);
-	nonblock(client->pty_slave);
-
-	int pid = fork();
-	if(pid < 0) {
-		perror("fork");
-		return NULL;
-	}
-
-	if(!pid) {
-		close(1);
-		close(2);
-		close(0);
-		dup2(client->pty_slave, 1);
-		dup2(client->pty_slave, 2);
-		dup2(client->pty_slave, 0);
+	if(pid) {
+	    int flags = fcntl(client->fd, F_GETFL);
+	    fcntl(client->fd, F_SETFL, flags | O_NONBLOCK);
+		return client;
+	} else {
+		close(server_fd);
+		close(client->fd);
+		free(client);
 
 		char* login_argv[] = { "bash", "-i", NULL };
 		char* login_env[] = { "USER=root", NULL };
-		execve("/usr/bin/login", login_argv, login_env);
+		if(execve("/usr/bin/login", login_argv, login_env) < 0) {
+			perror("execve failed");
+			exit(EXIT_FAILURE);
+		}
 	}
-
-	return client;
 }
 
 int copy(int from, int to) {
-	char buf[1024];
-	int nread = read(from, buf, 1024);
+	size_t bsize = getpagesize();
+	char buf[bsize];
+	int nread = read(from, buf, bsize);
 	if(nread < 0 && errno != EAGAIN) {
 		return -1;
 	}
@@ -204,9 +206,9 @@ int main (int argc, char *argv[]) {
 
 				int copy_result = -1;
 				if(fd == client->fd) {
-					copy_result = copy(client->fd, client->pty_master);
-				} else if(fd == client->pty_master) {
-					copy_result = copy(client->pty_master, client->fd);
+					copy_result = copy(client->fd, client->pty_fd);
+				} else if(fd == client->pty_fd) {
+					copy_result = copy(client->pty_fd, client->fd);
 				}
 
 				if(copy_result < 0) {
