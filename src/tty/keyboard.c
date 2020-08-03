@@ -18,9 +18,9 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <tty/keyboard.h>
+#include <gfx/gfx.h>
 #include <int/int.h>
-#include <tty/tty.h>
-#include <tty/input.h>
 #include <block/random.h>
 #include <fs/sysfs.h>
 #include <portio.h>
@@ -163,7 +163,6 @@ static void intr_handler(task_t* task, isf_t* isf_state, int num) {
 	}
 
 	handle_noncanon(&state);
-	tty_input_cb(&state);
 }
 
 

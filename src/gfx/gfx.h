@@ -35,6 +35,6 @@ struct gfx_handle {
 	size_t size;
 };
 
-void gfx_handle_enable(int which);
+void gfx_handle_enable(unsigned int which);
 struct gfx_handle* gfx_handle_init(struct vmem_context* ctx);
 void gfx_init();

@@ -18,4 +18,19 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
+
+struct tty_input_state {
+	bool shift;
+	bool shift_left;
+	bool shift_right;
+	bool capslock;
+	bool control_left;
+	bool control_right;
+	bool alt_left;
+	bool alt_right;
+	bool super;
+	uint16_t code;
+};
+
 void tty_keyboard_init();

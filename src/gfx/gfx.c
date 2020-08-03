@@ -49,7 +49,7 @@ static void map_handle(struct gfx_handle* handle, bool direct) {
 	vmem_map(handle->ctx, handle->addr, dest, handle->size, flags);
 }
 
-void gfx_handle_enable(int which) {
+void gfx_handle_enable(unsigned int which) {
 	if(which >= 20) {
 		return;
 	}
@@ -130,7 +130,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		return 0;
 
 	} else if(request == 0x2f02) {
-		gfx_handle_enable(_arg);
+		gfx_handle_enable((unsigned int)_arg);
 		return 0;
 	}
 
@@ -158,18 +158,12 @@ void gfx_init() {
 		* fb_desc->common.framebuffer_bpp;
 	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, VM_RW);
 
-
 	struct vfs_callbacks sfs_cb = {
 		.ioctl = sfs_ioctl,
 	};
-
 	sysfs_add_dev("gfx1", &sfs_cb);
+
 	gfx_mouse_init();
-
-	struct tty_driver* fbtext_drv = gfx_fbtext_init();
-	if(!fbtext_drv) {
-		panic("tty: Could not initialize fbtext driver");
-	}
-
+	gfx_fbtext_init();
 	tty_gfxbus_init();
 }

@@ -18,7 +18,6 @@
  */
 
 #include <tty/pty.h>
-#include <tty/ioctl.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>

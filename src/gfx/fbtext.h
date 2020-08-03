@@ -18,6 +18,4 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tty/tty.h>
-
-struct tty_driver* gfx_fbtext_init();
+void gfx_fbtext_init();

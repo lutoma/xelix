@@ -139,6 +139,10 @@ void log(uint32_t level, const char *fmt, ...) {
 	va_end(va);
 }
 
+void log_dump() {
+	printf(buffer);
+}
+
 void log_init() {
 	#ifdef LOG_STORE
 	struct vfs_callbacks sfs_cb = {

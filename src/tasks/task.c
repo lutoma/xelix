@@ -28,8 +28,6 @@
 #include <mem/vmem.h>
 #include <mem/i386-gdt.h>
 #include <int/int.h>
-#include <tty/tty.h>
-#include <tty/ioctl.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
 #include <fs/pipe.h>

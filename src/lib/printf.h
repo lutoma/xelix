@@ -21,9 +21,10 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <tty/serial.h>
-#include <tty/tty.h>
 
-#define _putchar(x) _tty_write(&ttys[0], &(x), 1)
+extern void fbtext_write_char(char);
+
+#define _putchar fbtext_write_char
 
 /* Make sure functions in printf.c have correct names - There's no stdlib here,
  * so no risk of conflicts.

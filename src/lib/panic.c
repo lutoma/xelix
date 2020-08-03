@@ -21,7 +21,6 @@
 
 #include "generic.h"
 #include <printf.h>
-#include <tty/tty.h>
 #include <int/int.h>
 #include <bsp/timer.h>
 #include <tty/serial.h>
