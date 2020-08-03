@@ -36,6 +36,9 @@
 
 #define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * gfx_font.width, y * gfx_font.height)
 
+int cols = 0;
+int rows = 0;
+
 // Font from ter-u16n.psf gets linked into the binary
 extern struct {
 	uint32_t magic;
@@ -65,9 +68,16 @@ void fbtext_write_char(char chr) {
 	}
 
 	last_x++;
-	if(last_x >= 80) {
+	if(last_x >= cols) {
 		last_x = 0;
 		last_y++;
+	}
+
+	if(last_y >= rows) {
+		size_t move_size = gfx_handle->pitch * gfx_font.height;
+		memcpy(gfx_handle->addr, gfx_handle->addr + move_size, gfx_handle->size - move_size);
+		memset(gfx_handle->addr + gfx_handle->size - move_size, 0, move_size);
+		last_y--;
 	}
 
 	unsigned int x = last_x * gfx_font.width;
@@ -96,7 +106,11 @@ void gfx_fbtext_init() {
 		return;
 	}
 
-	log(LOG_DEBUG, "fbtext: font width %d height %d flags %d\n", gfx_font.width, gfx_font.height, gfx_font.flags);
+	cols = gfx_handle->width / gfx_font.width;
+	rows = gfx_handle->height / gfx_font.height;
+
+	log(LOG_DEBUG, "fbtext: font width %d/%d height %d/%d flags %d\n", gfx_font.width, cols, gfx_font.height, rows, gfx_font.flags);
+
 	memset32(gfx_handle->addr, 0x000000, gfx_handle->size / 4);
 	log_dump();
 	gfx_handle_enable(gfx_handle->id);
