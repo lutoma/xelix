@@ -20,6 +20,7 @@
 #include "timer.h"
 #include <int/int.h>
 #include <fs/sysfs.h>
+#include <tasks/task.h>
 #include <portio.h>
 #include <time.h>
 

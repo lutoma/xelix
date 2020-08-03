@@ -18,6 +18,7 @@
  */
 
 #include <bitmap.h>
+#include <stdbool.h>
 
 void bitmap_set(struct bitmap* bm, uint32_t pos, uint32_t num) {
 	for(int i = 0; i < num; i++) {

@@ -28,6 +28,7 @@
 #include <block/block.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
+#include <tasks/task.h>
 
 #define VIRTIO_BLK_F_SIZE_MAX (1 << 1)
 #define VIRTIO_BLK_F_SEG_MAX (1 << 2)

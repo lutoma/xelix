@@ -20,7 +20,10 @@
 #include <bsp/virtio.h>
 #include <bsp/i386-pci.h>
 #include <mem/kmalloc.h>
+#include <mem/paging.h>
 #include <portio.h>
+#include <time.h>
+#include <log.h>
 
 #define ioutw(pin, val) outw(dev->pci_dev->iobase + (pin), val)
 #define ioutl(pin, val) outl(dev->pci_dev->iobase + (pin), val)

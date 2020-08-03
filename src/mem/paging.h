@@ -18,6 +18,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
+
 #define PAGE_SIZE 0x1000
 
 struct page {

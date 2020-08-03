@@ -31,6 +31,7 @@
 #include <int/int.h>
 #include <mem/kmalloc.h>
 #include <mem/vmem.h>
+#include <tasks/task.h>
 #include <pico_device.h>
 
 #define RECV_BUFFER_SIZE 2048

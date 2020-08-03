@@ -18,6 +18,7 @@
  */
 
 #include <string.h>
+#include <log.h>
 #include <mem/kmalloc.h>
 #include <block/i386-ide.h>
 #include <block/block.h>

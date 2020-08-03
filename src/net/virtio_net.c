@@ -28,6 +28,7 @@
 #include <bitmap.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
+#include <tasks/task.h>
 #include <pico_device.h>
 
 #define QUEUE_RX1 0

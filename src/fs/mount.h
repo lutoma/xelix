@@ -19,6 +19,7 @@
  */
 
 #include <block/block.h>
+#include <fs/vfs.h>
 
 struct vfs_callback_ctx;
 struct vfs_mountpoint {

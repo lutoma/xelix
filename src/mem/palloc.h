@@ -18,6 +18,9 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mem/paging.h>
+#include <string.h>
+
 void* palloc(uint32_t num);
 void pfree(uint32_t num, uint32_t size);
 void palloc_init();
