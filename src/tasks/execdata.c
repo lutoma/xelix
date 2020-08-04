@@ -54,8 +54,8 @@ struct execdata {
  * - environ strings / free space for new environment variables
  */
 void task_setup_execdata(task_t* task) {
-	void* page = zpalloc(2);
-	vmem_map(task->vmem_ctx, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 2,
+	void* page = zpalloc(4);
+	vmem_map(task->vmem_ctx, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 4,
 		VM_USER | VM_RW | VM_FREE);
 
 	struct execdata* exc = (struct execdata*)page;
