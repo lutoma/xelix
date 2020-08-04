@@ -33,7 +33,20 @@ static struct gfx_handle handles[20];
 static struct gfx_handle* active_handle = NULL;
 static int next_handle = 0;
 
-static void map_handle(struct gfx_handle* handle, bool direct) {
+struct gfx_handle* gfx_get_handle(unsigned int id) {
+	if(id >= 20) {
+		return NULL;
+	}
+
+	struct gfx_handle* handle = &handles[id];
+	if(!handle->used) {
+		return NULL;
+	}
+
+	return handle;
+}
+
+static inline void map_handle(struct gfx_handle* handle, bool direct) {
 	void* dest;
 	if(direct) {
 		dest = (void*)(uintptr_t)fb_desc->common.framebuffer_addr;
@@ -49,23 +62,13 @@ static void map_handle(struct gfx_handle* handle, bool direct) {
 	vmem_map(handle->ctx, handle->addr, dest, handle->size, flags);
 }
 
-void gfx_handle_enable(unsigned int which) {
-	if(which >= 20) {
-		return;
+void gfx_handle_render(struct gfx_handle* handle) {
+	if(handle == active_handle) {
+		memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, handle->buf_addr, handle->size);
 	}
+}
 
-	struct gfx_handle* handle = &handles[which];
-	if(!handle->used || handle == active_handle) {
-		return;
-	}
-
-	if(active_handle) {
-		memcpy(active_handle->buf_addr, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, active_handle->size);
-		map_handle(active_handle, false);
-	}
-
-	memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, handle->buf_addr, handle->size);
-	map_handle(handle, true);
+void gfx_handle_enable(struct gfx_handle* handle) {
 	active_handle = handle;
 }
 
@@ -130,7 +133,21 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		return 0;
 
 	} else if(request == 0x2f02) {
-		gfx_handle_enable((unsigned int)_arg);
+		struct gfx_handle* handle = gfx_get_handle((unsigned int)_arg);
+		if(!handle) {
+			return -1;
+		}
+
+		gfx_handle_enable(handle);
+		return 0;
+
+	} else if(request == 0x2f03) {
+		struct gfx_handle* handle = gfx_get_handle((unsigned int)_arg);
+		if(!handle) {
+			return -1;
+		}
+
+		gfx_handle_render(handle);
 		return 0;
 	}
 

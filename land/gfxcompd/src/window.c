@@ -10,10 +10,10 @@
 #include "text.h"
 
 #define TITLE_BAR_HEIGHT 30
-#define WINDoW_BORDER_SIZE 4
+#define WINDOW_BORDER_SIZE 4
 
-#define decoration_width(x) (x + WINDoW_BORDER_SIZE * 2)
-#define decoration_height(y) (y + TITLE_BAR_HEIGHT + WINDoW_BORDER_SIZE)
+#define decoration_width(x) (x + WINDOW_BORDER_SIZE * 2)
+#define decoration_height(y) (y + TITLE_BAR_HEIGHT + WINDOW_BORDER_SIZE)
 
 static uint32_t last_id = -1;
 
@@ -23,10 +23,10 @@ static inline void draw_decoration(struct window* win, size_t width, size_t heig
 	// Window border
 	cairo_t* cr = cairo_create(surface);
 	cairo_set_source_rgb(cr, 0.192, 0.211, 0.231);
-  	cairo_rectangle(cr, WINDoW_BORDER_SIZE / 2, WINDoW_BORDER_SIZE / 2,
-  		width - WINDoW_BORDER_SIZE, height - WINDoW_BORDER_SIZE);
+  	cairo_rectangle(cr, WINDOW_BORDER_SIZE / 2, WINDOW_BORDER_SIZE / 2,
+  		width - WINDOW_BORDER_SIZE, height - WINDOW_BORDER_SIZE);
 
-	cairo_set_line_width(cr, WINDoW_BORDER_SIZE);
+	cairo_set_line_width(cr, WINDOW_BORDER_SIZE);
 	cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
   	cairo_stroke(cr);
 
@@ -39,11 +39,10 @@ static inline void draw_decoration(struct window* win, size_t width, size_t heig
   	cairo_fill(cr);
 	cairo_pattern_destroy (pat);
 
-
   	// Window title
 	cairo_set_source_rgb(cr, 1, 1, 1);
-	cairo_set_font_face(cr, font);
-	cairo_set_font_size(cr, 13);
+	cairo_set_font_face(cr, font_light);
+	cairo_set_font_size(cr, 14);
 
 	cairo_text_extents_t extents;
 	cairo_text_extents(cr, win->title, &extents);
@@ -54,40 +53,6 @@ static inline void draw_decoration(struct window* win, size_t width, size_t heig
 	cairo_show_text(cr, win->title);
 
 	cairo_destroy(cr);
-
-	/*win->decoration = layer_new(width, height, NULL, 119);
-	uint32_t* buf = win->decoration->data;
-
-	uint32_t header_bg[] = {
-		0xff3b4147, 0xff3a4046, 0xff3a4046, 0xff393f45, 0xff393f45,
-		0xff383e44, 0xff383e43, 0xff383d43, 0xff373d42, 0xff373c42,
-		0xff363c41, 0xff363b41, 0xff363b40, 0xff353b40, 0xff353a3f,
-		0xff343a3f, 0xff34393e, 0xff33393e, 0xff33383d, 0xff33383d,
-		0xff32373c, 0xff32373c, 0xff31363b, 0xff31363b, 0xff31363b,
-		0xff31363b, 0xff31363b, 0xff31363b, 0xff31363b, 0xff31363b
-	};
-
-	for(int y = 0; y < height; y++) {
-		uint32_t* row = buf + y * width;
-
-		if(y < 30) {
-			memset32(row, header_bg[y], width);
-		} else if(y >= height - 4) {
-			memset32(row, 0xff31363b, width);
-		} else {
-			*row = 0xff31363b;
-			*(row + 1) = 0xff31363b;
-			*(row + 2) = 0xff31363b;
-			*(row + 3) = 0xff31363b;
-			*(row + width - 4) = 0xff31363b;
-			*(row + width - 3) = 0xff31363b;
-			*(row + width - 2) = 0xff31363b;
-			*(row + width - 1) = 0xff31363b;
-		}
-	}
-
-	win->title_layer = text_to_layer(10, win->title);
-	*/
 }
 
 struct window* window_new(const char* title, size_t width, size_t height, uint32_t* data) {
@@ -161,7 +126,7 @@ void window_add(struct window* win) {
 void window_set_position(struct window* win, int32_t x, int32_t y) {
 	win->dx = x;
 	win->dy = y;
-	win->x = x + WINDoW_BORDER_SIZE;
+	win->x = x + WINDOW_BORDER_SIZE;
 	win->y = y + TITLE_BAR_HEIGHT;
 }
 

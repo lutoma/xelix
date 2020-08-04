@@ -158,7 +158,10 @@ static void intr_handler(task_t* task, isf_t* isf_state, int num) {
 		(state.alt_left || state.alt_right) &&
 		state.code >= 0xbb && state.code <= 0xc4) {
 
-		gfx_handle_enable(state.code - 0xbb);
+		struct gfx_handle* handle = gfx_get_handle(state.code - 0xbb);
+		if(handle) {
+			gfx_handle_enable(handle);
+		}
 		return;
 	}
 

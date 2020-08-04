@@ -64,6 +64,7 @@ void fbtext_write_char(char chr) {
 	if(chr == '\n') {
 		last_y++;
 		last_x = 0;
+		gfx_handle_render(gfx_handle);
 		return;
 	}
 
@@ -113,5 +114,5 @@ void gfx_fbtext_init() {
 
 	memset32(gfx_handle->addr, 0x000000, gfx_handle->size / 4);
 	log_dump();
-	gfx_handle_enable(gfx_handle->id);
+	gfx_handle_enable(gfx_handle);
 }
