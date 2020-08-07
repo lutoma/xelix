@@ -80,7 +80,7 @@ int cursor_row = 0;
 int cursor_col = 0;
 FILE* serial;
 
-int bg_alpha = 0xd8;
+int bg_alpha = 0xb8;
 
 #define CACHE_MAX 256
 uint8_t* glyph_cache[CACHE_MAX];
@@ -157,7 +157,6 @@ static inline uint32_t convert_color(int color, int bg) {
 }
 
 static inline uint32_t rgba_interp(uint32_t src, uint32_t dst, uint32_t t) {
-    //assert(t <= 255);
     const uint32_t s = 255 - t;
     return (
         (((((src >> 0)  & 0xff) * s +
@@ -206,18 +205,26 @@ void write_char(const TMTSCREEN* screen, int row, int col) {
 	}
 }
 
+static inline void send_blit_msg(size_t x, size_t y, size_t width, size_t height) {
+	uint16_t two = 2;
+	struct msg_blit msg = {
+		.wid = 0,
+		.width = width,
+		.height = height,
+		.x = x,
+		.y = y
+	};
+
+	write(fb.fd, &two, 2);
+	write(fb.fd, &msg, sizeof(struct msg_blit));
+}
+
 void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 	const TMTSCREEN *s = tmt_screen(vt);
 	const TMTPOINT *c = tmt_cursor(vt);
 
-	uint16_t two = 2;
-	struct msg_blit msg = {
-		.wid = 0,
-		.width = 800,
-		.height = 600,
-		.x = 0,
-		.y = 0
-	};
+	size_t update_start = -1;
+	size_t update_end = 0;
 
 	switch (m){
 		case TMT_MSG_BELL:
@@ -229,15 +236,19 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 		case TMT_MSG_UPDATE:
 			for (size_t r = 0; r < s->nline; r++){
 				if (s->lines[r]->dirty){
+					if(update_start == -1) {
+						update_start = r * BLOCK_HEIGHT;
+					}
+
+					update_end = (r+1) * BLOCK_HEIGHT;
+
 					for (size_t c = 0; c < s->ncol; c++){
 						write_char(s, r, c);
 					}
 				}
 			}
 			tmt_clean(vt);
-
-			write(fb.fd, &two, 2);
-			write(fb.fd, &msg, sizeof(struct msg_blit));
+			send_blit_msg(0, update_start, fb.width, update_end - update_start);
 			break;
 		case TMT_MSG_ANSWER:
 			write(ptm_fd, a, strlen(a));
@@ -249,11 +260,11 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 			}
 
 			write_char(s, cursor_row, cursor_col);
+			send_blit_msg(cursor_col * BLOCK_WIDTH, cursor_row * BLOCK_HEIGHT, 1, BLOCK_HEIGHT);
+
 			cursor_row = c->r;
 			cursor_col = c->c;
-
-			write(fb.fd, &two, 2);
-			write(fb.fd, &msg, sizeof(struct msg_blit));
+			send_blit_msg(cursor_col * BLOCK_WIDTH, cursor_row * BLOCK_HEIGHT, 1, BLOCK_HEIGHT);
 			break;
 	}
 }
@@ -351,7 +362,7 @@ int main() {
 	fb.pitch = fb.width * 4;
 	fb.size = fb.pitch * fb.height * 4;
 	fb.addr = (uint32_t*)ioctl(fb.fd, 0x2f02, fb.size);
-	memset32(fb.addr, 0xff1e1e1e, fb.size / 4);
+	memset32(fb.addr, 0x1e1e1e | bg_alpha << 24, fb.size / 4);
 
 	struct msg_window_new msg = {
 		.addr = fb.addr,
@@ -365,6 +376,7 @@ int main() {
 	int one = 1;
 	write(fb.fd, &one, 2);
 	write(fb.fd, &msg, sizeof(struct msg_window_new));
+	send_blit_msg(0, 0, fb.width, fb.height);
 
 	// Open keyboard device
 	kbd_fd = open("/dev/keyboard1", O_RDONLY | O_NONBLOCK);

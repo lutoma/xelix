@@ -75,8 +75,8 @@ int bus_handle_msg() {
 			return 0;
 		}
 
-		window_update(win);
-		return 1;
+		window_blit(win, msg->width, msg->height, msg->x, msg->y);
+		return 0;
 	}
 
 	return 0;

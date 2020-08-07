@@ -36,7 +36,8 @@ struct gfx_handle {
 };
 
 struct gfx_handle* gfx_get_handle(unsigned int id);
-void gfx_handle_render(struct gfx_handle* handle);
+void gfx_blit_all(struct gfx_handle* handle);
+void gfx_blit(struct gfx_handle* handle, size_t x, size_t y, size_t width, size_t height);
 void gfx_handle_enable(struct gfx_handle* handle);
 struct gfx_handle* gfx_handle_init(struct vmem_context* ctx);
 void gfx_init();

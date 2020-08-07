@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <cairo/cairo.h>
+#include "render.h"
 
 struct window {
 	uint32_t id;
@@ -16,18 +17,16 @@ struct window {
 	int32_t x;
 	int32_t y;
 	int32_t z;
-	cairo_surface_t* surface;
 
-	int32_t dx;
-	int32_t dy;
-	cairo_surface_t* decoration;
+	struct surface* surface;
+	struct surface* decoration;
 };
 
 struct window* windows;
 
 struct window* window_new(const char* title, size_t width, size_t height, uint32_t* data);
 struct window* window_get(uint32_t id);
-void window_update(struct window* win);
+void window_blit(struct window* win, size_t width, size_t height, size_t x, size_t y);
 void window_set_position(struct window* win, int32_t x, int32_t y);
 void window_add(struct window* window);
 void window_init();

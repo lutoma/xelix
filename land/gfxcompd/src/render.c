@@ -12,63 +12,37 @@
 #include "mouse.h"
 #include "text.h"
 
+#define IIR_GAUSS_BLUR_IMPLEMENTATION
+#include "blur.h"
+
 static cairo_surface_t* main_surface;
 static cairo_surface_t* bg_surface;
+static cairo_surface_t* bg_surface_blurred;
 static cairo_t* cr;
+static struct surface* surfaces = NULL;
+static uint32_t last_id = -1;
 
-void render_bar(cairo_t* cr) {
-	cairo_pattern_t* pat = cairo_pattern_create_linear (0.0, 0.0,  0.0, 256.0);
-	cairo_pattern_add_color_stop_rgba(pat, 1, 0.231, 0.254, 0.278, 1);
-	cairo_pattern_add_color_stop_rgba(pat, 0, 0.192, 0.211, 0.231, 1);
-	cairo_set_source (cr, pat);
-  	cairo_rectangle(cr, 0, 0, gfx_handle.width, 35);
-  	cairo_fill(cr);
-	cairo_pattern_destroy (pat);
-
-    time_t timer = time(NULL);
-    struct tm* tm_info = localtime(&timer);
-
-    // Time
-	char buffer[20];
-    strftime(buffer, 26, "%H:%M:%S", tm_info);
-
-	cairo_set_source_rgb(cr, 1, 1, 1);
-	cairo_set_font_face(cr, font);
-	cairo_set_font_size(cr, 15);
-
-	cairo_text_extents_t extents;
-	cairo_text_extents(cr, buffer, &extents);
-	cairo_move_to(cr, gfx_handle.width - extents.width - 10, extents.height);
-	cairo_show_text(cr, buffer);
-
-	// Date
-    strftime(buffer, 26, "%Y-%m-%d", tm_info);
-	cairo_set_source_rgb(cr, 1, 1, 1);
-	cairo_set_font_face(cr, font_light);
-	cairo_set_font_size(cr, 14);
-	cairo_text_extents(cr, buffer, &extents);
-
-	cairo_move_to(cr, gfx_handle.width - extents.width - 10, 35 - extents.height);
-	cairo_show_text(cr, buffer);
-
-	// Windows
-	uint32_t xoff = 5;
-	struct window* window = windows;
-	for(; window; window = window->next) {
-		cairo_set_source_rgb(cr, 1, 1, 1);
-		cairo_set_font_face(cr, font_light);
-		cairo_set_font_size(cr, 13);
-		cairo_text_extents(cr, window->title, &extents);
-
-
-		double y = 35/2 - (extents.height/2 + extents.y_bearing);
-		cairo_move_to(cr, xoff, y);
-		cairo_show_text(cr, window->title);
-
-		xoff += extents.width + extents.x_bearing + 5;
+struct surface* surface_new(size_t width, size_t height) {
+	fprintf(serial, "surface_new %d x %d\n", width, height);
+	struct surface* surface = calloc(1, sizeof(struct surface));
+	if(!surface) {
+		return NULL;
 	}
+
+	surface->id = __sync_add_and_fetch(&last_id, 1);
+	surface->width = width;
+	surface->height = height;
+
+	surface->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+	if(!surface->cs) {
+		free(surface);
+		return NULL;
+	}
+
+	return surface;
 }
 
+/*
 void render() {
 	cairo_set_source_surface(cr, bg_surface, 0, 0);
 	cairo_paint(cr);
@@ -92,7 +66,44 @@ void render() {
 	cairo_surface_flush(main_surface);
 
 	// Request render
-	ioctl(gfx_fd, 0x2f03, gfx_handle.id);
+	//ioctl(gfx_fd, 0x2f03, gfx_handle.id);
+}
+*/
+
+static inline void draw_surface_offset(cairo_surface_t* cs, size_t width, size_t height, size_t x, size_t y, size_t rx, size_t ry) {
+	cairo_surface_set_device_offset(cs, x, y);
+
+	// Clip destination surface
+	cairo_rectangle(cr, rx, ry, width, height);
+	cairo_clip(cr);
+
+	// Copy
+	cairo_set_source_surface(cr, cs, rx, ry);
+	cairo_paint(cr);
+	cairo_reset_clip(cr);
+}
+
+void surface_blit(struct surface* surface, size_t width, size_t height, size_t x, size_t y) {
+	x = MIN(x, surface->width);
+	y = MIN(y, surface->height);
+	width = MIN(surface->width - x, width);
+	height = MIN(surface->height - y, height);
+
+	size_t rx = surface->x + x;
+	size_t ry = surface->y + y;
+
+
+	draw_surface_offset(bg_surface_blurred, width, height, x, y, rx, ry);
+	draw_surface_offset(surface->cs, width, height, x, y, rx, ry);
+
+	struct gfx_ul_blit_cmd cmd = {
+		.handle_id = gfx_handle.id,
+		.x = rx,
+		.y = ry,
+		.width = surface->width,
+		.height = surface->height
+	};
+	ioctl(gfx_fd, 0x2f04, &cmd);
 }
 
 void render_init() {
@@ -108,14 +119,31 @@ void render_init() {
 		exit(EXIT_FAILURE);
 	}
 
-
 	main_surface = cairo_image_surface_create_for_data(
 		(unsigned char*)gfx_handle.addr, CAIRO_FORMAT_ARGB32, gfx_handle.width,
 		gfx_handle.height, gfx_handle.pitch);
 
 	cr = cairo_create(main_surface);
 	bg_surface = cairo_image_surface_create_from_png("/usr/share/gfxcompd/bg.png");
+	bg_surface_blurred = cairo_image_surface_create_from_png("/usr/share/gfxcompd/bg.png");
 
-		// Enable gfx handle
+	cairo_surface_flush(bg_surface_blurred);
+	iir_gauss_blur(
+		cairo_image_surface_get_width(bg_surface_blurred),
+		cairo_image_surface_get_height(bg_surface_blurred), 4,
+		cairo_image_surface_get_data(bg_surface_blurred), 10);
+
+	cairo_surface_mark_dirty(bg_surface_blurred);
+
+
+	cairo_set_source_surface(cr, bg_surface, 0, 0);
+	cairo_paint(cr);
+	cairo_surface_flush(main_surface);
+
+	render_bar(cr);
+	mouse_render_cursor(cr);
+
+	// Enable gfx handle
 	ioctl(gfx_fd, 0x2f02, gfx_handle.id);
+	ioctl(gfx_fd, 0x2f03, gfx_handle.id);
 }

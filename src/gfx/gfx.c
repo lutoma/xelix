@@ -33,6 +33,14 @@ static struct gfx_handle handles[20];
 static struct gfx_handle* active_handle = NULL;
 static int next_handle = 0;
 
+struct gfx_ul_blit_cmd {
+	unsigned int handle_id;
+	size_t x;
+	size_t y;
+	size_t width;
+	size_t height;
+};
+
 struct gfx_handle* gfx_get_handle(unsigned int id) {
 	if(id >= 20) {
 		return NULL;
@@ -46,25 +54,21 @@ struct gfx_handle* gfx_get_handle(unsigned int id) {
 	return handle;
 }
 
-static inline void map_handle(struct gfx_handle* handle, bool direct) {
-	void* dest;
-	if(direct) {
-		dest = (void*)(uintptr_t)fb_desc->common.framebuffer_addr;
-	} else {
-		dest = handle->buf_addr;
-	}
-
-	int flags = VM_RW;
-	if(handle->ctx) {
-		flags |= VM_USER;
-	}
-
-	vmem_map(handle->ctx, handle->addr, dest, handle->size, flags);
-}
-
-void gfx_handle_render(struct gfx_handle* handle) {
+void gfx_blit_all(struct gfx_handle* handle) {
 	if(handle == active_handle) {
 		memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, handle->buf_addr, handle->size);
+	}
+}
+
+void gfx_blit(struct gfx_handle* handle, size_t x, size_t y, size_t width, size_t height) {
+	if(handle != active_handle) {
+		return;
+	}
+
+	// Naïve line-based copy
+	for(size_t cy = y; cy < y + height && cy < handle->height; cy++) {
+		uintptr_t offset = cy * handle->pitch + (x * handle->bpp/8);
+		memcpy((void*)((uintptr_t)fb_desc->common.framebuffer_addr + offset), handle->buf_addr + offset, width * handle->bpp/8);
 	}
 }
 
@@ -83,7 +87,7 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	handle->id = next_handle;
 	handle->size = fb_desc->common.framebuffer_width
 		* fb_desc->common.framebuffer_height
-		* fb_desc->common.framebuffer_bpp;
+		* fb_desc->common.framebuffer_bpp/8;
 
 	handle->buf_addr = palloc(ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE);
 	if(!handle->buf_addr) {
@@ -103,10 +107,22 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	handle->height = fb_desc->common.framebuffer_height;
 	handle->pitch = fb_desc->common.framebuffer_pitch;
 
-	map_handle(handle, false);
+	int flags = VM_RW;
+	if(handle->ctx) {
+		flags |= VM_USER;
+	}
+
+	vmem_map(handle->ctx, handle->addr, handle->buf_addr, handle->size, flags);
 	next_handle++;
 	return handle;
 }
+
+#define get_handle_or_einval(x) \
+	struct gfx_handle* handle = gfx_get_handle(x); \
+	if(!handle) { \
+		sc_errno = EINVAL; \
+			return -1; \
+	}
 
 static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	if(request == 0x2f01) {
@@ -131,27 +147,38 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		}
 
 		return 0;
+	}
 
-	} else if(request == 0x2f02) {
-		struct gfx_handle* handle = gfx_get_handle((unsigned int)_arg);
-		if(!handle) {
-			return -1;
-		}
-
+	if(request == 0x2f02) {
+		get_handle_or_einval((unsigned int)_arg);
 		gfx_handle_enable(handle);
-		return 0;
-
-	} else if(request == 0x2f03) {
-		struct gfx_handle* handle = gfx_get_handle((unsigned int)_arg);
-		if(!handle) {
-			return -1;
-		}
-
-		gfx_handle_render(handle);
 		return 0;
 	}
 
-	sc_errno = ENOSYS;
+	if(request == 0x2f03) {
+		get_handle_or_einval((unsigned int)_arg);
+		gfx_blit_all(handle);
+		return 0;
+	}
+
+	if(request == 0x2f04) {
+		bool copied = false;
+		struct gfx_ul_blit_cmd* cmd = task_memmap(ctx->task, _arg, sizeof(struct gfx_ul_blit_cmd), &copied);
+		if(!cmd) {
+			sc_errno = EINVAL;
+			return -1;
+		}
+
+		get_handle_or_einval(cmd->handle_id);
+		gfx_blit(handle, cmd->x, cmd->y, cmd->width, cmd->height);
+
+		if(copied) {
+			kfree(cmd);
+		}
+		return 0;
+	}
+
+	sc_errno = EINVAL;
 	return -1;
 }
 
@@ -172,7 +199,7 @@ void gfx_init() {
 	// Map the framebuffer into the kernel paging context
 	size_t vmem_size = fb_desc->common.framebuffer_width
       	* fb_desc->common.framebuffer_height
-		* fb_desc->common.framebuffer_bpp;
+		* fb_desc->common.framebuffer_bpp/8;
 	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, VM_RW);
 
 	struct vfs_callbacks sfs_cb = {

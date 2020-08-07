@@ -61,23 +61,23 @@ void fbtext_write_char(char chr) {
 		return;
 	}
 
-	if(chr == '\n') {
+	if(chr == '\n' || last_x + 1 >= cols) {
+		gfx_blit(gfx_handle, 0, last_y * gfx_font.height, gfx_handle->width, gfx_font.height);
+		gfx_blit_all(gfx_handle);
 		last_y++;
 		last_x = 0;
-		gfx_handle_render(gfx_handle);
-		return;
+
+		if(chr == '\n') {
+			return;
+		}
 	}
 
 	last_x++;
-	if(last_x >= cols) {
-		last_x = 0;
-		last_y++;
-	}
-
 	if(last_y >= rows) {
 		size_t move_size = gfx_handle->pitch * gfx_font.height;
 		memcpy(gfx_handle->addr, gfx_handle->addr + move_size, gfx_handle->size - move_size);
 		memset(gfx_handle->addr + gfx_handle->size - move_size, 0, move_size);
+		gfx_blit_all(gfx_handle);
 		last_y--;
 	}
 

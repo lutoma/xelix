@@ -2,8 +2,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <errno.h>
-#include <png.h>
+#include <time.h>
 #include <poll.h>
+#include <png.h>
 
 #include "util.h"
 #include "window.h"
@@ -11,9 +12,6 @@
 #include "bus.h"
 #include "text.h"
 #include "render.h"
-
-#define IIR_GAUSS_BLUR_IMPLEMENTATION
-#include "blur.h"
 
 int main(int argc, char* argv[]) {
 	serial = fopen("/dev/serial1", "w");
@@ -25,8 +23,6 @@ int main(int argc, char* argv[]) {
 
 	int gfxbus_fd = bus_init();
 	int mouse_fd = mouse_init();
-
-	render();
 
 	int pid = fork();
 	if(!pid) {
@@ -46,17 +42,13 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 
-		int need_render = 0;
 		if(pfds[0].revents & POLLIN) {
-			need_render |= handle_mouse();
+			handle_mouse();
 		}
 
 		if(pfds[1].revents & POLLIN) {
-			need_render |= bus_handle_msg();
+			bus_handle_msg();
 		}
 
-		if(need_render) {
-			render();
-		}
 	}
 }
