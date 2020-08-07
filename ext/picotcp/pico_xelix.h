@@ -5,8 +5,8 @@
 #include <log.h>
 #include <mem/kmalloc.h>
 
-#define dbg(args...) log(LOG_INFO, "picotcp: " args);
-//#define dbg(...)
+// #define dbg(args...) log(LOG_INFO, "picotcp: " args);
+#define dbg(...)
 
 #define stack_fill_pattern(...) do {} while(0)
 #define stack_count_free_words(...) do {} while(0)
