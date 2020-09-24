@@ -242,6 +242,11 @@ int main(int argc, const char** argv) {
 		if(syscall->call < (sizeof(syscalls) / sizeof(syscalls[0])) && syscalls[syscall->call].handler) {
 			syscalls[syscall->call].handler(syscall, syscalls[syscall->call].data);
 		}
+
+		// exit syscall, manually end loop for now
+		if(syscall->call == 1) {
+			break;
+		}
 	}
 
 	free(syscall);

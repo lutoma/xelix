@@ -11,6 +11,6 @@ struct mouse_event {
 	uint8_t button_middle:1;
 };
 
-int handle_mouse();
+void handle_mouse();
 void mouse_render_cursor(cairo_t* cr);
 int mouse_init();

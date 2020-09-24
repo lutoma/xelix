@@ -10,16 +10,16 @@
 #include "window.h"
 
 static int mouse_fd = -1;
-static cairo_surface_t* surface = NULL;
+static struct surface* surface = NULL;
 static uint32_t pos_x;
 static uint32_t pos_y;
 
-int handle_mouse() {
+void handle_mouse() {
 	struct mouse_event ev;
 	size_t sz = sizeof(struct mouse_event);
 
 	if(read(mouse_fd, &ev, sz) < sz) {
-		return 0;
+		return;
 	}
 
 	if(ev.x < 0 && pos_x < ev.x * -1) {
@@ -38,26 +38,23 @@ int handle_mouse() {
 		pos_y += ev.y;
 	}
 
+	// Move cursor surface
+	surface_move(surface, (int32_t)pos_x, (int32_t)pos_y);
 
-	if(ev.button_left) {
-		fprintf(serial, "x: %3d, y: %3d, left: %d right: %d middle: %d\n",
-			ev.x, ev.y, ev.button_left, ev.button_right, ev.button_middle);
+	// Run event callbacks
+	struct surface* top = NULL;
+	int32_t top_z = -100000;
 
-
-		//if(main_win) {
-		//	window_set_position(main_win, pos_x, pos_y);
-		//}
-	//	msg_layer->x += ev.x;
-	//	msg_layer->y += ev.y;
+	struct surface* cbs = surfaces;
+	for(; cbs; cbs = cbs->next) {
+		if(cbs->mouse_ev_handler && cbs->z > top_z && surface_intersect(cbs, 1, 1, pos_x, pos_y)) {
+			top_z = cbs->z;
+			top = cbs;
+		}
 	}
 
-	return 1;
-}
-
-void mouse_render_cursor(cairo_t* cr) {
-	if(surface) {
-		cairo_set_source_surface(cr, surface, pos_x, pos_y);
-		cairo_paint(cr);
+	if(top) {
+		top->mouse_ev_handler(top->mouse_ev_meta, pos_x, pos_y, &ev);
 	}
 }
 
@@ -68,8 +65,18 @@ int mouse_init() {
 		return -1;
 	}
 
-	surface = cairo_image_surface_create_from_png("/usr/share/gfxcompd/cursor.png");
-	pos_x = gfx_handle.width / 2 + cairo_image_surface_get_width(surface) / 2;
-	pos_y = gfx_handle.height / 2 + cairo_image_surface_get_height(surface) / 2;
+	cairo_surface_t* cs = cairo_image_surface_create_from_png("/usr/share/gfxcompd/cursor.png");
+	if(!cs) {
+		perror("Could not open cursor image");
+		return -1;
+	}
+
+	surface = surface_new(cs, cairo_image_surface_get_width(cs), cairo_image_surface_get_height(cs));
+	pos_x = gfx_handle.width / 2 + cairo_image_surface_get_width(cs) / 2;
+	pos_y = gfx_handle.height / 2 + cairo_image_surface_get_height(cs) / 2;
+
+	surface_move(surface, (int32_t)pos_x, (int32_t)pos_y);
+	surface->z = 1000;
+	surface_add(surface);
 	return mouse_fd;
 }

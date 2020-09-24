@@ -23,9 +23,11 @@ struct window {
 };
 
 struct window* windows;
+struct window* active_window;
 
 struct window* window_new(const char* title, size_t width, size_t height, uint32_t* data);
 struct window* window_get(uint32_t id);
+void window_toggle_show(struct window* win, int show);
 void window_blit(struct window* win, size_t width, size_t height, size_t x, size_t y);
 void window_set_position(struct window* win, int32_t x, int32_t y);
 void window_add(struct window* window);

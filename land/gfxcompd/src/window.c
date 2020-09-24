@@ -55,6 +55,25 @@ static inline void draw_decoration(struct window* win, size_t width, size_t heig
 	cairo_destroy(cr);
 }
 
+void window_set_position(struct window* win, int32_t x, int32_t y) {
+	win->decoration->x = x;
+	win->decoration->y = y;
+	win->surface->x = x + WINDOW_BORDER_SIZE;
+	win->surface->y = y + TITLE_BAR_HEIGHT;
+}
+
+void window_move(struct window* win, int32_t x, int32_t y) {
+	surface_move(win->decoration, x, y);
+	surface_move(win->surface, x + WINDOW_BORDER_SIZE, y + TITLE_BAR_HEIGHT);
+}
+
+void decoration_mouse_handler(void* meta, uint32_t x, uint32_t y, struct mouse_event* ev) {
+	struct window* win = (struct window*)meta;
+	if(win && ev->button_left) {
+		window_move(win, win->decoration->x + ev->x, win->decoration->y + ev->y);
+	}
+}
+
 struct window* window_new(const char* title, size_t width, size_t height, uint32_t* data) {
 	struct window* window = calloc(1, sizeof(struct window));
 	if(!window) {
@@ -68,8 +87,12 @@ struct window* window_new(const char* title, size_t width, size_t height, uint32
 
 	memcpy(window->title, title, MIN(strlen(title), 1024));
 
-	window->surface = surface_new(width, height);
-	window->decoration = surface_new(decoration_width(width), decoration_height(height));
+	window->surface = surface_new(NULL, width, height);
+	window->surface->name = "Window";
+	window->decoration = surface_new(NULL, decoration_width(width), decoration_height(height));
+	window->decoration->name = "Window decoration";
+	window->decoration->mouse_ev_handler = decoration_mouse_handler;
+	window->decoration->mouse_ev_meta = window;
 
 	window_set_position(window, (gfx_handle.width + width) / 2, (gfx_handle.height + height) / 2);
 	draw_decoration(window, decoration_width(width), decoration_height(height));
@@ -88,6 +111,17 @@ struct window* window_get(uint32_t id) {
 	return NULL;
 }
 
+void window_toggle_show(struct window* win, int show) {
+	if(show == -1) {
+		show = !win->surface->show;
+	}
+
+	win->surface->show = show;
+	win->decoration->show = show;
+	surface_blit_full(win->surface);
+	surface_blit_full(win->decoration);
+}
+
 void window_blit(struct window* win, size_t width, size_t height, size_t x, size_t y) {
 	memcpy((uint32_t*)cairo_image_surface_get_data(win->surface->cs), win->buffer,
 		cairo_image_surface_get_height(win->surface->cs) * cairo_image_surface_get_stride(win->surface->cs));
@@ -96,6 +130,8 @@ void window_blit(struct window* win, size_t width, size_t height, size_t x, size
 }
 
 void window_add(struct window* win) {
+	surface_add(win->decoration);
+	surface_add(win->surface);
 	surface_blit_full(win->decoration);
 
 	struct window* prev = windows;
@@ -111,15 +147,11 @@ void window_add(struct window* win) {
 	} else {
 		windows = win;
 	}
-}
 
-void window_set_position(struct window* win, int32_t x, int32_t y) {
-	win->decoration->x = x;
-	win->decoration->y = y;
-	win->surface->x = x + WINDOW_BORDER_SIZE;
-	win->surface->y = y + TITLE_BAR_HEIGHT;
+	active_window = win;
 }
 
 void window_init() {
 	windows = NULL;
+	active_window = NULL;
 }

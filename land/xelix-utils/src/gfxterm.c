@@ -80,7 +80,7 @@ int cursor_row = 0;
 int cursor_col = 0;
 FILE* serial;
 
-int bg_alpha = 0xb8;
+int bg_alpha = 0xc5;
 
 #define CACHE_MAX 256
 uint8_t* glyph_cache[CACHE_MAX];
@@ -366,7 +366,7 @@ int main() {
 
 	struct msg_window_new msg = {
 		.addr = fb.addr,
-		.title = "~ : bash - Terminal",
+		.title = "~ : bash — Terminal",
 		.width = 800,
 		.height = 600,
 		.x = 50,
