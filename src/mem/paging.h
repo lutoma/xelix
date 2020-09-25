@@ -23,16 +23,19 @@
 #define PAGE_SIZE 0x1000
 
 struct page {
-	bool present    : 1;
-	bool rw         : 1;
-	bool user       : 1;
-	bool accessed   : 1;
-
+	bool present:1;
+	bool rw:1;
+	bool user:1;
+	bool write_through:1;
+	bool cache_disabled:1;
+	bool accessed:1;
 	// Or page size for dir entries
-	bool dirty      : 1;
+	bool dirty:1;
+	bool global:1;
 
-	uint32_t unused : 7;
-	uint32_t frame  : 20;
+	uint8_t _unused:4;
+
+	uint32_t frame:20;
 };
 
 struct paging_context {
