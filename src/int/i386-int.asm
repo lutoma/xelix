@@ -18,6 +18,7 @@
 
 [EXTERN int_dispatch]
 [EXTERN vmem_kernel_hwdata]
+[EXTERN sse_state]
 
 %define PIT_MASTER	0x20
 %define PIT_SLAVE	0xA0
@@ -85,6 +86,9 @@ int_i386_dispatch:
 	mov eax, cr3
 	push eax
 
+	sub esp, 512
+	fxsave [sse_state]
+
 	; load the kernel data segment descriptor
 	mov ax, 0x10
 	mov ds, ax
@@ -111,6 +115,9 @@ int_i386_dispatch:
 	mov esp, eax
 
 .return:
+	fxrstor [sse_state]
+	add esp, 512
+
 	; Set paging context
 	pop eax
 	mov cr3, eax

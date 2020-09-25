@@ -33,6 +33,7 @@ struct task;
 
 /* Interrupt stack frame */
 typedef struct {
+	uint8_t sse_state[512];
 	uint32_t cr3;
 	void* cr2;
 	uint32_t ds;

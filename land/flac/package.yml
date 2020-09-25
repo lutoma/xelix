@@ -10,8 +10,8 @@ configure:
     --prefix=/usr
     --sysconfdir=/etc
     --disable-shared
-    --disable-sse
     --disable-asm-optimizations
+    --disable-cpplibs
     --without-ogg
 make:
   - make

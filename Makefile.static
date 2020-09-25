@@ -7,7 +7,7 @@ ifeq ($(ARCH),arm)
 	AS := $(PREFIX)-gcc
 else
 	PREFIX = i786-pc-xelix
-	MAKE_CFLAGS = -mtune=sandybridge -mgeneral-regs-only -mhard-float -mno-sse -mpopcnt
+	MAKE_CFLAGS = -mtune=sandybridge -mgeneral-regs-only -mhard-float -mpopcnt
 	MAKE_NASMFLAGS = -g -f elf
 	MAKE_ASFLAGS := $(MAKE_CFLAGS) -ffreestanding
 	AS = nasm

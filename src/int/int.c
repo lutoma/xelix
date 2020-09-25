@@ -28,8 +28,12 @@
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
+uint8_t sse_state[512] __aligned(16) UL_VISIBLE("bss");
+uint8_t* int_sse_target UL_VISIBLE("data") = sse_state;
+
 // Called by architecture-specific assembly handlers
 isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
+	memcpy(state->sse_state, sse_state, 512);
 	struct interrupt_reg* reg = int_handlers[intr];
 	volatile task_t* task = scheduler_get_current();
 
@@ -80,6 +84,8 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	debug("state after:\n");
 	dump_isf(LOG_DEBUG, state);
 	#endif
+
+	memcpy(sse_state, state->sse_state, 512);
 	return state;
 }
 

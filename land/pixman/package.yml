@@ -12,8 +12,6 @@ configure:
     --sysconfdir=/etc
     --localstatedir=/var
     --disable-mmx
-    --disable-sse2
-    --disable-sse3
     --disable-vmx
 make:
   - make

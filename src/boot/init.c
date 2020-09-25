@@ -77,6 +77,9 @@ void xelix_main(void) {
 		init_path = INIT_PATH;
 	}
 
+
+	log(LOG_INFO, "Starting %s\n", init_path);
+
 	char* __env[] = { NULL };
 	char* __argv[] = { vfs_basename(init_path), NULL };
 
