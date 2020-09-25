@@ -19,6 +19,7 @@
 
 #include <tty/pty.h>
 #include <fs/vfs.h>
+#include <fs/poll.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
 #include <buffer.h>

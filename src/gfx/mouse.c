@@ -20,6 +20,7 @@
 
 #include <int/int.h>
 #include <fs/sysfs.h>
+#include <fs/poll.h>
 #include <portio.h>
 #include <errno.h>
 #include <bitmap.h>

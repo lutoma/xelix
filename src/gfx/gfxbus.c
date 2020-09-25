@@ -23,6 +23,7 @@
 
 #include <mem/palloc.h>
 #include <fs/sysfs.h>
+#include <fs/poll.h>
 #include <errno.h>
 #include <buffer.h>
 #include <string.h>

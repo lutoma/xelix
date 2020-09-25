@@ -27,6 +27,7 @@
 #include <tasks/task.h>
 #include <tasks/syscall.h>
 #include <fs/vfs.h>
+#include <fs/poll.h>
 #include <errno.h>
 #include <endian.h>
 #include <spinlock.h>

@@ -90,20 +90,6 @@
 #define	F_RSETLKW 	13	/* Set or Clear remote record-lock(Blocking) */
 #define	F_DUPFD_CLOEXEC	14	/* As F_DUPFD, but set close-on-exec flag */
 
-// Poll events
-// Testable events (may be specified in events field)
-#define	POLLIN		0x0001
-#define	POLLPRI		0x0002
-#define	POLLOUT		0x0004
-#define	POLLRDNORM	0x0040
-#define	POLLWRNORM	POLLOUT
-#define	POLLRDBAND	0x0080
-#define	POLLWRBAND	0x0100
-// Non-testable events (may not be specified in events field).
-#define	POLLERR		0x0008
-#define	POLLHUP		0x0010
-#define	POLLNVAL	0x0020
-
 // Keep in sync with values from limits.h
 #define VFS_NAME_MAX 255
 #define VFS_PATH_MAX 1024
@@ -134,12 +120,6 @@ typedef struct {
 	uint32_t st_blocks;
 	long st_spare4[2];
 } __attribute__((packed)) vfs_stat_t;
-
-struct pollfd {
-	int fd;			/* file descriptor */
-	short events;	/* requested events */
-	short revents;	/* returned events */
-};
 
 struct vfs_callback_ctx {
 	// File descriptor - Only set on vfs calls that take open files
@@ -233,7 +213,6 @@ int vfs_utimes(struct task* task, const char* orig_path, struct timeval times[2]
 int vfs_link(struct task* task, const char* orig_path, const char* orig_new_path);
 int vfs_readlink(struct task* task, const char* orig_path, char* buf, size_t size);
 int vfs_rmdir(struct task* task, const char* orig_path);
-int vfs_poll(struct task* task, struct pollfd* fds, uint32_t nfds, int timeout);
 int vfs_stat(struct task* task, char* path, vfs_stat_t* dest);
 void vfs_init();
 

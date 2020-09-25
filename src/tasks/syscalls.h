@@ -26,6 +26,7 @@
 #include <net/socket.h>
 #include <fs/vfs.h>
 #include <fs/pipe.h>
+#include <fs/poll.h>
 #include <fs/mount.h>
 #include <time.h>
 

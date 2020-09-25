@@ -23,6 +23,7 @@
 #include <int/int.h>
 #include <block/random.h>
 #include <fs/sysfs.h>
+#include <fs/poll.h>
 #include <portio.h>
 #include <buffer.h>
 #include <errno.h>

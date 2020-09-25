@@ -19,6 +19,7 @@
 
 #include "pipe.h"
 #include <fs/vfs.h>
+#include <fs/poll.h>
 #include <errno.h>
 #include <tasks/task.h>
 #include <mem/kmalloc.h>
