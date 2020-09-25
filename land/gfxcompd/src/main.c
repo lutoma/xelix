@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 	while(1) {
 		pfds[0].revents = 0;
 		pfds[1].revents = 0;
-		if(poll(pfds, 2, 1) < 1) {
+		if(poll(pfds, 2, -1) < 1) {
 			continue;
 		}
 
@@ -39,8 +39,7 @@ int main(int argc, char* argv[]) {
 
 		if(pfds[1].revents & POLLIN) {
 			bus_handle_msg();
+			update_bar();
 		}
-
-		update_bar();
 	}
 }
