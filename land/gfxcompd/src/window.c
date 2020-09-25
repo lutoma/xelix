@@ -15,8 +15,6 @@
 #define decoration_width(x) (x + WINDOW_BORDER_SIZE * 2)
 #define decoration_height(y) (y + TITLE_BAR_HEIGHT + WINDOW_BORDER_SIZE)
 
-static uint32_t last_id = -1;
-
 static inline void draw_decoration(struct window* win, size_t width, size_t height) {
 	cairo_surface_t* surface = win->decoration->cs;
 
@@ -74,13 +72,13 @@ void decoration_mouse_handler(void* meta, uint32_t x, uint32_t y, struct mouse_e
 	}
 }
 
-struct window* window_new(const char* title, size_t width, size_t height, uint32_t* data) {
+struct window* window_new(uint32_t wid, const char* title, size_t width, size_t height, uint32_t* data) {
 	struct window* window = calloc(1, sizeof(struct window));
 	if(!window) {
 		return NULL;
 	}
 
-	window->id = __sync_add_and_fetch(&last_id, 1);
+	window->id = wid;
 	window->buffer = data;
 	window->width = width;
 	window->height = height;

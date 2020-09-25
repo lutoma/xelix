@@ -11,6 +11,7 @@
 #include "window.h"
 
 struct msg_window_new {
+	uint32_t wid;
 	void* addr;
 	char title[1024];
 	size_t width;
@@ -61,7 +62,7 @@ int bus_handle_msg() {
 	// New window
 	if(msg_type == 1) {
 		struct msg_window_new* msg = (struct msg_window_new*)buf;
-		struct window* win = window_new(msg->title, msg->width, msg->height, msg->addr);
+		struct window* win = window_new(msg->wid, msg->title, msg->width, msg->height, msg->addr);
 		window_set_position(win, msg->x, msg->y);
 		window_add(win);
 		return 0;

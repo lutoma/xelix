@@ -29,9 +29,10 @@
 #include <string.h>
 #include <log.h>
 
-struct buffer* buf = NULL;
-void* gfxbuf = NULL;
-task_t* master_task = NULL;
+static struct buffer* buf = NULL;
+static void* gfxbuf = NULL;
+static task_t* master_task = NULL;
+static int last_wid = -1;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	if(!buffer_size(buf) && ctx->fp->flags & O_NONBLOCK) {
@@ -68,7 +69,6 @@ static int sfs_poll(struct vfs_callback_ctx* ctx, int events) {
 static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	if(request == 0x2f01) {
 		master_task = ctx->task;
-		log(LOG_DEBUG, "gfxbus master: %d\n", ctx->task->pid);
 		return 0;
 	} else if(request == 0x2f02) {
 		size_t size = (size_t)_arg;
@@ -77,13 +77,12 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return 0;
 		}
 
-		log(LOG_DEBUG, "gfxbus buffer alloc pid %d\n", ctx->task->pid);
 		gfxbuf = zpalloc(RDIV(size, PAGE_SIZE));
-
 		vmem_map_flat(ctx->task->vmem_ctx, gfxbuf, size, VM_USER | VM_RW);
 		vmem_map_flat(master_task->vmem_ctx, gfxbuf, size, VM_USER | VM_RW);
-		log(LOG_DEBUG, "gfxbus allocated %#x\n", gfxbuf);
 		return (uintptr_t)gfxbuf;
+	} else if(request == 0x2f03) {
+		return __sync_add_and_fetch(&last_wid, 1);
 	}
 
 	sc_errno = EINVAL;

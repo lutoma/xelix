@@ -23,7 +23,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
-#include <sys/ioctl.h>
 #include <poll.h>
 #include <pty.h>
 #include <signal.h>
@@ -31,6 +30,7 @@
 #include <sys/termios.h>
 #include <sys/param.h>
 #include <wchar.h>
+#include <xelixgfx.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "util.h"
@@ -41,35 +41,8 @@
 #define BLOCK_WIDTH 8
 #define BLOCK_TEXTOFFSET 3
 
-#define block_ptr(row, col) (&fb.addr[row * BLOCK_HEIGHT * (fb.pitch / 4) + \
+#define block_ptr(row, col) (&window.addr[row * BLOCK_HEIGHT * (window.pitch / 4) + \
 	 col * BLOCK_WIDTH])
-
-struct msg_window_new {
-	void* addr;
-	char title[1024];
-	size_t width;
-	size_t height;
-	int32_t x;
-	int32_t y;
-};
-
-struct msg_blit {
-	uint32_t wid;
-	size_t width;
-	size_t height;
-	int32_t x;
-	int32_t y;
-};
-
-struct {
-	int fd;
-	uint32_t* addr;
-	uint32_t bpp;
-	uint32_t width;
-	uint32_t height;
-	uint32_t pitch;
-	uint32_t size;
-} fb;
 
 TMT* vt;
 FT_Face face;
@@ -79,6 +52,7 @@ int kbd_fd;
 int cursor_row = 0;
 int cursor_col = 0;
 FILE* serial;
+struct gfx_window window;
 
 int bg_alpha = 0xc5;
 
@@ -87,21 +61,16 @@ uint8_t* glyph_cache[CACHE_MAX];
 uint8_t* glyph_cache_bold[CACHE_MAX];
 FT_Library ft_library;
 
-static void deallocate(bool release_fb) {
+static void deallocate() {
 	close(kbd_fd);
 	close(ptm_fd);
 	tmt_close(vt);
 	FT_Done_FreeType(ft_library);
-/*
-	if(release_fb) {
-		ioctl(fb.fd, 0x2f04, (uint32_t)0);
-	}
-*/
-	close(fb.fd);
+	gfx_close();
 }
 
 void do_exit(int signum) {
-	deallocate(true);
+	deallocate();
 	exit(0);
 }
 
@@ -176,7 +145,7 @@ void write_char(const TMTSCREEN* screen, int row, int col) {
 	uint32_t bg_col = convert_color(chr.a.bg, 1);
 
 	for(int i = 0; i < BLOCK_HEIGHT; i++) {
-		memset32(block_ptr(row, col) + i * fb.pitch/4, bg_col, BLOCK_WIDTH);
+		memset32(block_ptr(row, col) + i * window.pitch/4, bg_col, BLOCK_WIDTH);
 	}
 
 	uint8_t* glyph = render_glyph(chr.c, chr.a.bold);
@@ -200,23 +169,9 @@ void write_char(const TMTSCREEN* screen, int row, int col) {
 				alpha = bg_alpha + slope * glyph[y * BLOCK_WIDTH + x];
 			}
 
-			*(addr + y * fb.pitch/4 + x) = rgba_interp(bg_col, fg_col, glyph[y * BLOCK_WIDTH + x]) & 0xffffff | alpha << 24;
+			*(addr + y * window.pitch/4 + x) = rgba_interp(bg_col, fg_col, glyph[y * BLOCK_WIDTH + x]) & 0xffffff | alpha << 24;
 		}
 	}
-}
-
-static inline void send_blit_msg(size_t x, size_t y, size_t width, size_t height) {
-	uint16_t two = 2;
-	struct msg_blit msg = {
-		.wid = 0,
-		.width = width,
-		.height = height,
-		.x = x,
-		.y = y
-	};
-
-	write(fb.fd, &two, 2);
-	write(fb.fd, &msg, sizeof(struct msg_blit));
 }
 
 void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
@@ -248,7 +203,7 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 				}
 			}
 			tmt_clean(vt);
-			send_blit_msg(0, update_start, fb.width, update_end - update_start);
+			gfx_window_blit(&window, 0, update_start, window.width, update_end - update_start);
 			break;
 		case TMT_MSG_ANSWER:
 			write(ptm_fd, a, strlen(a));
@@ -256,15 +211,15 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 		case TMT_MSG_MOVED:
 			// draw new cursor, redraw previous cursor position
 			for(int i = 0; i < BLOCK_HEIGHT; i++) {
-				*(block_ptr(c->r, c->c) + (i * fb.pitch/4)) = 0xffffffff;
+				*(block_ptr(c->r, c->c) + (i * window.pitch/4)) = 0xffffffff;
 			}
 
 			write_char(s, cursor_row, cursor_col);
-			send_blit_msg(cursor_col * BLOCK_WIDTH, cursor_row * BLOCK_HEIGHT, 1, BLOCK_HEIGHT);
+			gfx_window_blit(&window, cursor_col * BLOCK_WIDTH, cursor_row * BLOCK_HEIGHT, 1, BLOCK_HEIGHT);
 
 			cursor_row = c->r;
 			cursor_col = c->c;
-			send_blit_msg(cursor_col * BLOCK_WIDTH, cursor_row * BLOCK_HEIGHT, 1, BLOCK_HEIGHT);
+			gfx_window_blit(&window, cursor_col * BLOCK_WIDTH, cursor_row * BLOCK_HEIGHT, 1, BLOCK_HEIGHT);
 			break;
 	}
 }
@@ -346,37 +301,18 @@ int main() {
 		render_glyph(c, 1);
 	}
 
-	FILE* serial = fopen("/dev/serial1", "w");
-	setvbuf(serial, NULL, _IONBF, 0);
-
-	// Get gfxbus handle
-	fb.fd = open("/dev/gfxbus", O_RDWR);
-	if(!fb.fd) {
-		perror("Could not open /dev/gfxbus");
+	if(gfx_open() < 0) {
+		perror("Could not initialize gfx handle");
 		exit(EXIT_FAILURE);
 	}
 
-	fb.bpp = 32;
-	fb.width = 800;
-	fb.height = 600;
-	fb.pitch = fb.width * 4;
-	fb.size = fb.pitch * fb.height * 4;
-	fb.addr = (uint32_t*)ioctl(fb.fd, 0x2f02, fb.size);
-	memset32(fb.addr, 0x1e1e1e | bg_alpha << 24, fb.size / 4);
+	if(gfx_window_new(&window, "~ : bash — Terminal", 800, 600) < 0) {
+		perror("Could not initialize gfx handle");
+		exit(EXIT_FAILURE);
+	}
 
-	struct msg_window_new msg = {
-		.addr = fb.addr,
-		.title = "~ : bash — Terminal",
-		.width = 800,
-		.height = 600,
-		.x = 50,
-		.y = 100
-	};
-
-	int one = 1;
-	write(fb.fd, &one, 2);
-	write(fb.fd, &msg, sizeof(struct msg_window_new));
-	send_blit_msg(0, 0, fb.width, fb.height);
+	memset32(window.addr, 0x1e1e1e | bg_alpha << 24, window.size / 4);
+	gfx_window_blit_full(&window);
 
 	// Open keyboard device
 	kbd_fd = open("/dev/keyboard1", O_RDONLY | O_NONBLOCK);
@@ -385,8 +321,8 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	unsigned int rows = (fb.height / BLOCK_HEIGHT) - 1;
-	unsigned int cols = fb.width / BLOCK_WIDTH;
+	unsigned int rows = (window.height / BLOCK_HEIGHT) - 1;
+	unsigned int cols = window.width / BLOCK_WIDTH;
 
 	vt = tmt_open(rows, cols, tmt_callback,
 		NULL, L"→←↑↓■◆▒°±▒┘┐┌└┼⎺───⎽├┤┴┬│≤≥π≠£•");
@@ -400,8 +336,8 @@ int main() {
 	struct winsize ws = {
 		.ws_row = rows,
 		.ws_col = cols,
-		.ws_xpixel = fb.width,
-		.ws_ypixel = fb.height,
+		.ws_xpixel = window.width,
+		.ws_ypixel = window.height,
 	};
 
 	pid_t pid = forkpty(&ptm_fd, NULL, NULL, &ws);
@@ -415,7 +351,7 @@ int main() {
 		fcntl(ptm_fd, F_SETFL, flags | O_NONBLOCK);
 	} else {
 		// Close all our open files and free memory
-		deallocate(false);
+		deallocate();
 
 		setenv("TERM", "ansi", 1);
 		if(execl("/usr/bin/login", "login") < 0) {
