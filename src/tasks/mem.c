@@ -83,7 +83,7 @@ void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool us
 void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 	struct vmem_range* vmem_range = vmem_get_range(task->vmem_ctx, addr, false);
 	if(!vmem_range) {
-		return 0;
+		return NULL;
 	}
 
 	uintptr_t ptr_end = (uintptr_t)addr + ptr_size;
@@ -97,13 +97,14 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 		 * physical memory, so just pass it directly.
 		 */
 		if(ptr_end <= (uintptr_t)virt_end) {
+			*copied = false;
 			return vmem_translate_ptr(vmem_range, addr, false);
 		}
 
 		// Get next vmem range
 		cr = vmem_get_range(task->vmem_ctx, virt_end + PAGE_SIZE * i, false);
 		if(!cr) {
-			return 0;
+			return NULL;
 		}
 
 		// Check if next range is in adjacent physical pages
