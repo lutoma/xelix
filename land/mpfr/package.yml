@@ -1,11 +1,12 @@
 name: mpfr
-version: 4.0.2
+version: 4.1.0
 sources:
-  - url: https://www.mpfr.org/mpfr-current/mpfr-4.0.2.tar.xz
+  - url: https://www.mpfr.org/mpfr-current/mpfr-4.1.0.tar.xz
 dependencies:
   - gmp
+patch_skip_path: 0
 patches:
-  - mpfr-4.0.2.patch
+  - mpfr-4.1.0.patch
 configure:
   - ./configure
     --host=i786-pc-xelix

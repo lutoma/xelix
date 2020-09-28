@@ -1,9 +1,10 @@
 name: gmp
-version: '6.1.2'
+version: '6.2.0'
 sources:
-  - url: https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz
+  - url: https://gmplib.org/download/gmp/gmp-6.2.0.tar.xz
+patch_skip_path: 0
 patches:
-  - gmp-6.1.2.patch
+  - gmp-6.2.0.patch
 configure:
   - CC=i786-pc-xelix-gcc ./configure
     --host=i786-pc-xelix
