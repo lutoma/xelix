@@ -58,7 +58,7 @@ void menu_button_mouse_cb(void* meta, uint32_t x, uint32_t y, struct mouse_event
 	if(ev->button_left) {
 		int pid = fork();
 		if(!pid) {
-			execl("/usr/bin/gfxterm", "gfxterm");
+			execl("/usr/bin/gfxterm", "gfxterm", (char*)NULL);
 			exit(-1);
 		}
 	}

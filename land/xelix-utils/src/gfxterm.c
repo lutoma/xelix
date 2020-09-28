@@ -354,7 +354,7 @@ int main() {
 		deallocate();
 
 		setenv("TERM", "ansi", 1);
-		if(execl("/usr/bin/login", "login") < 0) {
+		if(execl("/usr/bin/bash", "bash", "-l", (char*)NULL) < 0) {
 			perror("Could not execute subprocess");
 			exit(EXIT_FAILURE);
 		}

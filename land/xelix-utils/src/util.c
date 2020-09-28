@@ -146,7 +146,7 @@ void run_shell(struct passwd* pwd, bool print_motd) {
 		fflush(stdout);
 	}
 
-	execl(pwd->pw_shell, pwd->pw_shell, "-l");
+	execl(pwd->pw_shell, pwd->pw_shell, "-l", (char*)NULL);
 	perror("Could not launch shell");
 	return;
 }
