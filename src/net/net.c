@@ -19,6 +19,7 @@
 
 #include "net.h"
 #include <buffer.h>
+#include <spinlock.h>
 #include <pico_stack.h>
 #include <pico_ipv4.h>
 #include <pico_device.h>
@@ -31,6 +32,7 @@
 
 #ifdef ENABLE_PICOTCP
 
+spinlock_t net_pico_lock;
 static bool initialized = false;
 static uint32_t dhcp_xid;
 

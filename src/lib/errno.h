@@ -21,7 +21,9 @@
 #include <tasks/scheduler.h>
 
 #define sc_errno (*__syscall_errno())
-uint32_t __dummy_errno;
+
+// In src/boot/init.c
+extern uint32_t __dummy_errno;
 static inline uint32_t* __syscall_errno(void) {
 	task_t* task = scheduler_get_current();
 	return task ? &task->syscall_errno : &__dummy_errno;

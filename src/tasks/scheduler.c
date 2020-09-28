@@ -23,6 +23,7 @@
 #include <int/int.h>
 
 static task_t* current_task = NULL;
+enum scheduler_state scheduler_state;
 
 task_t* scheduler_get_current() {
 	return current_task;

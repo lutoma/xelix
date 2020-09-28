@@ -28,6 +28,7 @@
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
+struct interrupt_reg int_handlers[512][10];
 uint8_t sse_state[512] __aligned(16) UL_VISIBLE("bss");
 uint8_t* int_sse_target UL_VISIBLE("data") = sse_state;
 

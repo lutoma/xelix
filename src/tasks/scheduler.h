@@ -21,12 +21,12 @@
 #include <tasks/task.h>
 #include <int/int.h>
 
-enum {
+enum scheduler_state {
 	SCHEDULER_OFF,
 	SCHEDULER_INITIALIZING,
 	SCHEDULER_INITIALIZED
-} scheduler_state;
-
+};
+extern enum scheduler_state scheduler_state;
 
 void scheduler_add(task_t *task);
 task_t* scheduler_find(uint32_t pid);

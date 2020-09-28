@@ -69,7 +69,7 @@ struct interrupt_reg {
 };
 
 // Can't use kmalloc here as this is used during early boot. 10 should be plenty
-struct interrupt_reg int_handlers[512][10];
+extern struct interrupt_reg int_handlers[512][10];
 
 static inline void int_register(int n, interrupt_handler_t handler, bool can_reent) {
 	struct interrupt_reg* reg = int_handlers[n];

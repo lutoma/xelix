@@ -19,7 +19,7 @@ OBJCOPY := $(PREFIX)-objcopy
 QEMU := qemu-system-$(ARCH)
 LD := $(CC)
 
-MAKE_CFLAGS += -std=gnu18 -fcommon -pipe -g -O3 -ffreestanding -fno-omit-frame-pointer -fstack-protector-strong -Wall -Wframe-larger-than=1024 -Wcast-align $(INCLUDE)
+MAKE_CFLAGS += -std=gnu18 -pipe -g -O3 -ffreestanding -fno-omit-frame-pointer -fstack-protector-strong -Wall -Wframe-larger-than=1024 -Wcast-align $(INCLUDE)
 MAKE_LDFLAGS := -T src/boot/$(ARCH)-linker.ld -nostdlib -lgcc
 
 ifeq ($(shell uname -s), Darwin)

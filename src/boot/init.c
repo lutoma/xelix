@@ -44,6 +44,9 @@
 #include <net/net.h>
 #endif
 
+// Used in lib/errno.h
+uint32_t __dummy_errno;
+
 void (*boot_sequence[])(void) = {
 #ifdef __i386__
 	serial_init, gdt_init, int_init, timer_init, multiboot_init,
