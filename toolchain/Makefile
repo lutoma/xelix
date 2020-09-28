@@ -5,7 +5,7 @@ BINUTILS_VERSION=2.31.1
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
 BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 
-GCC_VERSION=9.2.0
+GCC_VERSION=10.2.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 

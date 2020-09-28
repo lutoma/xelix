@@ -1,7 +1,7 @@
 PATH += :../../toolchain/local/bin/
 CC := i786-pc-xelix-gcc
 LD := i786-pc-xelix-ld
-CFLAGS += -std=gnu18 -O3 -g -D_GNU_SOURCE -I$(DESTDIR)/usr/include/freetype2
+CFLAGS += -std=gnu18 -fcommon -O3 -g -D_GNU_SOURCE -I$(DESTDIR)/usr/include/freetype2
 DESTDIR ?= ../../../mnt
 
 .PHONY: all
