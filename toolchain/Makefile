@@ -68,15 +68,15 @@ gcc-make:
 		--with-headers=../../download/newlib-${NEWLIB_VERSION}/newlib/libc/include \
 		--without-docdir
 
-	make -C build/gcc all-gcc
-	make -C build/gcc all-target-libgcc
-	make -C build/gcc all-target-libstdc++-v3
+	make -j 10 -C build/gcc all-gcc
+	make -j 10 -C build/gcc all-target-libgcc
+	make -j 10 -C build/gcc all-target-libstdc++-v3
 
 gcc-install:
 	make -C build/gcc install-gcc
 	make -C build/gcc install-target-libgcc
 	make -C build/gcc install-target-libstdc++-v3
-	ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc
+	ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc || true
 
 
 

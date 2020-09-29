@@ -85,3 +85,34 @@
    *)
      os_include_dir="os/generic"
      ;;
+--- gcc-10.2.0/libstdc++-v3/configure	2020-09-30 00:07:36.453707692 +0200
++++ gcc-10.2.0/libstdc++-v3/configure	2020-09-30 00:07:17.023791569 +0200
+@@ -74117,9 +74117,9 @@ _ACEOF
+
+
+     ;;
+-  *)
+-    as_fn_error $? "No support for this host/target combination." "$LINENO" 5
+-   ;;
++#  *)
++#    as_fn_error $? "No support for this host/target combination." "$LINENO" 5
++#   ;;
+ esac
+
+   fi
+--- gcc-10.2.0/gcc/configure	2020-09-30 01:02:35.104945210 +0200
++++ gcc-10.2.0/gcc/configure	2020-09-30 01:02:45.814901591 +0200
+@@ -11623,13 +11623,6 @@ rlim_t l = 0;
+   return 0;
+ }
+ _ACEOF
+-if ac_fn_cxx_try_compile "$LINENO"; then :
+-
+-else
+-
+-$as_echo "#define rlim_t long" >>confdefs.h
+-
+-fi
+ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+ # On AIX 5.2, <ldfcn.h> conflicts with <fcntl.h>, as both define incompatible

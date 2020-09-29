@@ -31,3 +31,6 @@ install:
   - cp -r /tmp/newlib-install/usr/i786-pc-xelix/* $DESTDIR/usr/
   - cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/xelix/crtn.o $DESTDIR/usr/lib/
   - rm -r /tmp/newlib-install
+
+  # Some GNU packages expect xlocale.h to exist
+  - ln -s locale.h $DESTDIR/usr/include/xlocale.h

@@ -39,10 +39,6 @@ pid_t _wait (int *);
 pid_t _wait (int *);
 
 #ifdef __cplusplus
-};
-#endif
-
-#ifdef __cplusplus
-}       /* C++ */
+}
 #endif
 #endif
