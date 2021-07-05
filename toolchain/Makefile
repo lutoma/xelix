@@ -58,7 +58,7 @@ gcc-patch:
 	cp ../land/gcc/xelix.h download/gcc-${GCC_VERSION}/gcc/config/
 
 gcc-make:
-	rm -r build/gcc
+	-rm -r build/gcc
 	mkdir -p build/gcc
 	cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure \
 		--target=${TARGET} \
