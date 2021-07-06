@@ -27,7 +27,7 @@
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
 
-#ifdef LOG_STORE
+#ifdef CONFIG_LOG_STORE
 /* Since the log is also used before kmalloc is initialized, first use a static
  * buffer, then switch as soon as kmalloc is ready.
  */
@@ -102,7 +102,7 @@ void log(uint32_t level, const char *fmt, ...) {
 	 * not very helpful, consumes a lot of memory and can cause deadlocks
 	 * (kmalloc debug could end up calling kmalloc in store and lock).
 	 */
-	#ifdef LOG_STORE
+	#ifdef CONFIG_LOG_STORE
 	size_t fmt_len = vsnprintf(fmt_string, 500, fmt, va);
 	if(level > LOG_DEBUG) {
 		store(level, fmt_string, fmt_len);
@@ -117,20 +117,20 @@ void log(uint32_t level, const char *fmt, ...) {
 	vsnprintf(fmt_string, 500, fmt, va);
 	#endif
 
-	#if LOG_SERIAL_LEVEL != 0 || LOG_PRINT_LEVEL != 0
+	#if CONFIG_LOG_SERIAL_LEVEL != 0 || CONFIG_LOG_PRINT_LEVEL != 0
 	char prefix[30];
 	snprintf(prefix, 30, "[%d:%03d] ", uptime(), timer_tick);
 	#endif
 
-	#if LOG_SERIAL_LEVEL != 0
-	if(level >= LOG_SERIAL_LEVEL) {
+	#if CONFIG_LOG_SERIAL_LEVEL != 0
+	if(level >= CONFIG_LOG_SERIAL_LEVEL) {
 		serial_printf(prefix);
 		serial_printf(fmt_string);
 	}
 	#endif
 
-	#if LOG_PRINT_LEVEL != 0
-	if(level >= LOG_PRINT_LEVEL) {
+	#if CONFIG_LOG_PRINT_LEVEL != 0
+	if(level >= CONFIG_LOG_PRINT_LEVEL) {
 		printf(prefix);
 		printf(fmt_string);
 	}
@@ -144,7 +144,7 @@ void log_dump() {
 }
 
 void log_init() {
-	#ifdef LOG_STORE
+	#ifdef CONFIG_LOG_STORE
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

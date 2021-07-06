@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_AC97
+#ifdef CONFIG_ENABLE_AC97
 
 #include <sound/i386-ac97.h>
 #include <log.h>

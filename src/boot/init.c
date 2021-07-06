@@ -40,7 +40,7 @@
 #include <sound/i386-ac97.h>
 #include <boot/multiboot.h>
 
-#ifdef ENABLE_PICOTCP
+#ifdef CONFIG_ENABLE_PICOTCP
 #include <net/net.h>
 #endif
 
@@ -60,11 +60,11 @@ void xelix_main(void) {
 		boot_sequence[i]();
 	}
 
-	#ifdef ENABLE_PICOTCP
+	#ifdef CONFIG_ENABLE_PICOTCP
 	net_init();
 	#endif
 
-	#ifdef ENABLE_AC97
+	#ifdef CONFIG_ENABLE_AC97
 	ac97_init();
 	#endif
 
@@ -77,7 +77,7 @@ void xelix_main(void) {
 
 	char* init_path = cmdline_get("init");
 	if(!init_path) {
-		init_path = INIT_PATH;
+		init_path = CONFIG_INIT_PATH;
 	}
 
 

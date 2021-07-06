@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_NE2K
+#ifdef CONFIG_ENABLE_NE2K
 
 #include <net/i386-ne2k.h>
 #include <net/net.h>

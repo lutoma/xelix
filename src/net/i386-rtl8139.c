@@ -18,9 +18,9 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_RTL8139
+#ifdef CONFIG_ENABLE_RTL8139
 
-#include <hw/rtl8139.h>
+#include <net/i386-rtl8139.h>
 #include <hw/pci.h>
 
 #include <log.h>

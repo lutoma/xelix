@@ -17,3 +17,5 @@ xelix.map
 /xpkg-build
 .xpkg-status
 /site
+.config
+.config.old

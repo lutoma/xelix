@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_EXT2
+#ifdef CONFIG_ENABLE_EXT2
 
 #include "ext2_internal.h"
 #include "misc.h"
@@ -305,4 +305,4 @@ void ext2_dump_inode(struct inode* buf) {
 	}
 }
 
-#endif /* ENABLE_EXT2 */
+#endif /* CONFIG_ENABLE_EXT2 */

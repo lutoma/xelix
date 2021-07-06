@@ -56,7 +56,9 @@ In addition to the toolchain, the [NASM](https://www.nasm.us/) assembler is also
 Once you have that in place, you can compile Xelix using:
 
 	#!bash
-	make gconfig
+	# Optional, if you want to customize settings:
+	make menuconfig
+
 	./configure
 	make
 
