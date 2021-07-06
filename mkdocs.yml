@@ -7,8 +7,9 @@ markdown_extensions:
   - tables
   - admonition
   - def_list
-  - codehilite:
-      guess_lang: false
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
   - toc:
       permalink: true
 theme:

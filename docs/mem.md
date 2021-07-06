@@ -10,10 +10,11 @@ Physical memory is allocated using a page allocator (`mem/palloc.c`). It is the 
 
 It is best suited for large, long-term allocations where the size is fixed or stored in a side channel, or for allocations that need to align to page boundaries anyway (like task memory).
 
-	#!c
-	#include <mem/palloc.h>
-	void* palloc(uint32_t num_pages);
-	void pfree(uint32_t page_id, uint32_t num_pages);
+```c
+#include <mem/palloc.h>
+void* palloc(uint32_t num_pages);
+void pfree(uint32_t page_id, uint32_t num_pages);
+```
 
 ## kmalloc
 

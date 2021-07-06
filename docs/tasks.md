@@ -22,21 +22,24 @@ Tasks have a number of states they can be in over their lifetime:
 
 A new `task_t` struct can be created using the `task_new` function from `src/tasks/task.h`:
 
-	#!c
-	task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
-		char** environ, uint32_t envc, char** argv, uint32_t argc);
+```c
+task_t* task_new(task_t* parent, uint32_t pid, char name[TASK_MAXNAME],
+	char** environ, uint32_t envc, char** argv, uint32_t argc);
+```
 
 This will create a memory context and allocate resources for the task. When this is done, a binary can be loaded into task memory using
 
-	#!c
-	int elf_load_file(task_t* task, char* path)
+```c
+int elf_load_file(task_t* task, char* path)
+```
 
 This loads the program headers from the ELF file and maps them into memory as requested. It also sets the absolute path and task permissions (when setuid is set) in the task struct.
 
 The task can then be added to the scheduler (`src/tasks/scheduler.h`), at which point it starts running:
 
-	#!c
-	void scheduler_add(task_t* task)
+```c
+void scheduler_add(task_t* task)
+```
 
 This manual process of adding a task is only used once in the kernel in `src/boot/init.c` to start PID 1. All other programs are usually started using the `execve` syscall (implemented by `task_execve` in `src/tasks/task.c`), which handles all of the steps above.
 
@@ -54,13 +57,14 @@ As soon as the exit status has been retrieved the task state changes to `TASK_ST
 
 Task memory allocations are stored in a linked list of `struct task_mem` in `src/tasks/mem.c`. Memory can be mapped into the task address space using
 
-	#!c
-	void task_add_mem(task_t* task, void* virt_start, void* phys_start,
-		uint32_t size, enum task_mem_section section, int flags);
+```c
+void task_add_mem(task_t* task, void* virt_start, void* phys_start,
+	uint32_t size, enum task_mem_section section, int flags);
 
-	// If virt_start and phys_start are equal, task_add_mem_flat can be used
-	void task_add_mem_flat(task_t* task, void* start,
-		uint32_t size, enum task_mem_section section, int flags);
+// If virt_start and phys_start are equal, task_add_mem_flat can be used
+void task_add_mem_flat(task_t* task, void* start,
+	uint32_t size, enum task_mem_section section, int flags);
+```
 
 The memory region that `phys_start` points to already needs to be allocated, for example using `kmalloc`.
 
@@ -98,8 +102,9 @@ All syscalls in Xelix use interrupt `0x80`, which is registered during boot by `
 
 The signature for syscall callbacks is
 
-	#!c
-	uint32_t (*syscall_cb)(task_t* task, [isf_t* state], [0 to 3 arguments])
+```c
+uint32_t (*syscall_cb)(task_t* task, [isf_t* state], [0 to 3 arguments])
+```
 
 state may or may not be passed depending on global flags, and the number and type of arguments depends on the argument flags (see below).
 
@@ -107,9 +112,9 @@ state may or may not be passed depending on global flags, and the number and typ
 
 Syscalls are defined in the syscall table in `src/tasks/syscalls.h` using entries of the format
 
-
-	#!c
-	{"name", callback, flags, arg0_flags, arg1_flags, arg2_flags, ptr_size}
+```c
+{"name", callback, flags, arg0_flags, arg1_flags, arg2_flags, ptr_size}
+```
 
 name
 :	A syscall name for debugging purposes
@@ -156,14 +161,15 @@ If none of SCA_SIZE_IN_x are passed, the default size from ptr_size is used.
 
 xelix has basic strace facilities using the `strace` syscall. This syscall works like fork(), except it returns a file descriptor from which the syscalls invoked by the child process can be read in the following format:
 
-	#!c
-	struct strace {
-		uint32_t call;
-		uint32_t result;
-		uint32_t errno;
-		uintptr_t args[3];
-		char ptrdata[3][0x50];
-	};
+```c
+struct strace {
+	uint32_t call;
+	uint32_t result;
+	uint32_t errno;
+	uintptr_t args[3];
+	char ptrdata[3][0x50];
+};
+```
 
 If the argument is marked as a pointer in the syscall table (see above), ptrdata contains the first 0x50 bytes of the buffer.
 Internally, the strace syscall opens a pipe, assigns the write end of it to `task->strace_fd` for the child task, and returns the read end to the parent task.
