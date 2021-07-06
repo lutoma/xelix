@@ -37,6 +37,9 @@ all: xelix.bin
 ext/picotcp/build/lib/libpicotcp.a:
 	make -C ext/picotcp
 
+.config:
+	util/kconfiglib/alldefconfig.py
+
 src/lib/config.h: Kconfig .config
 	util/kconfiglib/genconfig.py --header-path src/lib/config.h
 
