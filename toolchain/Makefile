@@ -5,7 +5,7 @@ BINUTILS_VERSION=2.31.1
 BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
 BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 
-GCC_VERSION=10.2.0
+GCC_VERSION=11.1.0
 GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 
@@ -17,10 +17,10 @@ PATH:=$(PATH):$(CURDIR)/local/bin
 
 .PHONY: toolchain install binutils-all gcc-all newlib-all
 
-toolchain: binutils-all gcc-all newlib-all
+toolchain: binutils-all gcc-all newlib-make newlib-install
 
 binutils-all: binutils-download binutils-patch binutils-make binutils-install
-gcc-all: gcc-download gcc-patch gcc-make gcc-install
+gcc-all: gcc-download newlib-download newlib-patch gcc-patch gcc-make gcc-install
 newlib-all: newlib-download newlib-patch newlib-make newlib-install
 
 
@@ -36,7 +36,7 @@ binutils-patch:
 	cp ../land/binutils/elf_i386_xelix.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
 	cd download/binutils-${BINUTILS_VERSION}/ld && aclocal
 	cd download/binutils-${BINUTILS_VERSION}/ld && automake
-	cd download/binutils-${BINUTILS_VERSION} && autoreconf
+	cd download/binutils-${BINUTILS_VERSION} && autoreconf-2.69
 
 binutils-make:
 	mkdir -p build/binutils
@@ -58,7 +58,7 @@ gcc-patch:
 	cp ../land/gcc/xelix.h download/gcc-${GCC_VERSION}/gcc/config/
 
 gcc-make:
-	rm -r build/gcc
+	-rm -r build/gcc
 	mkdir -p build/gcc
 	cd build/gcc && ../../download/gcc-${GCC_VERSION}/configure \
 		--target=${TARGET} \
@@ -68,15 +68,19 @@ gcc-make:
 		--with-headers=../../download/newlib-${NEWLIB_VERSION}/newlib/libc/include \
 		--without-docdir
 
-	make -j 10 -C build/gcc all-gcc
-	make -j 10 -C build/gcc all-target-libgcc
-	make -j 10 -C build/gcc all-target-libstdc++-v3
+	make -j 8 -C build/gcc all-gcc
+	make -j 8 -C build/gcc all-target-libgcc
+
+	# causes issues with newer GCC versions. Needs debugging
+	#make -j 8 -C build/gcc all-target-libstdc++-v3
 
 gcc-install:
 	make -C build/gcc install-gcc
 	make -C build/gcc install-target-libgcc
-	make -C build/gcc install-target-libstdc++-v3
-	ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc || true
+
+	#make -C build/gcc install-target-libstdc++-v3
+
+	-ln -s i786-pc-xelix-gcc local/bin/i786-pc-xelix-cc
 
 
 
@@ -99,11 +103,11 @@ newlib-patch:
 	cp -r ../land/newlib/xelix download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/
 
 	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && aclocal-1.11 -I ../../../ -I ../../../../
-	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoconf-2.64
+	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && autoconf-2.69
 	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/xelix/ && automake-1.11 --cygnus Makefile
 
 	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && aclocal-1.11 -I ../.. -I ../../..
-	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf-2.64
+	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && autoconf-2.69
 	cd download/newlib-${NEWLIB_VERSION}/newlib/libc/sys/ && automake-1.11 --cygnus Makefile
 
 	mkdir -p build/newlib
