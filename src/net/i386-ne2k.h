@@ -16,8 +16,8 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_NE2K
+#ifdef CONFIG_ENABLE_NE2K
 
 void ne2k_init();
 
-#endif /* ENABLE_NE2K */
+#endif /* CONFIG_ENABLE_NE2K */

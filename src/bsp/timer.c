@@ -54,7 +54,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 void timer_init() {
 	// preemptability setting here also affects scheduler, so leave set to false
 	int_register(IRQ(0), &timer_callback, false);
-	rate = PIT_RATE;
+	rate = CONFIG_PIT_RATE;
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is

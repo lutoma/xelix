@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_EXT2
+#ifdef CONFIG_ENABLE_EXT2
 
 #include "ext2_internal.h"
 #include "misc.h"
@@ -646,4 +646,4 @@ int ext2_build_path_tree(struct vfs_callback_ctx* ctx) {
 	return 0;
 }
 
-#endif /* ENABLE_EXT2 */
+#endif /* CONFIG_ENABLE_EXT2 */

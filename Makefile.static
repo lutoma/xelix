@@ -37,7 +37,10 @@ all: xelix.bin
 ext/picotcp/build/lib/libpicotcp.a:
 	make -C ext/picotcp
 
-%.o: %.c src/lib/generic.h src/lib/config.h
+src/lib/config.h: Kconfig .config
+	util/kconfiglib/genconfig.py --header-path src/lib/config.h
+
+%.o: %.c src/lib/generic.h src/lib/config.h ext/picotcp/build/lib/libpicotcp.a
 	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm
@@ -69,26 +72,36 @@ clean:
 land:
 	make -C land
 
-%config: clean
-	make -C util/kconfig $@
-	util/genconfigh.sh
-
 .PHONY: image
 image:
 	util/build-image.sh xelix.qcow2
 
+.PHONY: mount_boot
 mount_boot:
+	-mkdir mnt
 	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
 	sudo mount /dev/nbd0p1 mnt
 
+.PHONY: umount_boot
 umount_boot:
 	sudo umount mnt
 	sudo qemu-nbd --disconnect /dev/nbd0
 
+.PHONY: mount
 mount:
 	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
 	sudo mount /dev/nbd0p2 mnt
 
+.PHONY: umount
 umount:
 	sudo umount mnt
 	sudo qemu-nbd --disconnect /dev/nbd0
+
+.PHONY: menuconfig
+menuconfig:
+	util/kconfiglib/menuconfig.py
+
+.PHONY: menuconfig
+guiconfig:
+	util/kconfiglib/guiconfig.py
+

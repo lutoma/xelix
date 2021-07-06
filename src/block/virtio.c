@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_VIRTIO_BLOCK
+#ifdef CONFIG_ENABLE_VIRTIO_BLOCK
 
 #include <net/net.h>
 #include <bsp/virtio.h>

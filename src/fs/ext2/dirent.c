@@ -17,7 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ENABLE_EXT2
+#ifdef CONFIG_ENABLE_EXT2
 
 #include "ext2_internal.h"
 #include "misc.h"
@@ -305,4 +305,4 @@ void ext2_dirent_add(struct ext2_fs* fs, uint32_t dir_num, uint32_t inode_num, c
 	kfree(dir);
 }
 
-#endif /* ENABLE_EXT2 */
+#endif /* CONFIG_ENABLE_EXT2 */

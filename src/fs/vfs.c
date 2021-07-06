@@ -37,7 +37,7 @@
 #include <fs/ftree.h>
 #include <net/socket.h>
 
-vfs_file_t kernel_files[VFS_MAX_OPENFILES];
+vfs_file_t kernel_files[CONFIG_VFS_MAX_OPENFILES];
 
 /* Normalizes orig_path (which may be relative to cwd) into an absolute path,
  * removing all ../. and extraneous slashes in the process. */
@@ -179,7 +179,7 @@ struct vfs_callback_ctx* vfs_context_from_path(const char* path, task_t* task) {
 vfs_file_t* vfs_alloc_fileno(task_t* task, int min) {
 	vfs_file_t* file = &(task ? task->files : kernel_files)[min];
 
-	for(int i = min; i < VFS_MAX_OPENFILES; i++, file++) {
+	for(int i = min; i < CONFIG_VFS_MAX_OPENFILES; i++, file++) {
 		if(!file->refs) {
 			if(likely(__sync_bool_compare_and_swap(&file->refs, 0, 1))) {
 				file->num = i;

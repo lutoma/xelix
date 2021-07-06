@@ -30,7 +30,7 @@
 #include <net/i386-ne2k.h>
 #include <net/virtio_net.h>
 
-#ifdef ENABLE_PICOTCP
+#ifdef CONFIG_ENABLE_PICOTCP
 
 spinlock_t net_pico_lock;
 static bool initialized = false;
@@ -130,15 +130,15 @@ void net_init() {
 
 	log(LOG_INFO, "net: Loading device drivers\n");
 
-	#ifdef ENABLE_VIRTIO_NET
+	#ifdef CONFIG_ENABLE_VIRTIO_NET
 	virtio_net_init();
 	#endif
 
-	#ifdef ENABLE_NE2K
+	#ifdef CONFIG_ENABLE_NE2K
 	ne2k_init();
 	#endif
 
-	#ifdef ENABLE_RTL8139
+	#ifdef CONFIG_ENABLE_RTL8139
 	rtl8139_init();
 	#endif
 }

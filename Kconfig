@@ -28,7 +28,7 @@ menu "Kernel logger"
 
 	config LOG_PRINT_LEVEL
 		int "TTY log level"
-		default 4
+		default 2
 		---help---
 		0 Disabled
 		1 Debug
@@ -80,7 +80,7 @@ endmenu
 menu "Audio"
 	config ENABLE_AC97
 	bool "AC97 sound chip driver"
-	default n
+	default y
 endmenu
 
 menu "Networking"
@@ -130,33 +130,4 @@ menu "File systems"
 	config EXT2_DEBUG
 	bool "ext2 file system debugging"
 	depends on ENABLE_EXT2
-endmenu
-
-
-menu "TTY"
-	config CONSOLE_SCROLL_PAGES
-		int "Scroll pages (ring buffer size)"
-		default 8
-
-	config CONSOLE_NO_ECMA48
-		bool "Disable ECMA48 filter"
-
-	config CONSOLE_DEFAULT_FG
-		hex "Default text color"
-		default 0x7
-
-	config CONSOLE_DEFAULT_BG
-		hex "Default background color"
-		default 0x0
-
-	choice
-		prompt "Serial interface use"
-		default XELIX_WITH_SLIP
-
-		config CONSOLE_USE_SERIAL
-			bool "Output console to serial [disables screen output]"
-
-		config XELIX_WITH_SLIP
-			bool "Serial Line IP (SLIP)"
-	endchoice
 endmenu

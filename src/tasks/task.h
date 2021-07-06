@@ -111,7 +111,7 @@ typedef struct task {
 	uint32_t argc;
 	uint32_t envc;
 
-	vfs_file_t files[VFS_MAX_OPENFILES];
+	vfs_file_t files[CONFIG_VFS_MAX_OPENFILES];
 
 	struct sigaction signal_handlers[32];
 	uint32_t signal_mask;

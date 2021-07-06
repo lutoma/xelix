@@ -28,7 +28,7 @@ FIND=$(command -v gfind || command -v find)
 git submodule update --init 1> /dev/null
 
 # Get files
-arch=`sed -rn 's/\#define ARCH "([^"]+)"/\1/p' src/lib/config.h`
+arch=`sed -rn 's/\#define CONFIG_ARCH "([^"]+)"/\1/p' src/lib/config.h`
 extensions="\.\(c\|asm\|s\|psf\)"
 arch_files=`$FIND -L src -type f -iregex "^.*$arch-.*$extensions" | tr '\n' '  '`
 files=`$FIND -L src -type f -iregex "^[^\-]*$extensions" | tr '\n' '  '`

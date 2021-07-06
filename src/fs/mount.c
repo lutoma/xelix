@@ -137,7 +137,7 @@ int vfs_mount(task_t* task, const char* source, const char* target, int flags) {
 	}
 
 	int r = -1;
-	#ifdef ENABLE_EXT2
+	#ifdef CONFIG_ENABLE_EXT2
 	r = ext2_mount(dev, mnt_target);
 	#endif
 

@@ -182,7 +182,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	memcpy(task->state, state, sizeof(isf_t));
 	memcpy(task->kernel_stack, to_fork->kernel_stack, KERNEL_STACK_SIZE);
 	memcpy(task->binary_path, to_fork->binary_path, sizeof(task->binary_path));
-	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * VFS_MAX_OPENFILES);
+	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * CONFIG_VFS_MAX_OPENFILES);
 
 	task->uid = to_fork->uid;
 	task->gid = to_fork->gid;
@@ -315,7 +315,7 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 		return -1;
 	}
 
-	for(int i = 0; i < VFS_MAX_OPENFILES; i++) {
+	for(int i = 0; i < CONFIG_VFS_MAX_OPENFILES; i++) {
 		struct vfs_file* file = &task->files[i];
 
 		// FIXME flags seem to get mangled during fork/execve
@@ -412,7 +412,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	sysfs_printf("\n");
 
 	sysfs_printf("\nOpen files:\n");
-	for(int i = 0; i < VFS_MAX_OPENFILES; i++) {
+	for(int i = 0; i < CONFIG_VFS_MAX_OPENFILES; i++) {
 		if(!task->files[i].inode) {
 			continue;
 		}
