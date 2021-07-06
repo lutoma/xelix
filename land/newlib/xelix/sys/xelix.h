@@ -1,4 +1,4 @@
-/* Copyright © 2018-2020 Lukas Martini
+/* Copyright © 2018-2021 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -43,8 +43,8 @@ struct _xelix_execdata {
 	char binary_path[PATH_MAX];
 };
 
-struct _xelix_execdata* _xelix_execdata;
-char* _progname;
+extern struct _xelix_execdata* _xelix_execdata;
+extern char* _progname;
 
 int _strace(void);
 

@@ -1,5 +1,5 @@
 /* crt0.c: crt0 for userland tasks
- * Copyright © 2018-2019 Lukas Martini
+ * Copyright © 2018-2021 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -28,6 +28,10 @@ int h_errno;
 extern int main(int argc, char** argv);
 extern void __libc_init_array();
 extern void __libc_fini_array();
+
+// These are defined as extern in sys/xelix.h
+struct _xelix_execdata* _xelix_execdata;
+char* _progname;
 
 void __attribute__((fastcall, noreturn)) _start(void) {
 	__libc_init_array();
