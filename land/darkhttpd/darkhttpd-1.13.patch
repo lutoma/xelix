@@ -1,5 +1,5 @@
---- darkhttpd-1.12/darkhttpd.c	2016-01-29 15:21:13.000000000 +0100
-+++ darkhttpd-1.12/darkhttpd.c	2020-01-11 01:46:25.995398608 +0100
+--- darkhttpd-1.13/darkhttpd.c	2016-01-29 15:21:13.000000000 +0100
++++ darkhttpd-1.13/darkhttpd.c	2020-01-11 01:46:25.995398608 +0100
 @@ -855,11 +855,13 @@ static void init_sockin(void) {
      if (sockin == -1)
          err(1, "socket()");
