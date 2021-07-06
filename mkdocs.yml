@@ -1,6 +1,7 @@
 site_name: Xelix documentation
 repo_name: 'lutoma/xelix'
 repo_url: 'https://github.com/lutoma/xelix'
+site_url: 'https://xelix.org'
 markdown_extensions:
   - smarty
   - tables
