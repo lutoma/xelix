@@ -1,7 +1,7 @@
 name: htop
-version: 3.0.0beta5
+version: 3.0.5
 sources:
-  - url: https://github.com/hishamhm/htop/archive/3.0.0beta5.tar.gz
+  - url: https://github.com/htop-dev/htop/archive/refs/tags/3.0.5.tar.gz
 dependencies:
   - ncurses
 patch_skip_path: 0

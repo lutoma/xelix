@@ -25,7 +25,11 @@ void ProcessList_delete(ProcessList* this) {
    free(this);
 }
 
-void ProcessList_goThroughEntries(ProcessList* super) {
+void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {
+   if (pauseProcessUpdate) {
+      return;
+   }
+
     FILE* fp = fopen("/sys/tasks", "r");
     if(!fp) {
         return;
@@ -102,12 +106,6 @@ void ProcessList_goThroughEntries(ProcessList* super) {
         proc->nlwp = 1;
         strncpy(proc->starttime_show, "Jun 01 ", sizeof(proc->starttime_show));
         proc->starttime_ctime = 1433116800; // Jun 01, 2015
-
-        proc->m_size = 123454343;
-        proc->m_resident = 156;
-
-        proc->minflt = 20;
-        proc->majflt = 20;
 
         if(!preExisting) {
             ProcessList_add(super, proc);

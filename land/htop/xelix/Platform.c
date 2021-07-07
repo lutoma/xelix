@@ -1,214 +1,113 @@
 /*
-htop - xelix/Platform.c
+htop - dragonflybsd/Platform.c
 (C) 2014 Hisham H. Muhammad
-(C) 2015 David C. Hunt
-(C) 2019-2020 Lukas Martini
-Released under the GNU GPL, see the COPYING file
+(C) 2017 Diederik de Groot
+(C) 2019-2021 Lukas Martini
+Released under the GNU GPLv2, see the COPYING file
 in the source distribution for its full text.
 */
 
-#include <string.h>
 #include "Platform.h"
+#include "Macros.h"
+#include "Meter.h"
 #include "CPUMeter.h"
 #include "MemoryMeter.h"
 #include "SwapMeter.h"
 #include "TasksMeter.h"
 #include "LoadAverageMeter.h"
-#include "ClockMeter.h"
-#include "HostnameMeter.h"
 #include "UptimeMeter.h"
-
-/*{
-#include "Action.h"
-#include "BatteryMeter.h"
-#include "SignalsPanel.h"
+#include "ClockMeter.h"
+#include "DateMeter.h"
+#include "DateTimeMeter.h"
+#include "HostnameMeter.h"
 #include "XelixProcess.h"
+#include "XelixProcessList.h"
 
-#define LAST_PROCESSFIELD 100
-}*/
+#include <stdio.h>
+
+
+const ProcessField Platform_defaultFields[] = { PID, USER, PRIORITY, NICE, M_VIRT, M_RESIDENT, STATE, PERCENT_CPU, PERCENT_MEM, TIME, COMM, 0 };
 
 const SignalItem Platform_signals[] = {
    { .name = " 0 Cancel",    .number =  0 },
+   { .name = " 1 SIGHUP",    .number =  1 },
+   { .name = " 2 SIGINT",    .number =  2 },
+   { .name = " 3 SIGQUIT",   .number =  3 },
+   { .name = " 4 SIGILL",    .number =  4 },
+   { .name = " 5 SIGTRAP",   .number =  5 },
+   { .name = " 6 SIGABRT",   .number =  6 },
+   { .name = " 7 SIGEMT",    .number =  7 },
+   { .name = " 8 SIGFPE",    .number =  8 },
+   { .name = " 9 SIGKILL",   .number =  9 },
+   { .name = "10 SIGBUS",    .number = 10 },
+   { .name = "11 SIGSEGV",   .number = 11 },
+   { .name = "12 SIGSYS",    .number = 12 },
+   { .name = "13 SIGPIPE",   .number = 13 },
+   { .name = "14 SIGALRM",   .number = 14 },
+   { .name = "15 SIGTERM",   .number = 15 },
+   { .name = "16 SIGURG",    .number = 16 },
+   { .name = "17 SIGSTOP",   .number = 17 },
+   { .name = "18 SIGTSTP",   .number = 18 },
+   { .name = "19 SIGCONT",   .number = 19 },
+   { .name = "20 SIGCHLD",   .number = 20 },
+   { .name = "21 SIGTTIN",   .number = 21 },
+   { .name = "22 SIGTTOU",   .number = 22 },
+   { .name = "23 SIGIO",     .number = 23 },
+   { .name = "24 SIGXCPU",   .number = 24 },
+   { .name = "25 SIGXFSZ",   .number = 25 },
+   { .name = "26 SIGVTALRM", .number = 26 },
+   { .name = "27 SIGPROF",   .number = 27 },
+   { .name = "28 SIGWINCH",  .number = 28 },
+   { .name = "29 SIGINFO",   .number = 29 },
+   { .name = "30 SIGUSR1",   .number = 30 },
+   { .name = "31 SIGUSR2",   .number = 31 },
+   { .name = "32 SIGTHR",    .number = 32 },
+   { .name = "33 SIGLIBRT",  .number = 33 },
 };
 
-const unsigned int Platform_numberOfSignals = sizeof(Platform_signals)/sizeof(SignalItem);
+const unsigned int Platform_numberOfSignals = ARRAYSIZE(Platform_signals);
 
-ScreenDefaults Platform_defaultScreens[] = {
-   {
-      .name = "Main",
-      .columns = "PID USER M_RESIDENT STATE PERCENT_MEM Command",
-      .sortKey = "PID",
-   },
-};
-const unsigned int Platform_numberOfDefaultScreens = sizeof(Platform_defaultScreens)/sizeof(ScreenDefaults);
-
-ProcessFieldData Process_fields[] = {
-   [0] = {
-      .name = "",
-      .title = NULL,
-      .description = NULL,
-      .flags = 0, },
-   [PID] = {
-      .name = "PID",
-      .title = "    PID ",
-      .description = "Process/thread ID",
-      .flags = 0, },
-   [COMM] = {
-      .name = "Command",
-      .title = "Command ",
-      .description = "Command line",
-      .flags = 0, },
-   [STATE] = {
-      .name = "STATE",
-      .title = "S ",
-      .description = "Process state (S sleeping, R running, D disk, Z zombie, T traced, W paging)",
-      .flags = 0, },
-   [PPID] = {
-      .name = "PPID",
-      .title = "   PPID ",
-      .description = "Parent process ID",
-      .flags = 0, },
-   [PGRP] = {
-      .name = "PGRP",
-      .title = "   PGRP ",
-      .description = "Process group ID",
-      .flags = 0, },
-   [SESSION] = {
-      .name = "SESSION",
-      .title = "   SESN ",
-      .description = "Process's session ID",
-      .flags = 0, },
-/*   [TTY_NR] = {
-      .name = "TTY_NR",
-      .title = "    TTY ",
-      .description = "Controlling terminal",
-      .flags = 0, },
-*/
-   [TPGID] = {
-      .name = "TPGID",
-      .title = "  TPGID ",
-      .description = "Process ID of the fg process group of the controlling terminal",
-      .flags = 0, },
-/*   [MINFLT] = {
-      .name = "MINFLT",
-      .title = "     MINFLT ",
-      .description = "Number of minor faults which have not required loading a memory page from disk",
-      .flags = 0, },
-   [MAJFLT] = {
-      .name = "MAJFLT",
-      .title = "     MAJFLT ",
-      .description = "Number of major faults which have required loading a memory page from disk",
-      .flags = 0, },
-   [PRIORITY] = {
-      .name = "PRIORITY",
-      .title = "PRI ",
-      .description = "Kernel's internal priority for the process",
-      .flags = 0, },
-   [NICE] = {
-      .name = "NICE",
-      .title = " NI ",
-      .description = "Nice value (the higher the value, the more it lets other processes take priority)",
-      .flags = 0, },
-   [STARTTIME] = {
-      .name = "STARTTIME",
-      .title = "START ",
-      .description = "Time the process was started",
-      .flags = 0, },
-   [PROCESSOR] = {
-      .name = "PROCESSOR",
-      .title = "CPU ",
-      .description = "Id of the CPU the process last executed on",
-      .flags = 0, },
-*/
-   [M_SIZE] = {
-      .name = "M_SIZE",
-      .title = " VIRT ",
-      .description = "Total program size in virtual memory",
-      .flags = 0, },
-   [M_RESIDENT] = {
-      .name = "M_RESIDENT",
-      .title = "  RES ",
-      .description = "Resident set size, size of the text and data sections, plus stack usage",
-      .flags = 0, },
-   [ST_UID] = {
-      .name = "ST_UID",
-      .title = " UID ",
-      .description = "User ID of the process owner",
-      .flags = 0, },
-   [PERCENT_CPU] = {
-      .name = "PERCENT_CPU",
-      .title = "CPU% ",
-      .description = "Percentage of the CPU time the process used in the last sampling",
-      .flags = 0, },
-   [PERCENT_MEM] = {
-      .name = "PERCENT_MEM",
-      .title = "MEM% ",
-      .description = "Percentage of the memory the process is using, based on resident memory size",
-      .flags = 0, },
-   [USER] = {
-      .name = "USER",
-      .title = "USER      ",
-      .description = "Username of the process owner (or user ID if name cannot be determined)",
-      .flags = 0, },
-/*
-   [TIME] = {
-      .name = "TIME",
-      .title = "  TIME+  ",
-      .description = "Total time the process has spent in user and system time",
-      .flags = 0, },
-   [NLWP] = {
-      .name = "NLWP",
-      .title = "NLWP ",
-      .description = "Number of threads in the process",
-      .flags = 0, },
-*/
-   [TGID] = {
-      .name = "TGID",
-      .title = "   TGID ",
-      .description = "Thread group ID (i.e. process ID)",
-      .flags = 0, },
-   [LAST_PROCESSFIELD] = {
-      .name = "*** report bug! ***",
-      .title = NULL,
-      .description = NULL,
-      .flags = 0, },
-};
-int Platform_numberOfFields = LAST_PROCESSFIELD;
-
-ProcessPidColumn Process_pidColumns[] = {
-   { .id = PID, .label = "PID" },
-   { .id = PPID, .label = "PPID" },
-   { .id = TPGID, .label = "TPGID" },
-   { .id = TGID, .label = "TGID" },
-   { .id = PGRP, .label = "PGRP" },
-   { .id = SESSION, .label = "SESN" },
-   { .id = 0, .label = NULL },
-};
-
-MeterClass* Platform_meterTypes[] = {
+const MeterClass* const Platform_meterTypes[] = {
    &CPUMeter_class,
    &ClockMeter_class,
+   &DateMeter_class,
+   &DateTimeMeter_class,
    &LoadAverageMeter_class,
    &LoadMeter_class,
    &MemoryMeter_class,
+   &SwapMeter_class,
    &TasksMeter_class,
-   &HostnameMeter_class,
    &UptimeMeter_class,
+   &BatteryMeter_class,
+   &HostnameMeter_class,
    &AllCPUsMeter_class,
    &AllCPUs2Meter_class,
+   &AllCPUs4Meter_class,
+   &AllCPUs8Meter_class,
    &LeftCPUsMeter_class,
    &RightCPUsMeter_class,
    &LeftCPUs2Meter_class,
    &RightCPUs2Meter_class,
+   &LeftCPUs4Meter_class,
+   &RightCPUs4Meter_class,
+   &LeftCPUs8Meter_class,
+   &RightCPUs8Meter_class,
    &BlankMeter_class,
    NULL
 };
 
-void Platform_setBindings(Htop_Action* keys) {
-   (void) keys;
+void Platform_init(void) {
+   /* no platform-specific setup needed */
 }
 
-extern char Process_pidFormat[20];
+void Platform_done(void) {
+   /* no platform-specific cleanup needed */
+}
+
+void Platform_setBindings(Htop_Action* keys) {
+   /* no platform-specific key bindings */
+   (void) keys;
+}
 
 int Platform_getUptime() {
    FILE* fp = fopen("/sys/tick", "r");
@@ -266,12 +165,10 @@ void Platform_setMemoryValues(Meter* this) {
       }
    }
 
-   ProcessList* pl = (ProcessList*) this->pl;
    this->total = mem_total / 1024;
    this->values[0] = mem_used / 1024;
    this->values[1] = 0;
    this->values[2] = 0;
-
    fclose(fp);
 }
 
@@ -279,12 +176,39 @@ void Platform_setSwapValues(Meter* this) {
    (void) this;
 }
 
-bool Process_isThread(Process* this) {
-   (void) this;
+char* Platform_getProcessEnv(pid_t pid) {
+   (void)pid;
+   return NULL;
+}
+
+char* Platform_getInodeFilename(pid_t pid, ino_t inode) {
+    (void)pid;
+    (void)inode;
+    return NULL;
+}
+
+FileLocks_ProcessData* Platform_getProcessLocks(pid_t pid) {
+    (void)pid;
+    return NULL;
+}
+
+bool Platform_getDiskIO(DiskIOData* data) {
+   (void)data;
    return false;
 }
 
-char* Platform_getProcessEnv(pid_t pid) {
-   (void) pid;
-   return "foo=bar";
+bool Platform_getNetworkIO(unsigned long int* bytesReceived,
+                           unsigned long int* packetsReceived,
+                           unsigned long int* bytesTransmitted,
+                           unsigned long int* packetsTransmitted) {
+   *bytesReceived = 0;
+   *packetsReceived = 0;
+   *bytesTransmitted = 0;
+   *packetsTransmitted = 0;
+   return false;
+}
+
+void Platform_getBattery(double* percent, ACPresence* isOnAC) {
+   *percent = 0;
+   *isOnAC = AC_PRESENT;
 }
