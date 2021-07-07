@@ -132,7 +132,7 @@ void render_init() {
 	bgs->name = "Background";
 	surface_add(bgs);
 
-	bg_surface_blurred = cairo_image_surface_create_from_png("/usr/share/gfxcompd/bg.png");
+/*	bg_surface_blurred = cairo_image_surface_create_from_png("/usr/share/gfxcompd/bg.png");
 
 	cairo_surface_flush(bg_surface_blurred);
 	iir_gauss_blur(
@@ -140,6 +140,7 @@ void render_init() {
 		cairo_image_surface_get_height(bg_surface_blurred), 4,
 		cairo_image_surface_get_data(bg_surface_blurred), 15);
 	cairo_surface_mark_dirty(bg_surface_blurred);
+*/
 
 	cairo_set_source_surface(cr, bg_surface, 0, 0);
 	cairo_paint(cr);
