@@ -33,4 +33,4 @@ install:
   - rm -r /tmp/newlib-install
 
   # Some GNU packages expect xlocale.h to exist
-  - ln -s locale.h $DESTDIR/usr/include/xlocale.h
+  - ln -s locale.h $DESTDIR/usr/include/xlocale.h || true
