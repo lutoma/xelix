@@ -13,7 +13,7 @@ configure:
   - cp $PKGDIR/xelix.h gcc/config/
   - rm -r build || true
   - mkdir build
-  - cd build && CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL" ../configure
+  - cd build && CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL -D__int64_t_defined" ../configure
     --host=i786-pc-xelix
     --target=i786-pc-xelix
     --disable-shared
@@ -30,9 +30,9 @@ configure:
     --with-mpfr=$DESTDIR/usr
     --with-mpc=$DESTDIR/usr
 make:
-  - CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL" make -C build all-gcc
-  - CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL" make -C build all-target-libgcc
-#  - CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL" make -C build all-target-libstdc++-v3 || true
+  - CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL -D__int64_t_defined" make -C build all-gcc
+  - CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL -D__int64_t_defined" make -C build all-target-libgcc
+#  - CPPFLAGS="$CPPFLAGS -DHAVE_SYS_WAIT_H -DHAVE_SYS_RESOURCE_H -DHAVE_DECL_SBRK -DHAVE_DECL_STRSIGNAL -D__int64_t_defined" make -C build all-target-libstdc++-v3 || true
 install:
   - make -C build install-gcc
   - make -C build install-target-libgcc
