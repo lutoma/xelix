@@ -294,8 +294,8 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	load_font("/usr/share/fonts/Gintronic-Regular.otf", &face);
-	load_font("/usr/share/fonts/Gintronic-Bold.otf", &face_bold);
+	load_font("/usr/share/fonts/FiraCode-Regular.ttf", &face);
+	load_font("/usr/share/fonts/FiraCode-Bold.ttf", &face_bold);
 
 	for(char c = 1; c <= '~'; c++) {
 		render_glyph(c, 0);
