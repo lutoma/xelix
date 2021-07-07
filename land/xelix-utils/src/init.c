@@ -79,6 +79,7 @@ static void launch_service(struct service* service) {
 			}
 		}
 
+		chdir("/home/root");
 		if(execv(argv[0], argv) < 0) {
 			perror("execv failed");
 			exit(-1);
