@@ -36,6 +36,7 @@
 #include <tasks/syscall.h>
 #include <tasks/exception.h>
 #include <mem/mem.h>
+#include <mem/kmalloc.h>
 #include <mem/i386-gdt.h>
 #include <sound/i386-ac97.h>
 #include <boot/multiboot.h>
