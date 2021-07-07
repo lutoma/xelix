@@ -93,6 +93,10 @@ newlib-install:
 	PATH="${PATH}:`pwd`/local/bin/" make -C build/newlib install
 	cp build/newlib/i786-pc-xelix/newlib/libc/sys/xelix/crti.o build/newlib/i786-pc-xelix/newlib/libc/sys/xelix/crtn.o local/i786-pc-xelix/lib/
 
+	# Drop sys-include directory to avoid conflicts with regular includes
+	rm -r local/i786-pc-xelix/sys-include
+
+
 newlib-make:
 	PATH="${PATH}:`pwd`/local/bin/" make -C build/newlib all
 
