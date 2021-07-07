@@ -5,7 +5,8 @@ sources:
 patches:
   - bash-5.0.patch
 configure:
-  - ./configure
+# Multiple definitions needed due to confliction definitions in termcap/libreadline
+  - LDFLAGS="-Wl,--allow-multiple-definition" ./configure
     --host=i786-pc-xelix
     --prefix=/usr
     --sysconfdir=/etc
