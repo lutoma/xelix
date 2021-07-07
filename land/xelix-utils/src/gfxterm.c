@@ -226,6 +226,7 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 
 static inline void load_font(const char* path, FT_Face* face) {
 	if(FT_New_Face(ft_library, path, 0, face)) {
+		printf("Font %s: ", path);
 		perror("Could not read font");
 		exit(EXIT_FAILURE);
 	}

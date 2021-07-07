@@ -14,6 +14,7 @@ FT_Library ft_library;
 static void load_font(cairo_font_face_t** fdesc, const char* path) {
 	static FT_Face ft_font;
 	if(FT_New_Face(ft_library, path, 0, &ft_font)) {
+		printf("Font %s: ", path);
 		perror("Could not read font");
 		exit(EXIT_FAILURE);
 	}
