@@ -33,7 +33,7 @@
 
 #include "syscalls.h"
 
-#ifdef SYSCALL_DEBUG
+#ifdef CONFIG_SYSCALL_DEBUG
 static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value, uint32_t ovalue);
 #endif
 
@@ -130,7 +130,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		args[i] = (uint32_t)task_memmap(task, (void*)args[i], ptr_sizes[i], &copied[i]);
 		if(unlikely(!args[i])) {
 
-			#ifdef SYSCALL_DEBUG
+			#ifdef CONFIG_SYSCALL_DEBUG
 			log(LOG_DEBUG, "%2d %-20s %s(%#x, %#x, %#x)\n", task->pid, task->name,
 				def.name, oargs[0], oargs[1], oargs[2]);
 			log(LOG_DEBUG, "Result: Call failed - Could not memmap argument %d\n", i);
@@ -143,7 +143,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		}
 	}
 
-#ifdef SYSCALL_DEBUG
+#ifdef CONFIG_SYSCALL_DEBUG
 	log(LOG_DEBUG, "%2d %-20s %s(", task->pid, task->name, def.name);
 	dbg_print_arg(true, flags[0], args[0], oargs[0]);
 	dbg_print_arg(false, flags[1], args[1], oargs[1]);
@@ -185,7 +185,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		task->task_state = TASK_STATE_RUNNING;
 	}
 
-#ifdef SYSCALL_DEBUG
+#ifdef CONFIG_SYSCALL_DEBUG
 	log(LOG_DEBUG, "%2d %-20s %s = %d, errno %d\n", task->pid, task->name, def.name,
 		state->SCREG_RESULT, state->SCREG_ERRNO);
 #endif
@@ -249,7 +249,7 @@ void syscall_init() {
 	int_register(SYSCALL_INTERRUPT, int_handler, false);
 }
 
-#ifdef SYSCALL_DEBUG
+#ifdef CONFIG_SYSCALL_DEBUG
 static inline void dbg_print_arg(bool first, uint8_t flags, uint32_t value, uint32_t ovalue) {
 	if(flags != 0) {
 		char* fmt = "%d";

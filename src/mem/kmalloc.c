@@ -37,7 +37,7 @@
 
 /* Enable debugging. This will send out cryptic debug codes to the serial line
  * during kmalloc()/free()'s. Also makes everything horribly slow. */
-#ifdef KMALLOC_DEBUG
+#ifdef CONFIG_KMALLOC_DEBUG
 	#define debug(args...) log(LOG_DEBUG, args)
 	#define DEBUGREGS , char* _debug_file, uint32_t _debug_line, const char* _debug_func
 #else
@@ -50,7 +50,7 @@
  * after the actual allocations and tend to get overwritten on buffer overflow).
  * Wastes memory and makes things slow. Only use during development.
  */
-#ifdef KMALLOC_CHECK
+#ifdef CONFIG_KMALLOC_CHECK
 	#define KMALLOC_CANARY 0xCAFE
 	#define _SET_CANARIES(x, y) (x)->canary1 = y; (x)->canary2 = y
 	#define SET_CANARIES(x) _SET_CANARIES(x, KMALLOC_CANARY)
@@ -96,7 +96,7 @@ struct footer {
 } __aligned(8);
 
 
-#ifdef KMALLOC_CHECK
+#ifdef CONFIG_KMALLOC_CHECK
 	static void check_header(struct mem_block* header, bool recurse);
 #else
 	#define check_header(...)
@@ -358,7 +358,7 @@ void kmalloc_get_stats(uint32_t* total, uint32_t* used) {
 	}
 }
 
-#ifdef KMALLOC_CHECK
+#ifdef CONFIG_KMALLOC_CHECK
 #define check_err(fmt, args...) \
 	panic("kmalloc: Metadata corruption at 0x%x: " fmt "\n", header, ##args);
 
@@ -406,7 +406,7 @@ static void check_header(struct mem_block* header, bool recurse) {
 }
 #endif
 
-#ifdef KMALLOC_DEBUG
+#ifdef CONFIG_KMALLOC_DEBUG
 void kmalloc_stats() {
 	struct mem_block* header = (struct mem_block*)alloc_start;
 	log(LOG_DEBUG, "\nkmalloc_stats():\n");

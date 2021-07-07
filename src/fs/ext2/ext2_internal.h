@@ -25,7 +25,7 @@
 #include <block/block.h>
 #include <tasks/task.h>
 
-#ifdef EXT2_DEBUG
+#ifdef CONFIG_EXT2_DEBUG
   #define debug(args...) log(LOG_DEBUG, "ext2: " args)
 #else
   #define debug(...)

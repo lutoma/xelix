@@ -38,13 +38,13 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	struct interrupt_reg* reg = int_handlers[intr];
 	volatile task_t* task = scheduler_get_current();
 
-	#ifdef INTERRUPTS_DEBUG
+	#ifdef CONFIG_INTERRUPTS_DEBUG
 	debug("state before:\n");
 	dump_isf(LOG_DEBUG, state);
 	#endif
 
 	int_disable();
-	#ifdef ENABLE_PICOTCP
+	#ifdef CONFIG_ENABLE_PICOTCP
 	if(intr == IRQ(0)) {
 		net_tick();
 	}
@@ -71,7 +71,7 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 
 		task_t* new_task = scheduler_select(state);
 		if(new_task && new_task->state) {
-			#ifdef INTERRUPTS_DEBUG
+			#ifdef CONFIG_INTERRUPTS_DEBUG
 			debug("state after (task selection):\n");
 			dump_isf(LOG_DEBUG, new_task->state);
 			#endif
@@ -81,7 +81,7 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 		}
 	}
 
-	#ifdef INTERRUPTS_DEBUG
+	#ifdef CONFIG_INTERRUPTS_DEBUG
 	debug("state after:\n");
 	dump_isf(LOG_DEBUG, state);
 	#endif

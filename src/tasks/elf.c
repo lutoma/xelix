@@ -29,7 +29,7 @@
 #include <mem/palloc.h>
 #include <mem/vmem.h>
 
-#ifdef ELF_DEBUG
+#ifdef CONFIG_ELF_DEBUG
  #define debug(args...) log(LOG_DEBUG, args);
 #else
  #define debug(...)

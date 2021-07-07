@@ -471,7 +471,7 @@ int vfs_close(task_t* task, int fd) {
 			vfs_close(task, fp->dup_target);
 		}
 
-		#ifdef ENABLE_PICOTCP
+		#ifdef CONFIG_ENABLE_PICOTCP
 		if(fp->type == FT_IFSOCK) {
 			int r = net_vfs_close_cb(fp);
 			if(r < 0) {

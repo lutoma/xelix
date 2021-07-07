@@ -88,6 +88,10 @@ menu "Networking"
 	bool "Enable PicoTCP integration"
 	default y
 
+	config SOCKET_DEBUG
+	bool "Socket translation layer debugging"
+	default n
+
 	config ENABLE_VIRTIO_NET
 	bool "VirtIO network driver"
 	default y

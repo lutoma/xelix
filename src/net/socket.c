@@ -32,11 +32,10 @@
 #include <endian.h>
 #include <spinlock.h>
 
-#ifdef ENABLE_PICOTCP
+#ifdef CONFIG_ENABLE_PICOTCP
 #define READ_BUFFER_SIZE 0x5000
-//#define SOCKET_DEBUG // FIXME Move to Kconfig
 
-#ifdef SOCKET_DEBUG
+#ifdef CONFIG_SOCKET_DEBUG
  #define debug(args...) log(LOG_DEBUG, "socket: " args)
 #else
  #define debug(args...)

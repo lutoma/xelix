@@ -22,7 +22,7 @@
 
 extern bool kmalloc_ready;
 
-#ifdef KMALLOC_DEBUG
+#ifdef CONFIG_KMALLOC_DEBUG
 	void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero,
 		char* _debug_file, uint32_t _debug_line, const char* _debug_func);
 

@@ -156,7 +156,7 @@ const struct syscall_definition syscall_table[] = {
 	{"rmdir", (syscall_cb)vfs_rmdir, 0,
 		SCA_STRING, 0, 0, 0},
 
-#ifdef ENABLE_PICOTCP
+#ifdef CONFIG_ENABLE_PICOTCP
 	// 24
 	{"socket", (syscall_cb)net_socket, 0,
 		SCA_INT, SCA_INT, SCA_INT, 0},
@@ -221,7 +221,7 @@ const struct syscall_definition syscall_table[] = {
 	{"fcntl", (syscall_cb)vfs_fcntl, 0,
 		SCA_INT, SCA_INT, SCA_INT, 0},
 
-#ifdef ENABLE_PICOTCP
+#ifdef CONFIG_ENABLE_PICOTCP
 	/* FIXME Pointer sizes missing */
 	// 37
 	{"listen", (syscall_cb)net_listen, 0,
@@ -244,7 +244,7 @@ const struct syscall_definition syscall_table[] = {
 	{"", NULL, 0,
 		0, 0, 0, 0},
 
-#ifdef ENABLE_PICOTCP
+#ifdef CONFIG_ENABLE_PICOTCP
 	// 40
 	{"getpeername", (syscall_cb)net_getpeername, 0,
 		SCA_INT, SCA_INT, SCA_POINTER, sizeof(uint32_t)},
@@ -278,7 +278,7 @@ const struct syscall_definition syscall_table[] = {
 	{"strace", (syscall_cb)task_strace, SCF_STATE,
 		0, 0, 0, 0},
 
-#ifdef ENABLE_PICOTCP
+#ifdef CONFIG_ENABLE_PICOTCP
 	// 46
 	{"getaddr", (syscall_cb)net_getaddr, 0,
 		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
