@@ -17,5 +17,5 @@ make:
   - make
 install:
   - make install
-  - rm $DESTDIR/usr/lib/libFLAC.la
-  - rm $DESTDIR/usr/lib/libFLAC++.la
+  - rm $DESTDIR/usr/lib/libFLAC.la || true
+  - rm $DESTDIR/usr/lib/libFLAC++.la || true
