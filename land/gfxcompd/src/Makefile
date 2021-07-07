@@ -25,6 +25,11 @@ install:
 	install -d $(DESTDIR)/usr/bin/
 	install -D gfxcompd $(DESTDIR)/usr/bin/
 	install -d $(DESTDIR)/usr/lib/
-	install -D libxelixgfx.a $(DESTDIR)/usr/lib/
+	install -m 644 -D libxelixgfx.a $(DESTDIR)/usr/lib/
 	install -d $(DESTDIR)/usr/include/
-	install -D libxelixgfx.h $(DESTDIR)/usr/include/xelixgfx.h
+	install -m 644 -D libxelixgfx.h $(DESTDIR)/usr/include/xelixgfx.h
+	install -d $(DESTDIR)/usr/share/icons
+	install -m 644 -D view-app-grid-symbolic.png $(DESTDIR)/usr/share/icons/view-app-grid-symbolic.png
+	install -d $(DESTDIR)/usr/share/gfxcompd
+	install -m 644 -D cursor.png $(DESTDIR)/usr/share/gfxcompd
+	install -m 644 -D bg.png $(DESTDIR)/usr/share/gfxcompd
