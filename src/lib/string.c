@@ -56,16 +56,18 @@ int strcmp(const char* s1, const char* s2)
 }
 
 #undef strncmp
-int strncmp(const char* s1, const char* s2, size_t n)
+int strncmp(const char *s1, const char *s2, register size_t n)
 {
-	if (n == 0) return 0;
-	do {
-		if (*s1 < *s2)
-			return -1;
-		if (*s1 > *s2)
-			return 1;
-		s1++; s2++;
-	} while (n--);
+	register unsigned char u1, u2;
+	while (n-- > 0)
+		{
+			u1 = (unsigned char) *s1++;
+			u2 = (unsigned char) *s2++;
+			if (u1 != u2)
+				return u1 - u2;
+			if (u1 == '\0')
+				return 0;
+		}
 	return 0;
 }
 
@@ -136,20 +138,20 @@ cont:
 /* Return index of first match of item in list. */
 int find_substr(char* list, char* item)
 {
-  int t;
-  char* p, *p2;
+	int t;
+	char* p, *p2;
 
-  for(t=0; list[t]; t++) {
+	for(t=0; list[t]; t++) {
 	p = &list[t];
 	p2 = item;
 
 	while(*p2 && *p2==*p) {
-	  p++;
-	  p2++;
+		p++;
+		p2++;
 	}
 	if(!*p2) return t; /* 1st return */
-  }
-   return -1; /* 2nd return */
+	}
+	 return -1; /* 2nd return */
 }
 
 #undef strndup
