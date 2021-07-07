@@ -29,5 +29,5 @@ latter two offering the best performance (Most testing is done on QEMU/KVM howev
 Sample QEMU invocation:
 
 ```bash
-qemu-system-i386 -accel kvm -vga qxl -m 1024 -cpu SandyBridge -soundhw ac97 -drive file=xelix-0.2.0.qcow2,if=ide -netdev user,id=mnet0 -device virtio-net,netdev=mnet0
+qemu-system-i386 -accel kvm -vga qxl -m 1024 -cpu host -serial mon:stdio -device ac97 -drive file=xelix.qcow2,if=ide -netdev user,id=mnet0 -device virtio-net,netdev=mnet0
 ```
