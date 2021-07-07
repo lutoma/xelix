@@ -10,7 +10,7 @@ configure:
   - cp $PKGDIR/elf_i386_xelix.sh ld/emulparams/
   - cd ld && aclocal
   - cd ld && automake
-  - autoreconf
+  - autoreconf-2.69
   - ./configure
     --host=i786-pc-xelix
     --prefix=/usr
