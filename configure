@@ -27,8 +27,20 @@ FIND=$(command -v gfind || command -v find)
 # Update submodules
 git submodule update --init 1> /dev/null
 
-# Get files
+# Make sure config.h exists on first build
+if [ ! -f ".config" ]; then
+	util/kconfiglib/alldefconfig.py
+fi
+
+if [ ! -f "src/lib/config.h" ]; then
+	util/kconfiglib/genconfig.py --header-path src/lib/config.h
+fi
+
+# Get architecture from config
 arch=`sed -rn 's/\#define CONFIG_ARCH "([^"]+)"/\1/p' src/lib/config.h`
+
+
+# Get files
 extensions="\.\(c\|asm\|s\|psf\)"
 arch_files=`$FIND -L src -type f -iregex "^.*$arch-.*$extensions" | tr '\n' '  '`
 files=`$FIND -L src -type f -iregex "^[^\-]*$extensions" | tr '\n' '  '`
