@@ -1,0 +1,8 @@
+name: font-roboto
+version: '2.138'
+sources:
+  - url: https://github.com/googlefonts/roboto/releases/download/v2.138/roboto-unhinted.zip
+    type: zip
+install:
+  - install -d -m 755 $DESTDIR/usr/share/fonts
+  - install -D *.ttf -m 644 $DESTDIR/usr/share/fonts

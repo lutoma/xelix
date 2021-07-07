@@ -3,6 +3,7 @@ version: 0.1.0
 sources:
   - dir: src
 dependencies:
+  - font-roboto
   - cairo
   - freetype
   - libpng
