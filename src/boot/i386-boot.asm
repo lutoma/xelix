@@ -27,11 +27,12 @@ header_start:
 	dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start))
 
 	; framebuffer request
+	; The resolution set here gets overriden by set gfxpayload in grub cfg
 	dw 5	; type
 	dw 1	; flags - optional tag
 	dd 24	; size
-	dd 1920	; width
-	dd 1080	; height
+	dd 1024	; width
+	dd 768	; height
 	dd 32	; depth
 	dd 0	; alignment filler
 

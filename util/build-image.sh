@@ -42,6 +42,7 @@ fi
 
 menuentry 'Xelix' {
 	multiboot2 /xelix.bin root=/dev/ide1p2
+	set gfxpayload=1920x1080x32
 }
 EOF
 
