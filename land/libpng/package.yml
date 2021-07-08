@@ -12,6 +12,7 @@ configure:
     --host=i786-pc-xelix
     --prefix=/usr
     --sysconfdir=/etc
+    --enable-hardware-optimizations
 make:
   - make
 install:
