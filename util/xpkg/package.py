@@ -12,14 +12,15 @@ sources_dir = None
 build_dir = None
 image_dir = None
 
-# FIXME
-pkg_dir = (Path(__file__).parent / '..' / '..' / 'land').resolve()
-root = (Path('.') / 'xpkg-build').resolve()
-sources_dir = root / 'sources'
-build_dir = root / 'pkgs'
-image_dir = root / 'image'
+root_dir = (Path(__file__) / '..' / '..' / '..').resolve()
+pkg_dir = root_dir / 'land'
+dest_dir = root_dir / 'xpkg-build'
 
-for path in (root, sources_dir, build_dir, image_dir):
+sources_dir = dest_dir / 'sources'
+build_dir = dest_dir / 'pkgs'
+image_dir = dest_dir / 'image'
+
+for path in (dest_dir, sources_dir, build_dir, image_dir):
 	try:
 		os.mkdir(path)
 	except FileExistsError:
@@ -107,7 +108,7 @@ class Package:
 		env['PKG_CONFIG_LIBDIR'] = f'{image_dir / "usr" / "lib"/ "pkgconfig"}:{image_dir / "usr" / "share" / "pkgconfig"}'
 		env['PKG_CONFIG_SYSROOT_DIR'] = image_dir
 
-		env['PATH'] = f'/home/lutoma/code/xelix/toolchain/local/bin/:{os.environ.get("PATH", "")}'
+		env['PATH'] = f'{root_dir / "toolchain" / "local" / "bin"}:{os.environ.get("PATH", "")}'
 		env['CFLAGS'] = f'-O3'
 		env['CPPFLAGS'] = '-D__STDC_ISO_10646__ -D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0'
 		env['LDFLAGS'] = f'-L{image_dir / "usr" / "lib"}'
