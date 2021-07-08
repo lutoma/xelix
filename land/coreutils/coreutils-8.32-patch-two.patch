@@ -1,5 +1,5 @@
---- coreutils-8.30/Makefile	2019-02-04 20:37:41.509799534 +0100
-+++ coreutils-8.30/Makefile	2019-02-04 02:52:58.585407515 +0100
+--- coreutils-8.32/Makefile	2019-02-04 20:37:41.509799534 +0100
++++ coreutils-8.32/Makefile	2019-02-04 02:52:58.585407515 +0100
 @@ -13896,26 +13896,7 @@
  # We need the following in order to create <sys/select.h> when the system
  # doesn't have one that works with the given compiler.

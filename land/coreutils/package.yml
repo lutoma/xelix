@@ -1,11 +1,14 @@
 name: coreutils
-version: '8.30'
+version: '8.32'
 sources:
-  - url: https://ftp.gnu.org/gnu/coreutils/coreutils-8.30.tar.xz
+  - url: https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
 dependencies:
   - libiconv
+  - openssl
+  - libiconv
+  - gmp
 patches:
-  - coreutils-8.30.patch
+  - coreutils-8.32.patch
 configure:
   - autoreconf
   - ./configure
@@ -17,9 +20,10 @@ configure:
     --disable-xattr
     --disable-largefile
     --enable-no-install-program=arch,coreutils,dmesg,mknod
+    --with-openssl
 
   # Needs to be applied after configure
-  - patch -p1 < $PKGDIR/coreutils-8.30-patch-two.patch
+  - patch -p1 < $PKGDIR/coreutils-8.32-patch-two.patch
 make:
   - make
 install:
