@@ -20,7 +20,7 @@
 #include <tasks/mem.h>
 #include <tasks/task.h>
 #include <mem/kmalloc.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <mem/vmem.h>
 #include <errno.h>
 

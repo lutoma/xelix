@@ -21,7 +21,7 @@
 #include <tty/pty.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <panic.h>
 #include <errno.h>
 #include <stdlib.h>

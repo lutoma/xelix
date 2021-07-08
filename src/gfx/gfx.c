@@ -24,7 +24,7 @@
 #include <panic.h>
 #include <errno.h>
 #include <fs/sysfs.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <mem/kmalloc.h>
 #include <boot/multiboot.h>
 

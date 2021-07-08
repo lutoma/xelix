@@ -1,5 +1,5 @@
 /* mem.c: Memory management
- * Copyright © 2020 Lukas Martini
+ * Copyright © 2020-2021 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,11 +18,19 @@
  */
 
 
-#include <mem/palloc.h>
+#include <string.h>
+#include <bitmap.h>
+#include <panic.h>
+#include <spinlock.h>
+#include <mem/mem.h>
 #include <mem/kmalloc.h>
 #include <mem/vmem.h>
 #include <mem/paging.h>
+#include <mem/page_alloc.h>
+#include <boot/multiboot.h>
 #include <fs/sysfs.h>
+
+struct mem_page_alloc_ctx mem_phys_alloc_ctx;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	if(ctx->fp->offset) {
@@ -46,8 +54,56 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
+
+static void init_phys_allocator() {
+	if(mem_page_alloc_new(&mem_phys_alloc_ctx) < 0) {
+		panic("palloc: Page allocator initialization failed.\n");
+	}
+
+	struct multiboot_tag_mmap* mmap = multiboot_get_mmap();
+	struct multiboot_tag_basic_meminfo* mem = multiboot_get_meminfo();
+	if(!mmap) {
+		panic("palloc_init: Could not get memory maps from multiboot\n");
+	}
+
+	log(LOG_INFO, "palloc: Hardware memory map:\n");
+	uint32_t offset = 16;
+	for(; offset < mmap->size; offset += mmap->entry_size) {
+		struct multiboot_mmap_entry* entry = (struct multiboot_mmap_entry*)((intptr_t)mmap + offset);
+
+		const char* type_names[] = {
+			"Unknown",
+			"Available",
+			"Reserved",
+			"ACPI",
+			"NVS",
+			"Bad"
+		};
+
+		log(LOG_INFO, "  %#-12llx - %#-12llx size %#-12llx      %-9s\n",
+			entry->addr, entry->addr + entry->len - 1, entry->len, type_names[entry->type]);
+
+		if(entry->type != MULTIBOOT_MEMORY_AVAILABLE) {
+			mem_page_alloc_at(&mem_phys_alloc_ctx, (void*)(uint32_t)entry->addr, entry->len / PAGE_SIZE);
+		}
+	}
+
+	// Leave lower memory and kernel alone
+	mem_page_alloc_at(&mem_phys_alloc_ctx, 0, (uintptr_t)ALIGN(KERNEL_END, PAGE_SIZE) / PAGE_SIZE);
+	log(LOG_INFO, "palloc: Kernel resides at %#x - %#x\n", KERNEL_START, ALIGN(KERNEL_END, PAGE_SIZE));
+
+	// FIXME mem_info only provides memory size up until first memory hole (~3ish gb)
+	uint32_t mem_kb = (MAX(1024, mem->mem_lower) + mem->mem_upper);
+	mem_phys_alloc_ctx.bitmap.size = (mem_kb * 1024) / PAGE_SIZE;
+
+	uint32_t used = bitmap_count(&mem_phys_alloc_ctx.bitmap);
+	log(LOG_INFO, "palloc: Ready, %u mb, %u pages, %u used, %u free\n",
+		mem_kb /  1024, mem_phys_alloc_ctx.bitmap.size, used, mem_phys_alloc_ctx.bitmap.size - used);
+}
+
+
 void mem_init() {
-	palloc_init();
+	init_phys_allocator();
 	kmalloc_init();
 	vmem_init();
 

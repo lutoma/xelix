@@ -26,7 +26,7 @@
 #include <tasks/task.h>
 #include <fs/vfs.h>
 #include <mem/kmalloc.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <mem/vmem.h>
 
 #ifdef CONFIG_ELF_DEBUG

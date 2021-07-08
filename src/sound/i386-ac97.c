@@ -27,7 +27,7 @@
 #include <int/int.h>
 #include <bsp/i386-pci.h>
 #include <mem/kmalloc.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <boot/multiboot.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>

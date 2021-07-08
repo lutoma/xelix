@@ -19,6 +19,7 @@
 
 #include <bitmap.h>
 #include <stdbool.h>
+#include <string.h>
 
 void bitmap_set(struct bitmap* bm, uint32_t pos, uint32_t num) {
 	for(int i = 0; i < num; i++) {
@@ -52,6 +53,9 @@ void bitmap_clear(struct bitmap* bm, uint32_t pos, uint32_t num) {
 	}
 
 	bm->first_free = MIN(bm->first_free, pos);
+}
+void bitmap_clear_all(struct bitmap* bm) {
+	bzero(bm->data, bitmap_size(bm->size));
 }
 
 uint32_t bitmap_find(struct bitmap* bm, uint32_t num) {

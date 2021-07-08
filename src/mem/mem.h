@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2019-2020 Lukas Martini
+/* Copyright © 2019-2021 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,5 +17,21 @@
  * You should have received a copy of the GNU General Public License
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <mem/paging.h>
+#include <string.h>
+#include <mem/page_alloc.h>
+
+extern struct mem_page_alloc_ctx mem_phys_alloc_ctx;
+
+#define palloc(size) (mem_page_alloc(&mem_phys_alloc_ctx, size))
+#define pfree(num, size) (mem_page_free(&mem_phys_alloc_ctx, num, size))
+#define palloc_get_stats(total, used) (mem_page_alloc_stats(&mem_phys_alloc_ctx, total, used))
+
+static inline void* zpalloc(uint32_t num) {
+    void* buf = palloc(num);
+    bzero(buf, num * PAGE_SIZE);
+    return buf;
+}
 
 void mem_init();

@@ -17,9 +17,9 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "kmalloc.h"
-#include "vmem.h"
-#include "palloc.h"
+#include <mem/kmalloc.h>
+#include <mem/vmem.h>
+#include <mem/mem.h>
 #include <log.h>
 #include <string.h>
 #include <panic.h>

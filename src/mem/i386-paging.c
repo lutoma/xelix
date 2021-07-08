@@ -19,7 +19,7 @@
 
 #include "paging.h"
 #include <mem/kmalloc.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <log.h>
 #include <string.h>
 #include <mem/vmem.h>

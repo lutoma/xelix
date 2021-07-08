@@ -21,7 +21,7 @@
  * once those are implemented
  */
 
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <fs/sysfs.h>
 #include <fs/poll.h>
 #include <errno.h>

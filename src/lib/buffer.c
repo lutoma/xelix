@@ -19,7 +19,7 @@
 
 #include <buffer.h>
 #include <mem/kmalloc.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <errno.h>
 
 struct buffer* buffer_new(size_t max_pages) {

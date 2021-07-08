@@ -20,7 +20,7 @@
 #include <tasks/task.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <string.h>
 
 #define EXECDATA_LOCATION 0x5000

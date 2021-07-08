@@ -19,15 +19,21 @@
  */
 
 #include <mem/paging.h>
+#include <bitmap.h>
 #include <string.h>
+#include <stdint.h>
+#include <spinlock.h>
 
-void* palloc(uint32_t num);
-void pfree(uint32_t num, uint32_t size);
-void palloc_init();
-void palloc_get_stats(uint32_t* total, uint32_t* used);
+#define PAGE_ALLOC_BITMAP_SIZE 0xfffff000 / PAGE_SIZE
 
-static inline void* zpalloc(uint32_t num) {
-	void* buf = palloc(num);
-	bzero(buf, num * PAGE_SIZE);
-	return buf;
-}
+struct mem_page_alloc_ctx {
+	spinlock_t lock;
+	uint32_t bitmap_data[bitmap_size(PAGE_ALLOC_BITMAP_SIZE)];
+	struct bitmap bitmap;
+};
+
+void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, uint32_t size);
+int mem_page_alloc_at(struct mem_page_alloc_ctx* ctx, void* addr, uint32_t size);
+int mem_page_free(struct mem_page_alloc_ctx* ctx, uint32_t num, uint32_t size);
+int mem_page_alloc_stats(struct mem_page_alloc_ctx* ctx, uint32_t* total, uint32_t* used);
+int mem_page_alloc_new(struct mem_page_alloc_ctx* ctx);

@@ -24,7 +24,7 @@
 #include <tasks/elf.h>
 #include <mem/vmem.h>
 #include <mem/kmalloc.h>
-#include <mem/palloc.h>
+#include <mem/mem.h>
 #include <mem/vmem.h>
 #include <mem/i386-gdt.h>
 #include <int/int.h>
