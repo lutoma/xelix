@@ -109,7 +109,7 @@ class Package:
 		env['PKG_CONFIG_SYSROOT_DIR'] = image_dir
 
 		env['PATH'] = f'{root_dir / "toolchain" / "local" / "bin"}:{os.environ.get("PATH", "")}'
-		env['CFLAGS'] = f'-O3'
+		env['CFLAGS'] = f'-I{image_dir / "usr" / "include"} -O3'
 		env['CPPFLAGS'] = '-D__STDC_ISO_10646__ -D_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC=0 -D_GLIBCXX_USE_C99_STDLIB=0'
 		env['LDFLAGS'] = f'-L{image_dir / "usr" / "lib"}'
 
