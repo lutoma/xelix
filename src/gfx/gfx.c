@@ -85,10 +85,7 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	handle->used = true;
 	handle->ctx = ctx;
 	handle->id = next_handle;
-	handle->size = fb_desc->common.framebuffer_width
-		* fb_desc->common.framebuffer_height
-		* fb_desc->common.framebuffer_bpp/8;
-
+	handle->size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 	handle->buf_addr = palloc(ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE);
 	if(!handle->buf_addr) {
 		handle->used = false;
@@ -197,9 +194,7 @@ void gfx_init() {
 		(uint32_t)fb_desc->common.framebuffer_addr);
 
 	// Map the framebuffer into the kernel paging context
-	size_t vmem_size = fb_desc->common.framebuffer_width
-      	* fb_desc->common.framebuffer_height
-		* fb_desc->common.framebuffer_bpp/8;
+	size_t vmem_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, VM_RW);
 
 	struct vfs_callbacks sfs_cb = {
