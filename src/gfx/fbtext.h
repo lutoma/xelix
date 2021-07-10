@@ -19,3 +19,4 @@
  */
 
 void gfx_fbtext_init();
+void gfx_fbtext_show();

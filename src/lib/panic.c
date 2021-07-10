@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <tasks/elf.h>
 #include <boot/multiboot.h>
+#include <gfx/fbtext.h>
 
 static spinlock_t lock;
 // Should seed this using RNG
@@ -72,30 +73,28 @@ void __attribute__((optimize("O0"))) panic(char* fmt, ...) {
 	va_list va;
 	va_start(va, fmt);
 	int_disable();
+	gfx_fbtext_show();
+
 
 	char error[500];
 	vsnprintf(error, 500, fmt, va);
-	panic_printf("\nKernel Panic: %s\n", error);
+	panic_printf("   \n--------------------\n");
+	panic_printf("Kernel Panic: %s\n", error);
 	va_end(va);
+	panic_printf("   \n");
 
-	panic_printf("Last PIT tick:   %d (rate %d, uptime: %d seconds)\n",
+	panic_printf("Last PIT tick:   %-7d (rate %d, uptime: %d seconds)\n",
 		(uint32_t)timer_tick, timer_rate, uptime());
 
 	task_t* task = scheduler_get_current();
 	if(task) {
-		panic_printf("Running task:    %d <%s>", task->pid, task->name);
-
-	/*	uint32_t task_offset = task->state->eip - task->entry;
-		if(task_offset >= 0) {
-			panic_printf("+%x at 0x%x", task_offset, task->state->eip);
-		}
-*/
-		panic_printf("\n");
+		panic_printf("Running task:    %-7d (%s)\n", task->pid, task->name);
 	} else {
 		panic_printf("Running task:    [No task running]\n");
 	}
 
-	panic_printf("\nCall trace:\n");
+	panic_printf("   \n");
+	panic_printf("Call trace:\n");
 	intptr_t addresses[10];
 	int read = walk_stack(addresses, 10);
 
