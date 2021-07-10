@@ -46,6 +46,10 @@ SECTIONS {
 		*(.text.ul_visible)
 	} :ul_visible
 
+	.data.ul_visible ALIGN(4096) : {
+		*(.data.ul_visible)
+	} :ul_visible
+
 	.bss.ul_visible ALIGN(4096) : {
 		*(.bss.ul_visible)
 	} :ul_visible
