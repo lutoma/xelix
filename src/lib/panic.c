@@ -29,6 +29,7 @@
 #include <mem/kmalloc.h>
 #include <spinlock.h>
 #include <stdarg.h>
+#include <tasks/elf.h>
 #include <boot/multiboot.h>
 
 static spinlock_t lock;
@@ -43,8 +44,6 @@ uintptr_t __stack_chk_guard = 0xcafed00d;
 char* addr2name(intptr_t address) {
 	size_t symtab_length;
 	size_t strtab_length;
-	size_t loff = -1;
-	char* name = "?";
 
 	struct elf_sym* symtab = multiboot_get_symtab(&symtab_length);
 	char* strtab = multiboot_get_strtab(&strtab_length);
@@ -52,19 +51,17 @@ char* addr2name(intptr_t address) {
 		return "?";
 	}
 
-	for(struct elf_sym* sym = symtab; (intptr_t)sym < (intptr_t)symtab + symtab_length; sym++) {
-		if(sym->name == 0 || sym->value == 0 || sym->value > address) {
+	for(struct elf_sym* sym = symtab; (uintptr_t)sym < (uintptr_t)symtab + symtab_length; sym++) {
+		if(!sym->name || !sym->value) {
 			continue;
 		}
 
-		size_t offset = address - sym->value;
-		if(offset < 0x3000 && offset < loff) {
-			loff = offset;
-			name = strtab + sym->name;
+		if(address >= sym->value && address <= sym->value + sym->size) {
+			return strtab + sym->name;
 		}
 	}
 
-	return name;
+	return "?";
 }
 
 void __attribute__((optimize("O0"))) panic(char* fmt, ...) {
