@@ -36,7 +36,7 @@ void* multiboot_header;
  * may have been overwritten. Instead, allocate static buffer
  * and hope it fits.
  */
-#define SYMTAB_BSIZE 0x5000
+#define SYMTAB_BSIZE 0x10000
 static char cmdline[0x400];
 static char symtab[SYMTAB_BSIZE];
 static char strtab[SYMTAB_BSIZE];
