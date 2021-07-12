@@ -1,0 +1,31 @@
+--- configure	2021-07-12 15:50:31.741221429 +0200
++++ configure	2021-07-12 15:50:43.227801363 +0200
+@@ -5579,6 +5579,8 @@ case $target_os in
+         ;;
+     minix)
+         ;;
++    xelix)
++        ;;
+     none)
+         ;;
+     *)
+--- libavdevice/Makefile	2021-07-12 16:37:00.934411449 +0200
++++ libavdevice/Makefile	2021-07-12 16:37:26.164252390 +0200
+@@ -37,6 +37,7 @@ OBJS-$(CONFIG_OPENAL_INDEV)
+ OBJS-$(CONFIG_OPENGL_OUTDEV)             += opengl_enc.o
+ OBJS-$(CONFIG_OSS_INDEV)                 += oss_dec.o oss.o
+ OBJS-$(CONFIG_OSS_OUTDEV)                += oss_enc.o oss.o
++OBJS-$(CONFIG_XELIXSND_OUTDEV)           += xelixsnd_enc.o xelixsnd.o
+ OBJS-$(CONFIG_PULSE_INDEV)               += pulse_audio_dec.o \
+                                             pulse_audio_common.o timefilter.o
+ OBJS-$(CONFIG_PULSE_OUTDEV)              += pulse_audio_enc.o \
+--- libavdevice/alldevices.c	2021-07-12 16:38:35.433815146 +0200
++++ libavdevice/alldevices.c	2021-07-12 16:38:49.030395898 +0200
+@@ -45,6 +45,7 @@ extern AVInputFormat  ff_openal_demuxer;
+ extern AVOutputFormat ff_opengl_muxer;
+ extern AVInputFormat  ff_oss_demuxer;
+ extern AVOutputFormat ff_oss_muxer;
++extern AVOutputFormat ff_xelixsnd_muxer;
+ extern AVInputFormat  ff_pulse_demuxer;
+ extern AVOutputFormat ff_pulse_muxer;
+ extern AVOutputFormat ff_sdl2_muxer;
