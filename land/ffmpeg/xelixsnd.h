@@ -1,0 +1,44 @@
+/*
+ * This file is part of FFmpeg.
+ *
+ * FFmpeg is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * FFmpeg is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with FFmpeg; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
+#ifndef AVDEVICE_XELIXSND_H
+#define AVDEVICE_XELIXSND_H
+
+#include "libavcodec/avcodec.h"
+
+#include "libavformat/avformat.h"
+
+#define XELIXSND_AUDIO_BLOCK_SIZE 4096
+
+typedef struct XelixSNDAudioData {
+    AVClass *class;
+    int fd;
+    int sample_rate;
+    int channels;
+    int frame_size; /* in bytes ! */
+    enum AVCodecID codec_id;
+    uint8_t buffer[XELIXSND_AUDIO_BLOCK_SIZE];
+    int buffer_ptr;
+} XelixSNDAudioData;
+
+int ff_xelixsnd_audio_open(AVFormatContext *s1, int is_output,
+                      const char *audio_device);
+
+int ff_xelixsnd_audio_close(XelixSNDAudioData *s);
+
+#endif /* AVDEVICE_XELIXSND_H */
