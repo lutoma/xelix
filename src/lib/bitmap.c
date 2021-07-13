@@ -20,6 +20,13 @@
 #include <bitmap.h>
 #include <stdbool.h>
 #include <string.h>
+#include <log.h>
+
+#ifdef CONFIG_BITMAP_DEBUG
+	#define debug(x, args...) log(LOG_DEBUG, "bitmap: " x, args)
+#else
+	#define debug(x, args...)
+#endif
 
 void bitmap_set(struct bitmap* bm, uint32_t pos, uint32_t num) {
 	for(int i = 0; i < num; i++) {
@@ -65,45 +72,52 @@ uint32_t bitmap_find(struct bitmap* bm, uint32_t num) {
 
 	for(uint32_t i = bm->first_free; i <= bitmap_size(bm->size); i++) {
 		uint32_t* bits = &bm->data[i];
+		debug("Checking at index %d, value=%#x\n", i, *bits);
 
 		if(*bits == 0xffffffff) {
+			debug("All taken\n", i);
 			contig_num = 0;
 			continue;
 		}
 		if(all_nonfree) {
+			debug("Setting first_free=%d\n", i);
 			all_nonfree = false;
 			bm->first_free = i;
 		}
 
 		if(!*bits) {
+			debug("All free\n", i);
+
 			if(!contig_num) {
 				contig_start = i*32;
 			}
 			contig_num += 32;
 
-			if(contig_num + 32 >= num) {
+			if(contig_num >= num) {
 				return contig_start;
 			}
 
 			continue;
 		}
 
-		int tz = __builtin_ctz(*bits);
-		if(contig_num + tz < num) {
-			contig_num = 0;
-			continue;
-		}
+		// Could take some shortcuts here with __builtin_ctz/builtin_clz, but
+		// those are tricky to get right. This is good enough for now.
 
 		for(int j = 0; j < 32; j++) {
+			debug("Checking bit %d:%d = %d\n", i, j, bit_get(*bits, j) > 0);
+
 			if(bit_get(*bits, j)) {
 				contig_num = 0;
 			} else {
 				if(!contig_num) {
 					contig_start = i*32 + j;
 				}
+
 				contig_num++;
+				debug("contig_start=%d, contig_num=%d.\n", contig_start, contig_num);
 
 				if(contig_num >= num) {
+					debug("contig_num is large enough (%d >= %d)\n", contig_num, num);
 					return contig_start;
 				}
 			}

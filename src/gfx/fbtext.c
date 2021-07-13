@@ -100,6 +100,12 @@ void fbtext_write_char(char chr) {
 	}
 }
 
+// Switch GFX output to fbtext. This is used during kernel panics
+void gfx_fbtext_show() {
+	gfx_handle_enable(gfx_handle);
+	gfx_blit_all(gfx_handle);
+}
+
 void gfx_fbtext_init() {
 	gfx_handle = gfx_handle_init(NULL);
 	if(!gfx_handle) {
@@ -113,6 +119,6 @@ void gfx_fbtext_init() {
 	log(LOG_DEBUG, "fbtext: font width %d/%d height %d/%d flags %d\n", gfx_font.width, cols, gfx_font.height, rows, gfx_font.flags);
 
 	memset32(gfx_handle->addr, 0x000000, gfx_handle->size / 4);
+	gfx_fbtext_show();
 	log_dump();
-	gfx_handle_enable(gfx_handle);
 }

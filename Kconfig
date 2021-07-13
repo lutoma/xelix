@@ -18,7 +18,7 @@ menu "Interrupts"
 		the task switching frequency, and the maximum time resolution.
 endmenu
 
-menu "Kernel logger"
+menu "Kernel stdlib"
 	config LOG_STORE
 		bool "Store kernel logs"
 		default y
@@ -38,13 +38,17 @@ menu "Kernel logger"
 
 	config LOG_SERIAL_LEVEL
 		int "Serial log level"
-		default 1
+		default 0
 		---help---
 		0 Disabled
 		1 Debug
 		2 Info
 		3 Warn
 		4 Error
+
+	config BITMAP_DEBUG
+		bool "Debug bitmap.c"
+		default n
 endmenu
 
 menu "Memory"
