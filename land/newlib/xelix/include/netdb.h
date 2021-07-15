@@ -116,26 +116,26 @@ void endhostent(void);
 void endnetent(void);
 void endprotoent(void);
 void endservent(void);
-void freeaddrinfo(struct addrinfo *);
+void freeaddrinfo(struct addrinfo*);
 const char *gai_strerror(int);
 const char *hstrerror(int err);
 
-int getaddrinfo(const char *restrict, const char *restrict,
-	const struct addrinfo *restrict, struct addrinfo **restrict);
+int getaddrinfo(const char*, const char*,
+	const struct addrinfo*, struct addrinfo**);
 
 struct hostent *gethostent(void);
 
-int getnameinfo(const struct sockaddr *restrict, socklen_t,
-	char *restrict, socklen_t, char *restrict, socklen_t, int);
+int getnameinfo(const struct sockaddr*, socklen_t,
+	char*, socklen_t, char*, socklen_t, int);
 
 struct netent *getnetbyaddr(uint32_t, int);
-struct netent *getnetbyname(const char *);
+struct netent *getnetbyname(const char*);
 struct netent *getnetent(void);
-struct protoent *getprotobyname(const char *);
+struct protoent *getprotobyname(const char*);
 struct protoent *getprotobynumber(int);
 struct protoent *getprotoent(void);
-struct servent *getservbyname(const char *, const char *);
-struct servent *getservbyport(int, const char *);
+struct servent *getservbyname(const char*, const char*);
+struct servent *getservbyport(int, const char*);
 struct servent *getservent(void);
 void sethostent(int);
 void setnetent(int);
