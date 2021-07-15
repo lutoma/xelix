@@ -76,6 +76,7 @@ void cmdline_init() {
 		}
 	}
 
+	log(LOG_INFO, "cmdline: %s\n", cmdline_string());
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

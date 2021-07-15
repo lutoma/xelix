@@ -103,7 +103,8 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		 */
 		if(flags[i] & SCA_STRING) {
 			// FIXME
-			ptr_sizes[i] = 0x1;
+			//ptr_sizes[i] = 0x1;
+			ptr_sizes[i] = PAGE_SIZE - args[i] % PAGE_SIZE;
 		} else {
 			ptr_sizes[i] = def.ptr_size;
 			if(flags[i] & SCA_SIZE_IN_0) {

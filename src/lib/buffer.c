@@ -26,7 +26,7 @@ struct buffer* buffer_new(size_t max_pages) {
 	struct buffer* buf = zmalloc(sizeof(struct buffer));
 	buf->max_pages = max_pages;
 	buf->pages = 1;
-	buf->data = palloc(1);
+	buf->data = valloc(1, NULL, VM_RW);
 	return buf;
 }
 
@@ -45,7 +45,7 @@ size_t buffer_write(struct buffer* buf, const void* src, size_t size) {
 			return -1;
 		}
 
-		void* new_data = palloc(size_new);
+		void* new_data = valloc(size_new, NULL, VM_RW);
 		if(!new_data) {
 			return -1;
 		}

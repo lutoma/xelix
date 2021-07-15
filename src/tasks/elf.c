@@ -68,8 +68,9 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	}
 
 	size_t size = ALIGN(phead->memsz + phys_offset, PAGE_SIZE);
-	void* phys = zpalloc(size / PAGE_SIZE);
-	if(unlikely(!phys)) {
+	void* phys = palloc(size / PAGE_SIZE);
+	void* kernel_virt = zvalloc(size / PAGE_SIZE, phys, VM_RW);
+	if(unlikely(!kernel_virt)) {
 		return -1;
 	}
 
@@ -81,7 +82,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 		virt = phys;
 	}
 
-	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, phys + phys_offset, task))) {
+	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, kernel_virt + phys_offset, task))) {
 		pfree((uint32_t)phys / PAGE_SIZE, size / PAGE_SIZE);
 		return -1;
 	}
@@ -93,8 +94,8 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	}
 	vmem_map(task->vmem_ctx, virt, phys, size, vmem_flags);
 
-	debug("  phys %#-8x-%#-8x virt %#-8x-%#-8x\n",
-		phys, (intptr_t)phys + size, virt, (intptr_t)virt + size);
+	debug("  phys %#-8x-%#-8x task virt %#-8x-%#-8x kernel virt %#-8x-%#-8x\n",
+		phys, (uintptr_t)phys + size, virt, (uintptr_t)virt + size, kernel_virt, (uintptr_t)kernel_virt + size);
 	return 0;
 }
 

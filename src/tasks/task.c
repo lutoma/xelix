@@ -45,13 +45,15 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	task_t* task = zmalloc(sizeof(task_t));
 	task->vmem_ctx = zmalloc(sizeof(struct vmem_context));
-	task->state = palloc(1);
+	void* state_phys = palloc(1);
+	task->state = valloc(1, state_phys, VM_RW);
 	bzero(task->state, sizeof(isf_t));
-	vmem_map_flat(task->vmem_ctx, task->state, PAGE_SIZE, VM_FREE);
+	vmem_map(task->vmem_ctx, task->state, state_phys, PAGE_SIZE, VM_FREE);
 
 	// Kernel stack used during interrupts while this task is running
-	task->kernel_stack = palloc(4);
-	vmem_map_flat(task->vmem_ctx, task->kernel_stack, KERNEL_STACK_SIZE, VM_FREE);
+	void* kernel_stack_phys = palloc(4);
+	task->kernel_stack = valloc(4, kernel_stack_phys, VM_RW);
+	vmem_map(task->vmem_ctx, task->kernel_stack, kernel_stack_phys, KERNEL_STACK_SIZE, VM_FREE);
 
 	/* Map parts of the kernel marked as UL_VISIBLE into the task address
 	 * space (But readable only to PL0). These are the functions and data
@@ -103,8 +105,9 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
-	task->stack = zpalloc(task->stack_size / PAGE_SIZE);
-	vmem_map(task->vmem_ctx, (void*)TASK_STACK_LOCATION - task->stack_size, task->stack,
+	void* stack_phys = palloc(task->stack_size / PAGE_SIZE);
+	task->stack = zvalloc(task->stack_size / PAGE_SIZE, stack_phys, VM_RW);
+	vmem_map(task->vmem_ctx, (void*)TASK_STACK_LOCATION - task->stack_size, stack_phys,
 		task->stack_size, VM_USER | VM_RW | VM_FREE | VM_TFORK);
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
@@ -207,9 +210,13 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 
 		// Can't do copy on write/merging with pages where we don't control deallocation
 		//if(range->flags & VM_NOCOW || !(range->flags & (VM_FREE | VM_COW))) {
+
 		if(range->flags & VM_RW) {
-			void* phys_addr = zpalloc(range->size / PAGE_SIZE);
-			memcpy(phys_addr, range->phys_addr, range->size);
+			void* phys_addr = palloc(range->size / PAGE_SIZE);
+			void* kernel_virt = zvalloc(range->size / PAGE_SIZE, phys_addr, VM_RW);
+
+			void* old_kernel_virt = vmem_translate(NULL, range->phys_addr, true);
+			memcpy(kernel_virt, old_kernel_virt, range->size);
 			vmem_map(task->vmem_ctx, range->virt_addr, phys_addr, range->size, range->flags);
 			continue;
 		}

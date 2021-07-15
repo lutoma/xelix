@@ -256,7 +256,7 @@ int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	}
 
 	if(copied) {
-		task_memcpy(ctx->task, _arg, arg, arg_size, true);
+		task_memcpy(ctx->task, arg, _arg, arg_size, true);
 		kfree(arg);
 	}
 

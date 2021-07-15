@@ -77,7 +77,12 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return 0;
 		}
 
-		gfxbuf = zpalloc(RDIV(size, PAGE_SIZE));
+		gfxbuf = palloc(RDIV(size, PAGE_SIZE));
+
+		// Wipe memory
+		void* virt_gfxbuf = zvalloc(RDIV(size, PAGE_SIZE), gfxbuf, VM_RW);
+		// FIXME vfree(virt_gfxbux) here
+
 		vmem_map_flat(ctx->task->vmem_ctx, gfxbuf, size, VM_USER | VM_RW);
 		vmem_map_flat(master_task->vmem_ctx, gfxbuf, size, VM_USER | VM_RW);
 		return (uintptr_t)gfxbuf;

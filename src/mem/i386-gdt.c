@@ -21,6 +21,7 @@
 #include "i386-gdt.h"
 #include <stdint.h>
 #include <string.h>
+#include <log.h>
 #include <mem/kmalloc.h>
 
 #define SEG_DESCTYPE(x)  ((x) << 0x04) // Descriptor type (0 for system, 1 for code/data)
@@ -112,4 +113,5 @@ void gdt_init() {
 	create_descriptor(4, 0, 0xffffffff, GDT_DATA_PL3); // 0x23
 
 	gdt_set_tss(&stack_end);
+    log(LOG_INFO, "gdt: Set initial tss %#x\n", &stack_end);
 }

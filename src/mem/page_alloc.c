@@ -30,7 +30,7 @@
 #include <panic.h>
 #include <spinlock.h>
 
-void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, uint32_t size) {
+void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, size_t size) {
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return NULL;
 	}
@@ -41,17 +41,19 @@ void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, uint32_t size) {
 	return (void*)(num * PAGE_SIZE);
 }
 
-int mem_page_alloc_at(struct mem_page_alloc_ctx* ctx, void* addr, uint32_t size) {
+int mem_page_alloc_at(struct mem_page_alloc_ctx* ctx, void* addr, size_t size) {
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return -1;
 	}
 
+	// FIXME Add optional? check for duplicate allocations
 	bitmap_set(&ctx->bitmap, (uintptr_t)addr / PAGE_SIZE, size);
 	spinlock_release(&ctx->lock);
 	return 0;
 }
 
-int mem_page_free(struct mem_page_alloc_ctx* ctx, uint32_t num, uint32_t size) {
+int mem_page_free(struct mem_page_alloc_ctx* ctx, uint32_t num, size_t size) {
+	// FIXME Add optional debug check if allocation even exists
 	bitmap_clear(&ctx->bitmap, num, size);
 	return 0;
 }
@@ -66,7 +68,6 @@ int mem_page_alloc_new(struct mem_page_alloc_ctx* ctx) {
 	ctx->lock = 0;
 	ctx->bitmap.data = ctx->bitmap_data;
 	ctx->bitmap.size = PAGE_ALLOC_BITMAP_SIZE;
-	ctx->bitmap.first_free = 0;
 	bitmap_clear_all(&ctx->bitmap);
 
 	// Block NULL page

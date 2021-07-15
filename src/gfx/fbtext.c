@@ -55,6 +55,7 @@ extern struct {
 static struct gfx_handle* gfx_handle = NULL;
 static unsigned int last_x = 0;
 static unsigned int last_y = 0;
+static bool initialized = false;
 
 void fbtext_write_char(char chr) {
 	if(!gfx_handle) {
@@ -102,6 +103,9 @@ void fbtext_write_char(char chr) {
 
 // Switch GFX output to fbtext. This is used during kernel panics
 void gfx_fbtext_show() {
+	if(!initialized) {
+		return;
+	}
 	gfx_handle_enable(gfx_handle);
 	gfx_blit_all(gfx_handle);
 }
@@ -119,6 +123,7 @@ void gfx_fbtext_init() {
 	log(LOG_DEBUG, "fbtext: font width %d/%d height %d/%d flags %d\n", gfx_font.width, cols, gfx_font.height, rows, gfx_font.flags);
 
 	memset32(gfx_handle->addr, 0x000000, gfx_handle->size / 4);
+	initialized = true;
 	gfx_fbtext_show();
 	log_dump();
 }
