@@ -1,0 +1,23 @@
+name: dropbear
+version: 2020.81
+sources:
+  - url: https://matt.ucc.asn.au/dropbear/releases/dropbear-2020.81.tar.bz2
+dependencies:
+  - zlib
+patches:
+  - dropbear.patch
+patch_skip_path: 0
+configure:
+  - CFLAGS="$CFLAGS -DDROPBEAR_SVR_PASSWORD_AUTH=0" ./configure
+    --host=i786-pc-xelix
+    --prefix=/usr
+    --sysconfdir=/etc
+    --sbindir=/usr/bin
+    --disable-syslog
+    --disable-lastlog
+    --disable-harden
+    --enable-static
+make:
+  - make
+install:
+  - make install
