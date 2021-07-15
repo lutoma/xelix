@@ -5,6 +5,8 @@ sources:
 patches:
   - newlib-3.2.0.patch
 set_cflags_sysroot: false
+set_cflags_include: false
+set_ldflags_libpath: false
 configure:
   - cp -r $PKGDIR/xelix newlib/libc/sys/
 
