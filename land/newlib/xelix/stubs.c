@@ -141,3 +141,10 @@ STUB(int, getsockopt, (int sockfd, int level, int optname, void* optval, socklen
 STUB(ssize_t, recvmsg, (int sockfd, struct msghdr *msg, int flags), -1);
 STUB(dev_t, makedev, (unsigned int maj, unsigned int min), NULL);
 STUB(int, daemon, (int nochdir, int noclose), -1);
+STUB(int, seteuid, (uid_t euid), -1);
+STUB(int, setegid, (gid_t egid), -1);
+STUB(int, fstatat, (int fd, const char *restrict path, struct stat *restrict buf, int flag), -1);
+STUB(int, sigmask, (int signum), -1);
+STUB(int, sigblock, (int mask), -1);
+STUB(int, sigsetmask, (int mask), -1);
+STUB(int, siggetmask, (void), -1);

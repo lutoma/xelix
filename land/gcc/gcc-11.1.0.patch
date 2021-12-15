@@ -116,3 +116,27 @@
  		;;
  	# This one is extra strict with allowed versions
  	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
+--- gcc-11.1.0/include/libiberty.h	2021-04-27 12:00:15.000000000 +0200
++++ gcc-11.1.0/include/libiberty.h	2021-07-15 03:50:45.621053990 +0200
+@@ -48,6 +48,21 @@ extern "C" {
+ 
+ #include <stdio.h>
+ 
++// These macros break when compiling for native Xelix for some reason
++#ifdef __xelix__
++	#undef ATTRIBUTE_RESULT_SIZE_1
++	#define ATTRIBUTE_RESULT_SIZE_1
++
++	#undef ATTRIBUTE_RESULT_SIZE_2
++	#define ATTRIBUTE_RESULT_SIZE_2
++
++	#undef ATTRIBUTE_RESULT_SIZE_1_2
++	#define ATTRIBUTE_RESULT_SIZE_1_2
++
++	#undef ATTRIBUTE_WARN_UNUSED_RESULT
++	#define ATTRIBUTE_WARN_UNUSED_RESULT
++#endif
++
+ /* If the OS supports it, ensure that the supplied stream is setup to
+    avoid any multi-threaded locking.  Otherwise leave the FILE pointer
+    unchanged.  If the stream is NULL do nothing.  */
