@@ -1,15 +1,22 @@
 # Xelix kernel
 
-Xelix is a hobby POSIX kernel and operating system for x86. It has a largely GNU-based userland and can run many common \*nix programs.
+Xelix is a hobby Unix-like kernel and operating system for x86. It has a largely GNU-based userland and can run many common Linux/BSD programs.
 
 ## Features
 
 * Preemptive multitasking with privilege and memory separation
-* POSIX process API with fork/execve/wait and signal handling
+* Unix process API with fork/execve/wait and signal handling
 * VFS with support for dynamic mount points, poll, pipes, and in-memory file trees
 * Read/write ext2 implementation, IDE and virtio-block drivers
 * BSD socket API for TCP/IP support using the [PicoTCP network stack](https://github.com/tass-belgium/picotcp)
 * Terminal framework with support for multiple TTYs, pseudo terminals & ECMA48 escape sequences
+
+## Current development goals
+
+* Support for memory-mapping in userspace using mmap and general memory allocation overhaul
+* Dynamic library loading
+* Graphics compositing improvements and proper input handling for GUI tasks
+* Virtual file system overhaul to cache file tree in memory and do lazy lookups only
 
 ## Releases
 

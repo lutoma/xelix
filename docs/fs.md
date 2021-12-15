@@ -1,8 +1,5 @@
 # File system
 
-!!! note
-	The virtual file system is currently under more or less active refactoring. Some of the information here may be outdated by the time you read this.
-
 File manipulation functions are defined in `src/fs/vfs.c`. These are prefixed with `vfs_` and include all the common POSIX operations such as vfs_open, vfs_read, vfs_write, vfs_poll, etc.
 
 The first argument is always a `task_t*` to pass the calling task for permission checks and such. The remaining arguments are usually the same as the corresponding C standard library function.
@@ -109,3 +106,7 @@ struct sysfs_file* sysfs_add_file(char* name, struct vfs_callbacks* cb);
 // /dev
 struct sysfs_file* sysfs_add_dev(char* name, struct vfs_callbacks* cb);
 ```
+
+
+## Pseudoterminals (PTYs)
+
