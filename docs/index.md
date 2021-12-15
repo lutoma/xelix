@@ -2,6 +2,8 @@
 
 Xelix is a hobby Unix-like kernel and operating system for x86. It has a largely GNU-based userland and can run many common Linux/BSD programs.
 
+[![Screenshot of Xelix 0.3.0-alpha](images/screenshot.png)](images/screenshot.png)
+
 ## Features
 
 * Preemptive multitasking with privilege and memory separation
