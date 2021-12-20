@@ -44,12 +44,13 @@ struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, si
 	 * Add a dirty hack for that one-time special case.
 	 */
 	struct vmem_range* range;
-	if(kmalloc_ready) {
-		range = zmalloc(sizeof(struct vmem_range));
-	} else {
-		if(!have_malloc_ranges) {
-			panic("vmem: pre-malloc ranges exhausted\n");
+	if(likely(!have_malloc_ranges)) {
+		if(likely(kmalloc_ready)) {
+			range = zmalloc(sizeof(struct vmem_range));
+		} else {
+			panic("vmem: preallocated ranges exhausted before kmalloc is ready\n");
 		}
+	} else {
 		range = &malloc_ranges[50 - have_malloc_ranges--];
 	}
 
