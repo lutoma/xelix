@@ -13,9 +13,6 @@ defaults:
   run:
     working-directory: docs
 
-env:
-  LFTP_PASSWORD: "${{ secrets.SFTP_PASSWORD }}"
-
 jobs:
   push:
     runs-on: ubuntu-latest
@@ -44,4 +41,4 @@ jobs:
         run: poetry run mkdocs build -f ../mkdocs.yml
 
       - name: Push site
-        run: lftp --env-password "sftp://${{ secrets.SFTP_CONNECTION }}" -e "mirror --reverse --delete ../site httpdocs; bye"
+        run: lftp sftp://ws309@w2.fnordserver.net --password ${{ secrets.SFTP_PASSWORD }} -e "mirror --reverse --delete ../site httpdocs; bye"
