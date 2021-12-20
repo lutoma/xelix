@@ -196,9 +196,9 @@ void gfx_init() {
 	size_t vmem_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 
 	// FIXME use proper APIs
-	mem_page_alloc_at(&mem_phys_alloc_ctx, fb_desc->common.framebuffer_addr, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE);
+	mem_page_alloc_at(&mem_phys_alloc_ctx, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE);
 
-	framebuffer_addr = valloc(ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, fb_desc->common.framebuffer_addr, VM_RW);
+	framebuffer_addr = valloc(ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
 
 	log(LOG_DEBUG, "gfx1: %dx%d bpp %d pitch 0x%x at 0x%x\n",
 		fb_desc->common.framebuffer_width,
