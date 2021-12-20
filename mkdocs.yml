@@ -9,21 +9,45 @@ markdown_extensions:
   - admonition
   - def_list
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
   - pymdownx.inlinehilite
   - toc:
       permalink: true
 plugins:
   - search
+  - mermaid2
 theme:
   name: 'material'
   logo: 'images/92014.svg'
   features:
-     - navigation.instant
+# breaks mermaid2
+#     - navigation.instant
      - navigation.tracking
 #     - navigation.tabs
      - navigation.sections
      - navigation.top
+#     - toc.integrate
+
+# breaks mermaid2
+#  palette:
+#    - media: "(prefers-color-scheme: light)"
+#      scheme: default
+#      primary: indigo
+#      toggle:
+#        icon: material/toggle-switch-off-outline
+#        name: Switch to dark mode
+#    - media: "(prefers-color-scheme: dark)"
+#      scheme: slate
+#      primary: indigo
+#      accent: deep orange
+#      toggle:
+#        icon: material/toggle-switch
+#        name: Switch to light mode
+
 nav:
 - Home: 'index.md'
 

@@ -10,6 +10,7 @@ python = "^3.10"
 mkdocs = "^1.2.3"
 mkdocs-material = "^8.1.1"
 mkdocs-minify-plugin = "^0.5.0"
+mkdocs-mermaid2-plugin = "^0.5.2"
 
 [tool.poetry.dev-dependencies]
 
