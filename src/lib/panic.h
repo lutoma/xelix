@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011 Lukas Martini
+/* Copyright © 2011-2021 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -33,4 +33,6 @@
 extern int walk_stack(intptr_t* addresses, int naddr);
 
 char* addr2name(intptr_t address);
-void __attribute__((optimize("O0"))) panic(char* error, ...);
+
+void __attribute__((optimize("O0"))) _panic(char* error, ...);
+#define panic(args...) { _panic(args); __builtin_unreachable(); }

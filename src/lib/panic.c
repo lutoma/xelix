@@ -65,7 +65,7 @@ char* addr2name(intptr_t address) {
 	return "?";
 }
 
-void __attribute__((optimize("O0"))) panic(char* fmt, ...) {
+void __attribute__((optimize("O0"))) _panic(char* fmt, ...) {
 	if(unlikely(!spinlock_get(&lock, 30))) {
 		freeze();
 	}
