@@ -76,6 +76,8 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 			dump_isf(LOG_DEBUG, new_task->state);
 			#endif
 
+			// FIXME SSE state???
+			//memcpy(sse_state, new_task->state->sse_state, 512);
 			gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
 			return new_task->state;
 		}

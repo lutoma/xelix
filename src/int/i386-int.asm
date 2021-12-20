@@ -17,7 +17,7 @@
 ; along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
 
 [EXTERN int_dispatch]
-[EXTERN vmem_kernel_hwdata]
+[EXTERN paging_kernel_ctx]
 [EXTERN sse_state]
 
 %define PIT_MASTER	0x20
@@ -102,8 +102,8 @@ int_i386_dispatch:
 	jnz .return
 
 	; Load kernel paging context from global variable set during
-	; early boot in vmem_init
-	mov ecx, [vmem_kernel_hwdata]
+	; early boot in paging_init
+	mov ecx, [paging_kernel_ctx]
 	mov cr3, ecx
 
 	; Call C handler with fastcall convention

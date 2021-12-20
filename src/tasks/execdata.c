@@ -1,5 +1,5 @@
 /* task.c: Task execdata setup
- * Copyright © 2018 Lukas Martini
+ * Copyright © 2018-2021 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -22,8 +22,6 @@
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
 #include <string.h>
-
-#define EXECDATA_LOCATION 0x5000
 
 struct execdata {
 	uint32_t pid;
@@ -54,28 +52,33 @@ struct execdata {
  * - environ strings / free space for new environment variables
  */
 void task_setup_execdata(task_t* task) {
-	void* page = zpalloc(4);
-	vmem_map(task->vmem_ctx, (void*)EXECDATA_LOCATION, page, PAGE_SIZE * 4,
+	void* phys = palloc(4);
+	void* page = zvalloc(4, phys, VM_RW);
+	vmem_map(task->vmem_ctx, (void*)CONFIG_EXECDATA_LOCATION, phys, PAGE_SIZE * 4,
 		VM_USER | VM_RW | VM_FREE);
 
-	struct execdata* exc = (struct execdata*)page;
-	char** argv = (char**)exc + sizeof(struct execdata);
-	void* args = argv + sizeof(char*) * (task->argc + 1);
-
 	size_t offset = 0;
+
+	struct execdata* exc = (struct execdata*)page;
+	offset += sizeof(struct execdata);
+
+	char** argv = (char**)(page + offset);
+	exc->argv = (void*)CONFIG_EXECDATA_LOCATION + offset;
+	offset += sizeof(char*) * (task->argc + 1);
+
 	for(int i = 0; i < task->argc; i++) {
-		strncpy((char*)(args + offset), task->argv[i], 200);
-		argv[i] = (char*)vmem_translate(task->vmem_ctx, args + offset, true);
+		argv[i] = (void*)CONFIG_EXECDATA_LOCATION + offset;
+		strncpy((char*)(page + offset), task->argv[i], 200);
 		offset += strlen(task->argv[i]) + 1;
 	}
 
-	char** environ = (char**)args + offset;
-	void* env = environ + sizeof(char*) * (task->envc + 1);
+	char** environ = (char**)(page + offset);
+	exc->env = (void*)CONFIG_EXECDATA_LOCATION + offset;
+	offset += sizeof(char*) * (task->envc + 1);
 
-	offset = 0;
 	for(int i = 0; i < task->envc; i++) {
-		strncpy((char*)(env + offset), task->environ[i], 200);
-		environ[i] = (char*)vmem_translate(task->vmem_ctx, env + offset, true);
+		environ[i] = (void*)CONFIG_EXECDATA_LOCATION + offset;
+		strncpy((char*)(page + offset), task->environ[i], 200);
 		offset += strlen(task->environ[i]) + 1;
 	}
 
@@ -87,8 +90,6 @@ void task_setup_execdata(task_t* task) {
 	exc->ppid = task->parent ? task->parent->pid : 0;
 	exc->argc = task->argc;
 	exc->envc = task->envc;
-	exc->argv = vmem_translate(task->vmem_ctx, argv, true);
-	exc->env = vmem_translate(task->vmem_ctx, environ, true);
 	memcpy(exc->binary_path, task->binary_path, VFS_PATH_MAX);
 	memcpy(exc->old_binary_path, task->binary_path, 256);
 }

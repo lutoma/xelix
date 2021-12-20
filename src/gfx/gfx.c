@@ -29,8 +29,10 @@
 #include <boot/multiboot.h>
 
 static struct multiboot_tag_framebuffer* fb_desc;
+
 static struct gfx_handle handles[20];
 static struct gfx_handle* active_handle = NULL;
+static void* framebuffer_addr;
 static int next_handle = 0;
 
 struct gfx_ul_blit_cmd {
@@ -56,7 +58,7 @@ struct gfx_handle* gfx_get_handle(unsigned int id) {
 
 void gfx_blit_all(struct gfx_handle* handle) {
 	if(handle == active_handle) {
-		memcpy((void*)(uintptr_t)fb_desc->common.framebuffer_addr, handle->buf_addr, handle->size);
+		memcpy((void*)(uintptr_t)framebuffer_addr, handle->buf_addr, handle->size);
 	}
 }
 
@@ -68,7 +70,7 @@ void gfx_blit(struct gfx_handle* handle, size_t x, size_t y, size_t width, size_
 	// Naïve line-based copy
 	for(size_t cy = y; cy < y + height && cy < handle->height; cy++) {
 		uintptr_t offset = cy * handle->pitch + (x * handle->bpp/8);
-		memcpy((void*)((uintptr_t)fb_desc->common.framebuffer_addr + offset), handle->buf_addr + offset, width * handle->bpp/8);
+		memcpy((void*)((uintptr_t)framebuffer_addr + offset), handle->buf_addr + offset, width * handle->bpp/8);
 	}
 }
 
@@ -86,8 +88,16 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	handle->ctx = ctx;
 	handle->id = next_handle;
 	handle->size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
-	handle->buf_addr = palloc(ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE);
+
+	void* phys_buf = palloc(ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE);
+	if(!phys_buf) {
+		handle->used = false;
+		return NULL;
+	}
+
+	handle->buf_addr = valloc(ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE, phys_buf, VM_RW);
 	if(!handle->buf_addr) {
+		pfree(phys_buf, ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE);
 		handle->used = false;
 		return NULL;
 	}
@@ -95,6 +105,7 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	if(ctx) {
 		// FIXME Properly choose virtual userland pages
 		handle->addr = (void*)0xf4000000;
+		vmem_map(handle->ctx, handle->addr, phys_buf, handle->size + PAGE_SIZE, VM_RW | VM_USER);
 	} else {
 		handle->addr = handle->buf_addr;
 	}
@@ -104,12 +115,6 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	handle->height = fb_desc->common.framebuffer_height;
 	handle->pitch = fb_desc->common.framebuffer_pitch;
 
-	int flags = VM_RW;
-	if(handle->ctx) {
-		flags |= VM_USER;
-	}
-
-	vmem_map(handle->ctx, handle->addr, handle->buf_addr, handle->size, flags);
 	next_handle++;
 	return handle;
 }
@@ -129,7 +134,6 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			sc_errno = EINVAL;
 			return -1;
 		}
-
 
 		struct gfx_handle* handle = gfx_handle_init(ctx->task->vmem_ctx);
 		if(!handle) {
@@ -186,16 +190,22 @@ void gfx_init() {
 		return;
 	}
 
+	// Map the framebuffer into the kernel paging context
+
+	// FIXME do palloc_at to block framebuffer from phys page allocator
+	size_t vmem_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
+
+	// FIXME use proper APIs
+	mem_page_alloc_at(&mem_phys_alloc_ctx, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE);
+
+	framebuffer_addr = valloc(ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
+
 	log(LOG_DEBUG, "gfx1: %dx%d bpp %d pitch 0x%x at 0x%x\n",
 		fb_desc->common.framebuffer_width,
 		fb_desc->common.framebuffer_height,
 		fb_desc->common.framebuffer_bpp,
 		fb_desc->common.framebuffer_pitch,
-		(uint32_t)fb_desc->common.framebuffer_addr);
-
-	// Map the framebuffer into the kernel paging context
-	size_t vmem_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
-	vmem_map_flat(NULL, (void*)(uint32_t)fb_desc->common.framebuffer_addr, vmem_size, VM_RW);
+		(uint32_t)framebuffer_addr);
 
 	struct vfs_callbacks sfs_cb = {
 		.ioctl = sfs_ioctl,

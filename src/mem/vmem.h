@@ -45,6 +45,8 @@
 
 #define VM_NOCOW 64
 
+// Temp hack
+#define VM_VALLOC_NO_MAP 128
 
 
 #define vmem_translate_ptr(range, addr, phys)					\
@@ -73,6 +75,7 @@ struct vmem_context {
 
 	// Address of the actual page tables that will be read by the hardware
 	struct paging_context* hwdata;
+	struct paging_context* hwdata_phys;
 };
 
 struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, size_t size, int flags);

@@ -42,7 +42,10 @@ struct paging_context {
 	struct page dir_entries[1024];
 };
 
+extern struct paging_context* paging_kernel_ctx UL_VISIBLE("bss");
+extern void* paging_alloc_end;
+
 struct vmem_range;
-void paging_set_range(struct paging_context* ctx, struct vmem_range* range);
+void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_addr, size_t size, int flags);
 void paging_rm_context(struct paging_context* ctx);
-void paging_init(void* hwdata);
+void paging_init();

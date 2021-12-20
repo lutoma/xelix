@@ -19,29 +19,47 @@
 
 #include "vmem.h"
 #include <log.h>
-#include <mem/kmalloc.h>
 #include <mem/mem.h>
 #include <mem/paging.h>
+#include <mem/kmalloc.h>
 #include <panic.h>
 #include <string.h>
 #include <tasks/scheduler.h>
 
-static struct vmem_context* kernel_ctx = NULL;
-
-/* Used in interrupt handlers to return to kernel paging context */
-void* vmem_kernel_hwdata UL_VISIBLE("bss");
+static struct vmem_context kernel_ctx;
+static struct vmem_range malloc_ranges[50];
+static int have_malloc_ranges = 50;
 
 struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, size_t size, int flags) {
-	ctx = ctx ? ctx : kernel_ctx;
+	ctx = ctx ? ctx : &kernel_ctx;
 	if(unlikely(!ctx || ((flags & VM_COW) && !phys))) {
 		return NULL;
 	}
 
-	struct vmem_range* range = zmalloc(sizeof(struct vmem_range));
+	/* During initialization, kmalloc_init calls valloc once to get its memory
+	 * space to allocate from. valloc calls this function to map the memory,
+	 * but the zmalloc call below would fail since kmalloc is not ready yet.
+	 * Another call to vmem_map  can then happen in paging_set_range when a
+	 * new page table is allocated.
+	 * Add a dirty hack for that one-time special case.
+	 */
+	struct vmem_range* range;
+	if(likely(!have_malloc_ranges)) {
+		if(likely(kmalloc_ready)) {
+			range = zmalloc(sizeof(struct vmem_range));
+		} else {
+			panic("vmem: preallocated ranges exhausted before kmalloc is ready\n");
+		}
+	} else {
+		range = &malloc_ranges[50 - have_malloc_ranges--];
+	}
+
 	range->flags = flags;
 	range->size = ALIGN(size, PAGE_SIZE);
 
 	if(!phys && !(flags & VM_AOW)) {
+		// FIXME
+		panic("vmem_map no phys");
 		phys = palloc(range->size / PAGE_SIZE);
 	}
 
@@ -57,7 +75,7 @@ struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, si
 	ctx->ranges = range;
 
 	if(ctx->hwdata) {
-		paging_set_range(ctx->hwdata, range);
+		paging_set_range(ctx->hwdata, range->virt_addr, range->phys_addr, range->size, range->flags);
 	}
 
 	return range;
@@ -65,7 +83,7 @@ struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, si
 
 struct vmem_range* vmem_get_range(struct vmem_context* ctx, void* addr, bool phys) {
 	if(!ctx) {
-		ctx = kernel_ctx;
+		ctx = &kernel_ctx;
 	}
 
 	struct vmem_range* range = ctx->ranges;
@@ -78,29 +96,6 @@ struct vmem_range* vmem_get_range(struct vmem_context* ctx, void* addr, bool phy
 	}
 	return NULL;
 }
-
-#if 0
-int vmem_page_fault_cb(task_t* task, void* addr) {
-	struct vmem_range* range = vmem_get_range(task->vmem_ctx, addr, false);
-	if(!range || !(range->flags & (VM_COW | VM_AOW))) {
-		serial_printf("%s: no range for %#x\n", task->binary_path, addr);
-		return -1;
-	}
-
-	// FIXME check if all other refs of the phys page have gone
-
-	// FIXME only map the requested page, not entire range
-	void* page = palloc(range->size / PAGE_SIZE);
-	serial_printf("%s: have range %#x -> %#x size %#x, new location %#x\n",
-		task->binary_path, range->virt_addr, range->phys_addr, range->size, page);
-
-	memcpy(page, range->phys_addr, range->size);
-	range->phys_addr = page;
-	range->flags = range->cow_flags;
-	paging_set_range(task->vmem_ctx->hwdata, range);
-	return 0;
-}
-#endif
 
 void vmem_rm_context(struct vmem_context* ctx) {
 	paging_rm_context(ctx->hwdata);
@@ -127,20 +122,20 @@ void vmem_rm_context(struct vmem_context* ctx) {
 
 void* vmem_get_hwdata(struct vmem_context* ctx) {
 	if(!ctx->hwdata) {
-		ctx->hwdata = zpalloc(1);
+		ctx->hwdata_phys = palloc(1);
+		ctx->hwdata = zvalloc(1, ctx->hwdata_phys, VM_RW);
+
 		struct vmem_range* range = ctx->ranges;
 
 		for(; range; range = range->next) {
-			paging_set_range(ctx->hwdata, range);
+			paging_set_range(ctx->hwdata, range->virt_addr, range->phys_addr, range->size, range->flags);
 		}
 	}
-	return ctx->hwdata;
+	return ctx->hwdata_phys;
 }
 
 void vmem_init() {
-	// Initialize kernel context
-	kernel_ctx = zmalloc(sizeof(struct vmem_context));
-	vmem_map_flat(NULL, KERNEL_START, 0xfffff000, VM_RW);
-	vmem_kernel_hwdata = vmem_get_hwdata(kernel_ctx);
-	paging_init(vmem_kernel_hwdata);
+	kernel_ctx.hwdata = paging_kernel_ctx;
+	kernel_ctx.hwdata_phys = paging_kernel_ctx;
+	kernel_ctx.ranges = NULL;
 }

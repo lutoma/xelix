@@ -30,7 +30,6 @@
  */
 int task_page_fault_cb(task_t* task, void* _addr) {
 	uintptr_t addr = (uintptr_t)_addr;
-
 	addr = ALIGN_DOWN(addr, PAGE_SIZE);
 	uintptr_t stack_lower = TASK_STACK_LOCATION - task->stack_size;
 	if(addr >= stack_lower || addr <= TASK_STACK_LOCATION - PAGE_SIZE * 512) {
@@ -38,9 +37,20 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 	}
 
 	int alloc_size = MAX(PAGE_SIZE * 2, stack_lower - addr);
-	void* page = zpalloc(alloc_size / PAGE_SIZE);
+	void* page = palloc(alloc_size / PAGE_SIZE);
+	if(!page) {
+		return -1;
+	}
+
+	// Only allocate to zero out FIXME deallocate vaddr
+	if(!zvalloc(PAGE_SIZE * 2, page, VM_RW)) {
+		return -1;
+	}
+
 	vmem_map(task->vmem_ctx, (void*)(stack_lower - alloc_size), page,
 		alloc_size, VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK);
+
+	log(LOG_DEBUG, "task_page_fault_cb adding phys %#x virt %#x\n", page, stack_lower - alloc_size);
 
 	task->stack_size += alloc_size;
 	return 0;
@@ -55,7 +65,9 @@ void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool us
 
 	while(off < ptr_size) {
 		cr = vmem_get_range(task->vmem_ctx, addr + off, false);
-		void* paddr = vmem_translate_ptr(cr, addr + off, false);
+		void* tpaddr = vmem_translate_ptr(cr, addr + off, false);
+		void* paddr = vmem_translate(NULL, tpaddr + off, true);
+
 		size_t copy_size = MIN(ptr_size - off,
 			(void*)cr->size - (paddr - (uintptr_t)cr->phys_addr));
 
@@ -86,6 +98,7 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 		return NULL;
 	}
 
+#if 0
 	uintptr_t ptr_end = (uintptr_t)addr + ptr_size;
 	struct vmem_range* cr = vmem_range;
 
@@ -112,6 +125,7 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 			break;
 		}
 	}
+#endif
 
 	void* fmb = kmalloc(ptr_size);
 	task_memcpy(task, fmb, addr, ptr_size, false);
@@ -134,8 +148,14 @@ void* task_sbrk(task_t* task, int32_t length) {
 
 	length = ALIGN(length, PAGE_SIZE);
 
-	void* phys_addr = zpalloc(length / PAGE_SIZE);
+	void* phys_addr = palloc(length / PAGE_SIZE);
 	if(!phys_addr) {
+		sc_errno = ENOMEM;
+		return (void*)-1;
+	}
+
+	// Only allocate to zero out FIXME deallocate vaddr
+	if(!zvalloc(length / PAGE_SIZE, phys_addr, VM_RW)) {
 		sc_errno = ENOMEM;
 		return (void*)-1;
 	}
@@ -168,7 +188,8 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		new_array[i] = strndup((char*)vmem_translate(task->vmem_ctx, array[i], false), 200);
+		char* phys = (char*)vmem_translate(task->vmem_ctx, array[i], false);
+		new_array[i] = strndup((char*)vmem_translate(NULL, phys, true), 200);
 	}
 
 	new_array[i] = NULL;

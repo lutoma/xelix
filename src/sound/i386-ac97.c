@@ -34,7 +34,7 @@
 
 // Number of buffers to cache. More buffers = more latency. Maximum is 32.
 #define NUM_BUFFERS 32
-#define AC97_MAX_CARDS 10
+#define AC97_MAX_CARDS 1
 
 #define PORT_NAM_RESET				0x0000
 #define PORT_NAM_MASTER_VOLUME		0x0002
@@ -97,11 +97,12 @@ struct ac97_card {
 	uint16_t sample_rate;
 
 	struct buf_desc* descs;
+	void* buffers[NUM_BUFFERS];
 
 	// Currently playing buffer, -1 if not playing anything
 	int playing_buffer;
 
-	// Number of next buf_desc  to write to
+	// Number of next buf_desc to write to
 	int buf_next_write;
 };
 
@@ -176,10 +177,10 @@ static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size)
 
 	struct buf_desc* desc = &card->descs[bno];
 	size = MIN(size, PAGE_SIZE * 4);
-	memcpy(desc->buf, source, size);
 	desc->len = size / 2;
 	desc->ioc = 1;
 	desc->bup = 0;
+	memcpy(card->buffers[bno], source, size);
 	outb(card->nabmbar + PORT_NABM_POLVI, bno);
 
 	if(card->playing_buffer == -1) {
@@ -236,8 +237,11 @@ static void enable_card(struct ac97_card* card) {
 
 	set_sample_rate(card);
 	card->descs = zmalloc_a(sizeof(struct buf_desc) * NUM_BUFFERS);
+
 	for(int i = 0; i < NUM_BUFFERS; i++) {
-		card->descs[i].buf = palloc(4);
+		void* phys = palloc(4);
+		card->buffers[i] = valloc(4, phys, VM_RW);
+		card->descs[i].buf = phys;
 	}
 
 	outl(card->nabmbar + PORT_NABM_POBDBAR, (uintptr_t)card->descs);

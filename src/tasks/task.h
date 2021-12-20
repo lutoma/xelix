@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2019 Lukas Martini
+/* Copyright © 2011-2020 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -21,6 +21,7 @@
 #include <int/int.h>
 #include <fs/vfs.h>
 #include <mem/vmem.h>
+#include <mem/page_alloc.h>
 #include <tasks/signal.h>
 #include <tty/term.h>
 
@@ -48,11 +49,12 @@ typedef struct task {
 
 	char name[VFS_NAME_MAX];
 	struct task* parent;
-	isf_t* state;
 	struct task* next;
 	struct task* previous;
 
+	struct mem_page_alloc_ctx alloc_ctx;
 	struct vmem_context* vmem_ctx;
+	isf_t* state;
 	void* entry;
 	void* sbrk;
 	void* stack;

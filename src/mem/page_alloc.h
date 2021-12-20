@@ -28,12 +28,12 @@
 
 struct mem_page_alloc_ctx {
 	spinlock_t lock;
-	uint32_t bitmap_data[bitmap_size(PAGE_ALLOC_BITMAP_SIZE)];
-	struct bitmap bitmap;
+    uint32_t bitmap_data[bitmap_size(PAGE_ALLOC_BITMAP_SIZE)];
+    struct bitmap bitmap;
 };
 
-void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, uint32_t size);
-int mem_page_alloc_at(struct mem_page_alloc_ctx* ctx, void* addr, uint32_t size);
-int mem_page_free(struct mem_page_alloc_ctx* ctx, uint32_t num, uint32_t size);
+void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, size_t size);
+int mem_page_alloc_at(struct mem_page_alloc_ctx* ctx, void* addr, size_t size);
+int mem_page_free(struct mem_page_alloc_ctx* ctx, uint32_t num, size_t size);
 int mem_page_alloc_stats(struct mem_page_alloc_ctx* ctx, uint32_t* total, uint32_t* used);
 int mem_page_alloc_new(struct mem_page_alloc_ctx* ctx);

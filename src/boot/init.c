@@ -50,9 +50,14 @@ uint32_t __dummy_errno;
 
 void (*boot_sequence[])(void) = {
 #ifdef __i386__
-	serial_init, gdt_init, int_init, timer_init, multiboot_init,
-	mem_init, cmdline_init, gfx_init, term_init, time_init, pci_init, block_init,
-	vfs_init, timer_init2,
+	/* multiboot_init needs to be initialized before paging as it accesses the
+     * multiboot header left by the bootloader in an arbitrary location that
+     * will not be mapped after paging_init.
+     */
+
+	serial_init,  multiboot_init, gdt_init, paging_init, int_init, task_exception_init,
+	timer_init, mem_init, cmdline_init, gfx_init, term_init, time_init, pci_init,
+	block_init, vfs_init, timer_init2
 #endif
 };
 
@@ -70,7 +75,6 @@ void xelix_main(void) {
 	#endif
 
 	// These only register interrupts or initialize sysfs integration
-	task_exception_init();
 	syscall_init();
 	log_init();
 	version_init();
