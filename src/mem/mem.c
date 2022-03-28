@@ -27,48 +27,12 @@
 #include <mem/vmem.h>
 #include <mem/paging.h>
 #include <mem/page_alloc.h>
+#include <mem/valloc.h>
 #include <boot/multiboot.h>
 #include <fs/sysfs.h>
 
 struct mem_page_alloc_ctx mem_phys_alloc_ctx;
-struct mem_page_alloc_ctx mem_virt_alloc_ctx;
-
-void* valloc(size_t size, void* phys, int flags) {
-	if(!phys) {
-		phys = palloc(size);
-		if(!phys) {
-			return NULL;
-		}
-	}
-
-	void* virt = mem_page_alloc(&mem_virt_alloc_ctx, size);
-	if(!virt) {
-		pfree((uintptr_t)phys / PAGE_SIZE, size);
-		return NULL;
-	}
-
-	if(!(flags & VM_VALLOC_NO_MAP)) {
-		vmem_map(NULL, virt, phys, size * PAGE_SIZE, flags);
-	}
-	return virt;
-}
-
-int valloc_at(size_t size, void* virt, void* phys, int flags) {
-	if(!phys) {
-		void* phys = palloc(size);
-		if(!phys) {
-			return -1;
-		}
-	}
-
-	if(mem_page_alloc_at(&mem_virt_alloc_ctx, virt, size) < 0) {
-		pfree((uintptr_t)phys / PAGE_SIZE, size);
-		return -1;
-	}
-
-	vmem_map(NULL, virt, phys, size * PAGE_SIZE, flags);
-	return 0;
-}
+struct valloc_ctx valloc_kernel_ctx;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	if(ctx->fp->offset) {
@@ -81,7 +45,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 
 	kmalloc_get_stats(&kmalloc_total, &kmalloc_used);
 	mem_page_alloc_stats(&mem_phys_alloc_ctx, &palloc_total, &palloc_used);
-	mem_page_alloc_stats(&mem_virt_alloc_ctx, &valloc_total, &valloc_used);
+	valloc_stats(&valloc_kernel_ctx, &valloc_total, &valloc_used);
 
 	size_t rsize = 0;
 	sysfs_printf("mem_total: %u\n", palloc_total);
@@ -99,7 +63,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 
 void mem_init() {
 	if(mem_page_alloc_new(&mem_phys_alloc_ctx) < 0 ||
-	   mem_page_alloc_new(&mem_virt_alloc_ctx) < 0) {
+	   valloc_new(&valloc_kernel_ctx) < 0) {
 		panic("mem: Initialization of page allocators failed.\n");
 	}
 
@@ -140,25 +104,25 @@ void mem_init() {
 	 * KERNEL_END, this implicitly includes the kernel binary.
 	 */
 	mem_page_alloc_at(&mem_phys_alloc_ctx, 0, (uintptr_t)paging_alloc_end / PAGE_SIZE);
-	//mem_page_alloc_at(&mem_phys_alloc_ctx, KERNEL_START, (paging_alloc_end - (uintptr_t)KERNEL_START) / PAGE_SIZE);
 
 	// Same for virtual memory except also allow everything below KERNEL_START
-	mem_page_alloc_at(&mem_virt_alloc_ctx, KERNEL_START, (paging_alloc_end - KERNEL_START) / PAGE_SIZE);
+	vmem_t vmem;
+	valloc_at(VA_KERNEL, &vmem, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VA_NO_MAP);
 
 	// Set size of allocator bitmaps
 	// FIXME mem_info only provides memory size up until first memory hole (~3ish gb)
 	// FIXME We don't really have to limit the virtual address space to the size of the physical one
 	uint32_t mem_kb = (MAX(1024, mem->mem_lower) + mem->mem_upper);
 	mem_phys_alloc_ctx.bitmap.size = (mem_kb * 1024) / PAGE_SIZE;
-	mem_virt_alloc_ctx.bitmap.size = 2048000;
+	valloc_kernel_ctx.bitmap.size = 2048000;
 
 	uint32_t pused = bitmap_count(&mem_phys_alloc_ctx.bitmap);
 	log(LOG_INFO, "mem: Phys page allocator ready, %u mb, %u pages, %u used, %u free\n",
 		mem_kb /  1024, mem_phys_alloc_ctx.bitmap.size, pused, mem_phys_alloc_ctx.bitmap.size - pused);
 
-	uint32_t vused = bitmap_count(&mem_virt_alloc_ctx.bitmap);
+	uint32_t vused = bitmap_count(&valloc_kernel_ctx.bitmap);
 	log(LOG_INFO, "mem: Virt page allocator ready, %u pages, %u used, %u free\n",
-		mem_virt_alloc_ctx.bitmap.size, vused, mem_virt_alloc_ctx.bitmap.size - vused);
+		valloc_kernel_ctx.bitmap.size, vused, valloc_kernel_ctx.bitmap.size - vused);
 
 	vmem_init();
 	kmalloc_init();

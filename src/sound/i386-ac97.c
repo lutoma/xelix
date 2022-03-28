@@ -97,7 +97,7 @@ struct ac97_card {
 	uint16_t sample_rate;
 
 	struct buf_desc* descs;
-	void* buffers[NUM_BUFFERS];
+	vmem_t buffers[NUM_BUFFERS];
 
 	// Currently playing buffer, -1 if not playing anything
 	int playing_buffer;
@@ -180,7 +180,7 @@ static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size)
 	desc->len = size / 2;
 	desc->ioc = 1;
 	desc->bup = 0;
-	memcpy(card->buffers[bno], source, size);
+	memcpy(card->buffers[bno].addr, source, size);
 	outb(card->nabmbar + PORT_NABM_POLVI, bno);
 
 	if(card->playing_buffer == -1) {
@@ -239,9 +239,8 @@ static void enable_card(struct ac97_card* card) {
 	card->descs = zmalloc_a(sizeof(struct buf_desc) * NUM_BUFFERS);
 
 	for(int i = 0; i < NUM_BUFFERS; i++) {
-		void* phys = palloc(4);
-		card->buffers[i] = valloc(4, phys, VM_RW);
-		card->descs[i].buf = phys;
+		valloc(VA_KERNEL, &card->buffers[i], 4, NULL, VM_RW);
+		card->descs[i].buf = card->buffers[i].phys;
 	}
 
 	outl(card->nabmbar + PORT_NABM_POBDBAR, (uintptr_t)card->descs);

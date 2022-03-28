@@ -45,15 +45,16 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	task_t* task = zmalloc(sizeof(task_t));
 	task->vmem_ctx = zmalloc(sizeof(struct vmem_context));
-	void* state_phys = palloc(1);
-	task->state = valloc(1, state_phys, VM_RW);
+	vmem_t vmem;
+	valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW);
+	task->state = vmem.addr;
 	bzero(task->state, sizeof(isf_t));
-	vmem_map(task->vmem_ctx, task->state, state_phys, PAGE_SIZE, VM_FREE);
+	vmem_map(task->vmem_ctx, task->state, vmem.phys, PAGE_SIZE, VM_FREE);
 
 	// Kernel stack used during interrupts while this task is running
-	void* kernel_stack_phys = palloc(4);
-	task->kernel_stack = valloc(4, kernel_stack_phys, VM_RW);
-	vmem_map(task->vmem_ctx, task->kernel_stack, kernel_stack_phys, KERNEL_STACK_SIZE, VM_FREE);
+	valloc(VA_KERNEL, &vmem, 4, NULL, VM_RW);
+	task->kernel_stack = vmem.addr;
+	vmem_map(task->vmem_ctx, task->kernel_stack, vmem.phys, KERNEL_STACK_SIZE, VM_FREE);
 
 	/* Map parts of the kernel marked as UL_VISIBLE into the task address
 	 * space (But readable only to PL0). These are the functions and data
@@ -106,7 +107,10 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
 	void* stack_phys = palloc(task->stack_size / PAGE_SIZE);
-	task->stack = zvalloc(task->stack_size / PAGE_SIZE, stack_phys, VM_RW);
+
+	vmem_t vmem;
+	zvalloc(VA_KERNEL, &vmem, task->stack_size / PAGE_SIZE, stack_phys, VM_RW);
+	task->stack = vmem.addr;
 	vmem_map(task->vmem_ctx, (void*)TASK_STACK_LOCATION - task->stack_size, stack_phys,
 		task->stack_size, VM_USER | VM_RW | VM_FREE | VM_TFORK);
 
@@ -212,8 +216,10 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 		//if(range->flags & VM_NOCOW || !(range->flags & (VM_FREE | VM_COW))) {
 
 		if(range->flags & VM_RW) {
-			void* phys_addr = palloc(range->size / PAGE_SIZE);
-			void* kernel_virt = zvalloc(range->size / PAGE_SIZE, phys_addr, VM_RW);
+			vmem_t vmem;
+			zvalloc(VA_KERNEL, &vmem, range->size / PAGE_SIZE, NULL, VM_RW);
+			void* kernel_virt = vmem.addr;
+			void* phys_addr = vmem.phys;
 
 			void* old_kernel_virt = vmem_translate(NULL, range->phys_addr, true);
 			memcpy(kernel_virt, old_kernel_virt, range->size);

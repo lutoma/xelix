@@ -89,23 +89,18 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	handle->id = next_handle;
 	handle->size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 
-	void* phys_buf = palloc(ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE);
-	if(!phys_buf) {
+	vmem_t vmem;
+	if(valloc(VA_KERNEL, &vmem, ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE, NULL, VM_RW) != 0) {
 		handle->used = false;
 		return NULL;
 	}
 
-	handle->buf_addr = valloc(ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE, phys_buf, VM_RW);
-	if(!handle->buf_addr) {
-		pfree(phys_buf, ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE);
-		handle->used = false;
-		return NULL;
-	}
+	handle->buf_addr = vmem.addr;
 
 	if(ctx) {
 		// FIXME Properly choose virtual userland pages
 		handle->addr = (void*)0xf4000000;
-		vmem_map(handle->ctx, handle->addr, phys_buf, handle->size + PAGE_SIZE, VM_RW | VM_USER);
+		vmem_map(handle->ctx, handle->addr, vmem.phys, handle->size + PAGE_SIZE, VM_RW | VM_USER);
 	} else {
 		handle->addr = handle->buf_addr;
 	}
@@ -198,7 +193,9 @@ void gfx_init() {
 	// FIXME use proper APIs
 	mem_page_alloc_at(&mem_phys_alloc_ctx, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE);
 
-	framebuffer_addr = valloc(ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
+	vmem_t framebuffer_mem;
+	valloc(VA_KERNEL, &framebuffer_mem, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
+	framebuffer_addr = framebuffer_mem.addr;
 
 	log(LOG_DEBUG, "gfx1: %dx%d bpp %d pitch 0x%x at 0x%x\n",
 		fb_desc->common.framebuffer_width,

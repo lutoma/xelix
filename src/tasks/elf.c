@@ -68,9 +68,9 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	}
 
 	size_t size = ALIGN(phead->memsz + phys_offset, PAGE_SIZE);
-	void* phys = palloc(size / PAGE_SIZE);
-	void* kernel_virt = zvalloc(size / PAGE_SIZE, phys, VM_RW);
-	if(unlikely(!kernel_virt)) {
+
+	vmem_t vmem;
+	if(unlikely(zvalloc(VA_KERNEL, &vmem, size / PAGE_SIZE, NULL, VM_RW) != 0)) {
 		return -1;
 	}
 
@@ -79,23 +79,22 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 			task->sbrk = virt + size;
 		}
 	} else {
-		virt = phys;
+		virt = vmem.phys;
 	}
 
-	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, kernel_virt + phys_offset, task))) {
+	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, vmem.addr + phys_offset, task))) {
 		pfree((uint32_t)phys / PAGE_SIZE, size / PAGE_SIZE);
 		return -1;
 	}
-
 
 	int vmem_flags = VM_USER | VM_TFORK | VM_NOCOW | VM_FREE;
 	if(phead->flags & PF_W) {
 		vmem_flags |= VM_RW;
 	}
-	vmem_map(task->vmem_ctx, virt, phys, size, vmem_flags);
+	vmem_map(task->vmem_ctx, virt, vmem.phys, size, vmem_flags);
 
 	debug("  phys %#-8x-%#-8x task virt %#-8x-%#-8x kernel virt %#-8x-%#-8x\n",
-		phys, (uintptr_t)phys + size, virt, (uintptr_t)virt + size, kernel_virt, (uintptr_t)kernel_virt + size);
+		vmem.phys, (uintptr_t)vmem.phys + size, virt, (uintptr_t)virt + size, vmem.addr, (uintptr_t)vmem.addr + size);
 	return 0;
 }
 

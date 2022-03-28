@@ -342,7 +342,9 @@ void _kfree(void *ptr DEBUGREGS) {
 }
 
 void kmalloc_init() {
-	alloc_start = (uintptr_t)valloc(0x3200, NULL, VM_RW);
+	vmem_t vmem;
+	valloc(VA_KERNEL, &vmem, 0x3200, NULL, VM_RW);
+	alloc_start = (uintptr_t)vmem.addr;
 	alloc_end = alloc_start;
 	alloc_max = (uintptr_t)alloc_start + (0x3200 * PAGE_SIZE);
 	kmalloc_ready = true;

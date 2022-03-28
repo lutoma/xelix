@@ -30,7 +30,6 @@
 #include <log.h>
 
 static struct buffer* buf = NULL;
-static void* gfxbuf = NULL;
 static task_t* master_task = NULL;
 static int last_wid = -1;
 
@@ -77,15 +76,13 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return 0;
 		}
 
-		gfxbuf = palloc(RDIV(size, PAGE_SIZE));
-
-		// Wipe memory
-		void* virt_gfxbuf = zvalloc(RDIV(size, PAGE_SIZE), gfxbuf, VM_RW);
+		vmem_t vmem;
+		zvalloc(VA_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW);
 		// FIXME vfree(virt_gfxbux) here
 
-		vmem_map_flat(ctx->task->vmem_ctx, gfxbuf, size, VM_USER | VM_RW);
-		vmem_map_flat(master_task->vmem_ctx, gfxbuf, size, VM_USER | VM_RW);
-		return (uintptr_t)gfxbuf;
+		vmem_map_flat(ctx->task->vmem_ctx, vmem.phys, size, VM_USER | VM_RW);
+		vmem_map_flat(master_task->vmem_ctx, vmem.phys, size, VM_USER | VM_RW);
+		return (uintptr_t)vmem.phys;
 	} else if(request == 0x2f03) {
 		return __sync_add_and_fetch(&last_wid, 1);
 	}

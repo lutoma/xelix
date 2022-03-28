@@ -21,24 +21,12 @@
 #include <mem/paging.h>
 #include <string.h>
 #include <mem/page_alloc.h>
+#include <mem/valloc.h>
 
 extern struct mem_page_alloc_ctx mem_phys_alloc_ctx;
-extern struct mem_page_alloc_ctx mem_virt_alloc_ctx;
 
 #define palloc(size) (mem_page_alloc(&mem_phys_alloc_ctx, size))
 //#define pfree(num, size) (mem_page_free(&mem_phys_alloc_ctx, num, size))
 #define pfree(num, size)
-
-void* valloc(size_t size, void* phys, int flags);
-int valloc_at(size_t size, void* virt, void* phys, int flags);
-
-static inline void* zvalloc(size_t size, void* phys, int flags) {
-    void* buf = valloc(size, phys, flags);
-    if(buf) {
-        bzero(buf, size * PAGE_SIZE);
-    }
-
-    return buf;
-}
 
 void mem_init();

@@ -52,33 +52,33 @@ struct execdata {
  * - environ strings / free space for new environment variables
  */
 void task_setup_execdata(task_t* task) {
-	void* phys = palloc(4);
-	void* page = zvalloc(4, phys, VM_RW);
-	vmem_map(task->vmem_ctx, (void*)CONFIG_EXECDATA_LOCATION, phys, PAGE_SIZE * 4,
+	vmem_t vmem;
+	zvalloc(VA_KERNEL, &vmem, 4, NULL, VM_RW);
+	vmem_map(task->vmem_ctx, (void*)CONFIG_EXECDATA_LOCATION, vmem.phys, PAGE_SIZE * 4,
 		VM_USER | VM_RW | VM_FREE);
 
 	size_t offset = 0;
 
-	struct execdata* exc = (struct execdata*)page;
+	struct execdata* exc = (struct execdata*)vmem.addr;
 	offset += sizeof(struct execdata);
 
-	char** argv = (char**)(page + offset);
+	char** argv = (char**)(vmem.addr + offset);
 	exc->argv = (void*)CONFIG_EXECDATA_LOCATION + offset;
 	offset += sizeof(char*) * (task->argc + 1);
 
 	for(int i = 0; i < task->argc; i++) {
 		argv[i] = (void*)CONFIG_EXECDATA_LOCATION + offset;
-		strncpy((char*)(page + offset), task->argv[i], 200);
+		strncpy((char*)(vmem.addr + offset), task->argv[i], 200);
 		offset += strlen(task->argv[i]) + 1;
 	}
 
-	char** environ = (char**)(page + offset);
+	char** environ = (char**)(vmem.addr + offset);
 	exc->env = (void*)CONFIG_EXECDATA_LOCATION + offset;
 	offset += sizeof(char*) * (task->envc + 1);
 
 	for(int i = 0; i < task->envc; i++) {
 		environ[i] = (void*)CONFIG_EXECDATA_LOCATION + offset;
-		strncpy((char*)(page + offset), task->environ[i], 200);
+		strncpy((char*)(vmem.addr + offset), task->environ[i], 200);
 		offset += strlen(task->environ[i]) + 1;
 	}
 
