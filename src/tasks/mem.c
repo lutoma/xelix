@@ -29,16 +29,21 @@
  * control to the task. otherwise, return -1 so the fault gets raised.
  */
 int task_page_fault_cb(task_t* task, void* _addr) {
+
 	uintptr_t addr = (uintptr_t)_addr;
 	addr = ALIGN_DOWN(addr, PAGE_SIZE);
 	uintptr_t stack_lower = TASK_STACK_LOCATION - task->stack_size;
+
 	if(addr >= stack_lower || addr <= TASK_STACK_LOCATION - PAGE_SIZE * 512) {
 		return -1;
 	}
 
-	// FIXME The minimum allocation of 200 pages is absurd and stems from an
-	// earlier bug, but decreasing it makes gfxterm unhappy. Fix later.
-	int alloc_size = MAX(200 * PAGE_SIZE, ALIGN(stack_lower - addr, PAGE_SIZE));
+	int alloc_size = stack_lower - addr + PAGE_SIZE;
+
+	// FIXME Work around a bug in gfxterm. Needs to be fixed
+	if(!strcmp(task->name, "/usr/bin/gfxterm")) {
+		alloc_size = PAGE_SIZE * 200;
+	}
 
 	// FIXME deallocate vaddr
 	vmem_t vmem;
@@ -48,8 +53,6 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 
 	vmem_map(task->vmem_ctx, (void*)(stack_lower - alloc_size), vmem.phys,
 		alloc_size, VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK);
-
-	log(LOG_DEBUG, "task_page_fault_cb adding alloc_size %#x phys %#x virt %#x\n", alloc_size, vmem.phys, stack_lower - alloc_size);
 
 	task->stack_size += alloc_size;
 	return 0;
