@@ -77,7 +77,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		}
 
 		vmem_t vmem;
-		zvalloc(VA_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW);
+		valloc(VA_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO);
 		// FIXME vfree(virt_gfxbux) here
 
 		vmem_map_flat(ctx->task->vmem_ctx, vmem.phys, size, VM_USER | VM_RW);

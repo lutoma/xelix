@@ -108,7 +108,7 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task->stack_size = PAGE_SIZE * 2;
 
 	vmem_t vmem;
-	zvalloc(VA_KERNEL, &vmem, task->stack_size / PAGE_SIZE, NULL, VM_RW);
+	valloc(VA_KERNEL, &vmem, task->stack_size / PAGE_SIZE, NULL, VM_RW | VM_ZERO);
 	task->stack = vmem.addr;
 	vmem_map(task->vmem_ctx, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
 		task->stack_size, VM_USER | VM_RW | VM_FREE | VM_TFORK);
@@ -216,7 +216,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 
 		if(range->flags & VM_RW) {
 			vmem_t vmem;
-			zvalloc(VA_KERNEL, &vmem, range->size / PAGE_SIZE, NULL, VM_RW);
+			valloc(VA_KERNEL, &vmem, range->size / PAGE_SIZE, NULL, VM_RW | VM_ZERO);
 			void* kernel_virt = vmem.addr;
 			void* phys_addr = vmem.phys;
 

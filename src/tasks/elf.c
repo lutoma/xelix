@@ -70,7 +70,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	size_t size = ALIGN(phead->memsz + phys_offset, PAGE_SIZE);
 
 	vmem_t vmem;
-	if(unlikely(zvalloc(VA_KERNEL, &vmem, size / PAGE_SIZE, NULL, VM_RW) != 0)) {
+	if(unlikely(valloc(VA_KERNEL, &vmem, size / PAGE_SIZE, NULL, VM_RW | VM_ZERO) != 0)) {
 		return -1;
 	}
 

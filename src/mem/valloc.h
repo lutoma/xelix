@@ -28,30 +28,37 @@
 #define VALLOC_BITMAP_SIZE 0xfffff000 / PAGE_SIZE
 #define VA_KERNEL &valloc_kernel_ctx
 
+
 // Writable
-#define VA_RW 1
+#define VM_RW 1
 
 // Readable by user space
-#define VA_USER 2
+#define VM_USER 2
 
 // pfree() physical memory after context/range is unmapped
-#define VA_FREE 4
+#define VM_FREE 4
 
 /* This flag is used internally in task code to indicate the range should be
  * copied in fork() commands
  */
-#define VA_TFORK 8
+#define VM_TFORK 8
 
 // Allocate on write
-#define VA_AOW 16
+#define VM_AOW 16
 
 // Copy on write - implies VM_AOW
-#define VA_COW 32
+#define VM_COW 32
 
-#define VA_NOCOW 64
+#define VM_NOCOW 64
 
 // Temp hack
-#define VA_NO_MAP 128
+#define VM_NO_MAP 128
+#define VM_NO_VIRT 128
+
+// Zero out address space after allocation
+#define VM_ZERO 256
+
+#define valloc(ctx, vmem, size, phys, flags) valloc_at(ctx, vmem, size, NULL, phys, flags)
 
 struct valloc_mem;
 struct valloc_ctx {
@@ -72,16 +79,7 @@ typedef struct valloc_mem {
 
 extern struct valloc_ctx valloc_kernel_ctx;
 
-int valloc(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* phys, int flags);
-int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* addr, void* phys, int flags);
+int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags);
 int vfree(struct valloc_ctx* ctx, uint32_t num, size_t size);
 int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used);
 int valloc_new(struct valloc_ctx* ctx);
-
-static inline void* zvalloc(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* phys, int flags) {
-	if(valloc(ctx, vmem, size, phys, flags) == 0) {
-		bzero(vmem->addr, vmem->size);
-	}
-
-	return 0;
-}

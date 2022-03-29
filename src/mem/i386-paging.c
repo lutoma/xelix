@@ -55,7 +55,7 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 		if(!page_dir->present) {
 			// FIXME Possible chicken/egg problem here if valloc tries to allocate page within the page table we're trying to allocate
 			vmem_t page_table_alloc;
-			zvalloc(VA_KERNEL, &page_table_alloc, 1, NULL, VM_RW);
+			valloc(VA_KERNEL, &page_table_alloc, 1, NULL, VM_RW | VM_ZERO);
 			page_table = page_table_alloc.addr;
 			phys_table = page_table_alloc.phys;
 

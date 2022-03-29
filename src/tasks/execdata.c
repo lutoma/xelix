@@ -53,7 +53,7 @@ struct execdata {
  */
 void task_setup_execdata(task_t* task) {
 	vmem_t vmem;
-	zvalloc(VA_KERNEL, &vmem, 4, NULL, VM_RW);
+	valloc(VA_KERNEL, &vmem, 4, NULL, VM_RW | VM_ZERO);
 	vmem_map(task->vmem_ctx, (void*)CONFIG_EXECDATA_LOCATION, vmem.phys, PAGE_SIZE * 4,
 		VM_USER | VM_RW | VM_FREE);
 

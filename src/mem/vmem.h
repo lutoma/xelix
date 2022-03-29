@@ -20,33 +20,8 @@
 
 #include <int/int.h>
 #include <mem/paging.h>
+#include <mem/valloc.h>
 #include <stdbool.h>
-
-
-// Writable
-#define VM_RW 1
-
-// Readable by user space
-#define VM_USER 2
-
-// pfree() physical memory after context/range is unmapped
-#define VM_FREE 4
-
-/* This flag is used internally in task code to indicate the range should be
- * copied in fork() commands
- */
-#define VM_TFORK 8
-
-// Allocate on write
-#define VM_AOW 16
-
-// Copy on write - implies VM_AOW
-#define VM_COW 32
-
-#define VM_NOCOW 64
-
-// Temp hack
-#define VM_VALLOC_NO_MAP 128
 
 
 #define vmem_translate_ptr(range, addr, phys)					\

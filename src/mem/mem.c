@@ -106,8 +106,7 @@ void mem_init() {
 	mem_page_alloc_at(&mem_phys_alloc_ctx, 0, (uintptr_t)paging_alloc_end / PAGE_SIZE);
 
 	// Same for virtual memory except also allow everything below KERNEL_START
-	vmem_t vmem;
-	valloc_at(VA_KERNEL, &vmem, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VA_NO_MAP);
+	valloc_at(VA_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_NO_MAP);
 
 	// Set size of allocator bitmaps
 	// FIXME mem_info only provides memory size up until first memory hole (~3ish gb)

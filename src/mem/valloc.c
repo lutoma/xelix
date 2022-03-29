@@ -1,5 +1,5 @@
-/* page_alloc.c: Page allocator
- * Copyright © 2020 Lukas Martini
+/* valloc.c: Page allocator
+ * Copyright © 2020-2022 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -32,11 +32,32 @@
 #include <spinlock.h>
 
 
-int valloc(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* phys, int flags) {
+int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return -1;
 	}
 
+	// Allocate virtual address
+	uint32_t page_num;
+	void* virt;
+	if(virt_request) {
+		// FIXME Do duplicate checks
+		virt = ALIGN_DOWN(virt_request, PAGE_SIZE);
+		page_num = (uintptr_t)virt / PAGE_SIZE;
+	} else {
+		page_num = bitmap_find(&ctx->bitmap, size);
+
+		if(page_num == -1) {
+			return -1;
+		}
+
+		virt = (void*)(page_num * PAGE_SIZE);
+	}
+
+	bitmap_set(&ctx->bitmap, page_num, size);
+	spinlock_release(&ctx->lock);
+
+	// Allocate physical address if necessary
 	if(!phys) {
 		phys = palloc(size);
 		if(!phys) {
@@ -44,49 +65,23 @@ int valloc(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* phys, int fl
 		}
 	}
 
-	uint32_t num = bitmap_find(&ctx->bitmap, size);
-	bitmap_set(&ctx->bitmap, num, size);
-	spinlock_release(&ctx->lock);
-
-	void* virt = (void*)(num * PAGE_SIZE);
-	if(!virt) {
-		pfree((uintptr_t)phys / PAGE_SIZE, size);
-		return -1;
-	}
-
-	if(!(flags & VM_VALLOC_NO_MAP)) {
+	// FIXME VM_ZERO should always map into kernel ctx to zero, not specified
+	if(!(flags & VM_NO_VIRT) || flags & VM_ZERO) {
 		vmem_map(NULL, virt, phys, size * PAGE_SIZE, flags);
 	}
 
-	vmem->ctx = ctx;
-	vmem->addr = virt;
-	vmem->phys = phys;
-	vmem->size = size * PAGE_SIZE;
-	return 0;
-}
-
-int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* addr, void* phys, int flags) {
-	if(!spinlock_get(&ctx->lock, -1)) {
-		return -1;
+	if(flags & VM_ZERO) {
+		bzero(virt, size * PAGE_SIZE);
 	}
 
+	// FIXME Dealloc kernel mapping if both VM_NO_VIRT and VM_ZERO are set
 
-	if(!phys) {
-		phys = palloc(size);
-		if(!phys) {
-			return -1;
-		}
+	if(vmem) {
+		vmem->ctx = ctx;
+		vmem->addr = virt;
+		vmem->phys = phys;
+		vmem->size = size * PAGE_SIZE;
 	}
-
-	// FIXME Add optional? check for duplicate allocations
-	bitmap_set(&ctx->bitmap, (uintptr_t)addr / PAGE_SIZE, size);
-	spinlock_release(&ctx->lock);
-	vmem_map(NULL, addr, phys, size * PAGE_SIZE, flags);
-
-	vmem->ctx = ctx;
-	vmem->addr = addr;
-	vmem->phys = phys;
-	vmem->size = size * PAGE_SIZE;
 	return 0;
 }
 
