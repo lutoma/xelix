@@ -122,10 +122,10 @@ void vmem_rm_context(struct vmem_context* ctx) {
 
 void* vmem_get_hwdata(struct vmem_context* ctx) {
 	if(!ctx->hwdata) {
-		ctx->hwdata_phys = palloc(1);
 		vmem_t vmem;
-		zvalloc(VA_KERNEL, &vmem, 1, ctx->hwdata_phys, VM_RW);
+		zvalloc(VA_KERNEL, &vmem, 1, NULL, VM_RW);
 		ctx->hwdata = vmem.addr;
+		ctx->hwdata_phys = vmem.phys;
 
 		struct vmem_range* range = ctx->ranges;
 

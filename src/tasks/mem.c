@@ -36,22 +36,20 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 		return -1;
 	}
 
-	int alloc_size = MAX(PAGE_SIZE * 2, stack_lower - addr);
-	void* page = palloc(alloc_size / PAGE_SIZE);
-	if(!page) {
-		return -1;
-	}
+	// FIXME The minimum allocation of 200 pages is absurd and stems from an
+	// earlier bug, but decreasing it makes gfxterm unhappy. Fix later.
+	int alloc_size = MAX(200 * PAGE_SIZE, ALIGN(stack_lower - addr, PAGE_SIZE));
 
-	// Only allocate to zero out FIXME deallocate vaddr
+	// FIXME deallocate vaddr
 	vmem_t vmem;
-	if(zvalloc(VA_KERNEL, &vmem, PAGE_SIZE * 2, page, VM_RW) != 0) {
+	if(zvalloc(VA_KERNEL, &vmem, alloc_size / PAGE_SIZE, NULL, VM_RW) != 0) {
 		return -1;
 	}
 
-	vmem_map(task->vmem_ctx, (void*)(stack_lower - alloc_size), page,
+	vmem_map(task->vmem_ctx, (void*)(stack_lower - alloc_size), vmem.phys,
 		alloc_size, VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK);
 
-	log(LOG_DEBUG, "task_page_fault_cb adding phys %#x virt %#x\n", page, stack_lower - alloc_size);
+	log(LOG_DEBUG, "task_page_fault_cb adding alloc_size %#x phys %#x virt %#x\n", alloc_size, vmem.phys, stack_lower - alloc_size);
 
 	task->stack_size += alloc_size;
 	return 0;
@@ -149,15 +147,9 @@ void* task_sbrk(task_t* task, int32_t length) {
 
 	length = ALIGN(length, PAGE_SIZE);
 
-	void* phys_addr = palloc(length / PAGE_SIZE);
-	if(!phys_addr) {
-		sc_errno = ENOMEM;
-		return (void*)-1;
-	}
-
 	// Only allocate to zero out FIXME deallocate vaddr
 	vmem_t vmem;
-	if(zvalloc(VA_KERNEL, &vmem, length / PAGE_SIZE, phys_addr, VM_RW) != 0) {
+	if(zvalloc(VA_KERNEL, &vmem, length / PAGE_SIZE, NULL, VM_RW) != 0) {
 		sc_errno = ENOMEM;
 		return (void*)-1;
 	}
@@ -165,7 +157,7 @@ void* task_sbrk(task_t* task, int32_t length) {
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	vmem_map(task->vmem_ctx, virt_addr, phys_addr, length,
+	vmem_map(task->vmem_ctx, virt_addr, vmem.phys, length,
 		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE);
 	return virt_addr;
 }
