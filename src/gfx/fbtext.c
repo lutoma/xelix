@@ -56,6 +56,7 @@ static struct gfx_handle* gfx_handle = NULL;
 static unsigned int last_x = 0;
 static unsigned int last_y = 0;
 static bool initialized = false;
+static spinlock_t lock;
 
 void fbtext_write_char(char chr) {
 	if(!gfx_handle) {
@@ -63,10 +64,15 @@ void fbtext_write_char(char chr) {
 	}
 
 	if(chr == '\n' || last_x + 1 >= cols) {
+		if(unlikely(!spinlock_get(&lock, 200))) {
+			return;
+		}
+
 		gfx_blit(gfx_handle, 0, last_y * gfx_font.height, gfx_handle->width, gfx_font.height);
 		gfx_blit_all(gfx_handle);
 		last_y++;
 		last_x = 0;
+		spinlock_release(&lock);
 
 		if(chr == '\n') {
 			return;
@@ -75,11 +81,16 @@ void fbtext_write_char(char chr) {
 
 	last_x++;
 	if(last_y >= rows) {
+		if(unlikely(!spinlock_get(&lock, 200))) {
+			return;
+		}
+
 		size_t move_size = gfx_handle->pitch * gfx_font.height;
 		memcpy(gfx_handle->addr, gfx_handle->addr + move_size, gfx_handle->size - move_size);
 		memset(gfx_handle->addr + gfx_handle->size - move_size, 0, move_size);
 		gfx_blit_all(gfx_handle);
 		last_y--;
+		spinlock_release(&lock);
 	}
 
 	unsigned int x = last_x * gfx_font.width;
