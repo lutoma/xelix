@@ -248,17 +248,20 @@ size_t vfs_read(task_t* task, int fd, void* dest, size_t size) {
 	}
 
 	if(!ctx->fp->callbacks.read) {
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	if(!size) {
+		vfs_free_context(ctx);
 		return 0;
 	}
 
 	int_enable();
 	size_t read = ctx->fp->callbacks.read(ctx, dest, size);
 	ctx->fp->offset += read;
+	vfs_free_context(ctx);
 	return read;
 }
 
@@ -276,16 +279,19 @@ size_t vfs_write(task_t* task, int fd, void* source, size_t size) {
 	}
 
 	if(!ctx->fp->callbacks.write) {
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
 	if(!size) {
+		vfs_free_context(ctx);
 		return 0;
 	}
 
 	size_t written = ctx->fp->callbacks.write(ctx, source, size);
 	ctx->fp->offset += written;
+	vfs_free_context(ctx);
 	return written;
 }
 
@@ -297,11 +303,14 @@ size_t vfs_getdents(task_t* task, int fd, void* dest, size_t size) {
 	}
 
 	if(!ctx->fp->callbacks.getdents) {
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
-	return ctx->fp->callbacks.getdents(ctx, dest, size);
+	size_t r = ctx->fp->callbacks.getdents(ctx, dest, size);
+	vfs_free_context(ctx);
+	return r;
 }
 
 int vfs_seek(task_t* task, int fd, size_t offset, int origin) {
@@ -414,11 +423,14 @@ int vfs_ioctl(task_t* task, int fd, int request, void* arg) {
 	}
 
 	if(!ctx->fp->callbacks.ioctl) {
+		vfs_free_context(ctx);
 		sc_errno = ENOSYS;
 		return -1;
 	}
 
-	return ctx->fp->callbacks.ioctl(ctx, request, arg);
+	int r = ctx->fp->callbacks.ioctl(ctx, request, arg);
+	vfs_free_context(ctx);
+	return r;
 }
 
 int vfs_fstat(task_t* task, int fd, vfs_stat_t* dest) {
