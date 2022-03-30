@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2019 Lukas Martini
+/* Copyright © 2019-2022 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -23,23 +23,10 @@
 #include <tty/serial.h>
 
 extern void fbtext_write_char(char);
+#define PRINTF_ALIAS_STANDARD_FUNCTION_NAMES 1
 
-#define _putchar fbtext_write_char
+static inline void putchar_(char c) {
+    fbtext_write_char(c);
+}
 
-/* Make sure functions in printf.c have correct names - There's no stdlib here,
- * so no risk of conflicts.
- */
-#define printf_ printf
-#define sprintf_ sprintf
-#define snprintf_ snprintf
-#define vsnprintf_ vsnprintf
-#define vprintf_ vprintf
-#define fctprintf_ fctprintf
-
-int printf(const char* format, ...);
-int sprintf(char* buffer, const char* format, ...);
-int snprintf(char* buffer, size_t count, const char* format, ...);
-int vsnprintf(char* buffer, size_t count, const char* format, va_list va);
-int vprintf(const char* format, va_list va);
-int fctprintf(void (*out)(char character, void* arg), void* arg, const char* format, ...);
-int asprintf(char **strp, const char *fmt, ...);
+#include <printf/printf.h>

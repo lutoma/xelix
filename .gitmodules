@@ -1,6 +1,6 @@
-[submodule "ext/printf"]
-	path = ext/printf
-	url = https://github.com/mpaland/printf.git
 [submodule "util/kconfiglib"]
 	path = util/kconfiglib
 	url = https://github.com/ulfalizer/Kconfiglib.git
+[submodule "ext/printf"]
+	path = ext/printf
+	url = https://github.com/eyalroz/printf.git

@@ -14,7 +14,7 @@ endian.h   | endian_swap16, endian_swap32, endian_swap64
 errno.h    | sc_errno
 [kavl.h](https://github.com/attractivechaos/klib) | kavl_insert, kavl_find, kavl_erase, kavl_erase_first, kavl_itr_first, kavl_itr_find, kavl_itr_next, kavl_at, KAVL_INIT, KAVL_INIT2
 panic.h    | assert, assert_nc, addr2name, panic
-[printf.h](https://github.com/mpaland/printf) | printf, sprintf, snprintf, vsnprintf, vprintf, fctprintf
+[printf.h](https://github.com/eyalroz/printf) | printf, sprintf, snprintf, vsnprintf, vprintf, fctprintf
 spinlock.h | spinlock_release, spinlock_cmd, spinlock_get
 stdlib.h   | atoi, is_digit
 string.h   | strdup, strcmp, strcasecmp, strncasecmp, strncmp, strcat, strcpy, strncpy, strlen, strndup, memset, memcpy, memcmp, memmove, strchr, bzero, strtok_r, substr, find_substr, asprintf, memset32
