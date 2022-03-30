@@ -61,10 +61,15 @@ kernel7.img: xelix.bin
 $(CC):
 	make -C toolchain
 
-.PHONY: run
-run: xelix.bin mount_boot
+xelix.qcow2: xelix.bin
+	-mkdir mnt
+	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
+	sudo mount /dev/nbd0p1 mnt
 	sudo cp xelix.bin mnt/
 	make umount_boot
+
+.PHONY: run
+run: xelix.qcow2
 	$(QEMU) $(MAKE_QEMU_FLAGS)
 
 .PHONY: clean
