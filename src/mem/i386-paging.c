@@ -137,7 +137,6 @@ void paging_init() {
 		"mov %%cr0, %%eax;"
 		"or $0x80000000, %%eax;"
 		"mov %%eax, %%cr0;"
-		"sti;"
 	:: "r"(paging_kernel_ctx) : "memory", "eax");
 
 	log(LOG_INFO, "paging: Enabled\n");
