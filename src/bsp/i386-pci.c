@@ -151,7 +151,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	size_t rsize = 0;
 	pci_device_t* dev = first_device;
 	for(; dev; dev = dev->next) {
-		sysfs_printf("%02d:%02d.%d %x:%x %-2x %-2x %-4x %-2x %-2d %d\n",
+		sysfs_printf("%02d:%02d.%d %04x:%04x %-2x %-2x %-4x %-2x %-2d %d\n",
 			dev->bus, dev->dev, dev->func, dev->vendor, dev->device,
 			dev->class, dev->revision, dev->iobase,
 			dev->header_type, dev->interrupt_line, dev->interrupt_pin);
@@ -180,7 +180,7 @@ void pci_init() {
 				pdev->next = first_device;
 				first_device = pdev;
 
-				log(LOG_INFO, "  %02d:%02d.%d: %x:%x rev %-2x class %04x iobase %-4x type %-2x int %-2d pin %d\n",
+				log(LOG_INFO, "  %02d:%02d.%d: %04x:%04x rev %-2x class %04x iobase %-4x type %-2x int %-2d pin %d\n",
 						pdev->bus, pdev->dev, pdev->func, pdev->vendor,
 						pdev->device, pdev->revision, pdev->class,
 						pdev->iobase, pdev->header_type, pdev->interrupt_line,
