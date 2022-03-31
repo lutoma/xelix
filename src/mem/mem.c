@@ -24,7 +24,6 @@
 #include <spinlock.h>
 #include <mem/mem.h>
 #include <mem/kmalloc.h>
-#include <mem/vmem.h>
 #include <mem/paging.h>
 #include <mem/page_alloc.h>
 #include <mem/valloc.h>

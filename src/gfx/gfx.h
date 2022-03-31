@@ -18,13 +18,16 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <mem/vmem.h>
+#include <stdbool.h>
+#include <mem/valloc.h>
 
 struct gfx_handle {
 	unsigned int id;
 	bool used;
 
-	struct vmem_context* ctx;
+	// Used to be vmem context
+	void* _unused;
+
 	void* addr;
 	void* buf_addr;
 
@@ -39,5 +42,5 @@ struct gfx_handle* gfx_get_handle(unsigned int id);
 void gfx_blit_all(struct gfx_handle* handle);
 void gfx_blit(struct gfx_handle* handle, size_t x, size_t y, size_t width, size_t height);
 void gfx_handle_enable(struct gfx_handle* handle);
-struct gfx_handle* gfx_handle_init(struct vmem_context* ctx);
+struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx);
 void gfx_init();

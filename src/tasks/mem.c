@@ -21,7 +21,6 @@
 #include <tasks/task.h>
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
-#include <mem/vmem.h>
 #include <errno.h>
 
 /* Called on task page faults. If the fault is in the pages below the current
@@ -47,12 +46,12 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 
 	// FIXME deallocate vaddr
 	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, alloc_size / PAGE_SIZE, NULL, VM_RW | VM_ZERO | VM_NO_VIRT) != 0) {
+	if(valloc(VA_KERNEL, &vmem, RDIV(alloc_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO | VM_NO_VIRT) != 0) {
 		return -1;
 	}
 
-	vmem_map(task->vmem_ctx, (void*)(stack_lower - alloc_size), vmem.phys,
-		alloc_size, VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK);
+	valloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), vmem.phys,
+		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK);
 
 	task->stack_size += alloc_size;
 	return 0;
@@ -63,15 +62,15 @@ int task_page_fault_cb(task_t* task, void* _addr) {
  */
 void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool user_to_kernel) {
 	uintptr_t off = 0;
-	struct vmem_range* cr;
-
 	while(off < ptr_size) {
-		cr = vmem_get_range(task->vmem_ctx, addr + off, false);
-		void* tpaddr = vmem_translate_ptr(cr, addr + off, false);
+		// FIXME error handling if range does not exist
+		vmem_t* cr = valloc_get_range(&task->vmem, addr + off, false);
+
+		void* tpaddr = valloc_translate_ptr(cr, addr + off, false);
 		void* paddr = valloc_translate(VA_KERNEL, tpaddr + off, true);
 
 		size_t copy_size = MIN(ptr_size - off,
-			(void*)cr->size - (paddr - (uintptr_t)cr->phys_addr));
+			(void*)cr->size - (paddr - (uintptr_t)cr->phys));
 
 		if(!copy_size) {
 			break;
@@ -95,8 +94,8 @@ void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool us
  * manually copy them back using task_memcpy).
  */
 void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
-	struct vmem_range* vmem_range = vmem_get_range(task->vmem_ctx, addr, false);
-	if(!vmem_range) {
+	vmem_t* range = valloc_get_range(&task->vmem, addr, false);
+	if(!range) {
 		return NULL;
 	}
 
@@ -137,7 +136,7 @@ void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied) {
 
 // Free a task and all associated memory
 void task_free(task_t* t) {
-	vmem_rm_context(t->vmem_ctx);
+	valloc_cleanup(&t->vmem);
 	kfree_array(t->environ, t->envc);
 	kfree_array(t->argv, t->argc);
 	kfree(t);
@@ -160,8 +159,9 @@ void* task_sbrk(task_t* task, int32_t length) {
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	vmem_map(task->vmem_ctx, virt_addr, vmem.phys, length,
+	valloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, vmem.phys,
 		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE);
+
 	return virt_addr;
 }
 
@@ -185,7 +185,7 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		char* phys = (char*)vmem_translate(task->vmem_ctx, array[i], false);
+		char* phys = (char*)valloc_translate(&task->vmem, array[i], false);
 		new_array[i] = strndup((char*)valloc_translate(VA_KERNEL, phys, true), 200);
 	}
 

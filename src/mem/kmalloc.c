@@ -18,7 +18,6 @@
  */
 
 #include <mem/kmalloc.h>
-#include <mem/vmem.h>
 #include <mem/mem.h>
 #include <log.h>
 #include <string.h>

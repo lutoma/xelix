@@ -54,9 +54,11 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 
 	if(sa.sa_handler && (uint32_t)sa.sa_handler != SIG_DFL) {
 		iret_t* iret = task->kernel_stack + PAGE_SIZE - sizeof(iret_t);
+
+		// Make room on the stack for the things we will "push" to it below
 		iret->user_esp -= 11 * sizeof(uint32_t);
 
-		uint32_t* user_stack = (uint32_t*)vmem_translate(task->vmem_ctx, iret->user_esp, false);
+		uint32_t* user_stack = (uint32_t*)valloc_translate(&task->vmem, iret->user_esp, false);
 
 		// Address of signal handler and signal number as argument to it
 		*user_stack = (uint32_t)sa.sa_handler;

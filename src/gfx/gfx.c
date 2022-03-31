@@ -78,19 +78,18 @@ void gfx_handle_enable(struct gfx_handle* handle) {
 	active_handle = handle;
 }
 
-struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
+struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx) {
 	if(next_handle >= 20) {
 		return NULL;
 	}
 
 	struct gfx_handle* handle = &handles[next_handle];
 	handle->used = true;
-	handle->ctx = ctx;
 	handle->id = next_handle;
 	handle->size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 
 	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE, NULL, VM_RW) != 0) {
+	if(valloc(VA_KERNEL, &vmem, (ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE) + 1, NULL, VM_RW) != 0) {
 		handle->used = false;
 		return NULL;
 	}
@@ -100,7 +99,8 @@ struct gfx_handle* gfx_handle_init(struct vmem_context* ctx) {
 	if(ctx) {
 		// FIXME Properly choose virtual userland pages
 		handle->addr = (void*)0xf4000000;
-		vmem_map(handle->ctx, handle->addr, vmem.phys, handle->size + PAGE_SIZE, VM_RW | VM_USER);
+		valloc_at(ctx, NULL, (ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE) + 1, handle->addr, vmem.phys, VM_RW | VM_USER);
+
 	} else {
 		handle->addr = handle->buf_addr;
 	}
@@ -130,7 +130,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return -1;
 		}
 
-		struct gfx_handle* handle = gfx_handle_init(ctx->task->vmem_ctx);
+		struct gfx_handle* handle = gfx_handle_init(&ctx->task->vmem);
 		if(!handle) {
 			return -1;
 		}

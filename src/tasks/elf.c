@@ -27,7 +27,6 @@
 #include <fs/vfs.h>
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
-#include <mem/vmem.h>
 
 #ifdef CONFIG_ELF_DEBUG
  #define debug(args...) log(LOG_DEBUG, args);
@@ -70,7 +69,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	size_t size = ALIGN(phead->memsz + phys_offset, PAGE_SIZE);
 
 	vmem_t vmem;
-	if(unlikely(valloc(VA_KERNEL, &vmem, size / PAGE_SIZE, NULL, VM_RW | VM_ZERO) != 0)) {
+	if(unlikely(valloc(VA_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0)) {
 		return -1;
 	}
 
@@ -91,7 +90,8 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	if(phead->flags & PF_W) {
 		vmem_flags |= VM_RW;
 	}
-	vmem_map(task->vmem_ctx, virt, vmem.phys, size, vmem_flags);
+
+	valloc_at(&task->vmem, NULL, RDIV(size, PAGE_SIZE), virt, vmem.phys, vmem_flags);
 
 	debug("  phys %#-8x-%#-8x task virt %#-8x-%#-8x kernel virt %#-8x-%#-8x\n",
 		vmem.phys, (uintptr_t)vmem.phys + size, virt, (uintptr_t)virt + size, vmem.addr, (uintptr_t)vmem.addr + size);

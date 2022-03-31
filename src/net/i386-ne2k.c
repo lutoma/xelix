@@ -30,7 +30,6 @@
 #include <fs/sysfs.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
-#include <mem/vmem.h>
 #include <tasks/task.h>
 #include <pico_device.h>
 

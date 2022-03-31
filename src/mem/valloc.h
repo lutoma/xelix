@@ -60,9 +60,9 @@
 
 #define valloc(ctx, vmem, size, phys, flags) valloc_at(ctx, vmem, size, NULL, phys, flags)
 
-#define valloc_translate_ptr(range, inaddr, phys)     \
-    (phys ? range->addr : range->phys)              \
-    + (inaddr - (phys ? range->phys : range->addr))
+#define valloc_translate_ptr(range, inaddr, dir)   \
+    (dir ? range->addr : range->phys)              \
+    + (inaddr - (dir ? range->phys : range->addr))
 
 
 struct valloc_mem;
@@ -95,6 +95,8 @@ int vfree(struct valloc_ctx* ctx, uint32_t num, size_t size);
 vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys);
 int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used);
 int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir);
+void valloc_cleanup(struct valloc_ctx* ctx);
+void* valloc_get_page_dir(struct valloc_ctx* ctx);
 
 static inline void* valloc_translate(struct valloc_ctx* ctx, void* raddress, bool phys) {
     vmem_t* range = valloc_get_range(ctx, raddress, phys);

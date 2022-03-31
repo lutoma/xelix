@@ -80,8 +80,8 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		valloc(VA_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO);
 		// FIXME vfree(virt_gfxbux) here
 
-		vmem_map_flat(ctx->task->vmem_ctx, vmem.phys, size, VM_USER | VM_RW);
-		vmem_map_flat(master_task->vmem_ctx, vmem.phys, size, VM_USER | VM_RW);
+		valloc_at(&ctx->task->vmem, NULL, RDIV(size, PAGE_SIZE), vmem.phys, vmem.phys, VM_USER | VM_RW);
+		valloc_at(&master_task->vmem, NULL, RDIV(size, PAGE_SIZE), vmem.phys, vmem.phys, VM_USER | VM_RW);
 		return (uintptr_t)vmem.phys;
 	} else if(request == 0x2f03) {
 		return __sync_add_and_fetch(&last_wid, 1);

@@ -21,7 +21,7 @@
 #include <panic.h>
 #include <int/int.h>
 #include <tasks/task.h>
-#include <mem/vmem.h>
+#include <mem/mem.h>
 
 // Page fault error code flags
 #define PFE_PRES  1
@@ -78,15 +78,15 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 		log(LOG_WARN, "Page fault in task %d <%s> %s\n", task->pid,
 			task->name, message);
 
-		struct vmem_range* range = vmem_get_range(task->vmem_ctx, state->cr2, false);
+		vmem_t* range = valloc_get_range(&task->vmem, state->cr2, false);
 		if(range) {
 			log(LOG_WARN, "  phys: %#x, flags: rw %d, user %d\n",
-				vmem_translate_ptr(range, state->cr2, false),
+				valloc_translate_ptr(range, state->cr2, false),
 				range->flags & VM_RW, range->flags & VM_USER);
 
 			log(LOG_WARN, "  vmem range: virt %#x -> %#x  phys %#x -> %#x\n",
-				range->virt_addr, range->virt_addr + range->size,
-				range->phys_addr, range->phys_addr + range->size);
+				range->addr, range->addr + range->size,
+				range->phys, range->phys + range->size);
 		} else {
 			log(LOG_WARN, "  No matching vmem range found.\n");
 		}

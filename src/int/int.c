@@ -21,7 +21,6 @@
 #include <string.h>
 #include <int/i386-idt.h>
 #include <tasks/scheduler.h>
-#include <mem/vmem.h>
 #include <mem/paging.h>
 #include <mem/i386-gdt.h>
 #include <net/net.h>

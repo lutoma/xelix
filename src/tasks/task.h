@@ -20,8 +20,7 @@
 
 #include <int/int.h>
 #include <fs/vfs.h>
-#include <mem/vmem.h>
-#include <mem/page_alloc.h>
+#include <mem/valloc.h>
 #include <tasks/signal.h>
 #include <tty/term.h>
 
@@ -52,8 +51,7 @@ typedef struct task {
 	struct task* next;
 	struct task* previous;
 
-	struct mem_page_alloc_ctx alloc_ctx;
-	struct vmem_context* vmem_ctx;
+	struct valloc_ctx vmem;
 	isf_t* state;
 	void* entry;
 	void* sbrk;

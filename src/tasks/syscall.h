@@ -20,7 +20,6 @@
 
 #include <int/int.h>
 #include <tasks/task.h>
-#include <mem/vmem.h>
 
 #define SYSCALL_INTERRUPT 0x80
 

@@ -22,10 +22,8 @@
 #include <tasks/syscall.h>
 #include <tasks/wait.h>
 #include <tasks/elf.h>
-#include <mem/vmem.h>
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
-#include <mem/vmem.h>
 #include <mem/i386-gdt.h>
 #include <int/int.h>
 #include <fs/vfs.h>
@@ -44,24 +42,25 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = zmalloc(sizeof(task_t));
-	task->vmem_ctx = zmalloc(sizeof(struct vmem_context));
+	valloc_new(&task->vmem, NULL);
+
 	vmem_t vmem;
 	valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW);
 	task->state = vmem.addr;
 	bzero(task->state, sizeof(isf_t));
-	vmem_map(task->vmem_ctx, task->state, vmem.phys, PAGE_SIZE, VM_FREE);
+	valloc_at(&task->vmem, NULL, 1, vmem.addr, vmem.phys, VM_FREE);
 
 	// Kernel stack used during interrupts while this task is running
 	valloc(VA_KERNEL, &vmem, 4, NULL, VM_RW);
 	task->kernel_stack = vmem.addr;
-	vmem_map(task->vmem_ctx, task->kernel_stack, vmem.phys, KERNEL_STACK_SIZE, VM_FREE);
+	valloc_at(&task->vmem, NULL, 4, vmem.addr, vmem.phys, VM_FREE);
 
 	/* Map parts of the kernel marked as UL_VISIBLE into the task address
 	 * space (But readable only to PL0). These are the functions and data
 	 * structures used in the interrupt handler before the paging context is
 	 * switched.
 	 */
-	vmem_map_flat(task->vmem_ctx, UL_VISIBLE_START, UL_VISIBLE_SIZE, 0);
+	valloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0);
 
 	task->pid = pid ? pid : __sync_add_and_fetch(&highest_pid, 1);
 	task->task_state = TASK_STATE_RUNNING;
@@ -108,10 +107,10 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task->stack_size = PAGE_SIZE * 2;
 
 	vmem_t vmem;
-	valloc(VA_KERNEL, &vmem, task->stack_size / PAGE_SIZE, NULL, VM_RW | VM_ZERO);
+	valloc(VA_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO);
 	task->stack = vmem.addr;
-	vmem_map(task->vmem_ctx, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
-		task->stack_size, VM_USER | VM_RW | VM_FREE | VM_TFORK);
+	valloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
+		VM_USER | VM_RW | VM_FREE | VM_TFORK);
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
@@ -123,7 +122,7 @@ void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
-	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
+	task->state->cr3 = (uint32_t)valloc_get_page_dir(&task->vmem);
 	task->state->ebp = 0;
 	task->state->esp = (void*)TASK_STACK_LOCATION - sizeof(iret_t);
 
@@ -205,7 +204,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	intptr_t diff = state->esp - to_fork->kernel_stack;
 	task->state->esp = task->kernel_stack + diff;
 
-	struct vmem_range* range = to_fork->vmem_ctx->ranges;
+	vmem_t* range = to_fork->vmem.ranges;
 	for(; range; range = range->next) {
 		if(!(range->flags & VM_TFORK)) {
 			continue;
@@ -214,18 +213,20 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 		// Can't do copy on write/merging with pages where we don't control deallocation
 		//if(range->flags & VM_NOCOW || !(range->flags & (VM_FREE | VM_COW))) {
 
-		if(range->flags & VM_RW) {
+		//if(range->flags & VM_RW) {
+		if(true || range->flags & VM_RW) {
 			vmem_t vmem;
-			valloc(VA_KERNEL, &vmem, range->size / PAGE_SIZE, NULL, VM_RW | VM_ZERO);
+			valloc(VA_KERNEL, &vmem, RDIV(range->size, PAGE_SIZE), NULL, VM_RW | VM_ZERO);
 			void* kernel_virt = vmem.addr;
 			void* phys_addr = vmem.phys;
 
-			void* old_kernel_virt = valloc_translate(VA_KERNEL, range->phys_addr, true);
+			void* old_kernel_virt = valloc_translate(VA_KERNEL, range->phys, true);
 			memcpy(kernel_virt, old_kernel_virt, range->size);
-			vmem_map(task->vmem_ctx, range->virt_addr, phys_addr, range->size, range->flags);
+			valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->addr, phys_addr, range->flags);
 			continue;
 		}
 
+		#if 0
 		if(!range->ref_count) {
 			range->ref_count = kmalloc(sizeof(uint16_t));
 			*range->ref_count = 1;
@@ -237,12 +238,14 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 			flags |= VM_COW;
 		}
 
-		struct vmem_range* new_range = vmem_map(task->vmem_ctx, range->virt_addr, range->phys_addr, range->size, flags);
+		struct vmem_range* new_range = vmem _map(task->vmem_ctx, range->virt_addr, range->phys_addr, range->size, flags);
+		valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->virt_addr, range->phys_addr, flags);
 		__sync_add_and_fetch(range->ref_count, 1);
 		new_range->ref_count = range->ref_count;
+		#endif
 	}
 
-	task->state->cr3 = (uint32_t)vmem_get_hwdata(task->vmem_ctx);
+	task->state->cr3 = (uint32_t)valloc_get_page_dir(&task->vmem);
 
 	/* Set syscall return values for the forked task – need to set here since
 	 * the regular syscall return handling only affects the main process.
@@ -434,10 +437,12 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	sysfs_printf("\nTask memory:\n");
-	struct vmem_range* range = task->vmem_ctx->ranges;
+	vmem_t* range = task->vmem.ranges;
 	for(; range; range = range->next) {
-		sysfs_printf("0x%-8x -> 0x%-8x length 0x%-6x\n",
-			range->virt_addr, range->phys_addr, range->size);
+		sysfs_printf("%p - %p  ->  %p - %p length %#-6x\n",
+			range->addr, range->addr + range->size - 1,
+			range->phys, range->phys + range->size - 1,
+			range->size);
 	}
 
 

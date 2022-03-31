@@ -66,8 +66,9 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 
 	// FIXME VM_ZERO should always map into kernel ctx to zero, not specified
 	if((!(flags & VM_NO_MAP)) || flags & VM_ZERO) {
-		paging_set_range(ctx->page_dir, virt, phys, size * PAGE_SIZE, flags);
-		//vmem_map(NULL, virt, phys, size * PAGE_SIZE, flags);
+		if(ctx->page_dir) {
+			paging_set_range(ctx->page_dir, virt, phys, size * PAGE_SIZE, flags);
+		}
 	}
 
 	if(flags & VM_ZERO) {
@@ -78,14 +79,14 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 
 	/* During initialization, kmalloc_init calls valloc once to get its memory
 	 * space to allocate from. The zmalloc call below would fail since kmalloc
-	 * is not ready yet. Another call to vmem_map can then happen in
+	 * is not ready yet. Another call to valloc can then happen in
 	 * paging_set_range when a new page table is allocated.
 	 * Add a dirty hack for that one-time special case.
 	 */
 	vmem_t* range;
 	if(likely(!have_malloc_ranges)) {
 		if(likely(kmalloc_ready)) {
-			range = zmalloc(sizeof(struct vmem_range));
+			range = zmalloc(sizeof(vmem_t));
 		} else {
 			panic("valloc: preallocated ranges exhausted before kmalloc is ready\n");
 		}
@@ -113,8 +114,7 @@ vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
 	vmem_t* range = ctx->ranges;
 	for(; range; range = range->next) {
 		void* start = (phys ? range->phys : range->addr);
-
-		if(addr >= start && addr <= (start + range->size)) {
+		if(addr >= start && addr < (start + range->size)) {
 			return range;
 		}
 	}
@@ -136,20 +136,59 @@ int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used) {
 
 int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir) {
 	ctx->lock = 0;
+	ctx->ranges = NULL;
 	ctx->bitmap.data = ctx->bitmap_data;
 	ctx->bitmap.size = PAGE_ALLOC_BITMAP_SIZE;
 	bitmap_clear_all(&ctx->bitmap);
-	ctx->ranges = NULL;
+
+	// Don't allocate null pointer
+	bitmap_set(&ctx->bitmap, 0, 1);
 
 	if(page_dir) {
 		ctx->page_dir = page_dir;
 		ctx->page_dir_phys = page_dir;
 	} else {
-		ctx->page_dir = NULL;
-		ctx->page_dir_phys = NULL;
+	/*	vmem_t vmem;
+		valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW | VM_ZERO);
+		ctx->page_dir = vmem.addr;
+		ctx->page_dir_phys = vmem.phys;
+	*/
 	}
 
 	// Block NULL page
 	bitmap_set(&ctx->bitmap, 0, 1);
 	return 0;
+}
+
+void valloc_cleanup(struct valloc_ctx* ctx) {
+	if(ctx->page_dir) {
+		paging_rm_context(ctx->page_dir);
+	}
+
+	vmem_t* range = ctx->ranges;
+	while(range) {
+		if(range->flags & VM_FREE) {
+			pfree((uintptr_t)range->phys / PAGE_SIZE, RDIV(range->size, PAGE_SIZE));
+		}
+
+		vmem_t* old_range = range;
+		range = range->next;
+		kfree(old_range);
+	}
+}
+
+void* valloc_get_page_dir(struct valloc_ctx* ctx) {
+	if(!ctx->page_dir) {
+		vmem_t vmem;
+		valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW | VM_ZERO);
+		ctx->page_dir = vmem.addr;
+		ctx->page_dir_phys = vmem.phys;
+
+		vmem_t* range = ctx->ranges;
+
+		for(; range; range = range->next) {
+			paging_set_range(ctx->page_dir, range->addr, range->phys, range->size, range->flags);
+		}
+	}
+	return ctx->page_dir_phys;
 }

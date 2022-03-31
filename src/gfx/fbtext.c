@@ -122,7 +122,7 @@ void gfx_fbtext_show() {
 }
 
 void gfx_fbtext_init() {
-	gfx_handle = gfx_handle_init(NULL);
+	gfx_handle = gfx_handle_init(VA_KERNEL);
 	if(!gfx_handle) {
 		log(LOG_ERR, "fbtext: Could not get gfx handle\n");
 		return;

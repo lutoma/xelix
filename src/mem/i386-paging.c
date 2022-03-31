@@ -21,7 +21,6 @@
 #include <mem/mem.h>
 #include <log.h>
 #include <string.h>
-#include <mem/vmem.h>
 #include <int/int.h>
 
 // Used in interrupt handlers to return to kernel paging context
@@ -80,6 +79,8 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 		page->rw = flags & VM_RW;
 		page->user = flags & VM_USER;
 		page->frame = ((uintptr_t)phys_addr + off) >> 12;
+
+		// FIXME only if current ctx
 		asm volatile("invlpg (%0)":: "r" (current_virt));
 
 		// FIXME vfree page_table here?
@@ -127,6 +128,7 @@ void paging_init() {
 
 	log(LOG_INFO, "paging: Early page tables allocated up to %#x\n", paging_alloc_end);
 
+	// Create a new valloc context with the page dir and allocate the kernel / page dir in it
 	valloc_new(&valloc_kernel_ctx, paging_kernel_ctx);
 	valloc_at(VA_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW);
 

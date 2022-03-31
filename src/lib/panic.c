@@ -25,7 +25,6 @@
 #include <bsp/timer.h>
 #include <tty/serial.h>
 #include <string.h>
-#include <mem/vmem.h>
 #include <mem/kmalloc.h>
 #include <spinlock.h>
 #include <stdarg.h>

@@ -27,7 +27,6 @@
 #include <panic.h>
 #include <errno.h>
 #include <variadic.h>
-#include <mem/vmem.h>
 #include <mem/kmalloc.h>
 #include <tty/serial.h>
 
