@@ -57,6 +57,8 @@ EXTERN multiboot_header
 GLOBAL _start
 
 _start:
+	cli
+
 	; Store multiboot magic and header
 	mov [multiboot_magic], eax
 	mov [multiboot_header], ebx

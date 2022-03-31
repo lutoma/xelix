@@ -132,7 +132,6 @@ void paging_init() {
 		paging_alloc_end - KERNEL_START, VM_RW);
 
 	asm volatile(
-		"cli;"
 		"mov %0, %%cr3;"
 		"mov %%cr0, %%eax;"
 		"or $0x80000000, %%eax;"
