@@ -327,7 +327,7 @@ void _kfree(void *ptr DEBUGREGS) {
 	if(unlikely((uintptr_t)header < alloc_start ||
 		(uintptr_t)ptr >= alloc_end || header->type == TYPE_FREE)) {
 
-		log(LOG_ERR, "kmalloc: Attempt to free invalid block\n");
+		log(LOG_ERR, "kmalloc: Attempt to free invalid block %#x\n", header);
 		return;
 	}
 

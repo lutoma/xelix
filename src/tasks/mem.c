@@ -68,7 +68,7 @@ void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool us
 	while(off < ptr_size) {
 		cr = vmem_get_range(task->vmem_ctx, addr + off, false);
 		void* tpaddr = vmem_translate_ptr(cr, addr + off, false);
-		void* paddr = vmem_translate(NULL, tpaddr + off, true);
+		void* paddr = valloc_translate(VA_KERNEL, tpaddr + off, true);
 
 		size_t copy_size = MIN(ptr_size - off,
 			(void*)cr->size - (paddr - (uintptr_t)cr->phys_addr));
@@ -186,7 +186,7 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	int i = 0;
 	for(; i < size; i++) {
 		char* phys = (char*)vmem_translate(task->vmem_ctx, array[i], false);
-		new_array[i] = strndup((char*)vmem_translate(NULL, phys, true), 200);
+		new_array[i] = strndup((char*)valloc_translate(VA_KERNEL, phys, true), 200);
 	}
 
 	new_array[i] = NULL;

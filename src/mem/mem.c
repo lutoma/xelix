@@ -63,7 +63,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 
 void mem_init() {
 	if(mem_page_alloc_new(&mem_phys_alloc_ctx) < 0 ||
-	   valloc_new(&valloc_kernel_ctx) < 0) {
+	   valloc_new(&valloc_kernel_ctx, paging_kernel_ctx) < 0) {
 		panic("mem: Initialization of page allocators failed.\n");
 	}
 
@@ -123,7 +123,6 @@ void mem_init() {
 	log(LOG_INFO, "mem: Virt page allocator ready, %u pages, %u used, %u free\n",
 		valloc_kernel_ctx.bitmap.size, vused, valloc_kernel_ctx.bitmap.size - vused);
 
-	vmem_init();
 	kmalloc_init();
 
 	struct vfs_callbacks sfs_cb = {

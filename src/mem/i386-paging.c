@@ -68,10 +68,10 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 
 			if(phys_table < paging_alloc_end) {
 				// Early page table allocation in kernel ctx, those are 1:1
-				// mapped and cannot be translated by vmem_translate (yet)
+				// mapped and cannot be translated by valloc_translate (yet)
 				page_table = phys_table;
 			} else {
-				page_table = vmem_translate(NULL, phys_table, true);
+				page_table = valloc_translate(VA_KERNEL, phys_table, true);
 			}
 		}
 

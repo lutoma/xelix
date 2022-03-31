@@ -1,4 +1,4 @@
-/* valloc.c: Page allocator
+/* valloc.c: Virtual memory allocator
  * Copyright © 2020-2022 Lukas Martini
  *
  * This file is part of Xelix.
@@ -17,13 +17,9 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Generic page allocator used for physical and both kernel and task virtual
- * memory. Intentionally kept very simple for now relying on a single bitmap,
- * but can be extended later as required.
- */
-
 #include "valloc.h"
 #include <mem/paging.h>
+#include <mem/kmalloc.h>
 #include <mem/mem.h>
 #include <boot/multiboot.h>
 #include <string.h>
@@ -31,6 +27,8 @@
 #include <panic.h>
 #include <spinlock.h>
 
+static vmem_t malloc_ranges[50];
+static int have_malloc_ranges = 50;
 
 int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
 	if(!spinlock_get(&ctx->lock, -1)) {
@@ -48,6 +46,7 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 		page_num = bitmap_find(&ctx->bitmap, size);
 
 		if(page_num == -1) {
+			spinlock_release(&ctx->lock);
 			return -1;
 		}
 
@@ -55,19 +54,20 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 	}
 
 	bitmap_set(&ctx->bitmap, page_num, size);
-	spinlock_release(&ctx->lock);
 
 	// Allocate physical address if necessary
 	if(!phys) {
 		phys = palloc(size);
 		if(!phys) {
+			spinlock_release(&ctx->lock);
 			return -1;
 		}
 	}
 
 	// FIXME VM_ZERO should always map into kernel ctx to zero, not specified
-	if(!(flags & VM_NO_VIRT) || flags & VM_ZERO) {
-		vmem_map(NULL, virt, phys, size * PAGE_SIZE, flags);
+	if((!(flags & VM_NO_MAP)) || flags & VM_ZERO) {
+		paging_set_range(ctx->page_dir, virt, phys, size * PAGE_SIZE, flags);
+		//vmem_map(NULL, virt, phys, size * PAGE_SIZE, flags);
 	}
 
 	if(flags & VM_ZERO) {
@@ -76,17 +76,54 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 
 	// FIXME Dealloc kernel mapping if both VM_NO_VIRT and VM_ZERO are set
 
-	if(vmem) {
-		vmem->ctx = ctx;
-		vmem->addr = virt;
-		vmem->phys = phys;
-		vmem->size = size * PAGE_SIZE;
+	/* During initialization, kmalloc_init calls valloc once to get its memory
+	 * space to allocate from. The zmalloc call below would fail since kmalloc
+	 * is not ready yet. Another call to vmem_map can then happen in
+	 * paging_set_range when a new page table is allocated.
+	 * Add a dirty hack for that one-time special case.
+	 */
+	vmem_t* range;
+	if(likely(!have_malloc_ranges)) {
+		if(likely(kmalloc_ready)) {
+			range = zmalloc(sizeof(struct vmem_range));
+		} else {
+			panic("valloc: preallocated ranges exhausted before kmalloc is ready\n");
+		}
+	} else {
+		range = &malloc_ranges[50 - have_malloc_ranges--];
 	}
+
+	range->ctx = ctx;
+	range->addr = virt;
+	range->phys = phys;
+	range->size = size * PAGE_SIZE;
+	range->flags = flags;
+	range->next = ctx->ranges;
+	ctx->ranges = range;
+
+	if(vmem) {
+		memcpy(vmem, range, sizeof(vmem_t));
+	}
+
+	spinlock_release(&ctx->lock);
 	return 0;
+}
+
+vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
+	vmem_t* range = ctx->ranges;
+	for(; range; range = range->next) {
+		void* start = (phys ? range->phys : range->addr);
+
+		if(addr >= start && addr <= (start + range->size)) {
+			return range;
+		}
+	}
+	return NULL;
 }
 
 int vfree(struct valloc_ctx* ctx, uint32_t num, size_t size) {
 	// FIXME Add optional debug check if allocation even exists
+	// FIXME remove range
 	bitmap_clear(&ctx->bitmap, num, size);
 	return 0;
 }
@@ -97,11 +134,20 @@ int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used) {
 	return 0;
 }
 
-int valloc_new(struct valloc_ctx* ctx) {
+int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir) {
 	ctx->lock = 0;
 	ctx->bitmap.data = ctx->bitmap_data;
 	ctx->bitmap.size = PAGE_ALLOC_BITMAP_SIZE;
 	bitmap_clear_all(&ctx->bitmap);
+	ctx->ranges = NULL;
+
+	if(page_dir) {
+		ctx->page_dir = page_dir;
+		ctx->page_dir_phys = page_dir;
+	} else {
+		ctx->page_dir = NULL;
+		ctx->page_dir_phys = NULL;
+	}
 
 	// Block NULL page
 	bitmap_set(&ctx->bitmap, 0, 1);

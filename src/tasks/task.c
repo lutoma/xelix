@@ -220,7 +220,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 			void* kernel_virt = vmem.addr;
 			void* phys_addr = vmem.phys;
 
-			void* old_kernel_virt = vmem_translate(NULL, range->phys_addr, true);
+			void* old_kernel_virt = valloc_translate(VA_KERNEL, range->phys_addr, true);
 			memcpy(kernel_virt, old_kernel_virt, range->size);
 			vmem_map(task->vmem_ctx, range->virt_addr, phys_addr, range->size, range->flags);
 			continue;

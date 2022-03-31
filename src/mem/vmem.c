@@ -26,33 +26,16 @@
 #include <string.h>
 #include <tasks/scheduler.h>
 
-static struct vmem_context kernel_ctx;
-static struct vmem_range malloc_ranges[50];
-static int have_malloc_ranges = 50;
-
 struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, size_t size, int flags) {
-	ctx = ctx ? ctx : &kernel_ctx;
+	if(!ctx) {
+		panic("no ctx in vmem_map");
+	}
+
 	if(unlikely(!ctx || ((flags & VM_COW) && !phys))) {
 		return NULL;
 	}
 
-	/* During initialization, kmalloc_init calls valloc once to get its memory
-	 * space to allocate from. valloc calls this function to map the memory,
-	 * but the zmalloc call below would fail since kmalloc is not ready yet.
-	 * Another call to vmem_map  can then happen in paging_set_range when a
-	 * new page table is allocated.
-	 * Add a dirty hack for that one-time special case.
-	 */
-	struct vmem_range* range;
-	if(likely(!have_malloc_ranges)) {
-		if(likely(kmalloc_ready)) {
-			range = zmalloc(sizeof(struct vmem_range));
-		} else {
-			panic("vmem: preallocated ranges exhausted before kmalloc is ready\n");
-		}
-	} else {
-		range = &malloc_ranges[50 - have_malloc_ranges--];
-	}
+	struct vmem_range* range = zmalloc(sizeof(struct vmem_range));
 
 	range->flags = flags;
 	range->size = ALIGN(size, PAGE_SIZE);
@@ -83,7 +66,7 @@ struct vmem_range* vmem_map(struct vmem_context* ctx, void* virt, void* phys, si
 
 struct vmem_range* vmem_get_range(struct vmem_context* ctx, void* addr, bool phys) {
 	if(!ctx) {
-		ctx = &kernel_ctx;
+		panic("no ctx in vmem_get_range");
 	}
 
 	struct vmem_range* range = ctx->ranges;
@@ -134,10 +117,4 @@ void* vmem_get_hwdata(struct vmem_context* ctx) {
 		}
 	}
 	return ctx->hwdata_phys;
-}
-
-void vmem_init() {
-	kernel_ctx.hwdata = paging_kernel_ctx;
-	kernel_ctx.hwdata_phys = paging_kernel_ctx;
-	kernel_ctx.ranges = NULL;
 }
