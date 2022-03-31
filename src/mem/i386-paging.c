@@ -127,9 +127,8 @@ void paging_init() {
 
 	log(LOG_INFO, "paging: Early page tables allocated up to %#x\n", paging_alloc_end);
 
-	// Now, map the kernel binary and the page tables we just allocated in that page directory
-	paging_set_range(paging_kernel_ctx, KERNEL_START, KERNEL_START,
-		paging_alloc_end - KERNEL_START, VM_RW);
+	valloc_new(&valloc_kernel_ctx, paging_kernel_ctx);
+	valloc_at(VA_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW);
 
 	asm volatile(
 		"mov %0, %%cr3;"

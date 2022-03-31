@@ -62,9 +62,9 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 }
 
 void mem_init() {
-	if(mem_page_alloc_new(&mem_phys_alloc_ctx) < 0 ||
-	   valloc_new(&valloc_kernel_ctx, paging_kernel_ctx) < 0) {
-		panic("mem: Initialization of page allocators failed.\n");
+	// Init phys page allocator. kernel valloc has already been initialized in i386-paging.c.
+	if(mem_page_alloc_new(&mem_phys_alloc_ctx) < 0) {
+		panic("mem: Initialization of phys page allocator failed.\n");
 	}
 
 	// Fetch memory information from multiboot
@@ -105,15 +105,9 @@ void mem_init() {
 	 */
 	mem_page_alloc_at(&mem_phys_alloc_ctx, 0, (uintptr_t)paging_alloc_end / PAGE_SIZE);
 
-	// Same for virtual memory except also allow everything below KERNEL_START
-	valloc_at(VA_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_NO_MAP);
-
-	// Set size of allocator bitmaps
 	// FIXME mem_info only provides memory size up until first memory hole (~3ish gb)
-	// FIXME We don't really have to limit the virtual address space to the size of the physical one
 	uint32_t mem_kb = (MAX(1024, mem->mem_lower) + mem->mem_upper);
 	mem_phys_alloc_ctx.bitmap.size = (mem_kb * 1024) / PAGE_SIZE;
-	valloc_kernel_ctx.bitmap.size = 2048000;
 
 	uint32_t pused = bitmap_count(&mem_phys_alloc_ctx.bitmap);
 	log(LOG_INFO, "mem: Phys page allocator ready, %u mb, %u pages, %u used, %u free\n",
