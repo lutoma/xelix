@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2020 Lukas Martini
+/* Copyright © 2011-2022 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -47,5 +47,6 @@ extern void* paging_alloc_end;
 
 struct vmem_range;
 void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_addr, size_t size, int flags);
+void paging_clear_range(struct paging_context* ctx, void* virt_addr, size_t size);
 void paging_rm_context(struct paging_context* ctx);
 void paging_init();
