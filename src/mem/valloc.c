@@ -147,13 +147,25 @@ int vfree(vmem_t* range) {
 }
 
 vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
+	if(!spinlock_get(&ctx->lock, -1)) {
+		return NULL;
+	}
+
+	if(!phys && !bitmap_get(&ctx->bitmap, (uintptr_t)addr / PAGE_SIZE)) {
+		spinlock_release(&ctx->lock);
+		return NULL;
+	}
+
 	vmem_t* range = ctx->ranges;
 	for(; range; range = range->next) {
 		void* start = (phys ? range->phys : range->addr);
 		if(addr >= start && addr < (start + range->size)) {
+			spinlock_release(&ctx->lock);
 			return range;
 		}
 	}
+
+	spinlock_release(&ctx->lock);
 	return NULL;
 }
 
