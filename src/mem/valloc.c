@@ -84,14 +84,14 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 	 * Add a dirty hack for that one-time special case.
 	 */
 	vmem_t* range;
-	if(likely(!have_malloc_ranges)) {
-		if(likely(kmalloc_ready)) {
-			range = zmalloc(sizeof(vmem_t));
+	if(unlikely(!kmalloc_ready)) {
+		if(likely(have_malloc_ranges)) {
+			range = &malloc_ranges[50 - have_malloc_ranges--];
 		} else {
 			panic("valloc: preallocated ranges exhausted before kmalloc is ready\n");
 		}
 	} else {
-		range = &malloc_ranges[50 - have_malloc_ranges--];
+		range = zmalloc(sizeof(vmem_t));
 	}
 
 	range->ctx = ctx;
@@ -99,13 +99,49 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 	range->phys = phys;
 	range->size = size * PAGE_SIZE;
 	range->flags = flags;
+	range->self = range;
+
+	range->previous = NULL;
 	range->next = ctx->ranges;
+	if(ctx->ranges) {
+		ctx->ranges->previous = range;
+	}
 	ctx->ranges = range;
 
 	if(vmem) {
 		memcpy(vmem, range, sizeof(vmem_t));
 	}
 
+	spinlock_release(&ctx->lock);
+	return 0;
+}
+
+int vfree(vmem_t* range) {
+	struct valloc_ctx* ctx = range->ctx;
+	if(!spinlock_get(&ctx->lock, -1)) {
+		return -1;
+	}
+
+	if(ctx->ranges == range->self) {
+		ctx->ranges = range->next;
+	}
+
+	if(range->next) {
+		range->next->previous = range->previous;
+	}
+
+	if(range->previous) {
+		range->previous->next = range->next;
+	}
+
+	bitmap_clear(&ctx->bitmap, (uintptr_t)range->addr / PAGE_SIZE, RDIV(range->size, PAGE_SIZE));
+	paging_clear_range(ctx->page_dir, range->addr, range->size);
+
+	if(range->flags & VM_FREE) {
+		pfree((uintptr_t)range->phys / PAGE_SIZE, RDIV(range->size, PAGE_SIZE));
+	}
+
+	kfree(range->self);
 	spinlock_release(&ctx->lock);
 	return 0;
 }
@@ -119,19 +155,6 @@ vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
 		}
 	}
 	return NULL;
-}
-
-int vfree(struct valloc_ctx* ctx, uint32_t num, size_t size) {
-	// FIXME Add optional debug check if allocation even exists
-	// FIXME remove range
-	bitmap_clear(&ctx->bitmap, num, size);
-	return 0;
-}
-
-int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used) {
-	*total = ctx->bitmap.size * PAGE_SIZE;
-	*used = bitmap_count(&ctx->bitmap) * PAGE_SIZE;
-	return 0;
 }
 
 int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir) {
@@ -191,4 +214,10 @@ void* valloc_get_page_dir(struct valloc_ctx* ctx) {
 		}
 	}
 	return ctx->page_dir_phys;
+}
+
+int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used) {
+	*total = ctx->bitmap.size * PAGE_SIZE;
+	*used = bitmap_count(&ctx->bitmap) * PAGE_SIZE;
+	return 0;
 }

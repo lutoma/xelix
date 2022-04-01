@@ -1,5 +1,5 @@
 /* i386-paging.c: x86 paging
- * Copyright © 2011-2021 Lukas Martini
+ * Copyright © 2011-2022 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -79,6 +79,36 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 		page->rw = flags & VM_RW;
 		page->user = flags & VM_USER;
 		page->frame = ((uintptr_t)phys_addr + off) >> 12;
+
+		if(ctx == paging_kernel_ctx) {
+			asm volatile("invlpg (%0)":: "r" (current_virt));
+		}
+	}
+}
+
+void paging_clear_range(struct paging_context* ctx, void* virt_addr, size_t size) {
+	for(uintptr_t off = 0; off < size; off += PAGE_SIZE) {
+		uintptr_t current_virt = (uintptr_t)virt_addr + off;
+
+		uint32_t page_dir_offset = current_virt >> 22;
+		uint32_t page_table_offset = (current_virt >> 12) % 1024;
+
+		struct page* page_dir = &(ctx->dir_entries[page_dir_offset]);
+		if(!page_dir->present) {
+			continue;
+		}
+
+		void* phys_table = (void*)(page_dir->frame << 12);
+
+		struct page* page_table;
+		if(phys_table < paging_alloc_end) {
+			page_table = phys_table;
+		} else {
+			page_table = valloc_translate(VA_KERNEL, phys_table, true);
+		}
+
+		struct page* page = page_table + page_table_offset;
+		page->present = 0;
 
 		if(ctx == paging_kernel_ctx) {
 			asm volatile("invlpg (%0)":: "r" (current_virt));

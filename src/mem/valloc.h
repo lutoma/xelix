@@ -24,10 +24,8 @@
 #include <stdint.h>
 #include <spinlock.h>
 
-
 #define VALLOC_BITMAP_SIZE 0xfffff000 / PAGE_SIZE
 #define VA_KERNEL &valloc_kernel_ctx
-
 
 // Writable
 #define VM_RW 1
@@ -61,8 +59,8 @@
 #define valloc(ctx, vmem, size, phys, flags) valloc_at(ctx, vmem, size, NULL, phys, flags)
 
 #define valloc_translate_ptr(range, inaddr, dir)   \
-    (dir ? range->addr : range->phys)              \
-    + (inaddr - (dir ? range->phys : range->addr))
+	(dir ? range->addr : range->phys)              \
+	+ (inaddr - (dir ? range->phys : range->addr))
 
 
 struct valloc_mem;
@@ -72,36 +70,40 @@ struct valloc_ctx {
 	struct bitmap bitmap;
 	struct valloc_mem* ranges;
 
-    // Address of the actual page tables that will be read by the hardware
-    struct paging_context* page_dir;
-    struct paging_context* page_dir_phys;
+	// Address of the actual page tables that will be read by the hardware
+	struct paging_context* page_dir;
+	struct paging_context* page_dir_phys;
 };
 
 
 typedef struct valloc_mem {
-    struct valloc_mem* next;
+	struct valloc_mem* next;
+	struct valloc_mem* previous;
+
+	// Used in vfree
+	struct valloc_mem* self;
 	struct valloc_ctx* ctx;
 	void* addr;
 	void* phys;
 	size_t size;
-    int flags;
+	int flags;
 } vmem_t;
 
 
 extern struct valloc_ctx valloc_kernel_ctx;
 
 int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags);
-int vfree(struct valloc_ctx* ctx, uint32_t num, size_t size);
 vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys);
+int vfree(vmem_t* range);
 int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used);
 int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir);
 void valloc_cleanup(struct valloc_ctx* ctx);
 void* valloc_get_page_dir(struct valloc_ctx* ctx);
 
 static inline void* valloc_translate(struct valloc_ctx* ctx, void* raddress, bool phys) {
-    vmem_t* range = valloc_get_range(ctx, raddress, phys);
-    if(!range) {
-        return 0;
-    }
-    return valloc_translate_ptr(range, raddress, phys);
+	vmem_t* range = valloc_get_range(ctx, raddress, phys);
+	if(!range) {
+		return 0;
+	}
+	return valloc_translate_ptr(range, raddress, phys);
 }
