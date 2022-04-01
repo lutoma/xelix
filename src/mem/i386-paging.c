@@ -80,10 +80,9 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 		page->user = flags & VM_USER;
 		page->frame = ((uintptr_t)phys_addr + off) >> 12;
 
-		// FIXME only if current ctx
-		asm volatile("invlpg (%0)":: "r" (current_virt));
-
-		// FIXME vfree page_table here?
+		if(ctx == paging_kernel_ctx) {
+			asm volatile("invlpg (%0)":: "r" (current_virt));
+		}
 	}
 }
 
