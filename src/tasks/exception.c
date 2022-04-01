@@ -61,7 +61,7 @@ static const struct exception exceptions[] = {
 
 static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 	char message[300];
-	snprintf(message, 300, "for %s to 0x%x at %#x%s%s%s",
+	snprintf(message, 300, "for %s to %p at %p%s%s%s",
 		state->err_code & PFE_WRITE ? "write" : "read",
 		state->cr2, eip,
 		state->err_code & PFE_PRES ? " (page present)" : "",
@@ -80,11 +80,11 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 
 		vmem_t* range = valloc_get_range(&task->vmem, state->cr2, false);
 		if(range) {
-			log(LOG_WARN, "  phys: %#x, flags: rw %d, user %d\n",
+			log(LOG_WARN, "  phys: %p, flags: rw %d, user %d\n",
 				valloc_translate_ptr(range, state->cr2, false),
 				range->flags & VM_RW, range->flags & VM_USER);
 
-			log(LOG_WARN, "  vmem range: virt %#x -> %#x  phys %#x -> %#x\n",
+			log(LOG_WARN, "  vmem range: virt %p -> %p  phys %p -> %p\n",
 				range->addr, range->addr + range->size,
 				range->phys, range->phys + range->size);
 		} else {
@@ -114,7 +114,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		panic(exc.name);
 	}
 
-	log(LOG_WARN, "%s in task %d <%s> at %#x\n", exc.name, task->pid, task->name, eip);
+	log(LOG_WARN, "%s in task %d <%s> at %p\n", exc.name, task->pid, task->name, eip);
 	task_signal(task, NULL, exc.signal, NULL);
 }
 

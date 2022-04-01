@@ -406,9 +406,9 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	sysfs_printf("%-10s: %d\n", "gid", task->gid);
 	sysfs_printf("%-10s: %d\n", "egid", task->egid);
 	sysfs_printf("%-10s: %s\n", "name", task->name);
-	sysfs_printf("%-10s: 0x%x\n", "stack", task->stack);
-	sysfs_printf("%-10s: 0x%x\n", "entry", task->entry);
-	sysfs_printf("%-10s: 0x%x\n", "sbrk", task->sbrk);
+	sysfs_printf("%-10s: %p\n", "stack", task->stack);
+	sysfs_printf("%-10s: %p\n", "entry", task->entry);
+	sysfs_printf("%-10s: %p\n", "sbrk", task->sbrk);
 	sysfs_printf("%-10s: %d\n", "state", task->task_state);
 	sysfs_printf("%-10s: %s\n", "cwd", task->cwd);
 	sysfs_printf("%-10s: %s\n", "tty", task->ctty ? task->ctty->path : "");
@@ -439,7 +439,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	sysfs_printf("\nTask memory:\n");
 	vmem_t* range = task->vmem.ranges;
 	for(; range; range = range->next) {
-		sysfs_printf("%p - %p  ->  %p - %p length %#-6x\n",
+		sysfs_printf("%p - %p  ->  %p - %p length %#-6lx\n",
 			range->addr, range->addr + range->size - 1,
 			range->phys, range->phys + range->size - 1,
 			range->size);

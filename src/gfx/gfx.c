@@ -197,12 +197,12 @@ void gfx_init() {
 	valloc(VA_KERNEL, &framebuffer_mem, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
 	framebuffer_addr = framebuffer_mem.addr;
 
-	log(LOG_DEBUG, "gfx1: %dx%d bpp %d pitch 0x%x at 0x%x\n",
+	log(LOG_DEBUG, "gfx1: %dx%d bpp %d pitch %#x at %p\n",
 		fb_desc->common.framebuffer_width,
 		fb_desc->common.framebuffer_height,
 		fb_desc->common.framebuffer_bpp,
 		fb_desc->common.framebuffer_pitch,
-		(uint32_t)framebuffer_addr);
+		framebuffer_mem.phys);
 
 	struct vfs_callbacks sfs_cb = {
 		.ioctl = sfs_ioctl,

@@ -88,7 +88,7 @@ void mem_init() {
 			"Bad"
 		};
 
-		log(LOG_INFO, "  %#-12llx - %#-12llx size %#-12llx      %-9s\n",
+		log(LOG_INFO, "  %#010llx - %#010llx size %#-10llx      %-9s\n",
 			entry->addr, entry->addr + entry->len - 1, entry->len, type_names[entry->type]);
 
 		if(entry->type != MULTIBOOT_MEMORY_AVAILABLE) {
@@ -96,7 +96,7 @@ void mem_init() {
 		}
 	}
 
-	log(LOG_INFO, "mem: Kernel resides at %#x - %#x\n", KERNEL_START, ALIGN(KERNEL_END, PAGE_SIZE));
+	log(LOG_INFO, "mem: Kernel resides at %p - %p\n", KERNEL_START, ALIGN(KERNEL_END, PAGE_SIZE));
 
 	/* In physical memory, block out all lower memory up to the end of early
 	 * allocations from paging.c. Since the early allocations follow

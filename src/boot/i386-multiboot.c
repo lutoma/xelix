@@ -160,11 +160,11 @@ void multiboot_init() {
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
 				// see above
 				mem_info = (struct multiboot_tag_basic_meminfo*)tag;
-				snprintf(strrep, 150, "lower=%#x upper=%#x", mem_info->mem_lower, mem_info->mem_upper);
+				snprintf(strrep, 150, "lower=%d upper=%d", mem_info->mem_lower, mem_info->mem_upper);
 				break;
 			case MULTIBOOT_TAG_TYPE_ELF_SECTIONS:
 				if(extract_symtab((struct multiboot_tag_elf_sections*)tag) == 0) {
-					snprintf(strrep, 150, "symtab=%#x, strtab=%#x", &symtab, &strtab);
+					snprintf(strrep, 150, "symtab=%p, strtab=%p", &symtab, &strtab);
 				}
 				break;
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
@@ -172,7 +172,7 @@ void multiboot_init() {
 				break;
 		}
 
-		log(LOG_INFO, "  %#-10x size %-4d %-18s %s\n", tag, tag->size, tag_type_names[tag->type], strrep);
+		log(LOG_INFO, "  %#p size %-4d %-18s %s\n", tag, tag->size, tag_type_names[tag->type], strrep);
 		tag = (struct multiboot_tag*)((intptr_t)tag + tag->size);
 		*strrep = 0;
 	}

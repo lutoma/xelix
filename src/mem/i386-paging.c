@@ -100,7 +100,7 @@ void paging_init() {
 	bzero(paging_kernel_ctx, sizeof(struct paging_context));
 	paging_alloc_end = (void*)paging_kernel_ctx + sizeof(struct paging_context);
 
-	log(LOG_INFO, "paging: Building initial page directory at %#x\n", paging_kernel_ctx);
+	log(LOG_INFO, "paging: Building initial page directory at %p\n", paging_kernel_ctx);
 
 	/* Allocate page tables for the entire kernel virtual address space ahead
 	 * of time. This is a bit wasteful since we're also allocating page tables
@@ -125,7 +125,7 @@ void paging_init() {
 		paging_alloc_end += PAGE_SIZE;
 	}
 
-	log(LOG_INFO, "paging: Early page tables allocated up to %#x\n", paging_alloc_end);
+	log(LOG_INFO, "paging: Early page tables allocated up to %p\n", paging_alloc_end);
 
 	// Create a new valloc context with the page dir and allocate the kernel / page dir in it
 	valloc_new(&valloc_kernel_ctx, paging_kernel_ctx);

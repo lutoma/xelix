@@ -347,7 +347,7 @@ void kmalloc_init() {
 	alloc_end = alloc_start;
 	alloc_max = (uintptr_t)alloc_start + (0x3200 * PAGE_SIZE);
 	kmalloc_ready = true;
-	log(LOG_DEBUG, "kmalloc: Allocating from %#x - %#x\n", alloc_start, alloc_max);
+	log(LOG_DEBUG, "kmalloc: Allocating from %p - %p\n", alloc_start, alloc_max);
 }
 
 void kmalloc_get_stats(uint32_t* total, uint32_t* used) {
