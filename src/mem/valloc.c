@@ -35,6 +35,8 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 		return -1;
 	}
 
+	// FIXME Fail if size, virt_request or phys are not page aligned
+
 	// Allocate virtual address
 	uint32_t page_num;
 	void* virt;
@@ -64,18 +66,45 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 		}
 	}
 
-	// FIXME VM_ZERO should always map into kernel ctx to zero, not specified
-	if((!(flags & VM_NO_MAP)) || flags & VM_ZERO) {
+	if(!(flags & VM_NO_MAP)) {
 		if(ctx->page_dir) {
 			paging_set_range(ctx->page_dir, virt, phys, size * PAGE_SIZE, flags);
 		}
 	}
 
 	if(flags & VM_ZERO) {
-		bzero(virt, size * PAGE_SIZE);
-	}
+		if(ctx == VA_KERNEL && !(flags & VM_NO_MAP)) {
+			bzero(virt, size * PAGE_SIZE);
+		} else {
+			/* If the allocation is not in the kernel context or is set as NO_MAP,
+			 * temporarily map it into the kernel virtual address space to zero it.
+			 */
+			if(ctx != VA_KERNEL) {
+				if(!spinlock_get(&VA_KERNEL->lock, -1)) {
+					return -1;
+				}
+			}
 
-	// FIXME Dealloc kernel mapping if both VM_NO_VIRT and VM_ZERO are set
+			int zero_page = bitmap_find(&VA_KERNEL->bitmap, size);
+			if(zero_page == -1) {
+				spinlock_release(&ctx->lock);
+				if(ctx != VA_KERNEL) {
+					spinlock_release(&VA_KERNEL->lock);
+				}
+
+				return -1;
+			}
+
+			void* zero_addr = (void*)(zero_page * PAGE_SIZE);
+			paging_set_range(VA_KERNEL->page_dir, zero_addr, phys, size * PAGE_SIZE, VM_RW);
+			bzero(zero_addr, size * PAGE_SIZE);
+			paging_clear_range(VA_KERNEL->page_dir, zero_addr, size * PAGE_SIZE);
+
+			if(ctx != VA_KERNEL) {
+				spinlock_release(&VA_KERNEL->lock);
+			}
+		}
+	}
 
 	/* During initialization, kmalloc_init calls valloc once to get its memory
 	 * space to allocate from. The zmalloc call below would fail since kmalloc

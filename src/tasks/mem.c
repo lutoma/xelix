@@ -46,7 +46,7 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 
 	// FIXME deallocate vaddr
 	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, RDIV(alloc_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO | VM_NO_VIRT) != 0) {
+	if(valloc(VA_KERNEL, &vmem, RDIV(alloc_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
 		return -1;
 	}
 
@@ -151,7 +151,7 @@ void* task_sbrk(task_t* task, int32_t length) {
 
 	// Only allocate to zero out FIXME deallocate vaddr
 	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, length / PAGE_SIZE, NULL, VM_RW | VM_ZERO | VM_NO_VIRT) != 0) {
+	if(valloc(VA_KERNEL, &vmem, length / PAGE_SIZE, NULL, VM_RW | VM_ZERO) != 0) {
 		sc_errno = ENOMEM;
 		return (void*)-1;
 	}

@@ -25,7 +25,7 @@
 #include <spinlock.h>
 
 #define VALLOC_BITMAP_SIZE 0xfffff000 / PAGE_SIZE
-#define VA_KERNEL &valloc_kernel_ctx
+#define VA_KERNEL (&valloc_kernel_ctx)
 
 // Writable
 #define VM_RW 1
