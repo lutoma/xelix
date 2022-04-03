@@ -23,9 +23,9 @@
 #include <bsp/timer.h>
 #include <tasks/scheduler.h>
 
-#define assert(b) if(!(b)) panic("Assertion \"" #b "\" failed.")
+#define assert(b) if(!(b)) panic("Assertion \"" #b "\" in " __FILE__ ":%d failed.", __LINE__)
 #define assert_nc(qry) { if(!(qry)) {														\
-	log(LOG_ERR, "Assertion \"" #qry "\" in " __FILE__ ":%d failed.", __LINE__);		\
+	log(LOG_ERR, "Assertion \"" #qry "\" in " __FILE__ ":%d failed.\n", __LINE__);		\
 	return;																					\
 }}
 
