@@ -77,7 +77,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 
 	int num_args = 0;
-	bool copied[3] = {0};
+	vmem_t vmem[3] = {0};
 	size_t ptr_sizes[3] = {0};
 	uint8_t flags[3] = {def.arg0_flags, def.arg1_flags, def.arg2_flags};
 	uint32_t args[3] = {state->SCREG_ARG0, state->SCREG_ARG1,
@@ -101,8 +101,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		 * otherwise use the default value
 		 */
 		if(flags[i] & SCA_STRING) {
-			// FIXME
-			//ptr_sizes[i] = 0x1;
+			// FIXME FIXME FIXME Pass proper string sizes for SCA_STRING arguments!!!
 			ptr_sizes[i] = PAGE_SIZE - args[i] % PAGE_SIZE;
 		} else {
 			ptr_sizes[i] = def.ptr_size;
@@ -127,7 +126,8 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			call_fail();
 		}
 
-		args[i] = (uint32_t)task_memmap(task, (void*)args[i], ptr_sizes[i], &copied[i]);
+		args[i] = (uint32_t)vmap(VA_KERNEL, &vmem[i], &task->vmem, (void*)args[i], ptr_sizes[i], VM_RW | VM_MAP_UNDERALLOC_WORKAROUND);
+
 		if(unlikely(!args[i])) {
 
 			#ifdef CONFIG_SYSCALL_DEBUG
@@ -172,12 +172,9 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	state->SCREG_ERRNO = task->syscall_errno;
 
 	for(int i = 0; i < 3; i++) {
-		if(!copied[i]) {
-			continue;
+		if(vmem[i].self) {
+			vfree(&vmem[i]);
 		}
-
-		task_memcpy(task, (void*)args[i], (void*)oargs[i], ptr_sizes[i], true);
-		kfree((void*)args[i]);
 	}
 
 	// Only change state back if it hasn't alreay been modified

@@ -58,7 +58,9 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 		// Make room on the stack for the things we will "push" to it below
 		iret->user_esp -= 11 * sizeof(uint32_t);
 
-		uint32_t* user_stack = (uint32_t*)valloc_translate(&task->vmem, iret->user_esp, false);
+		vmem_t alloc;
+		uint32_t* user_stack = vmap(VA_KERNEL, &alloc, &task->vmem, iret->user_esp,
+			sizeof(uint32_t) * 11, VM_MAP_USER_ONLY | VM_RW);
 
 		// Address of signal handler and signal number as argument to it
 		*user_stack = (uint32_t)sa.sa_handler;
@@ -83,6 +85,7 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 		iret->eip = task_sigjmp_crt0;
 
 		task->task_state = TASK_STATE_RUNNING;
+		vfree(&alloc);
 		return 0;
 	}
 

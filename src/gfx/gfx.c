@@ -123,25 +123,24 @@ struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx) {
 
 static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	if(request == 0x2f01) {
-		bool copied = false;
-		struct gfx_handle* user_handle = task_memmap(ctx->task, _arg, sizeof(struct gfx_handle), &copied);
+		vmem_t alloc;
+		struct gfx_handle* user_handle = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
+			sizeof(struct gfx_handle), VM_MAP_USER_ONLY | VM_RW);
+
 		if(!user_handle) {
-			sc_errno = EINVAL;
+			task_signal(ctx->task, NULL, SIGSEGV, NULL);
+			sc_errno = EFAULT;
 			return -1;
 		}
 
 		struct gfx_handle* handle = gfx_handle_init(&ctx->task->vmem);
 		if(!handle) {
+			vfree(&alloc);
 			return -1;
 		}
 
 		memcpy(user_handle, handle, sizeof(struct gfx_handle));
-
-		if(copied) {
-			task_memcpy(ctx->task, user_handle, _arg, sizeof(struct gfx_handle), true);
-			kfree(user_handle);
-		}
-
+		vfree(&alloc);
 		return 0;
 	}
 
@@ -158,19 +157,19 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	}
 
 	if(request == 0x2f04) {
-		bool copied = false;
-		struct gfx_ul_blit_cmd* cmd = task_memmap(ctx->task, _arg, sizeof(struct gfx_ul_blit_cmd), &copied);
+		vmem_t alloc;
+		struct gfx_ul_blit_cmd* cmd = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
+			sizeof(struct gfx_ul_blit_cmd), VM_MAP_USER_ONLY | VM_RW);
+
 		if(!cmd) {
-			sc_errno = EINVAL;
+			task_signal(ctx->task, NULL, SIGSEGV, NULL);
+			sc_errno = EFAULT;
 			return -1;
 		}
 
 		get_handle_or_einval(cmd->handle_id);
 		gfx_blit(handle, cmd->x, cmd->y, cmd->width, cmd->height);
-
-		if(copied) {
-			kfree(cmd);
-		}
+		vfree(&alloc);
 		return 0;
 	}
 

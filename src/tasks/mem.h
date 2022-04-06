@@ -24,8 +24,6 @@
 #define TASK_STACK_LOCATION 0xc0000000
 
 int task_page_fault_cb(task_t* task, void* addr);
-void task_memcpy(task_t* task, void* kaddr, void* addr, size_t ptr_size, bool user_to_kernel);
-void* task_memmap(task_t* task, void* addr, size_t ptr_size, bool* copied);
 char** task_copy_strings(task_t* task, char** array, uint32_t* count);
 void* task_sbrk(task_t* task, int32_t length);
 void task_free(task_t* task);

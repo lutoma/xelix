@@ -190,21 +190,21 @@ int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size) {
 		return -1;
 	}
 
-	bool copied = false;
-	void* dest = task_memmap(task, data->dest, data->size, &copied);
+	vmem_t alloc;
+	void* dest = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, data->dest,
+		data->size, VM_MAP_USER_ONLY | VM_RW);
+
 	if(!dest) {
-		sc_errno = EINVAL;
+		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		sc_errno = EFAULT;
 		return -1;
 	}
 
 	size_t read = do_recvfrom(sock, dest, data->size,
 		0, data->flags, data->src_addr, data->addrlen);
 
-	if(read > 0 && copied) {
-		task_memcpy(task, dest, data->dest, read, true);
-		kfree(dest);
-	}
-
+	// FIXME
+	//vfree(&alloc);
 	return read;
 }
 
@@ -418,10 +418,13 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	/* Since sockaddr is variable length and the length is passed in a pointer,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
-	bool copied = false;
-	struct sockaddr* addr = (struct sockaddr*)task_memmap(task, oaddr, *addrlen, &copied);
+	vmem_t alloc;
+	struct sockaddr* addr = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, oaddr,
+		*addrlen, VM_MAP_USER_ONLY | VM_RW);
+
 	if(!addr) {
-		sc_errno = EINVAL;
+		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		sc_errno = EFAULT;
 		return -1;
 	}
 
@@ -432,6 +435,9 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	int_disable();
 
 	if(!spinlock_get(&net_pico_lock, 200)) {
+		// FIXME
+		//vfree(&alloc);
+
 		sc_errno = EAGAIN;
 		return -1;
 	}
@@ -448,6 +454,8 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 
 	if(!pico_sock) {
 		debug("accept done, but no pico sock\n");
+		// FIXME
+		//vfree(&alloc);
 		sc_errno = pico_err;
 		return -1;
 	}
@@ -456,11 +464,8 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	debug("accept %#x, pico %#x\n", pico_sock->priv, pico_sock);
 	sock->conn_requests--;
 
-	if(copied) {
-		task_memcpy(task, addr, oaddr, *addrlen, true);
-		kfree(addr);
-	}
-
+	// FIXME
+	//vfree(&alloc);
 	return new_fd->num;
 }
 
@@ -480,10 +485,13 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* osa,
 	/* Since sockaddr is variable length and the length is passed in a pointer,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
-	bool copied = false;
-	struct sockaddr* sa = (struct sockaddr*)task_memmap(task, osa, SOCKSIZE, &copied);
+	vmem_t alloc;
+	struct sockaddr* addr = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, oaddr,
+		*addrlen, VM_MAP_USER_ONLY | VM_RW);
+
 	if(!sa) {
-		sc_errno = EINVAL;
+		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		sc_errno = EFAULT;
 		return -1;
 	}
 
@@ -496,10 +504,9 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* osa,
 	}
 
 	int r = net_conv_pico2bsd(sa, SOCKSIZE, &addr, port);
-	if(copied) {
-		task_memcpy(task, sa, osa, SOCKSIZE, true);
-		kfree(sa);
-	}
+
+	// FIXME
+	//vfree(&alloc);
 	return r;
 }
 
@@ -514,20 +521,21 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 	/* Since sockaddr is variable length and the length is passed in a pointer,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
-	bool copied = false;
-	struct sockaddr* addr = (struct sockaddr*)task_memmap(task, oaddr, *addrlen, &copied);
+	vmem_t alloc;
+	struct sockaddr* addr = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, oaddr,
+		*addrlen, VM_MAP_USER_ONLY | VM_RW);
+
 	if(!addr) {
-		sc_errno = EINVAL;
+		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		sc_errno = EFAULT;
 		return -1;
 	}
 
 	int r = net_conv_pico2bsd(addr, SOCKSIZE, &sock->pico_socket->local_addr,
 		sock->pico_socket->local_port);
 
-	if(copied) {
-		task_memcpy(task, addr, oaddr, *addrlen, true);
-		kfree(addr);
-	}
+	// FIXME
+	//vfree(&alloc);
 	return r;
 }
 

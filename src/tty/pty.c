@@ -224,11 +224,13 @@ int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return -1;
 	}
 
-	bool copied;
-	void* arg = task_memmap(ctx->task, _arg, arg_size, &copied);
+	vmem_t alloc;
+	void* arg = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
+		arg_size, VM_MAP_USER_ONLY | VM_RW);
+
 	if(!arg) {
-		sc_errno = EFAULT;
 		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		sc_errno = EFAULT;
 		return -1;
 	}
 
@@ -255,11 +257,7 @@ int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			break;
 	}
 
-	if(copied) {
-		task_memcpy(ctx->task, arg, _arg, arg_size, true);
-		kfree(arg);
-	}
-
+	vfree(&alloc);
 	return 0;
 }
 

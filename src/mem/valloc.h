@@ -56,6 +56,15 @@
 // Zero out address space after allocation
 #define VM_ZERO 256
 
+// vmap: Only map user-readable pages
+#define VM_MAP_USER_ONLY 512
+
+// temp
+#define VM_MAP_UNDERALLOC_WORKAROUND 1024
+
+#define VM_DEBUG 2048
+
+
 #define valloc(ctx, vmem, size, phys, flags) valloc_at(ctx, vmem, size, NULL, phys, flags)
 
 #define valloc_translate_ptr(range, inaddr, dir)   \
@@ -75,6 +84,12 @@ struct valloc_ctx {
 	struct paging_context* page_dir_phys;
 };
 
+struct valloc_mem_shard {
+	struct valloc_mem_shard* next;
+	size_t size;
+	void* addr;
+	void* phys;
+};
 
 typedef struct valloc_mem {
 	struct valloc_mem* next;
@@ -84,17 +99,24 @@ typedef struct valloc_mem {
 	struct valloc_mem* self;
 	struct valloc_ctx* ctx;
 	void* addr;
-	void* phys;
 	size_t size;
 	int flags;
+
+	// Physical memory shards. If NULL, memory is contiguous
+	struct valloc_mem_shard* shards;
+
+	// For contiguous memory, this contains the phsyical address. NULL for shared memory
+	void* phys;
 } vmem_t;
 
 
 extern struct valloc_ctx valloc_kernel_ctx;
 
 int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags);
-vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys);
+void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
+	void* src_addr, size_t size, int flags);
 int vfree(vmem_t* range);
+vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys);
 int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used);
 int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir);
 void valloc_cleanup(struct valloc_ctx* ctx);
