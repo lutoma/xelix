@@ -27,7 +27,7 @@ ifeq ($(shell uname -s), Darwin)
 endif
 
 MAKE_CFLAGS += $(CFLAGS)
-MAKE_QEMU_FLAGS = --accel kvm -vga qxl -m 1024 -cpu host -serial mon:stdio -no-reboot -device ac97 -d guest_errors,unimp,page -drive file=xelix.qcow2,if=ide -netdev bridge,id=mnet0,br=br.vms,helper=/usr/lib/qemu/qemu-bridge-helper -device virtio-net,netdev=mnet0
+MAKE_QEMU_FLAGS = -accel kvm -vga qxl -m 1024 -cpu host -serial mon:stdio -no-reboot -device ac97 -d guest_errors,unimp,page -drive file=xelix.img,format=raw,if=ide -netdev bridge,id=mnet0,br=br.vms,helper=/usr/lib/qemu/qemu-bridge-helper -device virtio-net,netdev=mnet0
 MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
@@ -61,15 +61,15 @@ kernel7.img: xelix.bin
 $(CC):
 	make -C toolchain
 
-xelix.qcow2: xelix.bin
+xelix.img: xelix.bin
 	-mkdir mnt
-	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
-	sudo mount /dev/nbd0p1 mnt
+	sudo losetup -P /dev/loop0 xelix.img
+	sudo mount /dev/loop0p1 mnt
 	sudo cp xelix.bin mnt/
-	make umount_boot
+	make umount
 
 .PHONY: run
-run: xelix.qcow2
+run: xelix.img
 	$(QEMU) $(MAKE_QEMU_FLAGS)
 
 .PHONY: clean
@@ -87,23 +87,18 @@ image:
 .PHONY: mount_boot
 mount_boot:
 	-mkdir mnt
-	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
-	sudo mount /dev/nbd0p1 mnt
-
-.PHONY: umount_boot
-umount_boot:
-	sudo umount mnt
-	sudo qemu-nbd --disconnect /dev/nbd0
+	sudo losetup -P /dev/loop0 xelix.img
+	sudo mount /dev/loop0p1 mnt
 
 .PHONY: mount
 mount:
-	sudo qemu-nbd --connect /dev/nbd0 xelix.qcow2
-	sudo mount /dev/nbd0p2 mnt
+	sudo losetup -P /dev/loop0 xelix.img
+	sudo mount /dev/loop0p2 mnt
 
 .PHONY: umount
 umount:
 	sudo umount mnt
-	sudo qemu-nbd --disconnect /dev/nbd0
+	sudo losetup -d /dev/loop0
 
 .PHONY: menuconfig
 menuconfig:
