@@ -115,6 +115,9 @@ static int sfs_poll(struct vfs_callback_ctx* ctx, int events) {
 
 void gfx_mouse_init() {
 	buf = buffer_new(10);
+	if(!buf) {
+		return;
+	}
 
 	// Enable auxiliary mouse device
 	mouse_wait(1);

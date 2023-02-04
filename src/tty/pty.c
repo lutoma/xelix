@@ -347,10 +347,17 @@ static vfs_file_t* ptmx_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	pty->termios.c_cflag = CREAD | B38400;
 	pty->termios.c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK;
 
-	pty->ptm_buf = buffer_new(150);
 	pty->ptm_fd = fd1->num;
-	pty->pts_buf = buffer_new(150);
+	pty->ptm_buf = buffer_new(150);
+	if(!pty->ptm_buf) {
+		return NULL;
+	}
+
 	pty->pts_fd = fd2->num;
+	pty->pts_buf = buffer_new(150);
+	if(!pty->pts_buf) {
+		return NULL;
+	}
 
 	memcpy(&pty->termios.c_cc, default_c_cc, sizeof(default_c_cc));
 
