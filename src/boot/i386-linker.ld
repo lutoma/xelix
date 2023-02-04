@@ -8,6 +8,7 @@ PHDRS {
 	data PT_LOAD ;
 	rodata PT_LOAD ;
 	ul_visible PT_LOAD ;
+	ul_visible_data PT_LOAD ;
 }
 
 SECTIONS {
@@ -48,11 +49,11 @@ SECTIONS {
 
 	.data.ul_visible ALIGN(4096) : {
 		*(.data.ul_visible)
-	} :ul_visible
+	} :ul_visible_data
 
 	.bss.ul_visible ALIGN(4096) : {
 		*(.bss.ul_visible)
-	} :ul_visible
+	} :ul_visible_data
 
 	__ul_visible_end = .;
 	__kernel_end = .;
