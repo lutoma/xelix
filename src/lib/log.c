@@ -1,5 +1,5 @@
 /* log.c: Kernel logger
- * Copyright © 2010-2019 Lukas Martini
+ * Copyright © 2010-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -26,18 +26,30 @@
 #include <panic.h>
 #include <fs/sysfs.h>
 #include <mem/kmalloc.h>
+#include <mem/paging.h>
 
 #ifdef CONFIG_LOG_STORE
+struct log_entry {
+	uint8_t level;
+	uint64_t tick;
+	uint32_t timestamp;
+	uint32_t length;
+	char message[];
+};
+
 /* Since the log is also used before kmalloc is initialized, first use a static
  * buffer, then switch as soon as kmalloc is ready.
  */
-static char early_buffer[0x1000];
-static char* buffer = (char*)&early_buffer;
-static size_t buffer_size = 0x1000;
+static char early_buffer[PAGE_SIZE];
+static void* buffer = (void*)&early_buffer;
+static size_t buffer_size = PAGE_SIZE;
 static size_t log_size = 0;
+static size_t log_entries = 0;
 
-static void append(char* string, size_t len) {
-	if(log_size + len > buffer_size) {
+static void store(uint8_t level, char* string, size_t len) {
+	size_t new_size = log_size + len + sizeof(struct log_entry);
+
+	if(new_size > buffer_size) {
 		if(!kmalloc_ready) {
 			serial_printf("log: Static buffer exhausted before kmalloc is ready.\n");
 			return;
@@ -53,30 +65,15 @@ static void append(char* string, size_t len) {
 		buffer = new_buffer;
 	}
 
-	memcpy(buffer + log_size, string, len);
-	log_size += len;
+	struct log_entry* entry = (struct log_entry*)((uintptr_t)buffer + log_size);
+	entry->level = level;
+	entry->tick = timer_tick;
+	entry->timestamp = time_get();
+	entry->length = len;
+	memcpy(entry->message, string, len);
+	log_size = new_size;
+	log_entries++;
 }
-
-static void store(uint32_t level, char* fmt_string, size_t fmt_len) {
-	char log_prefix[100];
-	size_t prefix_len = snprintf(log_prefix, 100, "%d %d %d:", timer_tick, time_get(), level);
-	append(log_prefix, prefix_len);
-	append(fmt_string, fmt_len);
-}
-
-static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
-	if(ctx->fp->offset >= log_size) {
-		return 0;
-	}
-
-	if(ctx->fp->offset + size > log_size) {
-		size = log_size - ctx->fp->offset;
-	}
-
-	memcpy(dest, buffer + ctx->fp->offset, size);
-	return size;
-}
-
 
 /*
 void  __attribute__((optimize("O0"))) ltrace() {
@@ -92,20 +89,21 @@ void  __attribute__((optimize("O0"))) ltrace() {
 */
 #endif
 
-void log(uint32_t level, const char *fmt, ...) {
+void log(uint8_t level, const char *fmt, ...) {
 	va_list va;
 	va_start(va, fmt);
 
 	char fmt_string[500];
+	size_t fmt_len = vsnprintf(fmt_string, 500, fmt, va);
+	va_end(va);
 
+	#ifdef CONFIG_LOG_STORE
 	/* Only store for log levels > debug. Storing all debug messages is usually
 	 * not very helpful, consumes a lot of memory and can cause deadlocks
 	 * (kmalloc debug could end up calling kmalloc in store and lock).
 	 */
-	#ifdef CONFIG_LOG_STORE
-	size_t fmt_len = vsnprintf(fmt_string, 500, fmt, va);
 	if(level > LOG_DEBUG) {
-		store(level, fmt_string, fmt_len);
+		store(level, fmt_string, fmt_len + 1);
 
 		/* Broken at the moment
 		if(level == LOG_ERR) {
@@ -113,34 +111,41 @@ void log(uint32_t level, const char *fmt, ...) {
 		}
 		*/
 	}
-	#else
-	vsnprintf(fmt_string, 500, fmt, va);
-	#endif
-
-	#if CONFIG_LOG_SERIAL_LEVEL != 0 || CONFIG_LOG_PRINT_LEVEL != 0
-	char prefix[30];
-	snprintf(prefix, 30, "[%d:%03d] ", uptime(), timer_tick);
 	#endif
 
 	#if CONFIG_LOG_SERIAL_LEVEL != 0
 	if(level >= CONFIG_LOG_SERIAL_LEVEL) {
-		serial_printf(prefix);
 		serial_printf(fmt_string);
 	}
 	#endif
 
 	#if CONFIG_LOG_PRINT_LEVEL != 0
 	if(level >= CONFIG_LOG_PRINT_LEVEL) {
-		printf(prefix);
 		printf(fmt_string);
 	}
 	#endif
-
-	va_end(va);
 }
 
 void log_dump() {
-	printf(buffer);
+	struct log_entry* entry = (struct log_entry*)buffer;
+	log(LOG_INFO, "log: Dumping early log, %d entries\n", log_entries);
+	for(int i = 0; i < log_entries; i++) {
+		printf(entry->message);
+		entry = (struct log_entry*)((uintptr_t)entry + entry->length + sizeof(struct log_entry));
+	}
+}
+
+static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	if(ctx->fp->offset >= log_size) {
+		return 0;
+	}
+
+	if(ctx->fp->offset + size > log_size) {
+		size = log_size - ctx->fp->offset;
+	}
+
+	memcpy(dest, buffer + ctx->fp->offset, size);
+	return size;
 }
 
 void log_init() {

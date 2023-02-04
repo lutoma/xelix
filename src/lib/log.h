@@ -25,6 +25,6 @@
 #define LOG_WARN		3
 #define LOG_ERR			4
 
-void log(uint32_t level, const char *fmt, ...);
+void log(uint8_t level, const char *fmt, ...);
 void log_dump();
 void log_init();
