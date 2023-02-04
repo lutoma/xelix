@@ -41,7 +41,7 @@ arch=`sed -rn 's/\#define CONFIG_ARCH "([^"]+)"/\1/p' src/lib/config.h`
 
 
 # Get files
-extensions="\.\(c\|asm\|s\|psf\)"
+extensions="\.\(c\|asm\|s\|psf\|img\)"
 arch_files=`$FIND -L src -type f -iregex "^.*$arch-.*$extensions" | tr '\n' '  '`
 files=`$FIND -L src -type f -iregex "^[^\-]*$extensions" | tr '\n' '  '`
 files="$arch_files$files"
@@ -56,7 +56,7 @@ for i in $files
 do
 	w -n " ${i%\.*}"
 
-	if [[ ${i##*.} =~ ^(asm|S|psf)$ ]]; then
+	if [[ ${i##*.} =~ ^(asm|S|psf|img)$ ]]; then
 		w -n "-${i##*.}"
 	fi
 	w -n ".o"

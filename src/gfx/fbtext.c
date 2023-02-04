@@ -1,5 +1,5 @@
 /* fbtext.c: Text drawing on linear frame buffers
- * Copyright © 2019 Lukas Martini
+ * Copyright © 2019-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -28,13 +28,15 @@
 #include <bitmap.h>
 
 #define PSF_FONT_MAGIC 0x864ab572
+#define BOOT_LOGO_WIDTH 183
+#define BOOT_LOGO_HEIGHT 60
+#define BOOT_LOGO_PADDING 10
+#define BOOT_LOGO_PADDING_BELOW 30
 
 #define PIXEL_PTR(dbuf, x, y) 									\
 	((uint32_t*)((uintptr_t)(dbuf)								\
 		+ (y)*gfx_handle->pitch					\
 		+ (x)*(gfx_handle->bpp / 8)))
-
-#define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * gfx_font.width, y * gfx_font.height)
 
 int cols = 0;
 int rows = 0;
@@ -55,11 +57,13 @@ extern struct {
 static struct gfx_handle* gfx_handle = NULL;
 static unsigned int last_x = 0;
 static unsigned int last_y = 0;
+static size_t text_fb_size;
+static void* text_fb_addr;
 static bool initialized = false;
 static spinlock_t lock;
 
 void fbtext_write_char(char chr) {
-	if(!gfx_handle) {
+	if(!initialized) {
 		return;
 	}
 
@@ -68,13 +72,13 @@ void fbtext_write_char(char chr) {
 			return;
 		}
 
-		gfx_blit(gfx_handle, 0, last_y * gfx_font.height, gfx_handle->width, gfx_font.height);
-		gfx_blit_all(gfx_handle);
 		last_y++;
 		last_x = 0;
 		spinlock_release(&lock);
 
 		if(chr == '\n') {
+			gfx_blit(gfx_handle, 0, BOOT_LOGO_HEIGHT + BOOT_LOGO_PADDING_BELOW, gfx_handle->width,
+				gfx_handle->height - BOOT_LOGO_HEIGHT + BOOT_LOGO_PADDING_BELOW);
 			return;
 		}
 	}
@@ -86,9 +90,8 @@ void fbtext_write_char(char chr) {
 		}
 
 		size_t move_size = gfx_handle->pitch * gfx_font.height;
-		memcpy(gfx_handle->addr, gfx_handle->addr + move_size, gfx_handle->size - move_size);
-		memset(gfx_handle->addr + gfx_handle->size - move_size, 0, move_size);
-		gfx_blit_all(gfx_handle);
+		memcpy(text_fb_addr, text_fb_addr + move_size, text_fb_size - move_size);
+		memset(text_fb_addr + text_fb_size - move_size, 0, move_size);
 		last_y--;
 		spinlock_release(&lock);
 	}
@@ -107,7 +110,7 @@ void fbtext_write_char(char chr) {
 	for(int i = 0; i < gfx_font.height; i++) {
 		for(int j = 0; j < gfx_font.width; j++) {
 			int fg = bitmap[i] & (1 << (gfx_font.width - j - 1));
-			*PIXEL_PTR(gfx_handle->addr, x + j, y + i) = fg ? 0xffffff : 0;
+			*PIXEL_PTR(text_fb_addr, x + j, y + i) = fg ? 0xffffff : 0;
 		}
 	}
 }
@@ -128,12 +131,21 @@ void gfx_fbtext_init() {
 		return;
 	}
 
+	memset32(gfx_handle->addr, 0x000000, gfx_handle->size / 4);
+	extern void* boot_logo;
+	for(int i = 0; i < BOOT_LOGO_HEIGHT; i++) {
+		memcpy(PIXEL_PTR(gfx_handle->addr, BOOT_LOGO_PADDING, i + BOOT_LOGO_PADDING), (uint32_t*)&boot_logo + i*BOOT_LOGO_WIDTH, BOOT_LOGO_WIDTH * 4);
+	}
+
+	size_t offset = BOOT_LOGO_HEIGHT + BOOT_LOGO_PADDING_BELOW;
+	text_fb_addr = gfx_handle->addr + gfx_handle->pitch * offset;
+	text_fb_size = gfx_handle->size - gfx_handle->pitch * offset;
+
 	cols = gfx_handle->width / gfx_font.width;
-	rows = gfx_handle->height / gfx_font.height;
+	rows = (gfx_handle->height - offset) / gfx_font.height;
 
 	log(LOG_DEBUG, "fbtext: font width %d/%d height %d/%d flags %d\n", gfx_font.width, cols, gfx_font.height, rows, gfx_font.flags);
 
-	memset32(gfx_handle->addr, 0x000000, gfx_handle->size / 4);
 	initialized = true;
 	gfx_fbtext_show();
 	log_dump();
