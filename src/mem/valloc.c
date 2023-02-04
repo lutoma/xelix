@@ -298,7 +298,6 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 }
 
 int vfree(vmem_t* range) {
-	serial_printf("vfree!\n");
 	struct valloc_ctx* ctx = range->ctx;
 	spinlock_t* lock = &ctx->lock;
 	if(!spinlock_get(lock, -1)) {
@@ -322,20 +321,17 @@ int vfree(vmem_t* range) {
 
 	// FIXME VM_FREE should be the default
 	if(range->phys && range->flags & VM_FREE) {
-		serial_printf("vfree: freeing contig\n");
 		pfree((uintptr_t)range->phys / PAGE_SIZE, RDIV(range->size, PAGE_SIZE));
 	}
 
 	struct valloc_mem_shard* shard = range->shards;
 	while(shard) {
-		serial_printf("vfree: freeing shard %p\n", shard);
 		struct valloc_mem_shard* old = shard;
 		if(range->flags & VM_FREE) {
 			pfree((uintptr_t)shard->phys / PAGE_SIZE, RDIV(shard->size, PAGE_SIZE));
 		}
 
 		shard = old->next;
-		serial_printf("vfree: next shard %p\n", shard);
 		kfree(old);
 	}
 
