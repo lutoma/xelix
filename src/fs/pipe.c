@@ -87,6 +87,10 @@ int vfs_pipe(task_t* task, int fildes[2]) {
 
 	struct pipe* pipe = zmalloc(sizeof(struct pipe));
 	pipe->buf = buffer_new(150);
+	if(!pipe->buf) {
+		return -1;
+	}
+
 	pipe->fd[0] = fd1->num;
 	pipe->fd[1] = fd2->num;
 

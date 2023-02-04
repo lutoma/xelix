@@ -101,5 +101,9 @@ void tty_gfxbus_init() {
 	};
 
 	buf = buffer_new(1500);
+	if(!buf) {
+		return;
+	}
+
 	sysfs_add_dev("gfxbus", &sfs_cb);
 }

@@ -27,7 +27,11 @@ struct buffer* buffer_new(size_t max_pages) {
 	buf->max_pages = max_pages;
 	buf->pages = 1;
 	vmem_t vmem;
-	valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW);
+
+	if(valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
+		return NULL;
+	}
+
 	buf->data = vmem.addr;
 	return buf;
 }

@@ -95,6 +95,10 @@ struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_
 
 	memcpy(eth->mac.addr, mac, sizeof(uint8_t) + 6);
 	dev->recv_buf = buffer_new(40);
+	if(!dev->recv_buf) {
+		return NULL;
+	}
+
 	dev->pico_dev.eth = eth;
 	dev->pico_dev.send = send_cb;
 	dev->pico_dev.dsr = pico_dsr_cb;
