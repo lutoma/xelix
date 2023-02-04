@@ -1,4 +1,4 @@
-# Memory management
+# Memory
 
 ```mermaid
 graph TD
@@ -14,12 +14,16 @@ G[mmap]
 end
 ```
 
-Xelix uses a tiered memory allocation approach. At the top, there is palloc which allocates physical pages in the RAM. These pages can then be mapped into the address space of the kernel or userland tasks using valloc.
+At the top, there is palloc which allocates physical pages in the RAM. These pages can then be mapped into the address space of the kernel or userland tasks using valloc.
 
 The userland standard library will then use these page allocations for calls to `malloc()` and `mmap()`.
 
 In kernel space, there is also a memory allocator called `kmalloc()` which can be used for short-term, variable-sized allocations that will only be used in kernel space.
 
+
+## Virtual page allocator (valloc)
+
+Xelix has completely dynamic virtual memory in kernel and user space (with some exceptions).
 
 ## Physical page allocator
 
@@ -37,20 +41,7 @@ void* mem = palloc(num_pages);
 pfree(num_pages, page_id);
 ```
 
-## Virtual page allocator
-
-```c
-// Allocate virtual pages
-void* mem = valloc(pages, context);
-
-// Allocate physical and virtual page, and map them together
-void* mem = pvalloc(pages, context);
-
-vfree(num, pages);
-pvfree(num, pages);
-```
-
-## kmalloc
+## Kernel-internal memory (kmalloc)
 
 kmalloc is the internal memory allocator of the kernel. It is used for small allocations (smaller than one page, generally) that will have to be freed again at some point. Memory allocated using kmalloc should never be used in task address space.
 
@@ -62,12 +53,6 @@ void* mem = kmalloc(size);
 
 // Allocate memory and initialize it to zeros
 void* mem = zmalloc(size);
-
-// Allocate page-aligned memory -- If you need a whole page, you should use palloc instead
-void* mem = kmalloc_a(size);
-
-// Allocate page-aligned memory and initialize it to zeros
-void* mem = zmalloc_a(size);
 
 // Free allocated memory
 kfree(mem);

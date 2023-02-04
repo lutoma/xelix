@@ -176,8 +176,8 @@ Internally, the strace syscall opens a pipe, assigns the write end of it to `tas
 
 xelix-utils includes an `strace` binary that uses this API.
 
-## SysFS integration
+## sysfs integration
 
-Tasks and the scheduler are integrated into SysFS. `/sys/tasks` returns a list of all tasks loaded by the scheduler and a bit of basic information on each. This is used by the xelix-utils ps command.
+Tasks and the scheduler are integrated into sysfs. `/sys/tasks` returns a list of all tasks loaded by the scheduler and a bit of basic information on each. This is used by the xelix-utils ps command.
 
 `/sys/task<pid>` contains more detailed information on a task, including open files and memory mappings.

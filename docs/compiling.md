@@ -56,7 +56,7 @@ i786-pc-xelix-gcc test.c -o test
 
 ## Compiling the kernel
 
-In addition to the toolchain, the [NASM](https://www.nasm.us/) assembler is also required. Since no Xelix-specific patches are needed, you can just use the one from your distribution's package sources (Arch Linux: `pacman -S nasm`, Debian/Ubuntun: `apt install nasm`).
+In addition to the toolchain, the [NASM](https://www.nasm.us/) assembler is also required. Since no Xelix-specific patches are needed, you can just use the one from your distribution's package sources (Arch Linux: `pacman -S nasm`, Debian/Ubuntu: `apt install nasm`).
 
 Once you have that in place, you can compile Xelix using:
 
@@ -64,7 +64,7 @@ Once you have that in place, you can compile Xelix using:
 ./configure
 
 # Optional, if you want to customize settings:
-make menuconfig
+make menuconfig # (or make guiconfig)
 
 make
 ```
