@@ -66,10 +66,14 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task->task_state = TASK_STATE_RUNNING;
 	task->interrupt_yield = false;
 
-	strcpy(task->name, name);
-	memcpy(task->cwd, parent ? parent->cwd : "/", VFS_PATH_MAX);
-	task->parent = parent;
+	strncpy(task->name, name, VFS_NAME_MAX);
+	if(parent) {
+		memcpy(task->cwd, parent->cwd, VFS_PATH_MAX);
+	} else {
+		task->cwd[0] = '/';
+	}
 
+	task->parent = parent;
 	task->envc = envc;
 	task->argc = argc;
 	task->environ = kmalloc(sizeof(char*) * task->envc);
