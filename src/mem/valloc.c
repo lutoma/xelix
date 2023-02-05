@@ -30,10 +30,12 @@
 static vmem_t malloc_ranges[50];
 static int have_malloc_ranges = 50;
 
-#define VALLOC_DEBUG 1
-
 #ifdef VALLOC_DEBUG
-	#define debug(args...) { if(flags & VM_DEBUG) { log(LOG_DEBUG, args); } }
+	#ifdef VALLOC_DEBUG_ALL
+		#define debug(args...) { log(LOG_DEBUG, args); }
+	#else
+		#define debug(args...) { if(flags & VM_DEBUG) { log(LOG_DEBUG, args); } }
+	#endif
 #else
 	#define debug(...)
 #endif
@@ -199,7 +201,7 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 		memcpy(vmem, range, sizeof(vmem_t));
 	}
 
-	debug("valloc %p -> %p size %#x\n", range->addr, range->phys, range->size);
+	debug("ctx %#x valloc %p -> %p size %#x\n", ctx, range->addr, range->phys, range->size);
 	spinlock_release(&ctx->lock);
 	return 0;
 }
@@ -213,7 +215,7 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 		return NULL;
 	}
 
-	debug("vmap: %p size %#x\n", src_addr, size);
+	debug("vmap: ctx %#x src %p size %#x\n", ctx, src_addr, size);
 	void* src_aligned = ALIGN_DOWN(src_addr, PAGE_SIZE);
 	size_t src_offset = (uintptr_t)src_addr % PAGE_SIZE;
 
@@ -235,7 +237,7 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 
 	vmem_t* range = new_range();
 	if(!range) {
-		return -1;
+		return NULL;
 	}
 
 	range->ctx = ctx;

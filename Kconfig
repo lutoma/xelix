@@ -52,13 +52,24 @@ menu "Kernel stdlib"
 endmenu
 
 menu "Memory"
+	config VALLOC_DEBUG
+		bool "valloc: Enable debugging support"
+		---help---
+		Print out information for each allocation/free to serial. Makes
+		everything pretty slow.
+
+	config VALLOC_DEBUG_ALL
+		bool "valloc: Debug all ranges"
+                depends on VALLOC_DEBUG
+		---help---
+		Print out information for each allocation/free to serial. Makes
+		everything pretty slow.
+
 	config KMALLOC_DEBUG
 		bool "kmalloc: Enable debugging"
 		---help---
 		Print out information for each allocation/free to serial. Makes
-		everything pretty slow. Since vmem allocates lots of small blocks,
-		vmem allocations are not printed by default to make load time
-		bearable.
+		everything pretty slow.
 
 	config KMALLOC_CHECK
 		bool "kmalloc: Check all headers against buffer overflows/OOB"
