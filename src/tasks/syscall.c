@@ -1,5 +1,5 @@
 /* syscall.c: Syscall handling
- * Copyright © 2011-2019 Lukas Martini
+ * Copyright © 2011-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -140,6 +140,11 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 				task->pid, task->name, i, scnum, def.name);
 			task_signal(task, NULL, SIGSEGV, NULL);
 			call_fail();
+		}
+
+		// Ensure strings are always NULL-terminated
+		if(flags[i] & SCA_STRING) {
+			((char*)args[i])[ptr_sizes[i] - 1] = '\0';
 		}
 	}
 
