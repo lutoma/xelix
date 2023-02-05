@@ -102,7 +102,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 		 */
 		if(flags[i] & SCA_STRING) {
 			// FIXME FIXME FIXME Pass proper string sizes for SCA_STRING arguments!!!
-			ptr_sizes[i] = PAGE_SIZE - args[i] % PAGE_SIZE;
+			ptr_sizes[i] = PAGE_SIZE - args[i] % PAGE_SIZE + PAGE_SIZE;
 		} else {
 			ptr_sizes[i] = def.ptr_size;
 			if(flags[i] & SCA_SIZE_IN_0) {
@@ -142,9 +142,15 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			call_fail();
 		}
 
-		// Ensure strings are always NULL-terminated
+		// Ensure strings are NULL-terminated
 		if(flags[i] & SCA_STRING) {
-			((char*)args[i])[ptr_sizes[i] - 1] = '\0';
+			size_t slen = strnlen((char*)args[i], ptr_sizes[i]);
+			if(slen == ptr_sizes[i]) {
+				log(LOG_WARN, "tasks: %d %s: Unterminated string in argument %d to syscall %d %s\n",
+					task->pid, task->name, i, scnum, def.name);
+				task_signal(task, NULL, SIGSEGV, NULL);
+				call_fail();
+			}
 		}
 	}
 
