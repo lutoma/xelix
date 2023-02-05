@@ -1,5 +1,5 @@
 /* valloc.c: Virtual memory allocator
- * Copyright © 2020-2022 Lukas Martini
+ * Copyright © 2020-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -93,16 +93,24 @@ static inline vmem_t* new_range() {
 	 * Add a dirty hack for that one-time special case.
 	 */
 
+	vmem_t* range;
+
 	// FIXME combine into simple early_alloc with the initial page dir allocation
 	if(unlikely(!kmalloc_ready)) {
 		if(likely(have_malloc_ranges)) {
-			return &malloc_ranges[50 - have_malloc_ranges--];
+			range = &malloc_ranges[50 - have_malloc_ranges--];
 		} else {
 			panic("valloc: preallocated ranges exhausted before kmalloc is ready\n");
 		}
 	} else {
-		return kmalloc(sizeof(vmem_t));
+		range = kmalloc(sizeof(vmem_t));
 	}
+
+	if(range) {
+		bzero(range, sizeof(vmem_t));
+		range->self = range;
+	}
+	return range;
 }
 
 int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
@@ -171,16 +179,17 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 	}
 
 	vmem_t* range = new_range();
+	if(!range) {
+		return -1;
+	}
+
 	range->ctx = ctx;
 	range->addr = virt;
 	range->phys = phys;
-	range->shards = NULL;
 	range->size = size * PAGE_SIZE;
 	range->flags = flags;
-	range->self = range;
-
-	range->previous = NULL;
 	range->next = ctx->ranges;
+
 	if(ctx->ranges) {
 		ctx->ranges->previous = range;
 	}
@@ -225,13 +234,20 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	debug("  vmap: allocated %d pages at %p as target\n", size_pages, virt);
 
 	vmem_t* range = new_range();
+	if(!range) {
+		return -1;
+	}
+
 	range->ctx = ctx;
 	range->addr = virt;
-	range->phys = NULL;
-	range->shards = NULL;
 	range->size = size_pages * PAGE_SIZE;
 	range->flags = flags;
-	range->self = range;
+	range->next = ctx->ranges;
+
+	if(ctx->ranges) {
+		ctx->ranges->previous = range;
+	}
+	ctx->ranges = range;
 
 	// Now go over the source ranges in passes and map as much as possible from each range
 	// FIXME Currently only maps one page at a time
@@ -287,8 +303,6 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	if(vmem) {
 		memcpy(vmem, range, sizeof(vmem_t));
 	}
-
-	// FIXME store range
 
 	debug("\n");
 
