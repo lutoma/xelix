@@ -105,7 +105,7 @@ typedef struct valloc_mem {
 	// Physical memory shards. If NULL, memory is contiguous
 	struct valloc_mem_shard* shards;
 
-	// For contiguous memory, this contains the phsyical address. NULL for shared memory
+	// For contiguous memory, this contains the physical address. NULL for sharded memory
 	void* phys;
 } vmem_t;
 

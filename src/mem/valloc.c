@@ -318,6 +318,10 @@ int vfree(vmem_t* range) {
 		return -1;
 	}
 
+	// The range passed in is likely an out-of-date copy of the original, so
+	// use the self pointer to get current stored version
+	range = range->self;
+
 	if(ctx->ranges == range->self) {
 		ctx->ranges = range->next;
 	}
