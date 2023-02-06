@@ -92,6 +92,10 @@ void xelix_main(void) {
 	char* __argv[] = { vfs_basename(init_path), NULL };
 
 	task_t* init = task_new(NULL, 0, init_path, __env, 0, __argv, 1);
+	if(!init) {
+		panic("Could not spawn init task.\n");
+	}
+
 	if(elf_load_file(init, init_path) == -1) {
 		panic("Could not start init (Tried %s).\n", init_path);
 	}

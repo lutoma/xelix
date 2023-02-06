@@ -45,22 +45,34 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	valloc_new(&task->vmem, NULL);
 
 	vmem_t vmem;
-	valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW);
+	if(valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
+		return NULL;
+	}
 	task->state = vmem.addr;
 	bzero(task->state, sizeof(isf_t));
-	valloc_at(&task->vmem, NULL, 1, vmem.addr, vmem.phys, VM_FREE);
+
+	if(valloc_at(&task->vmem, NULL, 1, vmem.addr, vmem.phys, VM_FREE) != 0) {
+		return NULL;
+	}
 
 	// Kernel stack used during interrupts while this task is running
-	valloc(VA_KERNEL, &vmem, 4, NULL, VM_RW);
+	if(valloc(VA_KERNEL, &vmem, 4, NULL, VM_RW) != 0) {
+		return NULL;
+	}
 	task->kernel_stack = vmem.addr;
-	valloc_at(&task->vmem, NULL, 4, vmem.addr, vmem.phys, VM_FREE);
+
+	if(valloc_at(&task->vmem, NULL, 4, vmem.addr, vmem.phys, VM_FREE) != 0) {
+		return NULL;
+	}
 
 	/* Map parts of the kernel marked as UL_VISIBLE into the task address
 	 * space (But readable only to PL0). These are the functions and data
 	 * structures used in the interrupt handler before the paging context is
 	 * switched.
 	 */
-	valloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0);
+	if(valloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0) != 0) {
+		return NULL;
+	}
 
 	task->pid = pid ? pid : __sync_add_and_fetch(&highest_pid, 1);
 	task->task_state = TASK_STATE_RUNNING;
@@ -78,6 +90,10 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task->argc = argc;
 	task->environ = kmalloc(sizeof(char*) * task->envc);
 	task->argv = kmalloc(sizeof(char*) * task->argc);
+
+	if(!task->environ || !task->argv) {
+		return NULL;
+	}
 
 	for(int i = 0; i < task->envc; i++) {
 		task->environ[i] = strdup(environ[i]);
@@ -106,15 +122,23 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
+	if(!task) {
+		return NULL;
+	}
 
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
 
 	vmem_t vmem;
-	valloc(VA_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO);
+	if(valloc(VA_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
+		return NULL;
+	}
+
 	task->stack = vmem.addr;
-	valloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
-		VM_USER | VM_RW | VM_FREE | VM_TFORK);
+	if(valloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
+		VM_USER | VM_RW | VM_FREE | VM_TFORK) != 0) {
+		return NULL;
+	}
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
@@ -220,13 +244,19 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 		//if(range->flags & VM_RW) {
 		if(true || range->flags & VM_RW) {
 			vmem_t vmem;
-			valloc(VA_KERNEL, &vmem, RDIV(range->size, PAGE_SIZE), NULL, VM_RW | VM_ZERO);
+			if(valloc(VA_KERNEL, &vmem, RDIV(range->size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
+				return NULL;
+			}
+
 			void* kernel_virt = vmem.addr;
 			void* phys_addr = vmem.phys;
 
 			void* old_kernel_virt = valloc_translate(VA_KERNEL, range->phys, true);
 			memcpy(kernel_virt, old_kernel_virt, range->size);
-			valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->addr, phys_addr, range->flags);
+			if(valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->addr, phys_addr, range->flags) != 0) {
+				return NULL;
+			}
+
 			continue;
 		}
 
