@@ -31,6 +31,7 @@
 #define strcpy __builtin_strcpy
 #define strncpy __builtin_strncpy
 #define strlen __builtin_strlen
+#define strnlen __builtin_strnlen
 #define strndup __builtin_strndup
 #define memset __builtin_memset
 #define memcpy __builtin_memcpy

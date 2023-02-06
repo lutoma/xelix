@@ -30,6 +30,19 @@ size_t strlen(const char* str)
 	return(s - str);
 }
 
+
+#undef strnlen
+size_t strnlen(const char *s, size_t maxlen)
+{
+	size_t len;
+
+	for (len = 0; len < maxlen; len++, s++) {
+		if (!*s)
+			break;
+	}
+	return (len);
+}
+
 #undef strcpy
 char* strcpy(char* dest, const char* src)
 {
