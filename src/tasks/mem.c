@@ -38,20 +38,10 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 	}
 
 	int alloc_size = stack_lower - addr + PAGE_SIZE;
-
-	// FIXME Work around a bug in gfxterm. Needs to be fixed
-	if(!strcmp(task->name, "/usr/bin/gfxterm")) {
-		alloc_size = PAGE_SIZE * 200;
-	}
-
-	// FIXME deallocate vaddr
-	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, RDIV(alloc_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
+	if(valloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), NULL,
+		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK | VM_ZERO) != 0) {
 		return -1;
 	}
-
-	valloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), vmem.phys,
-		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK);
 
 	task->stack_size += alloc_size;
 	return 0;
