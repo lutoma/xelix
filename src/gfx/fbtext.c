@@ -35,8 +35,8 @@
 
 #define PIXEL_PTR(dbuf, x, y) 									\
 	((uint32_t*)((uintptr_t)(dbuf)								\
-		+ (y)*gfx_handle->pitch					\
-		+ (x)*(gfx_handle->bpp / 8)))
+		+ (y)*gfx_handle->ul_desc.pitch							\
+		+ (x)*(gfx_handle->ul_desc.bpp / 8)))
 
 int cols = 0;
 int rows = 0;
@@ -77,8 +77,6 @@ void fbtext_write_char(char chr) {
 		spinlock_release(&lock);
 
 		if(chr == '\n') {
-			gfx_blit(gfx_handle, 0, BOOT_LOGO_HEIGHT + BOOT_LOGO_PADDING_BELOW, gfx_handle->width,
-				gfx_handle->height - BOOT_LOGO_HEIGHT + BOOT_LOGO_PADDING_BELOW);
 			return;
 		}
 	}
@@ -89,7 +87,7 @@ void fbtext_write_char(char chr) {
 			return;
 		}
 
-		size_t move_size = gfx_handle->pitch * gfx_font.height;
+		size_t move_size = gfx_handle->ul_desc.pitch * gfx_font.height;
 		memcpy(text_fb_addr, text_fb_addr + move_size, text_fb_size - move_size);
 		memset(text_fb_addr + text_fb_size - move_size, 0, move_size);
 		last_y--;
@@ -121,28 +119,27 @@ void gfx_fbtext_show() {
 		return;
 	}
 	gfx_handle_enable(gfx_handle);
-	gfx_blit_all(gfx_handle);
 }
 
 void gfx_fbtext_init() {
-	gfx_handle = gfx_handle_init(NULL);
+	gfx_handle = gfx_handle_init(VA_KERNEL);
 	if(!gfx_handle) {
 		log(LOG_ERR, "fbtext: Could not get gfx handle\n");
 		return;
 	}
 
-	memset32(gfx_handle->addr, 0x000000, gfx_handle->size / 4);
+	memset32(gfx_handle->ul_desc.addr, 0x000000, gfx_handle->ul_desc.size / 4);
 	extern void* boot_logo;
 	for(int i = 0; i < BOOT_LOGO_HEIGHT; i++) {
-		memcpy(PIXEL_PTR(gfx_handle->addr, BOOT_LOGO_PADDING, i + BOOT_LOGO_PADDING), (uint32_t*)&boot_logo + i*BOOT_LOGO_WIDTH, BOOT_LOGO_WIDTH * 4);
+		memcpy(PIXEL_PTR(gfx_handle->ul_desc.addr, BOOT_LOGO_PADDING, i + BOOT_LOGO_PADDING), (uint32_t*)&boot_logo + i*BOOT_LOGO_WIDTH, BOOT_LOGO_WIDTH * 4);
 	}
 
 	size_t offset = BOOT_LOGO_HEIGHT + BOOT_LOGO_PADDING_BELOW;
-	text_fb_addr = gfx_handle->addr + gfx_handle->pitch * offset;
-	text_fb_size = gfx_handle->size - gfx_handle->pitch * offset;
+	text_fb_addr = gfx_handle->ul_desc.addr + gfx_handle->ul_desc.pitch * offset;
+	text_fb_size = gfx_handle->ul_desc.size - gfx_handle->ul_desc.pitch * offset;
 
-	cols = gfx_handle->width / gfx_font.width;
-	rows = (gfx_handle->height - offset) / gfx_font.height;
+	cols = gfx_handle->ul_desc.width / gfx_font.width;
+	rows = (gfx_handle->ul_desc.height - offset) / gfx_font.height;
 
 	log(LOG_DEBUG, "fbtext: font width %d/%d height %d/%d flags %d\n", gfx_font.width, cols, gfx_font.height, rows, gfx_font.flags);
 

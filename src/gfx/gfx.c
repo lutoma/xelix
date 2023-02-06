@@ -1,5 +1,5 @@
 /* gfx.c: Graphics buffer management/multiplexing
- * Copyright © 2020 Lukas Martini
+ * Copyright © 2020-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -35,14 +35,6 @@ static struct gfx_handle* active_handle = NULL;
 static void* framebuffer_addr;
 static int next_handle = 0;
 
-struct gfx_ul_blit_cmd {
-	unsigned int handle_id;
-	size_t x;
-	size_t y;
-	size_t width;
-	size_t height;
-};
-
 struct gfx_handle* gfx_get_handle(unsigned int id) {
 	if(id >= 20) {
 		return NULL;
@@ -56,25 +48,28 @@ struct gfx_handle* gfx_get_handle(unsigned int id) {
 	return handle;
 }
 
-void gfx_blit_all(struct gfx_handle* handle) {
-	if(handle == active_handle) {
-		memcpy((void*)(uintptr_t)framebuffer_addr, handle->buf_addr, handle->size);
-	}
-}
-
-void gfx_blit(struct gfx_handle* handle, size_t x, size_t y, size_t width, size_t height) {
-	if(handle != active_handle) {
+void gfx_handle_enable(struct gfx_handle* handle) {
+	/*
+	if(active_handle == handle) {
 		return;
 	}
 
-	// Naïve line-based copy
-	for(size_t cy = y; cy < y + height && cy < handle->height; cy++) {
-		uintptr_t offset = cy * handle->pitch + (x * handle->bpp/8);
-		memcpy((void*)((uintptr_t)framebuffer_addr + offset), handle->buf_addr + offset, width * handle->bpp/8);
-	}
-}
 
-void gfx_handle_enable(struct gfx_handle* handle) {
+	if(active_handle) {
+		serial_printf("handling active handle\n");
+		vfree(&active_handle->vmem);
+		valloc_at(active_handle->valloc_ctx, &active_handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), active_handle->ul_desc.addr, NULL, VM_RW | VM_USER);
+	}
+
+	int_disable();
+	vfree(&handle->vmem);
+	valloc_at(handle->valloc_ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), handle->ul_desc.addr, (void*)(uintptr_t)framebuffer_addr, VM_RW | VM_USER);
+
+
+	//memcpy(active_handle->buf_addr, (void*)(uintptr_t)framebuffer_addr, handle->size);
+	//memcpy((void*)(uintptr_t)framebuffer_addr, handle->buf_addr, handle->size);
+	serial_printf("activation done\n");
+	*/
 	active_handle = handle;
 }
 
@@ -86,29 +81,25 @@ struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx) {
 	struct gfx_handle* handle = &handles[next_handle];
 	handle->used = true;
 	handle->id = next_handle;
-	handle->size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
+	handle->valloc_ctx = ctx;
+	handle->ul_desc.size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 
-	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, (ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE) + 1, NULL, VM_RW) != 0) {
+/*
+	if(valloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), NULL, VM_RW) != 0) {
+		handle->used = false;
+		return NULL;
+	}
+*/
+	if(valloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW | VM_USER) != 0) {
 		handle->used = false;
 		return NULL;
 	}
 
-	handle->buf_addr = vmem.addr;
-
-	if(ctx) {
-		// FIXME Properly choose virtual userland pages
-		handle->addr = (void*)0xf4000000;
-		valloc_at(ctx, NULL, (ALIGN(handle->size, PAGE_SIZE) / PAGE_SIZE) + 1, handle->addr, vmem.phys, VM_RW | VM_USER);
-
-	} else {
-		handle->addr = handle->buf_addr;
-	}
-
-	handle->bpp = fb_desc->common.framebuffer_bpp;
-	handle->width = fb_desc->common.framebuffer_width;
-	handle->height = fb_desc->common.framebuffer_height;
-	handle->pitch = fb_desc->common.framebuffer_pitch;
+	handle->ul_desc.addr = handle->vmem.addr;
+	handle->ul_desc.bpp = fb_desc->common.framebuffer_bpp;
+	handle->ul_desc.width = fb_desc->common.framebuffer_width;
+	handle->ul_desc.height = fb_desc->common.framebuffer_height;
+	handle->ul_desc.pitch = fb_desc->common.framebuffer_pitch;
 
 	next_handle++;
 	return handle;
@@ -124,10 +115,10 @@ struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx) {
 static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	if(request == 0x2f01) {
 		vmem_t alloc;
-		struct gfx_handle* user_handle = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
-			sizeof(struct gfx_handle), VM_MAP_USER_ONLY | VM_RW);
+		struct gfx_ul_desc* user_desc = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
+			sizeof(struct gfx_ul_desc), VM_MAP_USER_ONLY | VM_RW);
 
-		if(!user_handle) {
+		if(!user_desc) {
 			task_signal(ctx->task, NULL, SIGSEGV, NULL);
 			sc_errno = EFAULT;
 			return -1;
@@ -139,7 +130,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return -1;
 		}
 
-		memcpy(user_handle, handle, sizeof(struct gfx_handle));
+		memcpy(user_desc, &handle->ul_desc, sizeof(struct gfx_ul_desc));
 		vfree(&alloc);
 		return 0;
 	}
@@ -147,29 +138,6 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	if(request == 0x2f02) {
 		get_handle_or_einval((unsigned int)_arg);
 		gfx_handle_enable(handle);
-		return 0;
-	}
-
-	if(request == 0x2f03) {
-		get_handle_or_einval((unsigned int)_arg);
-		gfx_blit_all(handle);
-		return 0;
-	}
-
-	if(request == 0x2f04) {
-		vmem_t alloc;
-		struct gfx_ul_blit_cmd* cmd = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
-			sizeof(struct gfx_ul_blit_cmd), VM_MAP_USER_ONLY | VM_RW);
-
-		if(!cmd) {
-			task_signal(ctx->task, NULL, SIGSEGV, NULL);
-			sc_errno = EFAULT;
-			return -1;
-		}
-
-		get_handle_or_einval(cmd->handle_id);
-		gfx_blit(handle, cmd->x, cmd->y, cmd->width, cmd->height);
-		vfree(&alloc);
 		return 0;
 	}
 
@@ -185,8 +153,6 @@ void gfx_init() {
 	}
 
 	// Map the framebuffer into the kernel paging context
-
-	// FIXME do palloc_at to block framebuffer from phys page allocator
 	size_t vmem_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 
 	// FIXME use proper APIs

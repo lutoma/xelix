@@ -21,21 +21,33 @@
 #include <stdbool.h>
 #include <mem/valloc.h>
 
+struct gfx_ul_desc {
+    unsigned int id;
+    bool _unused3;
+
+    // Used to be vmem context
+    void* _unused;
+
+    void* addr;
+
+    // Used to be buf addr
+    void* _unused2;
+
+    int bpp;
+    int width;
+    int height;
+    int pitch;
+    size_t size;
+};
+
 struct gfx_handle {
-	unsigned int id;
-	bool used;
+    unsigned int id;
+    bool used;
 
-	// Used to be vmem context
-	void* _unused;
+    struct valloc_ctx* valloc_ctx;
+    vmem_t vmem;
 
-	void* addr;
-	void* buf_addr;
-
-	int bpp;
-	int width;
-	int height;
-	int pitch;
-	size_t size;
+    struct gfx_ul_desc ul_desc;
 };
 
 struct gfx_handle* gfx_get_handle(unsigned int id);
