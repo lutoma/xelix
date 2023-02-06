@@ -18,11 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "generic.h"
-#include <int/int.h>
-#include <bsp/timer.h>
-#include <tasks/scheduler.h>
-
 #define assert(b) if(!(b)) panic("Assertion \"" #b "\" in " __FILE__ ":%d failed.", __LINE__)
 #define assert_nc(qry) { if(!(qry)) {														\
 	log(LOG_ERR, "Assertion \"" #qry "\" in " __FILE__ ":%d failed.\n", __LINE__);		\
