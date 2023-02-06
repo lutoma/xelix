@@ -30,8 +30,8 @@
 static vmem_t malloc_ranges[50];
 static int have_malloc_ranges = 50;
 
-#ifdef VALLOC_DEBUG
-	#ifdef VALLOC_DEBUG_ALL
+#ifdef CONFIG_VALLOC_DEBUG
+	#ifdef CONFIG_VALLOC_DEBUG_ALL
 		#define debug(args...) { log(LOG_DEBUG, args); }
 	#else
 		#define debug(args...) { if(flags & VM_DEBUG) { log(LOG_DEBUG, args); } }
