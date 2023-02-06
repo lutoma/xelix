@@ -243,17 +243,22 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 
 		//if(range->flags & VM_RW) {
 		if(true || range->flags & VM_RW) {
-			vmem_t vmem;
-			if(valloc(VA_KERNEL, &vmem, RDIV(range->size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
+			vmem_t new_kernel_vmem;
+			if(valloc(VA_KERNEL, &new_kernel_vmem, RDIV(range->size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
 				return NULL;
 			}
 
-			void* kernel_virt = vmem.addr;
-			void* phys_addr = vmem.phys;
+			vmem_t old_kernel_vmem;
+			void* old_kernel_virt = vmap(VA_KERNEL, &old_kernel_vmem, &to_fork->vmem, range->addr, range->size, 0);
+			if(!old_kernel_virt) {
+				return NULL;
+			}
 
-			void* old_kernel_virt = valloc_translate(VA_KERNEL, range->phys, true);
-			memcpy(kernel_virt, old_kernel_virt, range->size);
-			if(valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->addr, phys_addr, range->flags) != 0) {
+			memcpy(new_kernel_vmem.addr, old_kernel_virt, range->size);
+			vfree(&old_kernel_vmem);
+			//vfree(&new_kernel_vmem);
+
+			if(valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->addr, new_kernel_vmem.phys, range->flags) != 0) {
 				return NULL;
 			}
 

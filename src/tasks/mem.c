@@ -72,25 +72,19 @@ void* task_sbrk(task_t* task, int32_t length) {
 
 	length = ALIGN(length, PAGE_SIZE);
 
-	// Only allocate to zero out FIXME deallocate vaddr
-	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, length / PAGE_SIZE, NULL, VM_RW | VM_ZERO) != 0) {
-		sc_errno = ENOMEM;
-		return (void*)-1;
-	}
-
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	valloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, vmem.phys,
-		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE);
+	if(valloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, NULL,
+		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE) != 0) {
+		return (void*)-1;
+	}
 
 	return virt_addr;
 }
 
 /* Copy a NULL-terminated array of strings to kernel memory
- * FIXME This will fail if the array or one of its elements crosses a page
- * boundary that is not mapped contiguously in physical/kernel memory.
+ * FIXME This will fail for strings larger than VFS_PATH_MAX
  */
 char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	int size = 0;
@@ -108,8 +102,10 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		char* phys = (char*)valloc_translate(&task->vmem, array[i], false);
-		new_array[i] = strndup((char*)valloc_translate(VA_KERNEL, phys, true), 200);
+		vmem_t vmem;
+		char* old_string = vmap(VA_KERNEL, &vmem, &task->vmem, array[i], VFS_PATH_MAX, 0);
+		new_array[i] = strndup(old_string, VFS_PATH_MAX);
+		vfree(&vmem);
 	}
 
 	new_array[i] = NULL;
