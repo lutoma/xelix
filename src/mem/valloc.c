@@ -44,9 +44,15 @@ static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* reques
 	uint32_t page_num;
 	void* virt;
 	if(request) {
-		// FIXME Do duplicate checks
 		virt = ALIGN_DOWN(request, PAGE_SIZE);
 		page_num = (uintptr_t)virt / PAGE_SIZE;
+
+		for(int i = 0; i < size; i++) {
+			if(bitmap_get(&ctx->bitmap, page_num + i)) {
+				log(LOG_ERR, "valloc: Duplicate allocation attempt in context %#x at %#x\n", ctx, (page_num + i) * PAGE_SIZE);
+				return NULL;
+			}
+		}
 	} else {
 		page_num = bitmap_find(&ctx->bitmap, size);
 
