@@ -32,6 +32,7 @@
 static struct buffer* buf = NULL;
 static task_t* master_task = NULL;
 static int last_wid = -1;
+static int allocation_num = 0;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	if(!buffer_size(buf) && ctx->fp->flags & O_NONBLOCK) {
@@ -76,13 +77,19 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return 0;
 		}
 
-		vmem_t vmem;
-		valloc(VA_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO);
-		// FIXME vfree(virt_gfxbux) here
+		void* virt_addr = 0xd0000000 + (allocation_num * ALIGN(size, PAGE_SIZE));
+		allocation_num++;
 
-		valloc_at(&ctx->task->vmem, NULL, RDIV(size, PAGE_SIZE), vmem.phys, vmem.phys, VM_USER | VM_RW);
-		valloc_at(&master_task->vmem, NULL, RDIV(size, PAGE_SIZE), vmem.phys, vmem.phys, VM_USER | VM_RW);
-		return (uintptr_t)vmem.phys;
+		vmem_t vmem;
+		if(valloc_at(&ctx->task->vmem, &vmem, RDIV(size, PAGE_SIZE), virt_addr, NULL, VM_USER | VM_RW | VM_ZERO) != 0) {
+			return -1;
+		}
+
+		if(valloc_at(&master_task->vmem, NULL, RDIV(size, PAGE_SIZE), virt_addr, vmem.phys, VM_USER | VM_RW) != 0) {
+			vfree(&vmem);
+			return -1;
+		}
+		return (uintptr_t)virt_addr;
 	} else if(request == 0x2f03) {
 		return __sync_add_and_fetch(&last_wid, 1);
 	}
