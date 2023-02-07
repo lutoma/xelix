@@ -122,16 +122,16 @@ static inline vmem_t* new_range() {
 }
 
 int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
+	// FIXME Fail if size, virt_request or phys are not page aligned?
+
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return -1;
 	}
 
-	// FIXME Fail if size, virt_request or phys are not page aligned
-
 	// Allocate virtual address
 	void* virt = alloc_virt(ctx, size, virt_request);
+	spinlock_release(&ctx->lock);
 	if(!virt) {
-		spinlock_release(&ctx->lock);
 		return -1;
 	}
 
@@ -141,7 +141,6 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 	if(!phys) {
 		phys = palloc(size);
 		if(!phys) {
-			spinlock_release(&ctx->lock);
 			return -1;
 		}
 	}
@@ -159,31 +158,25 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 			/* If the allocation is not in the kernel context or is set as NO_MAP,
 			 * temporarily map it into the kernel virtual address space to zero it.
 			 */
-			if(ctx != VA_KERNEL) {
-				if(!spinlock_get(&VA_KERNEL->lock, -1)) {
-					return -1;
-				}
-			}
-
-			int zero_page = bitmap_find(&VA_KERNEL->bitmap, size);
-			if(zero_page == -1) {
-				spinlock_release(&ctx->lock);
-				if(ctx != VA_KERNEL) {
-					spinlock_release(&VA_KERNEL->lock);
-				}
-
+			if(!spinlock_get(&VA_KERNEL->lock, -1)) {
 				return -1;
 			}
 
-			void* zero_addr = (void*)(zero_page * PAGE_SIZE);
+			void* zero_addr = alloc_virt(VA_KERNEL, size, NULL);
+			spinlock_release(&VA_KERNEL->lock);
+			if(zero_addr == NULL) {
+				return -1;
+			}
+
 			paging_set_range(VA_KERNEL->page_dir, zero_addr, phys, size * PAGE_SIZE, VM_RW);
 			bzero(zero_addr, size * PAGE_SIZE);
 			paging_clear_range(VA_KERNEL->page_dir, zero_addr, size * PAGE_SIZE);
-
-			if(ctx != VA_KERNEL) {
-				spinlock_release(&VA_KERNEL->lock);
-			}
+			bitmap_clear(&VA_KERNEL->bitmap, (uintptr_t)zero_addr / PAGE_SIZE, RDIV(size, PAGE_SIZE));
 		}
+	}
+
+	if(!spinlock_get(&ctx->lock, -1)) {
+		return -1;
 	}
 
 	vmem_t* range = new_range();
@@ -217,10 +210,6 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	void* src_addr, size_t size, int flags) {
 
-	if(!spinlock_get(&ctx->lock, -1) || !spinlock_get(&src_ctx->lock, -1)) {
-		return NULL;
-	}
-
 	debug("vmap: ctx %#x src %p size %#x\n", ctx, src_addr, size);
 	void* src_aligned = ALIGN_DOWN(src_addr, PAGE_SIZE);
 	size_t src_offset = (uintptr_t)src_addr % PAGE_SIZE;
@@ -231,6 +220,11 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	 * bytes from 0x1ff0, we need to allocate two pages to map both 0x1000 and
 	 * 0x2000 for the full data, even though 0x100 < PAGE_SIZE.
 	 */
+
+	if(!spinlock_get(&ctx->lock, -1) || !spinlock_get(&src_ctx->lock, -1)) {
+		return NULL;
+	}
+
 	size_t size_pages = RDIV(size + src_offset, PAGE_SIZE);
 	void* virt = alloc_virt(ctx, size_pages, NULL);
 	if(!virt) {
@@ -257,6 +251,9 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	}
 	ctx->ranges = range;
 
+	spinlock_release(&ctx->lock);
+	spinlock_release(&src_ctx->lock);
+
 	// Now go over the source ranges in passes and map as much as possible from each range
 	// FIXME Currently only maps one page at a time
 	//size_t range_offset = src_offset;
@@ -274,8 +271,6 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 			}
 
 			debug("No range!\n");
-			spinlock_release(&ctx->lock);
-			spinlock_release(&src_ctx->lock);
 			return NULL;
 		}
 
@@ -313,9 +308,6 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	}
 
 	debug("\n");
-
-	spinlock_release(&ctx->lock);
-	spinlock_release(&src_ctx->lock);
 	return virt + src_offset;
 }
 
@@ -343,6 +335,8 @@ int vfree(vmem_t* range) {
 	}
 
 	bitmap_clear(&ctx->bitmap, (uintptr_t)range->addr / PAGE_SIZE, RDIV(range->size, PAGE_SIZE));
+	spinlock_release(lock);
+
 	paging_clear_range(ctx->page_dir, range->addr, range->size);
 
 	// FIXME VM_FREE should be the default
@@ -362,7 +356,6 @@ int vfree(vmem_t* range) {
 	}
 
 	kfree(range->self);
-	spinlock_release(lock);
 	return 0;
 }
 
@@ -376,16 +369,8 @@ int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir) {
 	// Don't allocate null pointer
 	bitmap_set(&ctx->bitmap, 0, 1);
 
-	if(page_dir) {
-		ctx->page_dir = page_dir;
-		ctx->page_dir_phys = page_dir;
-	} else {
-	/*	vmem_t vmem;
-		valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW | VM_ZERO);
-		ctx->page_dir = vmem.addr;
-		ctx->page_dir_phys = vmem.phys;
-	*/
-	}
+	ctx->page_dir = page_dir;
+	ctx->page_dir_phys = page_dir;
 
 	// Block NULL page
 	bitmap_set(&ctx->bitmap, 0, 1);
