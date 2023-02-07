@@ -20,7 +20,7 @@ play: play.c
 	$(CC) $(CFLAGS) -o $@ play.c -L. -lFLAC -lm -lutil
 
 gfxterm: gfxterm.c tmt.c tmt.h
-	$(CC) $(CFLAGS) -o $@ tmt.c gfxterm.c -I$(DESTDIR)/usr/include -I$(DESTDIR)/usr/include/freetype2 -lxelixgfx -lfreetype -lpng -lz -lm
+	$(CC) $(CFLAGS) -o $@ tmt.c gfxterm.c -I$(DESTDIR)/usr/include -I$(DESTDIR)/usr/include/freetype2 -lxelixgfx -lfreetype -lpng -lz -lm -lbz2
 
 png: png.c
 	$(CC) $(CFLAGS) -o $@ png.c -lxelixgfx -lpng -lz -lm

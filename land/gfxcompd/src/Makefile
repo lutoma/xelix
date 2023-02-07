@@ -12,7 +12,7 @@ clean:
 	rm -f gfxcompd
 
 gfxcompd: main.o mouse.o window.o bus.o text.o render.o bar.o
-	$(CC) $(CFLAGS) -o $@ $^ -lcairo -lpixman-1 -lfreetype -lpng -lz -lm
+	$(CC) $(CFLAGS) -o $@ $^ -lcairo -lpixman-1 -lfreetype -lpng -lz -lm -lbz2
 
 libxelixgfx.a: libxelixgfx.o
 	ar rcs $@ $^
