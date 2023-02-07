@@ -20,6 +20,8 @@
 
 #include <stdbool.h>
 
+extern void scheduler_yield();
+
 /* See https://gcc.gnu.org/onlinedocs/gcc-4.4.3/gcc/Atomic-Builtins.html for
  * documentation on the GCC builtin atomic function used here.
  */
@@ -33,16 +35,14 @@
 
 typedef uint8_t spinlock_t;
 static inline bool spinlock_get(spinlock_t* lock, uint32_t retries) {
-	for(int i = 0; i < retries || retries == -1; i++) {
+	for(uint32_t i = 0; i < retries || retries == -1; i++) {
 		if(!__sync_lock_test_and_set(lock, 1)) {
 			return true;
 		}
 
-		/* Can't use halt here as this is called from functions that have
-		 * interrupts disabled (kmalloc). Should use scheduler yield.
-		 */
-		//halt();
+		scheduler_yield();
 	}
+
 	return false;
 }
 

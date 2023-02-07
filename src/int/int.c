@@ -63,7 +63,7 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	}
 
 	// Run scheduler every 100th tick, or when task yields
-	if(intr == IRQ(0) || (task && task->interrupt_yield)) {
+	if(intr == IRQ(0) || intr == 0x31 || (task && task->interrupt_yield)) {
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}

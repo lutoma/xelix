@@ -63,6 +63,11 @@ task_t* scheduler_find(uint32_t pid) {
 	return NULL;
 }
 
+void scheduler_yield() {
+	int_enable();
+	asm("int $0x31;");
+}
+
 static inline void unlink(task_t *t) {
 	if(t->next == t || t->previous == t) {
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
