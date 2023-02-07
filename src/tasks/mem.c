@@ -94,6 +94,10 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	for(; i < size; i++) {
 		vmem_t vmem;
 		char* old_string = vmap(VA_KERNEL, &vmem, &task->vmem, array[i], VFS_PATH_MAX, 0);
+		if(!old_string) {
+			return NULL;
+		}
+
 		new_array[i] = strndup(old_string, VFS_PATH_MAX);
 		vfree(&vmem);
 	}
