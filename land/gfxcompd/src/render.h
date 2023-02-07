@@ -21,15 +21,6 @@ struct {
 	size_t size;
 } gfx_handle;
 
-
-struct gfx_ul_blit_cmd {
-	unsigned int handle_id;
-	size_t x;
-	size_t y;
-	size_t width;
-	size_t height;
-};
-
 struct surface {
 	uint32_t id;
 	struct surface* next;

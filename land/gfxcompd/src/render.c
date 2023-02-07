@@ -15,6 +15,7 @@
 #define IIR_GAUSS_BLUR_IMPLEMENTATION
 #include "blur.h"
 
+void* main_buffer;
 static cairo_surface_t* main_surface;
 static cairo_surface_t* bg_surface_blurred;
 static cairo_t* cr;
@@ -36,14 +37,10 @@ static inline void area_blit(size_t width, size_t height, size_t x, size_t y) {
 
 	cairo_reset_clip(cr);
 
-	struct gfx_ul_blit_cmd cmd = {
-		.handle_id = gfx_handle.id,
-		.x = x,
-		.y = y,
-		.width = width,
-		.height = height
-	};
-	ioctl(gfx_fd, 0x2f04, &cmd);
+	for(size_t cy = y; cy < y + height && cy < gfx_handle.height; cy++) {
+		uintptr_t offset = cy * gfx_handle.pitch + (x * gfx_handle.bpp/8);
+		memcpy((void*)((uintptr_t)gfx_handle.addr + offset), main_buffer + offset, width * gfx_handle.bpp/8);
+	}
 }
 
 void surface_blit(struct surface* surface, size_t width, size_t height, size_t x, size_t y) {
@@ -120,8 +117,9 @@ void render_init() {
 		exit(EXIT_FAILURE);
 	}
 
+	main_buffer = malloc(gfx_handle.size);
 	main_surface = cairo_image_surface_create_for_data(
-		(unsigned char*)gfx_handle.addr, CAIRO_FORMAT_ARGB32, gfx_handle.width,
+		main_buffer, CAIRO_FORMAT_ARGB32, gfx_handle.width,
 		gfx_handle.height, gfx_handle.pitch);
 
 	cr = cairo_create(main_surface);
@@ -150,5 +148,5 @@ void render_init() {
 
 	// Full-screen blit
 	cairo_surface_flush(main_surface);
-	ioctl(gfx_fd, 0x2f03, gfx_handle.id);
+	memcpy((unsigned char*)gfx_handle.addr, main_buffer, gfx_handle.size);
 }
