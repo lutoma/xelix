@@ -83,16 +83,21 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 
 	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, vmem.addr + phys_offset, task))) {
 		pfree((uint32_t)phys / PAGE_SIZE, size / PAGE_SIZE);
+		vfree(&vmem);
 		return -1;
 	}
+
 
 	int vmem_flags = VM_USER | VM_TFORK | VM_NOCOW | VM_FREE;
 	if(phead->flags & PF_W) {
 		vmem_flags |= VM_RW;
 	}
 
-	valloc_at(&task->vmem, NULL, RDIV(size, PAGE_SIZE), virt, vmem.phys, vmem_flags);
+	if(unlikely(valloc_at(&task->vmem, NULL, RDIV(size, PAGE_SIZE), virt, vmem.phys, vmem_flags) != 0)) {
+		return -1;
+	}
 
+	vfree(&vmem);
 	debug("  phys %#-8x-%#-8x task virt %#-8x-%#-8x kernel virt %#-8x-%#-8x\n",
 		vmem.phys, (uintptr_t)vmem.phys + size, virt, (uintptr_t)virt + size, vmem.addr, (uintptr_t)vmem.addr + size);
 	return 0;
