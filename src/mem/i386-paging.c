@@ -21,6 +21,7 @@
 #include <mem/mem.h>
 #include <log.h>
 #include <string.h>
+#include <panic.h>
 #include <int/int.h>
 
 // Used in interrupt handlers to return to kernel paging context
@@ -159,7 +160,9 @@ void paging_init() {
 
 	// Create a new valloc context with the page dir and allocate the kernel / page dir in it
 	valloc_new(&valloc_kernel_ctx, paging_kernel_ctx);
-	valloc_at(VA_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW);
+	if(valloc_at(VA_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW) != 0) {
+		panic("paging: Could not allocate kernel vmem");
+	}
 
 	asm volatile(
 		"mov %0, %%cr3;"
