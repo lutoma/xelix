@@ -20,6 +20,7 @@
 #include <tasks/task.h>
 #include <tasks/wait.h>
 #include <errno.h>
+#include <time.h>
 
 int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options) {
 	if(child_pid > 0) {
@@ -31,7 +32,11 @@ int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options) {
 	} else {
 		// Check if task has any children to wait for.
 		bool have_children = false;
-		for(task_t* i = task->next; i->next != task->next; i = i->next) {
+		for(struct scheduler_qentry* e = task->qentry->next; e->next != task->qentry->next; e = e->next) {
+			if(!e->task) {
+				continue;
+			}
+			task_t* i = e->task;
 			if(i->parent == task && i->task_state != TASK_STATE_REPLACED &&
 				i->task_state != TASK_STATE_REAPED) {
 				have_children = true;

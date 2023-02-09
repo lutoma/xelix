@@ -24,6 +24,10 @@
 #include <tasks/signal.h>
 #include <tty/term.h>
 
+// Should be kept in sync with value in boot/*-boot.S
+#define KERNEL_STACK_PAGES 4
+#define KERNEL_STACK_SIZE PAGE_SIZE * KERNEL_STACK_PAGES
+
 struct elf_load_ctx {
 	void* virt_end;
 
@@ -48,9 +52,7 @@ typedef struct task {
 
 	char name[VFS_NAME_MAX];
 	struct task* parent;
-	struct task* next;
-	struct task* previous;
-
+	struct scheduler_qentry* qentry;
 	struct valloc_ctx vmem;
 	isf_t* state;
 	void* entry;

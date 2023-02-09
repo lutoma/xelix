@@ -32,9 +32,6 @@
 #include <string.h>
 #include <errno.h>
 
-// Should be kept in sync with value in boot/*-boot.S
-#define KERNEL_STACK_SIZE PAGE_SIZE * 4
-
 static uint32_t highest_pid = 0;
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 
@@ -56,12 +53,12 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	}
 
 	// Kernel stack used during interrupts while this task is running
-	if(valloc(VA_KERNEL, &vmem, 4, NULL, VM_RW) != 0) {
+	if(valloc(VA_KERNEL, &vmem, KERNEL_STACK_PAGES, NULL, VM_RW) != 0) {
 		return NULL;
 	}
 	task->kernel_stack = vmem.addr;
 
-	if(valloc_at(&task->vmem, NULL, 4, vmem.addr, vmem.phys, VM_FREE) != 0) {
+	if(valloc_at(&task->vmem, NULL, KERNEL_STACK_PAGES, vmem.addr, vmem.phys, VM_FREE) != 0) {
 		return NULL;
 	}
 
@@ -172,9 +169,9 @@ void task_userland_eol(task_t* t) {
 	t->task_state = TASK_STATE_ZOMBIE;
 
 	task_t* init = scheduler_find(1);
-	for(task_t* i = t->next; i->next != t->next; i = i->next) {
-		if(i->parent == t) {
-			i->parent = init;
+	for(struct scheduler_qentry* e = t->qentry->next; e->next != t->qentry->next; e = e->next) {
+		if(e->task && e->task->parent == t) {
+			e->task->parent = init;
 		}
 	}
 

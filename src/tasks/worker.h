@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2011-2019 Lukas Martini
+/* Copyright © 2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,28 +18,18 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tasks/task.h>
-#include <tasks/worker.h>
+#include <stdint.h>
+#include <fs/vfs.h>
 #include <int/int.h>
 
-enum scheduler_state {
-	SCHEDULER_OFF,
-	SCHEDULER_INITIALIZING,
-	SCHEDULER_INITIALIZED
-};
+typedef struct worker {
+	char name[VFS_NAME_MAX];
+	bool stopped;
+	isf_t* state;
+	void* entry;
+	void* stack;
+} worker_t;
 
-struct scheduler_qentry {
-    struct scheduler_qentry* next;
-    struct scheduler_qentry* prev;
-    task_t* task;
-    worker_t* worker;
-};
-
-extern enum scheduler_state scheduler_state;
-
-void scheduler_add(task_t *task);
-task_t* scheduler_find(uint32_t pid);
-task_t* scheduler_get_current();
-void scheduler_yield();
-isf_t* scheduler_select(isf_t* lastRegs);
-void scheduler_init();
+worker_t* worker_new(char* name, void* entry);
+int worker_stop(worker_t* worker);
+int worker_exit(worker_t* worker);

@@ -62,23 +62,20 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 		reg[i].handler((task_t*)task, state, intr);
 	}
 
-	// Run scheduler every 100th tick, or when task yields
+	// Run scheduler every tick, or when task yields
 	if(intr == IRQ(0) || intr == 0x31 || (task && task->interrupt_yield)) {
 		if((task && task->interrupt_yield)) {
 			task->interrupt_yield = false;
 		}
 
-		task_t* new_task = scheduler_select(state);
-		if(new_task && new_task->state) {
+		isf_t* new_state = scheduler_select(state);
+		if(new_state) {
 			#ifdef CONFIG_INTERRUPTS_DEBUG
 			debug("state after (task selection):\n");
-			dump_isf(LOG_DEBUG, new_task->state);
+			dump_isf(LOG_DEBUG, new_state);
 			#endif
 
-			// FIXME per-task storage of SSE state needed
-			//memcpy(sse_state, new_task->state->sse_state, 512);
-			gdt_set_tss(new_task->kernel_stack + PAGE_SIZE);
-			return new_task->state;
+			return new_state;
 		}
 	}
 

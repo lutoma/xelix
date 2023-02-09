@@ -21,25 +21,32 @@
 #include <panic.h>
 #include <fs/sysfs.h>
 #include <int/int.h>
+#include <mem/kmalloc.h>
+#include <tasks/worker.h>
 
-static task_t* current_task = NULL;
+static struct scheduler_qentry* current_entry = NULL;
 enum scheduler_state scheduler_state;
 
 task_t* scheduler_get_current() {
-	return current_task;
+	return current_entry ? current_entry->task : NULL;
 }
 
-void scheduler_add(task_t *task) {
-	// No task yet?
-	if(current_task == NULL) {
-		current_task = task;
-		task->next = task;
-		task->previous = task;
+void scheduler_add(task_t* task) {
+	struct scheduler_qentry* entry = kmalloc(sizeof(struct scheduler_qentry));
+	entry->task = task;
+	entry->worker = NULL;
+	task->qentry = entry;
+
+	// No entry yet?
+	if(current_entry == NULL) {
+		current_entry = entry;
+		entry->next = entry;
+		entry->prev = entry;
 	} else {
-		task->next = current_task->next;
-		task->next->previous = task;
-		task->previous = current_task;
-		current_task->next = task;
+		entry->next = current_entry->next;
+		entry->next->prev = entry;
+		entry->prev = current_entry;
+		current_entry->next = entry;
 	}
 
 	if(task->ctty) {
@@ -47,16 +54,39 @@ void scheduler_add(task_t *task) {
 	}
 }
 
+void scheduler_add_worker(worker_t* worker) {
+	struct scheduler_qentry* entry = kmalloc(sizeof(struct scheduler_qentry));
+	entry->worker = worker;
+	entry->task = NULL;
+
+	// No entry yet?
+	if(current_entry == NULL) {
+		current_entry = entry;
+		entry->next = entry;
+		entry->prev = entry;
+	} else {
+		entry->next = current_entry->next;
+		entry->next->prev = entry;
+		entry->prev = current_entry;
+		current_entry->next = entry;
+	}
+}
+
 task_t* scheduler_find(uint32_t pid) {
-	task_t* start = current_task;
-	for(task_t* t = start; t->next != start; t = t->next) {
+	struct scheduler_qentry* start = current_entry;
+	for(struct scheduler_qentry* entry = start; entry->next != start; entry = entry->next) {
+		task_t* t = entry->task;
+		if(!t) {
+			continue;
+		}
+
 		if(t->pid == pid && t->task_state != TASK_STATE_REPLACED &&
 			t->task_state != TASK_STATE_TERMINATED &&
 			t->task_state != TASK_STATE_REAPED) {
 			return t;
 		}
 
-		if(t->next == t) {
+		if(entry->next == entry) {
 			break;
 		}
 	}
@@ -68,22 +98,32 @@ void scheduler_yield() {
 	asm("int $0x31;");
 }
 
-static inline void unlink(task_t *t) {
-	if(t->next == t || t->previous == t) {
+static inline void unlink(struct scheduler_qentry* entry) {
+	serial_printf("unlink pid %d, entry %#x\n", entry->task->pid, entry);
+	if(entry->next == entry || entry->prev == entry) {
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
+	serial_printf("1 entry is now %#x, kfreeing\n", entry);
 
-	t->next->previous = t->previous;
-	t->previous->next = t->next;
-	task_cleanup(t);
+	entry->next->prev = entry->prev;
+	entry->prev->next = entry->next;
+
+	serial_printf("2 entry is now %#x, kfreeing\n", entry);
+	if(entry->task) {
+		task_cleanup(entry->task);
+	}
+
+	serial_printf("entry is now %#x, kfreeing\n", entry);
+	//kfree(entry);
 }
 
-task_t* scheduler_select(isf_t* last_regs) {
+isf_t* scheduler_select(isf_t* last_regs) {
 	int_disable();
+
 	if(unlikely(scheduler_state != SCHEDULER_INITIALIZED)) {
 		if(scheduler_state == SCHEDULER_INITIALIZING) {
 			scheduler_state = SCHEDULER_INITIALIZED;
-			return current_task;
+			goto ret;
 		}
 
 		// SCHEDULER_OFF
@@ -92,19 +132,33 @@ task_t* scheduler_select(isf_t* last_regs) {
 
 	// Save CPU register state of previous task
 	if(last_regs) {
-		memcpy(current_task->state, last_regs, sizeof(isf_t));
+		if(current_entry->task) {
+			memcpy(current_entry->task->state, last_regs, sizeof(isf_t));
+		} else if(current_entry->worker) {
+			memcpy(current_entry->worker->state, last_regs, sizeof(isf_t));
+		}
 	}
 
 	/* Cycle through tasks until we find one that isn't terminated,
 	 * while along the way unlinking the killed/terminated ones.
 	*/
-	current_task = current_task->next;
+	current_entry = current_entry->next;
 
-	for(;; current_task = current_task->next) {
-		if(unlikely(current_task == NULL)) {
+	for(;; current_entry = current_entry->next) {
+		if(unlikely(current_entry == NULL)) {
 			panic("scheduler: Task list corrupted (current_task->next was NULL).\n");
 		}
 
+		if(current_entry->worker) {
+			if(current_entry->worker->stopped == true) {
+				unlink(current_entry);
+				continue;
+			}
+
+			break;
+		}
+
+		task_t* current_task = current_entry->task;
 		if(current_task->task_state == TASK_STATE_TERMINATED) {
 			task_userland_eol(current_task);
 			continue;
@@ -112,7 +166,7 @@ task_t* scheduler_select(isf_t* last_regs) {
 
 		if(current_task->task_state == TASK_STATE_REAPED ||
 			current_task->task_state == TASK_STATE_REPLACED) {
-			unlink(current_task);
+			unlink(current_entry);
 			continue;
 		}
 
@@ -125,7 +179,20 @@ task_t* scheduler_select(isf_t* last_regs) {
 		break;
 	}
 
-	return current_task;
+	if(current_entry->task) {
+		current_entry->task->task_state = TASK_STATE_RUNNING;
+	}
+
+ret:
+	if(current_entry->task) {
+		// FIXME per-task storage of SSE state needed?
+		//memcpy(sse_state, new_task->state->sse_state, 512);
+		gdt_set_tss(current_entry->task->kernel_stack + KERNEL_STACK_SIZE);
+		return current_entry->task->state;
+	} else if(current_entry->worker) {
+		return current_entry->worker->state;
+	}
+	return NULL;
 }
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
@@ -133,11 +200,17 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 		return 0;
 	}
 
-	task_t* task = ctx->task;
+	struct scheduler_qentry* entry = current_entry;
 	size_t rsize = 0;
 	sysfs_printf("# pid uid gid ppid state name memory tty\n")
 
 	do {
+		task_t* task = entry->task;
+		if(!task) {
+			sysfs_printf("-1 0 0 0 R \"%s\" 0 /dev/null\n", entry->worker->name);
+			goto next;
+		}
+
 		if(task->task_state == TASK_STATE_REPLACED) {
 			goto next;
 		}
@@ -151,6 +224,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 			case TASK_STATE_RUNNING: state = 'R'; break;
 			case TASK_STATE_WAITING: state = 'W'; break;
 			case TASK_STATE_SYSCALL: state = 'C'; break;
+			case TASK_STATE_SLEEPING: state = 'W'; break;
 			default: state = 'U'; break;
 		}
 
@@ -171,8 +245,8 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 		sysfs_printf("\" %d %s\n", mem_alloc, task->ctty ? task->ctty->path : "-");
 
 	next:
-		task = task->next;
-	} while(task != current_task);
+		entry = entry->next;
+	} while(entry != current_entry);
 
 	return rsize;
 }
