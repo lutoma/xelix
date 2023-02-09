@@ -77,9 +77,9 @@ bool ext2_inode_read(struct ext2_fs* fs, struct inode* buf, uint32_t inode_num) 
 		return false;
 	}
 
-	struct inode_cache_entry cache = fs->inode_cache[fs->inode_cache_end];
-	memcpy(&cache.inode, buf, fs->superblock->inode_size);
-	cache.num = inode_num;
+	struct inode_cache_entry* cache = &fs->inode_cache[fs->inode_cache_end];
+	memcpy(&cache->inode, buf, fs->superblock->inode_size);
+	cache->num = inode_num;
 	fs->inode_cache_end++;
 	fs->inode_cache_end %= INODE_CACHE_MAX;
 	return true;
