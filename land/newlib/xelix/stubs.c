@@ -88,8 +88,6 @@ STUB(long, sysconf, (int name), -1);
 STUB(int, getrlimit, (int resource, struct rlimit *rlim), -1);
 STUB(int, setrlimit, (int resource, const struct rlimit *rlim), -1);
 STUB(ssize_t, getline, (char **restrict lineptr, size_t *restrict n, FILE *restrict stream), -1);
-STUB(int, usleep, (useconds_t useconds), -1);
-STUB(unsigned, sleep, (unsigned seconds), -1);
 STUB(int, stime, (time_t *t), -1);
 STUB(long, fpathconf, (int fildes, int name), -1);
 STUB(long, pathconf, (const char *path, int name), -1);

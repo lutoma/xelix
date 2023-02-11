@@ -1,5 +1,5 @@
 /* scheduler.c: Userland task scheduling
- * Copyright © 2011-2019 Lukas Martini
+ * Copyright © 2011-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -25,6 +25,7 @@
 #include <tasks/worker.h>
 
 static struct scheduler_qentry* current_entry = NULL;
+struct scheduler_qentry idle_qentry;
 enum scheduler_state scheduler_state;
 
 task_t* scheduler_get_current() {
@@ -117,6 +118,65 @@ static inline void unlink(struct scheduler_qentry* entry) {
 	//kfree(entry);
 }
 
+static inline struct scheduler_qentry* find_runnable_qentry(struct scheduler_qentry* start) {
+	struct scheduler_qentry* qe = start->next;
+	struct scheduler_qentry* orig = qe;
+	bool initial = true;
+
+	for(;; qe = qe->next) {
+		if(unlikely(qe == NULL)) {
+			panic("scheduler: qentry list corrupted (current_entry->next was NULL).\n");
+		}
+
+		if(qe == orig && !initial) {
+			return NULL;
+		}
+
+		if(initial) {
+			initial = false;
+		}
+
+		if(qe->worker) {
+			if(qe->worker->stopped == true) {
+				unlink(qe);
+				continue;
+			}
+
+			break;
+		} else if(qe->task) {
+			task_t* task = qe->task;
+			if(task->task_state == TASK_STATE_TERMINATED) {
+				task_userland_eol(task);
+				continue;
+			}
+
+			if(task->task_state == TASK_STATE_REAPED ||
+				task->task_state == TASK_STATE_REPLACED) {
+				unlink(qe);
+				continue;
+			}
+
+			if(task->task_state == TASK_STATE_STOPPED ||
+				task->task_state == TASK_STATE_WAITING ||
+				task->task_state == TASK_STATE_ZOMBIE) {
+				continue;
+			}
+
+			if(task->task_state == TASK_STATE_SLEEPING) {
+			}
+
+			if(task->task_state == TASK_STATE_SLEEPING &&
+				timer_get_tick() < task->sleep_until) {
+				continue;
+			}
+		}
+
+		break;
+	}
+
+	return qe;
+}
+
 isf_t* scheduler_select(isf_t* last_regs) {
 	int_disable();
 
@@ -139,52 +199,19 @@ isf_t* scheduler_select(isf_t* last_regs) {
 		}
 	}
 
-	/* Cycle through tasks until we find one that isn't terminated,
-	 * while along the way unlinking the killed/terminated ones.
-	*/
-	current_entry = current_entry->next;
-
-	for(;; current_entry = current_entry->next) {
-		if(unlikely(current_entry == NULL)) {
-			panic("scheduler: Task list corrupted (current_task->next was NULL).\n");
-		}
-
-		if(current_entry->worker) {
-			if(current_entry->worker->stopped == true) {
-				unlink(current_entry);
-				continue;
-			}
-
-			break;
-		}
-
-		task_t* current_task = current_entry->task;
-		if(current_task->task_state == TASK_STATE_TERMINATED) {
-			task_userland_eol(current_task);
-			continue;
-		}
-
-		if(current_task->task_state == TASK_STATE_REAPED ||
-			current_task->task_state == TASK_STATE_REPLACED) {
-			unlink(current_entry);
-			continue;
-		}
-
-		if(current_task->task_state == TASK_STATE_STOPPED ||
-			current_task->task_state == TASK_STATE_WAITING ||
-			current_task->task_state == TASK_STATE_ZOMBIE) {
-			continue;
-		}
-
-		break;
-	}
-
-	if(current_entry->task) {
-		current_entry->task->task_state = TASK_STATE_RUNNING;
+	struct scheduler_qentry* qe = find_runnable_qentry(current_entry);
+	if(qe) {
+		current_entry = qe;
+	} else {
+		idle_qentry.next = current_entry->next;
+		idle_qentry.prev = current_entry;
+		current_entry = &idle_qentry;
 	}
 
 ret:
 	if(current_entry->task) {
+		current_entry->task->task_state = TASK_STATE_RUNNING;
+
 		// FIXME per-task storage of SSE state needed?
 		//memcpy(sse_state, new_task->state->sse_state, 512);
 		gdt_set_tss(current_entry->task->kernel_stack + KERNEL_STACK_SIZE);
@@ -251,7 +278,18 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
+static void __attribute__((fastcall, noreturn)) do_idle(worker_t* worker) {
+			int_enable();
+		while(true) {
+			asm("hlt;");
+		}
+}
+
 void scheduler_init() {
+	worker_t* idle_worker = worker_new("kidle", &do_idle);
+	idle_qentry.task = NULL;
+	idle_qentry.worker = idle_worker;
+
 	scheduler_state = SCHEDULER_INITIALIZING;
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,

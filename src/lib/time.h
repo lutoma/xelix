@@ -23,8 +23,8 @@
 struct task;
 typedef uint32_t time_t;
 struct timeval {
-	uint64_t tv_sec;
-	uint64_t tv_usec;
+	int64_t tv_sec;
+	int32_t tv_usec;
 };
 
 uint32_t time_get();

@@ -508,3 +508,15 @@ const char *hstrerror(int ecode) {
 int ttyname_r(int fd, char *buf, size_t buflen) {
 	return readlink("/dev/tty", buf, buflen) ? 0 : EBADF;
 }
+
+
+int usleep(useconds_t useconds) {
+	struct timeval tv = { 0, useconds };
+	return syscall(53, &tv, 0, 0);
+
+}
+
+unsigned sleep(unsigned seconds) {
+	struct timeval tv = { seconds, 0 };
+	return syscall(53, &tv, 0, 0);
+}

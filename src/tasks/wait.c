@@ -89,3 +89,18 @@ void wait_finish(task_t* task, task_t* child) {
 	 */
 	task->task_state = TASK_STATE_RUNNING;
 }
+
+int task_sleep(task_t* task, struct timeval* tv) {
+	uint32_t tick = timer_get_tick();
+	uint32_t rate = timer_get_rate();
+
+	uint32_t duration = tv->tv_sec * rate;
+	if(tv->tv_usec != 0) {
+		duration += tv->tv_usec / (1000 / rate * 1000);
+	}
+
+	task->sleep_until = tick + duration;
+	task->task_state = TASK_STATE_SLEEPING;
+	scheduler_yield();
+	return 0;
+}

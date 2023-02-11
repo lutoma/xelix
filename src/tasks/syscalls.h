@@ -137,7 +137,7 @@ const struct syscall_definition syscall_table[] = {
 		SCA_INT, SCA_INT, 0, 0},
 
 	// 19
-	{"gettimeofday", (syscall_cb)time_get_timeval, 0,
+	{"time", (syscall_cb)time_get_timeval, 0,
 		SCA_POINTER, 0, 0, sizeof(struct timeval)},
 
 	// 20
@@ -323,4 +323,8 @@ const struct syscall_definition syscall_table[] = {
 	// 52
 	{"realpath", (syscall_cb)vfs_realpath, 0,
 		SCA_STRING, SCA_POINTER, 0, VFS_PATH_MAX},
+
+	// 53
+	{"sleep", (syscall_cb)task_sleep, 0,
+		SCA_POINTER, 0, 0, sizeof(struct timeval)},
 };

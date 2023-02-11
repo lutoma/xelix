@@ -100,6 +100,9 @@ typedef struct task {
 		// Task has called waitpid syscall
 		TASK_STATE_WAITING,
 
+		// Task has called sleep syscall
+		TASK_STATE_SLEEPING,
+
 		// Task is currently in a syscall
 		TASK_STATE_SYSCALL
 	} task_state;
@@ -150,6 +153,8 @@ typedef struct task {
 
 	// ELF loader context, needed for dlopen/dlsym.
 	struct elf_load_ctx elf_ctx;
+
+	uint32_t sleep_until;
 
 	struct task* strace_observer;
 	int strace_fd;

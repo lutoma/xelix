@@ -22,3 +22,4 @@
 
 int task_waitpid(task_t* task, int32_t child_pid, int* stat_loc, int options);
 void wait_finish(task_t* task, task_t* child);
+int task_sleep(task_t* task, struct timeval* tv);
