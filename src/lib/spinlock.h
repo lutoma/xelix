@@ -19,6 +19,7 @@
  */
 
 #include <stdbool.h>
+#include <log.h>
 
 extern void scheduler_yield();
 
@@ -40,6 +41,9 @@ static inline bool spinlock_get(spinlock_t* lock, uint32_t retries) {
 			return true;
 		}
 
+		if(unlikely(i == 10000)) {
+			log(LOG_WARN, "Stuck spinlock %s (retry 10000 max %d)\n", lock, retries);
+		}
 		scheduler_yield();
 	}
 
