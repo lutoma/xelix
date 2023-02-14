@@ -2,10 +2,10 @@
 *.log
 *~
 .*.swp
-*.img
-*.raw
-*.qcow2
-*.vdi
+/*.img
+/*.raw
+/*.qcow2
+/*.vdi
 /Makefile
 xelix.bin
 tags
