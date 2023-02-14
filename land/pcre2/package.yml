@@ -1,7 +1,7 @@
 name: pcre2
 version: 10.32
 sources:
-  - url: https://ftp.pcre.org/pub/pcre/pcre2-10.32.tar.gz
+  - url: https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.32/pcre2-10.32.tar.bz2
 patches:
   - pcre2-10.32.patch
 configure:

@@ -1,7 +1,7 @@
 name: zlib
 version: 1.2.11
 sources:
-  - url: https://zlib.net/zlib-1.2.11.tar.xz
+  - url: https://zlib.net/fossils/zlib-1.2.11.tar.gz
 configure:
   - CC=i786-pc-xelix-gcc ./configure --static --prefix=/usr --sysconfdir=/etc
 make:
