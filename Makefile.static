@@ -32,7 +32,8 @@ MAKE_QEMU_FLAGS += $(QEMU_FLAGS)
 MAKE_LDFLAGS += $(LDFLAGS)
 
 .PHONY: all
-all: xelix.bin
+all:
+	@make -j$(nproc) xelix.bin
 
 ext/picotcp/build/lib/libpicotcp.a:
 	make -C ext/picotcp
