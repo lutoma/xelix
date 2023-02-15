@@ -1,5 +1,5 @@
 /* bitmap.c: Bitmap handling
- * Copyright © 2020 Lukas Martini
+ * Copyright © 2020-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -127,6 +127,48 @@ uint32_t bitmap_find(struct bitmap* bm, uint32_t num) {
 	// No free bits left
 	return -1;
 }
+
+uint32_t bitmap_get_range(struct bitmap* bm, uint32_t start, uint32_t num) {
+	uint32_t remainder = num;
+	uint32_t arraypos = start / 32;
+
+	// Deal with potentially unaligned start
+	if(start % 32) {
+		uint32_t* bits = &bm->data[arraypos];
+		uint32_t uaoff = 32 - start % 32;
+
+		if(*bits && __builtin_clz(*bits) < uaoff) {
+			return 1;
+		}
+
+		remainder -= uaoff;
+		arraypos++;
+	}
+
+	for(; remainder > 0 && arraypos <= bitmap_size(bm->size); arraypos++) {
+		uint32_t* bits = &bm->data[arraypos];
+
+		if(!*bits) {
+			if(remainder <= 32) {
+				return 0;
+			}
+
+			remainder -= 32;
+			continue;
+		} else {
+			if(remainder >= 32) {
+				return 1;
+			}
+		}
+
+		if(__builtin_ctz(*bits) < remainder) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 
 uint32_t bitmap_count(struct bitmap* bm) {
 	uint32_t count = 0;
