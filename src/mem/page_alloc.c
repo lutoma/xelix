@@ -35,7 +35,7 @@ void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, size_t size) {
 		return NULL;
 	}
 
-	uint32_t num = bitmap_find(&ctx->bitmap, size);
+	uint32_t num = bitmap_find(&ctx->bitmap, 0, size);
 	bitmap_set(&ctx->bitmap, num, size);
 	spinlock_release(&ctx->lock);
 	return (void*)(num * PAGE_SIZE);

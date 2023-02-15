@@ -50,11 +50,16 @@ static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* reques
 		for(int i = 0; i < size; i++) {
 			if(bitmap_get(&ctx->bitmap, page_num + i)) {
 				log(LOG_ERR, "valloc: Duplicate allocation attempt in context %#x at %#x\n", ctx, (page_num + i) * PAGE_SIZE);
+
+				vmem_t* crange = get_range(ctx, (page_num + i) * PAGE_SIZE, false);
+				if(crange) {
+					log(LOG_ERR, "valloc: Conflicting range: %#x - %#x\n", crange->addr, crange->addr + crange->size);
+				}
 				return NULL;
 			}
 		}
 	} else {
-		page_num = bitmap_find(&ctx->bitmap, size);
+		page_num = bitmap_find(&ctx->bitmap, 0, size);
 
 		if(page_num == -1) {
 			return NULL;

@@ -45,10 +45,6 @@ menu "Kernel stdlib"
 		2 Info
 		3 Warn
 		4 Error
-
-	config BITMAP_DEBUG
-		bool "Debug bitmap.c"
-		default n
 endmenu
 
 menu "Memory"
