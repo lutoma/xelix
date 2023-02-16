@@ -103,7 +103,10 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 
 	struct exception exc = exceptions[num];
-	void* eip = ((iret_t*)state->esp)->eip;
+	void* eip = NULL;
+	if(state && state->esp) {
+		eip = ((iret_t*)state->esp)->eip;
+	}
 
 	if(num == 14) {
 		handle_page_fault(task, state, eip);
