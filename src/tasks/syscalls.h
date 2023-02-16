@@ -93,8 +93,8 @@ const struct syscall_definition syscall_table[] = {
 		SCA_INT, 0, 0, 0},
 
 	// 8
-	{"symlink", NULL, 0,
-		0, 0, 0, 0},
+	{"mmap", (syscall_cb)task_mmap, 0,
+		SCA_POINTER, 0, 0, sizeof(struct task_mmap_ctx)},
 
 	// 9
 	{"poll", (syscall_cb)vfs_poll, 0,

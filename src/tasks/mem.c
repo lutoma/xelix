@@ -23,6 +23,16 @@
 #include <mem/mem.h>
 #include <errno.h>
 
+#define PROT_NONE 1
+#define PROT_READ 2
+#define PROT_WRITE 4
+#define PROT_EXEC 8
+
+#define MAP_PRIVATE 1
+#define MAP_SHARED 2
+#define MAP_ANONYMOUS 4
+#define MAP_FIXED 8
+
 /* Called on task page faults. If the fault is in the pages below the current
  * lower end of the stack, expand the stack (up to 512 pages total), and return
  * control to the task. otherwise, return -1 so the fault gets raised.
@@ -71,6 +81,40 @@ void* task_sbrk(task_t* task, int32_t length) {
 	}
 
 	return virt_addr;
+}
+
+void* task_mmap(task_t* task, struct task_mmap_ctx* ctx) {
+	if(ctx->len == 0) {
+		sc_errno = EINVAL;
+		return NULL;
+	}
+
+	if(!(ctx->flags & MAP_ANONYMOUS)) {
+		sc_errno = ENOSYS;
+		return NULL;
+	}
+
+	if(ctx->flags & (MAP_SHARED | MAP_FIXED)) {
+		sc_errno = ENOTSUP;
+		return NULL;
+	}
+
+	if(ctx->prot & PROT_NONE || !(ctx->prot & PROT_READ)) {
+		sc_errno = ENOTSUP;
+		return NULL;
+	}
+
+	int vaflags = VM_USER | VM_NOCOW | VM_TFORK | VM_FREE;
+	if(ctx->prot & PROT_WRITE) {
+		vaflags |= VM_RW;
+	}
+
+	vmem_t vmem;
+	if(valloc(&task->vmem, &vmem, RDIV(ctx->len, PAGE_SIZE), NULL, vaflags) != 0) {
+		return (void*)-1;
+	}
+
+	return vmem.addr;
 }
 
 /* Copy a NULL-terminated array of strings to kernel memory.
