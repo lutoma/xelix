@@ -118,12 +118,15 @@ int vm_alloc_many(int num, struct valloc_ctx** mctx, vmem_t** mvmem, size_t size
 
 void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	void* src_addr, size_t size, int flags);
-int vfree(vmem_t* range);
+
 vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys);
-int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used);
+int vm_copy(struct valloc_ctx* dest, vmem_t* vmem_dest, vmem_t* vmem_src);
+int vm_clone(struct valloc_ctx* dest, struct valloc_ctx* src);
+int vfree(vmem_t* range);
 int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir);
 void valloc_cleanup(struct valloc_ctx* ctx);
 void* valloc_get_page_dir(struct valloc_ctx* ctx);
+int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used);
 
 static inline void* valloc_translate(struct valloc_ctx* ctx, void* raddress, bool phys) {
 	vmem_t* range = valloc_get_range(ctx, raddress, phys);

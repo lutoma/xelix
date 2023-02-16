@@ -394,6 +394,68 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	return virt + src_offset;
 }
 
+int vm_copy(struct valloc_ctx* dest, vmem_t* vmem_dest, vmem_t* vmem_src) {
+	// does not work on sharded memory yet
+	assert(!vmem_src->shards);
+
+	vmem_t new_kernel_vmem;
+	if(valloc(VA_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW ) != 0) {
+		return -1;
+	}
+
+	vmem_t old_kernel_vmem;
+	void* old_kernel_virt = vmap(VA_KERNEL, &old_kernel_vmem, vmem_src->ctx, vmem_src->addr, vmem_src->size, 0);
+	if(!old_kernel_virt) {
+		return -1;
+	}
+
+	memcpy(new_kernel_vmem.addr, old_kernel_virt, vmem_src->size);
+	vfree(&old_kernel_vmem);
+
+	// Zero out remainder of page if needed in order to not leak any previous data
+	size_t mod = vmem_src->size % PAGE_SIZE;
+	if(mod) {
+		void* last_page = new_kernel_vmem.addr + vmem_src->size - PAGE_SIZE;
+		bzero(last_page + mod, PAGE_SIZE - mod);
+	}
+
+	vfree(&new_kernel_vmem);
+	return valloc_at(dest, vmem_dest, RDIV(vmem_src->size, PAGE_SIZE), vmem_src->addr, new_kernel_vmem.phys, vmem_src->flags);
+
+	#if 0
+	if(!range->ref_count) {
+		range->ref_count = kmalloc(sizeof(uint16_t));
+		*range->ref_count = 1;
+	}
+
+	int flags = range->flags;
+	if(range->flags & VM_RW) {
+		range->flags |= VM_COW;
+		flags |= VM_COW;
+	}
+
+	struct vmem_range* new_range = vmem _map(task->vmem_ctx, range->virt_addr, range->phys_addr, range->size, flags);
+	valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->virt_addr, range->phys_addr, flags);
+	__sync_add_and_fetch(range->ref_count, 1);
+	new_range->ref_count = range->ref_count;
+	#endif
+}
+
+int vm_clone(struct valloc_ctx* dest, struct valloc_ctx* src) {
+	vmem_t* range = src->ranges;
+	for(; range; range = range->next) {
+		if(!(range->flags & VM_TFORK)) {
+			continue;
+		}
+
+		if(vm_copy(dest, NULL, range) != 0) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 int vfree(vmem_t* range) {
 	struct valloc_ctx* ctx = range->ctx;
 	spinlock_t* lock = &ctx->lock;
