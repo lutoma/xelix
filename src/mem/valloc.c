@@ -1,4 +1,4 @@
-/* valloc.c: Virtual memory allocator
+/* valloc.c: Virtual memory management
  * Copyright © 2020-2023 Lukas Martini
  *
  * This file is part of Xelix.
@@ -40,6 +40,22 @@ static int have_malloc_ranges = 50;
 	#define debug(...)
 #endif
 
+static inline vmem_t* get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
+	if(!phys && !bitmap_get(&ctx->bitmap, (uintptr_t)addr / PAGE_SIZE)) {
+		return NULL;
+	}
+
+	vmem_t* range = ctx->ranges;
+	for(; range; range = range->next) {
+		void* start = (phys ? range->phys : range->addr);
+		if(addr >= start && addr < (start + range->size)) {
+			return range;
+		}
+	}
+
+	return NULL;
+}
+
 static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* request) {
 	uint32_t page_num;
 	void* virt;
@@ -51,7 +67,7 @@ static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* reques
 			if(bitmap_get(&ctx->bitmap, page_num + i)) {
 				log(LOG_ERR, "valloc: Duplicate allocation attempt in context %#x at %#x\n", ctx, (page_num + i) * PAGE_SIZE);
 
-				vmem_t* crange = get_range(ctx, (page_num + i) * PAGE_SIZE, false);
+				vmem_t* crange = get_range(ctx, (void*)((page_num + i) * PAGE_SIZE), false);
 				if(crange) {
 					log(LOG_ERR, "valloc: Conflicting range: %#x - %#x\n", crange->addr, crange->addr + crange->size);
 				}
@@ -70,22 +86,6 @@ static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* reques
 
 	bitmap_set(&ctx->bitmap, page_num, size);
 	return virt;
-}
-
-static inline vmem_t* get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
-	if(!phys && !bitmap_get(&ctx->bitmap, (uintptr_t)addr / PAGE_SIZE)) {
-		return NULL;
-	}
-
-	vmem_t* range = ctx->ranges;
-	for(; range; range = range->next) {
-		void* start = (phys ? range->phys : range->addr);
-		if(addr >= start && addr < (start + range->size)) {
-			return range;
-		}
-	}
-
-	return NULL;
 }
 
 vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
@@ -126,27 +126,12 @@ static inline vmem_t* new_range() {
 	return range;
 }
 
-int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
-	// FIXME Fail if size, virt_request or phys are not page aligned?
-
-	if(!spinlock_get(&ctx->lock, -1)) {
-		return -1;
-	}
-
-	// Allocate virtual address
-	void* virt = alloc_virt(ctx, size, virt_request);
-	spinlock_release(&ctx->lock);
-	if(!virt) {
-		return -1;
-	}
-
-	//debug("ctx %p page_num %5d valloc %p size %#x\n", ctx, page_num, page_num * PAGE_SIZE, size * PAGE_SIZE);
-
-	// Allocate physical address if necessary
+static inline void* setup_phys(struct valloc_ctx* ctx, size_t size, void* virt, void* phys, int flags) {
+	// Allocate memory if needed
 	if(!phys) {
 		phys = palloc(size);
 		if(!phys) {
-			return -1;
+			return NULL;
 		}
 	}
 
@@ -164,13 +149,13 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 			 * temporarily map it into the kernel virtual address space to zero it.
 			 */
 			if(!spinlock_get(&VA_KERNEL->lock, -1)) {
-				return -1;
+				return NULL;
 			}
 
 			void* zero_addr = alloc_virt(VA_KERNEL, size, NULL);
 			spinlock_release(&VA_KERNEL->lock);
 			if(zero_addr == NULL) {
-				return -1;
+				return NULL;
 			}
 
 			paging_set_range(VA_KERNEL->page_dir, zero_addr, phys, size * PAGE_SIZE, VM_RW);
@@ -179,6 +164,26 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 			bitmap_clear(&VA_KERNEL->bitmap, (uintptr_t)zero_addr / PAGE_SIZE, RDIV(size, PAGE_SIZE));
 		}
 	}
+
+	return phys;
+}
+
+int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
+	// FIXME Fail if size, virt_request or phys are not page aligned?
+
+	if(!spinlock_get(&ctx->lock, -1)) {
+		return -1;
+	}
+
+	// Allocate virtual address
+	void* virt = alloc_virt(ctx, size, virt_request);
+	spinlock_release(&ctx->lock);
+	if(!virt) {
+		return -1;
+	}
+
+	debug("ctx %p page_num %5d valloc %p size %#x\n", ctx, page_num, page_num * PAGE_SIZE, size * PAGE_SIZE);
+	phys = setup_phys(ctx, size, virt, phys, flags);
 
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return -1;
@@ -208,6 +213,79 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 	debug("ctx %#x valloc %p -> %p size %#x\n", ctx, range->addr, range->phys, range->size);
 	spinlock_release(&ctx->lock);
 	return 0;
+}
+
+int vm_alloc_many(int num, struct valloc_ctx** mctx, vmem_t** mvmem, size_t size, void* phys, int* mflags) {
+	for(int i = 0; i < num; i++) {
+		if(!spinlock_get(&mctx[i]->lock, -1)) {
+			for(int i = i - 1; i >= 0; i++) {
+				spinlock_release(&mctx[i]->lock);
+			}
+			return -1;
+		}
+	}
+
+	uint32_t page_num = 0;
+	// Try to find a matching allocation in all contexts
+	while(true) {
+		page_num = bitmap_find(&mctx[0]->bitmap, page_num, size);
+		if(page_num == -1) {
+			goto release_and_fail;
+		}
+
+		bool all_free = true;
+		for(int i = 1; i < num; i++) {
+			if(bitmap_get_range(&mctx[i]->bitmap, page_num, size)) {
+				all_free = false;
+				page_num++;
+				break;
+			}
+		}
+
+		if(all_free) {
+			break;
+		}
+	}
+
+	void* virt = (void*)(page_num * PAGE_SIZE);
+
+	for(int i = 0; i < num; i++) {
+		struct valloc_ctx* lctx = mctx[i];
+
+		bitmap_set(&lctx->bitmap, page_num, size);
+		phys = setup_phys(lctx, size, virt, phys, mflags[i]);
+
+		vmem_t* range = new_range();
+		if(!range) {
+			goto release_and_fail;
+		}
+
+		range->ctx = lctx;
+		range->addr = virt;
+		range->phys = phys;
+		range->size = size * PAGE_SIZE;
+		range->flags = mflags[i];
+		range->next = lctx->ranges;
+
+		if(lctx->ranges) {
+			lctx->ranges->previous = range;
+		}
+		lctx->ranges = range;
+		spinlock_release(&lctx->lock);
+
+		if(mvmem[i]) {
+			memcpy(mvmem[i], range, sizeof(vmem_t));
+		}
+	}
+
+	return 0;
+
+release_and_fail:
+	for(int i = 0; i < num; i++) {
+		spinlock_release(&mctx[i]->lock);
+	}
+
+	return -1;
 }
 
 /* Transparently maps memory from one paging context into another.

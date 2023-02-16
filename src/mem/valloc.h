@@ -113,6 +113,9 @@ typedef struct valloc_mem {
 extern struct valloc_ctx valloc_kernel_ctx;
 
 int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags);
+
+int vm_alloc_many(int num, struct valloc_ctx** mctx, vmem_t** mvmem, size_t size, void* phys, int* mflags);
+
 void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	void* src_addr, size_t size, int flags);
 int vfree(vmem_t* range);
