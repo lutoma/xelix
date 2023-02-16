@@ -41,20 +41,14 @@
  */
 #define VM_TFORK 8
 
-// Allocate on write
-#define VM_AOW 16
+// Do not use Copy-on-Write for copies of this range
+#define VM_NOCOW 16
 
-// Copy on write - implies VM_AOW
-#define VM_COW 32
-
-#define VM_NOCOW 64
+// Zero out address space after allocation
+#define VM_ZERO 32
 
 // Temp hack
 #define VM_NO_MAP 128
-#define VM_NO_VIRT 128
-
-// Zero out address space after allocation
-#define VM_ZERO 256
 
 // vmap: Only map user-readable pages
 #define VM_MAP_USER_ONLY 512
