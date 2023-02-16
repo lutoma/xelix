@@ -41,27 +41,6 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task_t* task = zmalloc(sizeof(task_t));
 	valloc_new(&task->vmem, NULL);
 
-	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
-		return NULL;
-	}
-	task->state = vmem.addr;
-	bzero(task->state, sizeof(isf_t));
-
-	if(valloc_at(&task->vmem, NULL, 1, vmem.addr, vmem.phys, VM_FREE) != 0) {
-		return NULL;
-	}
-
-	// Kernel stack used during interrupts while this task is running
-	if(valloc(VA_KERNEL, &vmem, KERNEL_STACK_PAGES, NULL, VM_RW) != 0) {
-		return NULL;
-	}
-	task->kernel_stack = vmem.addr;
-
-	if(valloc_at(&task->vmem, NULL, KERNEL_STACK_PAGES, vmem.addr, vmem.phys, VM_FREE) != 0) {
-		return NULL;
-	}
-
 	/* Map parts of the kernel marked as UL_VISIBLE into the task address
 	 * space (But readable only to PL0). These are the functions and data
 	 * structures used in the interrupt handler before the paging context is
@@ -111,6 +90,34 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	return task;
 }
 
+static inline int map_task(task_t* task) {
+	vmem_t vmem1;
+	vmem_t vmem2;
+	vmem_t* mvmem[] = {&vmem1, &vmem2};
+
+	int flags[] = {VM_RW, VM_FREE};
+	struct valloc_ctx* ctx[] = {VA_KERNEL, &task->vmem};
+
+	if(vm_alloc_many(2, ctx, mvmem, 1, NULL, flags) != 0) {
+		kfree(task);
+		return -1;
+	}
+
+	task->state = mvmem[0]->addr;
+	bzero(task->state, sizeof(isf_t));
+
+	// Kernel stack used during interrupts while this task is running
+	if(vm_alloc_many(2, ctx, mvmem, KERNEL_STACK_PAGES, NULL, flags) != 0) {
+		vfree(&vmem1);
+		vfree(&vmem2);
+		kfree(task);
+		return -1;
+	}
+
+	task->kernel_stack = vmem1.addr;
+	return 0;
+}
+
 /* Sets up a new task, including the necessary paging context, stacks,
  * interrupt stack frame etc. The binary still has to be mapped into the paging
  * context separately (usually in the ELF loader).
@@ -120,6 +127,10 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
 	if(!task) {
+		return NULL;
+	}
+
+	if(map_task(task) != 0) {
 		return NULL;
 	}
 
@@ -140,6 +151,7 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
 	vfs_open(task, "/dev/stderr", O_WRONLY);
+
 	return task;
 }
 
@@ -208,12 +220,6 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task_t* task = alloc_task(to_fork, 0, to_fork->name, to_fork->environ,
 		to_fork->envc, to_fork->argv, to_fork->argc);
 
-	memcpy(task->cwd, to_fork->cwd, VFS_PATH_MAX);
-	memcpy(task->state, state, sizeof(isf_t));
-	memcpy(task->kernel_stack, to_fork->kernel_stack, KERNEL_STACK_SIZE);
-	memcpy(task->binary_path, to_fork->binary_path, sizeof(task->binary_path));
-	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * CONFIG_VFS_MAX_OPENFILES);
-
 	task->uid = to_fork->uid;
 	task->gid = to_fork->gid;
 	task->euid = to_fork->euid;
@@ -222,64 +228,31 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	task->stack_size = to_fork->stack_size;
 	task->sbrk = to_fork->sbrk;
 
+	memcpy(task->cwd, to_fork->cwd, VFS_PATH_MAX);
+	memcpy(task->binary_path, to_fork->binary_path, sizeof(task->binary_path));
+	memcpy(task->files, to_fork->files, sizeof(vfs_file_t) * CONFIG_VFS_MAX_OPENFILES);
+
+	if(vm_clone(&task->vmem, &to_fork->vmem) != 0) {
+		return NULL;
+	}
+
 	// FIXME transfer potentially updated environ
 	task_setup_execdata(task);
+
+	/* Allocate task state and kernel stack. It's important this is done after
+	 * the vm_clone above, since it could otherwise end up in a memory region
+	 * that was already occupied in the forked task.
+	 */
+	if(map_task(task) != 0) {
+		return NULL;
+	}
+
+	memcpy(task->state, state, sizeof(isf_t));
+	memcpy(task->kernel_stack, to_fork->kernel_stack, KERNEL_STACK_SIZE);
 
 	// Adjust kernel esp
 	intptr_t diff = state->esp - to_fork->kernel_stack;
 	task->state->esp = task->kernel_stack + diff;
-
-	vmem_t* range = to_fork->vmem.ranges;
-	for(; range; range = range->next) {
-		if(!(range->flags & VM_TFORK)) {
-			continue;
-		}
-
-		// Can't do copy on write/merging with pages where we don't control deallocation
-		//if(range->flags & VM_NOCOW || !(range->flags & (VM_FREE | VM_COW))) {
-
-		//if(range->flags & VM_RW) {
-		if(true || range->flags & VM_RW) {
-			vmem_t new_kernel_vmem;
-			if(valloc(VA_KERNEL, &new_kernel_vmem, RDIV(range->size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
-				return NULL;
-			}
-
-			vmem_t old_kernel_vmem;
-			void* old_kernel_virt = vmap(VA_KERNEL, &old_kernel_vmem, &to_fork->vmem, range->addr, range->size, 0);
-			if(!old_kernel_virt) {
-				return NULL;
-			}
-
-			memcpy(new_kernel_vmem.addr, old_kernel_virt, range->size);
-			vfree(&old_kernel_vmem);
-			//vfree(&new_kernel_vmem);
-
-			if(valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->addr, new_kernel_vmem.phys, range->flags) != 0) {
-				return NULL;
-			}
-
-			continue;
-		}
-
-		#if 0
-		if(!range->ref_count) {
-			range->ref_count = kmalloc(sizeof(uint16_t));
-			*range->ref_count = 1;
-		}
-
-		int flags = range->flags;
-		if(range->flags & VM_RW) {
-			range->flags |= VM_COW;
-			flags |= VM_COW;
-		}
-
-		struct vmem_range* new_range = vmem _map(task->vmem_ctx, range->virt_addr, range->phys_addr, range->size, flags);
-		valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->virt_addr, range->phys_addr, flags);
-		__sync_add_and_fetch(range->ref_count, 1);
-		new_range->ref_count = range->ref_count;
-		#endif
-	}
 
 	task->state->cr3 = (uint32_t)valloc_get_page_dir(&task->vmem);
 

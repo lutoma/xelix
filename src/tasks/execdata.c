@@ -40,7 +40,7 @@ struct execdata {
 	char binary_path[VFS_PATH_MAX];
 };
 
-/* Sets up two pages of runtime data for the program, including PID, argv,
+/* Sets up four pages of runtime data for the program, including PID, argv,
  * environment etc.
  *
  * Page layout:
