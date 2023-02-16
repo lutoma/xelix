@@ -92,4 +92,6 @@ void task_setup_execdata(task_t* task) {
 	exc->envc = task->envc;
 	memcpy(exc->binary_path, task->binary_path, VFS_PATH_MAX);
 	memcpy(exc->old_binary_path, task->binary_path, 256);
+
+	vm_free(&vmem);
 }
