@@ -98,8 +98,8 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	}
 
 	vfree(&vmem);
-	debug("  phys %#-8x-%#-8x task virt %#-8x-%#-8x kernel virt %#-8x-%#-8x\n",
-		vmem.phys, (uintptr_t)vmem.phys + size, virt, (uintptr_t)virt + size, vmem.addr, (uintptr_t)vmem.addr + size);
+	debug("  phys %#-8x-%#-8x task virt %#-8x-%#-8x\n", vmem.phys,
+		(uintptr_t)vmem.phys + size, virt, (uintptr_t)virt + size);
 	return 0;
 }
 
