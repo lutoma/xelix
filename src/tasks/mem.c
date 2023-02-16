@@ -48,7 +48,7 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 	}
 
 	int alloc_size = stack_lower - addr + PAGE_SIZE;
-	if(valloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), NULL,
+	if(vm_alloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), NULL,
 		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK | VM_ZERO) != 0) {
 		return -1;
 	}
@@ -59,7 +59,7 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 
 // Free a task and all associated memory
 void task_free(task_t* t) {
-	valloc_cleanup(&t->vmem);
+	vm_cleanup(&t->vmem);
 	kfree_array(t->environ, t->envc);
 	kfree_array(t->argv, t->argc);
 	kfree(t);
@@ -75,7 +75,7 @@ void* task_sbrk(task_t* task, int32_t length) {
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	if(valloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, NULL,
+	if(vm_alloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, NULL,
 		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE) != 0) {
 		return (void*)-1;
 	}
@@ -109,8 +109,8 @@ void* task_mmap(task_t* task, struct task_mmap_ctx* ctx) {
 		vaflags |= VM_RW;
 	}
 
-	vmem_t vmem;
-	if(valloc(&task->vmem, &vmem, RDIV(ctx->len, PAGE_SIZE), NULL, vaflags) != 0) {
+	vm_alloc_t vmem;
+	if(vm_alloc(&task->vmem, &vmem, RDIV(ctx->len, PAGE_SIZE), NULL, vaflags) != 0) {
 		return (void*)-1;
 	}
 
@@ -137,20 +137,20 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 	char** new_array = kmalloc(sizeof(char*) * (size + 1));
 	int i = 0;
 	for(; i < size; i++) {
-		vmem_t vmem;
-		char* old_string = vmap(VA_KERNEL, &vmem, &task->vmem, array[i], VFS_PATH_MAX, 0);
+		vm_alloc_t vmem;
+		char* old_string = vm_map(VM_KERNEL, &vmem, &task->vmem, array[i], VFS_PATH_MAX, 0);
 
 		if(!old_string) {
 			// Retry with shorter length to stay within the page
 			max_length = ALIGN(array[i], PAGE_SIZE) - array[i] - 1;
-			old_string = vmap(VA_KERNEL, &vmem, &task->vmem, array[i], max_length, 0);
+			old_string = vm_map(VM_KERNEL, &vmem, &task->vmem, array[i], max_length, 0);
 			if(!old_string) {
 				return NULL;
 			}
 		}
 
 		new_array[i] = strndup(old_string, max_length);
-		vfree(&vmem);
+		vm_free(&vmem);
 
 		// Make sure string is NULL-terminated
 		size_t slen = strnlen(new_array[i], max_length);

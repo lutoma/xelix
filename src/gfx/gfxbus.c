@@ -80,13 +80,13 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		void* virt_addr = 0xd0000000 + (allocation_num * ALIGN(size, PAGE_SIZE));
 		allocation_num++;
 
-		vmem_t vmem;
-		if(valloc_at(&ctx->task->vmem, &vmem, RDIV(size, PAGE_SIZE), virt_addr, NULL, VM_USER | VM_RW | VM_ZERO) != 0) {
+		vm_alloc_t vmem;
+		if(vm_alloc_at(&ctx->task->vmem, &vmem, RDIV(size, PAGE_SIZE), virt_addr, NULL, VM_USER | VM_RW | VM_ZERO) != 0) {
 			return -1;
 		}
 
-		if(valloc_at(&master_task->vmem, NULL, RDIV(size, PAGE_SIZE), virt_addr, vmem.phys, VM_USER | VM_RW) != 0) {
-			vfree(&vmem);
+		if(vm_alloc_at(&master_task->vmem, NULL, RDIV(size, PAGE_SIZE), virt_addr, vmem.phys, VM_USER | VM_RW) != 0) {
+			vm_free(&vmem);
 			return -1;
 		}
 		return (uintptr_t)virt_addr;

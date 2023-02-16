@@ -19,7 +19,7 @@
 
 #include "worker.h"
 #include <mem/kmalloc.h>
-#include <mem/valloc.h>
+#include <mem/vm.h>
 #include <tasks/task.h>
 #include <mem/i386-gdt.h>
 
@@ -29,20 +29,20 @@ worker_t* worker_new(char* name, void* entry) {
     worker->stopped = false;
     strncpy(worker->name, name, VFS_NAME_MAX);
 
-    vmem_t vmem;
-    if(valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
+    vm_alloc_t vmem;
+    if(vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
         return NULL;
     }
     worker->state = vmem.addr;
     bzero(worker->state, sizeof(isf_t));
 
-    if(valloc(VA_KERNEL, &vmem, KERNEL_STACK_PAGES, NULL, VM_RW) != 0) {
+    if(vm_alloc(VM_KERNEL, &vmem, KERNEL_STACK_PAGES, NULL, VM_RW) != 0) {
         return NULL;
     }
     worker->stack = vmem.addr;
 
     worker->state->ds = GDT_SEG_DATA_PL0;
-    worker->state->cr3 = (uint32_t)valloc_get_page_dir(VA_KERNEL);
+    worker->state->cr3 = (uint32_t)vm_pagedir(VM_KERNEL);
     worker->state->ebp = 0;
     worker->state->esp = (void*)worker->stack + KERNEL_STACK_SIZE - sizeof(iret_t);
 

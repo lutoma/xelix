@@ -77,7 +77,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 
 	int num_args = 0;
-	vmem_t vmem[3] = {0};
+	vm_alloc_t vmem[3] = {0};
 	size_t ptr_sizes[3] = {0};
 	uint8_t flags[3] = {def.arg0_flags, def.arg1_flags, def.arg2_flags};
 	uint32_t args[3] = {state->SCREG_ARG0, state->SCREG_ARG1,
@@ -126,7 +126,9 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			call_fail();
 		}
 
-		args[i] = (uint32_t)vmap(VA_KERNEL, &vmem[i], &task->vmem, (void*)args[i], ptr_sizes[i], VM_RW | VM_MAP_UNDERALLOC_WORKAROUND);
+		// FIXME Remove workaround
+		args[i] = (uint32_t)vm_map(VM_KERNEL, &vmem[i], &task->vmem,
+			(void*)args[i], ptr_sizes[i], VM_RW | VM_MAP_UNDERALLOC_WORKAROUND);
 
 		if(unlikely(!args[i])) {
 
@@ -184,7 +186,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 
 	for(int i = 0; i < 3; i++) {
 		if(vmem[i].self) {
-			vfree(&vmem[i]);
+			vm_free(&vmem[i]);
 		}
 	}
 

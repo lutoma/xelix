@@ -78,7 +78,7 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 		log(LOG_WARN, "Page fault in task %d <%s> %s\n", task->pid,
 			task->name, message);
 
-		vmem_t* range = valloc_get_range(&task->vmem, state->cr2, false);
+		vm_alloc_t* range = vm_get(&task->vmem, state->cr2, false);
 		if(range) {
 			log(LOG_WARN, "  phys: %p, flags: rw %d, user %d\n",
 				valloc_translate_ptr(range, state->cr2, false),

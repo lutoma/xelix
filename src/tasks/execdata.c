@@ -51,9 +51,10 @@ struct execdata {
  * - environ strings / free space for new environment variables
  */
 void task_setup_execdata(task_t* task) {
-	vmem_t vmem;
-	valloc(VA_KERNEL, &vmem, 4, NULL, VM_RW | VM_ZERO);
-	valloc_at(&task->vmem, NULL, 4, (void*)CONFIG_EXECDATA_LOCATION, vmem.phys,
+	vm_alloc_t vmem;
+	// FIXME Free from kernel space
+	vm_alloc(VM_KERNEL, &vmem, 4, NULL, VM_RW | VM_ZERO);
+	vm_alloc_at(&task->vmem, NULL, 4, (void*)CONFIG_EXECDATA_LOCATION, vmem.phys,
 		VM_USER | VM_RW | VM_FREE);
 
 	size_t offset = 0;

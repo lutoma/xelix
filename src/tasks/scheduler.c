@@ -255,7 +255,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 			default: state = 'U'; break;
 		}
 
-		vmem_t* range = task->vmem.ranges;
+		vm_alloc_t* range = task->vmem.ranges;
 		uint32_t mem_alloc = 0;
 		for(; range; range = range->next) {
 			if(range->flags & VM_TFORK) {

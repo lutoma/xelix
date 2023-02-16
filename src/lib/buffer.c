@@ -26,9 +26,9 @@ struct buffer* buffer_new(size_t max_pages) {
 	struct buffer* buf = zmalloc(sizeof(struct buffer));
 	buf->max_pages = max_pages;
 	buf->pages = 1;
-	vmem_t vmem;
+	vm_alloc_t vmem;
 
-	if(valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
+	if(vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
 		return NULL;
 	}
 
@@ -51,8 +51,8 @@ size_t buffer_write(struct buffer* buf, const void* src, size_t size) {
 			return -1;
 		}
 
-		vmem_t vmem;
-		if(valloc(VA_KERNEL, &vmem, size_new, NULL, VM_RW) != 0) {
+		vm_alloc_t vmem;
+		if(vm_alloc(VM_KERNEL, &vmem, size_new, NULL, VM_RW) != 0) {
 			return -1;
 		}
 

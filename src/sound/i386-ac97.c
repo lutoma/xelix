@@ -97,7 +97,7 @@ struct ac97_card {
 	uint16_t sample_rate;
 
 	struct buf_desc* descs;
-	vmem_t buffers[NUM_BUFFERS];
+	vm_alloc_t buffers[NUM_BUFFERS];
 
 	// Currently playing buffer, -1 if not playing anything
 	int playing_buffer;
@@ -239,7 +239,7 @@ static void enable_card(struct ac97_card* card) {
 	card->descs = zmalloc_a(sizeof(struct buf_desc) * NUM_BUFFERS);
 
 	for(int i = 0; i < NUM_BUFFERS; i++) {
-		valloc(VA_KERNEL, &card->buffers[i], 4, NULL, VM_RW);
+		vm_alloc(VM_KERNEL, &card->buffers[i], 4, NULL, VM_RW);
 		card->descs[i].buf = card->buffers[i].phys;
 	}
 

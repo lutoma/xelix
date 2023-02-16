@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2020-2022 Lukas Martini
+/* Copyright © 2020-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -24,8 +24,8 @@
 #include <stdint.h>
 #include <spinlock.h>
 
-#define VALLOC_BITMAP_SIZE 0xfffff000 / PAGE_SIZE
-#define VA_KERNEL (&valloc_kernel_ctx)
+#define VM_BITMAP_SIZE 0xfffff000 / PAGE_SIZE
+#define VM_KERNEL (&vm_kernel_ctx)
 
 // Writable
 #define VM_RW 1
@@ -50,7 +50,7 @@
 // Temp hack
 #define VM_NO_MAP 128
 
-// vmap: Only map user-readable pages
+// vm_map: Only map user-readable pages
 #define VM_MAP_USER_ONLY 512
 
 // temp
@@ -59,71 +59,71 @@
 #define VM_DEBUG 2048
 
 
-#define valloc(ctx, vmem, size, phys, flags) valloc_at(ctx, vmem, size, NULL, phys, flags)
+#define vm_alloc(ctx, vmem, size, phys, flags) vm_alloc_at(ctx, vmem, size, NULL, phys, flags)
 
 #define valloc_translate_ptr(range, inaddr, dir)   \
 	(dir ? range->addr : range->phys)              \
 	+ (inaddr - (dir ? range->phys : range->addr))
 
 
-struct valloc_mem;
-struct valloc_ctx {
+struct vm_alloc;
+struct vm_ctx {
 	spinlock_t lock;
-	uint32_t bitmap_data[bitmap_size(VALLOC_BITMAP_SIZE)];
+	uint32_t bitmap_data[bitmap_size(VM_BITMAP_SIZE)];
 	struct bitmap bitmap;
-	struct valloc_mem* ranges;
+	struct vm_alloc* ranges;
 
 	// Address of the actual page tables that will be read by the hardware
 	struct paging_context* page_dir;
 	struct paging_context* page_dir_phys;
 };
 
-struct valloc_mem_shard {
-	struct valloc_mem_shard* next;
+struct vm_alloc_shard {
+	struct vm_alloc_shard* next;
 	size_t size;
 	void* addr;
 	void* phys;
 };
 
-typedef struct valloc_mem {
-	struct valloc_mem* next;
-	struct valloc_mem* previous;
+typedef struct vm_alloc {
+	struct vm_alloc* next;
+	struct vm_alloc* previous;
 
-	// Used in vfree
-	struct valloc_mem* self;
-	struct valloc_ctx* ctx;
+	// Used in vm_free
+	struct vm_alloc* self;
+	struct vm_ctx* ctx;
 	void* addr;
 	size_t size;
 	int flags;
 
 	// Physical memory shards. If NULL, memory is contiguous
-	struct valloc_mem_shard* shards;
+	struct vm_alloc_shard* shards;
 
 	// For contiguous memory, this contains the physical address. NULL for sharded memory
 	void* phys;
-} vmem_t;
+} vm_alloc_t;
 
 
-extern struct valloc_ctx valloc_kernel_ctx;
+extern struct vm_ctx vm_kernel_ctx;
 
-int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags);
+int vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_request, void* phys, int flags);
+int vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t size, void* phys, int* mflags);
 
-int vm_alloc_many(int num, struct valloc_ctx** mctx, vmem_t** mvmem, size_t size, void* phys, int* mflags);
-
-void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
+void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	void* src_addr, size_t size, int flags);
 
-vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys);
-int vm_copy(struct valloc_ctx* dest, vmem_t* vmem_dest, vmem_t* vmem_src);
-int vm_clone(struct valloc_ctx* dest, struct valloc_ctx* src);
-int vfree(vmem_t* range);
-int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir);
-void valloc_cleanup(struct valloc_ctx* ctx);
-void* valloc_get_page_dir(struct valloc_ctx* ctx);
-int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used);
+vm_alloc_t* vm_get(struct vm_ctx* ctx, void* addr, bool phys);
+int vm_copy(struct vm_ctx* dest, vm_alloc_t* vmem_dest, vm_alloc_t* vmem_src);
+int vm_clone(struct vm_ctx* dest, struct vm_ctx* src);
+int vm_free(vm_alloc_t* range);
+int vm_new(struct vm_ctx* ctx, struct paging_context* page_dir);
+void vm_cleanup(struct vm_ctx* ctx);
+void* vm_pagedir(struct vm_ctx* ctx);
+int vm_stats(struct vm_ctx* ctx, uint32_t* total, uint32_t* used);
 
-static inline void* valloc_translate(struct valloc_ctx* ctx, void* raddress, bool phys) {
-	vmem_t* range = valloc_get_range(ctx, raddress, phys);
+// FIXME Deprecated
+static inline void* valloc_translate(struct vm_ctx* ctx, void* raddress, bool phys) {
+	vm_alloc_t* range = vm_get(ctx, raddress, phys);
 	if(!range) {
 		return 0;
 	}

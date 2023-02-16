@@ -21,7 +21,7 @@
 #include <mem/paging.h>
 #include <string.h>
 #include <mem/page_alloc.h>
-#include <mem/valloc.h>
+#include <mem/vm.h>
 
 extern struct mem_page_alloc_ctx mem_phys_alloc_ctx;
 

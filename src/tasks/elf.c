@@ -68,8 +68,8 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 
 	size_t size = ALIGN(phead->memsz + phys_offset, PAGE_SIZE);
 
-	vmem_t vmem;
-	if(unlikely(valloc(VA_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0)) {
+	vm_alloc_t vmem;
+	if(unlikely(vm_alloc(VM_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0)) {
 		return -1;
 	}
 
@@ -83,7 +83,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 
 	if(unlikely(!bin_read(fd, phead->offset, phead->filesz, vmem.addr + phys_offset, task))) {
 		pfree((uint32_t)phys / PAGE_SIZE, size / PAGE_SIZE);
-		vfree(&vmem);
+		vm_free(&vmem);
 		return -1;
 	}
 
@@ -93,11 +93,11 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 		vmem_flags |= VM_RW;
 	}
 
-	if(unlikely(valloc_at(&task->vmem, NULL, RDIV(size, PAGE_SIZE), virt, vmem.phys, vmem_flags) != 0)) {
+	if(unlikely(vm_alloc_at(&task->vmem, NULL, RDIV(size, PAGE_SIZE), virt, vmem.phys, vmem_flags) != 0)) {
 		return -1;
 	}
 
-	vfree(&vmem);
+	vm_free(&vmem);
 	debug("  phys %#-8x-%#-8x task virt %#-8x-%#-8x\n", vmem.phys,
 		(uintptr_t)vmem.phys + size, virt, (uintptr_t)virt + size);
 	return 0;
@@ -249,7 +249,7 @@ int elf_load_file(task_t* task, char* path) {
 
 /*
 	if(ctx->ndyndeps) {
-		char* dynstr = (void*)vmem_translate(task->vmem_ctx, (intptr_t)ctx->dynstrtab, false);
+		char* dynstr = (void*)vm_alloc_translate(task->vmem_ctx, (intptr_t)ctx->dynstrtab, false);
 		for(int i = 0; i < ctx->ndyndeps; i++) {
 			char* lib_path = kmalloc(strlen(dynstr + ctx->dyndeps[i]) + 10);
 			sprintf(lib_path, "/usr/lib/%s", dynstr + ctx->dyndeps[i]);

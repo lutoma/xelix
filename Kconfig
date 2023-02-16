@@ -48,14 +48,14 @@ menu "Kernel stdlib"
 endmenu
 
 menu "Memory"
-	config VALLOC_DEBUG
-		bool "valloc: Enable debugging support"
+	config VM_DEBUG
+		bool "vm: Enable virtual memory allocation debugging support"
 		---help---
 		Print out information for each allocation/free to serial. Makes
 		everything pretty slow.
 
-	config VALLOC_DEBUG_ALL
-		bool "valloc: Debug all ranges"
+	config VM_DEBUG_ALL
+		bool "vm: Debug all allocations"
                 depends on VALLOC_DEBUG
 		---help---
 		Print out information for each allocation/free to serial. Makes

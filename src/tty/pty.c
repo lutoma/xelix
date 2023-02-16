@@ -224,8 +224,8 @@ int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return -1;
 	}
 
-	vmem_t alloc;
-	void* arg = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
+	vm_alloc_t alloc;
+	void* arg = vm_map(VM_KERNEL, &alloc, &ctx->task->vmem, _arg,
 		arg_size, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!arg) {
@@ -257,7 +257,7 @@ int pty_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			break;
 	}
 
-	vfree(&alloc);
+	vm_free(&alloc);
 	return 0;
 }
 

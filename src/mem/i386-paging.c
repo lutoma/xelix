@@ -53,9 +53,9 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 		struct page* page_table;
 
 		if(!page_dir->present) {
-			// FIXME Possible chicken/egg problem here if valloc tries to allocate page within the page table we're trying to allocate
-			vmem_t page_table_alloc;
-			valloc(VA_KERNEL, &page_table_alloc, 1, NULL, VM_RW | VM_ZERO);
+			// FIXME Possible chicken/egg problem here if vm_alloc tries to allocate page within the page table we're trying to allocate
+			vm_alloc_t page_table_alloc;
+			vm_alloc(VM_KERNEL, &page_table_alloc, 1, NULL, VM_RW | VM_ZERO);
 			page_table = page_table_alloc.addr;
 			phys_table = page_table_alloc.phys;
 
@@ -71,7 +71,7 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 				// mapped and cannot be translated by valloc_translate (yet)
 				page_table = phys_table;
 			} else {
-				page_table = valloc_translate(VA_KERNEL, phys_table, true);
+				page_table = valloc_translate(VM_KERNEL, phys_table, true);
 			}
 		}
 
@@ -105,7 +105,7 @@ void paging_clear_range(struct paging_context* ctx, void* virt_addr, size_t size
 		if(phys_table < paging_alloc_end) {
 			page_table = phys_table;
 		} else {
-			page_table = valloc_translate(VA_KERNEL, phys_table, true);
+			page_table = valloc_translate(VM_KERNEL, phys_table, true);
 		}
 
 		struct page* page = page_table + page_table_offset;
@@ -137,9 +137,9 @@ void paging_init() {
 	 * of time. This is a bit wasteful since we're also allocating page tables
 	 * for unused memory regions, but allocating these on the fly later is a
 	 * gigantic headache: You could end up in a situation where the new
-	 * location for the page table allocated by valloc lies within that page
+	 * location for the page table allocated by vm_alloc lies within that page
 	 * table itself, which would result in an endless loop between
-	 * valloc/paging_set_range.
+	 * vm_alloc/paging_set_range.
 	 *
 	 * Since this happens before memory allocation is ready, just store the
 	 * data in free memory following KERNEL_END. This memory will later be
@@ -158,9 +158,9 @@ void paging_init() {
 
 	log(LOG_INFO, "paging: Early page tables allocated up to %p\n", paging_alloc_end);
 
-	// Create a new valloc context with the page dir and allocate the kernel / page dir in it
-	valloc_new(&valloc_kernel_ctx, paging_kernel_ctx);
-	if(valloc_at(VA_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW) != 0) {
+	// Create a new vm_alloc context with the page dir and allocate the kernel / page dir in it
+	vm_new(&vm_kernel_ctx, paging_kernel_ctx);
+	if(vm_alloc_at(VM_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW) != 0) {
 		panic("paging: Could not allocate kernel vmem");
 	}
 

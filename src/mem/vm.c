@@ -1,4 +1,4 @@
-/* valloc.c: Virtual memory management
+/* vm.c: Virtual memory management
  * Copyright © 2020-2023 Lukas Martini
  *
  * This file is part of Xelix.
@@ -17,7 +17,7 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "valloc.h"
+#include <mem/vm.h>
 #include <mem/paging.h>
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
@@ -27,11 +27,11 @@
 #include <panic.h>
 #include <spinlock.h>
 
-static vmem_t malloc_ranges[50];
+static vm_alloc_t malloc_ranges[50];
 static int have_malloc_ranges = 50;
 
-#ifdef CONFIG_VALLOC_DEBUG
-	#ifdef CONFIG_VALLOC_DEBUG_ALL
+#ifdef CONFIG_VM_DEBUG
+	#ifdef CONFIG_VM_DEBUG_ALL
 		#define debug(args...) { log(LOG_DEBUG, args); }
 	#else
 		#define debug(args...) { if(flags & VM_DEBUG) { log(LOG_DEBUG, args); } }
@@ -40,12 +40,12 @@ static int have_malloc_ranges = 50;
 	#define debug(...)
 #endif
 
-static inline vmem_t* get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
+static inline vm_alloc_t* get_range(struct vm_ctx* ctx, void* addr, bool phys) {
 	if(!phys && !bitmap_get(&ctx->bitmap, (uintptr_t)addr / PAGE_SIZE)) {
 		return NULL;
 	}
 
-	vmem_t* range = ctx->ranges;
+	vm_alloc_t* range = ctx->ranges;
 	for(; range; range = range->next) {
 		void* start = (phys ? range->phys : range->addr);
 		if(addr >= start && addr < (start + range->size)) {
@@ -56,7 +56,7 @@ static inline vmem_t* get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
 	return NULL;
 }
 
-static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* request) {
+static inline void* alloc_virt(struct vm_ctx* ctx, size_t size, void* request) {
 	uint32_t page_num;
 	void* virt;
 	if(request) {
@@ -65,11 +65,11 @@ static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* reques
 
 		for(int i = 0; i < size; i++) {
 			if(bitmap_get(&ctx->bitmap, page_num + i)) {
-				log(LOG_ERR, "valloc: Duplicate allocation attempt in context %#x at %#x\n", ctx, (page_num + i) * PAGE_SIZE);
+				log(LOG_ERR, "vm: Duplicate allocation attempt in context %#x at %#x\n", ctx, (page_num + i) * PAGE_SIZE);
 
-				vmem_t* crange = get_range(ctx, (void*)((page_num + i) * PAGE_SIZE), false);
+				vm_alloc_t* crange = get_range(ctx, (void*)((page_num + i) * PAGE_SIZE), false);
 				if(crange) {
-					log(LOG_ERR, "valloc: Conflicting range: %#x - %#x\n", crange->addr, crange->addr + crange->size);
+					log(LOG_ERR, "vm: Conflicting range: %#x - %#x\n", crange->addr, crange->addr + crange->size);
 				}
 				return NULL;
 			}
@@ -88,45 +88,45 @@ static inline void* alloc_virt(struct valloc_ctx* ctx, size_t size, void* reques
 	return virt;
 }
 
-vmem_t* valloc_get_range(struct valloc_ctx* ctx, void* addr, bool phys) {
+vm_alloc_t* vm_get(struct vm_ctx* ctx, void* addr, bool phys) {
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return NULL;
 	}
 
-	vmem_t* range = get_range(ctx, addr, phys);
+	vm_alloc_t* range = get_range(ctx, addr, phys);
 	spinlock_release(&ctx->lock);
 	return range;
 }
 
-static inline vmem_t* new_range() {
-	/* During initialization, kmalloc_init calls valloc once to get its memory
-	 * space to allocate from. The zmalloc call below would fail since kmalloc
-	 * is not ready yet. Another call to valloc can then happen in
+static inline vm_alloc_t* new_range() {
+	/* During initialization, kmalloc_init calls vm_alloc once to get its
+	 * memory space to allocate from. The zmalloc call below would fail since
+	 * kmalloc is not ready yet. Another call to vm_alloc can then happen in
 	 * paging_set_range when a new page table is allocated.
 	 * Add a dirty hack for that one-time special case.
 	 */
 
-	vmem_t* range;
+	vm_alloc_t* range;
 
 	// FIXME combine into simple early_alloc with the initial page dir allocation
 	if(unlikely(!kmalloc_ready)) {
 		if(likely(have_malloc_ranges)) {
 			range = &malloc_ranges[50 - have_malloc_ranges--];
 		} else {
-			panic("valloc: preallocated ranges exhausted before kmalloc is ready\n");
+			panic("vm: preallocated ranges exhausted before kmalloc is ready\n");
 		}
 	} else {
-		range = kmalloc(sizeof(vmem_t));
+		range = kmalloc(sizeof(vm_alloc_t));
 	}
 
 	if(range) {
-		bzero(range, sizeof(vmem_t));
+		bzero(range, sizeof(vm_alloc_t));
 		range->self = range;
 	}
 	return range;
 }
 
-static inline void* setup_phys(struct valloc_ctx* ctx, size_t size, void* virt, void* phys, int flags) {
+static inline void* setup_phys(struct vm_ctx* ctx, size_t size, void* virt, void* phys, int flags) {
 	// Allocate memory if needed
 	if(!phys) {
 		phys = palloc(size);
@@ -142,33 +142,33 @@ static inline void* setup_phys(struct valloc_ctx* ctx, size_t size, void* virt, 
 	}
 
 	if(flags & VM_ZERO) {
-		if(ctx == VA_KERNEL && !(flags & VM_NO_MAP)) {
+		if(ctx == VM_KERNEL && !(flags & VM_NO_MAP)) {
 			bzero(virt, size * PAGE_SIZE);
 		} else {
 			/* If the allocation is not in the kernel context or is set as NO_MAP,
 			 * temporarily map it into the kernel virtual address space to zero it.
 			 */
-			if(!spinlock_get(&VA_KERNEL->lock, -1)) {
+			if(!spinlock_get(&VM_KERNEL->lock, -1)) {
 				return NULL;
 			}
 
-			void* zero_addr = alloc_virt(VA_KERNEL, size, NULL);
-			spinlock_release(&VA_KERNEL->lock);
+			void* zero_addr = alloc_virt(VM_KERNEL, size, NULL);
+			spinlock_release(&VM_KERNEL->lock);
 			if(zero_addr == NULL) {
 				return NULL;
 			}
 
-			paging_set_range(VA_KERNEL->page_dir, zero_addr, phys, size * PAGE_SIZE, VM_RW);
+			paging_set_range(VM_KERNEL->page_dir, zero_addr, phys, size * PAGE_SIZE, VM_RW);
 			bzero(zero_addr, size * PAGE_SIZE);
-			paging_clear_range(VA_KERNEL->page_dir, zero_addr, size * PAGE_SIZE);
-			bitmap_clear(&VA_KERNEL->bitmap, (uintptr_t)zero_addr / PAGE_SIZE, RDIV(size, PAGE_SIZE));
+			paging_clear_range(VM_KERNEL->page_dir, zero_addr, size * PAGE_SIZE);
+			bitmap_clear(&VM_KERNEL->bitmap, (uintptr_t)zero_addr / PAGE_SIZE, RDIV(size, PAGE_SIZE));
 		}
 	}
 
 	return phys;
 }
 
-int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
+int vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
 	// FIXME Fail if size, virt_request or phys are not page aligned?
 
 	if(!spinlock_get(&ctx->lock, -1)) {
@@ -182,14 +182,14 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 		return -1;
 	}
 
-	debug("ctx %p page_num %5d valloc %p size %#x\n", ctx, page_num, page_num * PAGE_SIZE, size * PAGE_SIZE);
+	debug("ctx %p page_num %5d vm_alloc_at %p size %#x\n", ctx, page_num, page_num * PAGE_SIZE, size * PAGE_SIZE);
 	phys = setup_phys(ctx, size, virt, phys, flags);
 
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return -1;
 	}
 
-	vmem_t* range = new_range();
+	vm_alloc_t* range = new_range();
 	if(!range) {
 		return -1;
 	}
@@ -207,15 +207,15 @@ int valloc_at(struct valloc_ctx* ctx, vmem_t* vmem, size_t size, void* virt_requ
 	ctx->ranges = range;
 
 	if(vmem) {
-		memcpy(vmem, range, sizeof(vmem_t));
+		memcpy(vmem, range, sizeof(vm_alloc_t));
 	}
 
-	debug("ctx %#x valloc %p -> %p size %#x\n", ctx, range->addr, range->phys, range->size);
+	debug("ctx %#x vm_alloc_at %p -> %p size %#x\n", ctx, range->addr, range->phys, range->size);
 	spinlock_release(&ctx->lock);
 	return 0;
 }
 
-int vm_alloc_many(int num, struct valloc_ctx** mctx, vmem_t** mvmem, size_t size, void* phys, int* mflags) {
+int vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t size, void* phys, int* mflags) {
 	for(int i = 0; i < num; i++) {
 		if(!spinlock_get(&mctx[i]->lock, -1)) {
 			for(int i = i - 1; i >= 0; i++) {
@@ -250,12 +250,12 @@ int vm_alloc_many(int num, struct valloc_ctx** mctx, vmem_t** mvmem, size_t size
 	void* virt = (void*)(page_num * PAGE_SIZE);
 
 	for(int i = 0; i < num; i++) {
-		struct valloc_ctx* lctx = mctx[i];
+		struct vm_ctx* lctx = mctx[i];
 
 		bitmap_set(&lctx->bitmap, page_num, size);
 		phys = setup_phys(lctx, size, virt, phys, mflags[i]);
 
-		vmem_t* range = new_range();
+		vm_alloc_t* range = new_range();
 		if(!range) {
 			goto release_and_fail;
 		}
@@ -274,7 +274,7 @@ int vm_alloc_many(int num, struct valloc_ctx** mctx, vmem_t** mvmem, size_t size
 		spinlock_release(&lctx->lock);
 
 		if(mvmem[i]) {
-			memcpy(mvmem[i], range, sizeof(vmem_t));
+			memcpy(mvmem[i], range, sizeof(vm_alloc_t));
 		}
 	}
 
@@ -290,10 +290,10 @@ release_and_fail:
 
 /* Transparently maps memory from one paging context into another.
  */
-void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
+void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	void* src_addr, size_t size, int flags) {
 
-	debug("vmap: ctx %#x src %p size %#x\n", ctx, src_addr, size);
+	debug("vm_map: ctx %#x src %p size %#x\n", ctx, src_addr, size);
 	void* src_aligned = ALIGN_DOWN(src_addr, PAGE_SIZE);
 	size_t src_offset = (uintptr_t)src_addr % PAGE_SIZE;
 
@@ -316,9 +316,9 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 		return NULL;
 	}
 
-	debug("  vmap: allocated %d pages at %p as target\n", size_pages, virt);
+	debug("  vm_map: allocated %d pages at %p as target\n", size_pages, virt);
 
-	vmem_t* range = new_range();
+	vm_alloc_t* range = new_range();
 	if(!range) {
 		return NULL;
 	}
@@ -344,8 +344,8 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	int pages_mapped = 0;
 
 	do {
-		debug("  vmap: map pass %d for %p\n", pages_mapped, src_aligned + pages_offset);
-		vmem_t* src_range = get_range(src_ctx, src_aligned + pages_offset, false);
+		debug("  vm_map: map pass %d for %p\n", pages_mapped, src_aligned + pages_offset);
+		vm_alloc_t* src_range = get_range(src_ctx, src_aligned + pages_offset, false);
 		if(!src_range) {
 			// FIXME Temp to map around broken execve
 			if(flags & VM_MAP_UNDERALLOC_WORKAROUND) {
@@ -359,7 +359,7 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 
 
 		if(!src_range->phys) {
-			panic("valloc: Attempt to vmap sharded memory\n");
+			panic("vm: Attempt to vm_map sharded memory\n");
 		}
 
 		if(flags & VM_MAP_USER_ONLY && !(src_range->flags & VM_USER)) {
@@ -371,12 +371,12 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 
 		//size_t to_copy = MIN(size - mapped, src_range->size - (range_offset % PAGE_SIZE));
 
-		struct valloc_mem_shard* shard = kmalloc(sizeof(struct valloc_mem_shard));
+		struct vm_alloc_shard* shard = kmalloc(sizeof(struct vm_alloc_shard));
 		shard->addr = virt + pages_offset;
 		shard->phys = src_range->phys + ALIGN_DOWN(src_addr - src_range->addr, PAGE_SIZE) + pages_offset;
 		shard->next = range->shards;
 		range->shards = shard;
-		debug("vmapped %p -> %p\n", shard->addr, shard->phys);
+		debug("vm_mapped %p -> %p\n", shard->addr, shard->phys);
 
 		paging_set_range(ctx->page_dir, shard->addr, shard->phys, PAGE_SIZE, flags);
 
@@ -387,30 +387,30 @@ void* vmap(struct valloc_ctx* ctx, vmem_t* vmem, struct valloc_ctx* src_ctx,
 	assert(pages_mapped == size_pages);
 
 	if(vmem) {
-		memcpy(vmem, range, sizeof(vmem_t));
+		memcpy(vmem, range, sizeof(vm_alloc_t));
 	}
 
 	debug("\n");
 	return virt + src_offset;
 }
 
-int vm_copy(struct valloc_ctx* dest, vmem_t* vmem_dest, vmem_t* vmem_src) {
+int vm_copy(struct vm_ctx* dest, vm_alloc_t* vmem_dest, vm_alloc_t* vmem_src) {
 	// does not work on sharded memory yet
 	assert(!vmem_src->shards);
 
-	vmem_t new_kernel_vmem;
-	if(valloc(VA_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW ) != 0) {
+	vm_alloc_t new_kernel_vmem;
+	if(vm_alloc(VM_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW ) != 0) {
 		return -1;
 	}
 
-	vmem_t old_kernel_vmem;
-	void* old_kernel_virt = vmap(VA_KERNEL, &old_kernel_vmem, vmem_src->ctx, vmem_src->addr, vmem_src->size, 0);
+	vm_alloc_t old_kernel_vmem;
+	void* old_kernel_virt = vm_map(VM_KERNEL, &old_kernel_vmem, vmem_src->ctx, vmem_src->addr, vmem_src->size, 0);
 	if(!old_kernel_virt) {
 		return -1;
 	}
 
 	memcpy(new_kernel_vmem.addr, old_kernel_virt, vmem_src->size);
-	vfree(&old_kernel_vmem);
+	vm_free(&old_kernel_vmem);
 
 	// Zero out remainder of page if needed in order to not leak any previous data
 	size_t mod = vmem_src->size % PAGE_SIZE;
@@ -419,8 +419,8 @@ int vm_copy(struct valloc_ctx* dest, vmem_t* vmem_dest, vmem_t* vmem_src) {
 		bzero(last_page + mod, PAGE_SIZE - mod);
 	}
 
-	vfree(&new_kernel_vmem);
-	return valloc_at(dest, vmem_dest, RDIV(vmem_src->size, PAGE_SIZE), vmem_src->addr, new_kernel_vmem.phys, vmem_src->flags);
+	vm_free(&new_kernel_vmem);
+	return vm_alloc_at(dest, vmem_dest, RDIV(vmem_src->size, PAGE_SIZE), vmem_src->addr, new_kernel_vmem.phys, vmem_src->flags);
 
 	#if 0
 	if(!range->ref_count) {
@@ -435,14 +435,14 @@ int vm_copy(struct valloc_ctx* dest, vmem_t* vmem_dest, vmem_t* vmem_src) {
 	}
 
 	struct vmem_range* new_range = vmem _map(task->vmem_ctx, range->virt_addr, range->phys_addr, range->size, flags);
-	valloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->virt_addr, range->phys_addr, flags);
+	vm_alloc_at(&task->vmem, NULL, RDIV(range->size, PAGE_SIZE), range->virt_addr, range->phys_addr, flags);
 	__sync_add_and_fetch(range->ref_count, 1);
 	new_range->ref_count = range->ref_count;
 	#endif
 }
 
-int vm_clone(struct valloc_ctx* dest, struct valloc_ctx* src) {
-	vmem_t* range = src->ranges;
+int vm_clone(struct vm_ctx* dest, struct vm_ctx* src) {
+	vm_alloc_t* range = src->ranges;
 	for(; range; range = range->next) {
 		if(!(range->flags & VM_TFORK)) {
 			continue;
@@ -456,8 +456,8 @@ int vm_clone(struct valloc_ctx* dest, struct valloc_ctx* src) {
 	return 0;
 }
 
-int vfree(vmem_t* range) {
-	struct valloc_ctx* ctx = range->ctx;
+int vm_free(vm_alloc_t* range) {
+	struct vm_ctx* ctx = range->ctx;
 	spinlock_t* lock = &ctx->lock;
 	if(!spinlock_get(lock, -1)) {
 		return -1;
@@ -489,9 +489,9 @@ int vfree(vmem_t* range) {
 		pfree((uintptr_t)range->phys / PAGE_SIZE, RDIV(range->size, PAGE_SIZE));
 	}
 
-	struct valloc_mem_shard* shard = range->shards;
+	struct vm_alloc_shard* shard = range->shards;
 	while(shard) {
-		struct valloc_mem_shard* old = shard;
+		struct vm_alloc_shard* old = shard;
 		if(range->flags & VM_FREE) {
 			pfree((uintptr_t)shard->phys / PAGE_SIZE, RDIV(shard->size, PAGE_SIZE));
 		}
@@ -504,7 +504,7 @@ int vfree(vmem_t* range) {
 	return 0;
 }
 
-int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir) {
+int vm_new(struct vm_ctx* ctx, struct paging_context* page_dir) {
 	ctx->lock = 0;
 	ctx->ranges = NULL;
 	ctx->bitmap.data = ctx->bitmap_data;
@@ -522,31 +522,31 @@ int valloc_new(struct valloc_ctx* ctx, struct paging_context* page_dir) {
 	return 0;
 }
 
-void valloc_cleanup(struct valloc_ctx* ctx) {
+void vm_cleanup(struct vm_ctx* ctx) {
 	if(ctx->page_dir) {
 		paging_rm_context(ctx->page_dir);
 	}
 
-	vmem_t* range = ctx->ranges;
+	vm_alloc_t* range = ctx->ranges;
 	while(range) {
 		if(range->flags & VM_FREE) {
 			pfree((uintptr_t)range->phys / PAGE_SIZE, RDIV(range->size, PAGE_SIZE));
 		}
 
-		vmem_t* old_range = range;
+		vm_alloc_t* old_range = range;
 		range = range->next;
 		kfree(old_range);
 	}
 }
 
-void* valloc_get_page_dir(struct valloc_ctx* ctx) {
+void* vm_pagedir(struct vm_ctx* ctx) {
 	if(!ctx->page_dir) {
-		vmem_t vmem;
-		valloc(VA_KERNEL, &vmem, 1, NULL, VM_RW | VM_ZERO);
+		vm_alloc_t vmem;
+		vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW | VM_ZERO);
 		ctx->page_dir = vmem.addr;
 		ctx->page_dir_phys = vmem.phys;
 
-		vmem_t* range = ctx->ranges;
+		vm_alloc_t* range = ctx->ranges;
 
 		for(; range; range = range->next) {
 			paging_set_range(ctx->page_dir, range->addr, range->phys, range->size, range->flags);
@@ -555,7 +555,7 @@ void* valloc_get_page_dir(struct valloc_ctx* ctx) {
 	return ctx->page_dir_phys;
 }
 
-int valloc_stats(struct valloc_ctx* ctx, uint32_t* total, uint32_t* used) {
+int vm_stats(struct vm_ctx* ctx, uint32_t* total, uint32_t* used) {
 	*total = ctx->bitmap.size * PAGE_SIZE;
 	*used = bitmap_count(&ctx->bitmap) * PAGE_SIZE;
 	return 0;

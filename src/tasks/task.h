@@ -20,7 +20,7 @@
 
 #include <int/int.h>
 #include <fs/vfs.h>
-#include <mem/valloc.h>
+#include <mem/vm.h>
 #include <tasks/signal.h>
 #include <tty/term.h>
 
@@ -53,7 +53,7 @@ typedef struct task {
 	char name[VFS_NAME_MAX];
 	struct task* parent;
 	struct scheduler_qentry* qentry;
-	struct valloc_ctx vmem;
+	struct vm_ctx vmem;
 	isf_t* state;
 	void* entry;
 	void* sbrk;

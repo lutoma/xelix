@@ -19,7 +19,7 @@
  */
 
 #include <stdbool.h>
-#include <mem/valloc.h>
+#include <mem/vm.h>
 
 struct gfx_ul_desc {
     unsigned int id;
@@ -44,8 +44,8 @@ struct gfx_handle {
     unsigned int id;
     bool used;
 
-    struct valloc_ctx* valloc_ctx;
-    vmem_t vmem;
+    struct vm_ctx* vm_ctx;
+    vm_alloc_t vmem;
 
     struct gfx_ul_desc ul_desc;
 };
@@ -54,5 +54,5 @@ struct gfx_handle* gfx_get_handle(unsigned int id);
 void gfx_blit_all(struct gfx_handle* handle);
 void gfx_blit(struct gfx_handle* handle, size_t x, size_t y, size_t width, size_t height);
 void gfx_handle_enable(struct gfx_handle* handle);
-struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx);
+struct gfx_handle* gfx_handle_init(struct vm_ctx* ctx);
 void gfx_init();

@@ -57,14 +57,13 @@ void gfx_handle_enable(struct gfx_handle* handle) {
 
 	if(active_handle) {
 		serial_printf("handling active handle\n");
-		vfree(&active_handle->vmem);
-		valloc_at(active_handle->valloc_ctx, &active_handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), active_handle->ul_desc.addr, NULL, VM_RW | VM_USER);
+		vm_free(&active_handle->vmem);
+		vm_alloc_at(active_handle->vm_ctx, &active_handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), active_handle->ul_desc.addr, NULL, VM_RW | VM_USER);
 	}
 
 	int_disable();
-	vfree(&handle->vmem);
-	valloc_at(handle->valloc_ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), handle->ul_desc.addr, (void*)(uintptr_t)framebuffer_addr, VM_RW | VM_USER);
-
+	vm_free(&handle->vmem);
+	vm_alloc_at(handle->vm_ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), handle->ul_desc.addr, (void*)(uintptr_t)framebuffer_addr, VM_RW | VM_USER);
 
 	//memcpy(active_handle->buf_addr, (void*)(uintptr_t)framebuffer_addr, handle->size);
 	//memcpy((void*)(uintptr_t)framebuffer_addr, handle->buf_addr, handle->size);
@@ -73,7 +72,7 @@ void gfx_handle_enable(struct gfx_handle* handle) {
 	active_handle = handle;
 }
 
-struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx) {
+struct gfx_handle* gfx_handle_init(struct vm_ctx* ctx) {
 	if(next_handle >= 20) {
 		return NULL;
 	}
@@ -81,16 +80,16 @@ struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx) {
 	struct gfx_handle* handle = &handles[next_handle];
 	handle->used = true;
 	handle->id = next_handle;
-	handle->valloc_ctx = ctx;
+	handle->vm_ctx = ctx;
 	handle->ul_desc.size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 
 /*
-	if(valloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), NULL, VM_RW) != 0) {
+	if(vm_alloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), NULL, VM_RW) != 0) {
 		handle->used = false;
 		return NULL;
 	}
 */
-	if(valloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW | VM_USER) != 0) {
+	if(vm_alloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW | VM_USER) != 0) {
 		handle->used = false;
 		return NULL;
 	}
@@ -114,8 +113,8 @@ struct gfx_handle* gfx_handle_init(struct valloc_ctx* ctx) {
 
 static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	if(request == 0x2f01) {
-		vmem_t alloc;
-		struct gfx_ul_desc* user_desc = vmap(VA_KERNEL, &alloc, &ctx->task->vmem, _arg,
+		vm_alloc_t alloc;
+		struct gfx_ul_desc* user_desc = vm_map(VM_KERNEL, &alloc, &ctx->task->vmem, _arg,
 			sizeof(struct gfx_ul_desc), VM_MAP_USER_ONLY | VM_RW);
 
 		if(!user_desc) {
@@ -126,12 +125,12 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 
 		struct gfx_handle* handle = gfx_handle_init(&ctx->task->vmem);
 		if(!handle) {
-			vfree(&alloc);
+			vm_free(&alloc);
 			return -1;
 		}
 
 		memcpy(user_desc, &handle->ul_desc, sizeof(struct gfx_ul_desc));
-		vfree(&alloc);
+		vm_free(&alloc);
 		return 0;
 	}
 
@@ -158,8 +157,8 @@ void gfx_init() {
 	// FIXME use proper APIs
 	mem_page_alloc_at(&mem_phys_alloc_ctx, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE);
 
-	vmem_t framebuffer_mem;
-	valloc(VA_KERNEL, &framebuffer_mem, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
+	vm_alloc_t framebuffer_mem;
+	vm_alloc(VM_KERNEL, &framebuffer_mem, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
 	framebuffer_addr = framebuffer_mem.addr;
 
 	log(LOG_DEBUG, "gfx1: %dx%d bpp %d pitch %#x at %p\n",

@@ -24,6 +24,7 @@
 #include <tasks/elf.h>
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
+#include <mem/vm.h>
 #include <mem/i386-gdt.h>
 #include <int/int.h>
 #include <fs/vfs.h>
@@ -39,14 +40,14 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
 	task_t* task = zmalloc(sizeof(task_t));
-	valloc_new(&task->vmem, NULL);
+	vm_new(&task->vmem, NULL);
 
 	/* Map parts of the kernel marked as UL_VISIBLE into the task address
 	 * space (But readable only to PL0). These are the functions and data
 	 * structures used in the interrupt handler before the paging context is
 	 * switched.
 	 */
-	if(valloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0) != 0) {
+	if(vm_alloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0) != 0) {
 		return NULL;
 	}
 
@@ -91,12 +92,12 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 }
 
 static inline int map_task(task_t* task) {
-	vmem_t vmem1;
-	vmem_t vmem2;
-	vmem_t* mvmem[] = {&vmem1, &vmem2};
+	vm_alloc_t vmem1;
+	vm_alloc_t vmem2;
+	vm_alloc_t* mvmem[] = {&vmem1, &vmem2};
 
 	int flags[] = {VM_RW, VM_FREE};
-	struct valloc_ctx* ctx[] = {VA_KERNEL, &task->vmem};
+	struct vm_ctx* ctx[] = {VM_KERNEL, &task->vmem};
 
 	if(vm_alloc_many(2, ctx, mvmem, 1, NULL, flags) != 0) {
 		kfree(task);
@@ -108,8 +109,8 @@ static inline int map_task(task_t* task) {
 
 	// Kernel stack used during interrupts while this task is running
 	if(vm_alloc_many(2, ctx, mvmem, KERNEL_STACK_PAGES, NULL, flags) != 0) {
-		vfree(&vmem1);
-		vfree(&vmem2);
+		vm_free(&vmem1);
+		vm_free(&vmem2);
 		kfree(task);
 		return -1;
 	}
@@ -137,13 +138,14 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
 
-	vmem_t vmem;
-	if(valloc(VA_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
+	// FIXME Does this need to be in kernel ctx?!
+	vm_alloc_t vmem;
+	if(vm_alloc(VM_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
 		return NULL;
 	}
 
 	task->stack = vmem.addr;
-	if(valloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
+	if(vm_alloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
 		VM_USER | VM_RW | VM_FREE | VM_TFORK) != 0) {
 		return NULL;
 	}
@@ -159,7 +161,7 @@ void task_set_initial_state(task_t* task) {
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
-	task->state->cr3 = (uint32_t)valloc_get_page_dir(&task->vmem);
+	task->state->cr3 = (uint32_t)vm_pagedir(&task->vmem);
 	task->state->ebp = 0;
 	task->state->esp = (void*)TASK_STACK_LOCATION - sizeof(iret_t);
 
@@ -254,7 +256,7 @@ static task_t* _fork(task_t* to_fork, isf_t* state) {
 	intptr_t diff = state->esp - to_fork->kernel_stack;
 	task->state->esp = task->kernel_stack + diff;
 
-	task->state->cr3 = (uint32_t)valloc_get_page_dir(&task->vmem);
+	task->state->cr3 = (uint32_t)vm_pagedir(&task->vmem);
 
 	/* Set syscall return values for the forked task – need to set here since
 	 * the regular syscall return handling only affects the main process.
@@ -446,7 +448,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	sysfs_printf("\nTask memory:\n");
-	vmem_t* range = task->vmem.ranges;
+	vm_alloc_t* range = task->vmem.ranges;
 	for(; range; range = range->next) {
 		sysfs_printf("%p - %p  ->  %p - %p length %#-6lx\n",
 			range->addr, range->addr + range->size - 1,

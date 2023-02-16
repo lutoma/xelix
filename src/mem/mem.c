@@ -26,12 +26,12 @@
 #include <mem/kmalloc.h>
 #include <mem/paging.h>
 #include <mem/page_alloc.h>
-#include <mem/valloc.h>
+#include <mem/vm.h>
 #include <boot/multiboot.h>
 #include <fs/sysfs.h>
 
 struct mem_page_alloc_ctx mem_phys_alloc_ctx;
-struct valloc_ctx valloc_kernel_ctx;
+struct vm_ctx vm_kernel_ctx;
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	if(ctx->fp->offset) {
@@ -40,11 +40,11 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 
 	uint32_t kmalloc_total, kmalloc_used;
 	uint32_t palloc_total, palloc_used;
-	uint32_t valloc_total, valloc_used;
+	uint32_t vm_total, vm_used;
 
 	kmalloc_get_stats(&kmalloc_total, &kmalloc_used);
 	mem_page_alloc_stats(&mem_phys_alloc_ctx, &palloc_total, &palloc_used);
-	valloc_stats(&valloc_kernel_ctx, &valloc_total, &valloc_used);
+	vm_stats(&vm_kernel_ctx, &vm_total, &vm_used);
 
 	size_t rsize = 0;
 	sysfs_printf("mem_total: %u\n", palloc_total);
@@ -53,15 +53,15 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	sysfs_printf("mem_cache: %u\n", 0);
 	sysfs_printf("palloc_total: %u\n", palloc_total);
 	sysfs_printf("palloc_used: %u\n", palloc_used);
-	sysfs_printf("valloc_total: %u\n", valloc_total);
-	sysfs_printf("valloc_used: %u\n", valloc_used);
+	sysfs_printf("vm_total: %u\n", vm_total);
+	sysfs_printf("vm_used: %u\n", vm_used);
 	sysfs_printf("kmalloc_total: %u\n", kmalloc_total);
 	sysfs_printf("kmalloc_used: %u\n", kmalloc_used);
 	return rsize;
 }
 
 void mem_init() {
-	// Init phys page allocator. kernel valloc has already been initialized in i386-paging.c.
+	// Init phys page allocator. kernel vm has already been initialized in i386-paging.c.
 	if(mem_page_alloc_new(&mem_phys_alloc_ctx) < 0) {
 		panic("mem: Initialization of phys page allocator failed.\n");
 	}
@@ -112,9 +112,9 @@ void mem_init() {
 	log(LOG_INFO, "mem: Phys page allocator ready, %u mb, %u pages, %u used, %u free\n",
 		mem_kb /  1024, mem_phys_alloc_ctx.bitmap.size, pused, mem_phys_alloc_ctx.bitmap.size - pused);
 
-	uint32_t vused = bitmap_count(&valloc_kernel_ctx.bitmap);
+	uint32_t vused = bitmap_count(&vm_kernel_ctx.bitmap);
 	log(LOG_INFO, "mem: Virt page allocator ready, %u pages, %u used, %u free\n",
-		valloc_kernel_ctx.bitmap.size, vused, valloc_kernel_ctx.bitmap.size - vused);
+		vm_kernel_ctx.bitmap.size, vused, vm_kernel_ctx.bitmap.size - vused);
 
 	kmalloc_init();
 
