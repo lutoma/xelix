@@ -128,7 +128,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 
 		// FIXME Remove workaround
 		args[i] = (uint32_t)vm_map(VM_KERNEL, &vmem[i], &task->vmem,
-			(void*)args[i], ptr_sizes[i], VM_RW | VM_MAP_UNDERALLOC_WORKAROUND);
+			(void*)args[i], ptr_sizes[i], VM_RW | VM_MAP_USER_ONLY | VM_MAP_UNDERALLOC_WORKAROUND);
 
 		if(unlikely(!args[i])) {
 
