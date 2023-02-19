@@ -341,9 +341,11 @@ void _kfree(void *ptr DEBUGREGS) {
 }
 
 void kmalloc_init() {
-	vm_alloc_t vmem;
-	vm_alloc(VM_KERNEL, &vmem, 0x3200, NULL, VM_RW);
-	alloc_start = (uintptr_t)vmem.addr;
+	alloc_start = (uintptr_t)vm_alloc(VM_KERNEL, NULL, 0x3200, NULL, VM_RW);;
+	if(!alloc_start) {
+		panic("kmalloc: Could not vm_alloc address space.");
+	}
+
 	alloc_end = alloc_start;
 	alloc_max = (uintptr_t)alloc_start + (0x3200 * PAGE_SIZE);
 	kmalloc_ready = true;

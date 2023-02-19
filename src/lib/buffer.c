@@ -28,7 +28,7 @@ struct buffer* buffer_new(size_t max_pages) {
 	buf->pages = 1;
 	vm_alloc_t vmem;
 
-	if(vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
+	if(!vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW)) {
 		return NULL;
 	}
 
@@ -52,7 +52,7 @@ size_t buffer_write(struct buffer* buf, const void* src, size_t size) {
 		}
 
 		vm_alloc_t vmem;
-		if(vm_alloc(VM_KERNEL, &vmem, size_new, NULL, VM_RW) != 0) {
+		if(!vm_alloc(VM_KERNEL, &vmem, size_new, NULL, VM_RW)) {
 			return -1;
 		}
 

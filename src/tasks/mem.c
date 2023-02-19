@@ -48,8 +48,8 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 	}
 
 	int alloc_size = stack_lower - addr + PAGE_SIZE;
-	if(vm_alloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), NULL,
-		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK | VM_ZERO) != 0) {
+	if(!vm_alloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), NULL,
+		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK | VM_ZERO)) {
 		return -1;
 	}
 
@@ -75,8 +75,8 @@ void* task_sbrk(task_t* task, int32_t length) {
 	void* virt_addr = task->sbrk;
 	task->sbrk += length;
 
-	if(vm_alloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, NULL,
-		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE) != 0) {
+	if(!vm_alloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, NULL,
+		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE)) {
 		return (void*)-1;
 	}
 
@@ -109,12 +109,12 @@ void* task_mmap(task_t* task, struct task_mmap_ctx* ctx) {
 		vaflags |= VM_RW;
 	}
 
-	vm_alloc_t vmem;
-	if(vm_alloc(&task->vmem, &vmem, RDIV(ctx->len, PAGE_SIZE), NULL, vaflags) != 0) {
+	void* addr = vm_alloc(&task->vmem, NULL, RDIV(ctx->len, PAGE_SIZE), NULL, vaflags);
+	if(!addr) {
 		return (void*)-1;
 	}
 
-	return vmem.addr;
+	return addr;
 }
 
 /* Copy a NULL-terminated array of strings to kernel memory.

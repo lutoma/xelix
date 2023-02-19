@@ -47,7 +47,7 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	 * structures used in the interrupt handler before the paging context is
 	 * switched.
 	 */
-	if(vm_alloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0) != 0) {
+	if(!vm_alloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0)) {
 		return NULL;
 	}
 
@@ -99,7 +99,7 @@ static inline int map_task(task_t* task) {
 	int flags[] = {VM_RW, VM_FREE};
 	struct vm_ctx* ctx[] = {VM_KERNEL, &task->vmem};
 
-	if(vm_alloc_many(2, ctx, mvmem, 1, NULL, flags) != 0) {
+	if(!vm_alloc_many(2, ctx, mvmem, 1, NULL, flags)) {
 		kfree(task);
 		return -1;
 	}
@@ -108,7 +108,7 @@ static inline int map_task(task_t* task) {
 	bzero(task->state, sizeof(isf_t));
 
 	// Kernel stack used during interrupts while this task is running
-	if(vm_alloc_many(2, ctx, mvmem, KERNEL_STACK_PAGES, NULL, flags) != 0) {
+	if(!vm_alloc_many(2, ctx, mvmem, KERNEL_STACK_PAGES, NULL, flags)) {
 		vm_free(&vmem1);
 		vm_free(&vmem2);
 		kfree(task);
@@ -140,13 +140,13 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	// FIXME Does this need to be in kernel ctx?!
 	vm_alloc_t vmem;
-	if(vm_alloc(VM_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0) {
+	if(!vm_alloc(VM_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO)) {
 		return NULL;
 	}
 
 	task->stack = vmem.addr;
-	if(vm_alloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
-		VM_USER | VM_RW | VM_FREE | VM_TFORK) != 0) {
+	if(!vm_alloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
+		VM_USER | VM_RW | VM_FREE | VM_TFORK)) {
 		return NULL;
 	}
 

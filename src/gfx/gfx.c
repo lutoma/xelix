@@ -84,12 +84,12 @@ struct gfx_handle* gfx_handle_init(struct vm_ctx* ctx) {
 	handle->ul_desc.size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
 
 /*
-	if(vm_alloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), NULL, VM_RW) != 0) {
+	if(!vm_alloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), NULL, VM_RW)) {
 		handle->used = false;
 		return NULL;
 	}
 */
-	if(vm_alloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW | VM_USER) != 0) {
+	if(!vm_alloc(ctx, &handle->vmem, RDIV(handle->ul_desc.size, PAGE_SIZE), (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW | VM_USER)) {
 		handle->used = false;
 		return NULL;
 	}
@@ -158,7 +158,10 @@ void gfx_init() {
 	mem_page_alloc_at(&mem_phys_alloc_ctx, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE);
 
 	vm_alloc_t framebuffer_mem;
-	vm_alloc(VM_KERNEL, &framebuffer_mem, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW);
+	if(!vm_alloc(VM_KERNEL, &framebuffer_mem, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW)) {
+		panic("gfx: Could not vm_alloc framebuffer");
+	}
+
 	framebuffer_addr = framebuffer_mem.addr;
 
 	log(LOG_DEBUG, "gfx1: %dx%d bpp %d pitch %#x at %p\n",

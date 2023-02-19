@@ -25,45 +25,44 @@
 
 worker_t* worker_new(char* name, void* entry) {
 	worker_t* worker = kmalloc(sizeof(worker_t));
-    worker->entry = entry;
-    worker->stopped = false;
-    strncpy(worker->name, name, VFS_NAME_MAX);
+	worker->entry = entry;
+	worker->stopped = false;
+	strncpy(worker->name, name, VFS_NAME_MAX);
 
-    vm_alloc_t vmem;
-    if(vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW) != 0) {
-        return NULL;
-    }
-    worker->state = vmem.addr;
-    bzero(worker->state, sizeof(isf_t));
+	worker->state = vm_alloc(VM_KERNEL, NULL, 1, NULL, VM_RW);
+	if(!worker->state) {
+		return NULL;
+	}
+	bzero(worker->state, sizeof(isf_t));
 
-    if(vm_alloc(VM_KERNEL, &vmem, KERNEL_STACK_PAGES, NULL, VM_RW) != 0) {
-        return NULL;
-    }
-    worker->stack = vmem.addr;
+	worker->stack = vm_alloc(VM_KERNEL, NULL, KERNEL_STACK_PAGES, NULL, VM_RW);
+	if(!worker->stack) {
+		return NULL;
+	}
 
-    worker->state->ds = GDT_SEG_DATA_PL0;
-    worker->state->cr3 = (uint32_t)vm_pagedir(VM_KERNEL);
-    worker->state->ebp = 0;
-    worker->state->esp = (void*)worker->stack + KERNEL_STACK_SIZE - sizeof(iret_t);
+	worker->state->ds = GDT_SEG_DATA_PL0;
+	worker->state->cr3 = (uint32_t)vm_pagedir(VM_KERNEL);
+	worker->state->ebp = 0;
+	worker->state->esp = (void*)worker->stack + KERNEL_STACK_SIZE - sizeof(iret_t);
 
-    // Pass worker as first fastcall argument
-    worker->state->ecx = worker;
+	// Pass worker as first fastcall argument
+	worker->state->ecx = worker;
 
-    // Return stack for iret
-    iret_t* iret = (iret_t*)worker->state->esp;
-    iret->eip = worker->entry;
-    iret->cs = GDT_SEG_CODE_PL0;
-    iret->eflags = EFLAGS_IF;
-    iret->user_esp = worker->state->esp;
-    iret->ss = GDT_SEG_DATA_PL0;
+	// Return stack for iret
+	iret_t* iret = (iret_t*)worker->state->esp;
+	iret->eip = worker->entry;
+	iret->cs = GDT_SEG_CODE_PL0;
+	iret->eflags = EFLAGS_IF;
+	iret->user_esp = worker->state->esp;
+	iret->ss = GDT_SEG_DATA_PL0;
 	return worker;
 }
 
 int worker_stop(worker_t* worker) {
-    worker->stopped = true;
+	worker->stopped = true;
 }
 
 int worker_exit(worker_t* worker) {
-    worker_stop(worker);
-    scheduler_yield();
+	worker_stop(worker);
+	scheduler_yield();
 }

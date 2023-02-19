@@ -69,7 +69,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 	size_t size = ALIGN(phead->memsz + phys_offset, PAGE_SIZE);
 
 	vm_alloc_t vmem;
-	if(unlikely(vm_alloc(VM_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO) != 0)) {
+	if(unlikely(!vm_alloc(VM_KERNEL, &vmem, RDIV(size, PAGE_SIZE), NULL, VM_RW | VM_ZERO))) {
 		return -1;
 	}
 
@@ -93,7 +93,7 @@ static int load_phead(task_t* task, int fd, elf_program_header_t* phead, bool is
 		vmem_flags |= VM_RW;
 	}
 
-	if(unlikely(vm_alloc_at(&task->vmem, NULL, RDIV(size, PAGE_SIZE), virt, vmem.phys, vmem_flags) != 0)) {
+	if(unlikely(!vm_alloc_at(&task->vmem, NULL, RDIV(size, PAGE_SIZE), virt, vmem.phys, vmem_flags))) {
 		return -1;
 	}
 

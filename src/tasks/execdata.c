@@ -52,7 +52,7 @@ struct execdata {
  */
 void task_setup_execdata(task_t* task) {
 	vm_alloc_t vmem;
-	// FIXME Free from kernel space
+	// FIXME error checking
 	vm_alloc(VM_KERNEL, &vmem, 4, NULL, VM_RW | VM_ZERO);
 	vm_alloc_at(&task->vmem, NULL, 4, (void*)CONFIG_EXECDATA_LOCATION, vmem.phys,
 		VM_USER | VM_RW | VM_FREE);

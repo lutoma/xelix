@@ -239,7 +239,9 @@ static void enable_card(struct ac97_card* card) {
 	card->descs = zmalloc_a(sizeof(struct buf_desc) * NUM_BUFFERS);
 
 	for(int i = 0; i < NUM_BUFFERS; i++) {
-		vm_alloc(VM_KERNEL, &card->buffers[i], 4, NULL, VM_RW);
+		if(!vm_alloc(VM_KERNEL, &card->buffers[i], 4, NULL, VM_RW)) {
+			return;
+		}
 		card->descs[i].buf = card->buffers[i].phys;
 	}
 

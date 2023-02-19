@@ -168,30 +168,30 @@ static inline void* setup_phys(struct vm_ctx* ctx, size_t size, void* virt, void
 	return phys;
 }
 
-int vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
+void* vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_request, void* phys, int flags) {
 	// FIXME Fail if size, virt_request or phys are not page aligned?
 
 	if(!spinlock_get(&ctx->lock, -1)) {
-		return -1;
+		return NULL;
 	}
 
 	// Allocate virtual address
 	void* virt = alloc_virt(ctx, size, virt_request);
 	spinlock_release(&ctx->lock);
 	if(!virt) {
-		return -1;
+		return NULL;
 	}
 
 	debug("ctx %p page_num %5d vm_alloc_at %p size %#x\n", ctx, page_num, page_num * PAGE_SIZE, size * PAGE_SIZE);
 	phys = setup_phys(ctx, size, virt, phys, flags);
 
 	if(!spinlock_get(&ctx->lock, -1)) {
-		return -1;
+		return NULL;
 	}
 
 	vm_alloc_t* range = new_range();
 	if(!range) {
-		return -1;
+		return NULL;
 	}
 
 	range->ctx = ctx;
@@ -212,16 +212,16 @@ int vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_re
 
 	debug("ctx %#x vm_alloc_at %p -> %p size %#x\n", ctx, range->addr, range->phys, range->size);
 	spinlock_release(&ctx->lock);
-	return 0;
+	return range->addr;
 }
 
-int vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t size, void* phys, int* mflags) {
+void* vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t size, void* phys, int* mflags) {
 	for(int i = 0; i < num; i++) {
 		if(!spinlock_get(&mctx[i]->lock, -1)) {
 			for(int i = i - 1; i >= 0; i++) {
 				spinlock_release(&mctx[i]->lock);
 			}
-			return -1;
+			return NULL;
 		}
 	}
 
@@ -278,14 +278,14 @@ int vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t size
 		}
 	}
 
-	return 0;
+	return virt;
 
 release_and_fail:
 	for(int i = 0; i < num; i++) {
 		spinlock_release(&mctx[i]->lock);
 	}
 
-	return -1;
+	return NULL;
 }
 
 /* Transparently maps memory from one paging context into another.
@@ -399,7 +399,7 @@ int vm_copy(struct vm_ctx* dest, vm_alloc_t* vmem_dest, vm_alloc_t* vmem_src) {
 	assert(!vmem_src->shards);
 
 	vm_alloc_t new_kernel_vmem;
-	if(vm_alloc(VM_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW ) != 0) {
+	if(!vm_alloc(VM_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW)) {
 		return -1;
 	}
 
@@ -420,7 +420,11 @@ int vm_copy(struct vm_ctx* dest, vm_alloc_t* vmem_dest, vm_alloc_t* vmem_src) {
 	}
 
 	vm_free(&new_kernel_vmem);
-	return vm_alloc_at(dest, vmem_dest, RDIV(vmem_src->size, PAGE_SIZE), vmem_src->addr, new_kernel_vmem.phys, vmem_src->flags);
+	if(!vm_alloc_at(dest, vmem_dest, RDIV(vmem_src->size, PAGE_SIZE), vmem_src->addr, new_kernel_vmem.phys, vmem_src->flags)) {
+		return -1;
+	}
+
+	return 0;
 
 	#if 0
 	if(!range->ref_count) {
@@ -542,7 +546,10 @@ void vm_cleanup(struct vm_ctx* ctx) {
 void* vm_pagedir(struct vm_ctx* ctx) {
 	if(!ctx->page_dir) {
 		vm_alloc_t vmem;
-		vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW | VM_ZERO);
+		if(!vm_alloc(VM_KERNEL, &vmem, 1, NULL, VM_RW | VM_ZERO)) {
+			return NULL;
+		}
+
 		ctx->page_dir = vmem.addr;
 		ctx->page_dir_phys = vmem.phys;
 

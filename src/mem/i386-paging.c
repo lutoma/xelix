@@ -55,6 +55,7 @@ void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_ad
 		if(!page_dir->present) {
 			// FIXME Possible chicken/egg problem here if vm_alloc tries to allocate page within the page table we're trying to allocate
 			vm_alloc_t page_table_alloc;
+			// FIXME Error handling missing
 			vm_alloc(VM_KERNEL, &page_table_alloc, 1, NULL, VM_RW | VM_ZERO);
 			page_table = page_table_alloc.addr;
 			phys_table = page_table_alloc.phys;
@@ -160,7 +161,7 @@ void paging_init() {
 
 	// Create a new vm_alloc context with the page dir and allocate the kernel / page dir in it
 	vm_new(&vm_kernel_ctx, paging_kernel_ctx);
-	if(vm_alloc_at(VM_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW) != 0) {
+	if(!vm_alloc_at(VM_KERNEL, NULL, (paging_alloc_end - KERNEL_START) / PAGE_SIZE, KERNEL_START, KERNEL_START, VM_RW)) {
 		panic("paging: Could not allocate kernel vmem");
 	}
 

@@ -106,8 +106,11 @@ typedef struct vm_alloc {
 
 extern struct vm_ctx vm_kernel_ctx;
 
-int vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_request, void* phys, int flags);
-int vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t size, void* phys, int* mflags);
+void* vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size,
+	void* virt_request, void* phys, int flags);
+
+void* vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem,
+	size_t size, void* phys, int* mflags);
 
 void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	void* src_addr, size_t size, int flags);
