@@ -47,9 +47,6 @@
 // Zero out address space after allocation
 #define VM_ZERO 32
 
-// Temp hack
-#define VM_NO_MAP 128
-
 // vm_map: Only map user-readable pages
 #define VM_MAP_USER_ONLY 512
 

@@ -135,14 +135,12 @@ static inline void* setup_phys(struct vm_ctx* ctx, size_t size, void* virt, void
 		}
 	}
 
-	if(!(flags & VM_NO_MAP)) {
-		if(ctx->page_dir) {
-			paging_set_range(ctx->page_dir, virt, phys, size * PAGE_SIZE, flags);
-		}
+	if(ctx->page_dir) {
+		paging_set_range(ctx->page_dir, virt, phys, size * PAGE_SIZE, flags);
 	}
 
 	if(flags & VM_ZERO) {
-		if(ctx == VM_KERNEL && !(flags & VM_NO_MAP)) {
+		if(ctx == VM_KERNEL) {
 			bzero(virt, size * PAGE_SIZE);
 		} else {
 			/* If the allocation is not in the kernel context or is set as NO_MAP,
