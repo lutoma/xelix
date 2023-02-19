@@ -62,6 +62,11 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 		uint32_t* user_stack = vm_map(VM_KERNEL, &alloc, &task->vmem, iret->user_esp,
 			sizeof(uint32_t) * 11, VM_MAP_USER_ONLY | VM_RW);
 
+		if(!user_stack) {
+			log(LOG_ERR, "signal: Could not map user stack while handling signal %d\n", sig);
+			return -1;
+		}
+
 		// Address of signal handler and signal number as argument to it
 		*user_stack = (uint32_t)sa.sa_handler;
 		*(user_stack + 1) = sig;
