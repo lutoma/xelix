@@ -99,6 +99,25 @@ void* _sbrk(int incr) {
 	return (void*)syscall_pf(7, incr, 0, 0);
 }
 
+void* mmap(void *addr, size_t len, int prot, int flags,
+	int fildes, off_t off) {
+
+	struct {
+		void *addr;
+		size_t len;
+		int prot;
+		int flags;
+		int fildes;
+		off_t off;
+	} ctx = {addr, len, prot, flags, fildes, off};
+
+	return (void*)syscall(8, &ctx, 0, 0);
+}
+
+int munmap(void *addr, size_t len) {
+	return 0;
+}
+
 int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
 	return syscall(9, fds, nfds, timeout);
 }
@@ -229,10 +248,6 @@ int lstat(const char* name, struct stat *st) {
 
 int mkdir(const char *dir_path, mode_t mode) {
 	return syscall(6, dir_path, mode, 0);
-}
-
-int symlink(const char *path1, const char *path2) {
-	return syscall(8, path1, path2, 0);
 }
 
 int _unlink(char *name) {

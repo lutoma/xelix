@@ -146,3 +146,4 @@ STUB(int, sigmask, (int signum), -1);
 STUB(int, sigblock, (int mask), -1);
 STUB(int, sigsetmask, (int mask), -1);
 STUB(int, siggetmask, (void), -1);
+STUB(int, symlink, (const char *path1, const char *path2), -1);

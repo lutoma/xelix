@@ -29,7 +29,7 @@
          ;;
 +  *-*-xelix*)
 +	syscall_dir=syscalls
-+	newlib_cflags="${newlib_cflags} -DHAVE_FCNTL"
++	newlib_cflags="${newlib_cflags} -DHAVE_FCNTL -DHAVE_MMAP"
 +	;;
    xstormy16-*-*)
  	syscall_dir=syscalls
@@ -90,3 +90,18 @@ diff -rupN newlib-3.2.0/newlib/libc/sys/configure.in newlib-3.2.0-xelix/newlib/l
  int	getrusage (int, struct rusage*);
 
  #endif
+--- newlib-3.2.0/newlib/libc/stdlib/mallocr.c	2020-01-02 20:56:24.000000000 +0100
++++ newlib-3.2.0/newlib/libc/stdlib/mallocr.c	2023-02-20 22:32:04.738171041 +0100
+@@ -305,7 +305,11 @@ extern "C" {
+ 
+ #define POINTER_UINT unsigned _POINTER_INT
+ #define SEPARATE_OBJECTS
+-#define HAVE_MMAP 0
++
++#ifndef HAVE_MMAP
++# define HAVE_MMAP 0
++#endif
++
+ #define MORECORE(size) _sbrk_r(reent_ptr, (size))
+ #define MORECORE_CLEARS 0
+ #define MALLOC_LOCK __malloc_lock(reent_ptr)
