@@ -298,6 +298,10 @@ vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock, int state
 	pico_sock->priv = (void*)sock;
 
 	vfs_file_t* fd = vfs_alloc_fileno(task, 3);
+	if(!fd) {
+		return NULL;
+	}
+
 	fd->type = FT_IFSOCK;
 	fd->flags = O_RDWR;
 	fd->callbacks.read = vfs_read_cb;
@@ -338,6 +342,10 @@ int net_socket(task_t* task, int domain, int type, int protocol) {
 
 	spinlock_release(&net_pico_lock);
 	vfs_file_t* fd = new_socket_fd(task, pico_sock, SOCK_OPEN);
+	if(!fd) {
+		return -1;
+	}
+
 	return fd->num;
 }
 
@@ -461,6 +469,10 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	}
 
 	vfs_file_t* new_fd = new_socket_fd(task, pico_sock, SOCK_CONNECTED);
+	if(!fd) {
+		return -1;
+	}
+
 	debug("accept %#x, pico %#x\n", pico_sock->priv, pico_sock);
 	sock->conn_requests--;
 

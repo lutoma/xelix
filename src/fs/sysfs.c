@@ -231,6 +231,10 @@ vfs_file_t* sysfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	}
 
 	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 0);
+	if(!fp) {
+		return NULL;
+	}
+
 	fp->inode = 1;
 
 	if(is_root) {

@@ -120,6 +120,10 @@ vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	kfree(inode);
 
 	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 3);
+	if(!fp) {
+		return NULL;
+	}
+
 	fp->type = ft;
 	fp->inode = inode_num;
 	memcpy(&fp->callbacks, fs->callbacks, sizeof(struct vfs_callbacks));
