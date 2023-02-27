@@ -47,7 +47,6 @@ int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 	}
 
 	while(1) {
-		scheduler_yield();
 		for(uint32_t i = 0; i < nfds; i++) {
 			int_disable();
 			int r = contexts[i]->fp->callbacks.poll(contexts[i], fds[i].events);
@@ -62,7 +61,8 @@ int vfs_poll(task_t* task, struct pollfd* fds, uint32_t nfds, int timeout) {
 		if(timeout_end && timer_get_tick() > timeout_end) {
 			break;
 		}
-		halt();
+
+		scheduler_yield();
 	}
 
 bye:
