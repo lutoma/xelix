@@ -56,7 +56,7 @@ menu "Memory"
 
 	config VM_DEBUG_ALL
 		bool "vm: Debug all allocations"
-                depends on VALLOC_DEBUG
+                depends on VM_DEBUG
 		---help---
 		Print out information for each allocation/free to serial. Makes
 		everything pretty slow.

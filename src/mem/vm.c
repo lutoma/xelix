@@ -180,7 +180,7 @@ void* vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_
 		return NULL;
 	}
 
-	debug("ctx %p page_num %5d vm_alloc_at %p size %#x\n", ctx, page_num, page_num * PAGE_SIZE, size * PAGE_SIZE);
+	debug("ctx %p vm_alloc_at %p size %#x\n", ctx, virt, size * PAGE_SIZE);
 	phys = setup_phys(ctx, size, virt, phys, flags);
 
 	if(!spinlock_get(&ctx->lock, -1)) {
@@ -216,8 +216,8 @@ void* vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_
 void* vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t size, void* phys, int* mflags) {
 	for(int i = 0; i < num; i++) {
 		if(!spinlock_get(&mctx[i]->lock, -1)) {
-			for(int i = i - 1; i >= 0; i++) {
-				spinlock_release(&mctx[i]->lock);
+			for(int j = i - 1; j >= 0; j++) {
+				spinlock_release(&mctx[j]->lock);
 			}
 			return NULL;
 		}
@@ -293,6 +293,11 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 
 	debug("vm_map: ctx %#x src %p size %#x\n", ctx, src_addr, size);
 	void* src_aligned = ALIGN_DOWN(src_addr, PAGE_SIZE);
+	if(unlikely(src_aligned == NULL)) {
+		return NULL;
+	}
+
+
 	size_t src_offset = (uintptr_t)src_addr % PAGE_SIZE;
 
 	/* Get number of pages we have to allocate in the new virtual memory
@@ -308,7 +313,7 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 
 	size_t size_pages = RDIV(size + src_offset, PAGE_SIZE);
 	void* virt = alloc_virt(ctx, size_pages, NULL);
-	if(!virt) {
+	if(unlikely(!virt)) {
 		spinlock_release(&ctx->lock);
 		spinlock_release(&src_ctx->lock);
 		return NULL;
@@ -397,7 +402,7 @@ int vm_copy(struct vm_ctx* dest, vm_alloc_t* vmem_dest, vm_alloc_t* vmem_src) {
 	assert(!vmem_src->shards);
 
 	vm_alloc_t new_kernel_vmem;
-	if(!vm_alloc(VM_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW)) {
+	if(unlikely(!vm_alloc(VM_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW))) {
 		return -1;
 	}
 
