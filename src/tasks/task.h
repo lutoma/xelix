@@ -28,21 +28,6 @@
 #define KERNEL_STACK_PAGES 4
 #define KERNEL_STACK_SIZE PAGE_SIZE * KERNEL_STACK_PAGES
 
-struct elf_load_ctx {
-	void* virt_end;
-
-	// Interpreter for dynamic linking
-	char* interp;
-	// Dynamic library string table (virt address)
-	void* dynstrtab;
-
-	#if 0
-	// Required dependencies, as offsets to dynstrtab
-	uint32_t dyndeps[MAXDEPS];
-	uint32_t ndyndeps;
-	#endif
-};
-
 typedef struct task {
 	uint32_t pid;
 	uint16_t uid;
@@ -150,9 +135,6 @@ typedef struct task {
 	 * that called exit() don't get called again.
 	 */
 	bool interrupt_yield;
-
-	// ELF loader context, needed for dlopen/dlsym.
-	struct elf_load_ctx elf_ctx;
 
 	uint32_t sleep_until;
 
