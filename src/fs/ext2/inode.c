@@ -223,8 +223,9 @@ uint8_t* ext2_inode_data_rw(struct ext2_fs* fs, struct inode* inode, uint32_t wr
 				return NULL;
 			}
 
-			// Counts 512-byte ide blocks, not ext2 blocks, so 2.
-			inode->block_count += 2;
+			// Counts 512-byte ide blocks, not ext2 blocks, so 8.
+			// FIXME Properly calculate from block size rather than hardcoding
+			inode->block_count += 8;
 
 			if(i < 12) {
 				inode->blocks[i] = block_num;
