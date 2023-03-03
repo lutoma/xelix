@@ -106,7 +106,9 @@ bool ext2_inode_write(struct ext2_fs* fs, struct inode* buf, uint32_t inode_num)
 uint32_t ext2_inode_new(struct ext2_fs* fs, struct inode* inode, uint16_t mode) {
 	struct blockgroup* blockgroup = fs->blockgroup_table;
 	while(!blockgroup->free_inodes) { blockgroup++; }
-	uint32_t inode_num = ext2_bitmap_search_and_claim(fs, blockgroup->inode_bitmap);
+
+	// Inodes are 1-indexed, so add 1 to result.
+	uint32_t inode_num = ext2_bitmap_search_and_claim(fs, blockgroup->inode_bitmap) + 1;
 
 	bzero(inode, fs->superblock->inode_size);
 	inode->mode = mode;

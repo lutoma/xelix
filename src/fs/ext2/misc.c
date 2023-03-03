@@ -38,7 +38,7 @@ uint32_t ext2_bitmap_search_and_claim(struct ext2_fs* fs, uint32_t bitmap_block)
 			for(int j = 0; j < 8; j++) {
 				if(!bit_get(*blt, j)) {
 					*blt = bit_set(*blt, j);
-					result = i*8 + j + 1;
+					result = i*8 + j;
 					break;
 				}
 			}
