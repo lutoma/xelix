@@ -188,7 +188,11 @@ int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	if(ctx->task) {
 		inode->uid = ctx->task->euid;
 		inode->gid = ctx->task->egid;
+	} else {
+		inode->uid = 0;
+		inode->gid = 0;
 	}
+
 	ext2_inode_write(fs, inode, inode_num);
 	ext2_dirent_add(fs, parent->inode, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_DIR);
 
