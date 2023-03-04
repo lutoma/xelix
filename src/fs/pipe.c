@@ -1,5 +1,5 @@
 /* pipe.c: Inter-process pipes
- * Copyright © 2019-2020 Lukas Martini
+ * Copyright © 2019-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -33,19 +33,21 @@ struct pipe {
 static size_t pipe_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	struct pipe* pipe = (struct pipe*)ctx->fp->mount_instance;
 
-	if(!buffer_size(pipe->buf) && ctx->fp->flags & O_NONBLOCK) {
-		sc_errno = EAGAIN;
-		return -1;
-	}
-
-	vfs_file_t* write_fp = vfs_get_from_id(pipe->fd[1], ctx->task);
-	if(!buffer_size(pipe->buf) && !write_fp) {
-		sc_errno = EBADF;
-		return -1;
-	}
-
 	while(!buffer_size(pipe->buf)) {
-		halt();
+		vfs_file_t* write_fp = vfs_get_from_id(pipe->fd[1], ctx->task);
+
+		// Input end closed, indicate EOF
+		if(!write_fp) {
+			return 0;
+		}
+
+		// Nonblock and nothing to read
+		if(ctx->fp->flags & O_NONBLOCK) {
+			sc_errno = EAGAIN;
+			return -1;
+		}
+
+		scheduler_yield();
 	}
 
 	return buffer_pop(pipe->buf, dest, size);
