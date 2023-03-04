@@ -74,18 +74,6 @@ diff -ruPN --exclude lib --exclude .deps --exclude blake2 coreutils-8.32/src/mkn
  #ifdef NODEV
          if (device == NODEV)
            die (EXIT_FAILURE, 0, _("invalid device %s %s"),
---- coreutils-8.32/lib/opendir.c  2018-05-14 06:20:31.000000000 +0200
-+++ coreutils-8.32-patched/lib/opendir.c  2019-02-04 21:01:30.771424111 +0100
-@@ -152,7 +152,8 @@
-
- #endif
-
--#if REPLACE_FCHDIR
-+//#if REPLACE_FCHDIR
-+#if 0
-   {
-     int fd = dirfd (dirp);
-     if (0 <= fd && _gl_register_fd (fd, dir_name) != fd)
 --- coreutils-8.32/src/dircolors.hin	2018-06-24 04:12:51.000000000 +0200
 +++ coreutils-8.32/src/dircolors.hin	2019-05-29 23:08:36.426222319 +0200
 @@ -33,6 +33,7 @@ TERM st
