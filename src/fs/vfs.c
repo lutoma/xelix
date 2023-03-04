@@ -1,5 +1,5 @@
 /* vfs.c: Virtual file system
- * Copyright © 2011-2019 Lukas Martini
+ * Copyright © 2011-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -373,6 +373,18 @@ int vfs_fcntl(task_t* task, int fd, int cmd, int arg3) {
 			fp->flags &= ~O_CLOEXEC;
 		}
 		return 0;
+	} else if(cmd == F_GETPATH) {
+		vm_alloc_t alloc;
+		void* dest = vm_map(VM_KERNEL, &alloc, &task->vmem, (void*)arg3,
+			VFS_PATH_MAX, VM_MAP_USER_ONLY | VM_RW);
+
+		if(!dest) {
+			task_signal(task, NULL, SIGSEGV, NULL);
+			sc_errno = EFAULT;
+			return -1;
+		}
+
+		return strncpy(dest, fp->path, VFS_PATH_MAX);
 	}
 
 	sc_errno = ENOSYS;

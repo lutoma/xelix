@@ -89,6 +89,7 @@
 #define	F_CNVT 		12	/* Convert a fhandle to an open fd */
 #define	F_RSETLKW 	13	/* Set or Clear remote record-lock(Blocking) */
 #define	F_DUPFD_CLOEXEC	14	/* As F_DUPFD, but set close-on-exec flag */
+#define	F_GETPATH	15	/* Retrieve path associated with fd */
 
 // Keep in sync with values from limits.h
 #define VFS_NAME_MAX 255
