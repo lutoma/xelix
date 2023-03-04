@@ -336,13 +336,13 @@ static int do_unlink(struct ext2_fs* fs, char* path, bool is_dir, task_t* task) 
 		}
 
 		ext2_free_blocknum_resolver_cache(res_cache);
-		ext2_bitmap_free(fs, blockgroup->inode_bitmap, dirent->inode % fs->superblock->inodes_per_group);
+		ext2_bitmap_free(fs, blockgroup->inode_bitmap, (dirent->inode - 1) % fs->superblock->inodes_per_group);
 		fs->superblock->free_inodes++;
 		blockgroup->free_inodes++;
 
 		// inode->block_count counts IDE blocks, free_blocks counts ext2 blocks.
-		fs->superblock->free_blocks += inode->block_count / 2;
-		blockgroup->free_blocks += inode->block_count / 2;
+		fs->superblock->free_blocks += inode->block_count / 8;
+		blockgroup->free_blocks += inode->block_count / 8;
 
 		if(is_dir) {
 			blockgroup->used_directories--;
