@@ -12,23 +12,23 @@ dest=$2
 
 sudo modprobe nbd max_part=8
 
-qemu-img create -f qcow2 "$dest" 3G
-sudo qemu-nbd --connect=/dev/nbd2 "$dest"
+qemu-img create -f raw "$dest" 10G
+sudo losetup -P /dev/loop2 "$dest"
 
-cat <<EOF | sudo sfdisk /dev/nbd2
+cat <<EOF | sudo sfdisk /dev/loop2
 /dev/nbd0p1 : start=2048, size=1024000, type=83
 /dev/nbd0p2 : start=1026048, type=83
 EOF
 
-sudo mkfs.ext2 /dev/nbd2p1
-sudo mkfs.ext2 /dev/nbd2p2
+sudo mkfs.ext2 /dev/loop2p1 -b 4096 -O '^ext_attr,^dir_index'
+sudo mkfs.ext2 /dev/loop2p2 -b 4096 -O '^ext_attr,^dir_index'
 
 mkdir -p mnt
-sudo mount /dev/nbd2p2 mnt
+sudo mount /dev/loop2p2 mnt
 sudo mkdir -p mnt/boot
-sudo mount /dev/nbd2p1 mnt/boot
+sudo mount /dev/loop2p1 mnt/boot
 
-sudo grub-install /dev/nbd2 --boot-directory=mnt/boot --modules="normal part_msdos ext2 multiboot" --no-floppy --target=i386-pc
+sudo grub-install /dev/loop2 --boot-directory=mnt/boot --modules="normal part_msdos ext2 multiboot" --no-floppy --target=i386-pc
 cat <<EOF | sudo sponge mnt/boot/grub/grub.cfg
 set root='hd0,msdos1'
 
@@ -50,4 +50,4 @@ sudo cp -r "$image_dir"/* mnt/
 sudo cp xelix.bin mnt/boot/
 sudo umount mnt/boot
 sudo umount mnt
-sudo qemu-nbd --disconnect /dev/nbd2
+sudo losetup -d /dev/loop2
