@@ -91,9 +91,7 @@ STUB(ssize_t, getline, (char **restrict lineptr, size_t *restrict n, FILE *restr
 STUB(int, stime, (time_t *t), -1);
 STUB(long, fpathconf, (int fildes, int name), -1);
 STUB(long, pathconf, (const char *path, int name), -1);
-STUB(int, fchmod, (int fildes, mode_t mode), -1);
 STUB(int, lchmod, (const char *path, mode_t mode), -1);
-STUB(int, fchown, (int fd, uid_t owner, gid_t group), -1);
 STUB(int, lchown, (const char *path, uid_t owner, gid_t group), -1);
 STUB(int, mknod, (const char *path, mode_t mode, dev_t dev), -1);
 STUB(int, lutimes, (const char *path, const struct timeval times[2]), -1);

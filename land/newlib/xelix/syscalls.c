@@ -143,6 +143,15 @@ int chdir(const char *path) {
 	return syscall(20, path, 0, 0);
 }
 
+int fchdir(int fd) {
+	char path[PATH_MAX];
+	if(fcntl(fd, F_GETPATH, path) == -1) {
+		return -1;
+	}
+
+	return chdir(path);
+}
+
 int socket(int domain, int type, int protocol) {
 	return syscall(24, domain, type, protocol);
 }
@@ -189,6 +198,15 @@ ssize_t send(int socket, const void *buffer, size_t length, int flags) {
 
 int _execve(char *name, char **argv, char **env) {
 	return syscall(32, name, argv, env);
+}
+
+int fexecve(int fd, char * const argv[], char * const envp[]) {
+	char path[PATH_MAX];
+	if(fcntl(fd, F_GETPATH, path) == -1) {
+		return -1;
+	}
+
+	return _execve(path, argv, envp);
 }
 
 // Gets called by the newlib readdir handler, see libc/posix/readdir.c
@@ -258,8 +276,27 @@ int chmod(const char *path, mode_t mode) {
 	return syscall(11, path, mode, 0);
 }
 
+int fchmod(int fd, mode_t mode) {
+	char path[PATH_MAX];
+	if(fcntl(fd, F_GETPATH, path) == -1) {
+		return -1;
+	}
+
+	return chmod(path, mode);
+}
+
+
 int chown(const char *path, uid_t owner, gid_t group) {
 	return syscall(17, path, owner, group);
+}
+
+int fchown(int fd, uid_t owner, gid_t group) {
+	char path[PATH_MAX];
+	if(fcntl(fd, F_GETPATH, path) == -1) {
+		return -1;
+	}
+
+	return chown(path, owner, group);
 }
 
 int access(const char *pathname, int mode) {
