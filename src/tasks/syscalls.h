@@ -106,7 +106,7 @@ const struct syscall_definition syscall_table[] = {
 
 	// 11
 	{"chmod", (syscall_cb)vfs_chmod, 0,
-		SCA_STRING, 0, 0, 0},
+		SCA_STRING, SCA_INT, 0, 0},
 
 	// 12
 	{"link", (syscall_cb)vfs_link, 0,
