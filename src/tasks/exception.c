@@ -114,7 +114,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 
 	if(!exc.signal || !task || task->task_state == TASK_STATE_SYSCALL) {
-		panic(exc.name);
+		panic("%s at %p\n", exc.name, eip);
 	}
 
 	log(LOG_WARN, "%s in task %d <%s> at %p\n", exc.name, task->pid, task->name, eip);
