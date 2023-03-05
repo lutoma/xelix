@@ -86,7 +86,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			return -1;
 		}
 
-		if(!vm_alloc_at(&master_task->vmem, NULL, RDIV(size, PAGE_SIZE), virt_addr, vmem.phys, VM_USER | VM_RW)) {
+		if(!vm_alloc_at(&master_task->vmem, NULL, RDIV(size, PAGE_SIZE), virt_addr, vmem.phys, VM_USER | VM_RW | VM_FIXED)) {
 			vm_free(&vmem);
 			return -1;
 		}

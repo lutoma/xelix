@@ -47,7 +47,9 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	 * structures used in the interrupt handler before the paging context is
 	 * switched.
 	 */
-	if(!vm_alloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE), UL_VISIBLE_START, UL_VISIBLE_START, 0)) {
+	if(!vm_alloc_at(&task->vmem, NULL, RDIV(UL_VISIBLE_SIZE, PAGE_SIZE),
+		UL_VISIBLE_START, UL_VISIBLE_START, VM_FIXED)) {
+
 		return NULL;
 	}
 
@@ -146,14 +148,13 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 
 	task->stack = vmem.addr;
 	if(!vm_alloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
-		VM_USER | VM_RW | VM_FREE | VM_TFORK)) {
+		VM_USER | VM_RW | VM_FREE | VM_TFORK | VM_FIXED)) {
 		return NULL;
 	}
 
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
 	vfs_open(task, "/dev/stderr", O_WRONLY);
-
 	return task;
 }
 

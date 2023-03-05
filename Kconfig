@@ -90,6 +90,10 @@ menu "Tasks"
 	config EXECDATA_LOCATION
 		hex "Execdata virtual memory location"
 		default 0x5000
+
+	config MMAP_BASE
+		hex "Lower base address for mmap allocations"
+		default 0xa000000
 endmenu
 
 menu "Audio"

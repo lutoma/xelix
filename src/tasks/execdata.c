@@ -55,7 +55,7 @@ void task_setup_execdata(task_t* task) {
 	// FIXME error checking
 	vm_alloc(VM_KERNEL, &vmem, 4, NULL, VM_RW | VM_ZERO);
 	vm_alloc_at(&task->vmem, NULL, 4, (void*)CONFIG_EXECDATA_LOCATION, vmem.phys,
-		VM_USER | VM_RW | VM_FREE);
+		VM_USER | VM_RW | VM_FREE | VM_FIXED);
 
 	size_t offset = 0;
 

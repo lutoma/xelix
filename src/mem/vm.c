@@ -56,13 +56,11 @@ static inline vm_alloc_t* get_range(struct vm_ctx* ctx, void* addr, bool phys) {
 	return NULL;
 }
 
-static inline void* alloc_virt(struct vm_ctx* ctx, size_t size, void* request) {
-	uint32_t page_num;
-	void* virt;
-	if(request) {
-		virt = ALIGN_DOWN(request, PAGE_SIZE);
-		page_num = (uintptr_t)virt / PAGE_SIZE;
+static inline void* alloc_virt(struct vm_ctx* ctx, size_t size, void* request, bool fixed) {
+	void* virt = ALIGN_DOWN(request, PAGE_SIZE);
+	uint32_t page_num = (uintptr_t)virt / PAGE_SIZE;
 
+	if(request && fixed) {
 		for(int i = 0; i < size; i++) {
 			if(bitmap_get(&ctx->bitmap, page_num + i)) {
 				log(LOG_ERR, "vm: Duplicate allocation attempt in context %#x at %#x\n", ctx, (page_num + i) * PAGE_SIZE);
@@ -75,8 +73,7 @@ static inline void* alloc_virt(struct vm_ctx* ctx, size_t size, void* request) {
 			}
 		}
 	} else {
-		page_num = bitmap_find(&ctx->bitmap, 0, size);
-
+		page_num = bitmap_find(&ctx->bitmap, page_num, size);
 		if(page_num == -1) {
 			return NULL;
 		}
@@ -150,7 +147,7 @@ static inline void* setup_phys(struct vm_ctx* ctx, size_t size, void* virt, void
 				return NULL;
 			}
 
-			void* zero_addr = alloc_virt(VM_KERNEL, size, NULL);
+			void* zero_addr = alloc_virt(VM_KERNEL, size, NULL, false);
 			spinlock_release(&VM_KERNEL->lock);
 			if(zero_addr == NULL) {
 				return NULL;
@@ -174,7 +171,7 @@ void* vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_
 	}
 
 	// Allocate virtual address
-	void* virt = alloc_virt(ctx, size, virt_request);
+	void* virt = alloc_virt(ctx, size, virt_request, flags & VM_FIXED);
 	spinlock_release(&ctx->lock);
 	if(!virt) {
 		return NULL;
@@ -312,7 +309,7 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	}
 
 	size_t size_pages = RDIV(size + src_offset, PAGE_SIZE);
-	void* virt = alloc_virt(ctx, size_pages, NULL);
+	void* virt = alloc_virt(ctx, size_pages, NULL, false);
 	if(unlikely(!virt)) {
 		spinlock_release(&ctx->lock);
 		spinlock_release(&src_ctx->lock);

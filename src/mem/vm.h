@@ -50,10 +50,13 @@
 // vm_map: Only map user-readable pages
 #define VM_MAP_USER_ONLY 512
 
-// temp
-#define VM_MAP_UNDERALLOC_WORKAROUND 1024
+// Fixed allocation in vm_alloc_at
+#define VM_FIXED 1024
 
-#define VM_DEBUG 2048
+// temp
+#define VM_MAP_UNDERALLOC_WORKAROUND 2048
+
+#define VM_DEBUG 4096
 
 
 #define vm_alloc(ctx, vmem, size, phys, flags) vm_alloc_at(ctx, vmem, size, NULL, phys, flags)

@@ -49,7 +49,7 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 
 	int alloc_size = stack_lower - addr + PAGE_SIZE;
 	if(!vm_alloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), NULL,
-		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK | VM_ZERO)) {
+		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK | VM_ZERO | VM_FIXED)) {
 		return -1;
 	}
 
@@ -76,7 +76,7 @@ void* task_sbrk(task_t* task, int32_t length) {
 	task->sbrk += length;
 
 	if(!vm_alloc_at(&task->vmem, NULL, RDIV(length, PAGE_SIZE), virt_addr, NULL,
-		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE)) {
+		VM_USER | VM_RW | VM_NOCOW | VM_TFORK | VM_FREE | VM_FIXED)) {
 		return (void*)-1;
 	}
 
@@ -94,7 +94,7 @@ void* task_mmap(task_t* task, struct task_mmap_ctx* ctx) {
 		return NULL;
 	}
 
-	if(ctx->flags & (MAP_SHARED | MAP_FIXED)) {
+	if(ctx->flags & MAP_SHARED ) {
 		sc_errno = ENOTSUP;
 		return NULL;
 	}
@@ -109,7 +109,24 @@ void* task_mmap(task_t* task, struct task_mmap_ctx* ctx) {
 		vaflags |= VM_RW;
 	}
 
-	void* addr = vm_alloc(&task->vmem, NULL, RDIV(ctx->len, PAGE_SIZE), NULL, vaflags);
+	void* req = ctx->addr;
+	if(ctx->flags & MAP_FIXED) {
+		if(!req) {
+			sc_errno = EINVAL;
+			return NULL;
+		}
+
+		vaflags |= VM_FIXED;
+	}
+
+	/* When request is unset, start allocating at an arbitrary high address
+	 * to hopefully avoid conflicts with future sbrk allocations.
+	 */
+	if(!req) {
+		req = (void*)CONFIG_MMAP_BASE;
+	}
+
+	void* addr = vm_alloc_at(&task->vmem, NULL, RDIV(ctx->len, PAGE_SIZE), req, NULL, vaflags);
 	if(!addr) {
 		return (void*)-1;
 	}

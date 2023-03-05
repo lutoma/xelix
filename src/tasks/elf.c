@@ -85,7 +85,7 @@ static inline int load_phead(task_t* task, int fd, elf_program_header_t* phead) 
 		return -1;
 	}
 
-	int vmem_flags = VM_USER | VM_TFORK | VM_NOCOW | VM_FREE;
+	int vmem_flags = VM_USER | VM_TFORK | VM_NOCOW | VM_FREE | VM_FIXED;
 	if(phead->flags & PF_W) {
 		vmem_flags |= VM_RW;
 	}
