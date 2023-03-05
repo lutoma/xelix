@@ -107,7 +107,9 @@ struct dirent* ext2_dirent_find(struct ext2_fs* fs, const char* path, uint32_t* 
 	struct dirent* dirent = NULL;
 	struct dirent* result = NULL;
 	struct ftree_file* ft_root = NULL;
-	ext2_inode_read(fs, inode, ROOT_INODE);
+	if(unlikely(!ext2_inode_read(fs, inode, ROOT_INODE))) {
+		goto bye;
+	}
 
 	while(pch != NULL) {
 		int inode_num = dirent ? dirent->inode : ROOT_INODE;
