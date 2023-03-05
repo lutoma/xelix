@@ -64,7 +64,7 @@ bool ext2_inode_read(struct ext2_fs* fs, struct inode* buf, uint32_t inode_num) 
 
 	struct inode* cache_in = check_cache(fs, inode_num);
 	if(cache_in) {
-		memcpy(buf, cache_in, fs->superblock->inode_size);
+		memcpy(buf, cache_in, sizeof(struct inode));
 		return true;
 	}
 
@@ -78,10 +78,9 @@ bool ext2_inode_read(struct ext2_fs* fs, struct inode* buf, uint32_t inode_num) 
 	}
 
 	struct inode_cache_entry* cache = &fs->inode_cache[fs->inode_cache_end];
-	memcpy(&cache->inode, buf, fs->superblock->inode_size);
+	memcpy(&cache->inode, buf, sizeof(struct inode));
 	cache->num = inode_num;
-	fs->inode_cache_end++;
-	fs->inode_cache_end %= INODE_CACHE_MAX;
+	fs->inode_cache_end = (fs->inode_cache_end + 1) % INODE_CACHE_MAX;
 	return true;
 }
 
@@ -97,7 +96,7 @@ bool ext2_inode_write(struct ext2_fs* fs, struct inode* buf, uint32_t inode_num)
 
 	struct inode* cache_in = check_cache(fs,inode_num);
 	if(cache_in) {
-		memcpy(cache_in, buf, fs->superblock->inode_size);
+		memcpy(cache_in, buf, sizeof(struct inode));
 	}
 
 	return vfs_block_swrite(fs->dev, inode_off, fs->superblock->inode_size, (uint8_t*)buf);
