@@ -95,7 +95,6 @@ STUB(int, lchmod, (const char *path, mode_t mode), -1);
 STUB(int, lchown, (const char *path, uid_t owner, gid_t group), -1);
 STUB(int, mknod, (const char *path, mode_t mode, dev_t dev), -1);
 STUB(int, lutimes, (const char *path, const struct timeval times[2]), -1);
-STUB(int, sched_yield, (void), -1);
 STUB(int, fsync, (int fildes), -1);
 STUB(int, getgrouplist, (const char *user, gid_t group, gid_t *groups, int *ngroups), -1);
 STUB(int, mkfifo, (const char *path, mode_t mode), -1);

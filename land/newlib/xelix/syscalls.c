@@ -356,7 +356,7 @@ int sigsuspend(const sigset_t *sigmask) {
 	return syscall(35, sigmask, 0, 0);
 }
 
-int	getpagesize(void) {
+int getpagesize(void) {
 	return 0x1000;
 }
 
@@ -415,6 +415,11 @@ int mount(const char *source, const char *target, const char *filesystemtype, un
 
 int umount2(const char *target, int flags) {
 	return syscall(51, target, flags, 0);
+}
+
+int sched_yield(void) {
+	asm volatile("int $0x31;");
+	return 0;
 }
 
 int umount(const char *target) {
