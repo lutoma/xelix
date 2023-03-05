@@ -118,13 +118,36 @@ void render_init() {
 	}
 
 	main_buffer = malloc(gfx_handle.size);
+	if(!main_buffer) {
+		printf("Could not allocate main_buffer\n");
+		exit(1);
+	};
+
 	main_surface = cairo_image_surface_create_for_data(
 		main_buffer, CAIRO_FORMAT_ARGB32, gfx_handle.width,
 		gfx_handle.height, gfx_handle.pitch);
 
 	cr = cairo_create(main_surface);
 
-	cairo_surface_t* bg_surface = cairo_image_surface_create_from_png("/usr/share/gfxcompd/bg.png");
+	// Create background surface and fill with gray color
+	cairo_surface_t* bg_surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, gfx_handle.width, gfx_handle.height);
+	cairo_t* bg_cr = cairo_create(bg_surface);
+	cairo_set_source_rgb(bg_cr, 0.2, 0.2, 0.2);
+	cairo_paint(bg_cr);
+
+	// If we have a wallpaper, fill it in as pattern
+	cairo_surface_t* wallpaper = cairo_image_surface_create_from_png("/usr/share/gfxcompd/bg.png");
+	if(wallpaper) {
+		cairo_pattern_t* bg_pat = cairo_pattern_create_for_surface(wallpaper);
+		cairo_pattern_set_extend(bg_pat, CAIRO_EXTEND_REPEAT);
+		cairo_set_source(bg_cr, bg_pat);
+		cairo_paint(bg_cr);
+		cairo_surface_destroy(wallpaper);
+		cairo_pattern_destroy(bg_pat);
+	}
+
+	cairo_destroy(bg_cr);
+
 	struct surface* bgs = surface_new(bg_surface, gfx_handle.width, gfx_handle.height);
 	bgs->z = -1000;
 	bgs->name = "Background";
