@@ -102,6 +102,7 @@ mount:
 .PHONY: umount
 umount:
 	sudo umount mnt
+	sleep 0.5
 	sudo losetup -d /dev/loop0
 
 .PHONY: menuconfig
