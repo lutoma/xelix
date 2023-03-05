@@ -268,7 +268,7 @@ void* vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t si
 		lctx->ranges = range;
 		spinlock_release(&lctx->lock);
 
-		if(mvmem[i]) {
+		if(mvmem && mvmem[i]) {
 			memcpy(mvmem[i], range, sizeof(vm_alloc_t));
 		}
 	}
