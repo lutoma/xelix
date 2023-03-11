@@ -51,17 +51,22 @@ char* addr2name(intptr_t address) {
 		return "?";
 	}
 
+	struct elf_sym* match = NULL;
 	for(struct elf_sym* sym = symtab; (uintptr_t)sym < (uintptr_t)symtab + symtab_length; sym++) {
-		if(!sym->name || !sym->value) {
+		if(!sym->name || !sym->value || (match && sym->value < match->value)) {
 			continue;
 		}
 
-		if(address >= sym->value && address <= sym->value + sym->size) {
-			return strtab + sym->name;
+		if(address >= sym->value) {
+			match = sym;
 		}
 	}
 
-	return "?";
+	if(match) {
+		return strtab + match->name;
+	} else {
+		return "?";
+	}
 }
 
 void __attribute__((optimize("O0"))) _panic(char* fmt, ...) {
@@ -81,15 +86,13 @@ void __attribute__((optimize("O0"))) _panic(char* fmt, ...) {
 	panic_printf("Kernel Panic: %s\n", error);
 	va_end(va);
 	panic_printf("   \n");
-
-	panic_printf("Last PIT tick:   %-7d (rate %d, uptime: %d seconds)\n",
-		(uint32_t)timer_tick, timer_rate, uptime());
+	panic_printf("Last tick:   %d (@%d/s)\n", timer_tick, timer_rate);
 
 	task_t* task = scheduler_get_current();
 	if(task) {
-		panic_printf("Running task:    %-7d (%s)\n", task->pid, task->name);
+		panic_printf("Task:        %-7d (%s)\n", task->pid, task->name);
 	} else {
-		panic_printf("Running task:    [No task running]\n");
+		panic_printf("Task:        (None)\n");
 	}
 
 	panic_printf("   \n");
@@ -98,7 +101,7 @@ void __attribute__((optimize("O0"))) _panic(char* fmt, ...) {
 	int read = walk_stack(addresses, 10);
 
 	for(int i = 0; i < read; i++) {
-		panic_printf("#%-6d %s <%#x>\n", i, addr2name(addresses[i]), addresses[i]);
+		panic_printf("#%-6d %s <%x>\n", i, addr2name(addresses[i]), addresses[i]);
 	}
 
 	freeze();
