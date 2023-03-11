@@ -1,4 +1,4 @@
-/* page_alloc.c: Page allocator
+/* page_alloc.c: Physical memory page allocator
  * Copyright © 2020 Lukas Martini
  *
  * This file is part of Xelix.
@@ -17,11 +17,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Generic page allocator used for physical and both kernel and task virtual
- * memory. Intentionally kept very simple for now relying on a single bitmap,
- * but can be extended later as required.
- */
-
 #include "page_alloc.h"
 #include <mem/paging.h>
 #include <boot/multiboot.h>
@@ -30,12 +25,18 @@
 #include <panic.h>
 #include <spinlock.h>
 
+// FIXME This code should be incorporated into vm.c, which is the only place that uses it.
+
 void* mem_page_alloc(struct mem_page_alloc_ctx* ctx, size_t size) {
 	if(!spinlock_get(&ctx->lock, -1)) {
 		return NULL;
 	}
 
 	uint32_t num = bitmap_find(&ctx->bitmap, 0, size);
+	if(num == -1) {
+		return NULL;
+	}
+
 	bitmap_set(&ctx->bitmap, num, size);
 	spinlock_release(&ctx->lock);
 	return (void*)(num * PAGE_SIZE);
