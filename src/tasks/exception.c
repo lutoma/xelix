@@ -93,7 +93,7 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 
 		task_signal(task, NULL, SIGSEGV, NULL);
 	} else {
-		panic("Page fault %s\n", message);
+		panic("Page fault %s", message);
 	}
 }
 
