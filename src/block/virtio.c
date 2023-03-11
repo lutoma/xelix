@@ -1,5 +1,5 @@
 /* virtio_block.c: VirtIO block storage device
- * Copyright © 2019 Lukas Martini
+ * Copyright © 2019-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -27,6 +27,7 @@
 #include <fs/vfs.h>
 #include <block/block.h>
 #include <int/int.h>
+#include <mem/vm.h>
 #include <mem/kmalloc.h>
 #include <tasks/task.h>
 
@@ -51,10 +52,6 @@ struct virtio_blk_req {
 	uint32_t type;
 	uint32_t reserved;
 	uint64_t sector;
-	/*
-	uint8_t* data;
-	uint8_t status;
-	*/
 };
 
 static struct virtio_dev* dev = NULL;
@@ -64,36 +61,6 @@ static uint32_t vendor_device_combos[][2] = {
 
 static void int_handler(task_t* task, isf_t* state, int num) {
 	inb(dev->pci_dev->iobase + 0x13);
-
-	struct virtqueue* queue = &dev->queues[0];
-	queue->available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
-	//log(LOG_DEBUG, "virtio_block int handler used idx %d av idx %d\n", queue->used->idx, queue->available->idx);
-
-	/*for(; queue->used_index < queue->used->idx; queue->used_index++) {
-		uint16_t desc_id = queue->used->ring[queue->used_index % queue->size];
-		struct virtq_desc* hdr_desc = &queue->descriptors[desc_id];
-	*/
-
-	for(; queue->used_index < queue->used->idx; queue->used_index++) {
-		struct virtq_used_elem* el = &queue->used->ring[queue->used_index % queue->size];
-		struct virtq_desc* hdr_desc = &queue->descriptors[el->id];
-
-		if(!(hdr_desc->flags & VIRTQ_DESC_F_NEXT)) {
-			log(LOG_ERR, "virtio_block: Missing request buffer\n");
-		}
-
-		struct virtq_desc* data_desc = &queue->descriptors[hdr_desc->next];
-
-		uint8_t status = *(uint8_t*)((uintptr_t)data_desc->addr + 512);
-		if(status == VIRTIO_BLK_S_IOERR) {
-			continue;
-		}
-
-		//log(LOG_DEBUG, "queue used elem %d status %d sector %d dlen %d\n", queue->used_index % queue->size, status, hdr->sector, 0);
-		//log(LOG_DEBUG, "%s\n", (uint32_t)data_desc->addr);
-	}
-
-	queue->available->flags = 0;
 }
 
 static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uint64_t num_blocks, void* buf) {
@@ -111,8 +78,18 @@ static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uin
 		.sector = lba
 	};
 
-	volatile uint8_t status = 255;
-	void* buffers[] = {&hdr, buf, (void*)&status};
+	volatile uint8_t status = 0xff;
+	void* buffers[] = {
+		valloc_translate(VM_KERNEL, &hdr, false),
+		valloc_translate(VM_KERNEL, buf, false),
+		valloc_translate(VM_KERNEL, (void*)&status, false),
+	};
+
+	if(!(buffers[0] && buffers[1] && buffers[2])) {
+		log(LOG_ERR, "virtio_block: Could not map buffers to phys mem in send_request\n");
+		return -1;
+	}
+
 	size_t lengths[] = {sizeof(struct virtio_blk_req), num_blocks * 512, sizeof(uint8_t)};
 
 	int user_buffer_flag = (type == VIRTIO_BLK_T_IN) ? VIRTQ_DESC_F_WRITE : 0;
@@ -122,12 +99,12 @@ static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uin
 		return -1;
 	}
 
-	while(status == 255) {
-		halt();
+	while(status == 0xff) {
+		scheduler_yield();
 	}
 
 	if(status != VIRTIO_BLK_S_OK) {
-		log(LOG_ERR, "virtio_block: Request type %d, lba %d failed\n", type, lba);
+		log(LOG_ERR, "virtio_block: Request type %d, lba %d failed (align %d)\n", type, lba, (uintptr_t)buf % 0x1000);
 		return -1;
 	}
 
@@ -135,7 +112,17 @@ static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uin
 }
 
 static uint64_t read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
-	return send_request(dev, VIRTIO_BLK_T_IN, lba, num_blocks, buf);
+	if(num_blocks < 16) {
+		return send_request(dev, VIRTIO_BLK_T_IN, lba, num_blocks, buf);
+	}
+
+	for(uint64_t i = 0; i < num_blocks; i++) {
+		if(send_request(dev, VIRTIO_BLK_T_IN, lba + i, 1, buf + (uint32_t)i * 512) == -1) {
+			return i;
+		}
+	}
+
+	return num_blocks;
 }
 
 static uint64_t write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
@@ -162,8 +149,8 @@ void virtio_block_init() {
 			log(LOG_INFO, "virtio_block: Device is read-only\n");
 		}
 
-		//dev->queues[0].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
-		//dev->queues[0].used->flags = VIRTQ_USED_F_NO_NOTIFY;
+		dev->queues[0].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
+		dev->queues[0].used->flags = VIRTQ_USED_F_NO_NOTIFY;
 		int_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
 
 		dev->status |= VIRTIO_PCI_STATUS_DRIVER_OK;
