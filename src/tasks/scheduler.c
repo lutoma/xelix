@@ -100,21 +100,18 @@ void scheduler_yield() {
 }
 
 static inline void unlink(struct scheduler_qentry* entry) {
-	serial_printf("unlink pid %d, entry %#x\n", entry->task->pid, entry);
 	if(entry->next == entry || entry->prev == entry) {
 		panic("scheduler: No more queued tasks to execute (PID 1 killed?).\n");
 	}
-	serial_printf("1 entry is now %#x, kfreeing\n", entry);
 
 	entry->next->prev = entry->prev;
 	entry->prev->next = entry->next;
 
-	serial_printf("2 entry is now %#x, kfreeing\n", entry);
 	if(entry->task) {
 		task_cleanup(entry->task);
 	}
 
-	serial_printf("entry is now %#x, kfreeing\n", entry);
+	// FIXME Free entry
 	//kfree(entry);
 }
 
