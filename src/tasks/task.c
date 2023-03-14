@@ -140,14 +140,7 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	// Allocate initial stack. Will dynamically grow, so be conservative.
 	task->stack_size = PAGE_SIZE * 2;
 
-	// FIXME Does this need to be in kernel ctx?!
-	vm_alloc_t vmem;
-	if(!vm_alloc(VM_KERNEL, &vmem, RDIV(task->stack_size, PAGE_SIZE), NULL, VM_RW | VM_ZERO)) {
-		return NULL;
-	}
-
-	task->stack = vmem.addr;
-	if(!vm_alloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, vmem.phys,
+	if(!vm_alloc_at(&task->vmem, NULL, 2, (void*)TASK_STACK_LOCATION - task->stack_size, NULL,
 		VM_USER | VM_RW | VM_FREE | VM_TFORK | VM_FIXED)) {
 		return NULL;
 	}
@@ -166,13 +159,18 @@ void task_set_initial_state(task_t* task) {
 	task->state->ebp = 0;
 	task->state->esp = (void*)TASK_STACK_LOCATION - sizeof(iret_t);
 
-	// Return stack for iret
-	iret_t* iret = task->stack + task->stack_size - sizeof(iret_t);
+	// Temporarily map part of the userland stack into kernel memory to set up
+	// stack for initial iret
+	vm_alloc_t alloc;
+	iret_t* iret = vm_map(VM_KERNEL, &alloc, &task->vmem, task->state->esp, sizeof(iret_t), 0);
+
 	iret->eip = task->entry;
 	iret->cs = GDT_SEG_CODE_PL3;
 	iret->eflags = EFLAGS_IF;
 	iret->user_esp = (void*)TASK_STACK_LOCATION;
 	iret->ss = GDT_SEG_DATA_PL3;
+
+	vm_free(&alloc);
 }
 
 /* Called by the scheduler whenever a task terminates from the userland
@@ -418,7 +416,6 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	sysfs_printf("%-10s: %d\n", "gid", task->gid);
 	sysfs_printf("%-10s: %d\n", "egid", task->egid);
 	sysfs_printf("%-10s: %s\n", "name", task->name);
-	sysfs_printf("%-10s: %p\n", "stack", task->stack);
 	sysfs_printf("%-10s: %p\n", "entry", task->entry);
 	sysfs_printf("%-10s: %p\n", "sbrk", task->sbrk);
 	sysfs_printf("%-10s: %d\n", "state", task->task_state);
