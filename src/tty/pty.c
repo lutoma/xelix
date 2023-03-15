@@ -74,7 +74,7 @@ static size_t ptm_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	while(!buffer_size(pty->ptm_buf)) {
-		halt();
+		scheduler_yield();
 	}
 
 	return buffer_pop(pty->ptm_buf, dest, size);
@@ -95,7 +95,7 @@ static size_t pts_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 */
 	while(!buffer_size(pty->pts_buf)) {
-		halt();
+		scheduler_yield();
 	}
 
 	if(pty->termios.c_lflag & ICANON) {
@@ -105,7 +105,7 @@ static size_t pts_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 		}
 
 		while(!pty->read_done) {
-			halt();
+			scheduler_yield();
 		}
 		pty->read_done = 0;
 	}

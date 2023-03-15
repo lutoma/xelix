@@ -214,6 +214,7 @@ ret:
 		gdt_set_tss(current_entry->task->kernel_stack + KERNEL_STACK_SIZE);
 		return current_entry->task->state;
 	} else if(current_entry->worker) {
+		// FIXME TSS for workers?
 		return current_entry->worker->state;
 	}
 	return NULL;

@@ -100,7 +100,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	while(!buffer_size(buf)) {
-		halt();
+		scheduler_yield();
 	}
 
 	return buffer_pop(buf, dest, size);

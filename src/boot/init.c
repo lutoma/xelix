@@ -85,7 +85,6 @@ void xelix_main(void) {
 		init_path = CONFIG_INIT_PATH;
 	}
 
-
 	log(LOG_INFO, "Starting %s\n", init_path);
 
 	char* __env[] = { NULL };
@@ -105,6 +104,5 @@ void xelix_main(void) {
 	struct term* init_term = zmalloc(sizeof(struct term));
 	strcpy(init_term->path, "/dev/console");
 	init->ctty = init_term;
-	//vfs_open(init, "/dev/tty1", 0);
 	scheduler_init();
 }

@@ -106,7 +106,7 @@ static inline int map_task(task_t* task) {
 		return -1;
 	}
 
-	task->state = mvmem[0]->addr;
+	task->state = vmem1.addr;
 	bzero(task->state, sizeof(isf_t));
 
 	// Kernel stack used during interrupts while this task is running

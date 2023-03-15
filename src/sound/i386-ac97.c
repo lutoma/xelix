@@ -171,7 +171,7 @@ static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size)
 
 	int_enable();
 	while(bno == card->playing_buffer) {
-		halt();
+		scheduler_yield();
 	}
 	int_disable();
 

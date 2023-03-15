@@ -20,6 +20,8 @@
 
 #include <bsp/timer.h>
 
+extern void scheduler_yield();
+
 struct task;
 typedef uint32_t time_t;
 struct timeval {
@@ -35,7 +37,7 @@ void time_init();
 static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {
 	const uint32_t until = timer_tick + timeout;
 	while(timer_tick <= until) {
-		halt();
+		scheduler_yield();
 	}
 }
 

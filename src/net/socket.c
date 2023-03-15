@@ -155,7 +155,7 @@ static size_t do_recvfrom(struct socket* sock, void* dest, size_t size,
 			return -1;
 		}
 
-		halt();
+		scheduler_yield();
 	}
 	int_disable();
 
@@ -222,7 +222,7 @@ static size_t vfs_write_cb(struct vfs_callback_ctx* ctx, void* source, size_t si
 			return -1;
 		}
 
-		halt();
+		scheduler_yield();
 	}
 	int_disable();
 
@@ -589,7 +589,7 @@ static int do_resolve(task_t* task, const char* data, char* result, int result_l
 	uint32_t end_tick = timer_tick + (5 * timer_rate);
 	int_enable();
 	while(timer_tick < end_tick && state->result == -2) {
-		halt();
+		scheduler_yield();
 	}
 	int_disable();
 
