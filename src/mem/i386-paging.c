@@ -161,7 +161,8 @@ void paging_init() {
 
 	// Create a new vm_alloc context with the page dir and allocate the kernel / page dir in it
 	vm_new(&vm_kernel_ctx, paging_kernel_ctx);
-	uint32_t kernel_pages = (paging_alloc_end - KERNEL_START) / PAGE_SIZE;
+
+	uint32_t kernel_pages = RDIV(paging_alloc_end - KERNEL_START, PAGE_SIZE);
 	if(!vm_alloc_at(VM_KERNEL, NULL, kernel_pages, KERNEL_START, KERNEL_START, VM_RW | VM_FIXED)) {
 		panic("paging: Could not allocate kernel vmem");
 	}
