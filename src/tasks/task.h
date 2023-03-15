@@ -102,7 +102,8 @@ typedef struct task {
 
 	vfs_file_t files[CONFIG_VFS_MAX_OPENFILES];
 
-	struct sigaction signal_handlers[32];
+	// Signals are 1-indexed, so we need one additional array entry
+	struct sigaction signal_handlers[NSIG + 1];
 	uint32_t signal_mask;
 
 	struct {

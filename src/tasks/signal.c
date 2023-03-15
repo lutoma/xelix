@@ -31,7 +31,7 @@
 extern void task_sigjmp_crt0(void);
 
 int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
-	if(sig > 32) {
+	if(sig > NSIG) {
 		sc_errno = EINVAL;
 		return -1;
 	}
@@ -154,7 +154,7 @@ int task_sigprocmask(task_t* task, int how, uint32_t* set, uint32_t* oset) {
 int task_sigaction(task_t* task, int sig, const struct sigaction* act,
 	struct sigaction* oact) {
 
-	if(sig > 32) {
+	if(sig > NSIG) {
 		sc_errno = EINVAL;
 		return -1;
 	}
