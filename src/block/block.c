@@ -27,6 +27,8 @@
 #include <block/random.h>
 #include <fs/sysfs.h>
 #include <fs/mount.h>
+#include <mem/vm.h>
+#include <panic.h>
 
 static int num_devs = 0;
 static struct vfs_block_dev* block_devs = NULL;
@@ -63,14 +65,19 @@ uint64_t vfs_block_sread(struct vfs_block_dev* dev, uint64_t position, uint64_t 
 		return vfs_block_read(dev, start_block, num_blocks, buf) * dev->block_size;
 	}
 
-	uint8_t* int_buf = kmalloc(num_blocks * dev->block_size);
+	vm_alloc_t alloc;
+	uint64_t buffer_size = num_blocks * dev->block_size;
+	assert(buffer_size >= size);
+
+	uint8_t* int_buf = vm_alloc(VM_KERNEL, &alloc, RDIV(buffer_size, PAGE_SIZE), NULL, 0);
+
 	if(vfs_block_read(dev, start_block, num_blocks, int_buf) < num_blocks) {
 		kfree(int_buf);
 		return -1;
 	}
 
 	memcpy(buf, int_buf + offset, size);
-	kfree(int_buf);
+	vm_free(&alloc);
 	return size;
 }
 
