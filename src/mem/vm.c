@@ -40,6 +40,49 @@ static int have_malloc_ranges = 50;
 	#define debug(...)
 #endif
 
+
+/* Remove all allocation flags that are only relevant for initial allocation
+ * and could cause trouble during later reallocations (such as VM_ZERO in
+ * vm_copy).
+ */
+#define CLEANUP_FLAGS(x) ((x) & (VM_RW | VM_USER | VM_FREE | VM_TFORK | VM_NOCOW))
+
+static inline vm_alloc_t* new_range() {
+	/* During initialization, kmalloc_init calls vm_alloc once to get its
+	 * memory space to allocate from. The zmalloc call below would fail since
+	 * kmalloc is not ready yet. Another call to vm_alloc can then happen in
+	 * paging_set_range when a new page table is allocated.
+	 * Add a dirty hack for that one-time special case.
+	 */
+
+	vm_alloc_t* range;
+
+	// FIXME combine into simple early_alloc with the initial page dir allocation
+	if(unlikely(!kmalloc_ready)) {
+		if(likely(have_malloc_ranges)) {
+			range = &malloc_ranges[50 - have_malloc_ranges--];
+		} else {
+			panic("vm: preallocated ranges exhausted before kmalloc is ready\n");
+		}
+	} else {
+		range = kmalloc(sizeof(vm_alloc_t));
+	}
+
+	if(range) {
+		bzero(range, sizeof(vm_alloc_t));
+		range->self = range;
+	}
+	return range;
+}
+
+static inline void insert_range(struct vm_ctx* ctx, vm_alloc_t* new_range) {
+	if(ctx->ranges) {
+		ctx->ranges->previous = new_range;
+	}
+	new_range->next = ctx->ranges;
+	ctx->ranges = new_range;
+}
+
 static inline vm_alloc_t* get_range(struct vm_ctx* ctx, void* addr, bool phys) {
 	if(!phys && !bitmap_get(&ctx->bitmap, (uintptr_t)addr / PAGE_SIZE)) {
 		return NULL;
@@ -92,34 +135,6 @@ vm_alloc_t* vm_get(struct vm_ctx* ctx, void* addr, bool phys) {
 
 	vm_alloc_t* range = get_range(ctx, addr, phys);
 	spinlock_release(&ctx->lock);
-	return range;
-}
-
-static inline vm_alloc_t* new_range() {
-	/* During initialization, kmalloc_init calls vm_alloc once to get its
-	 * memory space to allocate from. The zmalloc call below would fail since
-	 * kmalloc is not ready yet. Another call to vm_alloc can then happen in
-	 * paging_set_range when a new page table is allocated.
-	 * Add a dirty hack for that one-time special case.
-	 */
-
-	vm_alloc_t* range;
-
-	// FIXME combine into simple early_alloc with the initial page dir allocation
-	if(unlikely(!kmalloc_ready)) {
-		if(likely(have_malloc_ranges)) {
-			range = &malloc_ranges[50 - have_malloc_ranges--];
-		} else {
-			panic("vm: preallocated ranges exhausted before kmalloc is ready\n");
-		}
-	} else {
-		range = kmalloc(sizeof(vm_alloc_t));
-	}
-
-	if(range) {
-		bzero(range, sizeof(vm_alloc_t));
-		range->self = range;
-	}
 	return range;
 }
 
@@ -193,13 +208,8 @@ void* vm_alloc_at(struct vm_ctx* ctx, vm_alloc_t* vmem, size_t size, void* virt_
 	range->addr = virt;
 	range->phys = phys;
 	range->size = size * PAGE_SIZE;
-	range->flags = flags;
-	range->next = ctx->ranges;
-
-	if(ctx->ranges) {
-		ctx->ranges->previous = range;
-	}
-	ctx->ranges = range;
+	range->flags = CLEANUP_FLAGS(flags);
+	insert_range(ctx, range);
 
 	if(vmem) {
 		memcpy(vmem, range, sizeof(vm_alloc_t));
@@ -259,13 +269,8 @@ void* vm_alloc_many(int num, struct vm_ctx** mctx, vm_alloc_t** mvmem, size_t si
 		range->addr = virt;
 		range->phys = phys;
 		range->size = size * PAGE_SIZE;
-		range->flags = mflags[i];
-		range->next = lctx->ranges;
-
-		if(lctx->ranges) {
-			lctx->ranges->previous = range;
-		}
-		lctx->ranges = range;
+		range->flags = CLEANUP_FLAGS(mflags[i]);
+		insert_range(lctx, range);
 		spinlock_release(&lctx->lock);
 
 		if(mvmem && mvmem[i]) {
@@ -326,14 +331,9 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	range->ctx = ctx;
 	range->addr = virt;
 	range->size = size_pages * PAGE_SIZE;
-	range->flags = flags;
-	range->next = ctx->ranges;
+	range->flags = CLEANUP_FLAGS(flags);
 
-	if(ctx->ranges) {
-		ctx->ranges->previous = range;
-	}
-	ctx->ranges = range;
-
+	insert_range(ctx, range);
 	spinlock_release(&ctx->lock);
 	spinlock_release(&src_ctx->lock);
 
@@ -394,33 +394,36 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	return virt + src_offset;
 }
 
-int vm_copy(struct vm_ctx* dest, vm_alloc_t* vmem_dest, vm_alloc_t* vmem_src) {
+int vm_copy(struct vm_ctx* dest_ctx, vm_alloc_t* result, vm_alloc_t* src) {
 	// does not work on sharded memory yet
-	assert(!vmem_src->shards);
+	assert(!src->shards);
 
-	vm_alloc_t new_kernel_vmem;
-	if(unlikely(!vm_alloc(VM_KERNEL, &new_kernel_vmem, RDIV(vmem_src->size, PAGE_SIZE), NULL, VM_RW))) {
+	vm_alloc_t kernel_dest;
+	vm_alloc_t kernel_src;
+
+	if(unlikely(!vm_alloc(VM_KERNEL, &kernel_dest, RDIV(src->size, PAGE_SIZE), NULL, VM_RW))) {
 		return -1;
 	}
 
-	vm_alloc_t old_kernel_vmem;
-	void* old_kernel_virt = vm_map(VM_KERNEL, &old_kernel_vmem, vmem_src->ctx, vmem_src->addr, vmem_src->size, 0);
-	if(!old_kernel_virt) {
+	void* src_ptr = vm_map(VM_KERNEL, &kernel_src, src->ctx, src->addr, src->size, 0);
+	if(!src_ptr) {
 		return -1;
 	}
 
-	memcpy(new_kernel_vmem.addr, old_kernel_virt, vmem_src->size);
-	vm_free(&old_kernel_vmem);
+	memcpy(kernel_dest.addr, src_ptr, src->size);
+	vm_free(&kernel_src);
 
 	// Zero out remainder of page if needed in order to not leak any previous data
-	size_t mod = vmem_src->size % PAGE_SIZE;
+	size_t mod = src->size % PAGE_SIZE;
 	if(mod) {
-		void* last_page = new_kernel_vmem.addr + vmem_src->size - PAGE_SIZE;
+		void* last_page = kernel_dest.addr + src->size - PAGE_SIZE;
 		bzero(last_page + mod, PAGE_SIZE - mod);
 	}
 
-	vm_free(&new_kernel_vmem);
-	if(!vm_alloc_at(dest, vmem_dest, RDIV(vmem_src->size, PAGE_SIZE), vmem_src->addr, new_kernel_vmem.phys, vmem_src->flags)) {
+	vm_free(&kernel_dest);
+
+	int flags = src->flags | VM_FIXED;
+	if(!vm_alloc_at(dest_ctx, result, RDIV(src->size, PAGE_SIZE), src->addr, kernel_dest.phys, flags)) {
 		return -1;
 	}
 

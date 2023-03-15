@@ -58,7 +58,6 @@
 
 #define VM_DEBUG 4096
 
-
 #define vm_alloc(ctx, vmem, size, phys, flags) vm_alloc_at(ctx, vmem, size, NULL, phys, flags)
 
 #define valloc_translate_ptr(range, inaddr, dir)   \
