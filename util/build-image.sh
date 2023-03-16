@@ -31,18 +31,26 @@ sudo mount /dev/loop2p1 mnt/boot
 sudo grub-install /dev/loop2 --boot-directory=mnt/boot --modules="normal part_msdos ext2 multiboot" --no-floppy --target=i386-pc
 cat <<EOF | sudo sponge mnt/boot/grub/grub.cfg
 set root='hd0,msdos1'
+set gfxmode=1920x1080x32
+loadfont unicode
+terminal_output gfxterm
 
-if [ "x\${timeout}" != "x-1" ]; then
+if [ "x${timeout}" != "x-1" ]; then
 	if keystatus --shift; then
 		set timeout=-1
 	else
-		set timeout=0
+		set timeout=5
 	fi
 fi
 
 menuentry 'Xelix' {
 	multiboot2 /xelix.bin root=/dev/ide1p2
-	set gfxpayload=1920x1080x32
+	set gfxpayload=keep
+}
+
+menuentry 'Xelix (Text mode)' {
+	multiboot2 /xelix.bin root=/dev/ide1p2 init=/usr/bin/login
+	set gfxpayload=keep
 }
 EOF
 
