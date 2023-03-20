@@ -49,7 +49,7 @@ menuentry 'Xelix' {
 }
 
 menuentry 'Xelix (Text mode)' {
-	multiboot2 /xelix.bin root=/dev/ide1p2 init=/usr/bin/login
+	multiboot2 /xelix.bin root=/dev/ide1p2 init_target=text
 	set gfxpayload=keep
 }
 EOF

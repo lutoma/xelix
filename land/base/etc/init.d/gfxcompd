@@ -1,3 +1,4 @@
 [Service]
+Target=default
 ExecStart=/usr/bin/gfxcompd
-
+Restart=onfailure
