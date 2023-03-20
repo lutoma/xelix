@@ -1,4 +1,4 @@
-/* Copyright © 2019 Lukas Martini
+/* Copyright © 2019-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -33,10 +33,16 @@
 
 struct service {
 	struct service* next;
-
-	pid_t pid;
+	char name[NAME_MAX];
+	char target[NAME_MAX];
 	char tty[PATH_MAX];
 	char path[PATH_MAX];
+	pid_t pid;
+	enum {
+		RESTART_NEVER = 0,
+		RESTART_ALWAYS = 1,
+		RESTART_ON_FAILURE = 2
+	} restart_mode;
 };
 
 struct service* services;
@@ -87,20 +93,70 @@ static void launch_service(struct service* service) {
 	}
 }
 
-#define MATCH(s, n) strcasecmp(section, s) == 0 && strcasecmp(name, n) == 0
 static int handler(void* user, const char* section, const char* name,
-                   const char* value) {
+	const char* value) {
 
 	struct service* service = (struct service*)user;
-    if (MATCH("service", "execstart")) {
-    	strlcpy(service->path, value, PATH_MAX);
-	} else if (MATCH("service", "tty")) {
-    	strlcpy(service->tty, value, PATH_MAX);
-    } else {
-        return 0;
-    }
-    return 1;
+	if(strcasecmp(section, "Service") != 0) {
+		return 0;
+	}
+
+	if(strcasecmp(name, "ExecStart") == 0) {
+		strlcpy(service->path, value, PATH_MAX);
+	} else if(strcasecmp(name, "TTY") == 0) {
+		strlcpy(service->tty, value, PATH_MAX);
+	} else if(strcasecmp(name, "Target") == 0) {
+		strlcpy(service->target, value, NAME_MAX);
+	} else if(strcasecmp(name, "Restart") == 0) {
+		if(strcasecmp(value, "Always") == 0) {
+			service->restart_mode = RESTART_ALWAYS;
+		} else if(strcasecmp(value, "OnFailure") == 0) {
+			service->restart_mode = RESTART_ON_FAILURE;
+		}
+	} else {
+		return 0;
+	}
+	return 1;
 }
+
+
+static char* get_target() {
+	int fd = open("/sys/cmdline", O_RDONLY);
+	if(fd < 1) {
+		return NULL;
+	}
+
+	char buf[500];
+	int nread = read(fd, buf, 500);
+	close(fd);
+	if(nread < 1) {
+		return NULL;
+	}
+
+	char* pch;
+	char* strtok_state;
+	int state = 0;
+	pch = strtok_r(buf, " =\n", &strtok_state);
+	while(pch != NULL) {
+		if(state == 0) {
+			if(strcmp(pch, "init_target") == 0) {
+				state = 2;
+			} else {
+				state = 1;
+			}
+		} else if(state == 1) {
+			state = 0;
+		} else if(state == 2) {
+			char* result = malloc(500);
+			strlcpy(result, pch, 500);
+			return result;
+		}
+		pch = strtok_r(NULL, " =\n", &strtok_state);
+	}
+
+	return NULL;
+}
+
 
 
 int main() {
@@ -109,7 +165,7 @@ int main() {
 		return -1;
 	}
 
-	open("/dev/tty1", O_RDONLY);
+	open("/dev/console", O_RDONLY);
 	sigset_t set;
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
@@ -117,6 +173,12 @@ int main() {
 	if(mount("/dev/ide1p1", "/boot", "ext2", 0, NULL) < 0) {
 		perror("Could not mount /boot");
 	}
+
+	char* target = get_target();
+	if(!target) {
+		target = "default";
+	}
+	printf("init: Booting target %s\n", target);
 
 	if(chdir("/etc/init.d") == -1) {
 		perror("Could not switch to services directory");
@@ -141,12 +203,16 @@ int main() {
 			continue;
 		}
 
-	    if(ini_parse(ent->d_name, handler, service) < 0) {
-	        fprintf(stderr, "Can't load '%s'\n", ent->d_name);
-	        continue;
-	    }
+		strlcpy(service->name, ent->d_name, NAME_MAX);
+		if(ini_parse(ent->d_name, handler, service) < 0) {
+			fprintf(stderr, "Can't load '%s'\n", ent->d_name);
+			continue;
+		}
 
-	    launch_service(service);
+		if(!strcmp(service->target, target)) {
+			printf("init: Launching service %s, command %s\n", service->name, service->path);
+			launch_service(service);
+		}
 	}
 
 	while(1) {
@@ -157,15 +223,33 @@ int main() {
 			exit(EXIT_FAILURE);
 		}
 
-		if(!pid || WIFSTOPPED(wstat) || (WIFSIGNALED(wstat) &&
-			(WTERMSIG(wstat) == SIGKILL || WTERMSIG(wstat) == SIGTERM))) {
+		if(!pid) {
 			continue;
 		}
 
 		struct service* service = services;
 		for(; service; service = service->next) {
 			if(service->pid == pid) {
-				launch_service(service);
+				int failed = 0;
+				if(WIFEXITED(wstat)) {
+					if(WEXITSTATUS(wstat) != 0) {
+						failed = 1;
+					}
+				} else if(WIFSIGNALED(wstat)) {
+					if(WTERMSIG(wstat) != SIGKILL && WTERMSIG(wstat) != SIGTERM) {
+						failed = 1;
+					}
+				}
+				int do_restart = service->restart_mode == RESTART_ALWAYS ||
+					(service->restart_mode == RESTART_ON_FAILURE && failed);
+
+				printf("init: Service %s has %s%s\n",
+					service->name, failed ? "failed" : "stopped",
+					do_restart ? ", restarting" : "");
+
+				if(do_restart) {
+					launch_service(service);
+				}
 				break;
 			}
 		}
