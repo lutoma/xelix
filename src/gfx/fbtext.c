@@ -22,6 +22,7 @@
 #include <mem/kmalloc.h>
 #include <boot/multiboot.h>
 #include <fs/sysfs.h>
+#include <tty/console.h>
 #include <errno.h>
 #include <string.h>
 #include <log.h>
@@ -38,8 +39,17 @@
 		+ (y)*gfx_handle->ul_desc.pitch							\
 		+ (x)*(gfx_handle->ul_desc.bpp / 8)))
 
-int cols = 0;
-int rows = 0;
+#define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * gfx_font.width, \
+	y * gfx_font.height)
+
+static int cols = 0;
+static int rows = 0;
+
+struct {
+	uint32_t last_x;
+	uint32_t last_y;
+	uint32_t* last_data;
+} cursor_data = {0, 0, 0};
 
 // Font from ter-u16n.psf gets linked into the binary
 extern struct {
@@ -55,47 +65,14 @@ extern struct {
 } gfx_font;
 
 static struct gfx_handle* gfx_handle = NULL;
-static unsigned int last_x = 0;
-static unsigned int last_y = 0;
 static size_t text_fb_size;
 static void* text_fb_addr;
 static bool initialized = false;
 static spinlock_t lock;
 
-void fbtext_write_char(char chr) {
-	if(!initialized) {
-		return;
-	}
-
-	if(chr == '\n' || last_x + 1 >= cols) {
-		if(unlikely(!spinlock_get(&lock, 200))) {
-			return;
-		}
-
-		last_y++;
-		last_x = 0;
-		spinlock_release(&lock);
-
-		if(chr == '\n') {
-			return;
-		}
-	}
-
-	last_x++;
-	if(last_y >= rows) {
-		if(unlikely(!spinlock_get(&lock, 200))) {
-			return;
-		}
-
-		size_t move_size = gfx_handle->ul_desc.pitch * gfx_font.height;
-		memcpy(text_fb_addr, text_fb_addr + move_size, text_fb_size - move_size);
-		memset(text_fb_addr + text_fb_size - move_size, 0, move_size);
-		last_y--;
-		spinlock_release(&lock);
-	}
-
-	unsigned int x = last_x * gfx_font.width;
-	unsigned int y = last_y * gfx_font.height;
+void fbtext_write(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t col_fg, uint32_t col_bg) {
+	x *= gfx_font.width;
+	y *= gfx_font.height;
 
 	const uint8_t* bitmap = (uint8_t*)&gfx_font
 			+ gfx_font.header_size
@@ -108,8 +85,76 @@ void fbtext_write_char(char chr) {
 	for(int i = 0; i < gfx_font.height; i++) {
 		for(int j = 0; j < gfx_font.width; j++) {
 			int fg = bitmap[i] & (1 << (gfx_font.width - j - 1));
-			*PIXEL_PTR(text_fb_addr, x + j, y + i) = fg ? 0xffffff : 0;
+			*PIXEL_PTR(text_fb_addr, x + j, y + i) = fg ? col_fg : col_bg;
 		}
+	}
+}
+
+void fbtext_clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
+	uint32_t color = 0x000000;
+
+	// If end_y == start_y, we still need to clear 1 line
+	int lines = MAX(1, (end_y - start_y));
+
+	// memset32 entire area for full line clears
+	if(start_x == 0 && end_x == cols) {
+		size_t clear_size = lines * gfx_font.height
+			* gfx_handle->ul_desc.pitch;
+
+		memset32(CHAR_PTR(text_fb_addr, start_x, start_y), color, clear_size / 4);
+		return;
+	}
+
+	// Partial clear, do individual memset32 for each line
+	int chars = MAX(1, end_x - start_x);
+	size_t clear_size = chars * gfx_font.width
+		* (gfx_handle->ul_desc.bpp / 8);
+
+	for(int i = 0; i < lines * gfx_font.height; i++) {
+		void* mdest = PIXEL_PTR(text_fb_addr, start_x * gfx_font.width, start_y * gfx_font.height + i);
+		memset32(mdest, color, clear_size / 4);
+	}
+}
+
+void fbtext_scroll() {
+	if(unlikely(!spinlock_get(&lock, 200))) {
+		return;
+	}
+
+	size_t move_size = gfx_handle->ul_desc.pitch * gfx_font.height;
+	memcpy(text_fb_addr, text_fb_addr + move_size, text_fb_size - move_size);
+	memset(text_fb_addr + text_fb_size - move_size, 0, move_size);
+	spinlock_release(&lock);
+}
+
+void fbtext_set_cursor(uint32_t x, uint32_t y, bool restore) {
+	x *= gfx_font.width;
+	y *= gfx_font.height;
+
+	if(!cursor_data.last_data) {
+		cursor_data.last_data = zmalloc(gfx_font.height * sizeof(uint32_t));
+	} else {
+		if(restore) {
+			for(int i = 0; i < gfx_font.height; i++) {
+				*PIXEL_PTR(text_fb_addr, cursor_data.last_x, cursor_data.last_y + i) = cursor_data.last_data[i];
+			}
+		}
+	}
+
+	for(int i = 0; i < gfx_font.height; i++) {
+		cursor_data.last_data[i] = *PIXEL_PTR(text_fb_addr, x, y + i);
+	}
+
+	cursor_data.last_x = x;
+	cursor_data.last_y = y;
+
+	for(int i = 0; i < gfx_font.height; i++) {
+		int color = 0xffffff;
+		if(i == 0 || i == gfx_font.height - 1) {
+			color = 0x000000;
+		}
+
+		*PIXEL_PTR(text_fb_addr, x, y + i) = color;
 	}
 }
 
@@ -144,6 +189,7 @@ void gfx_fbtext_init() {
 	log(LOG_DEBUG, "fbtext: font width %d/%d height %d/%d flags %d\n", gfx_font.width, cols, gfx_font.height, rows, gfx_font.flags);
 
 	initialized = true;
+	tty_console_init(cols, rows);
 	gfx_fbtext_show();
 	log_dump();
 }

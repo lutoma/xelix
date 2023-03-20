@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2019 Lukas Martini
+/* Copyright © 2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,9 +18,6 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
+extern struct term* term_console;
 
-void gfx_fbtext_init();
-void gfx_fbtext_show();
-void fbtext_clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
-void fbtext_write(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t col_fg, uint32_t col_bg);
+void tty_console_init(int cols, int rows);

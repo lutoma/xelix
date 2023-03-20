@@ -21,12 +21,16 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <tty/serial.h>
+#include <tty/term.h>
+#include <tty/console.h>
 
 extern void fbtext_write_char(char);
 #define PRINTF_ALIAS_STANDARD_FUNCTION_NAMES 1
 
 static inline void putchar_(char c) {
-    fbtext_write_char(c);
+    if(term_console) {
+        term_write(term_console, &c, 1);
+    }
 }
 
 #include <printf/printf.h>

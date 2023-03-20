@@ -1,5 +1,5 @@
 /* term.c: Terminal handling
- * Copyright © 2019-2020 Lukas Martini
+ * Copyright © 2019-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -19,34 +19,174 @@
 
 #include <tty/keyboard.h>
 #include <tty/pty.h>
+#include <tty/console.h>
 #include <fs/vfs.h>
 #include <fs/sysfs.h>
+#include <fs/poll.h>
 #include <mem/mem.h>
+#include <mem/kmalloc.h>
 #include <panic.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <buffer.h>
 #include <log.h>
 
+static uint8_t default_c_cc[NCCS] = {
+	0,
+	4, // VEOF
+	'\n', // VEOL
+	0177, // VERASE
+	3, // VINTR
+	21, // VKILL
+	0,  // VMIN
+	28, // VQUIT
+	17, // VSTART
+	19, // VSTOP
+	26, // VSUSP
+	0,
+};
 
-static int term_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
-	dest->st_dev = 2;
-	dest->st_ino = 3;
-	dest->st_mode = FT_IFLNK | S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH;
-	dest->st_nlink = 1;
-	dest->st_blocks = 0;
-	dest->st_blksize = PAGE_SIZE;
-	dest->st_uid = 0;
-	dest->st_gid = 0;
-	dest->st_rdev = 0;
-	dest->st_size = 0;
-	uint32_t t = time_get();
-	dest->st_atime = t;
-	dest->st_mtime = t;
-	dest->st_ctime = t;
-	return 0;
+struct buffer* input_buffer = NULL;
+struct term* term_console = NULL;
+
+// A lot of this code is nearly identical to that in fs/pipe.c - Could be generalized
+
+struct term* term_new(char* name, term_write_cb_t* write_cb) {
+	struct term* term = zmalloc(sizeof(struct term));
+	snprintf(term->path, VFS_PATH_MAX, "/dev/%s", name);
+	term->write_cb = write_cb;
+
+	term->termios.c_iflag = ICRNL;
+	term->termios.c_oflag = OPOST | ONLCR;
+	term->termios.c_cflag = CREAD | B38400;
+	term->termios.c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK;
+
+	memcpy(&term->termios.c_cc, default_c_cc, sizeof(default_c_cc));
+
+	term->input_buf = buffer_new(150);
+	if(!term->input_buf) {
+		kfree(term);
+		return NULL;
+	}
+
+	struct vfs_callbacks term_cb = {
+		.read = term_vfs_read,
+		.write = term_vfs_write,
+		.poll = term_vfs_poll,
+		.ioctl = term_vfs_ioctl,
+		.stat = term_vfs_stat,
+		.access = sysfs_access,
+	};
+
+	sysfs_add_dev(name, &term_cb);
+	return term;
 }
 
-static int term_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
+size_t term_write(struct term* term, const char* source, size_t size) {
+	if(term->termios.c_oflag & ONLCR) {
+		size_t i = 0;
+		for(; i < size; i++, source++) {
+			if(*source == '\n') {
+				if(term->write_cb(term, "\r\n", 2) != 2) {
+					break;
+				}
+			} else {
+				if(!term->write_cb(term, source, 1)) {
+					break;
+				}
+			}
+		}
+
+		return i;
+	} else {
+		return term->write_cb(term, source, size);
+	}
+}
+
+/* Canonical read mode input handler. Perform internal line-editing and block
+ * read syscall until we encounter VEOF or VEOL.
+ */
+static void handle_canon(struct term* term, char chr) {
+	// EOF / ^D
+	if(chr == term->termios.c_cc[VEOF]) {
+		term->read_done = true;
+		return;
+	}
+
+	// Signal task on ^C
+	/*if(chr == pty->termios.c_cc[VINTR] && pty->fg_task && pty->termios.c_lflag & ISIG) {
+		task_signal(pty->fg_task, NULL, SIGINT, NULL);
+	}*/
+
+	if(chr == term->termios.c_cc[VERASE]) {
+		char _unused;
+		buffer_pop(term->input_buf, &_unused, 1);
+	} else {
+		buffer_write(term->input_buf, &chr, 1);
+	}
+
+	if(chr == term->termios.c_cc[VEOL]) {
+		term->read_done = true;
+	}
+}
+
+size_t term_input(struct term* term, void* _source, size_t size) {
+	char* source = (char*)_source;
+
+	// Loop back input if ECHO is enabled
+	if(term->termios.c_lflag & ECHO) {
+		term_write(term, source, size);
+	}
+
+	if(term->termios.c_lflag & ICANON) {
+		for(size_t i = 0; i < size; i++) {
+			handle_canon(term, source[i]);
+		}
+	} else {
+		buffer_write(term->input_buf, source, size);
+	}
+
+	return size;
+}
+
+size_t term_vfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
+	return term_write((struct term*)ctx->fp->mount_instance, (char*)source, size);
+}
+
+size_t term_vfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+	struct term* term = (struct term*)ctx->fp->mount_instance;
+
+	if(!buffer_size(term->input_buf) && ctx->fp->flags & O_NONBLOCK) {
+		sc_errno = EAGAIN;
+		return -1;
+	}
+
+/*	vfs_file_t* write_fp = vfs_get_from_id(term->fd[1], ctx->task);
+	if(!term->data_size && !write_fp) {
+		sc_errno = EBADF;
+		return -1;
+	}
+*/
+	while(!buffer_size(term->input_buf)) {
+		scheduler_yield();
+	}
+
+	if(term->termios.c_lflag & ICANON) {
+		if(!term->read_done && ctx->fp->flags & O_NONBLOCK) {
+			sc_errno = EAGAIN;
+			return -1;
+		}
+
+		while(!term->read_done) {
+			scheduler_yield();
+		}
+		term->read_done = 0;
+	}
+
+	return buffer_pop(term->input_buf, dest, size);
+}
+
+static int term_vfs_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
 	task_t* task = ctx->task;
 	if(!task || !task->ctty) {
 		sc_errno = ENOENT;
@@ -58,33 +198,132 @@ static int term_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
 	return len;
 }
 
-static size_t term_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
-	serial_printf(strndup(source, size));
-	return size;
+int term_vfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
+	dest->st_dev = 2;
+	dest->st_ino = 3;
+	dest->st_mode = FT_IFCHR;
+	dest->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+	dest->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+	dest->st_nlink = 1;
+	dest->st_blocks = 0;
+	dest->st_blksize = 0x1000;
+	dest->st_uid = 0;
+	dest->st_gid = 0;
+	dest->st_rdev = 0;
+	dest->st_size = 0;
+	uint32_t t = time_get();
+	dest->st_atime = t;
+	dest->st_mtime = t;
+	dest->st_ctime = t;
+	return 0;
 }
 
+int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
+	struct term* term = (struct term*)ctx->fp->mount_instance;
+	size_t arg_size = 0;
 
-//static vfs_file_t* term_open(struct vfs_callback_ctx* ctx, uint32_t flags);
+	/* Because arg can be a buffer of varying width, we can't use the automatic
+	 * syscall pointer mapping code. So do that manually here.
+	 */
+	switch(request) {
+		case TIOCGPTN:
+			arg_size = sizeof(int);
+			break;
+		case TIOCGWINSZ:
+		case TIOCSWINSZ:
+			arg_size = sizeof(struct winsize);
+			break;
+		case TCGETS:
+		case TCSETS:
+		case TCSETSW:
+			arg_size = sizeof(struct termios);
+			break;
+		default:
+			sc_errno = ENOSYS;
+			return -1;
+	}
+
+	vm_alloc_t alloc;
+	void* arg = vm_map(VM_KERNEL, &alloc, &ctx->task->vmem, _arg,
+		arg_size, VM_MAP_USER_ONLY | VM_RW);
+
+	if(!arg) {
+		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		sc_errno = EFAULT;
+		return -1;
+	}
+
+	switch(request) {
+		case TIOCGPTN:
+			// FIXME pty only
+			*(int*)arg = term->pts_fd;
+			break;
+		case TCGETS:
+			memcpy(arg, &term->termios, sizeof(struct termios));
+			break;
+		case TCSETS:
+		case TCSETSW:
+			memcpy(&term->termios, arg, sizeof(struct termios));
+			// Allow only supported flags - can't chance c_cflag
+			term->termios.c_iflag &= ICRNL | BRKINT | IGNBRK | IEXTEN;
+			term->termios.c_oflag &= OPOST | ONLCR;
+			term->termios.c_lflag &= ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK;
+			break;
+		case TIOCGWINSZ:
+			memcpy(arg, &term->winsize, sizeof(struct winsize));
+			break;
+		case TIOCSWINSZ:
+			memcpy(&term->winsize, arg, sizeof(struct winsize));
+			break;
+	}
+
+	vm_free(&alloc);
+	return 0;
+}
+
+int term_vfs_poll(struct vfs_callback_ctx* ctx, int events) {
+	struct term* pty = (struct term*)ctx->fp->mount_instance;
+	struct buffer* buf = pty->input_buf;
+
+//	int r = events & POLLOUT;
+	int r = 0;
+	if(events & POLLIN && buffer_size(buf)) {
+		r |= POLLIN;
+	}
+
+	return r;
+}
+
+static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags);
 struct vfs_callbacks term_cb = {
-	.stat = term_stat,
-	.readlink = term_readlink,
-	//.open = term_open,
-	.write = term_write,
+	.stat = term_vfs_stat,
+	.ioctl = term_vfs_ioctl,
+	.readlink = term_vfs_readlink,
+	.open = term_vfs_open,
+	.write = term_vfs_write,
+	.read = term_vfs_read,
 	.access = sysfs_access,
 };
 
-#if 0
-static vfs_file_t* term_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
-	serial_printf("term_open %s\n", ctx->orig_path);
-	if(!ctx->task || !ctx->task->ctty) {
-		serial_printf("open failed.\n");
+static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
+	if(!ctx->task) {
 		sc_errno = ENOENT;
 		return NULL;
 	}
 
-	return ctx->task->ctty->vfs_cb.open(ctx, flags);
+	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 0);
+	if(!fp) {
+		return NULL;
+	}
+
+	fp->inode = 1;
+	fp->type = FT_IFCHR;
+	fp->meta = NULL;
+	// FIXME
+	fp->mount_instance = term_console;
+	memcpy(&fp->callbacks, &term_cb, sizeof(struct vfs_callbacks));
+	return fp;
 }
-#endif
 
 void term_init() {
 	tty_keyboard_init();

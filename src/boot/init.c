@@ -31,6 +31,7 @@
 #include <tasks/scheduler.h>
 #include <gfx/gfx.h>
 #include <tty/term.h>
+#include <tty/console.h>
 #include <bsp/i386-pci.h>
 #include <tasks/elf.h>
 #include <tasks/syscall.h>
@@ -98,11 +99,8 @@ void xelix_main(void) {
 	if(elf_load_file(init, init_path) == -1) {
 		panic("Could not start init (Tried %s).\n", init_path);
 	}
-	scheduler_add(init);
 
-	// FIXME
-	struct term* init_term = zmalloc(sizeof(struct term));
-	strcpy(init_term->path, "/dev/console");
-	init->ctty = init_term;
+	init->ctty = term_console;
+	scheduler_add(init);
 	scheduler_init();
 }

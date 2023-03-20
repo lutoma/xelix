@@ -28,11 +28,14 @@
 #include <buffer.h>
 #include <errno.h>
 #include <tty/keymap.h>
+#include <tty/console.h>
+#include <tty/term.h>
 
 #define flush() { while(inb(0x64) & 1) { inb(0x60); }}
 #define send(c) { while((inb(0x64) & 0x2)); outb(0x60, (c)); }
 
 static struct buffer* buf = NULL;
+static bool forward_to_console = true;
 
 /* Convert tty_input_state/keycodes to ASCII character. Also converts a number of
  * single-byte escape sequences that are used in both canonical and non-canonical
@@ -60,7 +63,6 @@ static inline char convert_to_char(struct tty_input_state* input) {
 	}
 	return *chr;
 }
-
 
 /* Non-canonical read mode: Return immediately upon input regardless of
  * buffer size, and also return ECMA-48 encoded versions of control characters.
@@ -105,7 +107,11 @@ static void handle_noncanon(struct tty_input_state* input) {
 			inputlen = 1;
 	}
 
-	buffer_write(buf, inputseq, inputlen);
+	if(forward_to_console) {
+		term_input(term_console, inputseq, inputlen);
+	} else {
+		buffer_write(buf, inputseq, inputlen);
+	}
 }
 
 static void intr_handler(task_t* task, isf_t* isf_state, int num) {
@@ -190,6 +196,24 @@ static int sfs_poll(struct vfs_callback_ctx* ctx, int events) {
 	return 0;
 }
 
+static vfs_file_t* sfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
+	vfs_file_t* fp = vfs_alloc_fileno(ctx->task, 0);
+	if(!fp) {
+		return NULL;
+	}
+
+	// Stop forwarding input to console/tty handler
+	forward_to_console = false;
+
+	fp->inode = 1;
+	fp->type = FT_IFCHR;
+	fp->callbacks.read = sfs_read;
+	fp->callbacks.poll = sfs_poll;
+	fp->callbacks.stat = sysfs_stat;
+	fp->callbacks.access = sysfs_access;
+	return fp;
+}
+
 void tty_keyboard_init() {
 	buf = buffer_new(10);
 	if(!buf) {
@@ -210,8 +234,7 @@ void tty_keyboard_init() {
 	int_register(IRQ(1), &intr_handler, false);
 
 	struct vfs_callbacks sfs_cb = {
-		.read = sfs_read,
-		.poll = sfs_poll,
+		.open = sfs_open,
 	};
 	sysfs_add_dev("keyboard1", &sfs_cb);
 }
