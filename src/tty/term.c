@@ -113,38 +113,52 @@ static void handle_canon(struct term* term, char chr) {
 		return;
 	}
 
-	// Signal task on ^C
-	/*if(chr == pty->termios.c_cc[VINTR] && pty->fg_task && pty->termios.c_lflag & ISIG) {
-		task_signal(pty->fg_task, NULL, SIGINT, NULL);
-	}*/
-
-	if(chr == term->termios.c_cc[VERASE]) {
-		char _unused;
-		buffer_pop(term->input_buf, &_unused, 1);
-	} else {
-		buffer_write(term->input_buf, &chr, 1);
-	}
-
 	if(chr == term->termios.c_cc[VEOL]) {
 		term->read_done = true;
 	}
-}
 
-size_t term_input(struct term* term, void* _source, size_t size) {
-	char* source = (char*)_source;
+	if(chr == term->termios.c_cc[VERASE]) {
+		if(buffer_size(term->input_buf)) {
+			char* str = "\e[D\e[K";
+			term_write(term, str, strlen(str));
+		}
+
+		char _unused;
+		buffer_pop(term->input_buf, &_unused, 1);
+		return;
+	}
+
+	buffer_write(term->input_buf, &chr, 1);
 
 	// Loop back input if ECHO is enabled
 	if(term->termios.c_lflag & ECHO) {
-		term_write(term, source, size);
+		term_write(term, &chr, 1);
+	}
+}
+
+size_t term_input(struct term* term, const void* _source, size_t size) {
+	char* source = (char*)_source;
+
+	for(size_t i = 0; i < size; i++) {
+		char chr = source[i];
+		if(chr == term->termios.c_cc[VINTR] && term->fg_task && term->termios.c_lflag & ISIG) {
+			term_write(term, "^C\n", 3);
+			task_signal(term->fg_task, NULL, SIGINT, NULL);
+			continue;
+		}
+
+		if(term->termios.c_lflag & ICANON) {
+			handle_canon(term, chr);
+		} else {
+			// Loop back input if ECHO is enabled
+			if(term->termios.c_lflag & ECHO) {
+				term_write(term, &chr, 1);
+			}
+
+			buffer_write(term->input_buf, &chr, 1);
+		}
 	}
 
-	if(term->termios.c_lflag & ICANON) {
-		for(size_t i = 0; i < size; i++) {
-			handle_canon(term, source[i]);
-		}
-	} else {
-		buffer_write(term->input_buf, source, size);
-	}
 
 	return size;
 }
@@ -302,6 +316,7 @@ struct vfs_callbacks term_cb = {
 	.open = term_vfs_open,
 	.write = term_vfs_write,
 	.read = term_vfs_read,
+	.poll = term_vfs_poll,
 	.access = sysfs_access,
 };
 

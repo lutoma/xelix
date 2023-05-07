@@ -1,6 +1,5 @@
 ENTRY(_start)
 gfx_font = _binary_src_gfx_Tamsyn8x16r_psf_start;
-boot_logo = _binary_src_gfx_bootlogo_img_start;
 
 PHDRS {
 	headers PT_PHDR PHDRS ;

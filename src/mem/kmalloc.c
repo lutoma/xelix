@@ -313,6 +313,30 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero D
 	return (void*)GET_CONTENT(header);
 }
 
+void* _krealloc(void* ptr, size_t new_size DEBUGREGS) {
+	if(!ptr) {
+		return kmalloc(new_size);
+	}
+
+	struct mem_block* header = (struct mem_block*)((uintptr_t)ptr
+		- sizeof(struct mem_block));
+
+	debug("krealloc: %s:%d %s 0x%x new_size %#x old_size %#x\n", _debug_file, _debug_line,
+		_debug_func, ptr, new_size, header->size);
+	if(unlikely((uintptr_t)header < alloc_start ||
+		(uintptr_t)ptr >= alloc_end || header->type == TYPE_FREE)) {
+
+		log(LOG_ERR, "kmalloc: Attempt to realloc invalid block %#x\n", header);
+		return NULL;
+	}
+
+	check_header(header, true);
+	void* new = kmalloc(new_size);
+	memcpy(new, ptr, header->size);
+	kfree(ptr);
+	return new;
+}
+
 void _kfree(void *ptr DEBUGREGS) {
 	if(!ptr) {
 		return;

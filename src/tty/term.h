@@ -188,7 +188,7 @@ struct winsize {
 
 
 struct term;
-typedef size_t (term_write_cb_t)(struct term* term, void* source, size_t size);
+typedef size_t (term_write_cb_t)(struct term* term, const void* source, size_t size);
 
 struct term {
     char path[VFS_PATH_MAX];
@@ -210,7 +210,7 @@ struct term {
 
 struct term* term_new(char* name, term_write_cb_t* write_cb);
 size_t term_write(struct term* term, const char* source, size_t size);
-size_t term_input(struct term* term, void* source, size_t size);
+size_t term_input(struct term* term, const void* source, size_t size);
 size_t term_vfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size);
 size_t term_vfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 int term_vfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest);

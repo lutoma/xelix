@@ -22,5 +22,6 @@
 
 void gfx_fbtext_init();
 void gfx_fbtext_show();
-void fbtext_clear(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
-void fbtext_write(uint32_t x, uint32_t y, char chr, bool bdc, uint32_t col_fg, uint32_t col_bg);
+void gfx_fbtext_hide_logo();
+void gfx_fbtext_write(uint32_t x, uint32_t y, wchar_t chr, uint32_t col_fg, uint32_t col_bg);
+void gfx_fbtext_set_cursor(uint32_t x, uint32_t y, bool restore);

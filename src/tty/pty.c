@@ -66,7 +66,7 @@ static int ptm_poll(struct vfs_callback_ctx* ctx, int events) {
 	return r;
 }
 
-static size_t term_write_cb(struct term* term, void* source, size_t size) {
+static size_t term_write_cb(struct term* term, const void* source, size_t size) {
 	return buffer_write(term->ptm_buf, source, size);
 }
 
