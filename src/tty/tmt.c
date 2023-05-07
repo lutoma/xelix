@@ -29,11 +29,12 @@
 #include <mem/kmalloc.h>
 #include "tmt.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #define BUF_MAX 100
 #define PAR_MAX 8
 #define TAB 8
-#define MAX(x, y) (((size_t)(x) > (size_t)(y)) ? (size_t)(x) : (size_t)(y))
-#define MIN(x, y) (((size_t)(x) < (size_t)(y)) ? (size_t)(x) : (size_t)(y))
 #define CLINE(vt) (vt)->screen.lines[MIN((vt)->curs.r, (vt)->screen.nline - 1)]
 
 #define P0(x) (vt->pars[x])
@@ -499,3 +500,5 @@ tmt_reset(TMT *vt)
     CB(vt, TMT_MSG_CURSOR, "t");
     notify(vt, true, true);
 }
+
+#pragma GCC diagnostic pop
