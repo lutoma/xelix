@@ -48,8 +48,8 @@ menuentry 'Xelix' {
 	set gfxpayload=keep
 }
 
-menuentry 'Xelix (Text mode)' {
-	multiboot2 /xelix.bin root=/dev/ide1p2 init_target=text
+menuentry 'Xelix (Experimental GUI)' {
+	multiboot2 /xelix.bin root=/dev/ide1p2 init_target=gui
 	set gfxpayload=keep
 }
 EOF

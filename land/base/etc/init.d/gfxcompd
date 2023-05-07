@@ -1,4 +1,4 @@
 [Service]
-Target=default
+Target=gui
 ExecStart=/usr/bin/gfxcompd
 Restart=onfailure
