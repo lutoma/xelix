@@ -333,7 +333,7 @@ static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 
 	fp->inode = 1;
 	fp->type = FT_IFCHR;
-	fp->meta = NULL;
+	fp->meta = (int)NULL;
 	// FIXME
 	fp->mount_instance = term_console;
 	memcpy(&fp->callbacks, &term_cb, sizeof(struct vfs_callbacks));

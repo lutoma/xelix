@@ -270,6 +270,8 @@ int main(void) {
 	} while (0)
 
 #define __KAVL_ITR(suf, __scope, __type, __head, __cmp) \
+	_Pragma("GCC diagnostic push") \
+	_Pragma("GCC diagnostic ignored \"-Warray-bounds\"") \
 	struct kavl_itr_##suf { \
 		const __type *stack[KAVL_MAX_DEPTH], **top, *right; /* _right_ points to the right child of *top */ \
 	}; \
@@ -307,7 +309,8 @@ int main(void) {
 			itr->right = (*itr->top)->__head.p[1]; \
 			return 1; \
 		} \
-	}
+	} \
+	_Pragma("GCC diagnostic pop")
 
 /**
  * Insert a node to the tree

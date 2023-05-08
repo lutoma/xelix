@@ -22,6 +22,7 @@
 #include <fs/sysfs.h>
 #include <int/int.h>
 #include <mem/kmalloc.h>
+#include <mem/i386-gdt.h>
 #include <tasks/worker.h>
 
 static struct scheduler_qentry* current_entry = NULL;

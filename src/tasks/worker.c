@@ -46,7 +46,7 @@ worker_t* worker_new(char* name, void* entry) {
 	worker->state->esp = (void*)worker->stack + KERNEL_STACK_SIZE - sizeof(iret_t);
 
 	// Pass worker as first fastcall argument
-	worker->state->ecx = worker;
+	worker->state->ecx = (uint32_t)worker;
 
 	// Return stack for iret
 	iret_t* iret = (iret_t*)worker->state->esp;
@@ -60,9 +60,11 @@ worker_t* worker_new(char* name, void* entry) {
 
 int worker_stop(worker_t* worker) {
 	worker->stopped = true;
+	return 0;
 }
 
 int worker_exit(worker_t* worker) {
 	worker_stop(worker);
 	scheduler_yield();
+	return -1;
 }
