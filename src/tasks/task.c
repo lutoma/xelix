@@ -57,7 +57,7 @@ static task_t* alloc_task(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	task->task_state = TASK_STATE_RUNNING;
 	task->interrupt_yield = false;
 
-	strncpy(task->name, name, VFS_NAME_MAX);
+	strlcpy(task->name, name, VFS_NAME_MAX);
 	if(parent) {
 		memcpy(task->cwd, parent->cwd, VFS_PATH_MAX);
 	} else {

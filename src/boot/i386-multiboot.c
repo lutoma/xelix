@@ -143,10 +143,10 @@ void multiboot_init() {
 
 		switch(tag->type) {
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
-				strncpy(cmdline, (char*)(tag + 1), ARRAY_SIZE(cmdline) - 1);
+				strlcpy(cmdline, (char*)(tag + 1), ARRAY_SIZE(cmdline));
 				// intentional fallthrough
 			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-				strncpy(strrep, (char*)(tag + 1), 149);
+				strlcpy(strrep, (char*)(tag + 1), 150);
 				break;
 			case MULTIBOOT_TAG_TYPE_LOAD_BASE_ADDR:
 				snprintf(strrep, 150, "%#x", ((struct multiboot_tag_load_base_addr*)tag)->load_base_addr);

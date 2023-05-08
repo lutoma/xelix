@@ -481,10 +481,10 @@ int ext2_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
 		return -1;
 	}
 
-	strncpy(buf, (char*)inode->blocks, size);
+	size_t len = strlcpy(buf, (char*)inode->blocks, size);
 	kfree(inode);
 	kfree(dirent);
-	return strlen(buf);
+	return len;
 }
 
 

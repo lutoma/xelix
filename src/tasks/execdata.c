@@ -68,7 +68,7 @@ void task_setup_execdata(task_t* task) {
 
 	for(int i = 0; i < task->argc; i++) {
 		argv[i] = (void*)CONFIG_EXECDATA_LOCATION + offset;
-		strncpy((char*)(vmem.addr + offset), task->argv[i], 200);
+		strlcpy((char*)(vmem.addr + offset), task->argv[i], 200);
 		offset += strlen(task->argv[i]) + 1;
 	}
 
@@ -78,7 +78,7 @@ void task_setup_execdata(task_t* task) {
 
 	for(int i = 0; i < task->envc; i++) {
 		environ[i] = (void*)CONFIG_EXECDATA_LOCATION + offset;
-		strncpy((char*)(vmem.addr + offset), task->environ[i], 200);
+		strlcpy((char*)(vmem.addr + offset), task->environ[i], 200);
 		offset += strlen(task->environ[i]) + 1;
 	}
 

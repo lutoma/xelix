@@ -384,7 +384,7 @@ int vfs_fcntl(task_t* task, int fd, int cmd, int arg3) {
 			return -1;
 		}
 
-		return (int)strncpy(dest, fp->path, VFS_PATH_MAX);
+		return (int)strlcpy(dest, fp->path, VFS_PATH_MAX);
 	}
 
 	sc_errno = ENOSYS;
@@ -604,7 +604,7 @@ int vfs_realpath(task_t* task, const char* orig_path, char* dest) {
 		return -1;
 	}
 
-	strncpy(dest, ctx->orig_path, VFS_PATH_MAX);
+	strlcpy(dest, ctx->orig_path, VFS_PATH_MAX);
 	vfs_free_context(ctx);
 	return 0;
 }

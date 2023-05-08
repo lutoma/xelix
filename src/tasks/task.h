@@ -117,8 +117,8 @@ typedef struct task {
 		int* stat_loc;
 	} wait_context;
 
-	char cwd[VFS_PATH_MAX + 1];
-	char binary_path[VFS_PATH_MAX + 1];
+	char cwd[VFS_PATH_MAX];
+	char binary_path[VFS_PATH_MAX];
 
 	/* A task-specific errno variable. After a syscall return, this will be put
 	 * into the ebx register, from where the userland syscall handler will

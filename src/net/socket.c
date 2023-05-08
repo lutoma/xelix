@@ -567,7 +567,7 @@ static void dns_cb(char* data, void* _state) {
 	}
 
 	if(data) {
-		strncpy(state->dest, data, state->dest_len);
+		strlcpy(state->dest, data, state->dest_len);
 		//kfree(data);
 		state->result = 0;
 	} else {

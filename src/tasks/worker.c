@@ -27,7 +27,7 @@ worker_t* worker_new(char* name, void* entry) {
 	worker_t* worker = kmalloc(sizeof(worker_t));
 	worker->entry = entry;
 	worker->stopped = false;
-	strncpy(worker->name, name, VFS_NAME_MAX);
+	strlcpy(worker->name, name, VFS_NAME_MAX);
 
 	worker->state = vm_alloc(VM_KERNEL, NULL, 1, NULL, VM_RW);
 	if(!worker->state) {

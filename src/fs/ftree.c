@@ -33,7 +33,7 @@ struct ftree_file* vfs_ftree_insert(struct ftree_file* root, char* name, vfs_sta
 	struct ftree_file* p = zmalloc(sizeof(struct ftree_file));
 	struct ftree_file* q = NULL;
 
-	strncpy(p->path, name, ARRAY_SIZE(p->path) - 1);
+	strlcpy(p->path, name, ARRAY_SIZE(p->path));
 	memcpy(&p->stat, stat, sizeof(vfs_stat_t));
 
 	q = kavl_insert(my, &(root ? root : ftree_root)->children, p, 0);
@@ -67,7 +67,7 @@ struct ftree_file* vfs_ftree_insert_path(char* path, vfs_stat_t* stat) {
 const struct ftree_file* vfs_ftree_find(const struct ftree_file* root, char* name) {
 	kavl_itr_t(my) itr;
 	struct ftree_file* in = kmalloc(sizeof(struct ftree_file));
-	strncpy(in->path, name, ARRAY_SIZE(in->path) - 1);
+	strlcpy(in->path, name, ARRAY_SIZE(in->path));
 	kavl_itr_find(my, (root ? root : ftree_root)->children, in, &itr);
 
 	const struct ftree_file* p = kavl_at(&itr);
@@ -129,7 +129,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 
 void vfs_ftree_init() {
 	ftree_root = zmalloc(sizeof(struct ftree_file));
-	strncpy(ftree_root->path, "/", ARRAY_SIZE(ftree_root->path));
+	strlcpy(ftree_root->path, "/", ARRAY_SIZE(ftree_root->path));
 	ftree_root->stat.st_dev = 1;
 	ftree_root->stat.st_ino = 2;
 	ftree_root->stat.st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
