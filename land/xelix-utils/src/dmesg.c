@@ -1,4 +1,4 @@
-/* Copyright © 2019 Lukas Martini
+/* Copyright © 2019-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -17,10 +17,19 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include "util.h"
 #include "argparse.h"
+
+struct log_entry {
+	uint8_t level;
+	uint64_t tick;
+	uint32_t timestamp;
+	uint32_t length;
+};
 
 static const char *const usage[] = {
     "dmesg [options]",
@@ -48,45 +57,49 @@ int main(int argc, const char** argv) {
     	"is part of xelix-utils. Please report bugs to <hello@lutoma.org>.");
     argc = argparse_parse(&argparse, argc, argv);
 
-	FILE* fp = fopen(path, "r");
-	if(!fp) {
+	int fd = open(path, O_RDONLY);
+	if(fd == -1) {
 		fail("Could not open log file");
 	}
 
 	while(true) {
-		if(feof(fp)) {
-			return EXIT_SUCCESS;
+		struct log_entry header;
+		size_t hdr_len = sizeof(struct log_entry);
+
+		size_t nread = read(fd, &header, hdr_len);
+		if(nread != hdr_len) {
+			// EOF
+			if(nread == 0) {
+				exit(EXIT_SUCCESS);
+			}
+
+			fail("Incomplete header entry");
 		}
 
-		uint32_t tick;
-		uint32_t time;
-		uint32_t level;
-		char cstate;
-		char msg[500];
-
-		if(fscanf(fp, "%d %d %d:%500[^\n]", &tick, &time, &level, &msg) != 4) {
-			exit(EXIT_SUCCESS);
+		char msg[header.length];
+		if(read(fd, &msg, header.length) != header.length) {
+			fail("Incomplete message");
 		}
 
 		char* level_name = "31m???";
-		switch(level) {
+		switch(header.level) {
 			case 1: level_name = "39mDebug"; break;
 			case 2: level_name = "33mInfo"; break;
 			case 3: level_name = "35mWarn"; break;
 			case 4: level_name = "31mErr"; break;
 		}
 
-		if(time) {
-			printf("%19s ", time2str(time, "%Y-%m-%d %H:%M:%S"));
+		if(header.timestamp) {
+			printf("%19s ", time2str(header.timestamp, "%Y-%m-%d %H:%M:%S"));
 		} else {
 			char* tstr;
-			asprintf(&tstr, "+%d ticks", tick);
+			asprintf(&tstr, "+%d ticks", header.tick);
 			printf("%19s ", tstr);
 			free(tstr);
 		}
-		printf("\033[%-8s\033[m %s\n", level_name, msg);
+		printf("\033[%-8s\033[m %s", level_name, msg);
 	}
 
-	fclose(fp);
+	close(fd);
 	return 0;
 }
