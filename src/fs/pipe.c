@@ -20,6 +20,7 @@
 #include "pipe.h"
 #include <fs/vfs.h>
 #include <fs/poll.h>
+#include <fs/sysfs.h>
 #include <errno.h>
 #include <tasks/task.h>
 #include <mem/kmalloc.h>
@@ -73,6 +74,24 @@ static int pipe_poll(struct vfs_callback_ctx* ctx, int events) {
 	return 0;
 }
 
+static int pipe_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
+	dest->st_dev = 3;
+	dest->st_ino = 1;
+	dest->st_mode = FT_IFIFO | S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH;
+	dest->st_nlink = 2;
+	dest->st_blocks = 2;
+	dest->st_blksize = 1024;
+	dest->st_uid = 0;
+	dest->st_gid = 0;
+	dest->st_rdev = 0;
+	dest->st_size = 0;
+	uint32_t t = time_get();
+	dest->st_atime = t;
+	dest->st_mtime = t;
+	dest->st_ctime = t;
+	return 0;
+}
+
 int vfs_pipe(task_t* task, int fildes[2]) {
 	vfs_file_t* fd1 = vfs_alloc_fileno(task, 3);
 	if(!fd1) {
@@ -98,8 +117,10 @@ int vfs_pipe(task_t* task, int fildes[2]) {
 
 	fd1->callbacks.read = pipe_read;
 	fd1->callbacks.poll = pipe_poll;
+	fd1->callbacks.stat = pipe_stat;
 	fd2->callbacks.write = pipe_write;
 	fd2->callbacks.poll = pipe_poll;
+	fd2->callbacks.stat = pipe_stat;
 	fd1->flags = O_RDONLY;
 	fd2->flags = O_WRONLY;
 	fd1->mount_instance = (void*)pipe;
