@@ -2,6 +2,7 @@ name: nano
 version: '4.2'
 sources:
   - url: https://www.nano-editor.org/dist/v4/nano-4.2.tar.xz
+  - file: nanorc
 dependencies:
   - ncurses
 patches:
@@ -18,4 +19,5 @@ configure:
 make:
   - make
 install:
+  - cp nanorc $DESTDIR/etc/nanorc
   - make install

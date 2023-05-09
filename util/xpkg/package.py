@@ -164,6 +164,8 @@ class Package:
 				self.run_cmds([extract_cmd], cwd=sources_dir)
 			elif 'dir' in source.keys():
 				self.run_cmds([f'cp -r {self.pkg_dir / source["dir"]}/* {dest}'], cwd=sources_dir)
+			elif 'file' in source.keys():
+				self.run_cmds([f'cp -r {self.pkg_dir / source["file"]} {dest}'], cwd=sources_dir)
 
 	def patch(self):
 		if self.patches:
