@@ -91,7 +91,7 @@ static inline void handle_page_fault(task_t* task, isf_t* state, void* eip) {
 			log(LOG_WARN, "  No matching vmem range found.\n");
 		}
 
-		task_signal(task, NULL, SIGSEGV, NULL);
+		task_signal(task, NULL, SIGSEGV);
 	} else {
 		panic("Page fault %s", message);
 	}
@@ -118,7 +118,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 
 	log(LOG_WARN, "%s in task %d <%s> at %p\n", exc.name, task->pid, task->name, eip);
-	task_signal(task, NULL, exc.signal, NULL);
+	task_signal(task, NULL, exc.signal);
 }
 
 void task_exception_init() {

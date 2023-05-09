@@ -195,7 +195,7 @@ int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size) {
 		data->size, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!dest) {
-		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		task_signal(ctx->task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
@@ -431,7 +431,7 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 		*addrlen, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!addr) {
-		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		task_signal(ctx->task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
@@ -502,7 +502,7 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* osa,
 		*addrlen, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!sa) {
-		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		task_signal(ctx->task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
@@ -538,7 +538,7 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 		*addrlen, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!addr) {
-		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		task_signal(ctx->task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}

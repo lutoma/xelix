@@ -174,7 +174,7 @@ char** task_copy_strings(task_t* task, char** array, uint32_t* count) {
 		if(slen == max_length) {
 			log(LOG_WARN, "task_copy_strings: %d %s: Unterminated string in array\n",
 				task->pid, task->name);
-			task_signal(task, NULL, SIGSEGV, NULL);
+			task_signal(task, NULL, SIGSEGV);
 			return NULL;
 		}
 	}

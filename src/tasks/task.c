@@ -192,7 +192,7 @@ void task_userland_eol(task_t* t) {
 		if(t->parent->task_state == TASK_STATE_WAITING) {
 			wait_finish(t->parent, t);
 		}
-		task_signal(t->parent, t, SIGCHLD, t->parent->state);
+		task_signal(t->parent, t, SIGCHLD);
 	}
 
 	if(t->ctty && t == t->ctty->fg_task) {

@@ -30,7 +30,8 @@
 // signal.asm
 extern void task_sigjmp_crt0(void);
 
-int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
+
+int task_signal(task_t* task, task_t* source, int sig) {
 	if(sig > NSIG) {
 		sc_errno = EINVAL;
 		return -1;
@@ -71,19 +72,15 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 		*user_stack = (uint32_t)sa.sa_handler;
 		*(user_stack + 1) = sig;
 
-		if(!state) {
-			state = task->state;
-		}
-
 		// GP registers, will be restored by task_sigjmp_crt0 using popa
-		*(user_stack + 2) = state->edi;
-		*(user_stack + 3) = state->esi;
-		*(user_stack + 4) = (uint32_t)state->ebp;
+		*(user_stack + 2) = task->state->edi;
+		*(user_stack + 3) = task->state->esi;
+		*(user_stack + 4) = (uint32_t)task->state->ebp;
 		*(user_stack + 5) = 0;
-		*(user_stack + 6) = state->ebx;
-		*(user_stack + 7) = state->edx;
-		*(user_stack + 8) = state->ecx;
-		*(user_stack + 9) = state->eax;
+		*(user_stack + 6) = task->state->ebx;
+		*(user_stack + 7) = task->state->edx;
+		*(user_stack + 8) = task->state->ecx;
+		*(user_stack + 9) = task->state->eax;
 
 		// Current EIP, will be jumped back to after handler returns
 		*(user_stack + 10) = (uint32_t)iret->eip;
@@ -111,7 +108,7 @@ int task_signal(task_t* task, task_t* source, int sig, isf_t* state) {
 }
 
 // Syscall API
-int task_signal_syscall(task_t* source, isf_t* state, int target_pid, int sig) {
+int task_signal_syscall(task_t* source, int target_pid, int sig) {
 	task_t* target_task = scheduler_find(target_pid);
 	if(!target_task) {
 		sc_errno = ESRCH;
@@ -131,7 +128,7 @@ int task_signal_syscall(task_t* source, isf_t* state, int target_pid, int sig) {
 		return 0;
 	}
 
-	return task_signal(target_task, source, sig, state);
+	return task_signal(target_task, source, sig);
 }
 
 int task_sigprocmask(task_t* task, int how, uint32_t* set, uint32_t* oset) {

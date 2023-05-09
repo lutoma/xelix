@@ -118,7 +118,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 			sizeof(struct gfx_ul_desc), VM_MAP_USER_ONLY | VM_RW);
 
 		if(!user_desc) {
-			task_signal(ctx->task, NULL, SIGSEGV, NULL);
+			task_signal(ctx->task, NULL, SIGSEGV);
 			sc_errno = EFAULT;
 			return -1;
 		}

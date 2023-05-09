@@ -379,7 +379,7 @@ int vfs_fcntl(task_t* task, int fd, int cmd, int arg3) {
 			VFS_PATH_MAX, VM_MAP_USER_ONLY | VM_RW);
 
 		if(!dest) {
-			task_signal(task, NULL, SIGSEGV, NULL);
+			task_signal(task, NULL, SIGSEGV);
 			sc_errno = EFAULT;
 			return -1;
 		}

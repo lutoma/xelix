@@ -140,7 +140,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 
 			log(LOG_WARN, "tasks: %d %s: Invalid memory pointer in argument %d to syscall %d %s\n",
 				task->pid, task->name, i, scnum, def.name);
-			task_signal(task, NULL, SIGSEGV, NULL);
+			task_signal(task, NULL, SIGSEGV);
 			call_fail();
 		}
 
@@ -150,7 +150,7 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			if(slen == ptr_sizes[i]) {
 				log(LOG_WARN, "tasks: %d %s: Unterminated string in argument %d to syscall %d %s\n",
 					task->pid, task->name, i, scnum, def.name);
-				task_signal(task, NULL, SIGSEGV, NULL);
+				task_signal(task, NULL, SIGSEGV);
 				call_fail();
 			}
 		}

@@ -110,7 +110,7 @@ size_t term_input(struct term* term, const void* _source, size_t size) {
 		char chr = source[i];
 		if(chr == term->termios.c_cc[VINTR] && term->fg_task && term->termios.c_lflag & ISIG) {
 			term_write(term, "^C\n", 3);
-			task_signal(term->fg_task, NULL, SIGINT, NULL);
+			task_signal(term->fg_task, NULL, SIGINT);
 			continue;
 		}
 
@@ -230,7 +230,7 @@ int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		arg_size, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!arg) {
-		task_signal(ctx->task, NULL, SIGSEGV, NULL);
+		task_signal(ctx->task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
