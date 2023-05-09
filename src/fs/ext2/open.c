@@ -60,12 +60,14 @@ vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	if(!ctx->path || !strcmp(ctx->path, "")) {
 		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
+		sc_errno = EINVAL;
 		return NULL;
 	}
 
 	uint32_t dir_inode = 0;
 	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, &dir_inode, ctx->task);
 	if(!dirent && (sc_errno != ENOENT || !(flags & O_CREAT))) {
+		sc_errno = ENOENT;
 		return NULL;
 	}
 
