@@ -49,39 +49,6 @@ static uint8_t default_c_cc[NCCS] = {
 struct buffer* input_buffer = NULL;
 struct term* term_console = NULL;
 
-// A lot of this code is nearly identical to that in fs/pipe.c - Could be generalized
-
-struct term* term_new(char* name, term_write_cb_t* write_cb) {
-	struct term* term = zmalloc(sizeof(struct term));
-	snprintf(term->path, VFS_PATH_MAX, "/dev/%s", name);
-	term->write_cb = write_cb;
-
-	term->termios.c_iflag = ICRNL;
-	term->termios.c_oflag = OPOST | ONLCR;
-	term->termios.c_cflag = CREAD | B38400;
-	term->termios.c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK;
-
-	memcpy(&term->termios.c_cc, default_c_cc, sizeof(default_c_cc));
-
-	term->input_buf = buffer_new(150);
-	if(!term->input_buf) {
-		kfree(term);
-		return NULL;
-	}
-
-	struct vfs_callbacks term_cb = {
-		.read = term_vfs_read,
-		.write = term_vfs_write,
-		.poll = term_vfs_poll,
-		.ioctl = term_vfs_ioctl,
-		.stat = term_vfs_stat,
-		.access = sysfs_access,
-	};
-
-	sysfs_add_dev(name, &term_cb);
-	return term;
-}
-
 size_t term_write(struct term* term, const char* source, size_t size) {
 	if(term->termios.c_oflag & ONLCR) {
 		size_t i = 0;
@@ -164,11 +131,12 @@ size_t term_input(struct term* term, const void* _source, size_t size) {
 }
 
 size_t term_vfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
-	return term_write((struct term*)ctx->fp->mount_instance, (char*)source, size);
+	struct term* term = (struct term*)ctx->fp->meta;
+	return term_write(term, (char*)source, size);
 }
 
 size_t term_vfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
-	struct term* term = (struct term*)ctx->fp->mount_instance;
+	struct term* term = (struct term*)ctx->fp->meta;
 
 	if(!buffer_size(term->input_buf) && ctx->fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
@@ -233,7 +201,7 @@ int term_vfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 }
 
 int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
-	struct term* term = (struct term*)ctx->fp->mount_instance;
+	struct term* term = (struct term*)ctx->fp->meta;
 	size_t arg_size = 0;
 
 	/* Because arg can be a buffer of varying width, we can't use the automatic
@@ -296,8 +264,8 @@ int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 }
 
 int term_vfs_poll(struct vfs_callback_ctx* ctx, int events) {
-	struct term* pty = (struct term*)ctx->fp->mount_instance;
-	struct buffer* buf = pty->input_buf;
+	struct term* term = (struct term*)ctx->fp->meta;
+	struct buffer* buf = term->input_buf;
 
 //	int r = events & POLLOUT;
 	int r = 0;
@@ -320,6 +288,28 @@ struct vfs_callbacks term_cb = {
 	.access = sysfs_access,
 };
 
+struct term* term_new(char* name, term_write_cb_t* write_cb) {
+	struct term* term = zmalloc(sizeof(struct term));
+	snprintf(term->path, VFS_PATH_MAX, "/dev/%s", name);
+	term->write_cb = write_cb;
+
+	term->termios.c_iflag = ICRNL;
+	term->termios.c_oflag = OPOST | ONLCR;
+	term->termios.c_cflag = CREAD | B38400;
+	term->termios.c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK;
+
+	memcpy(&term->termios.c_cc, default_c_cc, sizeof(default_c_cc));
+
+	term->input_buf = buffer_new(150);
+	if(!term->input_buf) {
+		kfree(term);
+		return NULL;
+	}
+
+	sysfs_add_dev(name, &term_cb);
+	return term;
+}
+
 static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	if(!ctx->task) {
 		sc_errno = ENOENT;
@@ -333,7 +323,7 @@ static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 
 	fp->inode = 1;
 	fp->type = FT_IFCHR;
-	fp->meta = (int)NULL;
+	fp->meta = (int)term_console;
 	// FIXME
 	fp->mount_instance = term_console;
 	memcpy(&fp->callbacks, &term_cb, sizeof(struct vfs_callbacks));

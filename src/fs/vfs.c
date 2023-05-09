@@ -400,7 +400,7 @@ int vfs_dup2(task_t* task, int fd1, int fd2) {
 
 	// FIXME
 	if(fd2 <= 2 && !strncmp(fp1->path, "/dev/pts", 8)) {
-		task->ctty = fp1->mount_instance;
+		task->ctty = (struct term*)fp1->meta;
 	}
 
 	vfs_file_t* fp2 = task? &task->files[fd2] : &kernel_files[fd2];
@@ -423,7 +423,7 @@ int vfs_dup2(task_t* task, int fd1, int fd2) {
 
 	fp2->num = fd2;
 	__sync_add_and_fetch(&fp1->refs, 1);
-	fp2->dup_target = fp1->dup_target ? fp1->dup_target : fp1->num;
+	fp2->dup_target = fp1->num;
 	return 0;
 }
 
