@@ -11,11 +11,11 @@ configure:
   - cp -r $PKGDIR/xelix newlib/libc/sys/
 
   - cd newlib/libc/sys/xelix/ && aclocal-1.11 -I ../../../ -I ../../../../
-  - cd newlib/libc/sys/xelix/ && autoconf-2.64
+  - cd newlib/libc/sys/xelix/ && autoconf-2.69
   - cd newlib/libc/sys/xelix/ && automake-1.11 --cygnus Makefile
 
   - cd newlib/libc/sys/ && aclocal-1.11 -I ../.. -I ../../..
-  - cd newlib/libc/sys/ && autoconf-2.64
+  - cd newlib/libc/sys/ && autoconf-2.69
   - cd newlib/libc/sys/ && automake-1.11 --cygnus Makefile
 
   - ./configure
