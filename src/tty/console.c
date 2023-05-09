@@ -25,7 +25,15 @@
 #include <panic.h>
 #include "tmt.h"
 
+struct cache_entry {
+	wchar_t chr;
+	int fg;
+	int bg;
+};
+
 TMT* vt;
+static struct cache_entry* cache;
+static uint32_t cache_pitch;
 
 static inline uint32_t convert_color(int color, int bg) {
 	if(color < 1 || color > 8) {
@@ -44,6 +52,21 @@ static size_t term_write_cb(struct term* term, const void* _source, size_t size)
 	return size;
 }
 
+static inline void write_char(int col, int row, TMTCHAR chr) {
+	struct cache_entry* ent = cache + col + row * cache_pitch;
+	if(ent->chr == chr.c && ent->fg == chr.a.fg && ent->bg == chr.a.bg) {
+		return;
+	}
+
+	uint32_t fg = convert_color(chr.a.fg, 0);
+	uint32_t bg = convert_color(chr.a.bg, 1);
+	gfx_fbtext_write(col, row, chr.c, fg, bg);
+
+	ent->chr = chr.c;
+	ent->fg = chr.a.fg;
+	ent->bg = chr.a.bg;
+}
+
 void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 	const TMTSCREEN* s = tmt_screen(vt);
 	const TMTPOINT* c = tmt_cursor(vt);
@@ -54,9 +77,7 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 				if (s->lines[row]->dirty){
 					for (size_t col = 0; col < s->ncol; col++) {
 						TMTCHAR chr = s->lines[row]->chars[col];
-						uint32_t fg = convert_color(chr.a.fg, 0);
-						uint32_t bg = convert_color(chr.a.bg, 1);
-						gfx_fbtext_write(col, row, chr.c, fg, bg);
+						write_char(col, row, chr);
 					}
 				}
 			}
@@ -74,9 +95,14 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 
 void tty_console_init(int cols, int rows) {
 	term_console = term_new("console", term_write_cb);
-	//term_console->termios.c_oflag &= ~ONLCR;
 	term_console->winsize.ws_row = rows;
 	term_console->winsize.ws_col = cols;
+
+	cache = zmalloc(sizeof(struct cache_entry) * cols * rows);
+	cache_pitch = cols;
+	if(!cache) {
+		panic("Could not allocate console cache.");
+	}
 
 	vt = tmt_open(rows, cols, tmt_callback, NULL, NULL);
 

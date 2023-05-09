@@ -42,7 +42,7 @@
 #define CHAR_PTR(dbuf, x, y) PIXEL_PTR(dbuf, x * gfx_font.width, \
 	y * gfx_font.height)
 
-struct {
+static struct {
 	uint32_t last_x;
 	uint32_t last_y;
 	uint32_t* last_data;
@@ -65,6 +65,10 @@ static struct gfx_handle* gfx_handle = NULL;
 static bool initialized = false;
 
 void gfx_fbtext_write(uint32_t x, uint32_t y, wchar_t chr, uint32_t col_fg, uint32_t col_bg) {
+	if(chr > gfx_font.num_glyphs) {
+		chr = 0;
+	}
+
 	if(chr == ' ') {
 		for(int i = 0; i < gfx_font.height; i++) {
 			void* mdest = PIXEL_PTR(gfx_handle->ul_desc.addr, x * gfx_font.width, y * gfx_font.height + i);
