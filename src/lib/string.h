@@ -29,6 +29,7 @@
 #define strncmp __builtin_strncmp
 #define strcat __builtin_strcat
 #define strcpy __builtin_strcpy
+#define strncpy __builtin_strncpy
 #define strlen __builtin_strlen
 #define strnlen __builtin_strnlen
 #define strndup __builtin_strndup

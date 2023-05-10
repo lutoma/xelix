@@ -78,6 +78,14 @@ size_t strlcpy(char *dst, const char *src, size_t siz)
 	return(s - src - 1);	/* count does not include NUL */
 }
 
+#undef strncpy
+char* strncpy(char* dst, const char* src, size_t n)
+{
+	char* p = dst;
+	while (n-- && (*dst++ = *src++));
+	return p;
+}
+
 #undef strcmp
 int strcmp(const char* s1, const char* s2)
 {

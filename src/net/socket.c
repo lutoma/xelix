@@ -191,11 +191,11 @@ int net_recvfrom(task_t* task, struct recvfrom_data* data, int struct_size) {
 	}
 
 	vm_alloc_t alloc;
-	void* dest = vm_map(VM_KERNEL, &alloc, &ctx->task->vmem, data->dest,
+	void* dest = vm_map(VM_KERNEL, &alloc, &task->vmem, data->dest,
 		data->size, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!dest) {
-		task_signal(ctx->task, NULL, SIGSEGV);
+		task_signal(task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
@@ -427,11 +427,11 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
 	vm_alloc_t alloc;
-	struct sockaddr* addr = vm_map(VM_KERNEL, &alloc, &ctx->task->vmem, oaddr,
+	struct sockaddr* addr = vm_map(VM_KERNEL, &alloc, &task->vmem, oaddr,
 		*addrlen, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!addr) {
-		task_signal(ctx->task, NULL, SIGSEGV);
+		task_signal(task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
@@ -469,7 +469,7 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	}
 
 	vfs_file_t* new_fd = new_socket_fd(task, pico_sock, SOCK_CONNECTED);
-	if(!fd) {
+	if(!new_fd) {
 		return -1;
 	}
 
@@ -498,11 +498,11 @@ int net_getpeername(task_t* task, int sockfd, struct sockaddr* osa,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
 	vm_alloc_t alloc;
-	struct sockaddr* addr = vm_map(VM_KERNEL, &alloc, &ctx->task->vmem, oaddr,
+	struct sockaddr* sa = vm_map(VM_KERNEL, &alloc, &task->vmem, osa,
 		*addrlen, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!sa) {
-		task_signal(ctx->task, NULL, SIGSEGV);
+		task_signal(task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
@@ -534,11 +534,11 @@ int net_getsockname(task_t* task, int sockfd, struct sockaddr* oaddr,
 	 * we can't use the syscall system's automagic kernel memory mapping.
 	 */
 	vm_alloc_t alloc;
-	struct sockaddr* addr = vm_map(VM_KERNEL, &alloc, &ctx->task->vmem, oaddr,
+	struct sockaddr* addr = vm_map(VM_KERNEL, &alloc, &task->vmem, oaddr,
 		*addrlen, VM_MAP_USER_ONLY | VM_RW);
 
 	if(!addr) {
-		task_signal(ctx->task, NULL, SIGSEGV);
+		task_signal(task, NULL, SIGSEGV);
 		sc_errno = EFAULT;
 		return -1;
 	}
