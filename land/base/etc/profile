@@ -20,7 +20,7 @@ shopt -s checkwinsize
 
 export PATH="/usr/bin"
 export PS1='[\u@\h \W]\$ '
-export TERM='ansi'
+export TERM='xelix'
 export HOME=~
 export LANG='EN_US.utf-8'
 export TZ='Europe/Brussels'
