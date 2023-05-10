@@ -36,7 +36,7 @@
 uint32_t max_pty = -1;
 
 static size_t ptm_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
-	struct term* pty = (struct term*)ctx->fp->mount_instance;
+	struct term* pty = (struct term*)ctx->fp->meta;
 
 	if(!buffer_size(pty->ptm_buf) && ctx->fp->flags & O_NONBLOCK) {
 		sc_errno = EAGAIN;
@@ -51,12 +51,12 @@ static size_t ptm_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 }
 
 static size_t ptm_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
-	struct term* pty = (struct term*)ctx->fp->mount_instance;
+	struct term* pty = (struct term*)ctx->fp->meta;
 	return term_input(pty, source, size);
 }
 
 static int ptm_poll(struct vfs_callback_ctx* ctx, int events) {
-	struct term* pty = (struct term*)ctx->fp->mount_instance;
+	struct term* pty = (struct term*)ctx->fp->meta;
 //	int r = events & POLLOUT;
 	int r = 0;
 	if(events & POLLIN && buffer_size(pty->ptm_buf)) {
@@ -133,8 +133,8 @@ static vfs_file_t* ptmx_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	pty->ptm_fd = fd1->num;
 	pty->pts_fd = fd2->num;
 
-	fd1->mount_instance = (void*)pty;
-	fd2->mount_instance = (void*)pty;
+	fd1->meta = (void*)pty;
+	fd2->meta = (void*)pty;
 	return fd1;
 }
 
