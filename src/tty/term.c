@@ -112,6 +112,8 @@ size_t term_input(struct term* term, const void* _source, size_t size) {
 			term_write(term, "^C\n", 3);
 			task_signal(term->fg_task, NULL, SIGINT);
 			continue;
+		} else if(chr == '\r' && term->termios.c_iflag & ICRNL) {
+			chr = '\n';
 		}
 
 		if(term->termios.c_lflag & ICANON) {

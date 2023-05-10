@@ -41,8 +41,8 @@ static inline uint32_t convert_color(int color, int bg) {
 	}
 
 	// RGBA colors: Black, red, green, yellow, blue, magenta, cyan, white, max
-	const uint32_t colors[] = {0x00000000, 0xfffd6883, 0xffadda78, 0xfff9cc6c, 0xfff38d70,
-		0xffa8a9eb, 0x85dacc, 0xfffff1f3, 0xffffffff};
+	const uint32_t colors[] = {0x00000000, 0xfffd6883, 0xffadda78, 0xfff9cc6c,
+		0xffa8a9eb, 0xfff38d70, 0x85dacc, 0xfffff1f3, 0xffffffff};
 	return colors[color - 1];
 }
 
