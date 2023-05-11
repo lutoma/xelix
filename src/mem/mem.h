@@ -30,3 +30,4 @@ extern struct mem_page_alloc_ctx mem_phys_alloc_ctx;
 #define pfree(num, size)
 
 void mem_init();
+void mem_late_init();

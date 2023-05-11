@@ -98,12 +98,6 @@ void mem_init() {
 
 	log(LOG_INFO, "mem: Kernel resides at %p - %p\n", KERNEL_START, ALIGN(KERNEL_END, PAGE_SIZE));
 
-	/* In physical memory, block out all lower memory up to the end of early
-	 * allocations from paging.c. Since the early allocations follow
-	 * KERNEL_END, this implicitly includes the kernel binary.
-	 */
-	mem_page_alloc_at(&mem_phys_alloc_ctx, 0, (uintptr_t)paging_alloc_end / PAGE_SIZE);
-
 	// FIXME mem_info only provides memory size up until first memory hole (~3ish gb)
 	uint32_t mem_kb = (MAX(1024, mem->mem_lower) + mem->mem_upper);
 	mem_phys_alloc_ctx.bitmap.size = (mem_kb * 1024) / PAGE_SIZE;
@@ -115,6 +109,15 @@ void mem_init() {
 	uint32_t vused = bitmap_count(&vm_kernel_ctx.bitmap);
 	log(LOG_INFO, "mem: Virt page allocator ready, %u pages, %u used, %u free\n",
 		vm_kernel_ctx.bitmap.size, vused, vm_kernel_ctx.bitmap.size - vused);
+
+}
+
+void mem_late_init() {
+	/* In physical memory, block out all lower memory up to the end of early
+	 * allocations from paging.c. Since the early allocations follow
+	 * KERNEL_END, this implicitly includes the kernel binary.
+	 */
+	mem_page_alloc_at(&mem_phys_alloc_ctx, 0, (uintptr_t)paging_alloc_end / PAGE_SIZE);
 
 	kmalloc_init();
 
