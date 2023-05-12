@@ -93,7 +93,7 @@ struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_
 		return NULL;
 	}
 
-	memcpy(eth->mac.addr, mac, sizeof(uint8_t) + 6);
+	memcpy(eth->mac.addr, mac, sizeof(uint8_t) * 6);
 	dev->recv_buf = buffer_new(40);
 	if(!dev->recv_buf) {
 		return NULL;
@@ -105,7 +105,7 @@ struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_
 
 	log(LOG_INFO, "net: New device %s mac %02x:%02x:%02x:%02x:%02x:%02x\n",
 		name, mac[0], mac[1], mac[2], mac[3],
-		mac[4], mac[5], mac[6]);
+		mac[4], mac[5]);
 
 	pico_dhcp_initiate_negotiation(&dev->pico_dev, &dhcp_cb, &dhcp_xid);
 	return dev;

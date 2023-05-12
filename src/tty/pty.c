@@ -133,8 +133,8 @@ static vfs_file_t* ptmx_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	pty->ptm_fd = fd1->num;
 	pty->pts_fd = fd2->num;
 
-	fd1->meta = (void*)pty;
-	fd2->meta = (void*)pty;
+	fd1->meta = (uintptr_t)pty;
+	fd2->meta = (uintptr_t)pty;
 	return fd1;
 }
 
