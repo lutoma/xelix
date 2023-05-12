@@ -56,7 +56,7 @@ void (*boot_sequence[])(void) = {
      * will not be mapped after paging_init.
      */
 
-	serial_init,  multiboot_init, gdt_init, mem_init, paging_init, int_init, task_exception_init,
+	serial_init, multiboot_init, gdt_init, mem_init, paging_init, int_init, task_exception_init,
 	timer_init, mem_late_init, cmdline_init, gfx_init, term_init, time_init, pci_init,
 	block_init, vfs_init, timer_init2
 #endif

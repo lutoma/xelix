@@ -35,6 +35,10 @@ MAKE_LDFLAGS += $(LDFLAGS)
 all:
 	@make -j$(nproc) xelix.bin
 
+.PHONY: target/x86-unknown-bare_metal/release/libxelix.a
+target/x86-unknown-bare_metal/release/libxelix.a:
+	RUSTFLAGS="-A special_module_name" cargo build --release --target x86-unknown-bare_metal.json -Z build-std=core
+
 ext/picotcp/build/lib/libpicotcp.a:
 	make -C ext/picotcp
 
@@ -44,7 +48,7 @@ ext/picotcp/build/lib/libpicotcp.a:
 src/lib/config.h: Kconfig .config
 	util/kconfiglib/genconfig.py --header-path src/lib/config.h
 
-%.o: %.c src/lib/generic.h src/lib/config.h ext/picotcp/build/lib/libpicotcp.a
+%.o: %.c src/lib/generic.h src/lib/config.h
 	$(CC) $(MAKE_CFLAGS) -o $@ -c $<
 
 %-asm.o: %.asm

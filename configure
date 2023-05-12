@@ -62,7 +62,7 @@ do
 	w -n ".o"
 done
 
-w " ext/picotcp/build/lib/libpicotcp.a"
+w " ext/picotcp/build/lib/libpicotcp.a target/x86-unknown-bare_metal/release/libxelix.a"
 w "	\$(LD) $^ -o xelix.bin \$(MAKE_LDFLAGS) \$(LDFLAGS)"
 
 for i in $files

@@ -1,0 +1,6 @@
+# With this file, another toolchain to the currently selected one will be used, when you execute `cargo build`.
+# https://rust-lang.github.io/rustup/overrides.html
+
+[toolchain]
+channel = "nightly-2023-05-11"
+components = [ "rust-src", "rust-std", "rustc", "cargo" ]
