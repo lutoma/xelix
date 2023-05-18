@@ -1,16 +1,16 @@
 TARGET=i786-pc-xelix
 PREFIX=$(CURDIR)/local
 
-BINUTILS_VERSION=2.31.1
-BINUTILS_URL=http://ftp.gnu.org/gnu/binutils
+BINUTILS_VERSION=2.40
+BINUTILS_URL=https://ftp.gnu.org/gnu/binutils
 BINUTILS_PACKAGE=binutils-${BINUTILS_VERSION}.tar.xz
 
-GCC_VERSION=11.1.0
-GCC_URL=http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
+GCC_VERSION=13.1.0
+GCC_URL=https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}
 GCC_PACKAGE=gcc-${GCC_VERSION}.tar.xz
 
 NEWLIB_VERSION=3.2.0
-NEWLIB_URL=http://sourceware.org/pub/newlib
+NEWLIB_URL=https://sourceware.org/pub/newlib
 NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
 PATH:=$(PATH):$(CURDIR)/local/bin
@@ -33,7 +33,7 @@ binutils-download:
 binutils-patch:
 	patch -p0 -ddownload/binutils-${BINUTILS_VERSION}/ < ../land/binutils/binutils-${BINUTILS_VERSION}.patch
 	find download/binutils-${BINUTILS_VERSION} -name "config.cache" -delete
-	cp ../land/binutils/elf_i386_xelix.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
+	cp ../land/binutils/elf_i386_xelix.sh ../land/binutils/elf_x86_64_xelix.sh download/binutils-${BINUTILS_VERSION}/ld/emulparams/
 	cd download/binutils-${BINUTILS_VERSION}/ld && aclocal
 	cd download/binutils-${BINUTILS_VERSION}/ld && automake
 	cd download/binutils-${BINUTILS_VERSION} && autoreconf-2.69

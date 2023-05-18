@@ -1,0 +1,108 @@
+--- bfd/config.bfd	2023-01-14 01:00:00.000000000 +0100
++++ bfd/config.bfd.new	2023-05-18 03:54:54.959674472 +0200
+@@ -736,6 +736,12 @@ case "${targ}" in
+     targ_selvecs="i386_elf32_vec iamcu_elf32_vec x86_64_elf32_vec"
+     want64=true
+     ;;
++
++  x86_64-*-xelix*)
++    targ_defvec=x86_64_elf64_vec
++    targ_selvecs=i386_elf32_vec
++    want64=true
++    ;;
+ #endif
+   i[3-7]86-*-lynxos*)
+     targ_defvec=i386_elf32_vec
+@@ -785,6 +791,12 @@ case "${targ}" in
+     targ_underscore=yes
+     ;;
+ 
++  i[3-7]86-*-xelix*)
++    targ_defvec=i386_elf32_vec
++    targ_selvecs=
++    targ64_selvecs=x86_64_elf64_vec
++    ;;
++
+   ia16-*-elf)
+     targ_defvec=i386_elf32_vec
+     targ_selvecs="i386_msdos_vec i386_aout_vec"
+--- ld/configure.tgt	2023-01-14 01:00:00.000000000 +0100
++++ ld/configure.tgt.new	2023-05-18 03:56:28.888061464 +0200
+@@ -449,6 +449,11 @@ i[3-7]86-*-vxworks*)	targ_emul=elf_i386_
+ 			;;
+ i[3-7]86-*-chaos)	targ_emul=elf_i386_chaos
+ 			;;
++i[3-7]86-*-xelix*)
++            targ_emul=elf_i386_xelix
++            targ_extra_emuls=elf_i386
++            targ64_extra_emuls="elf_x86_64_xelix elf_x86_64"
++            ;;
+ ia16-*-elf*)		targ_emul=elf_i386
+ 			targ_extra_emuls=i386msdos
+ 			;;
+@@ -1063,6 +1068,10 @@ x86_64-*-gnu*)		targ_emul=elf_x86_64
+ 			targ_extra_libpath="elf_i386 elf32_x86_64"
+ 			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/x86_64/i386/'`
+ 			;;
++x86_64-*-xelix*)
++            targ_emul=elf_x86_64_xelix
++            targ_extra_emuls="elf_i386_xelix elf_x86_64 elf_i386"
++            ;;
+ xgate-*-*)		targ_emul=xgateelf
+ 			targ_extra_ofiles=ldelfgen.o
+ 			;;
+--- gas/configure.tgt	2023-01-14 01:00:00.000000000 +0100
++++ gas/configure.tgt.new	2023-05-18 03:59:29.994050447 +0200
+@@ -264,6 +264,7 @@ case ${generic_target} in
+   i386-*-*nt*)				fmt=coff em=pe ;;
+   i386-*-rdos*)				fmt=elf ;;
+   i386-*-darwin*)			fmt=macho ;;
++  i386-*-xelix*)			fmt=elf ;;
+ 
+   ia16-*-elf*)				fmt=elf ;;
+ 
+--- config.sub	2023-01-14 01:00:00.000000000 +0100
++++ config.sub.new	2023-05-18 03:59:56.630930777 +0200
+@@ -1754,7 +1754,7 @@ case $os in
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+-	     | fiwix* )
++	     | fiwix* | xelix* )
+ 		;;
+ 	# This one is extra strict with allowed versions
+ 	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
+--- ld/Makefile.am	2023-01-14 01:00:00.000000000 +0100
++++ ld/Makefile.am.new	2023-05-18 04:06:56.420470578 +0200
+@@ -281,6 +281,7 @@ ALL_EMULATION_SOURCES = \
+ 	eelf_i386_ldso.c \
+ 	eelf_i386_sol2.c \
+ 	eelf_i386_vxworks.c \
++	eelf_i386_xelix.c \
+ 	eelf_iamcu.c \
+ 	eelf_s390.c \
+ 	eh8300elf.c \
+@@ -458,6 +459,7 @@ ALL_64_EMULATION_SOURCES = \
+ 	eelf_x86_64_fbsd.c \
+ 	eelf_x86_64_haiku.c \
+ 	eelf_x86_64_sol2.c \
++	eelf_x86_64_xelix.c \
+ 	ehppa64linux.c \
+ 	ei386pep.c \
+ 	emmo.c
+@@ -776,6 +778,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULAT
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_ldso.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_sol2.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_vxworks.Pc@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_xelix.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_iamcu.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_s390.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eh8300elf.Pc@am__quote@
+@@ -950,6 +953,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULAT
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_fbsd.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_haiku.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_sol2.Pc@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_xelix.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ehppa64linux.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ei386pep.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/emmo.Pc@am__quote@

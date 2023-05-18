@@ -1,13 +1,13 @@
 name: binutils
-version: 2.31.1
+version: 2.40
 sources:
-  - url: https://ftp.gnu.org/gnu/binutils/binutils-2.31.1.tar.gz
+  - url: https://ftp.gnu.org/gnu/binutils/binutils-2.40.tar.gz
 patch_skip_path: 0
 patches:
-  - binutils-2.31.1.patch
+  - binutils-2.40.patch
 configure:
   - find . -name "config.cache" -delete
-  - cp $PKGDIR/elf_i386_xelix.sh ld/emulparams/
+  - cp $PKGDIR/elf_i386_xelix.sh $PKGDIR/elf_x86_64_xelix.sh ld/emulparams/
   - cd ld && aclocal
   - cd ld && automake
   - autoreconf-2.69
