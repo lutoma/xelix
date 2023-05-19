@@ -32,5 +32,4 @@ extern spinlock_t net_pico_lock;
 
 void net_receive(struct net_device* dev, void* data, size_t len);
 struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_t* write_cb);
-void net_tick();
 void net_init();

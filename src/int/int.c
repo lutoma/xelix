@@ -23,7 +23,6 @@
 #include <tasks/scheduler.h>
 #include <mem/paging.h>
 #include <mem/i386-gdt.h>
-#include <net/net.h>
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
@@ -43,12 +42,6 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	#endif
 
 	int_disable();
-	#ifdef CONFIG_ENABLE_PICOTCP
-	if(intr == IRQ(0)) {
-		net_tick();
-	}
-	#endif
-
 
 	for(int i = 0; i < 10; i++) {
 		if(!reg[i].handler) {

@@ -278,7 +278,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 }
 
 static void __attribute__((fastcall, noreturn)) do_idle(worker_t* worker) {
-			int_enable();
+		int_enable();
 		while(true) {
 			asm("hlt;");
 		}

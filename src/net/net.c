@@ -29,6 +29,9 @@
 #include <net/i386-rtl8139.h>
 #include <net/i386-ne2k.h>
 #include <net/virtio_net.h>
+#include <tasks/worker.h>
+#include <tasks/scheduler.h>
+#include <time.h>
 
 #ifdef CONFIG_ENABLE_PICOTCP
 
@@ -46,12 +49,6 @@ void dhcp_cb(void* cli, int code) {
 	char ip[16];
 	pico_ipv4_to_string(ip, ipaddr.addr);
 	log(LOG_INFO, "net: DHCP done, IP %s\n", ip);
-}
-
-void net_tick() {
-	if(likely(initialized)) {
-		pico_stack_tick();
-	}
 }
 
 static int pico_dsr_cb(struct pico_device* pico_dev, int loop_score) {
@@ -111,6 +108,15 @@ struct net_device* net_add_device(char* name, uint8_t mac[6], net_send_callback_
 	return dev;
 }
 
+static void __attribute__((fastcall, noreturn)) net_worker_entry(worker_t* worker) {
+	while(1) {
+		if(likely(initialized)) {
+			pico_stack_tick();
+		}
+		scheduler_yield();
+	}
+}
+
 void net_init() {
 	log(LOG_INFO, "net: Initializing PicoTCP\n");
 	pico_stack_init();
@@ -145,6 +151,9 @@ void net_init() {
 	#ifdef CONFIG_ENABLE_RTL8139
 	rtl8139_init();
 	#endif
+
+	worker_t* net_worker = worker_new("knetworkd", net_worker_entry);
+	scheduler_add_worker(net_worker);
 }
 
 #endif /* ENABLE_PICOTCP */

@@ -38,6 +38,7 @@ struct scheduler_qentry {
 extern enum scheduler_state scheduler_state;
 
 void scheduler_add(task_t *task);
+void scheduler_add_worker(worker_t* worker);
 task_t* scheduler_find(uint32_t pid);
 task_t* scheduler_get_current();
 void scheduler_yield();
