@@ -39,6 +39,7 @@ extern enum scheduler_state scheduler_state;
 
 void scheduler_add(task_t *task);
 task_t* scheduler_find(uint32_t pid);
+void scheduler_store_isf(isf_t* last_regs);
 task_t* scheduler_get_current();
 void scheduler_yield();
 isf_t* scheduler_select(isf_t* lastRegs);

@@ -34,6 +34,8 @@ uint8_t* int_sse_target UL_VISIBLE("data") = sse_state;
 // Called by architecture-specific assembly handlers
 isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	memcpy(state->sse_state, sse_state, 512);
+	scheduler_store_isf(state);
+
 	struct interrupt_reg* reg = int_handlers[intr];
 	volatile task_t* task = scheduler_get_current();
 
