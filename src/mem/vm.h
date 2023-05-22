@@ -27,6 +27,8 @@
 #define VM_BITMAP_SIZE 0xfffff000 / PAGE_SIZE
 #define VM_KERNEL (&vm_kernel_ctx)
 
+/* Flags for struct vm_alloc */
+
 // Writable
 #define VM_RW 1
 
@@ -47,16 +49,20 @@
 // Zero out address space after allocation
 #define VM_ZERO 32
 
+#define VM_DEBUG 4096
+
+/* Flags to vm_map */
+/* These must not conflict with the VM_* flags above. */
+
 // vm_map: Only map user-readable pages
 #define VM_MAP_USER_ONLY 512
 
 // Fixed allocation in vm_alloc_at
 #define VM_FIXED 1024
 
-// temp
-#define VM_MAP_UNDERALLOC_WORKAROUND 2048
+// Don't fail if not all of `size` could be mapped as long as at least one page succeeded.
+#define VM_MAP_LESS_OK 2048
 
-#define VM_DEBUG 4096
 
 #define vm_alloc(ctx, vmem, size, phys, flags) vm_alloc_at(ctx, vmem, size, NULL, phys, flags)
 

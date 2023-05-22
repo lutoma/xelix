@@ -347,16 +347,13 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 		debug("  vm_map: map pass %d for %p\n", pages_mapped, src_aligned + pages_offset);
 		vm_alloc_t* src_range = get_range(src_ctx, src_aligned + pages_offset, false);
 		if(!src_range) {
-			// FIXME Temp to map around broken execve
-			if(flags & VM_MAP_UNDERALLOC_WORKAROUND) {
-				pages_mapped++;
+			debug("No range!\n");
+
+			if(pages_mapped > 0 && flags & VM_MAP_LESS_OK) {
 				break;
 			}
-
-			debug("No range!\n");
 			return NULL;
 		}
-
 
 		if(!src_range->phys) {
 			panic("vm: Attempt to vm_map sharded memory\n");
@@ -383,8 +380,6 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 		pages_offset += PAGE_SIZE;
 		pages_mapped++;
 	} while(pages_mapped < size_pages);
-
-	assert(pages_mapped == size_pages);
 
 	if(vmem) {
 		memcpy(vmem, range, sizeof(vm_alloc_t));
