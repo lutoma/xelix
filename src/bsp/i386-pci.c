@@ -34,7 +34,7 @@
 #define get_address(bus, dev, func, offset) (0x80000000 | (bus << 16) | \
 	(dev << 11) | (func << 8) | (offset & 0xFC))
 
-static pci_device_t* first_device = NULL;
+static pci_device_t* pci_devices = NULL;
 
 
 uint32_t _pci_config_read(uint8_t bus, uint8_t dev, uint8_t func,
@@ -82,7 +82,6 @@ static uint32_t get_IO_base(pci_device_t* device) {
 	return 0;
 }
 
-// TODO Make sure this actually works
 static uint32_t get_mem_base(pci_device_t* device) {
 	uint8_t bars = 6 - get_header_type(device) * 4;
 
@@ -112,35 +111,33 @@ static void load_device(pci_device_t *device, uint8_t bus, uint8_t dev, uint8_t 
 	device->interrupt_line = (uint16_t)pci_config_read(device, 0x3c);
 }
 
-/* Searches a PCI device by vendor and device IDs.
- * rdev should be an empty allocated array, the size of which should be specified in max.
- * vendor_device_combos should be a NULL-terminated array of the format
+int pci_walk(int (*callback)(pci_device_t* dev)) {
+	for(pci_device_t* dev = pci_devices; dev; dev = dev->next) {
+		int ret = callback(dev);
+		if(ret < 1) {
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
+/* Checks a PCI device against an array of vendor + device ID combos.
  *
  * static uint32_t vendor_device_combos[][2] = {
  * 	{vendor_id, device_id},
  * 	{vendor_id, device_id},
- * 	{NULL}
+ * 	{(uint32_t)NULL}
  * };
  */
-uint32_t pci_search(pci_device_t** rdev, const uint32_t vendor_device_combos[][2], uint32_t max) {
-	if(!vendor_device_combos[0] || !vendor_device_combos[0][0])	{
-		return 0;
-	}
-
-	int devices_found = 0;
-	for(int i = 0; vendor_device_combos[i][0]; i++) {
-		pci_device_t* dev = first_device;
-		for(; dev && devices_found < max; dev = dev->next) {
-			if (dev->vendor != vendor_device_combos[i][0] ||
-				dev->device != vendor_device_combos[i][1])
-				continue;
-
-			rdev[devices_found] = dev;
-			devices_found++;
+int pci_check_vendor(pci_device_t* dev, const uint32_t combos[][2]) {
+	for(int i = 0; combos[i][0]; i++) {
+		if(dev->vendor == combos[i][0] && dev->device == combos[i][1]) {
+			return 0;
 		}
 	}
 
-	return devices_found;
+	return -1;
 }
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
@@ -149,7 +146,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	}
 
 	size_t rsize = 0;
-	pci_device_t* dev = first_device;
+	pci_device_t* dev = pci_devices;
 	for(; dev; dev = dev->next) {
 		sysfs_printf("%02d:%02d.%d %04x:%04x %-2x %-2x %-4x %-2x %-2d %d\n",
 			dev->bus, dev->dev, dev->func, dev->vendor, dev->device,
@@ -177,8 +174,8 @@ void pci_init() {
 				pci_device_t* pdev = kmalloc(sizeof(pci_device_t));
 				load_device(pdev, bus, dev, func);
 
-				pdev->next = first_device;
-				first_device = pdev;
+				pdev->next = pci_devices;
+				pci_devices = pdev;
 
 				log(LOG_INFO, "  %02d:%02d.%d: %04x:%04x rev %-2x class %04x iobase %-4x type %-2x int %-2d pin %d\n",
 						pdev->bus, pdev->dev, pdev->func, pdev->vendor,

@@ -212,7 +212,15 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	ioutb(R_ISR, isr &~ 1);
 }
 
-static void enable() {
+static int pci_cb(pci_device_t* _dev) {
+	if(pci_check_vendor(_dev, vendor_device_combos) != 0) {
+		return 1;
+	}
+
+	// FIXME Support multiple devices
+	dev = _dev;
+	log(LOG_INFO, "ne2k: Discovered device %p\n", dev);
+
 	// Reset
 	ioutb(0x1F, iinb(0x1F));
 	while ((iinb(R_ISR) & 0x80) == 0);
@@ -258,17 +266,12 @@ static void enable() {
 	ioutb(R_CR, CR_START);
 
 	net_dev = net_add_device("ne2k", nmac, send);
+
+	return 0;
 }
 
 void ne2k_init() {
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*));
-	uint32_t ndevices = pci_search(devices, vendor_device_combos, 1);
-
-	log(LOG_INFO, "ne2k: Discovered %d devices.\n", ndevices);
-	dev = devices[0];
-	if(ndevices) {
-		enable();
-	}
+	pci_walk(pci_cb);
 }
 
 #endif /* ENABLE_NE2K */
