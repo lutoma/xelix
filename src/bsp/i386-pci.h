@@ -61,6 +61,8 @@ typedef struct pci_device {
 	uint8_t revision;
 
 	enum pci_class class;
+	uint16_t subclass;
+	uint16_t prog_if;
 	uint32_t iobase;
 	uint32_t membase;
 	uint8_t header_type;

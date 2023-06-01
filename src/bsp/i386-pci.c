@@ -30,7 +30,9 @@
 
 #define CONFIG_HEADER_DEVICE   2
 #define CONFIG_HEADER_REVISION 8
-#define CONFIG_HEADER_CLASS    10
+#define CONFIG_HEADER_PROG_IF  9
+#define CONFIG_HEADER_SUBCLASS 10
+#define CONFIG_HEADER_CLASS    11
 #define CONFIG_HEADER_TYPE     15
 #define CONFIG_HEADER_INT_LINE 0x3c
 #define CONFIG_HEADER_INT_PIN  0x3d
@@ -94,7 +96,9 @@ static inline void try_load_device(uint8_t bus, uint8_t dev, uint8_t func) {
 	pdev->header_type = pci_config_read(pdev, CONFIG_HEADER_TYPE, 1);
 	pdev->device = pci_config_read(pdev, CONFIG_HEADER_DEVICE, 2);
 	pdev->revision = pci_config_read(pdev, CONFIG_HEADER_REVISION, 1);
-	pdev->class = pci_config_read(pdev, CONFIG_HEADER_CLASS, 2);
+	pdev->prog_if = pci_config_read(pdev, CONFIG_HEADER_PROG_IF, 1);
+	pdev->subclass = pci_config_read(pdev, CONFIG_HEADER_SUBCLASS, 1);
+	pdev->class = pci_config_read(pdev, CONFIG_HEADER_CLASS, 1);
 
 	if(pdev->header_type == 0) {
 		pdev->interrupt_line = pci_config_read(pdev, CONFIG_HEADER_INT_LINE, 1);
@@ -157,9 +161,10 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	size_t rsize = 0;
 	pci_device_t* dev = pci_devices;
 	for(; dev; dev = dev->next) {
+		uint16_t combined_class = dev->class << 8 | dev->subclass;
 		sysfs_printf("%02d:%02d.%d %04x:%04x %-2x %-2x %-4x %-2x %-2d %d\n",
 			dev->bus, dev->dev, dev->func, dev->vendor, dev->device,
-			dev->class, dev->revision, dev->iobase,
+			combined_class, dev->revision, dev->iobase,
 			dev->header_type, dev->interrupt_line, dev->interrupt_pin);
 	}
 
