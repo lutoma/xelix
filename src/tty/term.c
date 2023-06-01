@@ -211,6 +211,7 @@ int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	 */
 	switch(request) {
 		case TIOCGPTN:
+		case TCSLOGLEVEL:
 			arg_size = sizeof(int);
 			break;
 		case TIOCGWINSZ:
@@ -241,6 +242,16 @@ int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		case TIOCGPTN:
 			// FIXME pty only
 			*(int*)arg = term->pts_fd;
+			break;
+		case TCSLOGLEVEL:
+			// Console only
+			if(term->num) {
+				vm_free(&alloc);
+				sc_errno = EINVAL;
+				return -1;
+			}
+
+			log_set_console_level(*(int*)arg);
 			break;
 		case TCGETS:
 			memcpy(arg, &term->termios, sizeof(struct termios));

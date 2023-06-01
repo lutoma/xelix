@@ -171,6 +171,8 @@
 #define TIOCSSOFTCAR 0x4015
 #define TIOCGPTN     0x4016
 
+#define TCSLOGLEVEL  0x5000
+
 struct termios {
     uint32_t c_iflag;
     uint32_t c_oflag;

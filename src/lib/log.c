@@ -45,6 +45,7 @@ static void* buffer = (void*)&early_buffer;
 static size_t buffer_size = PAGE_SIZE;
 static size_t log_size = 0;
 static size_t log_entries = 0;
+static int console_log_level = CONFIG_LOG_CONSOLE_LEVEL;
 
 static void store(uint8_t level, char* string, size_t len) {
 	size_t new_size = log_size + len + sizeof(struct log_entry);
@@ -119,11 +120,9 @@ void log(uint8_t level, const char *fmt, ...) {
 	}
 	#endif
 
-	#if CONFIG_LOG_PRINT_LEVEL != 0
-	if(level >= CONFIG_LOG_PRINT_LEVEL) {
+	if(console_log_level != 0 && level >= console_log_level) {
 		printf(fmt_string);
 	}
-	#endif
 }
 
 void log_dump() {
@@ -133,6 +132,11 @@ void log_dump() {
 		printf(entry->message);
 		entry = (struct log_entry*)((uintptr_t)entry + entry->length + sizeof(struct log_entry));
 	}
+}
+
+void log_set_console_level(int level) {
+	console_log_level = level;
+	log(LOG_INFO, "log: Console log level changed to %d\n", level);
 }
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {

@@ -27,4 +27,5 @@
 
 void log(uint8_t level, const char *fmt, ...);
 void log_dump();
+void log_set_console_level(int level);
 void log_init();
