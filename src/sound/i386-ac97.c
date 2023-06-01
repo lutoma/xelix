@@ -214,8 +214,8 @@ static int pci_cb(pci_device_t* dev) {
 	sleep_ticks(30);
 
 	// Get correct PCI bars for the sound chip control io ports
-	card->nambar = pci_get_BAR(card->device, 0) & 0xFFFFFFFC;
-	card->nabmbar = pci_get_BAR(card->device, 1) & 0xFFFFFFFC;
+	card->nambar = pci_get_bar(card->device, 0) & 0xFFFFFFFC;
+	card->nabmbar = pci_get_bar(card->device, 1) & 0xFFFFFFFC;
 	card->playing_buffer = -1;
 
 	// Turn power on / disable cold reset
