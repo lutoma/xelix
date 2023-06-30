@@ -26,8 +26,8 @@ menu "Kernel stdlib"
 		Store kernel log in memory and make them available as /sys/log, where
 		it can be read by utilities like dmesg. Doesn't log debug messages.
 
-	config LOG_PRINT_LEVEL
-		int "TTY log level"
+	config LOG_CONSOLE_LEVEL
+		int "Default console log level"
 		default 2
 		---help---
 		0 Disabled
