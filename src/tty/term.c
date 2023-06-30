@@ -324,7 +324,7 @@ struct term* term_new(char* name, term_write_cb_t* write_cb) {
 }
 
 static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
-	if(!ctx->task) {
+	if(!ctx->task || !term_console) {
 		sc_errno = ENOENT;
 		return NULL;
 	}

@@ -23,6 +23,7 @@
 #include <mem/kmalloc.h>
 #include <stdlib.h>
 #include <panic.h>
+#include <log.h>
 #include "tmt.h"
 
 struct cache_entry {
@@ -109,4 +110,6 @@ void tty_console_init(int cols, int rows) {
 	if(!vt) {
 		panic("Could not open TMT virtual terminal.");
 	}
+
+	log_dump();
 }

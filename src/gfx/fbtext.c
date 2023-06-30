@@ -157,5 +157,4 @@ void gfx_fbtext_init() {
 	initialized = true;
 	tty_console_init(cols, rows);
 	gfx_fbtext_show();
-	log_dump();
 }
