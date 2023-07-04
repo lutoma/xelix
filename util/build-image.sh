@@ -43,14 +43,24 @@ if [ "x${timeout}" != "x-1" ]; then
 	fi
 fi
 
-menuentry 'Xelix' {
-	multiboot2 /xelix.bin root=/dev/ide1p2
+menuentry 'Xelix (1920x1080)' {
+	multiboot2 /xelix.bin root=/dev/ata1d1p2
 	set gfxpayload=keep
 }
 
-menuentry 'Xelix (Experimental GUI)' {
-	multiboot2 /xelix.bin root=/dev/ide1p2 init_target=gui
+menuentry 'Xelix (3840x2160)' {
+	multiboot2 /xelix.bin root=/dev/ata1d1p2
+	set gfxpayload=3840x2160x16
+}
+
+menuentry 'Xelix (Experimental GUI 1920x1080)' {
+	multiboot2 /xelix.bin root=/dev/ata1d1p2 init_target=gui
 	set gfxpayload=keep
+}
+
+menuentry 'Xelix (Experimental GUI 3840x2160 16-bit color)' {
+	multiboot2 /xelix.bin root=/dev/ata1d1p2 init_target=gui
+	set gfxpayload=3840x2160x16
 }
 EOF
 

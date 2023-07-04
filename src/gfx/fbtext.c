@@ -64,50 +64,63 @@ extern const struct {
 static struct gfx_handle* gfx_handle = NULL;
 static bool initialized = false;
 
+static inline uint16_t color_convert16_565(int color) {
+	uint16_t red = (color & 0xff0000) >> 16;
+	uint16_t green = (color & 0xff00) >> 8;
+	uint16_t blue =  color & 0xff;
+	return (red >> 3 << 11) + (green >> 2 << 5) + (blue >> 3);
+}
+
 void gfx_fbtext_write(uint32_t x, uint32_t y, wchar_t chr, uint32_t col_fg, uint32_t col_bg) {
-	if(chr > gfx_font.num_glyphs) {
+	if(unlikely(chr > gfx_font.num_glyphs)) {
 		chr = 0;
 	}
 
-	if(chr == ' ') {
-		for(int i = 0; i < gfx_font.height; i++) {
-			void* mdest = PIXEL_PTR(gfx_handle->ul_desc.addr, x * gfx_font.width, y * gfx_font.height + i);
-			memset32(mdest, col_bg, gfx_font.width);
-		}
-		return;
+	if(gfx_handle->ul_desc.bpp == 16) {
+		col_fg = color_convert16_565(col_fg);
+		col_bg = color_convert16_565(col_bg);
 	}
 
-	const uint8_t* bitmap = (uint8_t*)&gfx_font
+	const uint8_t* glyph = (uint8_t*)&gfx_font
 			+ gfx_font.header_size
 			+ chr * gfx_font.bytes_per_glyph;
-
-	if(unlikely(!bitmap)) {
-		return;
-	}
 
 	x *= gfx_font.width;
 	y *= gfx_font.height;
 
-	for(int cy = 0; cy < gfx_font.height; cy++) {
+	int pixel_bytes = (gfx_handle->ul_desc.bpp / 8);
+
+	for(uint32_t cy = 0; cy < gfx_font.height; cy++) {
 		uintptr_t cy_ptr = (uintptr_t)(gfx_handle->ul_desc.addr)
-			+ (y + cy)*gfx_handle->ul_desc.pitch +
-			+ (x)*(gfx_handle->ul_desc.bpp / 8);
+			+ (y + cy) * gfx_handle->ul_desc.pitch
+			+ x * pixel_bytes;
 
-		for(int cx = 0; cx < gfx_font.width; cx++) {
-			uintptr_t cx_ptr = cy_ptr + cx*(gfx_handle->ul_desc.bpp / 8);
+		int bit_offset = cy * ALIGN(gfx_font.width, 8);
 
-			int fg = bitmap[cy] & (1 << (gfx_font.width - cx - 1));
-			*(uint32_t*)cx_ptr = fg ? col_fg : col_bg;
+		for(uint32_t cx = 0; cx < gfx_font.width; cx++) {
+			uintptr_t cx_ptr = cy_ptr + cx * pixel_bytes;
+			int bit_num = bit_offset + gfx_font.width - cx - 1;
+			int fg = bit_get(glyph[bit_num / 8], bit_num % 8);
+
+			switch(gfx_handle->ul_desc.bpp) {
+				case 32:
+					*(uint32_t*)cx_ptr = fg ? col_fg : col_bg;
+					break;
+				case 16:
+					*(uint16_t*)cx_ptr = fg ? col_fg : col_bg;
+					break;
+			}
 		}
 	}
 }
 
 void gfx_fbtext_set_cursor(uint32_t x, uint32_t y, bool restore) {
+/*
 	x *= gfx_font.width;
 	y *= gfx_font.height;
 
 	if(!cursor_data.last_data) {
-		cursor_data.last_data = zmalloc(gfx_font.height * sizeof(uint32_t));
+		cursor_data.last_data = zmalloc(gfx_font.height * (gfx_handle->ul_desc.bpp / 8));
 	} else {
 		if(restore) {
 			for(int i = 0; i < gfx_font.height; i++) {
@@ -131,6 +144,7 @@ void gfx_fbtext_set_cursor(uint32_t x, uint32_t y, bool restore) {
 
 		*PIXEL_PTR(gfx_handle->ul_desc.addr, x, y + i) = color;
 	}
+*/
 }
 
 // Switch GFX output to fbtext. This is used during kernel panics
@@ -148,11 +162,18 @@ void gfx_fbtext_init() {
 		return;
 	}
 
-	memset32(gfx_handle->ul_desc.addr, 0x000000, gfx_handle->ul_desc.size / 4);
+	if(gfx_handle->ul_desc.bpp != 32 && gfx_handle->ul_desc.bpp != 16) {
+		log(LOG_ERR, "fbtext: Unsupported framebufer depth %d\n",
+			gfx_handle->ul_desc.bpp);
+		return;
+	}
+
+	memset(gfx_handle->ul_desc.addr, 0, gfx_handle->ul_desc.size);
 	int cols = gfx_handle->ul_desc.width / gfx_font.width;
 	int rows = gfx_handle->ul_desc.height / gfx_font.height;
 
-	log(LOG_DEBUG, "fbtext: font width %d/%d height %d/%d flags %d\n", gfx_font.width, cols, gfx_font.height, rows, gfx_font.flags);
+	log(LOG_DEBUG, "fbtext: font flags %d size %dx%d cols/rows %dx%d flags %d\n",
+		gfx_font.flags, gfx_font.width, gfx_font.height, cols, rows, gfx_font.flags);
 
 	initialized = true;
 	tty_console_init(cols, rows);

@@ -119,18 +119,31 @@ void render_init() {
 
 	main_buffer = malloc(gfx_handle.size);
 	if(!main_buffer) {
-		printf("Could not allocate main_buffer\n");
-		exit(1);
+		fprintf(stderr, "Could not allocate main_buffer\n");
+		exit(EXIT_FAILURE);
 	};
 
+	cairo_format_t format;
+	switch(gfx_handle.bpp) {
+		case 32:
+			format = CAIRO_FORMAT_RGB24;
+			break;
+		case 16:
+			format = CAIRO_FORMAT_RGB16_565;
+			break;
+		default:
+			fprintf(stderr, "Unsupported pixel depth\n");
+			exit(EXIT_FAILURE);
+	}
+
 	main_surface = cairo_image_surface_create_for_data(
-		main_buffer, CAIRO_FORMAT_ARGB32, gfx_handle.width,
+		main_buffer, format, gfx_handle.width,
 		gfx_handle.height, gfx_handle.pitch);
 
 	cr = cairo_create(main_surface);
 
 	// Create background surface and fill with gray color
-	cairo_surface_t* bg_surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, gfx_handle.width, gfx_handle.height);
+	cairo_surface_t* bg_surface = cairo_image_surface_create(format, gfx_handle.width, gfx_handle.height);
 	cairo_t* bg_cr = cairo_create(bg_surface);
 	cairo_set_source_rgb(bg_cr, 0.2, 0.2, 0.2);
 	cairo_paint(bg_cr);
