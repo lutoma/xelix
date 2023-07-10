@@ -219,7 +219,7 @@ int vfs_open(task_t* task, const char* orig_path, uint32_t flags) {
 	strcpy(fp->mount_path, ctx->path);
 
 	// Allow for this to be overriden by callback
-	if(!fp->mount_path) {
+	if(!strlen(fp->mount_path)) {
 		fp->mount_instance = ctx->mp->instance;
 	}
 
