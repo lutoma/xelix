@@ -109,19 +109,17 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			ptr_sizes[i] = multiplicator * args[1];
 		} else if(flags[i] & SCA_SIZE_IN_2) {
 			ptr_sizes[i] = multiplicator * args[2];
+		} else if(flags[i] & (SCA_STRING | SCA_FLEX_SIZE)) {
+			/* If there is no SIZE_IN_* flag, attempt to map up to two pages,
+			 * but don't fail if only one could be mapped. This is used for
+			 * strings. Later on, code will scan the mapped area to make
+			 * sure the string is NULL-terminated.
+			 */
+			ptr_sizes[i] = PAGE_SIZE * 2;
+			map_flags |= VM_MAP_LESS_OK;
+
 		} else {
-			if(def.ptr_size) {
-				ptr_sizes[i] = def.ptr_size;
-			} else {
-				/* If no default size is set and there is no SIZE_IN_* flag,
-				 * attempt to map up to two pages, but don't fail if only one
-				 * could be mapped. This is used for strings. Later on, code
-				 * will scan the mapped area to make sure the string is
-				 * NULL-terminated.
-				 */
-				ptr_sizes[i] = PAGE_SIZE * 2;
-				map_flags |= VM_MAP_LESS_OK;
-			}
+			ptr_sizes[i] = def.ptr_size;
 		}
 
 		if(unlikely((flags[i] & SCA_POINTER) && !ptr_sizes[i] && !(flags[i] & SCA_NULLOK))) {

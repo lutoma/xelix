@@ -32,6 +32,7 @@
 #define SCA_SIZE_IN_0 16
 #define SCA_SIZE_IN_1 32
 #define SCA_SIZE_IN_2 64
+#define SCA_FLEX_SIZE 128
 
 #ifdef __i386__
 	#define SCREG_CALLNUM eax

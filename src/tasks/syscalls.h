@@ -200,7 +200,7 @@ const struct syscall_definition syscall_table[] = {
 
 	// 32
 	{"execve", (syscall_cb)task_execve, 0,
-		SCA_STRING, SCA_POINTER, SCA_POINTER, 0},
+		SCA_STRING, SCA_POINTER | SCA_FLEX_SIZE, SCA_POINTER | SCA_FLEX_SIZE, 0},
 
 	// 33
 	{"sigaction", (syscall_cb)task_sigaction, 0,
