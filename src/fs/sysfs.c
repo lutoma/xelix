@@ -109,7 +109,10 @@ int sysfs_build_path_tree(struct vfs_callback_ctx* ctx) {
 		stat.st_ctime = t;
 	}
 
+	#ifdef CONFIG_ENABLE_FTREE
 	vfs_ftree_insert_path(ctx->orig_path, &stat);
+	#endif
+
 	return 0;
 }
 

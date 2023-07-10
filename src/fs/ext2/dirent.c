@@ -106,7 +106,11 @@ struct dirent* ext2_dirent_find(struct ext2_fs* fs, const char* path, uint32_t* 
 	struct inode* inode = kmalloc(fs->superblock->inode_size);
 	struct dirent* dirent = NULL;
 	struct dirent* result = NULL;
+
+	#ifdef CONFIG_ENABLE_FTREE
 	struct ftree_file* ft_root = NULL;
+	#endif
+
 	if(unlikely(!ext2_inode_read(fs, inode, ROOT_INODE))) {
 		goto bye;
 	}
@@ -138,6 +142,7 @@ struct dirent* ext2_dirent_find(struct ext2_fs* fs, const char* path, uint32_t* 
 		}
 
 
+		#ifdef CONFIG_ENABLE_FTREE
 		vfs_stat_t stat = {
 			.st_dev = 1,
 			.st_ino = dirent->inode,
@@ -155,6 +160,8 @@ struct dirent* ext2_dirent_find(struct ext2_fs* fs, const char* path, uint32_t* 
 		};
 
 		ft_root = vfs_ftree_insert(ft_root, pch, &stat);
+		#endif
+
 		pch = strtok_r(NULL, "/", &sp);
 	}
 	result = dirent;

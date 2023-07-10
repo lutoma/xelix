@@ -146,6 +146,10 @@ menu "File systems"
 	bool "Enable VirtIO block device driver"
 	default y
 
+	config ENABLE_FTREE
+	bool "Enable ftree file tracking (likely broken)"
+	default n
+
 	config ENABLE_EXT2
 	bool "Enable ext2 support"
 	default y

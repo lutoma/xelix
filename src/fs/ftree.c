@@ -17,6 +17,8 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef CONFIG_ENABLE_FTREE
+
 #include <fs/ftree.h>
 #include <string.h>
 #include <mem/kmalloc.h>
@@ -150,3 +152,5 @@ void vfs_ftree_init() {
 	};
 	sysfs_add_file("vfs_ftree", &sfs_cb);
 }
+
+#endif

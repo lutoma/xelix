@@ -700,7 +700,11 @@ void vfs_init() {
 	}
 
 	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
+
+	#ifdef CONFIG_ENABLE_FTREE
 	vfs_ftree_init();
+	#endif
+
 	sysfs_init();
 	vfs_mount_init(root_path);
 
