@@ -62,6 +62,7 @@ int ext2_mount(struct vfs_block_dev* dev, const char* path) {
 		log(LOG_ERR, "ext2: Invalid magic\n");
 
 		kfree(fs);
+		sc_errno = EINVAL;
 		return -1;
 	}
 
@@ -77,6 +78,7 @@ int ext2_mount(struct vfs_block_dev* dev, const char* path) {
 			"Please run fsck.ext2 on it.\n", dev->name);
 
 		kfree(fs);
+		sc_errno = EINVAL;
 		return -1;
 	}
 
