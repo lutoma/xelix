@@ -8,7 +8,7 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
-      - '.github/workflows/**'
+      - '.github/workflows/docs.yml'
 
 defaults:
   run:
