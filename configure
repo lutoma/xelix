@@ -25,7 +25,7 @@ function w {
 FIND=$(command -v gfind || command -v find)
 
 # Update submodules
-git submodule update --init 1> /dev/null
+[ -x "$(command -v git)" ] && git submodule update --init 1> /dev/null
 
 # Make sure config.h exists on first build
 if [ ! -f ".config" ]; then
