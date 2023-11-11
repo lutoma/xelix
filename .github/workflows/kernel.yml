@@ -23,7 +23,8 @@ jobs:
     steps:
       - name: Check out git repository
         uses: actions/checkout@v4
-        submodules: 'recursive'
+        with:
+          submodules: 'recursive'
 
       - name: Configure sources
         run: ./configure
