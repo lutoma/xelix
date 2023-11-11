@@ -1,0 +1,37 @@
+name: Kernel binary build
+
+on:
+  push:
+    branches:
+      - main
+
+    paths:
+      - 'src/**'
+      - 'ext/**'
+      - 'Makefile.static'
+      - 'configure'
+      - '.github/workflows/kernel.yml'
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/lutoma/xelix/toolchain:latest
+      volumes:
+        - .:/src
+
+    steps:
+      - name: Check out git repository
+        uses: actions/checkout@v4
+
+      - name: Configure sources
+        run: ./configure
+
+      - name: Compile kernel
+        run: make
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kernel-binary
+          path: xelix.bin
