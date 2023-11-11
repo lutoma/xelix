@@ -16,9 +16,10 @@ ARG NEWLIB_VERSION=3.2.0
 ARG NEWLIB_URL=https://sourceware.org/pub/newlib
 ARG NEWLIB_PACKAGE=newlib-${NEWLIB_VERSION}.tar.gz
 
-RUN apk --no-cache add wget git musl-dev make gcc g++ nasm m4 perl autoconf \
-	automake patch libtool mpc1 gmp mpfr mpc1-dev gmp-dev mpfr-dev gawk bash \
-	texinfo file python3
+ENV PATH="${PREFIX}/bin:${PATH}"
+
+RUN apk --no-cache add wget musl-dev make gcc g++ m4 perl autoconf automake \
+	patch libtool mpc1-dev gmp-dev mpfr-dev gawk texinfo file
 
 # Build outdated autoconf and automake versions for newlib
 WORKDIR /src
@@ -75,16 +76,17 @@ RUN autoconf-2.69
 RUN automake-1.11 --cygnus Makefile
 
 WORKDIR /build/binutils
-RUN /src/binutils-${BINUTILS_VERSION}/configure --target=${TARGET} --disable-nls --disable-werror
+RUN /src/binutils-${BINUTILS_VERSION}/configure --target=${TARGET} --prefix=${PREFIX} --disable-nls --disable-werror
 RUN make all install
 
 # GCC build uses newlib files, so configure that first
 WORKDIR /build/newlib
-RUN /src/newlib-${NEWLIB_VERSION}/configure --target=${TARGET}
+RUN /src/newlib-${NEWLIB_VERSION}/configure --target=${TARGET} --prefix=${PREFIX}
 
 WORKDIR /build/gcc
 RUN /src/gcc-${GCC_VERSION}/configure \
 	--target=${TARGET} \
+	--prefix=${PREFIX} \
 	--disable-nls \
 	--enable-languages=c,c++ \
 	--with-headers=/src/newlib-${NEWLIB_VERSION}/newlib/libc/include \
@@ -97,19 +99,22 @@ RUN make -j$(nproc) all-target-libgcc
 #RUN make -j$(nproc) all-target-libstdc++-v3
 
 RUN make install-gcc install-target-libgcc
-RUN ln -s i786-pc-xelix-gcc /usr/local/bin/i786-pc-xelix-cc
+RUN ln -s i786-pc-xelix-gcc ${PREFIX}/bin/i786-pc-xelix-cc
 
 WORKDIR /build/newlib
 RUN make -j$(nproc) all
 RUN make install
-RUN cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/xelix/crtn.o /usr/local/i786-pc-xelix/lib/
+RUN cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/xelix/crtn.o ${PREFIX}/i786-pc-xelix/lib/
 
 # Drop sys-include directory to avoid conflicts with regular includes
-run rm -r /usr/local/i786-pc-xelix/sys-include
+run rm -r ${PREFIX}/i786-pc-xelix/sys-include
 
-RUN rm -r /src /build
-RUN apk del --purge wget git musl-dev gcc g++ m4 perl autoconf \
-	automake patch libtool mpc1-dev gmp-dev mpfr-dev gawk texinfo file
-
+FROM alpine:latest
+COPY --from=0 /toolchain /usr
 WORKDIR /src
-CMD ["/usr/local/bin/i786-pc-xelix-gcc"]
+
+RUN apk --no-cache add wget musl-dev git make gcc g++ nasm m4 perl autoconf automake \
+	patch libtool mpc1 gmp mpfr mpc1-dev gmp-dev mpfr-dev gawk coreutils bash \
+	texinfo file python3
+
+CMD ["/bin/bash"]
