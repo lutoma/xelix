@@ -115,6 +115,6 @@ WORKDIR /src
 
 RUN apk --no-cache add wget musl-dev git make gcc g++ nasm m4 perl autoconf automake \
 	patch libtool mpc1 gmp mpfr mpc1-dev gmp-dev mpfr-dev gawk coreutils bash \
-	texinfo file python3 tar findutils
+	texinfo file python3 tar findutils gzip
 
 CMD ["/bin/bash"]
