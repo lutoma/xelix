@@ -18,11 +18,12 @@ jobs:
     container:
       image: ghcr.io/lutoma/xelix/toolchain:latest
       volumes:
-        - .:/src
+        - ${{ github.workspace }}:/src
 
     steps:
       - name: Check out git repository
         uses: actions/checkout@v4
+        submodules: 'recursive'
 
       - name: Configure sources
         run: ./configure
