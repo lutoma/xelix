@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/lutoma/xelix/toolchain:latest
+      options: --user 1001
       volumes:
         - ${{ github.workspace }}:/src
 
