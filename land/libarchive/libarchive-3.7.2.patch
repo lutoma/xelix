@@ -1,0 +1,44 @@
+--- build/autoconf/config.sub	2023-11-12 01:07:32.604168131 +0100
++++ build/autoconf/config.sub	2023-11-12 01:07:40.876166826 +0100
+@@ -1754,7 +1754,7 @@ case $os in
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+-	     | fiwix* )
++	     | fiwix* | xelix*)
+ 		;;
+ 	# This one is extra strict with allowed versions
+ 	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
+--- libarchive/archive_write_set_format_iso9660.c	2023-07-29 19:27:43.000000000 +0200
++++ libarchive/archive_write_set_format_iso9660.c.new	2023-11-12 01:53:04.009872470 +0100
+@@ -2503,18 +2503,7 @@ static long
+ get_gmoffset(struct tm *tm)
+ {
+ 	long offset;
+-
+-#if defined(HAVE__GET_TIMEZONE)
+-	_get_timezone(&offset);
+-#elif defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
+-	offset = _timezone;
+-#else
+-	offset = timezone;
+-#endif
+-	offset *= -1;
+-	if (tm->tm_isdst)
+-		offset += 3600;
+-	return (offset);
++	return 0;
+ }
+ #endif
+ 
+--- libarchive/archive_random.c	2023-09-12 00:05:19.000000000 +0200
++++ libarchive/archive_random.c.new	2023-11-12 01:54:04.170545328 +0100
+@@ -30,6 +30,8 @@ __FBSDID("$FreeBSD$");
+ #include <stdlib.h>
+ #endif
+ 
++#undef HAVE_PTHREAD_H
++
+ #if !defined(HAVE_ARC4RANDOM_BUF) && (!defined(_WIN32) || defined(__CYGWIN__))
+ 
+ #ifdef HAVE_FCNTL
