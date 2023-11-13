@@ -17,24 +17,32 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/lutoma/xelix/toolchain:latest
-      options: --user 1001
-      volumes:
-        - ${{ github.workspace }}:/src
+      options: --user 1000
 
     steps:
-      - name: Check out git repository
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
+      - name: Adjust dir permissions
+        run: 'sudo chown dev: /src'
 
-      - name: Configure sources
-        run: ./configure
+      - name: Import signing key
+        run: 'echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import'
 
-      - name: Compile kernel
-        run: make
+      - name: Download PKGBUILD
+        run: 'wget -q https://raw.githubusercontent.com/lutoma/xelix/main/land/xelix-kernel/PKGBUILD'
 
-      - name: Upload binary artifact
+      - name: Run makepkg
+        run:  'makepkg -Ad --sign'
+
+      - name: Adjust package name
+        run: 'rename x86_64 i786 *'
+
+      - name: 'Create package directory'
+        run: 'mkdir kernel-pkg'
+
+      - name: 'Move stuff around'
+        run: 'mv *.pkg.* kernel-pkg'
+
+      - name: Upload package as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: kernel-binary
-          path: xelix.bin
+          name: kernel-pkg
+          path: kernel-pkg
