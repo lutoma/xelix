@@ -115,6 +115,10 @@ RUN make -j$(nproc) all
 RUN make DESTDIR=/toolchain install
 RUN cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/xelix/crtn.o /toolchain/usr/i786-pc-xelix/lib/
 
+# Strip debug info from binaries (Reduces image size substantially)
+RUN strip --strip-unneeded /toolchain/usr/bin/i786-pc-xelix-* /toolchain/usr/i786-pc-xelix/bin/*
+RUN find /toolchain/usr/libexec/gcc/i786-pc-xelix/13.1.0 -type f -exec strip --strip-unneeded {} \;
+
 # Build a native/host copy of pacman so we can build and manage Xelix userland packages
 FROM alpine:latest
 WORKDIR /usr/src
@@ -129,6 +133,7 @@ WORKDIR /usr/src/pacman-v6.0.2
 RUN meson setup -Dc_link_args='-lintl' --prefix /usr build
 RUN ninja -C build
 RUN DESTDIR=/pacman ninja -C build install
+RUN strip /pacman/usr/bin/pacman
 
 # Now build the actual image
 FROM alpine:latest
