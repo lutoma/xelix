@@ -23,7 +23,7 @@ jobs:
         run: 'wget -q https://raw.githubusercontent.com/lutoma/xelix/main/land/xelix-kernel/PKGBUILD'
 
       - name: Adjust dir permissions
-        run: 'sudo chown dev: .'
+        run: 'sudo chown -R dev: .'
 
       - name: Import signing key
         run: 'echo "${{ secrets.GPG_PRIVATE_KEY }}" | sudo -u dev gpg --import'
