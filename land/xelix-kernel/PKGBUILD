@@ -1,5 +1,5 @@
 pkgname=xelix-kernel
-pkgver=r2560.0566564b
+pkgver=git
 pkgrel=1
 epoch=
 pkgdesc="The Xelix kernel binary"
@@ -14,13 +14,9 @@ pkgver() {
 	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
-prepare() {
-	cd xelix
-	./configure
-}
-
 build() {
 	cd xelix
+	./configure
 	make
 }
 
