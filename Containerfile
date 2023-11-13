@@ -138,4 +138,8 @@ RUN pip3 install --no-cache --upgrade pip setuptools PyYAML toposort click
 RUN adduser --disabled-password --gecos '' dev
 RUN echo 'dev ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
+# For uploads in automated runs
+RUN mkdir /root/.ssh
+RUN ssh-keyscan pkgs.xelix.org >> /root/.ssh/known_hosts
+
 CMD ["/bin/bash"]
