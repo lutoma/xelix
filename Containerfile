@@ -119,31 +119,14 @@ RUN cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/
 RUN strip --strip-unneeded /toolchain/usr/bin/i786-pc-xelix-* /toolchain/usr/i786-pc-xelix/bin/*
 RUN find /toolchain/usr/libexec/gcc/i786-pc-xelix/13.1.0 -type f -exec strip --strip-unneeded {} \;
 
-# Build a native/host copy of pacman so we can build and manage Xelix userland packages
-FROM alpine:latest
-WORKDIR /usr/src
-
-RUN apk --no-cache add wget musl-dev gcc libarchive-dev gettext-dev gawk bash \
-	meson ninja curl-dev
-
-RUN wget -c https://gitlab.archlinux.org/pacman/pacman/-/archive/v6.0.2/pacman-v6.0.2.tar.gz
-RUN tar xf pacman-v6.0.2.tar.gz
-
-WORKDIR /usr/src/pacman-v6.0.2
-RUN meson setup -Dc_link_args='-lintl' --prefix /usr build
-RUN ninja -C build
-RUN DESTDIR=/pacman ninja -C build install
-RUN strip /pacman/usr/bin/pacman
-
 # Now build the actual image
 FROM alpine:latest
 WORKDIR /src
 COPY --from=0 /toolchain /
-COPY --from=1 /pacman /
 
 RUN apk --no-cache add wget git make gcc g++ nasm m4 perl autoconf automake \
 	patch libtool mpc1 gmp mpfr libarchive gettext gawk bash coreutils \
-	texinfo file python3 tar findutils gzip xz meson ninja sudo curl
+	texinfo file python3 tar findutils gzip xz meson ninja sudo curl pacman
 
 # Add python stuff for (legacy) xpkg
 ENV PYTHONUNBUFFERED=1
