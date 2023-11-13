@@ -37,11 +37,11 @@ jobs:
       - name: 'Create package directory'
         run: 'mkdir kernel-pkg'
 
-      - name: 'Move stuff around'
-        run: 'mv *.pkg.* kernel-pkg'
+      - name: Import SSH key
+        run: 'mkdir .ssh; echo "${{ secrets.SSH_KEY }}" > .ssh/id_ed25519 && chmod 600 .ssh/id_ed25519'
 
-      - name: Upload package as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: kernel-pkg
-          path: kernel-pkg
+      - name: Upload to repo server
+        run: rsync *.pkg.tar.gz* repoupload@pkgs.xelix.org:/var/www/pkgs.xelix.org/core/i786/
+
+      - name: Update repository
+        run: ssh repoupload@pkgs.xelix.org /usr/local/bin/repo-remote-update core i786 xelix-kernel *.pkg.tar.gz
