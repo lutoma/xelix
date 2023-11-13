@@ -1,0 +1,31 @@
+pkgname=xelix-kernel
+pkgver=r2560.0566564b
+pkgrel=1
+epoch=
+pkgdesc="The Xelix kernel binary"
+arch=('i786')
+url="https://github.com/lutoma/xelix"
+license=('GPL')
+source=('xelix::git+https://github.com/lutoma/xelix.git')
+sha256sums=('SKIP')
+
+pkgver() {
+	cd xelix
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+	cd xelix
+	./configure
+}
+
+build() {
+	cd xelix
+	make
+}
+
+package() {
+	cd xelix
+	install -d $pkgdir/boot
+	install -D xelix.bin $pkgdir/boot
+}
