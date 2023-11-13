@@ -38,7 +38,7 @@ jobs:
         run: 'mkdir kernel-pkg'
 
       - name: Import SSH key
-        run: 'mkdir .ssh; echo "${{ secrets.SSH_KEY }}" > .ssh/id_ed25519 && chmod 600 .ssh/id_ed25519'
+        run: 'echo "${{ secrets.SSH_KEY }}" > /root/.ssh/id_ed25519 && chmod 600 /root/.ssh/id_ed25519'
 
       - name: Upload to repo server
         run: scp *.pkg.tar.gz* repoupload@pkgs.xelix.org:/var/www/pkgs.xelix.org/core/i786/
