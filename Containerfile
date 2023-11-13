@@ -110,11 +110,37 @@ RUN cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/
 run rm -r ${PREFIX}/i786-pc-xelix/sys-include
 
 FROM alpine:latest
-COPY --from=0 /toolchain /usr
 WORKDIR /src
 
-RUN apk --no-cache add wget musl-dev git make gcc g++ nasm m4 perl autoconf automake \
-	patch libtool mpc1 gmp mpfr mpc1-dev gmp-dev mpfr-dev gawk coreutils bash \
-	texinfo file python3 tar findutils gzip
+RUN apk --no-cache add wget musl-dev gcc libarchive-dev gettext-dev gawk bash \
+	meson ninja curl-dev
+
+# Build a native/host copy of pacman so we can build and manage Xelix userland packages
+RUN wget -c https://gitlab.archlinux.org/pacman/pacman/-/archive/v6.0.2/pacman-v6.0.2.tar.gz
+RUN tar xf pacman-v6.0.2.tar.gz
+
+WORKDIR /src/pacman-v6.0.2
+RUN meson setup -Dc_link_args='-lintl' --prefix /usr build
+RUN ninja -C build
+RUN DESTDIR=/pacman ninja -C build install
+
+# Now build the actual image
+FROM alpine:latest
+WORKDIR /src
+COPY --from=0 /toolchain /usr
+COPY --from=1 /pacman /
+
+RUN apk --no-cache add wget git make gcc g++ nasm m4 perl autoconf automake \
+	patch libtool mpc1 gmp mpfr libarchive gettext gawk bash coreutils \
+	texinfo file python3 tar findutils gzip xz meson ninja sudo curl
+
+# Add python stuff for (legacy) xpkg
+ENV PYTHONUNBUFFERED=1
+RUN python3 -m ensurepip
+RUN pip3 install --no-cache --upgrade pip setuptools PyYAML toposort click
+
+# Add non-root user for makepkg
+RUN adduser --disabled-password --gecos '' dev
+RUN echo 'dev ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 CMD ["/bin/bash"]
