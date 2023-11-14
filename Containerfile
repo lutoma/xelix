@@ -123,6 +123,7 @@ RUN find /toolchain/usr/libexec/gcc/i786-pc-xelix/13.1.0 -type f -exec strip --s
 FROM alpine:latest
 WORKDIR /src
 COPY --from=0 /toolchain /
+COPY --from=0 /usr/local /usr/local
 
 RUN apk --no-cache add wget git make gcc g++ nasm m4 perl autoconf automake \
 	patch libtool mpc1 gmp mpfr libarchive gettext gawk bash coreutils \
