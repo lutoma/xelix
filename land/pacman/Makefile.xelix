@@ -1,0 +1,22 @@
+.PHONY: all
+all: pacman
+
+%.o: %.c
+	i786-pc-xelix-gcc $(CFLAGS) -Isrc/common -Ilib/libalpm -D_FILE_OFFSET_BITS=64 -std=gnu99 -O0 -g -include xelixconfig.h -o $@ -c $<
+
+libalpm.a: lib/libalpm/add.o lib/libalpm/alpm.o lib/libalpm/alpm_list.o lib/libalpm/backup.o lib/libalpm/base64.o lib/libalpm/be_local.o lib/libalpm/be_package.o lib/libalpm/be_sync.o lib/libalpm/conflict.o lib/libalpm/db.o lib/libalpm/deps.o lib/libalpm/diskspace.o lib/libalpm/dload.o lib/libalpm/error.o lib/libalpm/filelist.o lib/libalpm/graph.o lib/libalpm/group.o lib/libalpm/handle.o lib/libalpm/hook.o lib/libalpm/log.o lib/libalpm/package.o lib/libalpm/pkghash.o lib/libalpm/rawstr.o lib/libalpm/remove.o lib/libalpm/signing.o lib/libalpm/sync.o lib/libalpm/trans.o lib/libalpm/util.o lib/libalpm/version.o
+	ar rcs $@ $<
+
+pacman: libalpm.a src/pacman/callback.o src/pacman/check.o src/pacman/conf.o src/pacman/database.o src/pacman/deptest.o src/pacman/files.o src/pacman/package.o src/pacman/pacman.o src/pacman/query.o src/pacman/remove.o src/pacman/sighandler.o src/pacman/sync.o src/pacman/upgrade.o src/pacman/util.o src/pacman/ini.c src/pacman/util-common.c
+	i786-pc-xelix-gcc -o $@ src/pacman/callback.o src/pacman/check.o src/pacman/conf.o src/pacman/database.o src/pacman/deptest.o src/pacman/files.o src/pacman/package.o src/pacman/pacman.o src/pacman/query.o src/pacman/remove.o src/pacman/sighandler.o src/pacman/sync.o src/pacman/upgrade.o src/pacman/util.o src/pacman/ini.c src/pacman/util-common.c lib/libalpm/add.o lib/libalpm/alpm.o lib/libalpm/alpm_list.o lib/libalpm/backup.o lib/libalpm/base64.o lib/libalpm/be_local.o lib/libalpm/be_package.o lib/libalpm/be_sync.o lib/libalpm/conflict.o lib/libalpm/db.o lib/libalpm/deps.o lib/libalpm/diskspace.o lib/libalpm/dload.o lib/libalpm/error.o lib/libalpm/filelist.o lib/libalpm/graph.o lib/libalpm/group.o lib/libalpm/handle.o lib/libalpm/hook.o lib/libalpm/log.o lib/libalpm/package.o lib/libalpm/pkghash.o lib/libalpm/rawstr.o lib/libalpm/remove.o lib/libalpm/signing.o lib/libalpm/sync.o lib/libalpm/trans.o lib/libalpm/util.o lib/libalpm/version.o -L. $(LDFLAGS) -larchive -lcurl -lssl -lcrypto -lbz2 -lxml2 -llzma -lz -lm
+
+.PHONY: clean
+clean:
+	find . -iname "*.o" -delete
+
+.PHONY: install
+install:
+	install -d $(DESTDIR)/usr/lib
+	install -D libalpm.a $(DESTDIR)/usr/lib
+	install -d $(DESTDIR)/usr/bin
+	install -D pacman $(DESTDIR)/usr/bin

@@ -1,0 +1,37 @@
+pkgname=ncurses
+pkgver=6.1
+pkgrel=1
+pkgdesc="The ncurses (new curses) library is a free software emulation of curses in System V Release 4.0 (SVr4), and more."
+arch=('i786')
+url="https://invisible-island.net/ncurses/announce.html"
+source=(
+	'https://invisible-island.net/archives/ncurses/ncurses-6.1.tar.gz'
+	"$pkgname-$pkgver.patch"
+	'xelix.terminfo'
+)
+sha256sums=(
+	'aa057eeeb4a14d470101eff4597d5833dcef5965331be3528c08d99cebaa0d17'
+	'SKIP'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--without-cxx-binding
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+	tic -o $pkgdir/usr/share/terminfo ../xelix.terminfo
+}

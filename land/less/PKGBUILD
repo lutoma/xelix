@@ -1,0 +1,24 @@
+pkgname=less
+pkgver=551
+pkgrel=1
+pkgdesc="Less is a free, open-source file pager."
+arch=('i786')
+depends=('ncurses')
+url="http://greenwoodsoftware.com/less/"
+source=('http://www.greenwoodsoftware.com/less/less-551.tar.gz')
+sha256sums=('ff165275859381a63f19135a8f1f6c5a194d53ec3187f94121ecd8ef0795fe3d')
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

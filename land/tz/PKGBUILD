@@ -1,0 +1,29 @@
+pkgname=tzdb
+pkgver=2019a
+pkgrel=1
+pkgdesc="The Time Zone Database (often called tz or zoneinfo) contains code and data that represent the history of local time for many representative locations around the globe."
+arch=('i786')
+url="https://www.iana.org/time-zones"
+source=(
+	"https://data.iana.org/time-zones/releases/tzdb-$pkgver.tar.lz"
+	"tz.patch"
+)
+sha256sums=(
+	'16d10794dd8de8eb21abbf21e74020b5e1b0227ea1f094299b0b4467954eecc7'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../tz.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	make CC=i786-pc-xelix-gcc
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make CC=i786-pc-xelix-gcc ZIC=zic DESTDIR=$pkgdir install
+}

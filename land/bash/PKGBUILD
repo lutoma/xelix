@@ -1,0 +1,35 @@
+pkgname=bash
+pkgver=5.0
+pkgrel=1
+epoch=
+pkgdesc=""
+arch=('i786')
+url="https://www.gnu.org/software/bash/"
+license=('GPL')
+source=('https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz' 'bash-5.0.patch')
+sha256sums=(
+	'b4a80f2ac66170b2913efbfb9f2594f1f76c7b1afd11f799e22035d63077fb4d'
+	'bcf1b6c4e9c5075aae1d2330b9512b714837597fc86e3048284bdadbfb1b2881')
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+
+	cd $pkgname-$pkgver
+	# Multiple definitions needed due to conflicting definitions in termcap/libreadline
+	LDFLAGS="-Wl,--allow-multiple-definition" ./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--without-bash-malloc \
+		--disable-job-control
+}
+
+build() {
+	cd $pkgname-$pkgver
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

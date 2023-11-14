@@ -1,0 +1,37 @@
+pkgname=libxml2
+pkgver=2.9.9
+pkgrel=1
+pkgdesc="libxml2 is an XML toolkit implemented in C, originally developed for the GNOME Project."
+arch=('i786')
+makedepend=('zlib' 'xz')
+url="https://gitlab.gnome.org/GNOME/libxml2"
+source=(
+	'https://download.gnome.org/sources/libxml2/2.9/libxml2-2.9.9.tar.xz'
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'58a5c05a2951f8b47656b676ce1017921a29f6b1419c45e3baed0d6435ba03f5'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--without-threads \
+		--without-http \
+		--without-python
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

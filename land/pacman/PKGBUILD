@@ -1,0 +1,39 @@
+pkgname=pacman
+pkgver=6.0.2
+pkgrel=4
+pkgdesc="Pacman - package management combining a simple binary package format with an easy-to-use build system."
+arch=('i786')
+makedepend=('libarchive' 'curl' 'openssl' 'bzip2' 'libxml2' 'xz' 'zlib')
+url="https://gitlab.archlinux.org/pacman/pacman"
+source=(
+	'https://gitlab.archlinux.org/pacman/pacman/-/archive/v6.0.2/pacman-v6.0.2.tar.gz'
+	"$pkgname-$pkgver.patch"
+	'Makefile.xelix'
+	'xelixconfig.h'
+	'pacman.conf'
+)
+sha256sums=(
+	'e39eab7f2cbd7cd802f56bc33e677df22a31caf7887ec4fae4d2b1649a95e410'
+	'SKIP'
+	'SKIP'
+	'SKIP'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-v$pkgver
+	patch -p1 < ../$pkgname-$pkgver.patch
+	cp ../Makefile.xelix ../xelixconfig.h .
+}
+
+build() {
+	cd $pkgname-v$pkgver
+	make -f Makefile.xelix
+}
+
+package() {
+	cd $pkgname-v$pkgver
+	make -f Makefile.xelix DESTDIR=$pkgdir install
+	install -d $pkgdir/etc
+	install -D ../pacman.conf $pkgdir/etc
+}

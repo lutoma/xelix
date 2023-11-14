@@ -1,0 +1,40 @@
+pkgname=dropbear
+pkgver=2020.81
+pkgrel=1
+pkgdesc="Dropbear is a relatively small SSH server and client."
+arch=('i786')
+url="https://matt.ucc.asn.au/dropbear/dropbear.html"
+makedepends=('zlib')
+source=(
+	'https://matt.ucc.asn.au/dropbear/releases/dropbear-2020.81.tar.bz2'
+	'dropbear.patch'
+)
+sha256sums=(
+	'48235d10b37775dbda59341ac0c4b239b82ad6318c31568b985730c788aac53b'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../dropbear.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CFLAGS="$CFLAGS -DDROPBEAR_SVR_PASSWORD_AUTH=0" ./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--sbindir=/usr/bin \
+		--disable-syslog \
+		--disable-lastlog \
+		--disable-harden \
+		--enable-static
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

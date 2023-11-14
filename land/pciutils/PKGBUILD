@@ -1,0 +1,53 @@
+pkgname=pciutils
+pkgver=3.6.2
+pkgrel=1
+pkgdesc="A library for portable access to PCI bus configuration registers and several utilities based on this library."
+arch=('i786')
+makedepend=('zlib')
+url="https://github.com/pciutils/pciutils"
+source=(
+	'https://github.com/pciutils/pciutils/archive/v3.6.2.tar.gz'
+	"$pkgname-$pkgver.patch"
+	'xelix-device.c'
+)
+sha256sums=(
+	'd84d7096a71890f0ddddc50e88ac5a3bc7412bf48d8100fc15857a411564687d'
+	'SKIP'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+	cp xelix-device.c $pkgname-$pkgver/lib
+}
+
+build() {
+	cd $pkgname-$pkgver
+	make \
+		CROSS_COMPILE=i786-pc-xelix- \
+		HOST=pc-xelix \
+		CFLAGS="$CFLAGS -I$DESTDIR/usr/include" \
+		LDFLAGS="$LDFLAGS -L$DESTDIR/usr/lib" \
+		DNS=no \
+		ZLIB=yes \
+		PREFIX=/usr \
+		BINDIR=/usr/bin \
+		SBINDIR=/usr/bin \
+		DESTDIR=$DESTDIR
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make \
+		CROSS_COMPILE=i786-pc-xelix- \
+		HOST=pc-xelix \
+		CFLAGS="$CFLAGS -I$DESTDIR/usr/include" \
+		LDFLAGS="$LDFLAGS -L$DESTDIR/usr/lib" \
+		DNS=no \
+		ZLIB=yes \
+		PREFIX=/usr \
+		BINDIR=/usr/bin \
+		SBINDIR=/usr/bin \
+		DESTDIR=$DESTDIR \
+		install
+}

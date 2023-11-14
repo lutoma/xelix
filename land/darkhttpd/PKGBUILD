@@ -1,0 +1,29 @@
+pkgname=darkhttpd
+pkgver=1.13
+pkgrel=1
+pkgdesc="When you need a web server in a hurry."
+arch=('i786')
+url="https://github.com/emikulic/darkhttpd"
+source=(
+	'https://github.com/emikulic/darkhttpd/archive/refs/tags/v1.13.tar.gz'
+	'darkhttpd-1.13.patch'
+)
+sha256sums=(
+	'1d88c395ac79ca9365aa5af71afe4ad136a4ed45099ca398168d4a2014dc0fc2'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CC=i786-pc-xelix-gcc CFLAGS="-O3 -DNO_IPV6" make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	install -d $pkgdir/usr/bin/
+	install -D darkhttpd $pkgdir/usr/bin/
+}

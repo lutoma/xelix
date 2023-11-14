@@ -1,0 +1,13 @@
+pkgname=font-roboto
+pkgver=2.138
+pkgrel=1
+pkgdesc="The Roboto font family."
+arch=('any')
+url="https://github.com/googlefonts/roboto"
+source=('https://github.com/googlefonts/roboto/releases/download/v2.138/roboto-unhinted.zip')
+sha256sums=('70f64c718510a601fbcf752aafe644314dacaeb85474dc689c89787c4a72a728')
+
+package() {
+	install -d -m 755 $pkgdir/usr/share/fonts
+	install -D *.ttf -m 644 $pkgdir/usr/share/fonts
+}

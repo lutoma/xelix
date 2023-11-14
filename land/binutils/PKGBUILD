@@ -1,0 +1,51 @@
+pkgname=binutils
+pkgver=2.40
+pkgrel=1
+pkgdesc="The GNU Binutils are a collection of binary tools."
+arch=('i786')
+url="https://www.gnu.org/software/binutils/"
+license=('GPL')
+makedepends=('flac' 'openssl' 'zlib' 'bzip2')
+source=(
+	'https://ftp.gnu.org/gnu/binutils/binutils-2.40.tar.gz'
+	'binutils-2.40.patch'
+	'elf_i386_xelix.sh'
+	'elf_x86_64_xelix.sh'
+)
+sha256sums=(
+	'd7f82c4047decf43a6f769ac32456a92ddb6932409a585c633cdd4e9df23d956'
+	'SKIP'
+	'SKIP'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../$pkgname-$pkgver.patch
+	cp ../elf_i386_xelix.sh ../elf_x86_64_xelix.sh ld/emulparams
+	find . -name "config.cache" -delete
+}
+
+build() {
+	cd $pkgname-$pkgver
+	cd ld
+	aclocal
+	automake
+	cd ..
+	autoreconf-2.69
+
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-werror \
+		--disable-plugins \
+		--disable-nls
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

@@ -1,0 +1,36 @@
+pkgname=libedit
+pkgver=20191231.3.1
+pkgrel=1
+pkgdesc="This is an autotool- and libtoolized port of the NetBSD Editline library (libedit)."
+arch=('i786')
+depends=('ncurses')
+url="https://thrysoee.dk/editline/"
+source=(
+	'https://thrysoee.dk/editline/libedit-20191231-3.1.tar.gz'
+	'libedit-20191231-3.1.patch'
+)
+sha256sums=(
+	'dbb82cb7e116a5f8025d35ef5b4f7d4a3cdd0a3909a146a39112095a2d229071'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < libedit-20191231-3.1.patch
+}
+
+build() {
+	cd libedit-20191231-3.1
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-shared \
+		--disable-widec
+
+	make
+}
+
+package() {
+	cd libedit-20191231-3.1
+	make DESTDIR=$pkgdir install
+}

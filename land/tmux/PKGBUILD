@@ -1,0 +1,34 @@
+pkgname=tmux
+pkgver=3.3a
+pkgrel=1
+pkgdesc="tmux is a terminal multiplexer: it enables a number of terminals to be created, accessed, and controlled from a single screen."
+arch=('i786')
+url="https://github.com/tmux/tmux"
+source=(
+	'https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz'
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'e4fd347843bd0772c4f48d6dde625b0b109b7a380ff15db21e97c11a4dcdf93f'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../$pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

@@ -1,0 +1,46 @@
+pkgname=ffmpeg
+pkgver=4.4
+pkgrel=1
+pkgdesc="FFmpeg is a collection of libraries and tools to process multimedia content such as audio, video, subtitles and related metadata."
+arch=('i786')
+url="https://ffmpeg.org/"
+license=('GPL')
+makedepends=('flac' 'openssl' 'zlib' 'bzip2')
+source=(
+	'https://ffmpeg.org/releases/ffmpeg-4.4.tar.xz'
+	'ffmpeg.patch'
+	'xelixsnd.c'
+	'xelixsnd.h'
+	'xelixsnd_enc.c')
+sha256sums=(
+	'06b10a183ce5371f915c6bb15b7b1fffbe046e8275099c96affc29e17645d909'
+	'SKIP'
+	'SKIP'
+	'SKIP'
+	'SKIP')
+
+prepare() {
+	cp xelixsnd.c $pkgname-$pkgver/libavdevice/
+	cp xelixsnd.h $pkgname-$pkgver/libavdevice/
+	cp xelixsnd_enc.c $pkgname-$pkgver/libavdevice/
+	cd $pkgname-$pkgver
+	patch -p0 < ../ffmpeg.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CFLAGS="-D__have_long64=0 -D__int64_t_defined" ./configure \
+		--arch=x86 \
+		--target-os=xelix \
+		--cross-prefix=i786-pc-xelix- \
+		--prefix=/usr \
+		--disable-shared \
+		--disable-network \
+		--disable-iconv
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

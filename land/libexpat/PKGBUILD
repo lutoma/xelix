@@ -1,0 +1,34 @@
+pkgname=libexpat
+pkgver=2.2.9
+pkgrel=1
+pkgdesc="Fast streaming XML parser written in C99 with >90% test coverage"
+arch=('i786')
+url="https://libexpat.github.io/"
+source=(
+	'https://github.com/libexpat/libexpat/releases/download/R_2_2_9/expat-2.2.9.tar.xz'
+	'libexpat.patch'
+)
+sha256sums=(
+	'1ea6965b15c2106b6bbe883397271c80dfa0331cdf821b2c319591b55eadc0a4'
+	'SKIP'
+)
+
+prepare() {
+	cd expat-2.2.9
+	patch -p0 < ../libexpat.patch
+}
+
+build() {
+	cd expat-2.2.9
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	make
+}
+
+package() {
+	cd expat-2.2.9
+	make DESTDIR=$pkgdir install
+}

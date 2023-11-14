@@ -1,0 +1,23 @@
+pkgname=gfxcompd
+pkgver=r2576.fb8939c5
+pkgrel=1
+epoch=
+pkgdesc="The graphics compositor of Xelix"
+arch=('i786')
+url="https://github.com/lutoma/xelix/tree/main/land/gfxcompd"
+license=('GPL')
+depends=('font-roboto')
+makedepends=('cairo' 'freetype' 'libpng')
+source=()
+
+pkgver() {
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+	make
+}
+
+package() {
+	make DESTDIR=$pkgdir install
+}

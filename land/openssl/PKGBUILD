@@ -1,0 +1,28 @@
+pkgname=openssl
+pkgver=1.1.1d
+pkgrel=1
+pkgdesc="A robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication."
+arch=('i786')
+url="https://www.openssl.org/"
+source=(
+	'https://www.openssl.org/source/openssl-1.1.1d.tar.gz'
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'1e3a91bc1f9dfce01af26026f856e064eab4c8ee0a8f457b5ae30b40b8b711f2'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CROSS_COMPILE=i786-pc-xelix- ./Configure xelix-x86 no-shared no-threads no-hw no-dso no-asm 386 no-sse2 no-zlib no-tests --prefix=/usr
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

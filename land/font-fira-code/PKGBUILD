@@ -1,0 +1,13 @@
+pkgname=font-fira-code
+pkgver=2
+pkgrel=1
+pkgdesc="The Fira Code font family."
+arch=('any')
+url="https://github.com/tonsky/FiraCode"
+source=('https://github.com/tonsky/FiraCode/releases/download/2/FiraCode_2.zip')
+sha256sums=('60d5b1106b708cc134c521aae4e503bb1d2ec3c9bf8ad978f2c659820505d492')
+
+package() {
+	install -d -m 755 $pkgdir/usr/share/fonts
+	install -D ttf/* -m 644 $pkgdir/usr/share/fonts
+}
