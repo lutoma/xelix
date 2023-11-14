@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source setenv.sh "/tmp/image"
+SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source $SCRIPT_DIR/setenv.sh "/tmp/image"
 
 mkdir /tmp/packages || true
 
@@ -22,12 +23,10 @@ for dir in "$@"; do
 		need_packages+=(${makedepend[@]})
 	fi
 
-
-	echo "makedepend: ${makedepend[@]}"
 	sudo pacman --root "$SYSROOT" --noconfirm -Sy "${need_packages[@]}"
 	cd $dir
-	makepkg -Ad
+	setarch i686
+	makepkg -Ad --sign
 	mv *.pkg.tar* /tmp/packages
 	cd ..
-	# --sign
 done
