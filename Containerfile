@@ -144,5 +144,5 @@ RUN echo 'dev ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN mkdir /root/.ssh
 RUN ssh-keyscan pkgs.xelix.org >> /root/.ssh/known_hosts
 
-RUN wget https://github.com/lutoma/xelix/blob/main/land/pacman/pacman.linux.conf -O /etc/pacman.conf
+COPY land/pacman/pacman.linux.conf /etc/pacman.conf
 CMD ["/bin/bash"]
