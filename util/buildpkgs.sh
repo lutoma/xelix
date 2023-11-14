@@ -25,7 +25,6 @@ for dir in "$@"; do
 
 	sudo pacman --root "$SYSROOT" --noconfirm -Sy "${need_packages[@]}"
 	cd $dir
-	setarch i686
 	makepkg -Ad --sign
 	mv *.pkg.tar* /tmp/packages
 	cd ..
