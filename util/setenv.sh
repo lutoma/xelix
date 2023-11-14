@@ -1,8 +1,6 @@
 if test "$#" -ne 1; then
 	echo "Usage: source setenv.sh >image root>"
-	exit 1
-fi
-
+else
 export SYSROOT=$1
 export PKG_CONFIG_DIR="$SYSROOT"
 export PKG_CONFIG_LIBDIR="$SYSROOT/usr/lib/pkgconfig:$SYSROOT/usr/share/pkgconfig"
@@ -15,3 +13,4 @@ fix_config_sub() {
 	echo "Replacing file $1"
 	echo -e "#!/bin/sh\necho i786-pc-xelix"
 }
+fi
