@@ -1,43 +1,31 @@
 pkgname=curl
-pkgver=
+pkgver=8.4.0
 pkgrel=1
 epoch=
-pkgdesc=""
+pkgdesc="command line tool and library for transferring data with URLs"
 arch=('i786')
 arch_override=('i786')
-url="https://www.gnu.org/software/coreutils/"
+url="https://curl.se/"
 license=('GPL')
-makedepends=('openssl' 'libiconv' 'gmp')
-source=(
-	'https://curl.se/download/curl-8.4.0.tar.xz'
-	'coreutils-8.32.patch'
-	'coreutils-8.32-patch-two.patch')
-sha256sums=(
-	'4458d8de7849df44ccab15e16b1548b285224dbba5f08fac070c1c0e0bcc4cfa'
-	'927b1b9d90d09063e8e662e3b41f91f1d216cea0e97a5df247137b4970da1714'
-	'74d85891fbfd578f779749febfee5a1ca0db65a2349a47b8c5f6b1a38808c1bb')
+makedepend=('openssl' 'zlib')
+source=('https://curl.se/download/curl-8.4.0.tar.xz')
+sha256sums=('16c62a9c4af0f703d28bda6d7bbf37ba47055ad3414d70dec63e2e6336f2a82d')
 
 prepare() {
-	patch -p0 < $pkgname-$pkgver.patch
 	cd $pkgname-$pkgver
-	autoreconf
-	./configure \
-	    --host=i786-pc-xelix \
-	    --prefix=/usr \
-	    --sysconfdir=/etc \
-	    --disable-threads \
-	    --disable-acl \
-	    --disable-xattr \
-	    --disable-largefile \
-	    --enable-no-install-program=arch,coreutils,dmesg,mknod \
-	    --with-openssl
-
-	# Needs to be applied after configure
-	patch -p1 < ../coreutils-8.32-patch-two.patch
+	echo -e "#!/bin/sh\necho i786-pc-xelix" > config.sub
 }
 
 build() {
 	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--with-openssl \
+		--with-zlib \
+		--disable-threaded-resolver
+
 	make
 }
 
