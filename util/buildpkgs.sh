@@ -7,23 +7,18 @@ source $SCRIPT_DIR/setenv.sh "/tmp/image"
 mkdir /tmp/packages || true
 
 for dir in "$@"; do
+	makedepend=()
+	depend=()
 	source "$dir/PKGBUILD"
+
 	echo -e "Building $pkgname-$pkgver: $pkgdesc\n"
 
 	sudo rm -rf "$SYSROOT"
 	mkdir -p "$SYSROOT/var/lib/pacman"
 
-	need_packages=('base')
-
-	if ! [ -z ${depend+x} ]; then
-		need_packages+=(${depend[@]})
-	fi
-
-	if ! [ -z ${makedepend+x} ]; then
-		need_packages+=(${makedepend[@]})
-	fi
-
+	need_packages=('base' ${depend[@]} ${makedepend[@]})
 	sudo pacman --root "$SYSROOT" --noconfirm -Sy "${need_packages[@]}"
+
 	cd $dir
 	makepkg -Ad --sign
 	mv *.pkg.tar* /tmp/packages
