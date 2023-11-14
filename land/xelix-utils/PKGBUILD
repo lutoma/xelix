@@ -7,7 +7,7 @@ arch=('i786')
 url="https://github.com/lutoma/xelix/tree/main/land/xelix-utils"
 license=('GPL')
 depends=('font-fira-code' 'gfxcompd')
-makedepends=('newlib' 'flac' 'freetype' 'libpng')
+makedepends=('flac' 'freetype' 'libpng')
 source=()
 
 pkgver() {

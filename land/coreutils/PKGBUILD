@@ -6,7 +6,7 @@ arch=('i786')
 arch_override=('i786')
 url="https://www.gnu.org/software/coreutils/"
 license=('GPL')
-makedepend=('newlib' 'openssl' 'libiconv' 'gmp')
+makedepend=('openssl' 'libiconv' 'gmp')
 source=(
 	'https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz'
 	'coreutils-8.32.patch'

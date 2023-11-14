@@ -7,7 +7,7 @@ arch=('i786')
 arch_override=('i786')
 url="https://www.gnu.org/software/coreutils/"
 license=('GPL')
-makedepends=('newlib' 'openssl' 'libiconv' 'gmp')
+makedepends=('openssl' 'libiconv' 'gmp')
 source=(
 	'https://curl.se/download/curl-8.4.0.tar.xz'
 	'coreutils-8.32.patch'
