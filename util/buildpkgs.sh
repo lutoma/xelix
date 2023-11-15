@@ -18,6 +18,7 @@ for dir in "$@"; do
 
 	need_packages=('base' ${depend[@]} ${makedepend[@]})
 	sudo pacman --root "$SYSROOT" --noconfirm -Sy "${need_packages[@]}"
+	sudo rm -vf "$SYSROOT"/usr/lib/*.la
 
 	cd $dir
 	makepkg -Ad --sign
