@@ -1,0 +1,36 @@
+pkgname=openssl-quic
+pkgver=3.1.4
+pkgrel=1
+pkgdesc="A robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication."
+arch=('i786')
+provides=('openssl')
+replaces=('openssl')
+makedepend=('zlib')
+url="https://www.openssl.org/"
+source=(
+	'https://github.com/quictls/openssl/archive/refs/tags/openssl-3.1.4-quic1.tar.gz'
+	"$pkgname-$pkgver.patch"
+	'50-xelix.conf'
+)
+sha256sums=(
+	'4bf990243d6aa39b8befa0c399834415842912ef67f88bef98e74dc619469618'
+	'SKIP'
+	'SKIP'
+)
+
+prepare() {
+	cd openssl-openssl-3.1.4-quic1
+	patch -p0 < ../$pkgname-$pkgver.patch
+	cp ../50-xelix.conf Configurations
+}
+
+build() {
+	cd openssl-openssl-3.1.4-quic1
+	CROSS_COMPILE=i786-pc-xelix- ./Configure xelix-x86 no-shared no-threads no-dso 386 no-sse2 no-tests --prefix=/usr -DDSO_NONE
+	make -j$(nproc)
+}
+
+package() {
+	cd openssl-openssl-3.1.4-quic1
+	make DESTDIR=$pkgdir install
+}

@@ -185,3 +185,14 @@
      return (*meth->globallookup) (name);
 +#endif
  }
+--- crypto/asn1/a_time.c
++++ crypto/asn1/a_time.c.new
+@@ -7,6 +7,8 @@
+  * https://www.openssl.org/source/license.html
+  */
+ 
++#define __DJGPP__
++
+ /*-
+  * This is an implementation of the ASN1 Time structure which is:
+  *    Time ::= CHOICE {
