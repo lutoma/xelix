@@ -1,6 +1,6 @@
 pkgname=bzip2
 pkgver=1.0.2
-pkgrel=1
+pkgrel=2
 pkgdesc="bzip2 is a freely available, patent free (see below), high-quality data compressor."
 arch=('i786')
 url="https://sourceware.org/bzip2/"
@@ -14,5 +14,5 @@ build() {
 
 package() {
 	cd $pkgname-$pkgver
-	make PREFIX=$pkgdir install
+	make PREFIX=$pkgdir/usr install
 }
