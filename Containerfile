@@ -99,15 +99,14 @@ RUN /usr/src/gcc-${GCC_VERSION}/configure \
 	--disable-nls \
 	--enable-languages=c,c++ \
 	--with-headers=/usr/src/newlib-${NEWLIB_VERSION}/newlib/libc/include \
-	--without-docdir
+	--without-docdir \
+	--with-newlib
 
 RUN make -j$(nproc) all-gcc
 RUN make -j$(nproc) all-target-libgcc
+RUN make -j$(nproc) all-target-libstdc++-v3
 
-# causes issues with newer GCC versions. Needs debugging
-#RUN make -j$(nproc) all-target-libstdc++-v3
-
-RUN make DESTDIR=/toolchain install-gcc install-target-libgcc
+RUN make DESTDIR=/toolchain install-gcc install-target-libgcc install-target-libstdc++-v3
 RUN ln -s i786-pc-xelix-gcc /toolchain/usr/bin/i786-pc-xelix-cc
 
 WORKDIR /build/newlib
