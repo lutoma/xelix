@@ -150,7 +150,12 @@ static inline int load_file(task_t* task, char* path) {
 		if(phead->type == PT_INTERP) {
 			char* interp = bin_read(fd, phead->offset, phead->filesz, NULL, task);
 			debug("elf: Binary has interpreter %s\n", interp);
-			return load_file(task, interp);
+			vfs_close(task, fd);
+			kfree(phead_start);
+			kfree(header);
+			int ret = load_file(task, interp);
+			kfree(interp);
+			return ret;
 		}
 
 		phead = (elf_program_header_t*)((uintptr_t)phead + header->phentsize);
