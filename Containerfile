@@ -130,7 +130,7 @@ RUN apk --no-cache add wget git make gcc g++ nasm m4 perl autoconf automake \
 	texinfo file python3 tar findutils gzip xz meson ninja sudo curl \
 	pacman fakeroot util-linux-misc openssh-client-default rsync nano bison \
 	flex qemu-img grub-bios sfdisk e2fsprogs moreutils bison flex qemu-img \
-	grub-bios sfdisk e2fsprogs moreutils pkgconfig
+	grub-bios sfdisk e2fsprogs moreutils pkgconfig gperf
 
 # Add python stuff for (legacy) xpkg
 ENV PYTHONUNBUFFERED=1
