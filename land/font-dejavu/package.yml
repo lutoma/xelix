@@ -1,7 +1,0 @@
-name: font-dejavu
-version: '2.37'
-sources:
-  - url: http://sourceforge.net/projects/dejavu/files/dejavu/2.37/dejavu-fonts-ttf-2.37.tar.bz2
-install:
-  - install -d -m 755 $DESTDIR/usr/share/fonts
-  - install -D ttf/* -m 644 $DESTDIR/usr/share/fonts

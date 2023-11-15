@@ -131,11 +131,6 @@ RUN apk --no-cache add wget git make gcc g++ nasm m4 perl autoconf automake \
 	fakeroot util-linux-misc openssh-client-default rsync nano bison flex \
 	qemu-img grub-bios sfdisk e2fsprogs moreutils bison flex pkgconfig gperf
 
-# Add python stuff for (legacy) xpkg
-ENV PYTHONUNBUFFERED=1
-RUN python3 -m ensurepip
-RUN pip3 install --no-cache --upgrade pip setuptools PyYAML toposort click
-
 # Add non-root user for makepkg
 RUN adduser --disabled-password --gecos '' dev
 RUN echo 'dev ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
