@@ -1,0 +1,33 @@
+pkgname=ngtcp2
+pkgver=1.0.1
+pkgrel=1
+epoch=
+pkgdesc="ngtcp2 project is an effort to implement IETF QUIC protocol."
+arch=('i786')
+arch_override=('i786')
+url="https://nghttp2.org/ngtcp2/"
+license=('GPL')
+makedepend=('openssl-quic')
+source=('https://github.com/ngtcp2/ngtcp2/releases/download/v1.0.1/ngtcp2-1.0.1.tar.xz')
+sha256sums=('21c898fa5543d3f2dc203fd0a300a8a7cb70fec21ad7f7a3ec6e119ba4850451')
+
+prepare() {
+	cd $pkgname-$pkgver
+	echo -e "#!/bin/sh\necho i786-pc-xelix" > config.sub
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CPPFLAGS="$CPPFLAGS -D__int64_t_defined" ./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--with-openssl
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

@@ -1,0 +1,33 @@
+pkgname=nghttp2
+pkgver=1.58.0
+pkgrel=1
+epoch=
+pkgdesc="This is an implementation of the Hypertext Transfer Protocol version 2 in C."
+arch=('i786')
+arch_override=('i786')
+url="https://nghttp2.org"
+license=('GPL')
+makedepend=()
+source=('https://github.com/nghttp2/nghttp2/releases/download/v1.58.0/nghttp2-1.58.0.tar.xz')
+sha256sums=('4a68a3040da92fd9872c056d0f6b0cd60de8410de10b578f8ade9ecc14d297e0')
+
+prepare() {
+	cd $pkgname-$pkgver
+	echo -e "#!/bin/sh\necho i786-pc-xelix" > config.sub
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-lib-only
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}
