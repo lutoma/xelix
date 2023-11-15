@@ -89,6 +89,20 @@ struct sockaddr {
 	char sa_data[];
 };
 
+#define	_SS_MAXSIZE	128U
+#define	_SS_ALIGNSIZE	(sizeof(int64_t))
+#define	_SS_PAD1SIZE	(_SS_ALIGNSIZE - sizeof(unsigned char) - sizeof(sa_family_t))
+#define	_SS_PAD2SIZE	(_SS_MAXSIZE - sizeof(unsigned char) - sizeof(sa_family_t) - \
+				_SS_PAD1SIZE - _SS_ALIGNSIZE)
+
+struct sockaddr_storage {
+	unsigned char		ss_len;		/* address length */
+	sa_family_t	ss_family;	/* address family */
+	char		__ss_pad1[_SS_PAD1SIZE];
+	int64_t		__ss_align;	/* force desired structure storage alignment */
+	char		__ss_pad2[_SS_PAD2SIZE];
+};
+
 struct msghdr {
 	void* msg_name;
 	socklen_t msg_namelen;
