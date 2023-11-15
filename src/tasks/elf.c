@@ -40,7 +40,11 @@ static char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 
 
 static inline void* bin_read(int fd, size_t offset, size_t size, void* inbuf, task_t* task) {
 	void* buf = inbuf ? inbuf : kmalloc(size);
-	vfs_seek(task, fd, offset, VFS_SEEK_SET);
+	if(vfs_seek(task, fd, offset, VFS_SEEK_SET) < 0 ) {
+		debug("elf: bin_read: vfs_seek failed\n");
+		return NULL;
+	}
+
 	size_t read = vfs_read(task, fd, buf, size);
 	if(likely(read == size)) {
 		return buf;
