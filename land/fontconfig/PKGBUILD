@@ -4,7 +4,7 @@ pkgrel=1
 pkgdesc="Fontconfig is a library for configuring and customizing font access."
 arch=('i786')
 url="https://www.freedesktop.org/wiki/Software/fontconfig/"
-makedepends=('libexpat' 'freetype' 'libpng' 'zlib' 'bzip2')
+makedepend=('libexpat' 'freetype' 'libpng' 'zlib' 'bzip2')
 source=(
 	'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.xz'
 	'fontconfig.patch'
