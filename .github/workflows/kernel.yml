@@ -41,7 +41,7 @@ jobs:
         run: 'echo "${{ secrets.SSH_KEY }}" > /root/.ssh/id_ed25519 && chmod 600 /root/.ssh/id_ed25519'
 
       - name: Upload to repo server
-        run: scp *.pkg.tar.gz* repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org/core/i786/
+        run: rsync *.pkg.tar.gz* repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org/core/i786/
 
       - name: Update repository
         run: ssh repoupdate@pkgs.xelix.org /usr/local/bin/repo-remote-update core i786 xelix-kernel *.pkg.tar.gz

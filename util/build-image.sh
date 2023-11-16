@@ -20,16 +20,16 @@ EOF
 # Docker uses tmpfs instead of devtmpfs for /dev, so doesn't pick up devices
 # created after the container is started. This is an issue when we create new
 # partitions below. Work around this by mounting separate devtmpfs.
-mkdir /rdev || true
-mount -t devtmpfs devs /rdev
+mkdir /tmp/rdev || true
+mount -t devtmpfs devs /tmp/rdev
 
-mkfs.ext2 -b 4096 -O '^ext_attr,^dir_index' /rdev/loop5p1
-mkfs.ext2 -b 4096 -O '^ext_attr,^dir_index' /rdev/loop5p2
+mkfs.ext2 -b 4096 -O '^ext_attr,^dir_index' /tmp/rdev/loop5p1
+mkfs.ext2 -b 4096 -O '^ext_attr,^dir_index' /tmp/rdev/loop5p2
 
 mkdir -p mnt
-mount /rdev/loop5p2 mnt
+mount /tmp/rdev/loop5p2 mnt
 mkdir -p mnt/boot
-mount /rdev/loop5p1 mnt/boot
+mount /tmp/rdev/loop5p1 mnt/boot
 
 grub-install /dev/loop5 --boot-directory=mnt/boot --modules="normal part_msdos ext2 multiboot" --no-floppy --target=i386-pc
 mkdir -p mnt/boot/grub
@@ -48,27 +48,33 @@ if [ "x${timeout}" != "x-1" ]; then
 fi
 
 menuentry 'Xelix (1920x1080)' {
-	multiboot2 /xelix.bin root=/dev/ata1d1p2
+	multiboot2 /xelix.bin root=/dev/ide1p2
 	set gfxpayload=keep
 }
  || true
 menuentry 'Xelix (3840x2160)' {
-	multiboot2 /xelix.bin root=/dev/ata1d1p2
+	multiboot2 /xelix.bin root=/dev/ide1p2
 	set gfxpayload=3840x2160x16
 }
 
 menuentry 'Xelix (Experimental GUI 1920x1080)' {
-	multiboot2 /xelix.bin root=/dev/ata1d1p2 init_target=gui
+	multiboot2 /xelix.bin root=/dev/ide1p2 init_target=gui
 	set gfxpayload=keep
 }
 
 menuentry 'Xelix (Experimental GUI 3840x2160 16-bit color)' {
-	multiboot2 /xelix.bin root=/dev/ata1d1p2 init_target=gui
+	multiboot2 /xelix.bin root=/dev/ide1p2 init_target=gui
 	set gfxpayload=3840x2160x16
 }
 EOF
 
 mkdir -p mnt/var/lib/pacman/
+
+pacman --root mnt -Sy
+pacman --root mnt --noconfirm -S $(pacman -Slq --root mnt core)
+
 umount mnt/boot
 umount mnt
 losetup -d /dev/loop5
+umount /tmp/rdev
+rmdir mnt /tmp/rdev
