@@ -6,20 +6,21 @@ on:
     - cron: '35 4 * * *'
 
 jobs:
-  kernel:
+  image:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/lutoma/xelix/toolchain:latest
+      options: --privileged
 
     steps:
-      - name: Download PKGBUILD
+      - name: Download build script
         run: 'wget -q https://raw.githubusercontent.com/lutoma/xelix/main/util/build-image.sh'
 
       - name: Build image
         run: bash build-image.sh xelix-nightly.img
 
       - name: Import signing key
-        run: 'echo "${{ secrets.GPG_PRIVATE_KEY }}" | sudo -u dev gpg --import'
+        run: 'echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import'
 
       - name: Sign image
         run: gpg --detach-sign --armor xelix-nightly.img
