@@ -39,5 +39,6 @@ jobs:
       - name: Import SSH key
         run: 'echo "${{ secrets.SSH_KEY }}" > /root/.ssh/id_ed25519 && chmod 600 /root/.ssh/id_ed25519'
 
+
       - name: Upload to server
-        run: rsync -z xelix-nightly.* repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org
+        run: rsync -z --exclude xelix-nightly.img xelix-nightly.* repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org
