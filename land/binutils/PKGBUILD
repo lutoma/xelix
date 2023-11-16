@@ -5,7 +5,6 @@ pkgdesc="The GNU Binutils are a collection of binary tools."
 arch=('i786')
 url="https://www.gnu.org/software/binutils/"
 license=('GPL')
-makedepends=('flac' 'openssl' 'zlib' 'bzip2')
 source=(
 	'https://ftp.gnu.org/gnu/binutils/binutils-2.40.tar.gz'
 	'binutils-2.40.patch'
@@ -42,7 +41,7 @@ build() {
 		--disable-plugins \
 		--disable-nls
 
-	make
+	make CPPFLAGS="$CPPFLAGS -D__int64_t_defined"
 }
 
 package() {

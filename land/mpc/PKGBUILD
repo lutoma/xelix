@@ -6,7 +6,7 @@ arch=('i786')
 makedepend=('gmp' 'mpfr')
 url="https://www.multiprecision.org"
 source=(
-	'https://ftp.gnu.org/gnu/mpc/mpc-1.2.0.tar.gz'
+	"https://ftp.gnu.org/gnu/$pkgname/$pkgname-$pkgver.tar.gz"
 	"$pkgname-$pkgver.patch"
 )
 sha256sums=(
@@ -25,11 +25,7 @@ build() {
 		--host=i786-pc-xelix \
 		--prefix=/usr \
 		--sysconfdir=/etc \
-		--disable-shared \
-		--with-gmp-include=$DESTDIR/usr/include \
-		--with-gmp-lib=$DESTDIR/usr/lib \
-		--with-mpfr-include=$DESTDIR/usr/include \
-		--with-mpfr-lib=$DESTDIR/usr/lib
+		--disable-shared
 
 	make
 }
