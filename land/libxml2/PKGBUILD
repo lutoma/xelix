@@ -1,6 +1,6 @@
 pkgname=libxml2
 pkgver=2.9.9
-pkgrel=1
+pkgrel=2
 pkgdesc="libxml2 is an XML toolkit implemented in C, originally developed for the GNOME Project."
 arch=('i786')
 makedepend=('zlib' 'xz')
@@ -26,9 +26,10 @@ build() {
 		--sysconfdir=/etc \
 		--without-threads \
 		--without-http \
+		--without-ftp \
 		--without-python
 
-	make
+	make -j$(nproc)
 }
 
 package() {

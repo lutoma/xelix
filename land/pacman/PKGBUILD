@@ -3,7 +3,7 @@ pkgver=6.0.2
 pkgrel=4
 pkgdesc="Pacman - package management combining a simple binary package format with an easy-to-use build system."
 arch=('i786')
-makedepend=('libarchive' 'curl' 'openssl' 'bzip2' 'libxml2' 'xz' 'zlib')
+makedepend=('libarchive' 'curl' 'openssl' 'nghttp2' 'nghttp3' 'ngtcp2' 'bzip2' 'libxml2' 'xz' 'zlib')
 url="https://gitlab.archlinux.org/pacman/pacman"
 source=(
 	'https://gitlab.archlinux.org/pacman/pacman/-/archive/v6.0.2/pacman-v6.0.2.tar.gz'
