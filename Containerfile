@@ -89,7 +89,12 @@ WORKDIR /build/newlib
 RUN /usr/src/newlib-${NEWLIB_VERSION}/configure \
 	--target=${TARGET} \
 	--prefix=/usr \
-	--sysconfdir=/etc
+	--sysconfdir=/etc \
+	--enable-newlib-mb \
+	--enable-newlib-iconv \
+	--enable-newlib-io-c99-formats \
+	--enable-newlib-io-long-long \
+	--enable-newlib-io-long-double
 
 WORKDIR /build/gcc
 RUN /usr/src/gcc-${GCC_VERSION}/configure \
