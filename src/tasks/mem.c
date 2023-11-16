@@ -1,5 +1,5 @@
 /* mem.c: Task memory allocation & management
- * Copyright © 2011-2020 Lukas Martini
+ * Copyright © 2011-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -33,21 +33,13 @@
 #define MAP_ANONYMOUS 4
 #define MAP_FIXED 8
 
-/* Called on task page faults. If the fault is in the pages below the current
- * lower end of the stack, expand the stack (up to 512 pages total), and return
- * control to the task. otherwise, return -1 so the fault gets raised.
- */
-int task_page_fault_cb(task_t* task, void* _addr) {
-
-	uintptr_t addr = (uintptr_t)_addr;
-	addr = ALIGN_DOWN(addr, PAGE_SIZE);
-	uintptr_t stack_lower = TASK_STACK_LOCATION - task->stack_size;
-
-	if(addr >= stack_lower || addr <= TASK_STACK_LOCATION - PAGE_SIZE * 512) {
+int task_stack_grow(task_t* task, size_t alloc_size) {
+	if(task->stack_size + alloc_size > PAGE_SIZE * 512) {
+		sc_errno = ENOMEM;
 		return -1;
 	}
 
-	int alloc_size = stack_lower - addr + PAGE_SIZE;
+	uintptr_t stack_lower = TASK_STACK_LOCATION - task->stack_size;
 	if(!vm_alloc_at(&task->vmem, NULL, RDIV(alloc_size, PAGE_SIZE), (void*)(stack_lower - alloc_size), NULL,
 		VM_USER | VM_RW | VM_FREE | VM_NOCOW | VM_TFORK | VM_ZERO | VM_FIXED)) {
 		return -1;
@@ -55,6 +47,23 @@ int task_page_fault_cb(task_t* task, void* _addr) {
 
 	task->stack_size += alloc_size;
 	return 0;
+}
+
+/* Called on task page faults. If the fault is in the pages below the current
+ * lower end of the stack, expand the stack (up to 512 pages total), and return
+ * control to the task. otherwise, return -1 so the fault gets raised.
+ */
+int task_page_fault_cb(task_t* task, void* _addr) {
+	uintptr_t addr = (uintptr_t)_addr;
+	addr = ALIGN_DOWN(addr, PAGE_SIZE);
+
+	uintptr_t stack_lower = TASK_STACK_LOCATION - task->stack_size;
+	if(addr >= stack_lower) {
+		return -1;
+	}
+
+	int alloc_size = stack_lower - addr + PAGE_SIZE;
+	return task_stack_grow(task, alloc_size);
 }
 
 // Free a task and all associated memory
