@@ -1,7 +1,7 @@
 name: Build nightly image
 
 on:
-  on: workflow_dispatch
+  workflow_dispatch
   schedule:
     - cron: '35 4 * * *'
 
