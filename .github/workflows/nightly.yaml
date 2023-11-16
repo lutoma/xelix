@@ -19,15 +19,25 @@ jobs:
       - name: Build image
         run: bash build-image.sh xelix-nightly.img
 
+      - name: Convert image
+        run: |
+          qemu-img convert -f raw xelix-nightly.img -O qcow2 xelix-nightly.qcow2
+          qemu-img convert -f raw xelix-nightly.img -O vdi xelix-nightly.vdi
+          qemu-img convert -f raw xelix-nightly.img -O vmdk xelix-nightly.vmdk
+          qemu-img convert -f raw xelix-nightly.img -O vhdx xelix-nightly.vhdx
+
       - name: Import signing key
         run: 'echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import'
 
-      - name: Sign image
-        run: gpg --detach-sign --armor xelix-nightly.img
+      - name: Sign images
+        run: |
+          gpg --detach-sign --armor xelix-nightly.qcow2
+          gpg --detach-sign --armor xelix-nightly.vdi
+          gpg --detach-sign --armor xelix-nightly.vmdk
+          gpg --detach-sign --armor xelix-nightly.vhdx
 
       - name: Import SSH key
         run: 'echo "${{ secrets.SSH_KEY }}" > /root/.ssh/id_ed25519 && chmod 600 /root/.ssh/id_ed25519'
 
       - name: Upload to server
-        run: rsync xelix-nightly.img xelix-nightly.img.asc repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org
-
+        run: rsync -z xelix-nightly.* repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org
