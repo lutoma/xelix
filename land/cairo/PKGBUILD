@@ -1,11 +1,10 @@
 pkgname=cairo
 pkgver=1.16.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Cairo is a 2D graphics library with support for multiple output devices."
 arch=('i786')
 url="https://www.cairographics.org/"
-depends=('fontconfig')
-makedepends=('zlib' 'libpng' 'freetype' 'fontconfig' 'pixman')
+makedepend=('zlib' 'libpng' 'freetype' 'pixman')
 source=(
 	'https://www.cairographics.org/releases/cairo-1.16.0.tar.xz'
 	'cairo.patch'
