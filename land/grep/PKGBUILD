@@ -1,6 +1,6 @@
 pkgname=grep
 pkgver=3.1
-pkgrel=1
+pkgrel=2
 pkgdesc="Grep searches one or more input files for lines containing a match to a specified pattern."
 arch=('i786')
 url="https://www.gnu.org/software/grep/"
@@ -29,4 +29,7 @@ build() {
 package() {
 	cd $pkgname-$pkgver
 	make DESTDIR=$pkgdir install
+
+	# Empty and conflicts with diffutils
+	rm $pkgdir/usr/lib/charset.alias
 }
