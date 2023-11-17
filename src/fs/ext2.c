@@ -693,35 +693,55 @@ static vfs_file_t* handle_symlink(struct vfs_callback_ctx* ctx, struct inode* in
 	return r;
 }
 
-// The public open interface to the virtual file system
 static vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	if(!ctx->path || !strcmp(ctx->path, "")) {
-		log(LOG_ERR, "ext2: ext2_read_file called with empty path.\n");
 		sc_errno = EINVAL;
 		return NULL;
 	}
 
-	uint32_t dir_inode = 0;
-	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, &dir_inode, ctx->task);
+	// Duplicate path as basedir() is destructive
+	char* dup_path = strdup(ctx->path);
+	if(!dup_path) {
+		return NULL;
+	}
+
+	const char* parent_dir = dirname(dup_path);
+
+	// Look up the parent directory first and fail if it cannot be found.
+	// This is important to ensure files can only be created in existing
+	// directories. below
+	struct dirent* parent_dirent = ext2_dirent_find(fs, parent_dir, NULL, ctx->task);
+	kfree(dup_path);
+	if(!parent_dirent || !parent_dirent->inode) {
+		sc_errno = ENOENT;
+		return NULL;
+	}
+
+	uint32_t parent_inode = parent_dirent->inode;
+	kfree(parent_dirent);
+
+	// FIXME Most of this just resolves the same path as above. Should take a
+	// shortcut here / reuse existing data with ext2_dirent_search
+	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, NULL, ctx->task);
 	if(!dirent && (sc_errno != ENOENT || !(flags & O_CREAT))) {
 		sc_errno = ENOENT;
 		return NULL;
 	}
 
-	uint32_t inode_num = dirent ? dirent->inode : 0;
+	uint32_t inode_num;
 	struct inode* inode = kmalloc(fs->superblock->inode_size);
 
-	if(!inode_num) {
-		debug("ext2_open: Could not find inode, creating one.\n");
+	if(!dirent || !dirent->inode) {
 		inode_num = ext2_inode_new(fs, inode, FT_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-		ext2_dirent_add(fs, dir_inode, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_REG_FILE);
+		ext2_dirent_add(fs, parent_inode, inode_num, basename(ctx->path), EXT2_DIRENT_FT_REG_FILE);
 
 		if(ctx->task) {
 			inode->uid = ctx->task->euid;
 			inode->gid = ctx->task->egid;
 		}
 	} else {
+		inode_num = dirent->inode;
 		kfree(dirent);
 
 		if((flags & O_CREAT) && (flags & O_EXCL)) {
