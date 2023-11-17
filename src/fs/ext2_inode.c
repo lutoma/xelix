@@ -1,4 +1,4 @@
-/* ext2.c: Implementation of the extended file system, version 2
+/* ext2_inode.c: Ext2 inode handling
  * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
@@ -20,14 +20,15 @@
 #ifdef CONFIG_ENABLE_EXT2
 
 #include "ext2_internal.h"
-#include "misc.h"
-#include "inode.h"
+#include "ext2_misc.h"
+#include "ext2_inode.h"
 #include <log.h>
 #include <string.h>
 #include <time.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <block/block.h>
+
 
 static uint64_t find_inode(struct ext2_fs* fs, uint32_t inode_num) {
 	uint32_t blockgroup_num = inode_to_blockgroup(inode_num);

@@ -19,7 +19,7 @@
  */
 
 #include "ext2.h"
-#include "inode.h"
+#include "ext2_inode.h"
 #include <lib/log.h>
 #include <fs/vfs.h>
 #include <block/block.h>

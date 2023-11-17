@@ -1,4 +1,4 @@
-/* ext2.c: Implementation of the extended file system, version 2
+/* ext2_dirent.c: Ext2 directory handling
  * Copyright © 2013-2019 Lukas Martini
  *
  * This file is part of Xelix.
@@ -20,9 +20,9 @@
 #ifdef CONFIG_ENABLE_EXT2
 
 #include "ext2_internal.h"
-#include "misc.h"
-#include "inode.h"
-#include "dirent.h"
+#include "ext2_misc.h"
+#include "ext2_inode.h"
+#include "ext2_dirent.h"
 #include <log.h>
 #include <string.h>
 #include <errno.h>

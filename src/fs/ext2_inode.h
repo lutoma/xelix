@@ -65,5 +65,4 @@ uint8_t* ext2_inode_data_rw(struct ext2_fs* fs, struct inode* inode, uint32_t wr
 
 
 uint32_t ext2_resolve_inode(const char* path, uint32_t* parent_ino);
-vfs_file_t* ext2_open(struct vfs_callback_ctx* ctx, uint32_t flags);
 void ext2_dump_inode(struct inode* buf);

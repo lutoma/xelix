@@ -33,7 +33,7 @@
 #include <block/block.h>
 #include <fs/sysfs.h>
 #include <block/part.h>
-#include <fs/ext2/ext2.h>
+#include <fs/ext2.h>
 #include <fs/ftree.h>
 #include <net/socket.h>
 
