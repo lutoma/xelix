@@ -289,7 +289,7 @@ void* memmove(void *dst, const void *src, size_t len) {
 		return dst;
 }
 
-char *strchr(const char *p, int ch) {
+char* strchr(const char *p, int ch) {
 	char c;
 
 	c = ch;
@@ -298,6 +298,17 @@ char *strchr(const char *p, int ch) {
 			return ((char *)p);
 		if (*p == '\0')
 			return (NULL);
+	}
+}
+
+char* strrchr(const char *p, int ch) {
+	char* save;
+
+	for (save = NULL;; ++p) {
+		if (*p == ch)
+			save = (char *)p;
+		if (!*p)
+			return(save);
 	}
 }
 
