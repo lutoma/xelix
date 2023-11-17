@@ -33,15 +33,14 @@ struct inode {
 	uint16_t link_count;
 	uint32_t block_count;
 	uint32_t flags;
-	uint32_t reserved1;
+	uint32_t osd1;
 	uint32_t blocks[15];
-	uint32_t version;
-	uint32_t file_acl;
-	uint32_t dir_acl;
-	uint32_t fragment_address;
-	uint8_t fragment_number;
-	uint8_t fragment_size;
-	uint16_t reserved2[5];
+	uint32_t generation;
+	uint32_t attrs_low;
+	uint32_t size_high;
+	uint32_t unused;
+	uint32_t osd2[3];
+	uint16_t inode_size;
 } __attribute__((packed));
 
 struct ext2_blocknum_resolver_cache {
