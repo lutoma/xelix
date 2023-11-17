@@ -826,6 +826,14 @@ int ext2_mount(struct vfs_block_dev* dev, const char* path) {
 		return -1;
 	}
 
+	if(unlikely(fs->superblock->revision != 1)) {
+		log(LOG_ERR, "ext2: Only revision 1 is supported.\n");
+
+		kfree(fs);
+		sc_errno = EINVAL;
+		return -1;
+	}
+
 	log(LOG_INFO, "ext2: Mounting /dev/%s - ext2 revision %d, block size %d, %d blockgroups\n",
 			dev->name, fs->superblock->revision, bl_off(1), fs->superblock->blockgroup_num);
 	log(LOG_INFO, "ext2: Blocks: %d free / %d total\n",
