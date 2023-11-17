@@ -46,6 +46,8 @@
 #include <net/net.h>
 #endif
 
+void xelix_main(void);
+
 // Used in lib/errno.h
 uint32_t __dummy_errno;
 

@@ -349,6 +349,10 @@ int vfs_fcntl(task_t* task, int fd, int cmd, int arg3) {
 
 	if(cmd == F_DUPFD) {
 		vfs_file_t* fp2 = vfs_alloc_fileno(task, MAX(3, arg3));
+		if(!fp2) {
+			return -1;
+		}
+
 		__sync_add_and_fetch(&fp->refs, 1);
 		fp2->dup_target = fp->num;
 		return fp2->num;
@@ -692,7 +696,7 @@ int vfs_link(task_t* task, const char* orig_path, const char* orig_new_path) {
 	return r;
 }
 
-void vfs_init() {
+void vfs_init(void) {
 	char* root_path = cmdline_get("root");
 	if(!root_path) {
 		panic("vfs: Could not get root device path - Make sure root= "

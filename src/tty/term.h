@@ -218,4 +218,4 @@ size_t term_vfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 int term_vfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest);
 int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg);
 int term_vfs_poll(struct vfs_callback_ctx* ctx, int events);
-void term_init();
+void term_init(void);

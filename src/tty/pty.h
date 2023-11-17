@@ -18,4 +18,4 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-void pty_init();
+void pty_init(void);

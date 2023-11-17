@@ -19,6 +19,7 @@
 
 #ifdef CONFIG_ENABLE_VIRTIO_BLOCK
 
+#include <block/virtio.h>
 #include <net/net.h>
 #include <bsp/virtio.h>
 #include <bsp/i386-pci.h>
@@ -63,12 +64,12 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	inb(dev->pci_dev->iobase + 0x13);
 }
 
-static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uint64_t num_blocks, void* buf) {
+static uint64_t send_request(struct virtio_dev* rdev, int type, uint64_t lba, uint64_t num_blocks, void* buf) {
 	if(num_blocks < 1) {
 		return -1;
 	}
 
-	if(!(dev->status & VIRTIO_PCI_STATUS_DRIVER_OK)) {
+	if(!(rdev->status & VIRTIO_PCI_STATUS_DRIVER_OK)) {
 		return -1;
 	}
 
@@ -95,7 +96,7 @@ static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uin
 	int user_buffer_flag = (type == VIRTIO_BLK_T_IN) ? VIRTQ_DESC_F_WRITE : 0;
 	int flags[] = {0, user_buffer_flag, VIRTQ_DESC_F_WRITE};
 
-	if(virtio_write(dev, 0, 3, buffers, lengths, flags) < 0) {
+	if(virtio_write(rdev, 0, 3, buffers, lengths, flags) < 0) {
 		return -1;
 	}
 
@@ -161,7 +162,7 @@ static int pci_cb(pci_device_t* pci_dev) {
 	return 0;
 }
 
-void virtio_block_init() {
+void virtio_block_init(void) {
 	pci_walk(pci_cb);
 }
 

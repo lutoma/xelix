@@ -124,7 +124,7 @@ static void pdma_write(int addr, const void* data, size_t len) {
 	set_dma_la(addr, len);
 	ioutb(R_CR, CR_START | CR_DMA_WRITE);
 
-	uint8_t *p = (uint8_t*)data;
+	const uint8_t *p = (const uint8_t*)data;
 	for(size_t i = 0; i < len; i++) {
 		ioutb(0x10, p[i]);
 	}
@@ -140,7 +140,7 @@ static void pdma_read(int addr, void* data, size_t len) {
 	}
 }
 
-static void receive() {
+static void receive(void) {
 	// Mask receipt interrupts
 	ioutb(R_IMR, 0x3a);
 
@@ -270,7 +270,7 @@ static int pci_cb(pci_device_t* _dev) {
 	return 0;
 }
 
-void ne2k_init() {
+void ne2k_init(void) {
 	pci_walk(pci_cb);
 }
 

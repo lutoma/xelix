@@ -44,7 +44,7 @@ static uint32_t cache_pitch;
 
 
 static size_t term_write_cb(struct term* term, const void* _source, size_t size) {
-	char* source = (char*)_source;
+	const char* source = (const char*)_source;
 	tmt_write(vt, source, size);
 	return size;
 }
@@ -114,9 +114,9 @@ static inline void write_row(const TMTSCREEN* s, const TMTLINE* l, int row) {
 	DO_CLEAR();
 }
 
-void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
-	const TMTSCREEN* s = tmt_screen(vt);
-	const TMTPOINT* c = tmt_cursor(vt);
+static void tmt_callback(tmt_msg_t m, TMT *callback_vt, const void *a, void *p) {
+	const TMTSCREEN* s = tmt_screen(callback_vt);
+	const TMTPOINT* c = tmt_cursor(callback_vt);
 
 	switch(m) {
 		case TMT_MSG_UPDATE:
@@ -125,7 +125,7 @@ void tmt_callback(tmt_msg_t m, TMT *vt, const void *a, void *p) {
 					write_row(s, s->lines[row], row);
 				}
 			}
-			tmt_clean(vt);
+			tmt_clean(callback_vt);
 			break;
 		case TMT_MSG_ANSWER:
 			term_input(term_console, a, strlen(a));

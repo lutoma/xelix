@@ -79,5 +79,5 @@ void pci_config_write(pci_device_t* dev, uint8_t offset, uint32_t val);
 int pci_walk(int (*callback)(pci_device_t* dev));
 int pci_check_vendor(pci_device_t* dev, const uint32_t combos[][2]);
 uint32_t pci_get_bar(pci_device_t* device, uint8_t bar);
-void pci_init();
+void pci_init(void);
 

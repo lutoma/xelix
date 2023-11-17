@@ -27,6 +27,8 @@
 
 #define debug(args...) log(LOG_DEBUG, "interrupts: " args)
 
+isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state);
+
 struct interrupt_reg int_handlers[512][10];
 uint8_t sse_state[512] __aligned(16) UL_VISIBLE("bss");
 uint8_t* int_sse_target UL_VISIBLE("data") = sse_state;
@@ -37,7 +39,7 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	scheduler_store_isf(state);
 
 	struct interrupt_reg* reg = int_handlers[intr];
-	volatile task_t* task = scheduler_get_current();
+	task_t* task = scheduler_get_current();
 
 	#ifdef CONFIG_INTERRUPTS_DEBUG
 	debug("state before:\n");
@@ -90,7 +92,7 @@ isf_t* __fastcall int_dispatch(uint32_t intr, isf_t* state) {
 	return state;
 }
 
-void int_init() {
+void int_init(void) {
 	idt_init();
 	bzero(int_handlers, sizeof(int_handlers));
 	int_enable();

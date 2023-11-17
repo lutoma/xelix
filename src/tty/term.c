@@ -104,7 +104,7 @@ static void handle_canon(struct term* term, char chr) {
 }
 
 size_t term_input(struct term* term, const void* _source, size_t size) {
-	char* source = (char*)_source;
+	const char* source = (const char*)_source;
 
 	for(size_t i = 0; i < size; i++) {
 		char chr = source[i];
@@ -343,7 +343,7 @@ static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	return fp;
 }
 
-void term_init() {
+void term_init(void) {
 	tty_keyboard_init();
 
 	sysfs_add_dev("tty", &term_cb);

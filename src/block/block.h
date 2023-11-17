@@ -53,4 +53,4 @@ struct vfs_block_dev* vfs_block_get_dev(const char* path);
 void vfs_block_register_dev(char* name, uint64_t start_offset,
 	vfs_block_read_cb read_cb, vfs_block_write_cb write_cb, void* meta);
 
-void block_init();
+void block_init(void);

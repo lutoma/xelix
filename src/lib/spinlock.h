@@ -21,7 +21,7 @@
 #include <stdbool.h>
 #include <log.h>
 
-extern void scheduler_yield();
+extern void scheduler_yield(void);
 
 /* See https://gcc.gnu.org/onlinedocs/gcc-4.4.3/gcc/Atomic-Builtins.html for
  * documentation on the GCC builtin atomic function used here.

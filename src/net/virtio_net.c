@@ -188,7 +188,7 @@ static int pci_cb(pci_device_t* pci_dev) {
 	return 0;
 }
 
-void virtio_net_init() {
+void virtio_net_init(void) {
 	pci_walk(pci_cb);
 }
 

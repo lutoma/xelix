@@ -36,10 +36,11 @@ struct sysfs_file* sysfs_add_file(char* name, struct vfs_callbacks* cb);
 struct sysfs_file* sysfs_add_dev(char* name, struct vfs_callbacks* cb);
 void sysfs_rm_file(struct sysfs_file* fp);
 void sysfs_rm_dev(struct sysfs_file* fp);
-void sysfs_init();
+void sysfs_init(void);
 
 vfs_file_t* sysfs_open(struct vfs_callback_ctx* ctx, uint32_t flags);
 int sysfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest);
 int sysfs_access(struct vfs_callback_ctx* ctx, uint32_t amode);
 int sysfs_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size);
+size_t sysfs_getdents(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 int sysfs_build_path_tree(struct vfs_callback_ctx* ctx);

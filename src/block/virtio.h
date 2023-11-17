@@ -18,4 +18,4 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-void virtio_block_init();
+void virtio_block_init(void);

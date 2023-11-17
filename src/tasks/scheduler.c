@@ -29,7 +29,7 @@ static struct scheduler_qentry* current_entry = NULL;
 struct scheduler_qentry idle_qentry;
 enum scheduler_state scheduler_state;
 
-task_t* scheduler_get_current() {
+task_t* scheduler_get_current(void) {
 	return current_entry ? current_entry->task : NULL;
 }
 
@@ -288,7 +288,7 @@ static void __attribute__((fastcall, noreturn)) do_idle(worker_t* worker) {
 		}
 }
 
-void scheduler_init() {
+void scheduler_init(void) {
 	worker_t* idle_worker = worker_new("kidle", &do_idle);
 	idle_qentry.task = NULL;
 	idle_qentry.worker = idle_worker;

@@ -53,22 +53,22 @@ struct ide_dev {
 	uint8_t slave;
 };
 
-void inportsm(unsigned short port, unsigned char * data, unsigned long size) {
+static void inportsm(unsigned short port, unsigned char * data, unsigned long size) {
 	asm volatile ("rep insw" : "+D" (data), "+c" (size) : "d" (port) : "memory");
 }
 
-void outportsm(unsigned short port, unsigned char * data, unsigned long size) {
+static void outportsm(unsigned short port, unsigned char * data, unsigned long size) {
 	asm volatile ("rep outsw" : "+S" (data), "+c" (size) : "d" (port));
 }
 
-void ata_io_wait(struct ide_dev* dev) {
+static void ata_io_wait(struct ide_dev* dev) {
 	inb(dev->bus + ATA_REG_ALTSTATUS);
 	inb(dev->bus + ATA_REG_ALTSTATUS);
 	inb(dev->bus + ATA_REG_ALTSTATUS);
 	inb(dev->bus + ATA_REG_ALTSTATUS);
 }
 
-int ata_wait(struct ide_dev* dev, int advanced) {
+static int ata_wait(struct ide_dev* dev, int advanced) {
 	uint8_t status = 0;
 
 	ata_io_wait(dev);
@@ -85,15 +85,15 @@ int ata_wait(struct ide_dev* dev, int advanced) {
 	return 0;
 }
 
-void ata_select(struct ide_dev* dev) {
+static void ata_select(struct ide_dev* dev) {
 	outb(dev->bus + ATA_REG_HDDEVSEL, 0xA0);
 }
 
-void ata_wait_ready(struct ide_dev* dev) {
+static void ata_wait_ready(struct ide_dev* dev) {
 	while (inb(dev->bus + ATA_REG_STATUS) & ATA_SR_BSY);
 }
 
-struct ide_dev* ide_init_device(uint16_t bus) {
+static struct ide_dev* ide_init_device(uint16_t bus) {
 	struct ide_dev* dev = zmalloc(sizeof(struct ide_dev));
 	dev->bus = bus;
 	dev->slave = 0;
@@ -158,7 +158,7 @@ try_again:
 
 }
 
-uint64_t ide_read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
+static uint64_t ide_read_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
 	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
 
 	for(int i = 0; i < num_blocks; i++) {
@@ -192,7 +192,7 @@ static inline int do_write(struct ide_dev* dev, uint64_t lba, void* buf) {
 	return 0;
 }
 
-uint64_t ide_write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
+static uint64_t ide_write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t num_blocks, void* buf) {
 	struct ide_dev* dev = (struct ide_dev*)block_dev->meta;
 
 	for(int i = 0; i < num_blocks; i++) {
@@ -204,7 +204,7 @@ uint64_t ide_write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t nu
 	return num_blocks;
 }
 
-void ide_init() {
+void ide_init(void) {
 	struct ide_dev* dev = ide_init_device(0x1F0);
 	vfs_block_register_dev("ide1", 0, ide_read_cb, ide_write_cb, (void*)dev);
 }

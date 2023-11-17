@@ -48,7 +48,7 @@ static void set_gate(uint8_t num, void (*handler)(void), uint8_t flags) {
 	idt_entries[num].flags = flags;
 }
 
-void idt_init() {
+void idt_init(void) {
 	lidt_pointer.limit = sizeof(struct idt_entry) * 256 -1;
 	lidt_pointer.base = (uint32_t)&idt_entries;
 

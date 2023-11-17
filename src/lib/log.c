@@ -125,7 +125,7 @@ void log(uint8_t level, const char *fmt, ...) {
 	}
 }
 
-void log_dump() {
+void log_dump(void) {
 	struct log_entry* entry = (struct log_entry*)buffer;
 	log(LOG_INFO, "log: Dumping early log, %d entries\n", log_entries);
 	for(int i = 0; i < log_entries; i++) {
@@ -152,7 +152,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return size;
 }
 
-void log_init() {
+void log_init(void) {
 	#ifdef CONFIG_LOG_STORE
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,

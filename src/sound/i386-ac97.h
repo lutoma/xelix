@@ -19,4 +19,4 @@
  */
 
 void ac97_play(char* file);
-void ac97_init();
+void ac97_init(void);

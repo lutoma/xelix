@@ -36,7 +36,7 @@ spinlock_t net_pico_lock;
 static bool initialized = false;
 static uint32_t dhcp_xid;
 
-void dhcp_cb(void* cli, int code) {
+static void dhcp_cb(void* cli, int code) {
 	if(code & PICO_DHCP_ERROR) {
 		log(LOG_INFO, "net: DHCP failed.\n");
 		return;

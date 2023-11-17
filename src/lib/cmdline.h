@@ -24,4 +24,4 @@
 
 char* cmdline_get(const char* key);
 bool cmdline_get_bool(const char* key);
-void cmdline_init();
+void cmdline_init(void);

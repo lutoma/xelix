@@ -67,7 +67,7 @@
 #define AC97_X_SR_CELV  (1 << 1)  /* Current equals last valid */
 #define AC97_X_SR_LVBCI (1 << 2)  /* Last valid buffer completion interrupt */
 #define AC97_X_SR_BCIS  (1 << 3)  /* Buffer completion interrupt status */
-#define AC97_X_SR_FIFOE (1 << 3)  /* FIFO error */
+#define AC97_X_SR_FIFOE (1 << 4)  /* FIFO error */
 
 /* PCM out control register flags */
 #define AC97_X_CR_RPBM  (1 << 0)  /* Run/pause bus master */
@@ -138,7 +138,7 @@ static void interrupt_handler(task_t* task, isf_t* state, int num) {
 	}
 }
 
-void ac97_set_volume(struct ac97_card* card, int volume) {
+static void ac97_set_volume(struct ac97_card* card, int volume) {
 	// Set volume level of the various mixers
 	// 0 = loud, 63 = almost silent
 	outw(card->nambar + PORT_NAM_MASTER_VOLUME, (volume<<8) | volume);
@@ -269,7 +269,7 @@ static int pci_cb(pci_device_t* dev) {
 	return 0;
 }
 
-void ac97_init() {
+void ac97_init(void) {
 	pci_walk(pci_cb);
 }
 

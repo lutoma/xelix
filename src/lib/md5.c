@@ -58,7 +58,7 @@ static uint8_t PADDING[] = {0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 /*
  * Rotates a 32-bit word left by n bits
  */
-uint32_t rotateLeft(uint32_t x, uint32_t n){
+static uint32_t rotateLeft(uint32_t x, uint32_t n){
     return (x << n) | (x >> (32 - n));
 }
 

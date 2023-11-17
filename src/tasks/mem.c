@@ -33,7 +33,7 @@
 #define MAP_ANONYMOUS 4
 #define MAP_FIXED 8
 
-int task_stack_grow(task_t* task, size_t alloc_size) {
+static int task_stack_grow(task_t* task, size_t alloc_size) {
 	if(task->stack_size + alloc_size > PAGE_SIZE * 512) {
 		sc_errno = ENOMEM;
 		return -1;

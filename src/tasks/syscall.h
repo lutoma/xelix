@@ -65,4 +65,4 @@ struct syscall_definition {
 };
 
 char** syscall_copy_array(task_t* task, char** array, uint32_t* count);
-void syscall_init();
+void syscall_init(void);

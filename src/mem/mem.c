@@ -60,7 +60,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
-void mem_init() {
+void mem_init(void) {
 	// Init phys page allocator. kernel vm has already been initialized in i386-paging.c.
 	if(mem_page_alloc_new(&mem_phys_alloc_ctx) < 0) {
 		panic("mem: Initialization of phys page allocator failed.\n");
@@ -112,7 +112,7 @@ void mem_init() {
 
 }
 
-void mem_late_init() {
+void mem_late_init(void) {
 	/* In physical memory, block out all lower memory up to the end of early
 	 * allocations from paging.c. Since the early allocations follow
 	 * KERNEL_END, this implicitly includes the kernel binary.

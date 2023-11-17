@@ -57,7 +57,7 @@ static struct inode* get_inode_and_check_owner(struct ext2_fs* fs, struct vfs_ca
 	return inode;
 }
 
-int ext2_chmod(struct vfs_callback_ctx* ctx, uint32_t mode) {
+static int ext2_chmod(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	struct dirent* dirent = NULL;
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct inode* inode = get_inode_and_check_owner(fs, ctx, &dirent);
@@ -72,7 +72,7 @@ int ext2_chmod(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	return 0;
 }
 
-int ext2_chown(struct vfs_callback_ctx* ctx, uint16_t uid, uint16_t gid) {
+static int ext2_chown(struct vfs_callback_ctx* ctx, uint16_t uid, uint16_t gid) {
 	struct dirent* dirent = NULL;
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct inode* inode = get_inode_and_check_owner(fs, ctx, &dirent);
@@ -92,7 +92,7 @@ int ext2_chown(struct vfs_callback_ctx* ctx, uint16_t uid, uint16_t gid) {
 	return 0;
 }
 
-int ext2_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
+static int ext2_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, NULL, ctx->task);
 	if(!dirent) {
@@ -127,7 +127,7 @@ int ext2_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 	return 0;
 }
 
-int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
+static int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	char* base_name = NULL;
 	char* base_path = ext2_chop_path(ctx->path, &base_name);
@@ -209,7 +209,7 @@ int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	return 0;
 }
 
-int ext2_utimes(struct vfs_callback_ctx* ctx, struct timeval times[2]) {
+static int ext2_utimes(struct vfs_callback_ctx* ctx, struct timeval times[2]) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, NULL, ctx->task);
 	if(!dirent) {
@@ -372,17 +372,17 @@ static int do_unlink(struct ext2_fs* fs, char* path, bool is_dir, task_t* task) 
 	return 0;
 }
 
-int ext2_unlink(struct vfs_callback_ctx* ctx) {
+static int ext2_unlink(struct vfs_callback_ctx* ctx) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	return do_unlink(fs, ctx->path, false, ctx->task);
 }
 
-int ext2_rmdir(struct vfs_callback_ctx* ctx) {
+static int ext2_rmdir(struct vfs_callback_ctx* ctx) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	return do_unlink(fs, ctx->path, true, ctx->task);
 }
 
-int ext2_link(struct vfs_callback_ctx* ctx, const char* new_path) {
+static int ext2_link(struct vfs_callback_ctx* ctx, const char* new_path) {
 	char* new_name;
 	struct ext2_fs* fs = ctx->mp->instance;
 	char* new_dir_path = ext2_chop_path(new_path, &new_name);
@@ -413,7 +413,7 @@ int ext2_link(struct vfs_callback_ctx* ctx, const char* new_path) {
 	return 0;
 }
 
-int ext2_access(struct vfs_callback_ctx* ctx, uint32_t amode) {
+static int ext2_access(struct vfs_callback_ctx* ctx, uint32_t amode) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, NULL, ctx->task);
 	if(!dirent) {
@@ -451,7 +451,7 @@ int ext2_access(struct vfs_callback_ctx* ctx, uint32_t amode) {
 	return 0;
 }
 
-int ext2_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
+static int ext2_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, NULL, ctx->task);
 	if(!dirent) {
@@ -488,7 +488,7 @@ int ext2_readlink(struct vfs_callback_ctx* ctx, char* buf, size_t size) {
 }
 
 
-size_t ext2_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
+static size_t ext2_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	if(!ctx->fp || !ctx->fp->inode || !fs) {
 		log(LOG_ERR, "ext2: ext2_read_file called without file system struct, fp or inode.\n");
@@ -545,7 +545,7 @@ size_t ext2_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return size;
 }
 
-size_t ext2_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
+static size_t ext2_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	if(!ctx || !ctx->fp || !ctx->fp->inode) {
 		log(LOG_ERR, "ext2: ext2_write_file called without fp or fp missing inode.\n");
@@ -595,7 +595,7 @@ size_t ext2_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
 }
 
 
-size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
+static size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct inode* inode = kmalloc(fs->superblock->inode_size);
 
@@ -640,13 +640,96 @@ size_t ext2_getdents(struct vfs_callback_ctx* ctx, void* buf, size_t size) {
 	return offset;
 }
 
-int ext2_build_path_tree(struct vfs_callback_ctx* ctx) {
+static int ext2_build_path_tree(struct vfs_callback_ctx* ctx) {
 	struct ext2_fs* fs = ctx->mp->instance;
 	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, NULL, ctx->task);
 	if(!dirent) {
 		sc_errno = ENOENT;
 		return -1;
 	}
+	return 0;
+}
+
+
+struct vfs_callbacks cb = {
+	.open = ext2_open,
+	.stat = ext2_stat,
+	.read = ext2_read,
+	.write = ext2_write,
+	.getdents = ext2_getdents,
+	.unlink = ext2_unlink,
+	.chmod = ext2_chmod,
+	.chown = ext2_chown,
+	.symlink = NULL,
+	.mkdir = ext2_mkdir,
+	.utimes = ext2_utimes,
+	.rmdir = ext2_rmdir,
+	.link = ext2_link,
+	.readlink = ext2_readlink,
+	.access = ext2_access,
+	.build_path_tree = ext2_build_path_tree,
+};
+
+int ext2_mount(struct vfs_block_dev* dev, const char* path) {
+	struct ext2_fs* fs = zmalloc(sizeof(struct ext2_fs));
+	fs->dev = dev;
+
+	// Main superblock always has an offset of 1024
+	fs->superblock = (struct superblock*)kmalloc(1024);
+	if(vfs_block_read(fs->dev, 2, 2, (uint8_t*)fs->superblock) < 0 ||
+		fs->superblock->magic != SUPERBLOCK_MAGIC) {
+		log(LOG_ERR, "ext2: Invalid magic\n");
+
+		kfree(fs);
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	log(LOG_INFO, "ext2: Mounting /dev/%s - ext2 revision %d, block size %d, %d blockgroups\n",
+			dev->name, fs->superblock->revision, bl_off(1), fs->superblock->blockgroup_num);
+	log(LOG_INFO, "ext2: Blocks: %d free / %d total\n",
+		fs->superblock->free_blocks, fs->superblock->block_count);
+	log(LOG_INFO, "ext2: Inodes: %d free / %d total\n",
+		fs->superblock->free_inodes, fs->superblock->inode_count);
+
+	if(fs->superblock->state != SUPERBLOCK_STATE_CLEAN) {
+		log(LOG_ERR, "ext2: File system on /dev/%s is not marked as clean. "
+			"Please run fsck.ext2 on it.\n", dev->name);
+
+		kfree(fs);
+		sc_errno = EINVAL;
+		return -1;
+	}
+
+	// TODO Compare superblocks to each other?
+
+	fs->blockgroup_table = kmalloc(bl_off(blockgroup_table_size));
+	if(!vfs_block_sread(fs->dev, bl_off(blockgroup_table_start),
+		bl_off(blockgroup_table_size), (uint8_t*)fs->blockgroup_table)) {
+
+		kfree(fs->superblock);
+		kfree(fs->blockgroup_table);
+		kfree(fs);
+		return -1;
+	}
+
+	// Cache root inode
+	struct inode* root_inode_buf = kmalloc(fs->superblock->inode_size);
+	if(!ext2_inode_read(fs, root_inode_buf, ROOT_INODE)) {
+		log(LOG_ERR, "ext2: Could not read root inode.\n");
+		kfree(fs->superblock);
+		kfree(fs->blockgroup_table);
+		kfree(root_inode_buf);
+		kfree(fs);
+		return -1;
+	}
+
+	fs->root_inode = root_inode_buf;
+	fs->superblock->mount_count++;
+	fs->superblock->mount_time = time_get();
+	fs->callbacks = &cb;
+	write_superblock();
+	vfs_mount_register(dev, path, (void*)fs, "ext2", &cb);
 	return 0;
 }
 

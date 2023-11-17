@@ -144,7 +144,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	return -1;
 }
 
-void gfx_init() {
+void gfx_init(void) {
 	fb_desc = multiboot_get_framebuffer();
 	if(!fb_desc) {
 		panic("Could not initialize graphics handling - No multiboot framebuffer");

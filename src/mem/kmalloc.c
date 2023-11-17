@@ -296,6 +296,10 @@ void* __attribute__((alloc_size(1))) _kmalloc(size_t sz, bool align, bool zero D
 		struct mem_block* new = split_block(header, alignment_offset
 			- sizeof(struct mem_block) - sizeof(struct footer));
 
+		if(!new) {
+			return NULL;
+		}
+
 		new->type = TYPE_USED;
 		free_block(header, true);
 		header = new;

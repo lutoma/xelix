@@ -19,4 +19,4 @@
  */
 
 void block_random_seed(uint64_t seed);
-void block_random_init();
+void block_random_init(void);

@@ -36,7 +36,7 @@ int century_register = 0x00;
 time_t last_timestamp = 0;
 uint64_t last_tick = 0;
 
-static int in_progress() {
+static int in_progress(void) {
 	outb(0x70, 0x0A);
 	return (inb(0x71) & 0x80);
 }
@@ -46,7 +46,7 @@ static uint8_t get_register(int reg) {
 	return inb(0x71);
 }
 
-static time_t read_rtc() {
+static time_t read_rtc(void) {
 	uint8_t century = 0;
 	uint8_t second;
 	uint8_t minute;
@@ -153,7 +153,7 @@ static time_t read_rtc() {
 	return t;
 }
 
-uint32_t time_get() {
+uint32_t time_get(void) {
 	uint32_t stick = timer_tick;
 	if(stick <= last_tick + timer_rate) {
 		return last_timestamp;
@@ -181,7 +181,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
-void time_init() {
+void time_init(void) {
 	last_timestamp = read_rtc();
 	last_tick = timer_tick;
 	log(LOG_INFO, "time: Initial last_timestamp is %u at tick %llu\n", last_timestamp, last_tick);

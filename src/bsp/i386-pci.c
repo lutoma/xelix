@@ -171,7 +171,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
-void pci_init() {
+void pci_init(void) {
 	log(LOG_INFO, "PCI devices:\n");
 	for(uint8_t bus = 0; bus < 255; bus++) {
 		for(uint8_t dev = 0; dev < 32; dev++) {

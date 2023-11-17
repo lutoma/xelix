@@ -291,7 +291,7 @@ int net_vfs_close_cb(vfs_file_t* fp) {
 	return 0;
 }
 
-vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock, int state) {
+static vfs_file_t* new_socket_fd(task_t* task, struct pico_socket* pico_sock, int state) {
 	struct socket* sock = (struct socket*)zmalloc(sizeof(struct socket));
 	sock->pico_socket = pico_sock;
 	sock->state = state;

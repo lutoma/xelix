@@ -18,4 +18,4 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-void gfx_mouse_init();
+void gfx_mouse_init(void);

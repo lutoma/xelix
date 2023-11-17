@@ -20,9 +20,8 @@
 
 #include <stdbool.h>
 
-void gfx_fbtext_init();
-void gfx_fbtext_show();
-void gfx_fbtext_hide_logo();
+void gfx_fbtext_init(void);
+void gfx_fbtext_show(void);
 void gfx_fbtext_write(uint32_t x, uint32_t y, wchar_t chr, uint32_t col_fg, uint32_t col_bg);
 void gfx_fbtext_draw_cursor(uint32_t x, uint32_t y);
 void gfx_fbtext_clear(uint32_t x, uint32_t y, uint32_t cols, uint32_t rows);

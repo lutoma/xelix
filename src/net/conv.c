@@ -29,13 +29,11 @@ int net_bsd_to_pico_addr(union pico_address *addr, const struct sockaddr *_saddr
 	}
 
 	if (socklen == SOCKSIZE6) {
-		struct sockaddr_in6 *saddr = (struct sockaddr_in6 *)_saddr;
+		const struct sockaddr_in6 *saddr = (const struct sockaddr_in6 *)_saddr;
 		memcpy(&addr->ip6.addr, &saddr->sin6_addr.s6_addr, 16);
-		saddr->sin6_family = AF_INET6;
 	} else {
-		struct sockaddr_in *saddr = (struct sockaddr_in *)_saddr;
+		const struct sockaddr_in *saddr = (const struct sockaddr_in *)_saddr;
 		addr->ip4.addr = saddr->sin_addr.s_addr;
-		saddr->sin_family = AF_INET;
 	}
 	return 0;
 }
@@ -46,10 +44,10 @@ uint16_t net_bsd_to_pico_port(const struct sockaddr *_saddr, socklen_t socklen) 
 	}
 
 	if (socklen == SOCKSIZE6) {
-		struct sockaddr_in6 *saddr = (struct sockaddr_in6 *)_saddr;
+		const struct sockaddr_in6 *saddr = (const struct sockaddr_in6 *)_saddr;
 		return saddr->sin6_port;
 	} else {
-		struct sockaddr_in *saddr = (struct sockaddr_in *)_saddr;
+		const struct sockaddr_in *saddr = (const struct sockaddr_in *)_saddr;
 		return saddr->sin_port;
 	}
 }

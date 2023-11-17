@@ -21,7 +21,7 @@
 
 typedef struct list list_t;
 
-struct list *list_new();
+struct list *list_new(void);
 struct list *list_alloc(void * (*allocator)(int len));
 
 void *list_append(struct list *l, void *data);

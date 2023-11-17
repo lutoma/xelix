@@ -49,4 +49,4 @@ struct vmem_range;
 void paging_set_range(struct paging_context* ctx, void* virt_addr, void* phys_addr, size_t size, int flags);
 void paging_clear_range(struct paging_context* ctx, void* virt_addr, size_t size);
 void paging_rm_context(struct paging_context* ctx);
-void paging_init();
+void paging_init(void);

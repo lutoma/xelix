@@ -58,8 +58,8 @@ static unsigned int font_width_aligned = 0;
 static unsigned int font_width_bytes = 0;
 static unsigned int font_height_pitch = 0;
 static unsigned int pixel_bytes = 0;
-static unsigned int cols = 0;
-static unsigned int rows = 0;
+static unsigned int num_cols = 0;
+static unsigned int num_rows = 0;
 
 static inline uint16_t color_convert16_565(int color) {
 	uint16_t red = (color & 0xff0000) >> 16;
@@ -98,7 +98,7 @@ void gfx_fbtext_write(uint32_t x, uint32_t y, wchar_t chr, uint32_t col_fg, uint
 		col_bg = color_convert16_565(col_bg);
 	}
 
-	const uint8_t* glyph = (uint8_t*)&gfx_font
+	const uint8_t* glyph = (const uint8_t*)&gfx_font
 			+ gfx_font.header_size
 			+ chr * gfx_font.bytes_per_glyph;
 
@@ -160,18 +160,18 @@ void gfx_fbtext_scroll(unsigned int num) {
 	size_t size = gfx_handle->ul_desc.size - lines;
 	void* from_ptr = gfx_handle->ul_desc.addr + lines;
 	memmove(gfx_handle->ul_desc.addr, from_ptr, size);
-	gfx_fbtext_clear(0, rows - 1, cols, 1);
+	gfx_fbtext_clear(0, num_rows - 1, num_cols, 1);
 }
 
 // Switch GFX output to fbtext. This is used during kernel panics
-void gfx_fbtext_show() {
+void gfx_fbtext_show(void) {
 	if(!initialized) {
 		return;
 	}
 	gfx_handle_enable(gfx_handle);
 }
 
-void gfx_fbtext_init() {
+void gfx_fbtext_init(void) {
 	gfx_handle = gfx_handle_init(VM_KERNEL);
 	if(!gfx_handle) {
 		log(LOG_ERR, "fbtext: Could not get gfx handle\n");
@@ -185,11 +185,11 @@ void gfx_fbtext_init() {
 	}
 
 	//memset(gfx_handle->ul_desc.addr, 0, gfx_handle->ul_desc.size);
-	cols = gfx_handle->ul_desc.width / gfx_font.width;
-	rows = gfx_handle->ul_desc.height / gfx_font.height;
+	num_cols = gfx_handle->ul_desc.width / gfx_font.width;
+	num_rows = gfx_handle->ul_desc.height / gfx_font.height;
 
 	log(LOG_DEBUG, "fbtext: font size %ux%u cols/rows %ux%u flags %u\n",
-		gfx_font.width, gfx_font.height, cols, rows, gfx_font.flags);
+		gfx_font.width, gfx_font.height, num_cols, num_rows, gfx_font.flags);
 
 	font_width_aligned = ALIGN(gfx_font.width, 8);
 	font_height_pitch = gfx_font.height * gfx_handle->ul_desc.pitch;
@@ -197,6 +197,6 @@ void gfx_fbtext_init() {
 	font_width_bytes = pixel_bytes * gfx_font.width;
 	initialized = true;
 
-	tty_console_init(cols, rows);
+	tty_console_init(num_cols, num_rows);
 	gfx_fbtext_show();
 }

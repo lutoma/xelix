@@ -18,4 +18,4 @@
  * along with Xelix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-void tty_gfxbus_init();
+void tty_gfxbus_init(void);

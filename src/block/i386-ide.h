@@ -103,7 +103,7 @@
 #define ATA_READ      0x00
 #define ATA_WRITE     0x01
 
-void ide_init();
+void ide_init(void);
 bool ide_read_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);
 void ide_write_sector(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);
 //void ide_write_sector_retry(uint16_t bus, uint8_t slave, uint32_t lba, uint8_t * buf);

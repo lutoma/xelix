@@ -258,7 +258,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
-void syscall_init() {
+void syscall_init(void) {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

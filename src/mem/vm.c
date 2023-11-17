@@ -47,7 +47,7 @@ static int have_malloc_ranges = 50;
  */
 #define CLEANUP_FLAGS(x) ((x) & (VM_RW | VM_USER | VM_FREE | VM_TFORK | VM_NOCOW))
 
-static inline vm_alloc_t* new_range() {
+static inline vm_alloc_t* new_range(void) {
 	/* During initialization, kmalloc_init calls vm_alloc once to get its
 	 * memory space to allocate from. The zmalloc call below would fail since
 	 * kmalloc is not ready yet. Another call to vm_alloc can then happen in

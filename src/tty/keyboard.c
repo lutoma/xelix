@@ -214,7 +214,7 @@ static vfs_file_t* sfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	return fp;
 }
 
-void tty_keyboard_init() {
+void tty_keyboard_init(void) {
 	buf = buffer_new(10);
 	if(!buf) {
 		return;

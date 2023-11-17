@@ -18,6 +18,7 @@
  */
 
 #include <fs/sysfs.h>
+#include <version.h>
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	if(ctx->fp->offset) {
@@ -29,7 +30,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
-void version_init() {
+void version_init(void) {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

@@ -129,7 +129,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return sfs_iter(ctx, dest, size, 0, ftree_root, 0);
 }
 
-void vfs_ftree_init() {
+void vfs_ftree_init(void) {
 	ftree_root = zmalloc(sizeof(struct ftree_file));
 	strlcpy(ftree_root->path, "/", ARRAY_SIZE(ftree_root->path));
 	ftree_root->stat.st_dev = 1;
