@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright © 2013-2019 Lukas Martini
+/* Copyright © 2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -18,14 +18,34 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <fs/vfs.h>
+static inline char* basename(char* path) {
+	if(!path || !*path) {
+		return ".";
+	}
 
-enum inode_check_op {
-	PERM_CHECK_READ = 2,
-	PERM_CHECK_WRITE = 1,
-	PERM_CHECK_EXEC = 0
-};
-int ext2_inode_check_perm(enum inode_check_op, struct inode* inode, task_t* task);
+	if(!strcmp(path, "/")) {
+		return path;
+	}
 
-uint32_t ext2_bitmap_search_and_claim(struct ext2_fs* fs, uint32_t bitmap_block);
-void ext2_bitmap_free(struct ext2_fs* fs, uint32_t bitmap_block, uint32_t bit);
+	char* name = strrchr(path, '/');
+	return name ? name + 1 : path;
+}
+
+
+static inline char* dirname(char* path) {
+	if(!path) {
+		return ".";
+	}
+
+	if(!strcmp(path, "/")) {
+		return path;
+	}
+
+	char* end = strrchr(path, '/');
+	if(!end) {
+		return ".";
+	}
+
+	*end = '\0';
+	return path;
+}

@@ -1,5 +1,5 @@
 /* ext2.c: ext2 VFS callbacks
- * Copyright © 2013-2019 Lukas Martini
+ * Copyright © 2013-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <libgen.h>
 #include <mem/kmalloc.h>
 #include <fs/vfs.h>
 #include <fs/mount.h>
@@ -130,15 +131,18 @@ static int ext2_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 
 static int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	struct ext2_fs* fs = ctx->mp->instance;
-	char* base_name = NULL;
-	char* base_path = ext2_chop_path(ctx->path, &base_name);
-	if(!base_path || ! base_name) {
-		sc_errno = EINVAL;
+
+	// Duplicate path as basedir() is destructive
+	char* dup_path = strdup(ctx->path);
+	if(!dup_path) {
 		return -1;
 	}
 
+	const char* base_path = dirname(dup_path);
+
 	// Ensure parent directory exists and permissions are ok
 	struct dirent* parent = ext2_dirent_find(fs, base_path, NULL, ctx->task);
+	kfree(dup_path);
 	if(!parent) {
 		sc_errno = ENOENT;
 		return -1;
@@ -195,7 +199,7 @@ static int ext2_mkdir(struct vfs_callback_ctx* ctx, uint32_t mode) {
 	}
 
 	ext2_inode_write(fs, inode, inode_num);
-	ext2_dirent_add(fs, parent->inode, inode_num, vfs_basename(ctx->path), EXT2_DIRENT_FT_DIR);
+	ext2_dirent_add(fs, parent->inode, inode_num, basename(ctx->path), EXT2_DIRENT_FT_DIR);
 
 	// Add . and .. dirents
 	ext2_dirent_add(fs, inode_num, inode_num, ".", EXT2_DIRENT_FT_DIR);
@@ -314,7 +318,7 @@ static int do_unlink(struct ext2_fs* fs, char* path, bool is_dir, task_t* task) 
 		}
 	}
 
-	ext2_dirent_rm(fs, dir_ino, vfs_basename(path));
+	ext2_dirent_rm(fs, dir_ino, basename(path));
 	link_count--;
 	inode->link_count--;
 
@@ -384,14 +388,22 @@ static int ext2_rmdir(struct vfs_callback_ctx* ctx) {
 }
 
 static int ext2_link(struct vfs_callback_ctx* ctx, const char* new_path) {
-	char* new_name;
 	struct ext2_fs* fs = ctx->mp->instance;
-	char* new_dir_path = ext2_chop_path(new_path, &new_name);
+
+	// Duplicate path as basedir() is destructive
+	char* dup_path = strdup(new_path);
+	if(!dup_path) {
+		return -1;
+	}
+
+	char* new_name = basename(dup_path);
+	char* new_dir_path = dirname(dup_path);
+
 	struct dirent* dirent = ext2_dirent_find(fs, ctx->path, NULL, ctx->task);
 	struct dirent* dir_dirent = ext2_dirent_find(fs, new_dir_path, NULL, ctx->task);
+	kfree(dup_path);
 
 	if(!dirent || !dir_dirent) {
-		kfree(new_dir_path);
 		kfree(dirent);
 		kfree(dir_dirent);
 		sc_errno = ENOENT;
@@ -400,7 +412,6 @@ static int ext2_link(struct vfs_callback_ctx* ctx, const char* new_path) {
 
 	// Directory hard links are not allowed in ext2
 	if(dirent->type == EXT2_DIRENT_FT_DIR) {
-		kfree(new_dir_path);
 		kfree(dirent);
 		kfree(dir_dirent);
 		sc_errno = EACCES;
@@ -408,7 +419,6 @@ static int ext2_link(struct vfs_callback_ctx* ctx, const char* new_path) {
 	}
 
 	ext2_dirent_add(fs, dir_dirent->inode, dirent->inode, new_name, dirent->type);
-	kfree(new_dir_path);
 	kfree(dirent);
 	kfree(dir_dirent);
 	return 0;
@@ -660,14 +670,20 @@ static vfs_file_t* handle_symlink(struct vfs_callback_ctx* ctx, struct inode* in
 	if(inode->size > 60) {
 		log(LOG_WARN, "ext2: Symlinks with length >60 are not supported right now.\n");
 		kfree(inode);
-		return 0;
+		return NULL;
 	}
 
 	char* sym_path = (char*)inode->blocks;
 	if(sym_path[0] != '/') {
-		char* base_path = ext2_chop_path(ctx->path, NULL);
+
+		char* dup_path = strdup(ctx->path);
+		if(!dup_path) {
+			return NULL;
+		}
+
+		char* base_path = dirname(dup_path);
 		ctx->path = vfs_normalize_path(sym_path, base_path);
-		kfree(base_path);
+		kfree(dup_path);
 	} else {
 		ctx->path = strdup(sym_path);
 	}

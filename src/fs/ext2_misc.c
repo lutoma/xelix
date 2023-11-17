@@ -63,23 +63,6 @@ void ext2_bitmap_free(struct ext2_fs* fs, uint32_t bitmap_block, uint32_t bit) {
 	kfree(bitmap);
 }
 
-const char* ext2_chop_path(const char* path, const char** ent) {
-	char* parent_dir = strdup(path);
-	char* file_name = strrchr(parent_dir, '/');
-	if(!file_name || parent_dir == file_name) {
-		if(ent) {
-			*ent = parent_dir;
-		}
-		return "/";
-	} else {
-		*file_name = '\0';
-		if(ent) {
-			*ent = file_name++;
-		}
-		return parent_dir;
-	}
-}
-
 uint32_t ext2_block_new(struct ext2_fs* fs, uint32_t neighbor) {
 	uint32_t pref_blockgroup = inode_to_blockgroup(neighbor);
 

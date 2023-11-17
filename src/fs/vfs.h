@@ -259,9 +259,3 @@ static inline char* vfs_flags_verbose(uint32_t flags) {
 
 	return mode;
 }
-
-static inline char* vfs_basename(char* path) {
-	char* bname = path + strlen(path);
-	while(*(bname - 1) != '/' && bname >= path) { bname--; }
-	return bname;
-}
