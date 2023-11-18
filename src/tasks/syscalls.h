@@ -228,7 +228,7 @@ const struct syscall_definition syscall_table[] = {
 
 	// 38
 	{"accept", (syscall_cb)net_accept, 0,
-		SCA_INT, SCA_INT, SCA_POINTER, sizeof(uint32_t)},
+		SCA_INT, SCA_INT, SCA_POINTER | SCA_NULLOK, sizeof(uint32_t)},
 #else
 	// 37
 	{"listen", NULL, 0,

@@ -423,17 +423,20 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 		return -1;
 	}
 
-	/* Since sockaddr is variable length and the length is passed in a pointer,
-	 * we can't use the syscall system's automagic kernel memory mapping.
-	 */
-	vm_alloc_t alloc;
-	struct sockaddr* addr = vm_map(VM_KERNEL, &alloc, &task->vmem, oaddr,
-		*addrlen, VM_MAP_USER_ONLY | VM_RW);
+	struct sockaddr* addr = NULL;
+	if(oaddr && addrlen) {
+		/* Since sockaddr is variable length and the length is passed in a pointer,
+		 * we can't use the syscall system's automagic kernel memory mapping.
+		 */
+		vm_alloc_t alloc;
+		addr = vm_map(VM_KERNEL, &alloc, &task->vmem, oaddr,
+			*addrlen, VM_MAP_USER_ONLY | VM_RW);
 
-	if(!addr) {
-		task_signal(task, NULL, SIGSEGV);
-		sc_errno = EFAULT;
-		return -1;
+		if(!addr) {
+			task_signal(task, NULL, SIGSEGV);
+			sc_errno = EFAULT;
+			return -1;
+		}
 	}
 
 	int_enable();
@@ -454,7 +457,10 @@ int net_accept(task_t* task, int sockfd, struct sockaddr* oaddr,
 	uint16_t port;
 	struct pico_socket* pico_sock = pico_socket_accept(sock->pico_socket, &pico_addr, &port);
 	spinlock_release(&net_pico_lock);
-	net_conv_pico2bsd(addr, SOCKSIZE, &pico_addr, port);
+
+	if(addr) {
+		net_conv_pico2bsd(addr, SOCKSIZE, &pico_addr, port);
+	}
 
 	// FIXME
 	int yes = 1;
