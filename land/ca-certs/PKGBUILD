@@ -1,0 +1,16 @@
+pkgname=ca-certs
+pkgver=20231118
+pkgrel=1
+pkgdesc="The Mozilla CA certificates bundle"
+arch=('any')
+url="https://curl.se/docs/caextract.html"
+source=('https://curl.se/ca/cacert.pem')
+sha256sums=('SKIP')
+
+pkgver() {
+	date -d @$(stat -c %Y cacert.pem) +%Y%m%d
+}
+
+package() {
+	install -m 644 -D cacert.pem $pkgdir/etc/ssl/cert.pem
+}
