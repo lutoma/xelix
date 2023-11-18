@@ -20,6 +20,7 @@
 #define _SYS_XELIX_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -45,8 +46,10 @@ struct _xelix_execdata {
 
 extern struct _xelix_execdata* _xelix_execdata;
 extern char* _progname;
+extern FILE* _xelix_serial;
 
 int _strace(void);
+void _serial_printf(const char* format, ...);
 
 #define syscall(call, a1, a2, a3) __syscall(__errno(), call, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3)
 static inline uint32_t __syscall(int* errp, uint32_t call, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
