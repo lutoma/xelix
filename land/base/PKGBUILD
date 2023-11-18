@@ -1,0 +1,37 @@
+pkgname=base
+pkgver=1
+pkgrel=2
+pkgdesc="The basic components of the Xelix operating system."
+arch=('any')
+url="https://xelix.org"
+license=('GPL')
+depennds=('xelix-kernel' 'coreutils' 'bash' 'xelix-utils')
+makedepends=()
+source=()
+sha256sums=()
+
+package() {
+	install -d $pkgdir/boot
+	install -d $pkgdir/dev
+	install -d $pkgdir/etc
+	install -d $pkgdir/etc/init.d
+	install -d $pkgdir/home
+	install -d $pkgdir/home/root -m 700
+	install -d $pkgdir/sys
+	install -d $pkgdir/tmp
+	install -d $pkgdir/usr
+	install -d $pkgdir/usr/bin
+	install -d $pkgdir/usr/include
+	install -d $pkgdir/usr/lib
+	install -d $pkgdir/usr/share
+	install -d $pkgdir/var
+	install -d $pkgdir/var/run
+
+	rm $pkgdir/bin || true
+	ln -s usr/bin $pkgdir/bin
+
+	rm $pkgdir/etc/mtab || true
+	ln -s /sys/mounts $pkgdir/etc/mtab
+
+	cp -r ../etc $pkgdir/
+}

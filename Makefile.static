@@ -13,13 +13,12 @@ else
 	AS = nasm
 endif
 
-PATH += :toolchain/local/bin
 CC := $(PREFIX)-gcc
 OBJCOPY := $(PREFIX)-objcopy
 QEMU := qemu-system-$(ARCH)
 LD := $(CC)
 
-MAKE_CFLAGS += -std=gnu18 -pipe -g -O3 -ffreestanding -fno-omit-frame-pointer -fstack-protector-strong -Wall -Wframe-larger-than=1024 -Wcast-align $(INCLUDE)
+MAKE_CFLAGS += -std=gnu2x -pipe -g -O3 -ffreestanding -fno-omit-frame-pointer -fstack-protector-strong -Wall -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wframe-larger-than=1024 -Wcast-align -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference $(INCLUDE)
 MAKE_LDFLAGS := -T src/boot/$(ARCH)-linker.ld -nostdlib -lgcc
 
 ifeq ($(shell uname -s), Darwin)

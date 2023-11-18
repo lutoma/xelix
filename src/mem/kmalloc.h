@@ -57,5 +57,5 @@ extern bool kmalloc_ready;
 	kfree(arr); \
 } while(0)
 
-void kmalloc_init();
+void kmalloc_init(void);
 void kmalloc_get_stats(uint32_t* total, uint32_t* used);

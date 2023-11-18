@@ -30,12 +30,12 @@ void serial_send(const char c, void* unused) {
 	outb(PORT, c);
 }
 
-char serial_recv() {
+char serial_recv(void) {
 	while(!CAN_RECV);
 	return inb(PORT);
 }
 
-void serial_init() {
+void serial_init(void) {
 	// from http://wiki.osdev.org/Serial_Ports
 	// set up with divisor = 3 and 8 data bits, no parity, one stop bit
 	// IRQs enabled
@@ -62,7 +62,7 @@ static size_t sfs_write(struct vfs_callback_ctx* ctx, void* src, size_t size) {
 	return size;
 }
 
-void serial_init2() {
+void serial_init2(void) {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 		.write = sfs_write,

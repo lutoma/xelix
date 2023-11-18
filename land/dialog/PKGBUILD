@@ -1,0 +1,35 @@
+pkgname=dialog
+pkgver=1.3.20191210
+pkgrel=1
+pkgdesc="Display dialog boxes from shell scripts."
+arch=('i786')
+depends=('ncurses')
+source=(
+	'https://invisible-island.net/archives/dialog/dialog-1.3-20191210.tgz'
+	'dialog-1.3-20191210.patch'
+)
+sha256sums=(
+	'10f7c02ee5dea311e61b0d3e29eb6e18bcedd6fb6672411484c1a37729cbd7a6'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < dialog-1.3-20191210.patch
+}
+
+build() {
+	cd dialog-1.3-20191210
+	./configure \
+		--host=i786-pc-xelix \
+		--disable-shared \
+		--enable-static \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	make
+}
+
+package() {
+	cd dialog-1.3-20191210
+	make DESTDIR=$pkgdir install
+}

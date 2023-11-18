@@ -1,0 +1,80 @@
+--- compat/disk.h
++++ compat/disk.h.new
+@@ -35,6 +35,7 @@
+ 	strbuf_humanise_bytes(out, avail2caller.QuadPart);
+ 	strbuf_addch(out, '\n');
+ #else
++#ifndef __xelix__
+ 	struct statvfs stat;
+ 
+ 	strbuf_realpath(&buf, ".", 1);
+@@ -48,6 +49,7 @@
+ 	strbuf_addf(out, "Available space on '%s': ", buf.buf);
+ 	strbuf_humanise_bytes(out, (off_t)stat.f_bsize * (off_t)stat.f_bavail);
+ 	strbuf_addf(out, " (mount flags 0x%lx)\n", stat.f_flag);
++#endif
+ #endif
+ 
+ cleanup:
+--- git-compat-util.h
++++ git-compat-util.h.new
+@@ -278,7 +278,9 @@
+ #include <sys/resource.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
++#ifndef __xelix__
+ #include <sys/statvfs.h>
++#endif
+ #include <termios.h>
+ #ifndef NO_SYS_SELECT_H
+ #include <sys/select.h>
+@@ -400,7 +402,7 @@
+ #include <openssl/err.h>
+ #endif
+ 
+-#ifdef HAVE_SYSINFO
++#ifndef __xelix__
+ # include <sys/sysinfo.h>
+ #endif
+ 
+--- builtin/gc.c
++++ builtin/gc.c.new
+@@ -262,7 +262,7 @@
+ 
+ static uint64_t total_ram(void)
+ {
+-#if defined(HAVE_SYSINFO)
++#if 0
+ 	struct sysinfo si;
+ 
+ 	if (!sysinfo(&si))
+--- Makefile
++++ Makefile.new
+@@ -2078,9 +2078,9 @@
+ 	BASIC_CFLAGS += -DHAVE_SYNC_FILE_RANGE
+ endif
+ 
+-ifdef NEEDS_LIBRT
+-	EXTLIBS += -lrt
+-endif
++#ifdef NEEDS_LIBRT
++#	EXTLIBS += -lrt
++#endif
+ 
+ ifdef HAVE_BSD_SYSCTL
+ 	BASIC_CFLAGS += -DHAVE_BSD_SYSCTL
+--- progress.c
++++ progress.c.new
+@@ -102,8 +102,12 @@
+ 
+ static int is_foreground_fd(int fd)
+ {
++#ifndef __xelix__
+ 	int tpgrp = tcgetpgrp(fd);
+ 	return tpgrp < 0 || tpgrp == getpgid(0);
++#else
++	return 1;
++#endif
+ }
+ 
+ static void display(struct progress *progress, uint64_t n, const char *done)

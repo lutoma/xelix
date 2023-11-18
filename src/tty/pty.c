@@ -138,7 +138,7 @@ static vfs_file_t* ptmx_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	return fd1;
 }
 
-void pty_init() {
+void pty_init(void) {
 	struct vfs_callbacks ptmx_cb = {
 		.open = ptmx_open,
 	};

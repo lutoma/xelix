@@ -33,4 +33,4 @@ struct tty_input_state {
 	uint16_t code;
 };
 
-void tty_keyboard_init();
+void tty_keyboard_init(void);

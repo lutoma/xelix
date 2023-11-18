@@ -61,7 +61,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
-void cmdline_init() {
+void cmdline_init(void) {
 	char* cmdline = strdup(cmdline_string());
 	size_t len = strlen(cmdline);
 

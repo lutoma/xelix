@@ -97,21 +97,29 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			continue;
 		}
 
+		int map_flags = VM_RW | VM_MAP_USER_ONLY;
+
 		/* Get pointer size - From an argument if SCA_SIZE_IN_* is set,
 		 * otherwise use the default value
 		 */
-		if(flags[i] & SCA_STRING) {
-			// FIXME FIXME FIXME Pass proper string sizes for SCA_STRING arguments!!!
-			ptr_sizes[i] = PAGE_SIZE - args[i] % PAGE_SIZE + PAGE_SIZE;
+		int multiplicator = MAX(1, def.ptr_size);
+		if(flags[i] & SCA_SIZE_IN_0) {
+			ptr_sizes[i] = multiplicator * args[0];
+		} else if(flags[i] & SCA_SIZE_IN_1) {
+			ptr_sizes[i] = multiplicator * args[1];
+		} else if(flags[i] & SCA_SIZE_IN_2) {
+			ptr_sizes[i] = multiplicator * args[2];
+		} else if(flags[i] & (SCA_STRING | SCA_FLEX_SIZE)) {
+			/* If there is no SIZE_IN_* flag, attempt to map up to two pages,
+			 * but don't fail if only one could be mapped. This is used for
+			 * strings. Later on, code will scan the mapped area to make
+			 * sure the string is NULL-terminated.
+			 */
+			ptr_sizes[i] = PAGE_SIZE * 2;
+			map_flags |= VM_MAP_LESS_OK;
+
 		} else {
 			ptr_sizes[i] = def.ptr_size;
-			if(flags[i] & SCA_SIZE_IN_0) {
-				ptr_sizes[i] = MAX(1, ptr_sizes[i]) * args[0];
-			} else if(flags[i] & SCA_SIZE_IN_1) {
-				ptr_sizes[i] = MAX(1, ptr_sizes[i]) * args[1];
-			} else if(flags[i] & SCA_SIZE_IN_2) {
-				ptr_sizes[i] = MAX(1, ptr_sizes[i]) * args[2];
-			}
 		}
 
 		if(unlikely((flags[i] & SCA_POINTER) && !ptr_sizes[i] && !(flags[i] & SCA_NULLOK))) {
@@ -126,9 +134,8 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 			call_fail();
 		}
 
-		// FIXME Remove workaround
 		args[i] = (uint32_t)vm_map(VM_KERNEL, &vmem[i], &task->vmem,
-			(void*)args[i], ptr_sizes[i], VM_RW | VM_MAP_USER_ONLY | VM_MAP_UNDERALLOC_WORKAROUND);
+			(void*)args[i], ptr_sizes[i], map_flags);
 
 		if(unlikely(!args[i])) {
 
@@ -251,7 +258,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return rsize;
 }
 
-void syscall_init() {
+void syscall_init(void) {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

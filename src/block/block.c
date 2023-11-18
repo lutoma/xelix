@@ -186,7 +186,7 @@ void vfs_block_register_dev(char* name, uint64_t start_offset,
 	}
 }
 
-void block_init() {
+void block_init(void) {
 	ide_init();
 
 	#ifdef CONFIG_ENABLE_VIRTIO_BLOCK

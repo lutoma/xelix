@@ -1,0 +1,37 @@
+pkgname=pixman
+pkgver=0.38.4
+pkgrel=1
+pkgdesc="Pixman is a low-level software library for pixel manipulation, providing features such as image compositing and trapezoid rasterization."
+arch=('i786')
+url="https://pixman.org"
+source=(
+	'https://cairographics.org/releases/pixman-0.38.4.tar.gz'
+	"$pkgname.patch"
+)
+sha256sums=(
+	'da66d6fd6e40aee70f7bd02e4f8f76fc3f006ec879d346bae6a723025cfbdde7'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../$pkgname.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CFLAGS="-DPIXMAN_NO_TLS" ./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-mmx \
+		--disable-vmx
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

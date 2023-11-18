@@ -26,8 +26,8 @@ menu "Kernel stdlib"
 		Store kernel log in memory and make them available as /sys/log, where
 		it can be read by utilities like dmesg. Doesn't log debug messages.
 
-	config LOG_PRINT_LEVEL
-		int "TTY log level"
+	config LOG_CONSOLE_LEVEL
+		int "Default console log level"
 		default 2
 		---help---
 		0 Disabled
@@ -145,6 +145,10 @@ menu "File systems"
 	config ENABLE_VIRTIO_BLOCK
 	bool "Enable VirtIO block device driver"
 	default y
+
+	config ENABLE_FTREE
+	bool "Enable ftree file tracking (likely broken)"
+	default n
 
 	config ENABLE_EXT2
 	bool "Enable ext2 support"

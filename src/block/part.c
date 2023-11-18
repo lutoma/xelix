@@ -17,6 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <block/part.h>
 #include <string.h>
 #include <log.h>
 #include <mem/kmalloc.h>

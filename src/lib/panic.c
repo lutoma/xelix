@@ -32,6 +32,8 @@
 #include <boot/multiboot.h>
 #include <gfx/fbtext.h>
 
+void __stack_chk_fail(void);
+
 static spinlock_t lock;
 // Should seed this using RNG
 uintptr_t __stack_chk_guard = 0xcafed00d;

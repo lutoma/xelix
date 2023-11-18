@@ -1,0 +1,198 @@
+--- crypto/dso/dso_lib.c
++++ crypto/dso/dso_lib.c.new
+@@ -12,6 +12,7 @@
+ 
+ static DSO *DSO_new_method(DSO_METHOD *meth)
+ {
++#ifndef __xelix__
+     DSO *ret;
+ 
+     ret = OPENSSL_zalloc(sizeof(*ret));
+@@ -42,15 +43,19 @@
+     }
+ 
+     return ret;
++#endif
+ }
+ 
+ DSO *DSO_new(void)
+ {
++#ifndef __xelix__
+     return DSO_new_method(NULL);
++#endif
+ }
+ 
+ int DSO_free(DSO *dso)
+ {
++#ifndef __xelix__
+     int i;
+ 
+     if (dso == NULL)
+@@ -82,6 +87,7 @@
+     CRYPTO_THREAD_lock_free(dso->lock);
+     OPENSSL_free(dso);
+     return 1;
++#endif
+ }
+ 
+ int DSO_flags(DSO *dso)
+@@ -91,6 +97,8 @@
+ 
+ int DSO_up_ref(DSO *dso)
+ {
++#ifndef __xelix__
++
+     int i;
+ 
+     if (dso == NULL) {
+@@ -104,10 +112,12 @@
+     REF_PRINT_COUNT("DSO", dso);
+     REF_ASSERT_ISNT(i < 2);
+     return ((i > 1) ? 1 : 0);
++#endif
+ }
+ 
+ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
+ {
++#ifndef __xelix__
+     DSO *ret;
+     int allocated = 0;
+ 
+@@ -158,10 +168,12 @@
+     if (allocated)
+         DSO_free(ret);
+     return NULL;
++#endif
+ }
+ 
+ DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
+ {
++#ifndef __xelix__
+     DSO_FUNC_TYPE ret = NULL;
+ 
+     if ((dso == NULL) || (symname == NULL)) {
+@@ -178,6 +190,7 @@
+     }
+     /* Success */
+     return ret;
++#endif
+ }
+ 
+ /*
+@@ -191,6 +204,8 @@
+  */
+ long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
+ {
++#ifndef __xelix__
++
+     if (dso == NULL) {
+         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
+         return -1;
+@@ -216,19 +231,24 @@
+         return -1;
+     }
+     return dso->meth->dso_ctrl(dso, cmd, larg, parg);
++#endif
+ }
+ 
+ const char *DSO_get_filename(DSO *dso)
+ {
++#ifndef __xelix__
+     if (dso == NULL) {
+         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
+         return NULL;
+     }
+     return dso->filename;
++#endif
+ }
+ 
+ int DSO_set_filename(DSO *dso, const char *filename)
+ {
++#ifndef __xelix__
++
+     char *copied;
+ 
+     if ((dso == NULL) || (filename == NULL)) {
+@@ -248,10 +268,12 @@
+     OPENSSL_free(dso->filename);
+     dso->filename = copied;
+     return 1;
++#endif
+ }
+ 
+ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
+ {
++#ifndef __xelix__
+     char *result = NULL;
+ 
+     if (dso == NULL || filespec1 == NULL) {
+@@ -265,10 +287,12 @@
+             result = dso->meth->dso_merger(dso, filespec1, filespec2);
+     }
+     return result;
++#endif
+ }
+ 
+ char *DSO_convert_filename(DSO *dso, const char *filename)
+ {
++#ifndef __xelix__
+     char *result = NULL;
+ 
+     if (dso == NULL) {
+@@ -295,10 +319,13 @@
+         }
+     }
+     return result;
++#endif
+ }
+ 
+ int DSO_pathbyaddr(void *addr, char *path, int sz)
+ {
++#ifndef __xelix__
++
+     DSO_METHOD *meth = DSO_METHOD_openssl();
+ 
+     if (meth->pathbyaddr == NULL) {
+@@ -306,10 +333,12 @@
+         return -1;
+     }
+     return (*meth->pathbyaddr) (addr, path, sz);
++#endif
+ }
+ 
+ DSO *DSO_dsobyaddr(void *addr, int flags)
+ {
++#ifndef __xelix__
+     DSO *ret = NULL;
+     char *filename = NULL;
+     int len = DSO_pathbyaddr(addr, NULL, 0);
+@@ -324,10 +353,12 @@
+ 
+     OPENSSL_free(filename);
+     return ret;
++#endif
+ }
+ 
+ void *DSO_global_lookup(const char *name)
+ {
++#ifndef __xelix__
+     DSO_METHOD *meth = DSO_METHOD_openssl();
+ 
+     if (meth->globallookup == NULL) {
+@@ -335,4 +366,5 @@
+         return NULL;
+     }
+     return (*meth->globallookup) (name);
++#endif
+ }
+--- crypto/asn1/a_time.c
++++ crypto/asn1/a_time.c.new
+@@ -7,6 +7,8 @@
+  * https://www.openssl.org/source/license.html
+  */
+ 
++#define __DJGPP__
++
+ /*-
+  * This is an implementation of the ASN1 Time structure which is:
+  *    Time ::= CHOICE {

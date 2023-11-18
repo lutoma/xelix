@@ -25,4 +25,4 @@
 #define GDT_SEG_DATA_PL3 0x23
 
 void gdt_set_tss(void* addr);
-void gdt_init();
+void gdt_init(void);

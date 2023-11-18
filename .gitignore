@@ -14,8 +14,9 @@ tags
 src/lib/config.h
 xelix.map
 .bochsrc
-/xpkg-build
-.xpkg-status
 /site
-.config
-.config.old
+/.config
+/.config.old
+/land/*/pkg
+/land/*/src
+/land/*/*.tar.*

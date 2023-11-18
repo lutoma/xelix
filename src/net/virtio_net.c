@@ -149,43 +149,47 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	}
 }
 
-void virtio_net_init()
-{
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*));
-	uint32_t ndevices = pci_search(devices, vendor_device_combos, 1);
-	log(LOG_INFO, "virtio_net: Discovered %d devices.\n", ndevices);
-
-	if(ndevices) {
-		dev = virtio_init_dev(devices[0], FEATURES_WANT, 2);
-		if(!dev) {
-			return;
-		}
-
-		log(LOG_DEBUG, "virtio_net: Negotiated features (0x%x): ", dev->features);
-		for(int i = 0; i < 16; i++) {
-			if(bit_get(dev->features, i)) {
-				// FIXME should use log
-				serial_printf("%s ", feature_flags_verbose[i]);
-			}
-		}
-		serial_printf("\n");
-
-		dev->queues[QUEUE_TX1].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
-		virtio_provide_descs(dev, QUEUE_RX1, 50, 1500);
-		int_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
-
-		uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
-		if(dev->features & VIRTIO_NET_F_MAC) {
-			for(int i = 0; i < 6; i++) {
-				mac[i] = inb(dev->pci_dev->iobase + 0x14 + i);
-			}
-		}
-
-		dev->status |= VIRTIO_PCI_STATUS_DRIVER_OK;
-		virtio_write_status(dev);
-
-		net_dev = net_add_device("vionet", mac, send);
+static int pci_cb(pci_device_t* pci_dev) {
+	if(pci_check_vendor(pci_dev, vendor_device_combos) != 0) {
+		return 1;
 	}
+
+	log(LOG_INFO, "virtio_net: Discovered device %p\n", pci_dev);
+
+	dev = virtio_init_dev(pci_dev, FEATURES_WANT, 2);
+	if(!dev) {
+		return 1;
+	}
+
+	log(LOG_DEBUG, "virtio_net: Negotiated features (0x%x): ", dev->features);
+	for(int i = 0; i < 16; i++) {
+		if(bit_get(dev->features, i)) {
+			// FIXME should use log
+			serial_printf("%s ", feature_flags_verbose[i]);
+		}
+	}
+	serial_printf("\n");
+
+	dev->queues[QUEUE_TX1].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
+	virtio_provide_descs(dev, QUEUE_RX1, 50, 1500);
+	int_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
+
+	uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
+	if(dev->features & VIRTIO_NET_F_MAC) {
+		for(int i = 0; i < 6; i++) {
+			mac[i] = inb(dev->pci_dev->iobase + 0x14 + i);
+		}
+	}
+
+	dev->status |= VIRTIO_PCI_STATUS_DRIVER_OK;
+	virtio_write_status(dev);
+
+	net_dev = net_add_device("vionet", mac, send);
+	return 0;
+}
+
+void virtio_net_init(void) {
+	pci_walk(pci_cb);
 }
 
 #endif /* ENABLE_VIRTIO_NET */

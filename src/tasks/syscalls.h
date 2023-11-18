@@ -199,9 +199,8 @@ const struct syscall_definition syscall_table[] = {
 		SCA_STRING, SCA_POINTER | SCA_SIZE_IN_2, SCA_INT, 0},
 
 	// 32
-	/* FIXME Size incorrect */
 	{"execve", (syscall_cb)task_execve, 0,
-		SCA_STRING, SCA_POINTER, SCA_POINTER, PAGE_SIZE},
+		SCA_STRING, SCA_POINTER | SCA_FLEX_SIZE, SCA_POINTER | SCA_FLEX_SIZE, 0},
 
 	// 33
 	{"sigaction", (syscall_cb)task_sigaction, 0,

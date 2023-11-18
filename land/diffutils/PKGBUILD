@@ -1,0 +1,36 @@
+pkgname=diffutils
+pkgver=3.6
+pkgrel=2
+pkgdesc="GNU Diffutils is a package of several programs related to finding differences between files."
+arch=('i786')
+url="https://www.gnu.org/software/diffutils/"
+source=(
+	'https://ftp.gnu.org/gnu/diffutils/diffutils-3.6.tar.xz'
+	'diffutils-3.6.patch'
+)
+sha256sums=(
+	'd621e8bdd4b573918c8145f7ae61817d1be9deb4c8d2328a65cea8e11d783bd6'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < diffutils-3.6.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+
+	# Empty and conflicts with grep
+	rm $pkgdir/usr/lib/charset.alias
+}

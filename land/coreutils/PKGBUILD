@@ -1,0 +1,46 @@
+pkgname=coreutils
+pkgver=8.32
+pkgrel=3
+pkgdesc="The GNU Core Utilities are the basic file, shell and text manipulation utilities of the GNU operating system."
+arch=('i786')
+arch_override=('i786')
+url="https://www.gnu.org/software/coreutils/"
+license=('GPL')
+makedepend=('openssl' 'libiconv' 'gmp')
+source=(
+	'https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz'
+	'coreutils-8.32.patch'
+	'coreutils-8.32-patch-two.patch')
+sha256sums=(
+	'4458d8de7849df44ccab15e16b1548b285224dbba5f08fac070c1c0e0bcc4cfa'
+	'927b1b9d90d09063e8e662e3b41f91f1d216cea0e97a5df247137b4970da1714'
+	'74d85891fbfd578f779749febfee5a1ca0db65a2349a47b8c5f6b1a38808c1bb')
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+	cd $pkgname-$pkgver
+	autoreconf
+	./configure \
+	    --host=i786-pc-xelix \
+	    --prefix=/usr \
+	    --sysconfdir=/etc \
+	    --disable-threads \
+	    --disable-acl \
+	    --disable-xattr \
+	    --disable-largefile \
+	    --enable-no-install-program=arch,coreutils,dmesg,mknod,uptime \
+	    --with-openssl
+
+	# Needs to be applied after configure
+	patch -p1 < ../coreutils-8.32-patch-two.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

@@ -215,7 +215,7 @@ int vfs_link(struct task* task, const char* orig_path, const char* orig_new_path
 int vfs_readlink(struct task* task, const char* orig_path, char* buf, size_t size);
 int vfs_rmdir(struct task* task, const char* orig_path);
 int vfs_stat(struct task* task, char* path, vfs_stat_t* dest);
-void vfs_init();
+void vfs_init(void);
 
 // legacy
 int vfs_fstat(struct task* task, int fd, vfs_stat_t* dest);
@@ -258,10 +258,4 @@ static inline char* vfs_flags_verbose(uint32_t flags) {
 	}
 
 	return mode;
-}
-
-static inline char* vfs_basename(char* path) {
-	char* bname = path + strlen(path);
-	while(*(bname - 1) != '/' && bname >= path) { bname--; }
-	return bname;
 }

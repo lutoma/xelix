@@ -162,7 +162,7 @@ int task_sigaction(task_t* task, int sig, const struct sigaction* act,
 	}
 
 	if(act) {
-		memcpy(tbl_entry, (struct sigaction*)act, sizeof(struct sigaction));
+		memcpy(tbl_entry, (const struct sigaction*)act, sizeof(struct sigaction));
 	}
 
 	return 0;

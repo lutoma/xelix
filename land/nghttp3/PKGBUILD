@@ -1,0 +1,33 @@
+pkgname=nghttp3
+pkgver=1.0.0
+pkgrel=2
+epoch=
+pkgdesc="HTTP/3 library written in C"
+arch=('i786')
+arch_override=('i786')
+url="https://nghttp2.org/nghttp3/"
+license=('GPL')
+makedepend=('openssl-quic')
+source=('https://github.com/ngtcp2/nghttp3/releases/download/v1.0.0/nghttp3-1.0.0.tar.xz')
+sha256sums=('2d982fadb92ba6488cd5ef3dadc9d2c901084c812553aea9ab1c4bfa1215f77a')
+
+prepare() {
+	cd $pkgname-$pkgver
+	echo -e "#!/bin/sh\necho i786-pc-xelix" > config.sub
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CPPFLAGS="$CPPFLAGS -D__int64_t_defined" ./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-lib-only
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

@@ -22,18 +22,14 @@
 #include <string.h>
 #include <log.h>
 
-#undef strlen
-size_t strlen(const char* str)
-{
+size_t strlen(const char* str) {
 	const char *s;
 	for (s = str; *s != 0 && *s != -1; ++s);
 	return(s - str);
 }
 
 
-#undef strnlen
-size_t strnlen(const char *s, size_t maxlen)
-{
+size_t strnlen(const char *s, size_t maxlen) {
 	size_t len;
 
 	for (len = 0; len < maxlen; len++, s++) {
@@ -43,9 +39,7 @@ size_t strnlen(const char *s, size_t maxlen)
 	return (len);
 }
 
-#undef strcpy
-char* strcpy(char* dest, const char* src)
-{
+char* strcpy(char* dest, const char* src) {
 	char* save = dest;
 	while((*dest++ = *src++));
 	return save;
@@ -56,8 +50,7 @@ char* strcpy(char* dest, const char* src)
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-size_t strlcpy(char *dst, const char *src, size_t siz)
-{
+size_t strlcpy(char *dst, const char *src, size_t siz) {
 	char *d = dst;
 	const char *s = src;
 	size_t n = siz;
@@ -78,26 +71,20 @@ size_t strlcpy(char *dst, const char *src, size_t siz)
 	return(s - src - 1);	/* count does not include NUL */
 }
 
-#undef strncpy
-char* strncpy(char* dst, const char* src, size_t n)
-{
+char* strncpy(char* dst, const char* src, size_t n) {
 	char* p = dst;
 	while (n-- && (*dst++ = *src++));
 	return p;
 }
 
-#undef strcmp
-int strcmp(const char* s1, const char* s2)
-{
+int strcmp(const char* s1, const char* s2) {
 	 for(; *s1 == *s2; ++s1, ++s2)
 			if(*s1 == 0)
 				return 0;
 	 return *(unsigned char *)s1 < *(unsigned char *)s2 ? -1 : 1;
 }
 
-#undef strncmp
-int strncmp(const char *s1, const char *s2, register size_t n)
-{
+int strncmp(const char *s1, const char *s2, register size_t n) {
 	register unsigned char u1, u2;
 	while (n-- > 0)
 		{
@@ -111,16 +98,12 @@ int strncmp(const char *s1, const char *s2, register size_t n)
 	return 0;
 }
 
-
-#undef strcat
-char* strcat(char *dest, const char *src)
-{
+char* strcat(char *dest, const char *src) {
 	 strcpy(dest + strlen(dest), src);
 	 return dest;
 }
 
-char* substr(char* src, size_t start, size_t len)
-{
+char* substr(char* src, size_t start, size_t len) {
 	char *dest = (char*)kmalloc(len+1);
 	if (dest) {
 		memcpy(dest, src+start, len);
@@ -129,8 +112,7 @@ char* substr(char* src, size_t start, size_t len)
 	return dest;
 }
 
-char* strtok_r(char* s, const char* delim, char** last)
-{
+char* strtok_r(char* s, const char* delim, char** last) {
 	char *spanp;
 	int c, sc;
 	char *tok;
@@ -176,8 +158,7 @@ cont:
 
 
 /* Return index of first match of item in list. */
-int find_substr(char* list, char* item)
-{
+int find_substr(char* list, char* item) {
 	int t;
 	char* p, *p2;
 
@@ -194,16 +175,13 @@ int find_substr(char* list, char* item)
 	 return -1; /* 2nd return */
 }
 
-#undef strndup
-char* strndup(const char* old, size_t num)
-{
+char* strndup(const char* old, size_t num) {
 	char* new = kmalloc(sizeof(char) * (num + 1));
 	strlcpy(new, old, num + 1);
 	return new;
 }
 
 #if !defined(__i386__)
-#undef memset
 void memset(void* ptr, uint8_t fill, uint32_t size) {
 	uint8_t* p = (uint8_t*) ptr;
 	uint8_t* max = p+size;
@@ -213,7 +191,6 @@ void memset(void* ptr, uint8_t fill, uint32_t size) {
 	}
 }
 
-#undef memcpy
 void* memcpy(void* dest, const void* src, uint32_t size) {
 	uint8_t* from = (uint8_t*) src;
 	uint8_t* to = (uint8_t*) dest;
@@ -230,7 +207,6 @@ void* memcpy(void* dest, const void* src, uint32_t size) {
 }
 #endif
 
-#undef memcmp
 int32_t memcmp(const void *s1, const void *s2, size_t n) {
 	const unsigned char *us1 = (const unsigned char *) s1;
 	const unsigned char *us2 = (const unsigned char *) s2;
@@ -244,7 +220,6 @@ int32_t memcmp(const void *s1, const void *s2, size_t n) {
 	return 0;
 }
 
-#undef memmove
 void* memmove(void *dst, const void *src, size_t len) {
 		size_t i;
 
@@ -314,8 +289,7 @@ void* memmove(void *dst, const void *src, size_t len) {
 		return dst;
 }
 
-#undef strchr
-char *strchr(const char *p, int ch) {
+char* strchr(const char *p, int ch) {
 	char c;
 
 	c = ch;
@@ -324,6 +298,17 @@ char *strchr(const char *p, int ch) {
 			return ((char *)p);
 		if (*p == '\0')
 			return (NULL);
+	}
+}
+
+char* strrchr(const char *p, int ch) {
+	char* save;
+
+	for (save = NULL;; ++p) {
+		if (*p == ch)
+			save = (char *)p;
+		if (!*p)
+			return(save);
 	}
 }
 

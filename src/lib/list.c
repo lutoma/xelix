@@ -35,7 +35,7 @@ struct list_node
 	void *data;
 };
 
-struct list *list_new()
+struct list *list_new(void)
 {
 	struct list *list = kmalloc(sizeof(struct list));
 	list->length = 0;

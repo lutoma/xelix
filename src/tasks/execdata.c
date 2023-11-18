@@ -18,6 +18,7 @@
  */
 
 #include <tasks/task.h>
+#include <tasks/execdata.h>
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
 #include <string.h>

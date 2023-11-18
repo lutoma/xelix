@@ -268,25 +268,24 @@ diff -rupN wget-1.20.3/src/ptimer.c wget-1.20.3/src/ptimer.c
 +    return 0;
    return IMPL_resolution ();
  }
-diff -rupN wget-1.20.3/src/retr.c wget-1.20.3/src/retr.c
---- wget-1.20.3/src/retr.c	2018-12-26 20:58:39.000000000 +0100
-+++ wget-1.20.3/src/retr.c	2019-10-09 08:44:14.435631938 +0200
-@@ -254,6 +254,7 @@ fd_read_body (const char *downloaded_fil
-               wgint *qtyread, wgint *qtywritten, double *elapsed, int flags,
-               FILE *out2)
+--- wget-1.20.3/src/utils.c
++++ wget-1.20.3/src/utils.c
+@@ -113,6 +113,10 @@
+ #include "exits.h"
+ #include "c-strcase.h"
+ 
++#ifdef __xelix__
++# undef ITIMER_REAL
++#endif
++
+ _Noreturn static void
+ memfatal (const char *context, long attempted_size)
  {
-+  fprintf(stderr, "fd_read_body\n");
-   int ret = 0;
- #undef max
- #define max(a,b) ((a) > (b) ? (a) : (b))
-diff -rupN wget-1.20.3/src/utils.c wget-1.20.3/src/utils.c
---- wget-1.20.3/src/utils.c	2018-12-26 20:58:39.000000000 +0100
-+++ wget-1.20.3/src/utils.c	2019-10-09 09:03:29.170539288 +0200
-@@ -430,13 +430,17 @@ concat_strings (const char *str0, ...)
+@@ -431,13 +435,17 @@
  static char *
  fmttime (time_t t, const char *fmt)
  {
-+  return "stub";
++  return "";
 +/*
    static char output[32];
 +
@@ -298,6 +297,5 @@ diff -rupN wget-1.20.3/src/utils.c wget-1.20.3/src/utils.c
    return output;
 +*/
  }
-
+ 
  /* Return pointer to a static char[] buffer in which zero-terminated
-

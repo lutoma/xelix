@@ -21,6 +21,7 @@
 #include <int/int.h>
 #include <fs/sysfs.h>
 #include <fs/poll.h>
+#include <gfx/mouse.h>
 #include <portio.h>
 #include <errno.h>
 #include <bitmap.h>
@@ -36,7 +37,7 @@ struct mouse_event {
 
 static struct buffer* buf = NULL;
 
-static inline void intr_handler() {
+static inline void intr_handler(struct task* task, isf_t* state, int num) {
 	static uint8_t mouse_cycle = 0;
 	static struct mouse_event ev;
 	static uint8_t status;
@@ -88,7 +89,7 @@ static inline void mouse_write(uint8_t cmd) {
 	outb(0x60, cmd);
 }
 
-static inline uint8_t mouse_read() {
+static inline uint8_t mouse_read(void) {
 	mouse_wait(0);
 	return inb(0x60);
 }
@@ -113,7 +114,7 @@ static int sfs_poll(struct vfs_callback_ctx* ctx, int events) {
 	return 0;
 }
 
-void gfx_mouse_init() {
+void gfx_mouse_init(void) {
 	buf = buffer_new(10);
 	if(!buf) {
 		return;

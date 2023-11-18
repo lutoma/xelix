@@ -1,0 +1,33 @@
+pkgname=tar
+pkgver=1.32
+pkgrel=1
+pkgdesc="GNU Tar provides the ability to create tar archives, as well as various other kinds of manipulation."
+arch=('i786')
+url="https://www.gnu.org/software/tar/"
+source=(
+	'https://ftp.gnu.org/gnu/tar/tar-1.32.tar.xz'
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'd0d3ae07f103323be809bc3eac0dcc386d52c5262499fe05511ac4788af1fdd8'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

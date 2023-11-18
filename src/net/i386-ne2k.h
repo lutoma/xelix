@@ -18,6 +18,6 @@
 
 #ifdef CONFIG_ENABLE_NE2K
 
-void ne2k_init();
+void ne2k_init(void);
 
 #endif /* CONFIG_ENABLE_NE2K */

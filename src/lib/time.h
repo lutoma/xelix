@@ -20,7 +20,7 @@
 
 #include <bsp/timer.h>
 
-extern void scheduler_yield();
+extern void scheduler_yield(void);
 
 struct task;
 typedef uint32_t time_t;
@@ -29,9 +29,9 @@ struct timeval {
 	int32_t tv_usec;
 };
 
-uint32_t time_get();
+uint32_t time_get(void);
 int time_get_timeval(struct task* task, struct timeval* tv);
-void time_init();
+void time_init(void);
 
 #define sleep(t) sleep_ticks((t) * timer_rate)
 static inline void __attribute__((optimize("O0"))) sleep_ticks(time_t timeout) {

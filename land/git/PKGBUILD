@@ -1,0 +1,44 @@
+pkgname=git
+pkgver=2.42.1
+pkgrel=3
+pkgdesc="Git is a free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency."
+arch=('i786')
+makedepend=('openssl' 'pcre2' 'curl' 'libexpat' 'zlib')
+url="https://git-scm.com/"
+source=(
+	'https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.42.1.tar.xz'
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'8e46fa96bf35a65625d85fde50391e39bc0620d1bb39afb70b96c4a237a1a4f7'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../$pkgname-$pkgver.patch
+}
+
+
+build() {
+	cd $pkgname-$pkgver
+	ac_cv_fread_reads_directories=n \
+	ac_cv_snprintf_returns_bogus=n \
+	NO_MMAP=y \
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-pthreads \
+		--with-openssl \
+		--with-libpcre2 \
+		--with-curl \
+		--with-expat
+
+	make -j$(nproc)
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

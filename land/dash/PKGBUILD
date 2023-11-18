@@ -1,0 +1,30 @@
+pkgname=dash
+pkgver=0.5.10.2
+pkgrel=1
+pkgdesc="DASH is a POSIX-compliant implementation of /bin/sh that aims to be as small as possible."
+arch=('i786')
+url="http://gondor.apana.org.au/~herbert/dash/"
+source=(
+	'http://gondor.apana.org.au/~herbert/dash/files/dash-0.5.10.2.tar.gz'
+	'dash-0.5.10.2.patch'
+)
+sha256sums=(
+	'3c663919dc5c66ec991da14c7cf7e0be8ad00f3db73986a987c118862b5f6071'
+	'SKIP'
+)
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	patch -p1 < ../dash-0.5.10.2.patch
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

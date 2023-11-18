@@ -86,7 +86,7 @@ int sysfs_build_path_tree(struct vfs_callback_ctx* ctx) {
 	} else {
 		stat.st_dev = 2;
 		stat.st_ino = 1;
-		if(is_root) {
+		if(!file || is_root) {
 			stat.st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
 		} else {
 			stat.st_mode = file ? file->type : FT_IFDIR;
@@ -109,7 +109,10 @@ int sysfs_build_path_tree(struct vfs_callback_ctx* ctx) {
 		stat.st_ctime = t;
 	}
 
+	#ifdef CONFIG_ENABLE_FTREE
 	vfs_ftree_insert_path(ctx->orig_path, &stat);
+	#endif
+
 	return 0;
 }
 
@@ -129,7 +132,7 @@ int sysfs_stat(struct vfs_callback_ctx* ctx, vfs_stat_t* dest) {
 
 	dest->st_dev = 2;
 	dest->st_ino = 1;
-	if(is_root) {
+	if(!file || is_root) {
 		dest->st_mode = FT_IFDIR | S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH;
 	} else {
 		dest->st_mode = file ? file->type : FT_IFDIR;
@@ -306,7 +309,7 @@ void sysfs_rm_dev(struct sysfs_file* fp) {
 	remove_file(&dev_files, fp);
 }
 
-void sysfs_init() {
+void sysfs_init(void) {
 	//sys_root = vfs_ftree_insert(NULL, "sys", stat);
 	//dev_root = vfs_ftree_insert(NULL, "dev", stat);
 	vfs_mount_register(NULL, "/sys", &sys_files, "sysfs", &callbacks);

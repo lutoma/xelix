@@ -23,7 +23,7 @@
 #define timer_tick (timer_get_tick())
 #define timer_rate (timer_get_rate())
 
-void timer_init();
-void timer_init2();
+void timer_init(void);
+void timer_init2(void);
 uint32_t timer_get_tick(void);
 uint32_t timer_get_rate(void);

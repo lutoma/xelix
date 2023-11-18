@@ -1,0 +1,18 @@
+pkgname=bzip2
+pkgver=1.0.2
+pkgrel=2
+pkgdesc="bzip2 is a freely available, patent free (see below), high-quality data compressor."
+arch=('i786')
+url="https://sourceware.org/bzip2/"
+source=('https://sourceware.org/pub/bzip2/bzip2-1.0.2.tar.gz')
+sha256sums=('4b526afa73ca1ccd6f5f1f5fd23813f159f715c3d0e00688f1df54b51f443cdd')
+
+build() {
+	cd $pkgname-$pkgver
+	make CC=i786-pc-xelix-gcc libbz2.a bzip2
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make PREFIX=$pkgdir/usr install
+}

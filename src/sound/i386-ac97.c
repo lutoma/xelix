@@ -22,6 +22,7 @@
 #include <sound/i386-ac97.h>
 #include <log.h>
 #include <portio.h>
+#include <errno.h>
 #include <string.h>
 #include <stdbool.h>
 #include <int/int.h>
@@ -66,7 +67,7 @@
 #define AC97_X_SR_CELV  (1 << 1)  /* Current equals last valid */
 #define AC97_X_SR_LVBCI (1 << 2)  /* Last valid buffer completion interrupt */
 #define AC97_X_SR_BCIS  (1 << 3)  /* Buffer completion interrupt status */
-#define AC97_X_SR_FIFOE (1 << 3)  /* FIFO error */
+#define AC97_X_SR_FIFOE (1 << 4)  /* FIFO error */
 
 /* PCM out control register flags */
 #define AC97_X_CR_RPBM  (1 << 0)  /* Run/pause bus master */
@@ -106,11 +107,10 @@ struct ac97_card {
 	int buf_next_write;
 };
 
-static struct ac97_card ac97_cards[AC97_MAX_CARDS];
-static int cards = 0;
+static struct ac97_card main_card;
 
 static void interrupt_handler(task_t* task, isf_t* state, int num) {
-	struct ac97_card* card = &ac97_cards[0];
+	struct ac97_card* card = &main_card;
 	/*// Find the card this IRQ is coming from
 	for(int i = 0; i < cards; i++) {
 		if(likely(state->interrupt == IRQ(ac97_cards[i].device->interrupt_line))) {
@@ -138,7 +138,7 @@ static void interrupt_handler(task_t* task, isf_t* state, int num) {
 	}
 }
 
-void ac97_set_volume(struct ac97_card* card, int volume) {
+static void ac97_set_volume(struct ac97_card* card, int volume) {
 	// Set volume level of the various mixers
 	// 0 = loud, 63 = almost silent
 	outw(card->nambar + PORT_NAM_MASTER_VOLUME, (volume<<8) | volume);
@@ -164,7 +164,11 @@ static void set_sample_rate(struct ac97_card* card) {
 }
 
 static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size) {
-	struct ac97_card* card = &ac97_cards[0];
+	struct ac97_card* card = &main_card;
+	if(unlikely(!card)) {
+		sc_errno = EINVAL;
+		return -1;
+	}
 
 	int bno = card->buf_next_write;
 	card->buf_next_write = (card->buf_next_write + 1) % NUM_BUFFERS;
@@ -192,7 +196,17 @@ static size_t sfs_write(struct vfs_callback_ctx* ctx, void* source, size_t size)
 	return size;
 }
 
-static void enable_card(struct ac97_card* card) {
+static int pci_cb(pci_device_t* dev) {
+	if(pci_check_vendor(dev, vendor_device_combos) != 0) {
+		return 1;
+	}
+
+	log(LOG_INFO, "ac97: Discovered device %p\n", dev);
+
+	// FIXME support multiple cards
+	struct ac97_card* card = &main_card;
+	card->device = dev;
+
 	int_register(IRQ(card->device->interrupt_line), interrupt_handler, false);
 
 	// Enable bus master, disable MSE
@@ -200,8 +214,8 @@ static void enable_card(struct ac97_card* card) {
 	sleep_ticks(30);
 
 	// Get correct PCI bars for the sound chip control io ports
-	card->nambar = pci_get_BAR(card->device, 0) & 0xFFFFFFFC;
-	card->nabmbar = pci_get_BAR(card->device, 1) & 0xFFFFFFFC;
+	card->nambar = pci_get_bar(card->device, 0) & 0xFFFFFFFC;
+	card->nabmbar = pci_get_bar(card->device, 1) & 0xFFFFFFFC;
 	card->playing_buffer = -1;
 
 	// Turn power on / disable cold reset
@@ -224,7 +238,7 @@ static void enable_card(struct ac97_card* card) {
 
 		if(i > 60) {
 			log(LOG_INFO, "ac97: Warm reset was not successful. Bailing.\n");
-			return;
+			return 0;
 		}
 
 		sleep_ticks(10);
@@ -240,7 +254,7 @@ static void enable_card(struct ac97_card* card) {
 
 	for(int i = 0; i < NUM_BUFFERS; i++) {
 		if(!vm_alloc(VM_KERNEL, &card->buffers[i], 4, NULL, VM_RW)) {
-			return;
+			return 0;
 		}
 		card->descs[i].buf = card->buffers[i].phys;
 	}
@@ -251,23 +265,12 @@ static void enable_card(struct ac97_card* card) {
 		.write = sfs_write,
 	};
 	sysfs_add_dev("dsp1", &sfs_cb);
+
+	return 0;
 }
 
-void ac97_init() {
-	memset(ac97_cards, 0, AC97_MAX_CARDS * sizeof(struct ac97_card));
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(pci_device_t*) * AC97_MAX_CARDS);
-	uint32_t num_devices = pci_search(devices, vendor_device_combos, AC97_MAX_CARDS);
-	log(LOG_INFO, "ac97: Discovered %d devices.\n", num_devices);
-
-	for(int i = 0; i < num_devices; ++i) {
-		ac97_cards[i].device = devices[i];
-		cards++;
-
-		enable_card(&ac97_cards[i]);
-		log(LOG_INFO, "ac97: %d:%d.%d, iobase 0x%x, irq %d\n",
-			devices[i]->bus, devices[i]->dev, devices[i]->func,
-			devices[i]->iobase, devices[i]->interrupt_line);
-	}
+void ac97_init(void) {
+	pci_walk(pci_cb);
 }
 
 #endif /* ENABLE_AC97 */

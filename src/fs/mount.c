@@ -21,7 +21,7 @@
 #include <fs/vfs.h>
 #include <block/block.h>
 #include <fs/sysfs.h>
-#include <fs/ext2/ext2.h>
+#include <fs/ext2.h>
 #include <tasks/task.h>
 #include <mem/kmalloc.h>
 #include <errno.h>

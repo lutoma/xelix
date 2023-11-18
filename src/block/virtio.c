@@ -19,6 +19,7 @@
 
 #ifdef CONFIG_ENABLE_VIRTIO_BLOCK
 
+#include <block/virtio.h>
 #include <net/net.h>
 #include <bsp/virtio.h>
 #include <bsp/i386-pci.h>
@@ -63,12 +64,12 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	inb(dev->pci_dev->iobase + 0x13);
 }
 
-static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uint64_t num_blocks, void* buf) {
+static uint64_t send_request(struct virtio_dev* rdev, int type, uint64_t lba, uint64_t num_blocks, void* buf) {
 	if(num_blocks < 1) {
 		return -1;
 	}
 
-	if(!(dev->status & VIRTIO_PCI_STATUS_DRIVER_OK)) {
+	if(!(rdev->status & VIRTIO_PCI_STATUS_DRIVER_OK)) {
 		return -1;
 	}
 
@@ -95,7 +96,7 @@ static uint64_t send_request(struct virtio_dev* dev, int type, uint64_t lba, uin
 	int user_buffer_flag = (type == VIRTIO_BLK_T_IN) ? VIRTQ_DESC_F_WRITE : 0;
 	int flags[] = {0, user_buffer_flag, VIRTQ_DESC_F_WRITE};
 
-	if(virtio_write(dev, 0, 3, buffers, lengths, flags) < 0) {
+	if(virtio_write(rdev, 0, 3, buffers, lengths, flags) < 0) {
 		return -1;
 	}
 
@@ -134,30 +135,35 @@ static uint64_t write_cb(struct vfs_block_dev* block_dev, uint64_t lba, uint64_t
 	return send_request(dev, VIRTIO_BLK_T_OUT, lba, num_blocks, buf);
 }
 
-void virtio_block_init() {
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*));
-	uint32_t ndevices = pci_search(devices, vendor_device_combos, 1);
-	log(LOG_INFO, "virtio_block: Discovered %d devices.\n", ndevices);
-
-	if(ndevices) {
-		dev = virtio_init_dev(devices[0], 0, 1);
-		if(!dev) {
-			return;
-		}
-
-		if(dev->features & VIRTIO_BLK_F_RO) {
-			log(LOG_INFO, "virtio_block: Device is read-only\n");
-		}
-
-		dev->queues[0].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
-		dev->queues[0].used->flags = VIRTQ_USED_F_NO_NOTIFY;
-		int_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
-
-		dev->status |= VIRTIO_PCI_STATUS_DRIVER_OK;
-		virtio_write_status(dev);
-
-		vfs_block_register_dev("vioblk1", (uint64_t)0, read_cb, write_cb, NULL);
+static int pci_cb(pci_device_t* pci_dev) {
+	if(pci_check_vendor(pci_dev, vendor_device_combos) != 0) {
+		return 1;
 	}
+
+	log(LOG_INFO, "virtio_block: Discovered device %p\n", pci_dev);
+
+	dev = virtio_init_dev(pci_dev, 0, 1);
+	if(!dev) {
+		return 1;
+	}
+
+	if(dev->features & VIRTIO_BLK_F_RO) {
+		log(LOG_INFO, "virtio_block: Device is read-only\n");
+	}
+
+	dev->queues[0].available->flags = VIRTQ_AVAIL_F_NO_INTERRUPT;
+	dev->queues[0].used->flags = VIRTQ_USED_F_NO_NOTIFY;
+	int_register(IRQ(dev->pci_dev->interrupt_line), int_handler, false);
+
+	dev->status |= VIRTIO_PCI_STATUS_DRIVER_OK;
+	virtio_write_status(dev);
+
+	vfs_block_register_dev("vioblk1", (uint64_t)0, read_cb, write_cb, NULL);
+	return 0;
+}
+
+void virtio_block_init(void) {
+	pci_walk(pci_cb);
 }
 
 #endif /* ENABLE_VIRTIO_BLOCK */

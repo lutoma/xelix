@@ -24,6 +24,7 @@
 #include <block/block.h>
 #include <block/random.h>
 #include <cmdline.h>
+#include <libgen.h>
 #include <tty/serial.h>
 #include <int/int.h>
 #include <bsp/timer.h>
@@ -45,6 +46,8 @@
 #ifdef CONFIG_ENABLE_PICOTCP
 #include <net/net.h>
 #endif
+
+void xelix_main(void);
 
 // Used in lib/errno.h
 uint32_t __dummy_errno;
@@ -89,7 +92,7 @@ void xelix_main(void) {
 	log(LOG_INFO, "Starting %s\n", init_path);
 
 	char* __env[] = { NULL };
-	char* __argv[] = { vfs_basename(init_path), NULL };
+	char* __argv[] = { basename(init_path), NULL };
 
 	task_t* init = task_new(NULL, 0, init_path, __env, 0, __argv, 1);
 	if(!init) {

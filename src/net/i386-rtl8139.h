@@ -19,4 +19,4 @@
  */
 
 
-void rtl8139_init();
+void rtl8139_init(void);

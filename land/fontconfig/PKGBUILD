@@ -1,0 +1,36 @@
+pkgname=fontconfig
+pkgver=2.13.92
+pkgrel=1
+pkgdesc="Fontconfig is a library for configuring and customizing font access."
+arch=('i786')
+url="https://www.freedesktop.org/wiki/Software/fontconfig/"
+makedepend=('libexpat' 'freetype' 'libpng' 'zlib' 'bzip2')
+source=(
+	'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.xz'
+	'fontconfig.patch'
+)
+sha256sums=(
+	'506e61283878c1726550bc94f2af26168f1e9f2106eac77eaaf0b2cdfad66e4e'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../fontconfig.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	FREETYPE_LIBS="-lfreetype -lpng -lz -lbz2 -lm" ./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

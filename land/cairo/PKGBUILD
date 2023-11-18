@@ -1,0 +1,46 @@
+pkgname=cairo
+pkgver=1.16.0
+pkgrel=2
+pkgdesc="Cairo is a 2D graphics library with support for multiple output devices."
+arch=('i786')
+url="https://www.cairographics.org/"
+makedepend=('zlib' 'libpng' 'freetype' 'pixman')
+source=(
+	'https://www.cairographics.org/releases/cairo-1.16.0.tar.xz'
+	'cairo.patch'
+)
+sha256sums=(
+	'5e7b29b3f113ef870d1e3ecf8adf21f923396401604bda16d44be45e66052331'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../cairo.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	CFLAGS="$CFLAGS -DCAIRO_NO_MUTEX=1" ./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-xcb \
+		--disable-xcb-shm \
+		--disable-xlib \
+		--disable-xlib-xrender \
+		--disable-gobject \
+		--disable-fc
+
+	# Disable tests that won't work in non-native environment
+	echo -e 'all:\n\ttrue\ninstall:\n\ttrue' > test/Makefile
+	echo -e 'all:\n\ttrue\ninstall:\n\ttrue' > perf/Makefile
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

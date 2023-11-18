@@ -1,0 +1,23 @@
+pkgname=xelix-utils
+pkgver=r2576.fb8939c5
+pkgrel=2
+epoch=
+pkgdesc="A suite of Xelix-specific standard system utilities."
+arch=('i786')
+url="https://github.com/lutoma/xelix/tree/main/land/xelix-utils"
+license=('GPL')
+depends=('font-fira-code' 'gfxcompd')
+makedepends=('flac' 'freetype' 'libpng')
+source=()
+
+pkgver() {
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+	CFLAGS="$CFLAGS -I$SYSROOT/usr/include/freetype2" make
+}
+
+package() {
+	make DESTDIR=$pkgdir install
+}

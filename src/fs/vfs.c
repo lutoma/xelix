@@ -33,7 +33,7 @@
 #include <block/block.h>
 #include <fs/sysfs.h>
 #include <block/part.h>
-#include <fs/ext2/ext2.h>
+#include <fs/ext2.h>
 #include <fs/ftree.h>
 #include <net/socket.h>
 
@@ -219,7 +219,7 @@ int vfs_open(task_t* task, const char* orig_path, uint32_t flags) {
 	strcpy(fp->mount_path, ctx->path);
 
 	// Allow for this to be overriden by callback
-	if(!fp->mount_path) {
+	if(!strlen(fp->mount_path)) {
 		fp->mount_instance = ctx->mp->instance;
 	}
 
@@ -349,6 +349,10 @@ int vfs_fcntl(task_t* task, int fd, int cmd, int arg3) {
 
 	if(cmd == F_DUPFD) {
 		vfs_file_t* fp2 = vfs_alloc_fileno(task, MAX(3, arg3));
+		if(!fp2) {
+			return -1;
+		}
+
 		__sync_add_and_fetch(&fp->refs, 1);
 		fp2->dup_target = fp->num;
 		return fp2->num;
@@ -692,7 +696,7 @@ int vfs_link(task_t* task, const char* orig_path, const char* orig_new_path) {
 	return r;
 }
 
-void vfs_init() {
+void vfs_init(void) {
 	char* root_path = cmdline_get("root");
 	if(!root_path) {
 		panic("vfs: Could not get root device path - Make sure root= "
@@ -700,7 +704,11 @@ void vfs_init() {
 	}
 
 	log(LOG_INFO, "vfs: initializing, root=%s\n", root_path);
+
+	#ifdef CONFIG_ENABLE_FTREE
 	vfs_ftree_init();
+	#endif
+
 	sysfs_init();
 	vfs_mount_init(root_path);
 

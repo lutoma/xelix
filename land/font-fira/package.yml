@@ -1,8 +1,0 @@
-name: font-fira
-version: '2'
-sources:
-  - url: https://github.com/mozilla/Fira/archive/4.202.tar.gz
-install:
-  - install -d -m 755 $DESTDIR/usr/share/fonts
-  - install -D ttf/* -m 644 $DESTDIR/usr/share/fonts
-

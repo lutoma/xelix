@@ -127,7 +127,7 @@ void paging_rm_context(struct paging_context* ctx) {
 	pfree((uintptr_t)ctx / PAGE_SIZE, 1);
 }
 
-void paging_init() {
+void paging_init(void) {
 	paging_kernel_ctx = ALIGN(KERNEL_END, PAGE_SIZE);
 	bzero(paging_kernel_ctx, sizeof(struct paging_context));
 	paging_alloc_end = (void*)paging_kernel_ctx + sizeof(struct paging_context);

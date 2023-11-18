@@ -23,27 +23,31 @@
 
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 #define strdup(string) strndup(string, strlen(string))
-#define strcmp __builtin_strcmp
-#define strcasecmp __builtin_strcasecmp
-#define strncasecmp __builtin_strncasecmp
-#define strncmp __builtin_strncmp
-#define strcat __builtin_strcat
-#define strcpy __builtin_strcpy
-#define strncpy __builtin_strncpy
-#define strlen __builtin_strlen
-#define strnlen __builtin_strnlen
-#define strndup __builtin_strndup
-#define memset __builtin_memset
-#define memcpy __builtin_memcpy
-#define memcmp __builtin_memcmp
-#define memmove __builtin_memmove
-#define strchr __builtin_strchr
 
+// string.c
+size_t strlen(const char* str);
+size_t strnlen(const char *s, size_t maxlen);
+char* strcpy(char* dest, const char* src);
 size_t strlcpy(char *dst, const char *src, size_t siz);
-char* strtok_r(char* s, const char* delim, char** last);
+char* strncpy(char* dst, const char* src, size_t n);
+int strcmp(const char* s1, const char* s2);
+int strncmp(const char *s1, const char *s2, register size_t n);
+char* strcat(char *dest, const char *src);
 char* substr(char* src, size_t start, size_t len);
+char* strtok_r(char* s, const char* delim, char** last);
 int find_substr(char* list, char* item);
+char* strndup(const char* old, size_t num);
+void memset(void* ptr, uint8_t fill, uint32_t size);
+void* memcpy(void* dest, const void* src, uint32_t size);
+int32_t memcmp(const void *s1, const void *s2, size_t n);
+void* memmove(void *dst, const void *src, size_t len);
+char *strchr(const char *p, int ch);
+char* strrchr(const char *p, int ch);
 int asprintf(char **strp, const char *fmt, ...);
+
+// strcasecmp.c
+int strcasecmp(const char *s1, const char *s2);
+int strncasecmp(const char *s1, const char *s2, size_t n);
 
 static inline void *memset32(uint32_t *s, uint32_t v, size_t n) {
 	long d0, d1;

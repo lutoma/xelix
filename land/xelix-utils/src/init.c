@@ -26,8 +26,10 @@
 #include <string.h>
 #include <strings.h>
 #include <limits.h>
+#include <termios.h>
 #include <sys/wait.h>
 #include <sys/mount.h>
+#include <sys/ioctl.h>
 #include "util.h"
 #include "ini.h"
 
@@ -158,14 +160,16 @@ static char* get_target() {
 }
 
 
-
 int main() {
 	if(getpid() != 1) {
 		fprintf(stderr, "This program needs to be run as PID 1.\n");
 		return -1;
 	}
 
-	open("/dev/console", O_RDONLY);
+	int console_fd = open("/dev/console", O_RDONLY);
+	int level = 0;
+	ioctl(console_fd, TCSLOGLEVEL, &level);
+
 	sigset_t set;
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);

@@ -1,0 +1,47 @@
+name: Kernel binary build
+
+on:
+  push:
+    branches:
+      - main
+
+    paths:
+      - 'src/**'
+      - 'ext/**'
+      - 'Makefile.static'
+      - 'configure'
+      - '.github/workflows/kernel.yml'
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/lutoma/xelix/toolchain:latest
+
+    steps:
+      - name: Download PKGBUILD
+        run: 'wget -q https://raw.githubusercontent.com/lutoma/xelix/main/land/xelix-kernel/PKGBUILD'
+
+      - name: Adjust dir permissions
+        run: 'sudo chown -R dev: .'
+
+      - name: Import signing key
+        run: 'echo "${{ secrets.GPG_PRIVATE_KEY }}" | sudo -u dev gpg --import'
+
+      - name: Run makepkg
+        run:  'sudo -u dev makepkg -Ad --sign'
+
+      - name: Adjust package name
+        run: 'rename x86_64 i786 *'
+
+      - name: 'Create package directory'
+        run: 'mkdir kernel-pkg'
+
+      - name: Import SSH key
+        run: 'echo "${{ secrets.SSH_KEY }}" > /root/.ssh/id_ed25519 && chmod 600 /root/.ssh/id_ed25519'
+
+      - name: Upload to repo server
+        run: rsync *.pkg.tar.gz* repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org/core/i786/
+
+      - name: Update repository
+        run: ssh repoupdate@pkgs.xelix.org /usr/local/bin/repo-remote-update core i786 xelix-kernel *.pkg.tar.gz

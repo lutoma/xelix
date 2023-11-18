@@ -21,6 +21,7 @@
 #include <panic.h>
 #include <int/int.h>
 #include <tasks/task.h>
+#include <tasks/exception.h>
 #include <mem/mem.h>
 
 // Page fault error code flags
@@ -121,6 +122,6 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	task_signal(task, NULL, exc.signal);
 }
 
-void task_exception_init() {
+void task_exception_init(void) {
 	int_register_bulk(0, 31, int_handler, true);
 }

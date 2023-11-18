@@ -33,4 +33,4 @@ struct ftree_file* vfs_ftree_insert(struct ftree_file* root, char* name, vfs_sta
 struct ftree_file* vfs_ftree_insert_path(char* path, vfs_stat_t* stat);
 const struct ftree_file* vfs_ftree_find(const struct ftree_file* root, char* name);
 const struct ftree_file* vfs_ftree_find_path(char* path);
-void vfs_ftree_init();
+void vfs_ftree_init(void);

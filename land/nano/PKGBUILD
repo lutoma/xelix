@@ -1,0 +1,40 @@
+pkgname=nano
+pkgver=4.2
+pkgrel=1
+pkgdesc="GNU nano is a small and friendly text editor."
+arch=('i786')
+depend=('ncurses')
+url="https://www.nano-editor.org"
+source=(
+	'https://www.nano-editor.org/dist/v4/nano-4.2.tar.xz'
+	"$pkgname-$pkgver.patch"
+	'nanorc'
+)
+sha256sums=(
+	'1143defce62e391b241252ffdb6e5c1ded56cfe26d46ee81b796abe0ccc45df9'
+	'SKIP'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-largefile \
+		--disable-threads \
+		--disable-speller \
+		--disable-mouse
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

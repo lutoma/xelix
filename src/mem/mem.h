@@ -29,5 +29,5 @@ extern struct mem_page_alloc_ctx mem_phys_alloc_ctx;
 //#define pfree(num, size) (mem_page_free(&mem_phys_alloc_ctx, num, size))
 #define pfree(num, size)
 
-void mem_init();
-void mem_late_init();
+void mem_init(void);
+void mem_late_init(void);

@@ -196,6 +196,8 @@ struct termios {
 #define TIOCGSOFTCAR 0x4014
 #define TIOCSSOFTCAR 0x4015
 
+#define TCSLOGLEVEL  0x5000
+
 /* termios functions */
 #ifndef _KERNEL_
 speed_t cfgetispeed(const struct termios *);

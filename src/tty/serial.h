@@ -22,7 +22,7 @@
 
 #define serial_printf(fmt, args...) fctprintf(serial_send, NULL, fmt, ## args)
 
-void serial_init();
-void serial_init2();
-char serial_recv();
+void serial_init(void);
+void serial_init2(void);
+char serial_recv(void);
 void serial_send(const char c, void* unused);

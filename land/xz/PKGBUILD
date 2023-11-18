@@ -1,0 +1,33 @@
+pkgname=xz
+pkgver=5.2.4
+pkgrel=1
+pkgdesc="XZ Utils is free general-purpose data compression software with a high compression ratio."
+arch=('i786')
+url="https://tukaani.org/xz/"
+source=(
+	'https://tukaani.org/xz/xz-5.2.4.tar.xz'
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'9717ae363760dedf573dad241420c5fea86256b65bc21d2cf71b2b12f0544f4b'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

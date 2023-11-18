@@ -17,6 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <block/null.h>
 #include <fs/sysfs.h>
 #include <string.h>
 

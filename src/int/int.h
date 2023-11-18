@@ -99,4 +99,4 @@ static inline void dump_isf(uint32_t level, isf_t* state) {
 	log(level, "  ESI=0x%-10x EDI=0x%-10x EBP=0x%-10x ESP=0x%-10x\n", state->esi, state->edi, state->ebp, state->esp);
 }
 
-void int_init();
+void int_init(void);

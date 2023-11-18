@@ -1,0 +1,35 @@
+pkgname=mpfr
+pkgver=4.1.0
+pkgrel=1
+pkgdesc="The MPFR library is a C library for multiple-precision floating-point computations with correct rounding."
+arch=('i786')
+depend=('gmp')
+url="https://www.mpfr.org"
+source=(
+	"https://ftp.gnu.org/gnu/$pkgname/$pkgname-$pkgver/$pkgname-$pkgver.tar.xz"
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'0c98a3f1732ff6ca4ea690552079da9c597872d30e96ec28414ee23c95558a7f'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../$pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-shared
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

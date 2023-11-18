@@ -51,7 +51,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 }
 
 // Initialize the PIT
-void timer_init() {
+void timer_init(void) {
 	// preemptability setting here also affects scheduler, so leave set to false
 	int_register(IRQ(0), &timer_callback, false);
 	rate = CONFIG_PIT_RATE;
@@ -74,7 +74,7 @@ void timer_init() {
 	log(LOG_DEBUG, "pit: Timer frequency %d\n", rate);
 }
 
-void timer_init2() {
+void timer_init2(void) {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

@@ -104,7 +104,7 @@ static void handle_canon(struct term* term, char chr) {
 }
 
 size_t term_input(struct term* term, const void* _source, size_t size) {
-	char* source = (char*)_source;
+	const char* source = (const char*)_source;
 
 	for(size_t i = 0; i < size; i++) {
 		char chr = source[i];
@@ -211,6 +211,7 @@ int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	 */
 	switch(request) {
 		case TIOCGPTN:
+		case TCSLOGLEVEL:
 			arg_size = sizeof(int);
 			break;
 		case TIOCGWINSZ:
@@ -241,6 +242,16 @@ int term_vfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 		case TIOCGPTN:
 			// FIXME pty only
 			*(int*)arg = term->pts_fd;
+			break;
+		case TCSLOGLEVEL:
+			// Console only
+			if(term->num) {
+				vm_free(&alloc);
+				sc_errno = EINVAL;
+				return -1;
+			}
+
+			log_set_console_level(*(int*)arg);
 			break;
 		case TCGETS:
 			memcpy(arg, &term->termios, sizeof(struct termios));
@@ -313,7 +324,7 @@ struct term* term_new(char* name, term_write_cb_t* write_cb) {
 }
 
 static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
-	if(!ctx->task) {
+	if(!ctx->task || !term_console) {
 		sc_errno = ENOENT;
 		return NULL;
 	}
@@ -332,7 +343,7 @@ static vfs_file_t* term_vfs_open(struct vfs_callback_ctx* ctx, uint32_t flags) {
 	return fp;
 }
 
-void term_init() {
+void term_init(void) {
 	tty_keyboard_init();
 
 	sysfs_add_dev("tty", &term_cb);

@@ -21,6 +21,7 @@
  * once those are implemented
  */
 
+#include <gfx/gfxbus.h>
 #include <mem/mem.h>
 #include <fs/sysfs.h>
 #include <fs/poll.h>
@@ -78,9 +79,9 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 
 		task_t* task = ctx->task;
 		int flags[] = {VM_USER | VM_RW | VM_ZERO, VM_USER | VM_RW};
-		struct vm_ctx* ctx[] = {&master_task->vmem, &task->vmem};
+		struct vm_ctx* vm_ctx[] = {&master_task->vmem, &task->vmem};
 
-		void* addr = vm_alloc_many(2, ctx, NULL, RDIV(size, PAGE_SIZE), NULL, flags);
+		void* addr = vm_alloc_many(2, vm_ctx, NULL, RDIV(size, PAGE_SIZE), NULL, flags);
 		if(!addr) {
 			return -1;
 		}
@@ -95,7 +96,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 }
 
 
-void tty_gfxbus_init() {
+void tty_gfxbus_init(void) {
 	struct vfs_callbacks sfs_cb = {
 		.ioctl = sfs_ioctl,
 		.read = sfs_read,

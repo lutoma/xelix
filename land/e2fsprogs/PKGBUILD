@@ -1,0 +1,37 @@
+pkgname=e2fsprogs
+pkgver=1.45.5
+pkgrel=1
+pkgdesc="Filesystem utilities for use with the ext2 filesystem."
+arch=('i786')
+url="https://e2fsprogs.sourceforge.net/"
+source=(
+	'https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.45.5/e2fsprogs-1.45.5.tar.xz'
+	'e2fsprogs.patch'
+)
+sha256sums=(
+	'f9faccc0d90f73556e797dc7cc5979b582bd50d3f8609c0f2ad48c736d44aede'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../e2fsprogs.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+
+	autoconf
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--sbindir=/usr/bin \
+		--disable-nls
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

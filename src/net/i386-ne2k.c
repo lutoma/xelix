@@ -124,7 +124,7 @@ static void pdma_write(int addr, const void* data, size_t len) {
 	set_dma_la(addr, len);
 	ioutb(R_CR, CR_START | CR_DMA_WRITE);
 
-	uint8_t *p = (uint8_t*)data;
+	const uint8_t *p = (const uint8_t*)data;
 	for(size_t i = 0; i < len; i++) {
 		ioutb(0x10, p[i]);
 	}
@@ -140,7 +140,7 @@ static void pdma_read(int addr, void* data, size_t len) {
 	}
 }
 
-static void receive() {
+static void receive(void) {
 	// Mask receipt interrupts
 	ioutb(R_IMR, 0x3a);
 
@@ -212,7 +212,15 @@ static void int_handler(task_t* task, isf_t* state, int num) {
 	ioutb(R_ISR, isr &~ 1);
 }
 
-static void enable() {
+static int pci_cb(pci_device_t* _dev) {
+	if(pci_check_vendor(_dev, vendor_device_combos) != 0) {
+		return 1;
+	}
+
+	// FIXME Support multiple devices
+	dev = _dev;
+	log(LOG_INFO, "ne2k: Discovered device %p\n", dev);
+
 	// Reset
 	ioutb(0x1F, iinb(0x1F));
 	while ((iinb(R_ISR) & 0x80) == 0);
@@ -258,17 +266,12 @@ static void enable() {
 	ioutb(R_CR, CR_START);
 
 	net_dev = net_add_device("ne2k", nmac, send);
+
+	return 0;
 }
 
-void ne2k_init() {
-	pci_device_t** devices = (pci_device_t**)kmalloc(sizeof(void*));
-	uint32_t ndevices = pci_search(devices, vendor_device_combos, 1);
-
-	log(LOG_INFO, "ne2k: Discovered %d devices.\n", ndevices);
-	dev = devices[0];
-	if(ndevices) {
-		enable();
-	}
+void ne2k_init(void) {
+	pci_walk(pci_cb);
 }
 
 #endif /* ENABLE_NE2K */

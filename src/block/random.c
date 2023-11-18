@@ -17,6 +17,7 @@
  * along with Xelix.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <block/random.h>
 #include <fs/sysfs.h>
 
 #define UPPER_MASK 0x80000000
@@ -36,7 +37,7 @@ void block_random_seed(uint64_t seed) {
 	}
 }
 
-static inline uint64_t getnum() {
+static inline uint64_t getnum(void) {
 	uint64_t y;
 	// mag[x] = x * 0x9908b0df for x = 0,1
 	static uint64_t mag[2] = {0x0, 0x9908b0df};
@@ -87,7 +88,7 @@ static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {
 	return size;
 }
 
-void block_random_init() {
+void block_random_init(void) {
 	struct vfs_callbacks sfs_cb = {
 		.read = sfs_read,
 	};

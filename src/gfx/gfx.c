@@ -144,7 +144,7 @@ static int sfs_ioctl(struct vfs_callback_ctx* ctx, int request, void* _arg) {
 	return -1;
 }
 
-void gfx_init() {
+void gfx_init(void) {
 	fb_desc = multiboot_get_framebuffer();
 	if(!fb_desc) {
 		panic("Could not initialize graphics handling - No multiboot framebuffer");
@@ -152,13 +152,15 @@ void gfx_init() {
 	}
 
 	// Map the framebuffer into the kernel paging context
-	size_t vmem_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
+	void* alloc_phys = (void*)(uintptr_t)fb_desc->common.framebuffer_addr;
+	size_t alloc_size = fb_desc->common.framebuffer_height * fb_desc->common.framebuffer_pitch;
+	size_t alloc_pages = ALIGN(alloc_size, PAGE_SIZE) / PAGE_SIZE;
 
 	// FIXME use proper APIs
-	mem_page_alloc_at(&mem_phys_alloc_ctx, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE);
+	mem_page_alloc_at(&mem_phys_alloc_ctx, alloc_phys, alloc_pages);
 
 	vm_alloc_t framebuffer_mem;
-	if(!vm_alloc(VM_KERNEL, &framebuffer_mem, ALIGN(vmem_size, PAGE_SIZE) / PAGE_SIZE, (void*)(uintptr_t)fb_desc->common.framebuffer_addr, VM_RW)) {
+	if(!vm_alloc(VM_KERNEL, &framebuffer_mem, alloc_pages, alloc_phys, VM_RW)) {
 		panic("gfx: Could not vm_alloc framebuffer");
 	}
 

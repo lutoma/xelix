@@ -1,0 +1,42 @@
+pkgname=htop
+pkgver=3.0.5
+pkgrel=1
+pkgdesc="An interactive process viewer"
+arch=('i786')
+url="https://htop.dev/"
+depends=('ncurses')
+source=(
+	'https://github.com/htop-dev/htop/archive/refs/tags/3.0.5.tar.gz'
+	'htop.patch'
+)
+sha256sums=(
+	'4c2629bd50895bd24082ba2f81f8c972348aa2298cc6edc6a21a7fa18b73990c'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../htop.patch
+
+	cp -r ../../xelix .
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./autogen.sh
+	echo -e "#!/bin/sh\necho i786-pc-xelix" > config.sub
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--program-transform-name= \
+		--disable-unicode \
+		--disable-linux_affinity
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

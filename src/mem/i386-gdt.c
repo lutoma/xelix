@@ -102,7 +102,7 @@ void gdt_set_tss(void* addr) {
 	gdt_flush(&pointer);
 }
 
-void gdt_init() {
+void gdt_init(void) {
 	pointer.limit = (sizeof(uint64_t) * 6) - 1;
 	pointer.base = descs;
 

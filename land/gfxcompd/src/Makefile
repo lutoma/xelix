@@ -1,7 +1,7 @@
 PATH += :../../toolchain/local/bin/
 CC := i786-pc-xelix-gcc
 LD := i786-pc-xelix-ld
-CFLAGS += -std=gnu18 -fcommon -O3 -g -D_GNU_SOURCE -I$(DESTDIR)/usr/include/freetype2
+MAKE_CFLAGS += -std=gnu18 -fcommon -O3 -g -D_GNU_SOURCE -I$(DESTDIR)/usr/include/freetype2
 DESTDIR ?= ../../../mnt
 
 .PHONY: all
@@ -12,7 +12,7 @@ clean:
 	rm -f gfxcompd
 
 gfxcompd: main.o mouse.o window.o bus.o text.o render.o bar.o
-	$(CC) $(CFLAGS) -o $@ $^ -lcairo -lpixman-1 -lfreetype -lpng -lz -lm -lbz2
+	$(CC) $(CFLAGS) $(MAKE_CFLAGS) -o $@ $^ $(LDFLAGS) -lcairo -lpixman-1 -lfreetype -lpng -lz -lm -lbz2
 
 libxelixgfx.a: libxelixgfx.o
 	ar rcs $@ $^

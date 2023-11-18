@@ -1,0 +1,14 @@
+pkgname=font-fira
+pkgver=4.202
+pkgrel=1
+pkgdesc="The Fira font family."
+arch=('any')
+url="http://mozilla.github.io/Fira/"
+source=('https://github.com/mozilla/Fira/archive/4.202.tar.gz')
+sha256sums=('d86269657387f144d77ba12011124f30f423f70672e1576dc16f918bb16ddfe4')
+
+package() {
+	cd Fira-4.202
+	install -d -m 755 $pkgdir/usr/share/fonts
+	install -D ttf/* -m 644 $pkgdir/usr/share/fonts
+}

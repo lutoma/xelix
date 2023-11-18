@@ -1,0 +1,44 @@
+name: Build nightly image
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '35 4 * * *'
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/lutoma/xelix/toolchain:latest
+      options: --privileged
+
+    steps:
+      - name: Download build script
+        run: 'wget -q https://raw.githubusercontent.com/lutoma/xelix/main/util/build-image.sh'
+
+      - name: Build image
+        run: bash build-image.sh xelix-nightly.img
+
+      - name: Convert image
+        run: |
+          qemu-img convert -f raw xelix-nightly.img -O qcow2 xelix-nightly.qcow2
+          qemu-img convert -f raw xelix-nightly.img -O vdi xelix-nightly.vdi
+          qemu-img convert -f raw xelix-nightly.img -O vmdk xelix-nightly.vmdk
+          qemu-img convert -f raw xelix-nightly.img -O vhdx xelix-nightly.vhdx
+
+      - name: Import signing key
+        run: 'echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import'
+
+      - name: Sign images
+        run: |
+          gpg --detach-sign --armor xelix-nightly.qcow2
+          gpg --detach-sign --armor xelix-nightly.vdi
+          gpg --detach-sign --armor xelix-nightly.vmdk
+          gpg --detach-sign --armor xelix-nightly.vhdx
+
+      - name: Import SSH key
+        run: 'echo "${{ secrets.SSH_KEY }}" > /root/.ssh/id_ed25519 && chmod 600 /root/.ssh/id_ed25519'
+
+
+      - name: Upload to server
+        run: rsync -z --exclude xelix-nightly.img xelix-nightly.* repoupdate@pkgs.xelix.org:/var/www/pkgs.xelix.org

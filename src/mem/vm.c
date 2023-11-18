@@ -47,7 +47,7 @@ static int have_malloc_ranges = 50;
  */
 #define CLEANUP_FLAGS(x) ((x) & (VM_RW | VM_USER | VM_FREE | VM_TFORK | VM_NOCOW))
 
-static inline vm_alloc_t* new_range() {
+static inline vm_alloc_t* new_range(void) {
 	/* During initialization, kmalloc_init calls vm_alloc once to get its
 	 * memory space to allocate from. The zmalloc call below would fail since
 	 * kmalloc is not ready yet. Another call to vm_alloc can then happen in
@@ -347,16 +347,13 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 		debug("  vm_map: map pass %d for %p\n", pages_mapped, src_aligned + pages_offset);
 		vm_alloc_t* src_range = get_range(src_ctx, src_aligned + pages_offset, false);
 		if(!src_range) {
-			// FIXME Temp to map around broken execve
-			if(flags & VM_MAP_UNDERALLOC_WORKAROUND) {
-				pages_mapped++;
+			debug("No range!\n");
+
+			if(pages_mapped > 0 && flags & VM_MAP_LESS_OK) {
 				break;
 			}
-
-			debug("No range!\n");
 			return NULL;
 		}
-
 
 		if(!src_range->phys) {
 			panic("vm: Attempt to vm_map sharded memory\n");
@@ -383,8 +380,6 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 		pages_offset += PAGE_SIZE;
 		pages_mapped++;
 	} while(pages_mapped < size_pages);
-
-	assert(pages_mapped == size_pages);
 
 	if(vmem) {
 		memcpy(vmem, range, sizeof(vm_alloc_t));

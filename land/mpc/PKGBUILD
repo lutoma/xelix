@@ -1,0 +1,36 @@
+pkgname=mpc
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="GNU MPC is a C library for the arithmetic of complex numbers with arbitrarily high precision and correct rounding of the result."
+arch=('i786')
+makedepend=('gmp' 'mpfr')
+url="https://www.multiprecision.org"
+source=(
+	"https://ftp.gnu.org/gnu/$pkgname/$pkgname-$pkgver.tar.gz"
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'e90f2d99553a9c19911abdb4305bf8217106a957e3994436428572c8dfe8fda6'
+	'SKIP'
+)
+
+prepare() {
+	cd $pkgname-$pkgver
+	patch -p0 < ../$pkgname-$pkgver.patch
+}
+
+build() {
+	cd $pkgname-$pkgver
+	./configure \
+		--host=i786-pc-xelix \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-shared
+
+	make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install
+}

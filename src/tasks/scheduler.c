@@ -29,7 +29,7 @@ static struct scheduler_qentry* current_entry = NULL;
 struct scheduler_qentry idle_qentry;
 enum scheduler_state scheduler_state;
 
-task_t* scheduler_get_current() {
+task_t* scheduler_get_current(void) {
 	return current_entry ? current_entry->task : NULL;
 }
 
@@ -175,6 +175,19 @@ static inline struct scheduler_qentry* find_runnable_qentry(struct scheduler_qen
 	return qe;
 }
 
+void scheduler_store_isf(isf_t* last_regs) {
+	if(unlikely(scheduler_state != SCHEDULER_INITIALIZED || !current_entry)) {
+		return;
+	}
+
+	// Save CPU register state of previous task
+	if(current_entry->task) {
+		memcpy(current_entry->task->state, last_regs, sizeof(isf_t));
+	} else if(current_entry->worker) {
+		memcpy(current_entry->worker->state, last_regs, sizeof(isf_t));
+	}
+}
+
 isf_t* scheduler_select(isf_t* last_regs) {
 	int_disable();
 
@@ -186,15 +199,6 @@ isf_t* scheduler_select(isf_t* last_regs) {
 
 		// SCHEDULER_OFF
 		return NULL;
-	}
-
-	// Save CPU register state of previous task
-	if(last_regs) {
-		if(current_entry->task) {
-			memcpy(current_entry->task->state, last_regs, sizeof(isf_t));
-		} else if(current_entry->worker) {
-			memcpy(current_entry->worker->state, last_regs, sizeof(isf_t));
-		}
 	}
 
 	struct scheduler_qentry* qe = find_runnable_qentry(current_entry);
@@ -284,7 +288,7 @@ static void __attribute__((fastcall, noreturn)) do_idle(worker_t* worker) {
 		}
 }
 
-void scheduler_init() {
+void scheduler_init(void) {
 	worker_t* idle_worker = worker_new("kidle", &do_idle);
 	idle_qentry.task = NULL;
 	idle_qentry.worker = idle_worker;
