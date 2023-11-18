@@ -1,6 +1,6 @@
 pkgname=curl
 pkgver=8.4.0
-pkgrel=2
+pkgrel=3
 epoch=
 pkgdesc="command line tool and library for transferring data with URLs"
 arch=('i786')
