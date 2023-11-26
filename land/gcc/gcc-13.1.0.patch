@@ -138,12 +138,42 @@
  	;;
 +i[34567]86-*-xelix*)
 +	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o crtbeginS.o crtendS.o"
-+	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver t-libgcc-pic"
 +	;;
 +x86_64-*-xelix*)
 +	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o crtbeginS.o crtendS.o"
-+	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver t-libgcc-pic"
 +	;;
  i[34567]86-*-cygwin*)
  	extra_parts="crtbegin.o crtbeginS.o crtend.o crtfastmath.o"
  	if test x$enable_vtable_verify = xyes; then
+--- gcc-13.1.0/libtool.m4	2023-04-26 09:09:44.000000000 +0200
++++ gcc-13.1.0/libtool.m4.new	2023-11-25 20:56:09.062975655 +0100
+@@ -2694,6 +2694,17 @@ vxworks7*)
+       ;;
+   esac
+   ;;
++
++xelix*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  hardcode_into_libs=yes
++  ;;
++
+ *)
+   dynamic_linker=no
+   ;;
+@@ -3186,6 +3197,9 @@ vxworks*)
+   # as canadian for Windows hosts.
+   lt_cv_deplibs_check_method=pass_all
+   ;;
++xelix*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
+ esac
+ ])
+ file_magic_cmd=$lt_cv_file_magic_cmd

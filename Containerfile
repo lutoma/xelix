@@ -107,17 +107,25 @@ RUN /usr/src/gcc-${GCC_VERSION}/configure \
 	--without-docdir \
 	--with-newlib
 
+# Build GCC itself, but defer libraries until after newlib
 RUN make -j$(nproc) all-gcc
-RUN make -j$(nproc) all-target-libgcc
-RUN make -j$(nproc) all-target-libstdc++-v3
-
-RUN make DESTDIR=/toolchain install-gcc install-target-libgcc install-target-libstdc++-v3
+RUN make DESTDIR=/toolchain install-gcc
 RUN ln -s i786-pc-xelix-gcc /toolchain/usr/bin/i786-pc-xelix-cc
 
+# Use built GCC to build newlib
 WORKDIR /build/newlib
 RUN make -j$(nproc) all
 RUN make DESTDIR=/toolchain install
 RUN cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/xelix/crtn.o /toolchain/usr/i786-pc-xelix/lib/
+RUN /toolchain/usr/i786-pc-xelix/bin/ld -shared --whole-archive --allow-multiple-definition -o /toolchain/usr/i786-pc-xelix/lib/libc.so i786-pc-xelix/newlib/libc.a
+RUN /toolchain/usr/i786-pc-xelix/bin/ld -shared --whole-archive --allow-multiple-definition -o /toolchain/usr/i786-pc-xelix/lib/libm.so i786-pc-xelix/newlib/libm.a
+
+# Build GCC libraries
+WORKDIR /build/gcc
+RUN rm -r /usr/i786-pc-xelix && ln -s /toolchain/usr/i786-pc-xelix/ /usr/i786-pc-xelix
+RUN make -j$(nproc) all-target-libgcc
+RUN make -j$(nproc) all-target-libstdc++-v3
+RUN make DESTDIR=/toolchain install-target-libgcc install-target-libstdc++-v3
 
 # Strip debug info from binaries (Reduces image size substantially)
 RUN strip --strip-unneeded /toolchain/usr/bin/i786-pc-xelix-* /toolchain/usr/i786-pc-xelix/bin/*
