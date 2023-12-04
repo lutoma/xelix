@@ -1,6 +1,6 @@
 pkgname=flac
 pkgver=1.3.3
-pkgrel=1
+pkgrel=2
 pkgdesc="Free Lossless Audio Codec"
 arch=('i786')
 url="https://github.com/xiph/flac"
@@ -23,7 +23,8 @@ build() {
 		--host=i786-pc-xelix \
 		--prefix=/usr \
 		--sysconfdir=/etc \
-		--disable-shared \
+		--enable-shared \
+		--disable-static \
 		--disable-asm-optimizations \
 		--disable-cpplibs \
 		--without-ogg
