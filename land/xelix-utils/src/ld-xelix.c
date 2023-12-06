@@ -130,22 +130,6 @@ static inline Elf32_Sym* find_sym(struct elf_object* obj, const char* name, bool
 static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name) {
 	void* result = NULL;
 
-	// Check own syms
-	Elf32_Sym* sym = find_sym(req_obj, name, true);
-	if(sym) {
-		int bind = ELF32_ST_BIND(sym->st_info);
-		result = sym->st_value;
-		if(req_obj->header.e_type == ET_DYN) {
-			result += (uintptr_t)req_obj->base_addr;
-		}
-
-		// For non-weak symbols, return immediately.
-		// For weak symbols, keep looking for potential non-weak sym.
-		if(bind != STB_WEAK) {
-			return result;
-		}
-	}
-
 	for(struct dependency* np = req_obj->deps.lh_first; np; np = np->entries.le_next) {
 		struct elf_object* obj = np->obj;
 		if(!obj->symbols || !obj->strtab) {
@@ -167,6 +151,22 @@ static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name
 			if(bind != STB_WEAK) {
 				return result;
 			}
+		}
+	}
+
+	// Check own syms
+	Elf32_Sym* sym = find_sym(req_obj, name, true);
+	if(sym) {
+		int bind = ELF32_ST_BIND(sym->st_info);
+		result = sym->st_value;
+		if(req_obj->header.e_type == ET_DYN) {
+			result += (uintptr_t)req_obj->base_addr;
+		}
+
+		// For non-weak symbols, return immediately.
+		// For weak symbols, keep looking for potential non-weak sym.
+		if(bind != STB_WEAK) {
+			return result;
 		}
 	}
 
@@ -226,8 +226,7 @@ static void relocate(struct elf_object* obj) {
 			}
 
 			// First handle relocations that don't need a symbol
-			switch(reltype) {
-			case R_386_RELATIVE:
+			if(reltype == R_386_RELATIVE) {
 				*(uint32_t*)relptr = *(uint32_t*)relptr + obj->base_addr;
 				continue;
 			}
@@ -262,6 +261,9 @@ static void relocate(struct elf_object* obj) {
 			case R_386_PC32:
 				// FIXME?
 				*(uint32_t*)relptr += target;
+				break;
+			case R_386_COPY:
+				memcpy(relptr, target, sym->st_size);
 				break;
 			default:
 				fprintf(stderr, "ld-xelix: Unsupported relocation type %d\n", reltype);
