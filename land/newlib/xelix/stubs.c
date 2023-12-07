@@ -41,6 +41,7 @@
 #include <mntent.h>
 #include <pthread.h>
 #include <syslog.h>
+#include <sched.h>
 
 #ifdef NOISY_STUBS
 	#define STUBWARN(cmd) fprintf(stderr, "xelix-newlib: " #cmd " stub called.\n");
@@ -144,3 +145,8 @@ STUB(int, sigblock, (int mask), -1);
 STUB(int, sigsetmask, (int mask), -1);
 STUB(int, siggetmask, (void), -1);
 STUB(int, symlink, (const char *path1, const char *path2), -1);
+STUB(int, sched_setscheduler, (pid_t pid, int policy, const struct sched_param *param), -1);
+STUB(int, sched_setparam, (pid_t pid, const struct sched_param *param), -1);
+STUB(int, posix_memalign, (void **memptr, size_t alignment, size_t size), EINVAL);
+STUB(int, getentropy, (void* buffer, size_t length), -1);
+STUB(int, execvpe, (const char *file, char *const argv[], char *const envp[]), -1);

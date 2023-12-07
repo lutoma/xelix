@@ -264,8 +264,8 @@ int lstat(const char* name, struct stat *st) {
 	return stat(name, st);
 }
 
-int mkdir(const char *dir_path, mode_t mode) {
-	return syscall(6, dir_path, mode, 0);
+int _mkdir(const char *dir_path, mode_t mode) {
+	return syscall_pf(6, dir_path, mode, 0);
 }
 
 int _unlink(char *name) {
