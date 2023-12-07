@@ -268,6 +268,10 @@ int _mkdir(const char *dir_path, mode_t mode) {
 	return syscall_pf(6, dir_path, mode, 0);
 }
 
+int mkdir(const char *dir_path, mode_t mode) {
+	return syscall(6, dir_path, mode, 0);
+}
+
 int _unlink(char *name) {
 	return syscall_pf(10, name, 0, 0);
 }
