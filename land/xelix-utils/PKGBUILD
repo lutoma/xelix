@@ -6,8 +6,8 @@ pkgdesc="A suite of Xelix-specific standard system utilities."
 arch=('i786')
 url="https://github.com/lutoma/xelix/tree/main/land/xelix-utils"
 license=('GPL')
-depend=('font-fira-code' 'gfxcompd')
-makedepend=('flac' 'freetype' 'libpng' 'zlib' 'bzip2')
+depend=('font-fira-code' 'gfxcompd' 'zlib')
+makedepend=('flac' 'freetype' 'libpng' 'bzip2')
 source=()
 
 pkgver() {

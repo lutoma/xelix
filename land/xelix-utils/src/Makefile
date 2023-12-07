@@ -1,22 +1,22 @@
 CC := i786-pc-xelix-gcc
 LD := i786-pc-xelix-ld
-CFLAGS += -std=gnu18 -O3 -ggdb -D_GNU_SOURCE
+CFLAGS += -std=gnu18 -O3 -ggdb -D_GNU_SOURCE -fPIC
 DESTDIR ?= ../../../mnt
 
-TARGETS=basictest init ps uptime free login dmesg su play strace host telnetd mount umount gfxterm png
+TARGETS=basictest ps uptime free login dmesg su play strace host telnetd mount umount gfxterm png
 
 .PHONY: all
-all: $(TARGETS) ld-xelix.so
+all: $(TARGETS) init ld-xelix.so
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS) util.o libutil.a basictest.o ld-xelix.so ld-xelix.o ld-xelix-i386.o
+	rm -f $(TARGETS) util.o libutil.a init basictest.o ld-xelix.so ld-xelix.o ld-xelix-i386.o
 
 init: init.c ini.c libutil.a
 	$(CC) $(CFLAGS) -o $@ init.c ini.c -L. -lutil
 
 play: play.c
-	$(CC) $(CFLAGS) -o $@ play.c -L. -lFLAC -lm -lutil
+	$(CC) $(CFLAGS) -o $@ play.c -L. -L/usr/lib/gcc/i786-pc-xelix/13.1.0 -lFLAC -lutil -lm
 
 gfxterm: gfxterm.c tmt.c tmt.h
 	$(CC) $(CFLAGS) -o $@ tmt.c gfxterm.c -lxelixgfx -lfreetype -lpng -lz -lm -lbz2
@@ -45,6 +45,8 @@ libutil.a: util.c argparse.c
 install:
 	install -d $(DESTDIR)/usr/bin/
 	install -d $(DESTDIR)/usr/lib/
+	install -d $(DESTDIR)/usr/libexec/xelix-utils/
 	install -D $(TARGETS) $(DESTDIR)/usr/bin/
+	install -D init $(DESTDIR)/usr/libexec/xelix-utils
 	install -D ld-xelix.so $(DESTDIR)/usr/lib/
 	chmod u+s $(DESTDIR)/usr/bin/su

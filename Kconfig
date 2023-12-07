@@ -85,7 +85,7 @@ menu "Tasks"
 
 	config INIT_PATH
 		string "Init process path"
-		default "/usr/bin/init"
+		default "/usr/libexec/xelix-utils/init"
 
 	config EXECDATA_LOCATION
 		hex "Execdata virtual memory location"
