@@ -1,0 +1,68 @@
+pkgname=newlib
+pkgver=3.2.0
+pkgrel=7
+pkgdesc="Newlib is a C library intended for use on embedded systems."
+arch=('i786')
+url="https://sourceware.org/newlib/"
+license=('GPL')
+source=(
+	"http://sourceware.org/pub/$pkgname/$pkgname-$pkgver.tar.gz"
+	"$pkgname-$pkgver.patch"
+)
+sha256sums=(
+	'f7b2322964a1e3b37bec0768da20f50dfb62247d729110974dd95756a53bb6d4'
+	'SKIP'
+)
+
+prepare() {
+	patch -p0 < $pkgname-$pkgver.patch
+
+	cd $pkgname-$pkgver
+	cp -r ../../xelix newlib/libc/sys
+
+	cd newlib/libc/sys/xelix/
+	aclocal-1.11 -I ../../../ -I ../../../../
+	autoconf-2.69
+	automake-1.11 --cygnus Makefile
+
+	cd ..
+	aclocal-1.11 -I ../.. -I ../../..
+	autoconf-2.69
+	automake-1.11 --cygnus Makefile
+}
+
+build() {
+	cd $pkgname-$pkgver
+
+	CFLAGS="" CPPFLAGS="" LDFLAGS="-g" ./configure \
+		--target=i786-pc-xelix \
+		--prefix=/usr \
+		--exec-prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-newlib-mb \
+		--enable-newlib-iconv \
+		--enable-newlib-io-c99-formats \
+		--enable-newlib-io-long-long \
+		--enable-newlib-io-long-double
+
+	make -j$(nproc) all-target-newlib
+	i786-pc-xelix-gcc -shared -Wl,--whole-archive -Wl,--allow-multiple-definition -nodefaultlibs -ffreestanding -o libc.so i786-pc-xelix/newlib/libc.a
+}
+
+package() {
+	cd $pkgname-$pkgver
+	make DESTDIR=$pkgdir install-target-newlib
+	mv $pkgdir/usr/i786-pc-xelix/* $pkgdir/usr/
+	rmdir $pkgdir/usr/i786-pc-xelix
+
+	cp libc.so $pkgdir/usr/lib
+
+	# Some GNU packages expect xlocale.h to exist
+	ln -s locale.h $pkgdir/usr/include/xlocale.h
+
+	# openlibm is used instead
+	rm $pkgdir/usr/lib/libm.a
+	
+	# Conflict with ncurses
+	rm $pkgdir/usr/include/unctrl.h
+}

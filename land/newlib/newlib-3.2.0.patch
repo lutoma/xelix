@@ -9,31 +9,6 @@
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	qnx*)
---- newlib-3.2.0/newlib/configure.host	2019-02-08 18:12:13.508918038 +0100
-+++ newlib-3.2.0/newlib/configure.host	2019-02-08 18:13:05.578570795 +0100
-@@ -602,6 +602,11 @@
-   w65-*-*)
- 	sys_dir=w65
- 	;;
-+  *-*-xelix*)
-+	sys_dir=xelix
-+	posix_dir=posix
-+	unix_dir=unix
-+	;;
-   z8k-*-coff)
- 	sys_dir=z8ksim
- 	;;
-@@ -887,6 +892,10 @@
-   xc16x-*)
-           syscall_dir=syscalls
-         ;;
-+  *-*-xelix*)
-+	syscall_dir=syscalls
-+	newlib_cflags="${newlib_cflags} -DHAVE_FCNTL -DHAVE_MMAP"
-+	;;
-   xstormy16-*-*)
- 	syscall_dir=syscalls
- 	;;
 diff -rupN newlib-3.2.0/newlib/libc/sys/configure.in newlib-3.2.0-xelix/newlib/libc/sys/configure.in
 --- newlib-3.2.0/newlib/libc/sys/configure.in	2010-02-24 21:59:55.000000000 +0100
 +++ newlib-3.2.0-xelix/newlib/libc/sys/configure.in	2012-01-06 23:38:45.000000000 +0100
@@ -105,3 +80,29 @@ diff -rupN newlib-3.2.0/newlib/libc/sys/configure.in newlib-3.2.0-xelix/newlib/l
  #define MORECORE(size) _sbrk_r(reent_ptr, (size))
  #define MORECORE_CLEARS 0
  #define MALLOC_LOCK __malloc_lock(reent_ptr)
+--- newlib-3.2.0/newlib/configure.host
++++ newlib-3.2.0/newlib/configure.host
+@@ -623,6 +623,12 @@
+   w65-*-*)
+ 	sys_dir=w65
+ 	;;
++  *-*-xelix*)
++	sys_dir=xelix
++	posix_dir=posix
++	unix_dir=unix
++	have_init_fini=no
++	;;
+   z8k-*-coff)
+ 	sys_dir=z8ksim
+ 	;;
+@@ -912,6 +918,10 @@
+   xc16x-*)
+           syscall_dir=syscalls
+         ;;
++  *-*-xelix*)
++	syscall_dir=syscalls
++	newlib_cflags="${newlib_cflags} -DHAVE_FCNTL -DHAVE_MMAP -fPIC -ggdb"
++	;;
+   xstormy16-*-*)
+ 	syscall_dir=syscalls
+ 	;;

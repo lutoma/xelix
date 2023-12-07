@@ -1,0 +1,19 @@
+pkgname=openlibm
+pkgver=0.8.1
+pkgrel=1
+pkgdesc="OpenLibm is an effort to have a high quality, portable, standalone C mathematical library (libm)"
+arch=('i786')
+url="https://openlibm.org/"
+source=('https://github.com/JuliaMath/openlibm/archive/refs/tags/v0.8.1.tar.gz')
+sha256sums=('ba8a282ecd92d0033f5656bb20dfc6ea3fb83f90ba69291ac8f7beba42dcffcf')
+
+build() {
+	cd $pkgname-$pkgver
+	CFLAGS="" CPPFLAGS="" CC=i786-pc-xelix-gcc ARCH=i386 prefix=/usr make
+}
+
+package() {
+	cd $pkgname-$pkgver
+	CFLAGS="" CPPFLAGS="" CC=i786-pc-xelix-gcc ARCH=i386 prefix=/usr make DESTDIR=$pkgdir install
+	ln -s libopenlibm.so.4.0 $pkgdir/usr/lib/libm.so
+}
