@@ -15,6 +15,9 @@
 #undef LIB_SPEC
 #define LIB_SPEC "-lc"
 
+#undef REAL_LIBGCC_SPEC
+#define REAL_LIBGCC_SPEC "%{static: -lgcc%s}%{!static: -lgcc_s%s}"
+
 #undef  LINK_SPEC
 #define LINK_SPEC  "%{shared:-shared} %{!shared: %{static:-static} %{!static: -dynamic-linker " DYNAMIC_LINKER "}}"
 

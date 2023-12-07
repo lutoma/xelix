@@ -36,15 +36,9 @@ RUN ./configure --program-suffix=-1.11
 RUN make all install
 RUN ln -s /usr/local/share/aclocal-1.11 /usr/local/share/aclocal
 
-# Download sources and apply Xelix patches/support files
 WORKDIR /usr/src
 RUN wget -c ${BINUTILS_URL}/${BINUTILS_PACKAGE}
-RUN wget -c ${GCC_URL}/${GCC_PACKAGE}
-RUN wget -c ${NEWLIB_URL}/${NEWLIB_PACKAGE}
-
 RUN tar -xf ${BINUTILS_PACKAGE}
-RUN tar -xf ${GCC_PACKAGE}
-RUN tar -xf ${NEWLIB_PACKAGE}
 
 COPY land/binutils/binutils-${BINUTILS_VERSION}.patch /usr/src/
 RUN patch -p0 -dbinutils-${BINUTILS_VERSION}/ < binutils-${BINUTILS_VERSION}.patch
@@ -55,10 +49,20 @@ RUN cd binutils-${BINUTILS_VERSION}/ld && aclocal
 RUN cd binutils-${BINUTILS_VERSION}/ld && automake
 RUN cd binutils-${BINUTILS_VERSION} && autoreconf-2.69
 
-COPY land/gcc/gcc-${GCC_VERSION}.patch /usr/src/
-RUN patch -p0 < gcc-${GCC_VERSION}.patch
-COPY land/gcc/xelix.h gcc-${GCC_VERSION}/gcc/config/
+WORKDIR /build/binutils
+RUN /usr/src/binutils-${BINUTILS_VERSION}/configure \
+	--target=${TARGET} \
+	--prefix=/usr \
+	--sysconfdir=/etc \
+	--disable-nls \
+	--disable-werror
 
+RUN make DESTDIR=/toolchain all install
+
+# GCC build uses newlib files, so configure that first
+WORKDIR /usr/src
+RUN wget -c ${NEWLIB_URL}/${NEWLIB_PACKAGE}
+RUN tar -xf ${NEWLIB_PACKAGE}
 COPY land/newlib/newlib-${NEWLIB_VERSION}.patch /usr/src/
 RUN patch -p0 < newlib-${NEWLIB_VERSION}.patch
 
@@ -74,17 +78,6 @@ RUN aclocal-1.11 -I ../.. -I ../../..
 RUN autoconf-2.69
 RUN automake-1.11 --cygnus Makefile
 
-WORKDIR /build/binutils
-RUN /usr/src/binutils-${BINUTILS_VERSION}/configure \
-	--target=${TARGET} \
-	--prefix=/usr \
-	--sysconfdir=/etc \
-	--disable-nls \
-	--disable-werror
-
-RUN make DESTDIR=/toolchain all install
-
-# GCC build uses newlib files, so configure that first
 WORKDIR /build/newlib
 RUN /usr/src/newlib-${NEWLIB_VERSION}/configure \
 	--target=${TARGET} \
@@ -95,6 +88,13 @@ RUN /usr/src/newlib-${NEWLIB_VERSION}/configure \
 	--enable-newlib-io-c99-formats \
 	--enable-newlib-io-long-long \
 	--enable-newlib-io-long-double
+
+WORKDIR /usr/src
+RUN wget -c ${GCC_URL}/${GCC_PACKAGE}
+RUN tar -xf ${GCC_PACKAGE}
+COPY land/gcc/gcc-${GCC_VERSION}.patch /usr/src/
+RUN patch -p0 < gcc-${GCC_VERSION}.patch
+COPY land/gcc/xelix.h gcc-${GCC_VERSION}/gcc/config/
 
 WORKDIR /build/gcc
 RUN /usr/src/gcc-${GCC_VERSION}/configure \
@@ -117,15 +117,19 @@ WORKDIR /build/newlib
 RUN make -j$(nproc) all
 RUN make DESTDIR=/toolchain install
 RUN cp i786-pc-xelix/newlib/libc/sys/xelix/crti.o i786-pc-xelix/newlib/libc/sys/xelix/crtn.o /toolchain/usr/i786-pc-xelix/lib/
-RUN /toolchain/usr/i786-pc-xelix/bin/ld -shared --whole-archive --allow-multiple-definition -o /toolchain/usr/i786-pc-xelix/lib/libc.so i786-pc-xelix/newlib/libc.a
-RUN /toolchain/usr/i786-pc-xelix/bin/ld -shared --whole-archive --allow-multiple-definition -o /toolchain/usr/i786-pc-xelix/lib/libm.so i786-pc-xelix/newlib/libm.a
+RUN rm /toolchain/usr/i786-pc-xelix/lib/libm.a
 
 # Build GCC libraries
 WORKDIR /build/gcc
 RUN rm -r /usr/i786-pc-xelix && ln -s /toolchain/usr/i786-pc-xelix/ /usr/i786-pc-xelix
 RUN make -j$(nproc) all-target-libgcc
 RUN make -j$(nproc) all-target-libstdc++-v3
-RUN make DESTDIR=/toolchain install-target-libgcc install-target-libstdc++-v3
+RUN make -j$(nproc) all-target-libssp
+RUN make DESTDIR=/toolchain install-target-libgcc install-target-libstdc++-v3 install-target-libssp
+
+# Convert libs
+WORKDIR /build/newlib
+RUN /toolchain/usr/bin/i786-pc-xelix-gcc -shared -Wl,--whole-archive -Wl,--allow-multiple-definition -nodefaultlibs -ffreestanding -o /toolchain/usr/i786-pc-xelix/lib/libc.so i786-pc-xelix/newlib/libc.a
 
 # Strip debug info from binaries (Reduces image size substantially)
 RUN strip --strip-unneeded /toolchain/usr/bin/i786-pc-xelix-* /toolchain/usr/i786-pc-xelix/bin/*
