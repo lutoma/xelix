@@ -1,3 +1,7 @@
+OUTPUT_FORMAT("binary")
+
+ENTRY(_start)
+
 PHDRS {
 	text PT_LOAD ;
 	data PT_LOAD ;
@@ -7,7 +11,7 @@ PHDRS {
 SECTIONS {
 	. = 0x500000;
 
-	.text ALIGN(4096) : {
+	.text : {
 		*(.text)
 	} :text
 
@@ -27,3 +31,4 @@ SECTIONS {
 		*(.eh_frame)
 	} :rodata
 }
+

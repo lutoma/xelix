@@ -21,7 +21,6 @@
 #include <tasks/execdata.h>
 #include <tasks/syscall.h>
 #include <tasks/wait.h>
-#include <tasks/elf.h>
 #include <mem/kmalloc.h>
 #include <mem/mem.h>
 #include <mem/vm.h>
@@ -32,7 +31,9 @@
 #include <fs/pipe.h>
 #include <string.h>
 #include <errno.h>
+#include <panic.h>
 
+static vm_alloc_t loader_alloc;
 static uint32_t highest_pid = 0;
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size);
 
@@ -122,8 +123,7 @@ static inline int map_task(task_t* task) {
 }
 
 /* Sets up a new task, including the necessary paging context, stacks,
- * interrupt stack frame etc. The binary still has to be mapped into the paging
- * context separately (usually in the ELF loader).
+ * interrupt stack frame etc.
  */
 task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
@@ -148,10 +148,20 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	vfs_open(task, "/dev/stdin", O_RDONLY);
 	vfs_open(task, "/dev/stdout", O_WRONLY);
 	vfs_open(task, "/dev/stderr", O_WRONLY);
-	return task;
-}
 
-void task_set_initial_state(task_t* task) {
+	char* abs_path = vfs_normalize_path(name, task->cwd);
+	strlcpy(task->binary_path, abs_path, VFS_PATH_MAX);
+	kfree(abs_path);
+
+	// Load ELF binary loader into task memory space
+	if(vm_copy(&task->vmem, 0x500000, NULL, &loader_alloc, VM_USER | VM_RW | VM_TFORK | VM_FREE) < 0) {
+		return NULL;
+	}
+
+	task->entry = 0x500000;
+	// FIXME
+	task->sbrk = 0xf000000;
+
 	task_setup_execdata(task);
 
 	task->state->ds = GDT_SEG_DATA_PL3;
@@ -171,6 +181,7 @@ void task_set_initial_state(task_t* task) {
 	iret->ss = GDT_SEG_DATA_PL3;
 
 	vm_free(&alloc);
+	return task;
 }
 
 /* Called by the scheduler whenever a task terminates from the userland
@@ -336,10 +347,6 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	new_task->strace_fd = task->strace_fd;
 	new_task->ctty = task->ctty;
 
-	if(elf_load_file(new_task, path) == -1) {
-		return -1;
-	}
-
 	for(int i = 0; i < CONFIG_VFS_MAX_OPENFILES; i++) {
 		struct vfs_file* file = &task->files[i];
 
@@ -400,6 +407,29 @@ int task_strace(task_t* task, isf_t* state) {
 	fork->strace_observer = task;
 	fork->strace_fd = pipe[1];
 	return pipe[0];
+}
+
+void task_init(void) {
+	int fd = vfs_open(NULL, "/usr/libexec/system/xelix-loader", O_RDONLY);
+	if(unlikely(fd < 0)) {
+		panic("Could not open ELF loader.\n");
+	}
+
+	vfs_stat_t stat;
+	if(vfs_fstat(NULL, fd, &stat) < 0 ) {
+		panic("Could not stat ELF loader.\n");
+	}
+
+	size_t size = stat.st_size;
+	if(unlikely(!vm_alloc(VM_KERNEL, &loader_alloc, RDIV(size, PAGE_SIZE), NULL, VM_RW))) {
+		panic("Could not map ELF loader.\n");
+	}
+
+	size_t read = vfs_read(NULL, fd, loader_alloc.addr, size);
+	if(unlikely(read != size)) {
+		panic("Could not read ELF loader.\n");
+
+	}
 }
 
 static size_t sfs_read(struct vfs_callback_ctx* ctx, void* dest, size_t size) {

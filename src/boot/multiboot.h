@@ -22,7 +22,28 @@
 #ifndef MULTIBOOT_HEADER
 #define MULTIBOOT_HEADER 1
 
-#include <tasks/elf.h>
+
+struct elf_section {
+  uint32_t name;
+  uint32_t type;
+  uint32_t flags;
+  void* addr;
+  uint32_t offset;
+  uint32_t size;
+  uint32_t link;
+  uint32_t info;
+  uint32_t addralign;
+  uint32_t entsize;
+};
+
+struct elf_sym {
+  uint32_t name;
+  uint32_t value;
+  uint32_t size;
+  uint8_t info;
+  uint8_t other;
+  uint16_t shndx;
+};
 
 /* How many bytes from the start of the file we search for the header.  */
 #define MULTIBOOT_SEARCH			32768

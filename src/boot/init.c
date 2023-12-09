@@ -1,5 +1,5 @@
 /* init.c: Initialization code of the kernel
- * Copyright © 2010-2019 Lukas Martini
+ * Copyright © 2010-2023 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -34,7 +34,6 @@
 #include <tty/term.h>
 #include <tty/console.h>
 #include <bsp/i386-pci.h>
-#include <tasks/elf.h>
 #include <tasks/syscall.h>
 #include <tasks/exception.h>
 #include <mem/mem.h>
@@ -61,7 +60,7 @@ void (*boot_sequence[])(void) = {
 
 	serial_init,  multiboot_init, gdt_init, mem_init, paging_init, int_init, task_exception_init,
 	timer_init, mem_late_init, cmdline_init, gfx_init, term_init, time_init, pci_init,
-	block_init, vfs_init, timer_init2
+	block_init, vfs_init, timer_init2, task_init
 #endif
 };
 
@@ -97,10 +96,6 @@ void xelix_main(void) {
 	task_t* init = task_new(NULL, 0, init_path, __env, 0, __argv, 1);
 	if(!init) {
 		panic("Could not spawn init task.\n");
-	}
-
-	if(elf_load_file(init, init_path) == -1) {
-		panic("Could not start init (Tried %s).\n", init_path);
 	}
 
 	init->ctty = term_console;

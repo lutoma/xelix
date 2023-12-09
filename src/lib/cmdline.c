@@ -21,6 +21,7 @@
 #include <string.h>
 #include <mem/kmalloc.h>
 #include <fs/sysfs.h>
+#include <log.h>
 
 static char* options[50] = {0};
 

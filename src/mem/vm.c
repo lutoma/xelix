@@ -389,7 +389,7 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	return virt + src_offset;
 }
 
-int vm_copy(struct vm_ctx* dest_ctx, vm_alloc_t* result, vm_alloc_t* src) {
+int vm_copy(struct vm_ctx* dest_ctx, void* dest_addr, vm_alloc_t* result, vm_alloc_t* src, int flags) {
 	// does not work on sharded memory yet
 	assert(!src->shards);
 
@@ -400,13 +400,18 @@ int vm_copy(struct vm_ctx* dest_ctx, vm_alloc_t* result, vm_alloc_t* src) {
 		return -1;
 	}
 
-	void* src_ptr = vm_map(VM_KERNEL, &kernel_src, src->ctx, src->addr, src->size, 0);
-	if(!src_ptr) {
-		return -1;
+	void* src_ptr = src->addr;
+	if(src->ctx != VM_KERNEL) {
+		src_ptr = vm_map(VM_KERNEL, &kernel_src, src->ctx, src->addr, src->size, 0);
+		if(!src_ptr) {
+			return -1;
+		}
 	}
 
 	memcpy(kernel_dest.addr, src_ptr, src->size);
-	vm_free(&kernel_src);
+	if(src->ctx != VM_KERNEL) {
+		vm_free(&kernel_src);
+	}
 
 	// Zero out remainder of page if needed in order to not leak any previous data
 	size_t mod = src->size % PAGE_SIZE;
@@ -417,9 +422,15 @@ int vm_copy(struct vm_ctx* dest_ctx, vm_alloc_t* result, vm_alloc_t* src) {
 
 	vm_free(&kernel_dest);
 
-	int flags = src->flags | VM_FIXED;
-	if(!vm_alloc_at(dest_ctx, result, RDIV(src->size, PAGE_SIZE), src->addr, kernel_dest.phys, flags)) {
-		return -1;
+	if(dest_addr) {
+		flags |= VM_FIXED;
+		if(!vm_alloc_at(dest_ctx, result, RDIV(src->size, PAGE_SIZE), dest_addr, kernel_dest.phys, flags)) {
+			return -1;
+		}
+	} else {
+		if(!vm_alloc(dest_ctx, result, RDIV(src->size, PAGE_SIZE), kernel_dest.phys, flags)) {
+			return -1;
+		}
 	}
 
 	return 0;
@@ -450,7 +461,7 @@ int vm_clone(struct vm_ctx* dest, struct vm_ctx* src) {
 			continue;
 		}
 
-		if(vm_copy(dest, NULL, range) != 0) {
+		if(vm_copy(dest, range->addr, NULL, range, range->flags) != 0) {
 			return -1;
 		}
 	}

@@ -146,7 +146,6 @@ typedef struct task {
 
 task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc);
-void task_set_initial_state(task_t* task);
 int task_fork(task_t* to_fork, isf_t* state);
 int task_execve(task_t* task, char* path, char** argv, char** env);
 int task_exit(task_t* task, int code);
@@ -155,5 +154,6 @@ void task_userland_eol(task_t* t);
 void task_cleanup(task_t* t);
 int task_chdir(task_t* task, const char* dir);
 int task_strace(task_t* task, isf_t* state);
+void task_init(void);
 
 #include <tasks/mem.h>

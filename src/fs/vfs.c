@@ -333,7 +333,10 @@ int vfs_seek(task_t* task, int fd, size_t offset, int origin) {
 			}
 			break;
 		case VFS_SEEK_END:
-			vfs_fstat(task, fp->num, &stat);
+			if(vfs_fstat(task, fp->num, &stat) < 0) {
+				return -1;
+			}
+
 			fp->offset = stat.st_size + offset;
 	}
 

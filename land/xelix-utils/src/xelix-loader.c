@@ -528,9 +528,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	char* execpath = _xelix_execdata->binary_path;
-	if(!strcmp(execpath, "/usr/lib/ld-xelix.so")) {
+	if(!strcmp(execpath, "/usr/libexec/system/xelix-loader")) {
 		if(argc < 2) {
-			fprintf(stderr, "Usage: ld-xelix.so <ELF object>\n(Or set as `interpreter` on ELF object).\n");
+			fprintf(stderr, "Usage: xelix-loader <ELF object>\n(Or set as `interpreter` on ELF object).\n");
 			exit(EXIT_FAILURE);
 		}
 

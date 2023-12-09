@@ -21,7 +21,6 @@
 #include <log.h>
 #include <printf.h>
 #include <panic.h>
-#include <tasks/elf.h>
 
 static struct multiboot_tag_mmap* mmap_info = NULL;
 static struct multiboot_tag_basic_meminfo* mem_info = NULL;

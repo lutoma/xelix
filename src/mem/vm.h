@@ -121,7 +121,7 @@ void* vm_map(struct vm_ctx* ctx, vm_alloc_t* vmem, struct vm_ctx* src_ctx,
 	void* src_addr, size_t size, int flags);
 
 vm_alloc_t* vm_get(struct vm_ctx* ctx, void* addr, bool phys);
-int vm_copy(struct vm_ctx* dest, vm_alloc_t* vmem_dest, vm_alloc_t* vmem_src);
+int vm_copy(struct vm_ctx* dest_ctx, void* dest_addr, vm_alloc_t* result, vm_alloc_t* src, int flags);
 int vm_clone(struct vm_ctx* dest, struct vm_ctx* src);
 int vm_free(vm_alloc_t* range);
 int vm_new(struct vm_ctx* ctx, struct paging_context* page_dir);

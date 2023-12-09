@@ -28,9 +28,9 @@
 #include <mem/kmalloc.h>
 #include <spinlock.h>
 #include <stdarg.h>
-#include <tasks/elf.h>
 #include <boot/multiboot.h>
 #include <gfx/fbtext.h>
+#include <tasks/task.h>
 
 void __stack_chk_fail(void);
 
