@@ -10,7 +10,7 @@
         builtin_assert("system=posix"); \
     } while (0);
 
-#define DYNAMIC_LINKER "/usr/lib/ld-xelix.so"
+#define DYNAMIC_LINKER "/usr/libexec/system/xelix-loader"
 
 #undef LIB_SPEC
 #define LIB_SPEC "-lc"

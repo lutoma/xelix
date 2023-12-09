@@ -48,5 +48,4 @@ install:
 	install -d $(DESTDIR)/usr/libexec/system/
 	install -D $(TARGETS) $(DESTDIR)/usr/bin/
 	install -D init xelix-loader $(DESTDIR)/usr/libexec/system
-	install -D ld-xelix.so $(DESTDIR)/usr/lib/
 	chmod u+s $(DESTDIR)/usr/bin/su
