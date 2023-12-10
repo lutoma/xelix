@@ -10,6 +10,7 @@ on:
       - 'ext/**'
       - 'Makefile.static'
       - 'configure'
+      - 'Kconfig'
       - '.github/workflows/kernel.yml'
 
 jobs:
