@@ -1,11 +1,11 @@
 pkgname=base
 pkgver=1
-pkgrel=2
+pkgrel=3
 pkgdesc="The basic components of the Xelix operating system."
 arch=('any')
 url="https://xelix.org"
 license=('GPL')
-depennds=('xelix-kernel' 'coreutils' 'bash' 'xelix-utils')
+depends=('xelix-kernel' 'newlib' 'openlibm' 'xelix-utils' 'gcc-libs')
 makedepends=()
 source=()
 sha256sums=()
