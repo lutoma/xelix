@@ -51,7 +51,7 @@ menuentry 'Xelix (1920x1080)' {
 	multiboot2 /xelix.bin root=/dev/ide1p2
 	set gfxpayload=keep
 }
- || true
+
 menuentry 'Xelix (3840x2160)' {
 	multiboot2 /xelix.bin root=/dev/ide1p2
 	set gfxpayload=3840x2160x16
