@@ -101,7 +101,7 @@ diff -rupN newlib-3.2.0/newlib/libc/sys/configure.in newlib-3.2.0-xelix/newlib/l
          ;;
 +  *-*-xelix*)
 +	syscall_dir=syscalls
-+	newlib_cflags="${newlib_cflags} -DHAVE_FCNTL -DHAVE_MMAP -fPIC -ggdb"
++	newlib_cflags="${newlib_cflags} -DHAVE_FCNTL -DHAVE_MMAP"
 +	;;
    xstormy16-*-*)
  	syscall_dir=syscalls

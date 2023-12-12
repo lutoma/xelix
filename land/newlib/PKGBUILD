@@ -1,6 +1,6 @@
 pkgname=newlib
 pkgver=3.2.0
-pkgrel=7
+pkgrel=8
 pkgdesc="Newlib is a C library intended for use on embedded systems."
 arch=('i786')
 url="https://sourceware.org/newlib/"
@@ -34,7 +34,25 @@ prepare() {
 build() {
 	cd $pkgname-$pkgver
 
-	CFLAGS="" CPPFLAGS="" LDFLAGS="-g" ./configure \
+	# Shared/position-independent build
+	CFLAGS_FOR_TARGET="-fPIC" CFLAGS="" CPPFLAGS="" LDFLAGS="" ./configure \
+		--target=i786-pc-xelix \
+		--prefix=/usr \
+		--exec-prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-newlib-mb \
+		--enable-newlib-iconv \
+		--enable-newlib-io-c99-formats \
+		--enable-newlib-io-long-long \
+		--enable-newlib-io-long-double
+
+	make clean
+	make -j$(nproc) all-target-newlib
+	i786-pc-xelix-gcc -shared -Wl,--whole-archive -Wl,--allow-multiple-definition -nodefaultlibs -ffreestanding -o libc.so i786-pc-xelix/newlib/libc.a
+
+	# Static build
+	make distclean
+	CFLAGS="" CPPFLAGS="" LDFLAGS="" ./configure \
 		--target=i786-pc-xelix \
 		--prefix=/usr \
 		--exec-prefix=/usr \
@@ -46,7 +64,6 @@ build() {
 		--enable-newlib-io-long-double
 
 	make -j$(nproc) all-target-newlib
-	i786-pc-xelix-gcc -shared -Wl,--whole-archive -Wl,--allow-multiple-definition -nodefaultlibs -ffreestanding -o libc.so i786-pc-xelix/newlib/libc.a
 }
 
 package() {
