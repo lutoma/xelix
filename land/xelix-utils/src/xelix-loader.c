@@ -30,7 +30,7 @@
 
 #define LD_ASSERT(cond, msg) \
 	if(__builtin_expect(!(cond), 0)) { \
-		fprintf(stderr, "ld-xelix: " msg "\n"); \
+		fprintf(stderr, "xelix-loader: " msg "\n"); \
 		exit(1); \
 	}
 
@@ -92,7 +92,7 @@ static void load_obj(struct elf_object* _obj, char* path, struct elf_object* req
 static void* read_data(struct elf_object* obj, void* buf, off_t offset, size_t size) {
 	if(offset != obj->seek_offset) {
 		if(lseek(obj->fd, offset, SEEK_SET) != offset) {
-			perror("ld-xelix: Seek failed on executable file");
+			perror("xelix-loader: Seek failed on executable file");
 			exit(1);
 		}
 
@@ -104,7 +104,7 @@ static void* read_data(struct elf_object* obj, void* buf, off_t offset, size_t s
 	}
 
 	if(read(obj->fd, buf, size) != size) {
-		perror("ld-xelix: Reading executable data failed");
+		perror("xelix-loader: Reading executable data failed");
 		exit(1);
 	}
 
@@ -189,18 +189,18 @@ static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name
 void* __fastcall resolve_callback(uint32_t offset, struct elf_object* req_obj) {
 	Elf32_Rel* rel = (Elf32_Rel*)((uintptr_t)req_obj->jmprel + offset);
 	if(ELF32_R_TYPE(rel->r_info) != R_386_JMP_SLOT) {
-		fprintf(stderr, "ld-xelix: Unsupported relocation type\n");
+		fprintf(stderr, "xelix-loader: Unsupported relocation type\n");
 	}
 
  	int symidx = ELF32_R_SYM(rel->r_info);
 	Elf32_Sym* sym = (Elf32_Sym*)((uintptr_t)req_obj->symbols + (symidx * req_obj->syment));
 	const char* name = req_obj->strtab + sym->st_name;
 
-	debug("ld-xelix: Lazy relocation %-35s in %s\n", name, req_obj->path);
+	debug("xelix-loader: Lazy relocation %-35s in %s\n", name, req_obj->path);
 
 	void* target = resolve_dep_sym(req_obj, name);
 	if(!target) {
-		fprintf(stderr, "ld-xelix: Could not resolve %s\n\n", name);
+		fprintf(stderr, "xelix-loader: Could not resolve %s\n\n", name);
 		exit(EXIT_FAILURE);
 	}
 
@@ -234,7 +234,7 @@ static void relocate(struct elf_object* obj) {
 			// Try loading symbol
 			int symidx = ELF32_R_SYM(crel->r_info);
 			if(!symidx) {
-				fprintf(stderr, "ld-xelix: Could not handle symbol at %p\n", crel->r_offset);
+				fprintf(stderr, "xelix-loader: Could not handle symbol at %p\n", crel->r_offset);
 				exit(EXIT_FAILURE);
 			}
 
@@ -247,7 +247,7 @@ static void relocate(struct elf_object* obj) {
 					continue;
 				}
 
-				fprintf(stderr, "ld-xelix: Could not resolve required symbol %s\n", name);
+				fprintf(stderr, "xelix-loader: Could not resolve required symbol %s\n", name);
 				exit(EXIT_FAILURE);
 			}
 
@@ -266,7 +266,7 @@ static void relocate(struct elf_object* obj) {
 				memcpy(relptr, target, sym->st_size);
 				break;
 			default:
-				fprintf(stderr, "ld-xelix: Unsupported relocation type %d\n", reltype);
+				fprintf(stderr, "xelix-loader: Unsupported relocation type %d\n", reltype);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -285,7 +285,7 @@ static void relocate(struct elf_object* obj) {
 				uint32_t* roffset = (uint32_t*)((uintptr_t)crel->r_offset + obj->base_addr);
 				*roffset += obj->base_addr;
 			} else {
-				fprintf(stderr, "ld-xelix: Unsupported relocation type %d\n", reltype);
+				fprintf(stderr, "xelix-loader: Unsupported relocation type %d\n", reltype);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -371,7 +371,7 @@ static void load_dyn(struct elf_object* obj) {
 			char* path;
 			char* name = obj->strtab + dyn->d_un.d_val;
 			if(asprintf(&path, "/usr/lib/%s", name) == -1) {
-				fprintf(stderr, "ld-xelix: Could not build library path\n");
+				fprintf(stderr, "xelix-loader: Could not build library path\n");
 				exit(1);
 			}
 
@@ -390,7 +390,7 @@ static void load_dyn(struct elf_object* obj) {
 		char* path;
 		char* name = obj->strtab + dyn->d_un.d_val;
 		if(asprintf(&path, "/usr/lib/%s", name) == -1) {
-			fprintf(stderr, "ld-xelix: Could not build library path\n");
+			fprintf(stderr, "xelix-loader: Could not build library path\n");
 			exit(1);
 		}
 
@@ -435,7 +435,7 @@ static void map_phead(struct elf_object* obj, Elf32_Phdr* phead) {
 	// FIXME drop PROT_EXEC once mprotect stuff is ready
 	void* addr = mmap(addr_request, phead->p_memsz, PROT_READ | PROT_WRITE | PROT_EXEC, mflags, 0, 0);
 	if(addr == MAP_FAILED || addr == -1) {
-		fprintf(stderr, "ld-xelix: mmap failed at %p: %s\n", phead->p_vaddr, strerror(errno));
+		fprintf(stderr, "xelix-loader: mmap failed at %p: %s\n", phead->p_vaddr, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -459,7 +459,7 @@ static void map_phead(struct elf_object* obj, Elf32_Phdr* phead) {
 
 	// FIXME
 	// if(mprotect(addr, phead->p_memsz, prot) != 0) {
-	// 	fprintf(stderr, "ld-xelix: Could not adjust protection of memory region at %p\n", addr);
+	// 	fprintf(stderr, "xelix-loader: Could not adjust protection of memory region at %p\n", addr);
 	// 	exit(EXIT_FAILURE);
 	// }
 
@@ -475,7 +475,7 @@ static void load_obj(struct elf_object* obj, char* path, struct elf_object* req_
 	obj->path = path;
 	obj->fd = open(path, O_RDONLY);
 	if(obj->fd < 0) {
-		fprintf(stderr, "ld-xelix: Could not open %s: %s\n", path, strerror(errno));
+		fprintf(stderr, "xelix-loader: Could not open %s: %s\n", path, strerror(errno));
 		free(obj);
 		exit(EXIT_FAILURE);
 	}
@@ -528,16 +528,13 @@ int main(int argc, char* argv[]) {
 	}
 
 	char* execpath = _xelix_execdata->binary_path;
-	if(!strcmp(execpath, "/usr/libexec/system/xelix-loader")) {
-		if(argc < 2) {
-			fprintf(stderr, "Usage: xelix-loader <ELF object>\n(Or set as `interpreter` on ELF object).\n");
-			exit(EXIT_FAILURE);
-		}
+	LD_ASSERT(execpath && execpath[0], "Could not get executable path.");
 
-		execpath = argv[1];
+	if(!strcmp(execpath, "/usr/libexec/system/xelix-loader")) {
+		fprintf(stderr, "xelix-loader is automatically invoked by the kernel to load ELF binaries. It cannot be used directly.\n");
+		exit(EXIT_FAILURE);
 	}
 
-	LD_ASSERT(execpath && execpath[0], "Could not get executable path.");
 	root_obj = calloc(1, sizeof(struct elf_object));
 	load_obj(root_obj, execpath, NULL);
 	LD_ASSERT(root_obj, "Executable loading failed.");
