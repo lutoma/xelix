@@ -128,6 +128,10 @@ static inline int map_task(task_t* task) {
 task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	char** environ, uint32_t envc, char** argv, uint32_t argc) {
 
+	if(vfs_access(parent, name, R_OK | X_OK) != 0) {
+		return NULL;
+	}
+
 	task_t* task = alloc_task(parent, pid, name, environ, envc, argv, argc);
 	if(!task) {
 		return NULL;
@@ -322,7 +326,7 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	char** __env = task_copy_strings(task, env, &__envc);
 	if(!__argv || !__env) {
 		log(LOG_WARN, "execve: array check fail\n");
-		return 0;
+		return -1;
 	}
 
 	/* Normally removed in task_cleanup, but it may take until after this
@@ -335,6 +339,10 @@ int task_execve(task_t* task, char* path, char** argv, char** env) {
 	task->sysfs_file = NULL;
 
 	task_t* new_task = task_new(task->parent, task->pid, path, __env, __envc, __argv, __argc);
+	if(!new_task) {
+		return -1;
+	}
+
 	kfree_array(__argv, __argc);
 	kfree_array(__env, __envc);
 
