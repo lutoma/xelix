@@ -94,7 +94,7 @@ inet_addr(cp)
 {
 	in_addr_t val;
 
-	if (inet_aton(cp, &val))
+	if (inet_aton(cp, (struct in_addr*)&val))
 		return (val);
 	return (INADDR_NONE);
 }

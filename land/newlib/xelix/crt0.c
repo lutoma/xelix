@@ -31,7 +31,7 @@ extern void __libc_fini_array();
 
 // These are defined as extern in sys/xelix.h
 struct _xelix_execdata* _xelix_execdata;
-char* _progname;
+const char* _progname;
 FILE* _xelix_serial = NULL;
 
 void __attribute__((fastcall, noreturn)) _start(void) {

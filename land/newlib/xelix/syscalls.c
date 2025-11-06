@@ -28,6 +28,7 @@
 #include <sys/select.h>
 #include <sys/errno.h>
 #include <sys/xelix.h>
+#include <sys/mman.h>
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
@@ -196,7 +197,7 @@ ssize_t send(int socket, const void *buffer, size_t length, int flags) {
 	return syscall(3, socket, buffer, length);
 }
 
-int _execve(char *name, char **argv, char **env) {
+int _execve(char *name, char* const argv[], char* const env[]) {
 	return syscall(32, name, argv, env);
 }
 

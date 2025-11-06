@@ -42,6 +42,7 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <sched.h>
+#include <netdb.h>
 
 #ifdef NOISY_STUBS
 	#define STUBWARN(cmd) fprintf(stderr, "xelix-newlib: " #cmd " stub called.\n");
@@ -135,7 +136,7 @@ STUB(int, initgroups, (const char *user, gid_t group), -1);
 STUB(void, sync, (void));
 STUB(int, getsockopt, (int sockfd, int level, int optname, void* optval, socklen_t* optlen), -1);
 STUB(ssize_t, recvmsg, (int sockfd, struct msghdr *msg, int flags), -1);
-STUB(dev_t, makedev, (unsigned int maj, unsigned int min), NULL);
+STUB(dev_t, makedev, (unsigned int maj, unsigned int min), (dev_t)0);
 STUB(int, daemon, (int nochdir, int noclose), -1);
 STUB(int, seteuid, (uid_t euid), -1);
 STUB(int, setegid, (gid_t egid), -1);

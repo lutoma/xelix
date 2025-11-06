@@ -45,7 +45,7 @@ struct _xelix_execdata {
 };
 
 extern struct _xelix_execdata* _xelix_execdata;
-extern char* _progname;
+extern const char* _progname;
 extern FILE* _xelix_serial;
 
 int _strace(void);

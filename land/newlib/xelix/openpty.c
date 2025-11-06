@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <limits.h>
+#include <unistd.h>
 
 int openpty(int* ptm, int* pts, char *name, const struct termios* termios,
 	const struct winsize* winsize) {
@@ -31,20 +32,20 @@ int openpty(int* ptm, int* pts, char *name, const struct termios* termios,
 	}
 
 	if(ioctl(*ptm, TIOCGPTN, pts) < 0) {
-		close(ptm);
+		close(*ptm);
 		return -1;
 	}
 
 	if(termios) {
 		if(ioctl(*pts, TCSETS, termios) < 0) {
-			close(ptm);
+			close(*ptm);
 			return -1;
 		}
 	}
 
 	if(winsize) {
 		if(ioctl(*pts, TIOCSWINSZ, winsize) < 0) {
-			close(ptm);
+			close(*ptm);
 			return -1;
 		}
 	}
@@ -73,7 +74,7 @@ pid_t forkpty(int* ptm, char* name, const struct termios* termios,
 		close(pts);
 		return pid;
 	} else {
-		close(ptm);
+		close(*ptm);
 
 		// Map stdin/out to pts
 		close(1);

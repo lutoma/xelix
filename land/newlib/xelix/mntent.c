@@ -72,4 +72,5 @@ free_mem (void)
   free (getmntent_buffer);
 }
 
-text_set_element (__libc_subfreeres, free_mem);
+// FIXME
+//text_set_element (__libc_subfreeres, free_mem);
