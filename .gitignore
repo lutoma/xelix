@@ -18,5 +18,6 @@ xelix.map
 /.config
 /.config.old
 /land/*/pkg
-/land/*/src
 /land/*/*.tar.*
+land/*/src
+/packages

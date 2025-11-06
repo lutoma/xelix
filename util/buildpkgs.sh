@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LAND_DIR="$SCRIPT_DIR/../land"
 source $SCRIPT_DIR/setenv.sh "/tmp/image"
 
-mkdir /tmp/packages || true
+mkdir "$SCRIPT_DIR/../packages" || true
 
 for dir in "$@"; do
 	# Create a new empty sysroot
@@ -25,6 +25,6 @@ for dir in "$@"; do
 	# Build package
 	cd "$LAND_DIR/$dir"
 	makepkg -fAd --sign
-	mv *.pkg.* /tmp/packages
+	mv *.pkg.* "$SCRIPT_DIR/../packages"
 	cd ..
 done
