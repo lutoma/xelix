@@ -13,7 +13,7 @@ extern "C" {
 int dlclose(void *);
 char *dlerror(void);
 void *dlopen(const char *, int);
-void *dlsym(void *restrict, const char *restrict);
+void *dlsym(void *, const char *);
 
 #ifdef __cplusplus
 }       /* C++ */
