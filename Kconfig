@@ -77,9 +77,6 @@ menu "Memory"
 endmenu
 
 menu "Tasks"
-	config ELF_DEBUG
-		bool "ELF loader debugging"
-
 	config SYSCALL_DEBUG
 		bool "Syscall debugging"
 
