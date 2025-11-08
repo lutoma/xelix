@@ -31,6 +31,7 @@
 #include <boot/multiboot.h>
 #include <gfx/fbtext.h>
 #include <tasks/task.h>
+#include <tasks/scheduler.h>
 
 void __stack_chk_fail(void);
 

@@ -158,13 +158,13 @@ task_t* task_new(task_t* parent, uint32_t pid, char name[VFS_NAME_MAX],
 	kfree(abs_path);
 
 	// Load ELF binary loader into task memory space
-	if(vm_copy(&task->vmem, 0x500000, NULL, &loader_alloc, VM_USER | VM_RW | VM_TFORK | VM_FREE) < 0) {
+	if(vm_copy(&task->vmem, (void*)0x500000, NULL, &loader_alloc, VM_USER | VM_RW | VM_TFORK | VM_FREE) < 0) {
 		return NULL;
 	}
 
-	task->entry = 0x500000;
+	task->entry = (void*)0x500000;
 	// FIXME
-	task->sbrk = 0xf000000;
+	task->sbrk = (void*)0xf000000;
 
 	task_setup_execdata(task);
 
