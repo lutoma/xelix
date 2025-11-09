@@ -15,16 +15,24 @@ sha256sums=(
 
 prepare() {
 	cd $pkgname-$pkgver
-	patch -p0 < ../gmp-6.2.0.patch
+	rm configfsf.sub
+	autoreconf --force --install
+	echo -e "#!/bin/sh\necho i786-pc-xelix" > config.sub
+	#patch -p0 < ../gmp-6.2.0.patch
+	#cp /tmp/aclocal.m4 aclocal.m4
 }
 
 build() {
 	cd $pkgname-$pkgver
-	CC=i786-pc-xelix-gcc ./configure \
+#	CC=i786-pc-xelix-gcc ac_cv_can_build_shared=1 ./configure \
+	./configure \
 		--host=i786-pc-xelix \
 		--prefix=/usr \
 		--sysconfdir=/etc \
-		--disable-shared
+		--enable-shared \
+		--enable-static
+#		--disable-static
+
 	make
 }
 
