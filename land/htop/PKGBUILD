@@ -4,7 +4,7 @@ pkgrel=1
 pkgdesc="An interactive process viewer"
 arch=('i786')
 url="https://htop.dev/"
-depends=('ncurses')
+depend=('ncurses')
 source=(
 	'https://github.com/htop-dev/htop/archive/refs/tags/3.0.5.tar.gz'
 	'htop.patch'
