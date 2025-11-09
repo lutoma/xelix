@@ -1,6 +1,6 @@
 pkgname=openssl-quic
 pkgver=3.1.4
-pkgrel=2
+pkgrel=4
 pkgdesc="A robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication."
 arch=('i786')
 provides=('openssl')
@@ -26,7 +26,7 @@ prepare() {
 
 build() {
 	cd openssl-openssl-3.1.4-quic1
-	CROSS_COMPILE=i786-pc-xelix- ./Configure xelix-x86 no-shared no-threads no-dso 386 no-sse2 no-tests --prefix=/usr --openssldir=/etc/ssl -DDSO_NONE
+	CROSS_COMPILE=i786-pc-xelix- ./Configure xelix-x86 no-threads no-dso 386 no-sse2 no-tests --prefix=/usr --openssldir=/etc/ssl -DDSO_NONE
 	make -j$(nproc)
 }
 
