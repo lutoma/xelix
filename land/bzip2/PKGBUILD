@@ -9,7 +9,7 @@ sha256sums=('4b526afa73ca1ccd6f5f1f5fd23813f159f715c3d0e00688f1df54b51f443cdd')
 
 build() {
 	cd $pkgname-$pkgver
-	make CC=i786-pc-xelix-gcc libbz2.a bzip2
+	make CC=i786-pc-xelix-gcc libbz2.so bzip2
 }
 
 package() {

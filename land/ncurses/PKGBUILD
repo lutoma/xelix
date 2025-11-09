@@ -1,6 +1,6 @@
 pkgname=ncurses
 pkgver=6.1
-pkgrel=1
+pkgrel=2
 pkgdesc="The ncurses (new curses) library is a free software emulation of curses in System V Release 4.0 (SVr4), and more."
 arch=('i786')
 url="https://invisible-island.net/ncurses/announce.html"
@@ -25,7 +25,9 @@ build() {
 		--host=i786-pc-xelix \
 		--prefix=/usr \
 		--sysconfdir=/etc \
-		--without-cxx-binding
+		--without-cxx-binding \
+		--disable-static \
+		--enable-shared
 
 	make
 }
