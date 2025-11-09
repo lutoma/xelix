@@ -23,13 +23,22 @@ plt_trampoline:
 	pop edx
 	pop ecx
 
-;	push ebp
-;	mov ebp, esp
+	; push ebp
+	; mov ebp, esp
 
-	; mov eax, 0x60012f8
-	; mov dword [eax], 0x6000166
+	push eax
+	; push ebx
+	; push esi
+	; push edi
+
 	call resolve_callback
+	mov ecx, eax
 
-;	mov esp, ebp
-;	pop ebp
-	jmp eax
+	; pop edi
+	; pop esi
+	; pop ebx
+	pop eax
+
+	; mov esp, ebp
+	; pop ebp
+	jmp ecx

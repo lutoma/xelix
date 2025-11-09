@@ -1,4 +1,4 @@
-/* Copyright © 2023 Lukas Martini
+/* Copyright © 2023-2025 Lukas Martini
  *
  * This file is part of Xelix.
  *
@@ -28,22 +28,26 @@
 #include <sys/queue.h>
 #include <sys/xelix.h>
 
+#define unlikely(x)     __builtin_expect((x),0)
 #define LD_ASSERT(cond, msg) \
-	if(__builtin_expect(!(cond), 0)) { \
+	if(unlikely(!(cond))) { \
 		fprintf(stderr, "xelix-loader: " msg "\n"); \
 		exit(1); \
 	}
 
-#define debug(args...) if(do_debug) { printf(args); _serial_printf(args); }
+#define debug(args...) \
+	if(unlikely(do_debug)) { \
+		printf(args); \
+		_serial_printf(args); \
+	}
 
-// ld-xelix.asm
+// xelix-loader-i386.asm
 extern void plt_trampoline(void);
 
 struct elf_object;
 struct dependency {
 	struct elf_object* obj;
 	LIST_ENTRY(dependency) entries;
-
 };
 
 struct elf_object {
@@ -72,10 +76,10 @@ struct elf_object {
 	Elf32_Rel* jmprel;
 	size_t pltrelsz;
 
-	void* init_array;
+	void (**init_array)(void);
 	size_t init_array_size;
 
-	void* fini_array;
+	void (**fini_array)(void);
 	size_t fini_array_size;
 
 	void (*init)(void);
@@ -85,13 +89,13 @@ struct elf_object {
 static bool do_debug = false;
 static const char elf_magic[16] = {0x7f, 'E', 'L', 'F', 01, 01, 01, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static struct elf_object* root_obj = NULL;
-LIST_HEAD(elf_objs_head, elf_object) loaded_objs;
+static LIST_HEAD(elf_objs_head, elf_object) loaded_objs;
 
 static void load_obj(struct elf_object* _obj, char* path, struct elf_object* req_obj);
 
 static void* read_data(struct elf_object* obj, void* buf, off_t offset, size_t size) {
 	if(offset != obj->seek_offset) {
-		if(lseek(obj->fd, offset, SEEK_SET) != offset) {
+		if(unlikely(lseek(obj->fd, offset, SEEK_SET) != offset)) {
 			perror("xelix-loader: Seek failed on executable file");
 			exit(1);
 		}
@@ -103,7 +107,7 @@ static void* read_data(struct elf_object* obj, void* buf, off_t offset, size_t s
 		buf = malloc(size);
 	}
 
-	if(read(obj->fd, buf, size) != size) {
+	if(unlikely(read(obj->fd, buf, size) != size)) {
 		perror("xelix-loader: Reading executable data failed");
 		exit(1);
 	}
@@ -118,7 +122,6 @@ static inline Elf32_Sym* find_sym(struct elf_object* obj, const char* name, bool
 		int bind = ELF32_ST_BIND(sym->st_info);
 		if((allow_local || bind != STB_LOCAL) && sym->st_value &&
 			!strcmp(obj->strtab + sym->st_name, name)) {
-
 			return sym;
 		}
 		sym = (Elf32_Sym*)((uintptr_t)sym + obj->syment);
@@ -127,7 +130,7 @@ static inline Elf32_Sym* find_sym(struct elf_object* obj, const char* name, bool
 	return NULL;
 }
 
-static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name) {
+static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name, Elf32_Sym** result_sym) {
 	void* result = NULL;
 
 	for(struct dependency* np = req_obj->deps.lh_first; np; np = np->entries.le_next) {
@@ -143,8 +146,12 @@ static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name
 				continue;
 			}
 
-			result = sym->st_value;
-			if(obj->header.e_type == ET_DYN) {
+			result = (void*)sym->st_value;
+			if(result_sym) {
+				*result_sym = sym;
+			}
+
+			if(obj->header.e_type == ET_DYN && sym->st_other != 0xfe) {
 				result += (uintptr_t)obj->base_addr;
 			}
 
@@ -158,8 +165,13 @@ static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name
 	Elf32_Sym* sym = find_sym(req_obj, name, true);
 	if(sym) {
 		int bind = ELF32_ST_BIND(sym->st_info);
-		result = sym->st_value;
-		if(req_obj->header.e_type == ET_DYN) {
+		result = (void*)sym->st_value;
+		if(result_sym) {
+			*result_sym = sym;
+		}
+
+
+		if(req_obj->header.e_type == ET_DYN && sym->st_other != 0xfe) {
 			result += (uintptr_t)req_obj->base_addr;
 		}
 
@@ -175,8 +187,12 @@ static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name
 		sym = find_sym(root_obj, name, true);
 		if(sym) {
 			if(ELF32_ST_BIND(sym->st_info) != STB_LOCAL) {
-				result = sym->st_value;
-				if(root_obj->header.e_type == ET_DYN) {
+				result = (void*)sym->st_value;
+				if(result_sym) {
+					*result_sym = sym;
+				}
+
+				if(root_obj->header.e_type == ET_DYN && sym->st_other != 0xfe) {
 					result += (uintptr_t)root_obj->base_addr;
 				}
 			}
@@ -188,7 +204,7 @@ static inline void* resolve_dep_sym(struct elf_object* req_obj, const char* name
 
 void* __fastcall resolve_callback(uint32_t offset, struct elf_object* req_obj) {
 	Elf32_Rel* rel = (Elf32_Rel*)((uintptr_t)req_obj->jmprel + offset);
-	if(ELF32_R_TYPE(rel->r_info) != R_386_JMP_SLOT) {
+	if(unlikely(ELF32_R_TYPE(rel->r_info) != R_386_JMP_SLOT)) {
 		fprintf(stderr, "xelix-loader: Unsupported relocation type\n");
 	}
 
@@ -198,15 +214,15 @@ void* __fastcall resolve_callback(uint32_t offset, struct elf_object* req_obj) {
 
 	debug("xelix-loader: Lazy relocation %-35s in %s\n", name, req_obj->path);
 
-	void* target = resolve_dep_sym(req_obj, name);
-	if(!target) {
+	void* target = resolve_dep_sym(req_obj, name, NULL);
+	if(unlikely(!target)) {
 		fprintf(stderr, "xelix-loader: Could not resolve %s\n\n", name);
 		exit(EXIT_FAILURE);
 	}
 
 	uintptr_t relptr = rel->r_offset;
 	if(req_obj->header.e_type == ET_DYN) {
-		relptr += req_obj->base_addr;
+		relptr += (uintptr_t)req_obj->base_addr;
 	}
 
 	*(uint32_t*)relptr = target;
@@ -222,7 +238,7 @@ static void relocate(struct elf_object* obj) {
 			int reltype = ELF32_R_TYPE(crel->r_info);
 			uintptr_t relptr = crel->r_offset;
 			if(obj->header.e_type == ET_DYN) {
-				relptr += obj->base_addr;
+				relptr += (uintptr_t)obj->base_addr;
 			}
 
 			// First handle relocations that don't need a symbol
@@ -240,7 +256,9 @@ static void relocate(struct elf_object* obj) {
 
 			Elf32_Sym* sym = (Elf32_Sym*)((uintptr_t)obj->symbols + (symidx * obj->syment));
 			const char* name = obj->strtab + sym->st_name;
-			void* target = resolve_dep_sym(obj, name);
+
+			Elf32_Sym* target_sym;
+			void* target = resolve_dep_sym(obj, name, &target_sym);
 
 			if(!target){
 				if(ELF32_ST_BIND(sym->st_info) == STB_WEAK) {
@@ -258,12 +276,18 @@ static void relocate(struct elf_object* obj) {
 			case R_386_32:
 				*(uint32_t*)relptr += target;
 				break;
-			case R_386_PC32:
+			//case R_386_PC32:
 				// FIXME?
-				*(uint32_t*)relptr += target;
-				break;
+				//*(uint32_t*)relptr += target;
+				//break;
 			case R_386_COPY:
+				debug("R_386_COPY %s relptr %p target %p, size %d\n", name, relptr, target, sym->st_size);
 				memcpy(relptr, target, sym->st_size);
+
+				// Todo update target
+				target_sym->st_value = relptr;
+				// FIXME FIXME FIXME
+				target_sym->st_other = 0xfe;
 				break;
 			default:
 				fprintf(stderr, "xelix-loader: Unsupported relocation type %d\n", reltype);
@@ -301,7 +325,7 @@ static void load_dyn(struct elf_object* obj) {
 		uintptr_t relptr = dyn->d_un.d_ptr;
 
 		if(relptr && obj->header.e_type == ET_DYN) {
-			relptr += obj->base_addr;
+			relptr += (uintptr_t)obj->base_addr;
 		}
 
 		switch(dyn->d_tag) {
@@ -333,10 +357,10 @@ static void load_dyn(struct elf_object* obj) {
 			obj->relsz = dyn->d_un.d_val;
 			break;
 		case DT_INIT:
-			obj->init = relptr;
+			obj->init = (void*)relptr;
 			break;
 		case DT_FINI:
-			obj->fini = relptr;
+			obj->fini = (void*)relptr;
 			break;
 		case DT_INIT_ARRAY:
 			obj->init_array = relptr;
@@ -429,12 +453,12 @@ static void map_phead(struct elf_object* obj, Elf32_Phdr* phead) {
 		addr_request = (void*)((uintptr_t)obj->base_addr + phead->p_vaddr);
 		mflags |= MAP_FIXED;
 	} else {
-		addr_request = 0x6000000;
+		addr_request = (void*)0x6000000;
 	}
 
 	// FIXME drop PROT_EXEC once mprotect stuff is ready
 	void* addr = mmap(addr_request, phead->p_memsz, PROT_READ | PROT_WRITE | PROT_EXEC, mflags, 0, 0);
-	if(addr == MAP_FAILED || addr == -1) {
+	if(unlikely(addr == MAP_FAILED || addr == (void*)-1)) {
 		fprintf(stderr, "xelix-loader: mmap failed at %p: %s\n", phead->p_vaddr, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
@@ -463,7 +487,7 @@ static void map_phead(struct elf_object* obj, Elf32_Phdr* phead) {
 	// 	exit(EXIT_FAILURE);
 	// }
 
-	debug("  map vaddr %-10p to %-10p from offset %#-6x size %#x\n",
+	debug("  map vaddr %-10p to %-10p from offset %#-8x size %#x\n",
 		phead->p_vaddr, addr + (phead->p_vaddr % 0x1000),
 		phead->p_offset, phead->p_memsz);
 }
@@ -471,10 +495,12 @@ static void map_phead(struct elf_object* obj, Elf32_Phdr* phead) {
 static void load_obj(struct elf_object* obj, char* path, struct elf_object* req_obj) {
 	debug("\nOpening %s\n", path);
 
+	//int lib_shm = shm_open(path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+
 	LIST_INIT(&obj->deps);
 	obj->path = path;
 	obj->fd = open(path, O_RDONLY);
-	if(obj->fd < 0) {
+	if(unlikely(obj->fd < 0)) {
 		fprintf(stderr, "xelix-loader: Could not open %s: %s\n", path, strerror(errno));
 		free(obj);
 		exit(EXIT_FAILURE);
@@ -488,7 +514,7 @@ static void load_obj(struct elf_object* obj, char* path, struct elf_object* req_
 	LD_ASSERT(obj->header.e_phnum > 0, "Binary has no program headers");
 	LD_ASSERT(obj->header.e_type == ET_EXEC || obj->header.e_type == ET_DYN, "Binary is not an executable");
 
-	if(!req_obj) {
+	if(unlikely(!req_obj)) {
 		LD_ASSERT(obj->header.e_entry, "Binary has no entry point");
 	}
 
@@ -514,23 +540,23 @@ static void load_obj(struct elf_object* obj, char* path, struct elf_object* req_
 	}
 
 	// Now that other pheads are loaded, check dynamic section that relies on loaded data
+	// It's important that we insert the object into loaded_objs first to prevent infinite
+	// loops with mutually dependent objects.
+	LIST_INSERT_HEAD(&loaded_objs, obj, entries);
 	load_dyn(obj);
 	close(obj->fd);
-	LIST_INSERT_HEAD(&loaded_objs, obj, entries);
-	return obj;
 }
 
 int main(int argc, char* argv[]) {
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	if(getenv("LD_DEBUG")) {
+	if(unlikely(getenv("LD_DEBUG") != NULL)) {
+		setvbuf(stdout, NULL, _IONBF, 0);
 		do_debug = true;
 	}
 
 	char* execpath = _xelix_execdata->binary_path;
 	LD_ASSERT(execpath && execpath[0], "Could not get executable path.");
 
-	if(!strcmp(execpath, "/usr/libexec/system/xelix-loader")) {
+	if(unlikely(!strcmp(execpath, "/usr/libexec/system/xelix-loader"))) {
 		fprintf(stderr, "xelix-loader is automatically invoked by the kernel to load ELF binaries. It cannot be used directly.\n");
 		exit(EXIT_FAILURE);
 	}
@@ -541,7 +567,7 @@ int main(int argc, char* argv[]) {
 
 	debug("\n");
 
-	if(do_debug) {
+	if(unlikely(do_debug)) {
 		fflush(stdout);
 		fflush(stderr);
 	}
@@ -553,11 +579,21 @@ int main(int argc, char* argv[]) {
 		debug("\n");
 	}
 
-		obj = root_obj;
+	// FIXME This will run the init for the binary before libaries. This doesn't seem like it is the correct order.
+	obj = root_obj;
 	for(struct elf_object* obj = loaded_objs.lh_first; obj; obj = obj->entries.le_next) {
 		if(obj->init) {
 			debug("\nRunning init for %s at %p\n", obj->path, obj->init);
 			obj->init();
+		}
+
+		if(obj->init_array_size) {
+			// FIXME
+			//debug("\nFIXME Should be running init array for %s\n", obj->path);
+
+			// for(int i=0; i < obj->init_array_size; i++) {
+			// 	obj->init_array[i]();
+			// }
 		}
 	}
 
