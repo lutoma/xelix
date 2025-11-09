@@ -1,0 +1,55 @@
+--- build-aux/config.sub	2020-07-05 14:04:14.000000000 +0200
++++ build-aux/config.sub.new	2023-05-31 03:51:30.281092028 +0200
+@@ -1366,7 +1366,7 @@ case $os in
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+-	     | nsk* | powerunix)
++	     | nsk* | powerunix | xelix*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+--- buffer.c	2020-07-05 14:01:34.000000000 +0200
++++ buffer.c	2025-11-09 17:27:29.090916556 +0100
+@@ -2344,7 +2344,7 @@
+ 				n = bytesRead;
+ 		}
+ #else
+-		n = readv(fd, vecs, nvecs);
++		n = 0;
+ #endif
+ 	}
+ 
+@@ -2457,7 +2457,7 @@
+ 			n = bytesSent;
+ 	}
+ #else
+-	n = writev(fd, iov, i);
++	n = 0;
+ #endif
+ 	return (n);
+ }
+--- evutil.c	2020-07-05 14:01:34.000000000 +0200
++++ evutil.c	2025-11-09 17:27:29.090916556 +0100
+@@ -201,11 +201,7 @@
+ int
+ evutil_socketpair(int family, int type, int protocol, evutil_socket_t fd[2])
+ {
+-#ifndef _WIN32
+-	return socketpair(family, type, protocol, fd);
+-#else
+-	return evutil_ersatz_socketpair_(family, type, protocol, fd);
+-#endif
++	return -1;
+ }
+ 
+ int
+@@ -2007,7 +2003,7 @@
+ 	if (cp == NULL)
+ 		return evutil_inet_pton(af, src, dst);
+ 
+-	if_index = if_nametoindex(cp + 1);
++	if_index = 0;
+ 	if (if_index == 0) {
+ 		/* Could be numeric */
+ 		if_index = strtoul(cp + 1, &check, 10);
