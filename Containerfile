@@ -129,7 +129,8 @@ RUN make DESTDIR=/toolchain install-target-libgcc install-target-libstdc++-v3 in
 
 # Convert libs
 WORKDIR /build/newlib
-RUN /toolchain/usr/bin/i786-pc-xelix-gcc -shared -Wl,--whole-archive -Wl,--allow-multiple-definition -nodefaultlibs -ffreestanding -o /toolchain/usr/i786-pc-xelix/lib/libc.so i786-pc-xelix/newlib/libc.a
+#RUN /toolchain/usr/bin/i786-pc-xelix-gcc -shared -Wl,--whole-archive -Wl,--allow-multiple-definition -nodefaultlibs -ffreestanding -o /toolchain/usr/i786-pc-xelix/lib/libc.so.1 i786-pc-xelix/newlib/libc.a
+#RUN ln -s libc.so.1 /toolchain/usr/i786-pc-xelix/lib/libc.so
 
 # Strip debug info from binaries (Reduces image size substantially)
 RUN strip --strip-unneeded /toolchain/usr/bin/i786-pc-xelix-* /toolchain/usr/i786-pc-xelix/bin/*
